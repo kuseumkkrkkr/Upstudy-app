@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:omj/home_page.dart';
 import 'package:omj/more_page.dart';
-import 'package:omj/more_page_2.dart';
+import 'package:omj/editor.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,9 +23,9 @@ class _MyAppState extends State<MyApp> {
 
   // Define the widgets for each tab
   final List<Widget> _pages = [
-    const Home_Page(), // Placeholder for Home Page
+    const mainEditor(), // Placeholder for Home Page
     const MorePage(), // Placeholder for More Page
-    const AutocompleteExample(), // 자동완성 예시만들기
+    const MainEditor(), // 자동완성 예시만들기
   ];
 
   void _onItemTapped(BuildContext ctx, int index) {
