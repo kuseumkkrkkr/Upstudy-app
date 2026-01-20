@@ -46,15 +46,19 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
   }
 
   void _toggleTagSelection(ConceptTag tag) {
+    final state = _getSelectionState(tag);
+    final shouldSelect = state != _SelectionState.selected;
     setState(() {
-      tag.isSelected = !tag.isSelected;
-
-      if (tag.isSelected) {
-        selectedTags.insert(0, tag);
-      } else {
-        selectedTags.removeWhere((t) => t.name == tag.name);
-      }
+      _setSelectionRecursively(tag, shouldSelect);
+      _syncSelectedTags();
     });
+  }
+
+  void _setSelectionRecursively(ConceptTag tag, bool selected) {
+    tag.isSelected = selected;
+    for (final child in tag.children) {
+      _setSelectionRecursively(child, selected);
+    }
   }
 
   void _toggleExpanded(ConceptTag tag) {
@@ -63,32 +67,73 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
     });
   }
 
-  List<ConceptTag> _getFilteredTags(List<ConceptTag> tagsToFilter) {
+  List<_TagNode> _getFilteredTags(List<ConceptTag> tagsToFilter) {
     if (searchQuery.isEmpty) {
-      return tagsToFilter;
+      return _buildTagNodes(tagsToFilter);
     }
 
-    List<ConceptTag> filtered = [];
+    List<_TagNode> filtered = [];
     for (var tag in tagsToFilter) {
       bool matches = tag.displayName.toLowerCase().contains(
         searchQuery.toLowerCase(),
       );
 
-      List<ConceptTag> filteredChildren = _getFilteredTags(tag.children);
+      List<_TagNode> filteredChildren = _getFilteredTags(tag.children);
 
       if (matches || filteredChildren.isNotEmpty) {
-        filtered.add(
-          ConceptTag(
-            name: tag.name,
-            displayName: tag.displayName,
-            children: filteredChildren,
-            isExpanded: matches || filteredChildren.isNotEmpty,
-            isSelected: tag.isSelected,
-          ),
-        );
+        filtered.add(_TagNode(tag, filteredChildren));
       }
     }
     return filtered;
+  }
+
+  List<_TagNode> _buildTagNodes(List<ConceptTag> tagsToBuild) {
+    return tagsToBuild
+        .map((tag) => _TagNode(tag, _buildTagNodes(tag.children)))
+        .toList();
+  }
+
+  _SelectionState _getSelectionState(ConceptTag tag) {
+    if (tag.children.isEmpty) {
+      return tag.isSelected ? _SelectionState.selected : _SelectionState.unselected;
+    }
+    bool hasSelected = false;
+    bool hasUnselected = false;
+    for (final child in tag.children) {
+      final state = _getSelectionState(child);
+      if (state == _SelectionState.partial) {
+        return _SelectionState.partial;
+      }
+      if (state == _SelectionState.selected) {
+        hasSelected = true;
+      } else {
+        hasUnselected = true;
+      }
+    }
+    if (hasSelected && hasUnselected) {
+      return _SelectionState.partial;
+    }
+    return hasSelected ? _SelectionState.selected : _SelectionState.unselected;
+  }
+
+  void _syncSelectedTags() {
+    selectedTags
+      ..clear()
+      ..addAll(_collectSelectedLeafTags(tags));
+  }
+
+  List<ConceptTag> _collectSelectedLeafTags(List<ConceptTag> tagsToCheck) {
+    final results = <ConceptTag>[];
+    for (final tag in tagsToCheck) {
+      if (tag.children.isEmpty) {
+        if (tag.isSelected) {
+          results.add(tag);
+        }
+      } else {
+        results.addAll(_collectSelectedLeafTags(tag.children));
+      }
+    }
+    return results;
   }
 
   @override
@@ -229,11 +274,14 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
     );
   }
 
-  Widget _buildTagTree(List<ConceptTag> tagsToRender, {int depth = 0}) {
+  Widget _buildTagTree(List<_TagNode> tagsToRender, {int depth = 0}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: tagsToRender.map((tag) {
-        final hasChildren = tag.children.isNotEmpty;
+      children: tagsToRender.map((node) {
+        final tag = node.tag;
+        final hasChildren = node.children.isNotEmpty;
+        final selectionState = _getSelectionState(tag);
+        final shouldExpand = searchQuery.isNotEmpty || tag.isExpanded;
 
         return Padding(
           padding: EdgeInsets.only(left: depth * 16.0),
@@ -263,7 +311,12 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
 
                   // 체크박스
                   Checkbox(
-                    value: tag.isSelected,
+                    value: selectionState == _SelectionState.selected
+                        ? true
+                        : selectionState == _SelectionState.unselected
+                            ? false
+                            : null,
+                    tristate: true,
                     onChanged: (_) => _toggleTagSelection(tag),
                   ),
 
@@ -281,8 +334,8 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
               ),
 
               // 자식 태그 렌더링
-              if (hasChildren && tag.isExpanded)
-                _buildTagTree(tag.children, depth: depth + 1),
+              if (hasChildren && shouldExpand)
+                _buildTagTree(node.children, depth: depth + 1),
 
               const SizedBox(height: 4),
             ],
@@ -291,4 +344,13 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
       }).toList(),
     );
   }
+}
+
+enum _SelectionState { selected, unselected, partial }
+
+class _TagNode {
+  final ConceptTag tag;
+  final List<_TagNode> children;
+
+  _TagNode(this.tag, this.children);
 }

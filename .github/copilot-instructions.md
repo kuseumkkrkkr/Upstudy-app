@@ -2,15 +2,16 @@
 
 ## Architecture Overview
 
-**AIFlow** is a Flutter web/mobile app with a modular architecture that separates concerns:
+**AIFlow** is a Flutter web/mobile app for exam content generation with modular architecture:
 
-- **Entry Point** (`main.dart`): Simple MaterialApp configuration with no business logic
-- **Pages** (`lib/pages/`): Screen-level widgets (currently `MainpageWidget`) managing state and layout
-- **Widgets** (`lib/widgets/`): Reusable UI components (`HeaderBar`, `MenuButton`) - pure presentation
-- **Services** (`lib/services/`): Cross-cutting concerns like dialog management (`DialogService`)
-- **Dialogs** (`lib/dialogs/`): Dialog-specific UI components (future expansion for custom dialogs)
+- **Entry Point** (`main.dart`): MaterialApp configuration only - no business logic
+- **Pages** (`lib/pages/`): `MainpageWidget` - stateful screen with menu items and header
+- **Widgets** (`lib/widgets/`): `HeaderBar` - reusable top navigation bar with search/menu callbacks
+- **Services** (`lib/services/`): `DialogService.openDialog()` - centralized dialog management
+- **Dialogs** (`lib/dialogs/`): `BuildboxWidget` (main dialog container), `ConceptTagDialog` (hierarchical tag picker)
+- **Models** (`lib/models/`): `ConceptTag` - tree-structured concept data with expand/select states
 
-**Data Flow**: Menu items (hardcoded in `_MainpageWidgetState`) → MenuButton component → DialogService.openDialog()
+**Data Flow**: MainpageWidget menu list → DialogService.openDialog(context, title) → BuildboxWidget displays with ConceptTagDialog integration
 
 ## File Organization Pattern
 
@@ -24,7 +25,7 @@
 ```dart
 import 'package:flutter/material.dart';
 import '../services/dialog_service.dart';
-import '../widgets/menu_button.dart';
+import '../widgets/header_bar.dart';
 ```
 
 ## Key Patterns
@@ -36,20 +37,28 @@ Dialog opening is centralized in `DialogService.openDialog()`. All dialogs flow 
 - Called from page widgets: `DialogService.openDialog(context, title: '빠른 생성')`
 
 ### Component Callbacks
-Widgets receive callbacks rather than managing state:
+Widgets receive callbacks for interactivity - no widget should manage page-level state:
 ```dart
-// HeaderBar receives VoidCallbacks
+// HeaderBar in MainpageWidget
 HeaderBar(
-  onSearchPressed: () => DialogService.openDialog(context),
-  onMenuPressed: () => DialogService.openDialog(context),
+  onSearchPressed: () => DialogService.openDialog(context, title: '검색'),
+  onMenuPressed: () => DialogService.openDialog(context, title: '메뉴'),
 )
 
-// MenuButton receives onTap callback
-MenuButton(
-  title: item['title']!,
-  onTap: () => _onMenuItemPressed(item['title']!),
+// ConceptTagDialog callback pattern
+ConceptTagDialog(
+  onTagsSelected: (tags) {
+    // Handle selected tags, update parent state
+    Navigator.pop(context);
+  },
 )
 ```
+
+### ConceptTag Model (Hierarchical Data)
+`ConceptTag` represents exam concepts in a tree structure with selection/expansion state:
+- **Properties**: `name`, `displayName`, `children` (recursive), `isExpanded`, `isSelected`
+- **Used in**: `ConceptTagDialog` for multi-level tag selection (deep copy pattern to preserve original data)
+- **Pattern**: Dialog manages tag state locally, returns selected tags via callback to parent
 
 ### Typography & Styling
 - Use `google_fonts/google_fonts.dart` for custom fonts (Inter family used throughout)
@@ -80,9 +89,10 @@ flutter run -d ios
 
 ## Dependencies
 
-- **flutter/material.dart**: Material Design (required)
-- **google_fonts**: Custom font support (Inter family)
-- Avoid adding large dependencies; prioritize Flutter's built-in APIs
+- **flutter/material.dart**: Material Design UI components
+- **google_fonts**: Custom fonts (Inter family used throughout for headers and text)
+- **flutter_slidable** (^3.0.0): Swipe actions for list items in dialogs
+- Minimize external dependencies; leverage Flutter's built-in Material Design
 
 ## Conventions
 

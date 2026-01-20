@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/concept_tag.dart';
 import 'concept_tag_dialog.dart';
+import '../services/api_client.dart';
+import '../pages/exam_preview_page.dart';
 
 class BuildboxWidget extends StatefulWidget {
   final String title;
@@ -16,6 +18,7 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
   double _sliderValue = 0;
   final TextEditingController _textController = TextEditingController();
   List<Map<String, dynamic>> _rangeItems = [];
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -71,6 +74,69 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
           ),
         ),
       ),
+    );
+  }
+
+  int _difficultyTierFromSlider() {
+    final index = (_sliderValue / 25).round();
+    return (index + 1).clamp(1, 5).toInt();
+  }
+
+  Future<void> _submitExam() async {
+    if (_isSubmitting) {
+      return;
+    }
+    final questionCount = int.tryParse(_textController.text.trim());
+    if (questionCount == null || questionCount < 1) {
+      _showMessage('Enter a valid question count.');
+      return;
+    }
+
+    final ranges = _rangeItems
+        .map(
+          (item) => ExamRangeRequest(
+            key: 'range-${item['id']}',
+            tags: (item['tags'] as List<ConceptTag>)
+                .map((tag) => tag.displayName)
+                .toList(),
+          ),
+        )
+        .where((range) => range.tags.isNotEmpty)
+        .toList();
+
+    if (ranges.isEmpty) {
+      _showMessage('Select at least one tag.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final examId = await ApiClient.instance.createExam(
+        ranges: ranges,
+        difficultyTier: _difficultyTierFromSlider(),
+        questionCount: questionCount,
+      );
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop();
+      Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute(
+          builder: (_) => ExamPreviewPage(examId: examId),
+        ),
+      );
+    } catch (error) {
+      _showMessage('Failed to create exam.');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -326,6 +392,7 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
           padding: const EdgeInsets.symmetric(horizontal: 30),
           child: TextField(
             controller: _textController,
+            keyboardType: TextInputType.number,
             decoration: InputDecoration(
               hintText: 'TextField',
               filled: true,
@@ -355,7 +422,7 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
       child: Padding(
         padding: const EdgeInsets.all(22),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: _isSubmitting ? null : _submitExam,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF777777),
             minimumSize: const Size(200, 70),
@@ -364,14 +431,23 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
             ),
             elevation: 0,
           ),
-          child: const Text(
-            '다음',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 40,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text(
+                  '다음',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
       ),
     );

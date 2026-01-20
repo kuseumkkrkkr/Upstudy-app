@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/dialog_service.dart';
 import '../widgets/menu_button.dart';
 import '../widgets/header_bar.dart';
+import 'data_open_page.dart';
+import 'solution_view_page.dart';
 
 class MainpageWidget extends StatefulWidget {
   const MainpageWidget({super.key});
@@ -38,6 +40,18 @@ class _MainpageWidgetState extends State<MainpageWidget> {
   ];
 
   void _onMenuItemPressed(String title) {
+    if (title.toLowerCase() == 'data open') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const DataOpenPage()),
+      );
+      return;
+    }
+    if (title == '풀이보기') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const SolutionViewPage()),
+      );
+      return;
+    }
     DialogService.openDialog(context, title: title);
   }
 
