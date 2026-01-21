@@ -34,6 +34,7 @@ def _format_reference(reference_quest: Optional[Dict[str, Any]]) -> str:
     reference_block = f"""
 [참고 문제]
 quest_title: {data.get("quest_title", "")}
+quest_answer: {data.get("quest_answer", "")}
 main_huddle: {info.get("main_huddle", "")}
 solves:
 {solves_text}
@@ -68,6 +69,7 @@ def build_prompt(
 [출력 포맷]
 {{
   "quest_title": "문제 본문",
+  "quest_answer": "정답",
   "quest_model": ["pix2text"] 또는 ["gemini-vision"],
   "main_huddle": {strategy_level},
   "primary_hash_tag": "가장 대표 해시태그",

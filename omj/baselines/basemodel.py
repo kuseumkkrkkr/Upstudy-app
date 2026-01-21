@@ -31,6 +31,7 @@ class QuestInfo(BaseModel):
 class QuestData(BaseModel):
     quest_title: str = Field(..., description="Problem statement text")
     quest_image: Optional[str] = Field(None, description="Optional path or URL to reference image")
+    quest_answer: Optional[str] = Field(None, description="Final answer text")
 
 
 class SolveStep(BaseModel):
@@ -63,6 +64,7 @@ class AISolveStep(BaseModel):
 
 class AIQuestResult(BaseModel):
     quest_title: str = Field(..., description="Quest body text")
+    quest_answer: Optional[str] = Field(None, description="Final answer text")
     quest_model: List[str] = Field(..., description="Model names used when generating the quest")
     main_huddle: int = Field(..., ge=0, le=10, description="Requested strategy difficulty level")
     primary_hash_tag: str = Field("", description="Most representative hash tag for the quest")
@@ -126,6 +128,7 @@ def build_quest_data(ai: AIQuestResult) -> QuestData:
     return QuestData(
         quest_title=ai.quest_title,
         quest_image=ai.quest_image,
+        quest_answer=ai.quest_answer or None,
     )
 
 
@@ -165,4 +168,3 @@ def assemble_quest(
         "data": data,
         "solves": solves,
     }
-

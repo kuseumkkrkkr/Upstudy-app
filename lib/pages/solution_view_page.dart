@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
+import 'flow_view_page.dart';
 
 class SolutionViewPage extends StatefulWidget {
-  const SolutionViewPage({super.key});
+  final String? initialHashTag;
+  final String? initialQuestId;
+  final String? initialTextQuery;
+  final bool autoSearch;
+
+  const SolutionViewPage({
+    super.key,
+    this.initialHashTag,
+    this.initialQuestId,
+    this.initialTextQuery,
+    this.autoSearch = false,
+  });
 
   @override
   State<SolutionViewPage> createState() => _SolutionViewPageState();
@@ -15,6 +27,20 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
   bool _loading = false;
   String? _error;
   List<Map<String, dynamic>> _results = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _hashTagController.text = widget.initialHashTag ?? '';
+    _questIdController.text = widget.initialQuestId ?? '';
+    _textController.text = widget.initialTextQuery ?? '';
+    if (widget.autoSearch &&
+        (_hashTagController.text.isNotEmpty ||
+            _questIdController.text.isNotEmpty ||
+            _textController.text.isNotEmpty)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _search());
+    }
+  }
 
   @override
   void dispose() {
@@ -160,6 +186,22 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
                                       .map((tag) => Chip(label: Text(tag)))
                                       .toList(),
                                 ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => FlowViewPage(
+                                          quest: quest,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Flow 보기'),
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               if (flows.isEmpty)
                                 const Text('No flow data.')

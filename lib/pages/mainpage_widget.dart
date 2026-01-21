@@ -4,6 +4,7 @@ import '../services/dialog_service.dart';
 import '../widgets/menu_button.dart';
 import '../widgets/header_bar.dart';
 import 'data_open_page.dart';
+import 'quick_generate_page.dart';
 import 'solution_view_page.dart';
 
 class MainpageWidget extends StatefulWidget {
@@ -43,6 +44,12 @@ class _MainpageWidgetState extends State<MainpageWidget> {
     if (title.toLowerCase() == 'data open') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const DataOpenPage()),
+      );
+      return;
+    }
+    if (title == '빠른 생성') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const QuickGeneratePage()),
       );
       return;
     }

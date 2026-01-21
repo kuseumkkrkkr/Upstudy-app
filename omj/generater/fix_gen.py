@@ -555,6 +555,7 @@ def fix_gen(ai: AIQuestResult, hash_tags: List[str], *, strict_tags: bool = True
     quest_data_model = QuestData(
         quest_title=ai.quest_title,
         quest_image=ai.quest_image,
+        quest_answer=ai.quest_answer or None,
     )
 
     # SolveSteps with branches

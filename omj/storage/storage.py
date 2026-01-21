@@ -54,6 +54,7 @@ def init_db():
             quest_id TEXT PRIMARY KEY,
             quest_title TEXT NOT NULL,
             quest_image TEXT,
+            quest_answer TEXT,
             FOREIGN KEY (quest_id) REFERENCES quest_header(quest_id)
         )
         """
@@ -76,8 +77,9 @@ def init_db():
         """
     )
 
-    # Ensure branches column exists for legacy DBs
+    # Ensure columns exist for legacy DBs
     _ensure_column(cursor, "solve_step", "branches", "TEXT NOT NULL DEFAULT '[]'")
+    _ensure_column(cursor, "quest_data", "quest_answer", "TEXT")
 
     conn.commit()
     conn.close()
@@ -138,10 +140,15 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
         # 3. quest_data insert
         cursor.execute(
             """
-            INSERT INTO quest_data (quest_id, quest_title, quest_image)
-            VALUES (?, ?, ?)
+            INSERT INTO quest_data (quest_id, quest_title, quest_image, quest_answer)
+            VALUES (?, ?, ?, ?)
             """,
-            (quest_id, data["quest_title"], data.get("quest_image")),
+            (
+                quest_id,
+                data["quest_title"],
+                data.get("quest_image"),
+                data.get("quest_answer"),
+            ),
         )
 
         # 4. solve_step insert
@@ -224,6 +231,7 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
             "data": {
                 "quest_title": data_row[1],
                 "quest_image": data_row[2],
+                "quest_answer": data_row[3] if len(data_row) > 3 else None,
             },
             "solves": [
                 {

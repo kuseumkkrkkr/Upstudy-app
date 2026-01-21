@@ -96,6 +96,19 @@ class QuestSearchResponse(BaseModel):
     page_size: int
 
 
+class QuestGenerateRequest(BaseModel):
+    hash_tags: List[str]
+    solves_count: int = Field(ge=1)
+    strategy_level: int = Field(ge=1, le=3)
+    branch_conditions: int = Field(ge=0)
+    reference_quest_id: Optional[str] = None
+    strict_tags: bool = False
+
+
+class QuestGenerateResponse(BaseModel):
+    quest: Dict[str, Any]
+
+
 def _get_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
@@ -205,6 +218,36 @@ def search_quests_handler(
         page_size=page_size,
     )
     return QuestSearchResponse(**results)
+
+
+@app.post("/quests/generate", response_model=QuestGenerateResponse)
+async def generate_quest_handler(
+    payload: QuestGenerateRequest,
+    user_id: str = Depends(_get_user_id),
+) -> QuestGenerateResponse:
+    hash_tags = [tag.strip() for tag in payload.hash_tags if tag.strip()]
+    if not hash_tags:
+        raise HTTPException(status_code=400, detail="hash_tags must not be empty")
+    try:
+        async with _GEN_SEMAPHORE:
+            storage_data = await asyncio.to_thread(
+                make,
+                hash_tags,
+                payload.solves_count,
+                payload.strategy_level,
+                payload.branch_conditions,
+                payload.reference_quest_id,
+                payload.strict_tags,
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    if not store_data(storage_data):
+        raise HTTPException(status_code=500, detail="failed to store quest")
+
+    return QuestGenerateResponse(quest=storage_data)
 
 
 def _resolve_items(items: List[Dict[str, Any]]) -> List[ExamItemResponse]:

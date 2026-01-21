@@ -220,6 +220,44 @@ class ApiClient {
     return QuestSearchResult.fromJson(payload).quests;
   }
 
+  Future<Map<String, dynamic>> generateQuest({
+    required List<String> hashTags,
+    required int solvesCount,
+    required int strategyLevel,
+    required int branchConditions,
+    String? referenceQuestId,
+    bool strictTags = false,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/quests/generate');
+    final body = jsonEncode({
+      'hash_tags': hashTags,
+      'solves_count': solvesCount,
+      'strategy_level': strategyLevel,
+      'branch_conditions': branchConditions,
+      if (referenceQuestId != null && referenceQuestId.trim().isNotEmpty)
+        'reference_quest_id': referenceQuestId.trim(),
+      'strict_tags': strictTags,
+    });
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to generate quest: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final quest = payload['quest'] as Map<String, dynamic>?;
+    if (quest == null) {
+      throw Exception('Missing quest data in response');
+    }
+    return quest;
+  }
+
   Future<QuestSearchResult> fetchQuestPage({
     int page = 1,
     int pageSize = 20,
