@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import 'flow_view_page.dart';
+import '../models/content_block.dart';
+import '../widgets/content_blocks_view.dart';
 
 class SolutionViewPage extends StatefulWidget {
   final String? initialHashTag;
@@ -160,7 +162,11 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
                         final info = quest['info'] as Map<String, dynamic>? ?? {};
                         final data = quest['data'] as Map<String, dynamic>? ?? {};
                         final questId = header['quest_id']?.toString() ?? 'unknown';
-                        final title = data['quest_title']?.toString() ?? 'untitled';
+                        final titleBlocks =
+                            parseContentBlocks(data['quest_title']);
+                        final displayTitleBlocks = titleBlocks.isEmpty
+                            ? [const ContentBlock(type: 'text', content: 'untitled')]
+                            : titleBlocks;
                         final tags = (info['hash_tag'] as List<dynamic>? ?? [])
                             .map((tag) => tag.toString())
                             .toList();
@@ -175,7 +181,11 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
                           ),
                           child: ExpansionTile(
                             title: Text(questId),
-                            subtitle: Text(title),
+                            subtitle: ContentBlocksView(
+                              blocks: displayTitleBlocks,
+                              textStyle: const TextStyle(fontSize: 12),
+                              latexStyle: const TextStyle(fontSize: 12),
+                            ),
                             childrenPadding: const EdgeInsets.all(12),
                             children: [
                               if (tags.isNotEmpty)
@@ -207,9 +217,10 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
                                 const Text('No flow data.')
                               else
                                 ...flows.map(
-                                  (line) => Text(
-                                    line,
-                                    style: const TextStyle(fontSize: 12),
+                                  (blocks) => ContentBlocksView(
+                                    blocks: blocks,
+                                    textStyle: const TextStyle(fontSize: 12),
+                                    latexStyle: const TextStyle(fontSize: 12),
                                   ),
                                 ),
                             ],
@@ -224,13 +235,13 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
   }
 }
 
-List<String> _flattenFlows(List<dynamic> solves, {int depth = 0}) {
-  final results = <String>[];
+List<List<ContentBlock>> _flattenFlows(List<dynamic> solves, {int depth = 0}) {
+  final results = <List<ContentBlock>>[];
   for (final entry in solves) {
     final map = entry as Map<String, dynamic>? ?? {};
-    final flow = map['flow']?.toString() ?? '';
     final prefix = '  ' * depth;
-    results.add('$prefix- $flow');
+    final flowBlocks = parseContentBlocks(map['flow']);
+    results.add(prependTextBlock(flowBlocks, '$prefix- '));
     final branches = map['branches'] as List<dynamic>? ?? [];
     if (branches.isNotEmpty) {
       results.addAll(_flattenFlows(branches, depth: depth + 1));

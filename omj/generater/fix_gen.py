@@ -6,11 +6,13 @@ from typing import Iterable, Iterator, List
 from baselines.basemodel import (
     AISolveStep,
     AIQuestResult,
+    ContentBlocks,
     QuestData,
     QuestHeader,
     QuestInfo,
     QuestModel,
     SolveStep,
+    blocks_to_text,
 )
 
 
@@ -389,7 +391,13 @@ def _select_solve_step_tags(
     fallback = fallback_tag or tag_mapping[ordered_norms[0]]
     results = []
     for step in solves_flat:
-        text = f"{step.flow} {step.hint_riddle} {step.answer_riddle}"
+        text = " ".join(
+            [
+                _content_to_text(step.flow),
+                _content_to_text(step.hint_riddle),
+                _content_to_text(step.answer_riddle),
+            ]
+        )
         condensed = text.replace(" ", "")
         matched = []
         for norm in ordered_norms:
@@ -400,6 +408,19 @@ def _select_solve_step_tags(
             matched = [fallback]
         results.append(matched)
     return results
+
+
+def _content_to_text(content: ContentBlocks | dict | list | str | None) -> str:
+    if content is None:
+        return ""
+    if isinstance(content, ContentBlocks):
+        return blocks_to_text(content)
+    if isinstance(content, str):
+        return content
+    try:
+        return blocks_to_text(ContentBlocks.model_validate(content))
+    except Exception:
+        return str(content)
 
 
 def generate_quest_id(subject_code: int) -> str:

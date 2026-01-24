@@ -24,7 +24,7 @@ class ExamItem {
   final int branchConditions;
   final String? questId;
   final int? flowCount;
-  final String? questTitle;
+  final dynamic questTitle;
   final String? error;
 
   ExamItem({
@@ -54,7 +54,7 @@ class ExamItem {
       branchConditions: json['branch_conditions'] as int,
       questId: json['quest_id'] as String?,
       flowCount: json['flow_count'] as int?,
-      questTitle: json['quest_title'] as String?,
+      questTitle: json['quest_title'],
       error: json['error'] as String?,
     );
   }
@@ -104,6 +104,41 @@ class QuestSearchResult {
       total: json['total'] as int? ?? quests.length,
       page: json['page'] as int? ?? 1,
       pageSize: json['page_size'] as int? ?? quests.length,
+    );
+  }
+}
+
+class TestChatResponse {
+  final String assistantMessage;
+  final String? pairSummary;
+  final String prompt;
+  final int inputTokenEstimate;
+  final int outputTokenEstimate;
+  final int totalTokenEstimate;
+
+  TestChatResponse({
+    required this.assistantMessage,
+    required this.prompt,
+    required this.inputTokenEstimate,
+    required this.outputTokenEstimate,
+    required this.totalTokenEstimate,
+    this.pairSummary,
+  });
+
+  factory TestChatResponse.fromJson(Map<String, dynamic> json) {
+    final total = json['token_estimate'] as int? ?? 0;
+    final input = json['input_token_estimate'] as int?;
+    final output = json['output_token_estimate'] as int?;
+    final resolvedInput = input ?? total;
+    final resolvedOutput = output ?? (input != null && total > 0 ? total - input : 0);
+    final resolvedTotal = total > 0 ? total : resolvedInput + resolvedOutput;
+    return TestChatResponse(
+      assistantMessage: json['assistant_message'] as String? ?? '',
+      pairSummary: json['pair_summary'] as String?,
+      prompt: json['prompt'] as String? ?? '',
+      inputTokenEstimate: resolvedInput,
+      outputTokenEstimate: resolvedOutput,
+      totalTokenEstimate: resolvedTotal,
     );
   }
 }
@@ -277,5 +312,42 @@ class ApiClient {
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return QuestSearchResult.fromJson(payload);
+  }
+
+  Future<TestChatResponse> sendTestChatMessage({
+    required String userMessage,
+    required int affection,
+    required int attendanceDays,
+    String? questId,
+    String? problemNumber,
+    String? solutionNotes,
+    Map<String, int>? learningRatings,
+    List<Map<String, String>>? recentPairs,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/test-chat/message');
+    final body = jsonEncode({
+      'user_message': userMessage,
+      'affection': affection,
+      'attendance_days': attendanceDays,
+      if (questId != null) 'quest_id': questId,
+      if (problemNumber != null) 'problem_number': problemNumber,
+      if (solutionNotes != null) 'solution_notes': solutionNotes,
+      if (learningRatings != null) 'learning_ratings': learningRatings,
+      if (recentPairs != null) 'recent_pairs': recentPairs,
+    });
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to send chat: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return TestChatResponse.fromJson(payload);
   }
 }

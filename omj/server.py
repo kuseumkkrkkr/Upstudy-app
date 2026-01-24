@@ -10,6 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from auth import create_token, decode_token
+from baselines.basemodel import ContentBlocks
 from exam_service import plan_exam_items
 from generater.make import make
 from storage.exam_storage import (
@@ -24,6 +25,7 @@ from storage.exam_storage import (
     update_exam_status,
 )
 from storage.storage import get_quest, init_db, search_quests, store_data
+from test_chat.service import build_test_chat_response
 
 try:
     from pdf_builder import build_exam_pdf
@@ -74,7 +76,7 @@ class ExamItemResponse(BaseModel):
     branch_conditions: int
     quest_id: Optional[str] = None
     flow_count: Optional[int] = None
-    quest_title: Optional[str] = None
+    quest_title: Optional[ContentBlocks] = None
     error: Optional[str] = None
 
 
@@ -107,6 +109,31 @@ class QuestGenerateRequest(BaseModel):
 
 class QuestGenerateResponse(BaseModel):
     quest: Dict[str, Any]
+
+
+class TestChatPair(BaseModel):
+    user: str
+    assistant: str
+
+
+class TestChatMessageRequest(BaseModel):
+    user_message: str
+    affection: int = Field(ge=1, le=255)
+    attendance_days: int = Field(ge=1)
+    quest_id: Optional[str] = None
+    problem_number: Optional[str] = None
+    solution_notes: Optional[str] = None
+    learning_ratings: Dict[str, int] = Field(default_factory=dict)
+    recent_pairs: List[TestChatPair] = Field(default_factory=list)
+
+
+class TestChatMessageResponse(BaseModel):
+    assistant_message: str
+    pair_summary: Optional[str] = None
+    prompt: str
+    input_token_estimate: int
+    output_token_estimate: int
+    token_estimate: int
 
 
 def _get_user_id(
@@ -250,6 +277,18 @@ async def generate_quest_handler(
     return QuestGenerateResponse(quest=storage_data)
 
 
+@app.post("/test-chat/message", response_model=TestChatMessageResponse)
+def test_chat_message(
+    payload: TestChatMessageRequest,
+    user_id: str = Depends(_get_user_id),
+) -> TestChatMessageResponse:
+    try:
+        result = build_test_chat_response(payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return TestChatMessageResponse(**result)
+
+
 def _resolve_items(items: List[Dict[str, Any]]) -> List[ExamItemResponse]:
     resolved: List[ExamItemResponse] = []
     for item in items:
@@ -283,34 +322,27 @@ async def _run_exam_generation(exam_id: str) -> None:
     update_exam_status(exam_id, "generating")
     items = get_exam_items(exam_id)
     used_quest_ids: set[str] = set()
-    failed_items: List[Dict[str, Any]] = []
-
-    for item in items:
-        ok = await _generate_exam_item(
-            exam_id,
-            item,
-            used_quest_ids,
-            start_status="generating",
-            failure_status="retrying",
-        )
-        if not ok:
-            failed_items.append(item)
+    used_quest_lock = asyncio.Lock()
+    failed_items = await _run_exam_batch(
+        exam_id,
+        items,
+        used_quest_ids,
+        used_quest_lock,
+        start_status="generating",
+        failure_status="retrying",
+    )
 
     if failed_items:
         update_exam_status(exam_id, "retrying")
         await asyncio.sleep(2)
-        retry_failures: List[Dict[str, Any]] = []
-        for item in failed_items:
-            ok = await _generate_exam_item(
-                exam_id,
-                item,
-                used_quest_ids,
-                start_status="retrying",
-                failure_status="failed",
-            )
-            if not ok:
-                retry_failures.append(item)
-        failed_items = retry_failures
+        failed_items = await _run_exam_batch(
+            exam_id,
+            failed_items,
+            used_quest_ids,
+            used_quest_lock,
+            start_status="retrying",
+            failure_status="failed",
+        )
 
     final_status = "done"
     if failed_items:
@@ -322,6 +354,7 @@ async def _generate_exam_item(
     exam_id: str,
     item: Dict[str, Any],
     used_quest_ids: set[str],
+    used_quest_lock: asyncio.Lock,
     *,
     start_status: str,
     failure_status: str,
@@ -331,15 +364,17 @@ async def _generate_exam_item(
     try:
         quest_id: Optional[str] = None
         if get_total_quest_count() >= 20:
-            quest_id = find_reusable_quest(
-                target_tags=item["hash_tags"],
-                min_flow=item["solves_count"],
-                max_flow=item["solves_count"] + max(item["branch_conditions"], 1) + 2,
-                used_quest_ids=used_quest_ids,
-            )
+            async with used_quest_lock:
+                quest_id = find_reusable_quest(
+                    target_tags=item["hash_tags"],
+                    min_flow=item["solves_count"],
+                    max_flow=item["solves_count"] + max(item["branch_conditions"], 1) + 2,
+                    used_quest_ids=used_quest_ids,
+                )
+                if quest_id:
+                    used_quest_ids.add(quest_id)
 
         if quest_id:
-            used_quest_ids.add(quest_id)
             quest = get_quest(quest_id)
             flow_count = len(quest.get("solves", [])) if quest else item["solves_count"]
             update_exam_item(
@@ -351,16 +386,15 @@ async def _generate_exam_item(
             )
             return True
 
-        async with _GEN_SEMAPHORE:
-            storage_data = await asyncio.to_thread(
-                make,
-                item["hash_tags"],
-                item["solves_count"],
-                item["strategy_level"],
-                item["branch_conditions"],
-                None,
-                False,
-            )
+        storage_data = await asyncio.to_thread(
+            make,
+            item["hash_tags"],
+            item["solves_count"],
+            item["strategy_level"],
+            item["branch_conditions"],
+            None,
+            False,
+        )
         if not store_data(storage_data):
             raise RuntimeError("failed to store quest")
         quest_id = storage_data["header"]["quest_id"]
@@ -381,3 +415,31 @@ async def _generate_exam_item(
             error=str(exc),
         )
         return False
+
+
+async def _run_exam_batch(
+    exam_id: str,
+    items: List[Dict[str, Any]],
+    used_quest_ids: set[str],
+    used_quest_lock: asyncio.Lock,
+    *,
+    start_status: str,
+    failure_status: str,
+) -> List[Dict[str, Any]]:
+    if not items:
+        return []
+    tasks = [
+        asyncio.create_task(
+            _generate_exam_item(
+                exam_id,
+                item,
+                used_quest_ids,
+                used_quest_lock,
+                start_status=start_status,
+                failure_status=failure_status,
+            )
+        )
+        for item in items
+    ]
+    results = await asyncio.gather(*tasks)
+    return [item for item, ok in zip(items, results) if not ok]

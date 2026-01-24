@@ -1,13 +1,40 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # =========================
 # Domain Models
 # =========================
+
+
+class ContentBlock(BaseModel):
+    type: Literal["text", "latex"]
+    content: str
+
+
+class ContentBlocks(BaseModel):
+    blocks: List[ContentBlock] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_input(cls, value: Any) -> Any:
+        if value is None:
+            return {"blocks": []}
+        if isinstance(value, str):
+            if not value:
+                return {"blocks": []}
+            return {"blocks": [{"type": "text", "content": value}]}
+        if isinstance(value, list):
+            return {"blocks": value}
+        if isinstance(value, dict):
+            if "blocks" in value:
+                return value
+            if "type" in value and "content" in value:
+                return {"blocks": [value]}
+        return value
 
 
 class QuestModel(BaseModel):
@@ -29,16 +56,16 @@ class QuestInfo(BaseModel):
 
 
 class QuestData(BaseModel):
-    quest_title: str = Field(..., description="Problem statement text")
+    quest_title: ContentBlocks = Field(..., description="Problem statement blocks")
     quest_image: Optional[str] = Field(None, description="Optional path or URL to reference image")
-    quest_answer: Optional[str] = Field(None, description="Final answer text")
+    quest_answer: Optional[ContentBlocks] = Field(None, description="Final answer blocks")
 
 
 class SolveStep(BaseModel):
-    flow: str = Field(..., description="Step-by-step solving flow description")
+    flow: ContentBlocks = Field(..., description="Step-by-step solving flow description blocks")
     hash_tag: List[str] = Field(..., description="Hashtags applicable to this step")
-    hint_riddle: str = Field(..., description="Hint text")
-    answer_riddle: str = Field(..., description="Answer explanation text")
+    hint_riddle: ContentBlocks = Field(..., description="Hint blocks")
+    answer_riddle: ContentBlocks = Field(..., description="Answer explanation blocks")
     enter_huddle: int = Field(..., ge=0, le=10, description="Per-step solving difficulty")
     branches: List["SolveStep"] = Field(
         default_factory=list,
@@ -52,9 +79,9 @@ class SolveStep(BaseModel):
 
 
 class AISolveStep(BaseModel):
-    flow: str
-    hint_riddle: str
-    answer_riddle: str
+    flow: ContentBlocks
+    hint_riddle: ContentBlocks
+    answer_riddle: ContentBlocks
     enter_huddle: int = Field(..., ge=0, le=10)
     branches: List["AISolveStep"] = Field(
         default_factory=list,
@@ -63,8 +90,8 @@ class AISolveStep(BaseModel):
 
 
 class AIQuestResult(BaseModel):
-    quest_title: str = Field(..., description="Quest body text")
-    quest_answer: Optional[str] = Field(None, description="Final answer text")
+    quest_title: ContentBlocks = Field(..., description="Quest body blocks")
+    quest_answer: Optional[ContentBlocks] = Field(None, description="Final answer blocks")
     quest_model: List[str] = Field(..., description="Model names used when generating the quest")
     main_huddle: int = Field(..., ge=0, le=10, description="Requested strategy difficulty level")
     primary_hash_tag: str = Field("", description="Most representative hash tag for the quest")
@@ -130,6 +157,12 @@ def build_quest_data(ai: AIQuestResult) -> QuestData:
         quest_image=ai.quest_image,
         quest_answer=ai.quest_answer or None,
     )
+
+
+def blocks_to_text(blocks: Optional[ContentBlocks]) -> str:
+    if not blocks or not blocks.blocks:
+        return ""
+    return " ".join(block.content for block in blocks.blocks if block.content)
 
 
 # ========================

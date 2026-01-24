@@ -1,3 +1,4 @@
+import json
 import os
 import textwrap
 from io import BytesIO
@@ -20,6 +21,33 @@ _GRID_COLUMNS = 2
 _GRID_ROWS = 2
 _LARGE_FLOW_THRESHOLD = 5
 _HEADER_TEXT = "Powered By AIFlow | 수학영역 | 학번 | 이름"
+
+
+def _content_to_text(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, dict):
+        blocks = value.get("blocks", [])
+        return " ".join(
+            block.get("content", "")
+            for block in blocks
+            if isinstance(block, dict) and block.get("content")
+        )
+    if isinstance(value, list):
+        return " ".join(
+            block.get("content", "")
+            for block in value
+            if isinstance(block, dict) and block.get("content")
+        )
+    if isinstance(value, str):
+        if not value:
+            return ""
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return value
+        return _content_to_text(parsed)
+    return str(value)
 
 
 def build_exam_pdf(items: List[Dict[str, object]]) -> bytes:
@@ -334,7 +362,7 @@ def _get_item_text(item: Dict[str, object]) -> str:
     if item.get("quest_id"):
         quest = get_quest(item["quest_id"])
         if quest:
-            quest_title = quest.get("data", {}).get("quest_title")
+            quest_title = _content_to_text(quest.get("data", {}).get("quest_title"))
     if not quest_title:
         quest_title = "Generating..."
     return f"{item.get('item_index')}. {quest_title}"

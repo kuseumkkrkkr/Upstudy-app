@@ -9,6 +9,70 @@ from typing import Any, Dict, List, Optional
 DB_PATH = "quests.db"
 
 
+def _normalize_content(value: Any) -> dict | None:
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        if "blocks" in value:
+            return value
+        if "type" in value and "content" in value:
+            return {"blocks": [value]}
+        return {"blocks": [{"type": "text", "content": json.dumps(value, ensure_ascii=False)}]}
+    if isinstance(value, list):
+        return {"blocks": value}
+    return {"blocks": [{"type": "text", "content": str(value)}]}
+
+
+def _serialize_content(value: Any) -> str | None:
+    normalized = _normalize_content(value)
+    if normalized is None:
+        return None
+    return json.dumps(normalized, ensure_ascii=False)
+
+
+def _parse_content(value: Any) -> dict | None:
+    if value is None:
+        return None
+    if isinstance(value, (dict, list)):
+        return _normalize_content(value)
+    if isinstance(value, str):
+        if not value:
+            return {"blocks": []}
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return _normalize_content(value)
+        return _normalize_content(parsed)
+    return _normalize_content(value)
+
+
+def _normalize_nested_steps(value: Any) -> List[Dict[str, Any]]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            return []
+    if not isinstance(value, list):
+        return []
+    normalized: List[Dict[str, Any]] = []
+    for step in value:
+        if not isinstance(step, dict):
+            continue
+        normalized.append(_normalize_nested_step(step))
+    return normalized
+
+
+def _normalize_nested_step(step: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = dict(step)
+    normalized["flow"] = _parse_content(step.get("flow"))
+    normalized["hint_riddle"] = _parse_content(step.get("hint_riddle"))
+    normalized["answer_riddle"] = _parse_content(step.get("answer_riddle"))
+    normalized["branches"] = _normalize_nested_steps(step.get("branches"))
+    return normalized
+
+
 def _ensure_column(cursor: sqlite3.Cursor, table: str, column: str, definition: str) -> None:
     cursor.execute(f"PRAGMA table_info({table})")
     existing = {row[1] for row in cursor.fetchall()}
@@ -145,9 +209,9 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
             """,
             (
                 quest_id,
-                data["quest_title"],
+                _serialize_content(data["quest_title"]),
                 data.get("quest_image"),
-                data.get("quest_answer"),
+                _serialize_content(data.get("quest_answer")),
             ),
         )
 
@@ -161,10 +225,10 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
                 """,
                 (
                     quest_id,
-                    solve["flow"],
+                    _serialize_content(solve["flow"]),
                     json.dumps(solve.get("hash_tag", [])),
-                    solve["hint_riddle"],
-                    solve["answer_riddle"],
+                    _serialize_content(solve["hint_riddle"]),
+                    _serialize_content(solve["answer_riddle"]),
                     solve["enter_huddle"],
                     json.dumps(solve.get("branches", [])),
                 ),
@@ -229,18 +293,18 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
                 "main_huddle": info_row[6],
             },
             "data": {
-                "quest_title": data_row[1],
+                "quest_title": _parse_content(data_row[1]),
                 "quest_image": data_row[2],
-                "quest_answer": data_row[3] if len(data_row) > 3 else None,
+                "quest_answer": _parse_content(data_row[3]) if len(data_row) > 3 else None,
             },
             "solves": [
                 {
-                    "flow": row[2],
+                    "flow": _parse_content(row[2]),
                     "hash_tag": json.loads(row[3]),
-                    "hint_riddle": row[4],
-                    "answer_riddle": row[5],
+                    "hint_riddle": _parse_content(row[4]),
+                    "answer_riddle": _parse_content(row[5]),
                     "enter_huddle": row[6],
-                    "branches": json.loads(row[7]) if len(row) > 7 else [],
+                    "branches": _normalize_nested_steps(row[7]) if len(row) > 7 else [],
                 }
                 for row in solves_rows
             ],
@@ -325,10 +389,23 @@ def _matches_filters(
     if hash_tag and not _quest_matches_tag(quest, hash_tag):
         return False
     if text_query:
-        title = (quest.get("data", {}) or {}).get("quest_title", "") or ""
-        if text_query.lower() not in title.lower():
+        title_value = (quest.get("data", {}) or {}).get("quest_title")
+        title_text = _content_to_text(title_value)
+        if text_query.lower() not in title_text.lower():
             return False
     return True
+
+
+def _content_to_text(value: Any) -> str:
+    content = _parse_content(value)
+    if not content:
+        return ""
+    blocks = content.get("blocks", [])
+    return " ".join(
+        block.get("content", "")
+        for block in blocks
+        if isinstance(block, dict) and block.get("content")
+    )
 
 
 def _hash_tag_json_matches(hash_tag_json: str, normalized_tag: str) -> bool:

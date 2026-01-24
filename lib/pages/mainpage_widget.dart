@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/dialog_service.dart';
 import '../widgets/menu_button.dart';
 import '../widgets/header_bar.dart';
+import 'character_chat_debug_page.dart';
 import 'data_open_page.dart';
 import 'quick_generate_page.dart';
 import 'solution_view_page.dart';
@@ -80,6 +81,32 @@ class _MainpageWidgetState extends State<MainpageWidget> {
               ),
 
               // 메뉴 버튼 목록
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      textStyle: GoogleFonts.inter(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const CharacterChatDebugPage(),
+                        ),
+                      );
+                    },
+                    child: const Text('캐릭터챗'),
+                  ),
+                ),
+              ),
+
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(10),

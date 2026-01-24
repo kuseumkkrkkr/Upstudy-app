@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import 'flow_view_page.dart';
 import 'solution_view_page.dart';
+import '../models/content_block.dart';
+import '../widgets/content_blocks_view.dart';
 
 class QuickGeneratePage extends StatefulWidget {
   const QuickGeneratePage({super.key});
@@ -126,7 +128,7 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     final payload = _buildPayload();
     final payloadText = const JsonEncoder.withIndent('  ').convert(payload);
     final questId = _extractQuestId(_quest);
-    final questTitle = _extractQuestTitle(_quest);
+    final questTitleBlocks = _extractQuestTitleBlocks(_quest);
 
     return Scaffold(
       appBar: AppBar(
@@ -141,7 +143,7 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
           const SizedBox(height: 12),
           _buildPayloadSection(payloadText),
           const SizedBox(height: 12),
-          _buildActionSection(questId, questTitle),
+          _buildActionSection(questId, questTitleBlocks),
           if (_loading)
             const Padding(
               padding: EdgeInsets.only(top: 12),
@@ -297,8 +299,14 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     );
   }
 
-  Widget _buildActionSection(String questId, String questTitle) {
+  Widget _buildActionSection(
+    String questId,
+    List<ContentBlock> questTitleBlocks,
+  ) {
     final hasQuest = questId.isNotEmpty;
+    final displayTitleBlocks = questTitleBlocks.isEmpty
+        ? [const ContentBlock(type: 'text', content: '-')]
+        : questTitleBlocks;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -312,7 +320,13 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
             const SizedBox(height: 8),
             Text('quest_id: ${questId.isEmpty ? '-' : questId}'),
             const SizedBox(height: 4),
-            Text('quest_title: ${questTitle.isEmpty ? '-' : questTitle}'),
+            const Text('quest_title:'),
+            const SizedBox(height: 4),
+            ContentBlocksView(
+              blocks: displayTitleBlocks,
+              textStyle: const TextStyle(fontSize: 13, height: 1.3),
+              latexStyle: const TextStyle(fontSize: 13, height: 1.3),
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -395,12 +409,14 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     return header['quest_id']?.toString().trim() ?? '';
   }
 
-  String _extractQuestTitle(Map<String, dynamic>? quest) {
+  List<ContentBlock> _extractQuestTitleBlocks(
+    Map<String, dynamic>? quest,
+  ) {
     if (quest == null) {
-      return '';
+      return [];
     }
     final data = quest['data'] as Map<String, dynamic>? ?? {};
-    return data['quest_title']?.toString().trim() ?? '';
+    return parseContentBlocks(data['quest_title']);
   }
 }
 

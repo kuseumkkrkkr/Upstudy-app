@@ -242,7 +242,6 @@ def get_exam_items(exam_id: str) -> List[Dict[str, Any]]:
         )
     return items
 
-
 def get_total_quest_count() -> int:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()

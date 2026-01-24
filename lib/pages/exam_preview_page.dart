@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_client.dart';
+import '../models/content_block.dart';
+import '../widgets/content_blocks_view.dart';
 
 class ExamPreviewPage extends StatefulWidget {
   final String examId;
@@ -225,7 +227,10 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
   }
 
   Widget _buildCell(ExamItem item) {
-    final title = item.questTitle ?? 'Generating...';
+    final titleBlocks = parseContentBlocks(item.questTitle);
+    final displayTitleBlocks = titleBlocks.isEmpty
+        ? [const ContentBlock(type: 'text', content: 'Generating...')]
+        : titleBlocks;
     final flowCount = item.flowCount ?? item.solvesCount;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -238,9 +243,13 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
           ),
           const SizedBox(height: 6),
           Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 12),
+            child: ClipRect(
+              child: ContentBlocksView(
+                blocks: displayTitleBlocks,
+                textStyle: const TextStyle(fontSize: 12),
+                latexStyle: const TextStyle(fontSize: 12),
+                spacing: 2,
+              ),
             ),
           ),
           const SizedBox(height: 4),

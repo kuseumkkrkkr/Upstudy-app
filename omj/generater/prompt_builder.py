@@ -11,12 +11,20 @@ def _format_reference(reference_quest: Optional[Dict[str, Any]]) -> str:
     info = reference_quest.get("info", {})
     solves = reference_quest.get("solves", [])
 
+    def _format_content(value: Any) -> str:
+        if value is None:
+            return "null"
+        if isinstance(value, (dict, list)):
+            return json.dumps(value, ensure_ascii=False)
+        wrapped = {"blocks": [{"type": "text", "content": str(value)}]}
+        return json.dumps(wrapped, ensure_ascii=False)
+
     def _format_step(step: Dict[str, Any], depth: int) -> List[str]:
         indent = "  " * depth
         lines = [
-            f"{indent}- flow: {step.get('flow', '')}",
-            f"{indent}  hint_riddle: {step.get('hint_riddle', '')}",
-            f"{indent}  answer_riddle: {step.get('answer_riddle', '')}",
+            f"{indent}- flow: {_format_content(step.get('flow'))}",
+            f"{indent}  hint_riddle: {_format_content(step.get('hint_riddle'))}",
+            f"{indent}  answer_riddle: {_format_content(step.get('answer_riddle'))}",
             f"{indent}  enter_huddle: {step.get('enter_huddle', '')}",
         ]
         for branch in step.get("branches") or []:
@@ -33,8 +41,8 @@ def _format_reference(reference_quest: Optional[Dict[str, Any]]) -> str:
 
     reference_block = f"""
 [참고 문제]
-quest_title: {data.get("quest_title", "")}
-quest_answer: {data.get("quest_answer", "")}
+quest_title: {_format_content(data.get("quest_title"))}
+quest_answer: {_format_content(data.get("quest_answer"))}
 main_huddle: {info.get("main_huddle", "")}
 solves:
 {solves_text}
@@ -68,23 +76,56 @@ def build_prompt(
 
 [출력 포맷]
 {{
-  "quest_title": "문제 본문",
-  "quest_answer": "정답",
+  "quest_title": {{
+    "blocks": [
+      {{ "type": "text", "content": "문제 본문" }},
+      {{ "type": "latex", "content": "f(x)=x^2" }}
+    ]
+  }},
+  "quest_answer": {{
+    "blocks": [
+      {{ "type": "latex", "content": "3" }}
+    ]
+  }},
   "quest_model": ["pix2text"] 또는 ["gemini-vision"],
   "main_huddle": {strategy_level},
   "primary_hash_tag": "가장 대표 해시태그",
   "quest_image": null,
   "solves": [
     {{
-      "flow": "메인 흐름 설명",
-      "hint_riddle": "힌트",
-      "answer_riddle": "정답 풀이",
+      "flow": {{
+        "blocks": [
+          {{ "type": "text", "content": "메인 흐름 설명" }}
+        ]
+      }},
+      "hint_riddle": {{
+        "blocks": [
+          {{ "type": "text", "content": "힌트" }}
+        ]
+      }},
+      "answer_riddle": {{
+        "blocks": [
+          {{ "type": "text", "content": "정답 풀이" }}
+        ]
+      }},
       "enter_huddle": 0~10,
       "branches": [
         {{
-          "flow": "조건별 흐름",
-          "hint_riddle": "힌트",
-          "answer_riddle": "풀이",
+          "flow": {{
+            "blocks": [
+              {{ "type": "text", "content": "조건별 흐름" }}
+            ]
+          }},
+          "hint_riddle": {{
+            "blocks": [
+              {{ "type": "text", "content": "힌트" }}
+            ]
+          }},
+          "answer_riddle": {{
+            "blocks": [
+              {{ "type": "text", "content": "풀이" }}
+            ]
+          }},
           "enter_huddle": 0~10,
           "branches": []
         }}

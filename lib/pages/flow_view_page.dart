@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import '../models/content_block.dart';
+import '../widgets/content_blocks_view.dart';
 
 class FlowViewPage extends StatefulWidget {
   final Map<String, dynamic> quest;
@@ -25,8 +27,8 @@ class _FlowViewPageState extends State<FlowViewPage> {
   @override
   Widget build(BuildContext context) {
     final questData = widget.quest['data'] as Map<String, dynamic>? ?? {};
-    final questTitle = questData['quest_title']?.toString() ?? '제목 없음';
-    final questAnswer = questData['quest_answer']?.toString() ?? '';
+    final questTitleBlocks = parseContentBlocks(questData['quest_title']);
+    final questAnswerBlocks = parseContentBlocks(questData['quest_answer']);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Flow Editor'),
@@ -40,7 +42,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
               children: [
                 Expanded(
                   flex: 2,
-                  child: _buildLeftPanel(questTitle, questAnswer),
+                  child: _buildLeftPanel(questTitleBlocks, questAnswerBlocks),
                 ),
                 Expanded(
                   flex: 5,
@@ -57,7 +59,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
           return ListView(
             padding: const EdgeInsets.all(12),
             children: [
-              _buildLeftPanel(questTitle, questAnswer),
+              _buildLeftPanel(questTitleBlocks, questAnswerBlocks),
               const SizedBox(height: 12),
               _buildCanvasPanel(height: 520),
               const SizedBox(height: 12),
@@ -69,7 +71,16 @@ class _FlowViewPageState extends State<FlowViewPage> {
     );
   }
 
-  Widget _buildLeftPanel(String questTitle, String questAnswer) {
+  Widget _buildLeftPanel(
+    List<ContentBlock> questTitleBlocks,
+    List<ContentBlock> questAnswerBlocks,
+  ) {
+    final titleBlocks = questTitleBlocks.isEmpty
+        ? [const ContentBlock(type: 'text', content: '제목 없음')]
+        : questTitleBlocks;
+    final answerBlocks = questAnswerBlocks.isEmpty
+        ? [const ContentBlock(type: 'text', content: '-')]
+        : questAnswerBlocks;
     return Card(
       margin: const EdgeInsets.all(12),
       child: Padding(
@@ -87,9 +98,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            Text(
-              questTitle,
-              style: const TextStyle(fontSize: 14, height: 1.4),
+            ContentBlocksView(
+              blocks: titleBlocks,
+              textStyle: const TextStyle(fontSize: 14, height: 1.4),
+              latexStyle: const TextStyle(fontSize: 14, height: 1.4),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -97,9 +109,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            Text(
-              questAnswer.isEmpty ? '-' : questAnswer,
-              style: const TextStyle(fontSize: 14, height: 1.4),
+            ContentBlocksView(
+              blocks: answerBlocks,
+              textStyle: const TextStyle(fontSize: 14, height: 1.4),
+              latexStyle: const TextStyle(fontSize: 14, height: 1.4),
             ),
           ],
         ),
@@ -144,7 +157,14 @@ class _FlowViewPageState extends State<FlowViewPage> {
                     _buildDetailRow('flow', node.flow),
                     _buildDetailRow(
                       'hash_tag',
-                      node.hashTags.isEmpty ? '-' : node.hashTags.join(', '),
+                      [
+                        ContentBlock(
+                          type: 'text',
+                          content: node.hashTags.isEmpty
+                              ? '-'
+                              : node.hashTags.join(', '),
+                        ),
+                      ],
                     ),
                     _buildDetailRow('hint_riddle', node.hintRiddle),
                     _buildDetailRow('answer_riddle', node.answerRiddle),
@@ -155,7 +175,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(String label, List<ContentBlock> blocks) {
+    final displayBlocks = blocks.isEmpty
+        ? [const ContentBlock(type: 'text', content: '-')]
+        : blocks;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Column(
@@ -166,9 +189,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
             style: const TextStyle(fontSize: 12, color: Colors.black54),
           ),
           const SizedBox(height: 4),
-          Text(
-            value.isEmpty ? '-' : value,
-            style: const TextStyle(fontSize: 14, height: 1.4),
+          ContentBlocksView(
+            blocks: displayBlocks,
+            textStyle: const TextStyle(fontSize: 14, height: 1.4),
+            latexStyle: const TextStyle(fontSize: 14, height: 1.4),
           ),
         ],
       ),
@@ -265,12 +289,17 @@ class _FlowNodeCard extends StatelessWidget {
           ],
         ),
         child: Center(
-          child: Text(
-            node.flow.isEmpty ? '-' : node.flow,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, height: 1.3),
-            textAlign: TextAlign.center,
+          child: ClipRect(
+            child: ContentBlocksView(
+              blocks: node.flow.isEmpty
+                  ? [const ContentBlock(type: 'text', content: '-')]
+                  : node.flow,
+              textStyle: const TextStyle(fontSize: 12, height: 1.3),
+              latexStyle: const TextStyle(fontSize: 12, height: 1.3),
+              textAlign: TextAlign.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 2,
+            ),
           ),
         ),
       ),
@@ -331,10 +360,10 @@ class _FlowEdge {
 
 class _FlowNode {
   final String id;
-  final String flow;
+  final List<ContentBlock> flow;
   final List<String> hashTags;
-  final String hintRiddle;
-  final String answerRiddle;
+  final List<ContentBlock> hintRiddle;
+  final List<ContentBlock> answerRiddle;
   final List<_FlowNode> rawBranches;
   _FlowNode? next;
   _FlowNode? inline;
@@ -446,10 +475,10 @@ class _FlowGraphBuilder {
         .toList();
     return _FlowNode(
       id: 'node-${_counter++}',
-      flow: raw['flow']?.toString() ?? '',
+      flow: parseContentBlocks(raw['flow']),
       hashTags: hashTags,
-      hintRiddle: raw['hint_riddle']?.toString() ?? '',
-      answerRiddle: raw['answer_riddle']?.toString() ?? '',
+      hintRiddle: parseContentBlocks(raw['hint_riddle']),
+      answerRiddle: parseContentBlocks(raw['answer_riddle']),
       rawBranches: _buildNodes(branches, sequential: false),
     );
   }
