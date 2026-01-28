@@ -20,34 +20,109 @@ from storage.storage import get_quest
 _GRID_COLUMNS = 2
 _GRID_ROWS = 2
 _LARGE_FLOW_THRESHOLD = 5
-_HEADER_TEXT = "Powered By AIFlow | 수학영역 | 학번 | 이름"
+_COVER_TITLE = "AIFlow 모의고사"
+_FOOTER_TEXT = "Learningmate"
+_TOP_LINE_RATIO_FIRST = 0.16
+_TOP_LINE_RATIO_REST = 0.12
+_TITLE_RATIO = 0.065
+_BOTTOM_RESERVED_RATIO = 0.09
+_DOUBLE_LINE_GAP = 4.0
+_CONTENT_VERTICAL_OFFSET = 8.0
+_LINE_INSET_RATIO = 0.06
+_VERTICAL_END_OFFSET = 8.0
 
 
 def _content_to_text(value: object) -> str:
+    blocks = _extract_blocks(value)
+    formatted = [_format_block(block) for block in blocks]
+    return " ".join(part for part in formatted if part)
+
+
+def _extract_blocks(value: object) -> List[Dict[str, object]]:
     if value is None:
-        return ""
+        return []
     if isinstance(value, dict):
-        blocks = value.get("blocks", [])
-        return " ".join(
-            block.get("content", "")
-            for block in blocks
-            if isinstance(block, dict) and block.get("content")
-        )
+        if isinstance(value.get("blocks"), list):
+            return [block for block in value["blocks"] if isinstance(block, dict)]
+        if "type" in value and "content" in value:
+            return [value]
     if isinstance(value, list):
-        return " ".join(
-            block.get("content", "")
-            for block in value
-            if isinstance(block, dict) and block.get("content")
-        )
+        return [block for block in value if isinstance(block, dict)]
     if isinstance(value, str):
         if not value:
-            return ""
+            return []
         try:
             parsed = json.loads(value)
         except json.JSONDecodeError:
-            return value
-        return _content_to_text(parsed)
-    return str(value)
+            return [{"type": "text", "content": value}]
+        return _extract_blocks(parsed)
+    return [{"type": "text", "content": str(value)}]
+
+
+def _format_block(block: Dict[str, object]) -> str:
+    content = block.get("content") or block.get("text")
+    if not content:
+        return ""
+    block_type = str(block.get("type") or "").lower()
+    if block_type == "latex":
+        return f"${content}$"
+    return str(content)
+
+
+def _compute_page_metrics(page_width: float, page_height: float, is_first: bool) -> Dict[str, float]:
+    top_line_from_top = page_height * (_TOP_LINE_RATIO_FIRST if is_first else _TOP_LINE_RATIO_REST)
+    title_from_top = page_height * _TITLE_RATIO
+    bottom_reserved = max(60.0, page_height * _BOTTOM_RESERVED_RATIO)
+    content_top_from_top = top_line_from_top + _CONTENT_VERTICAL_OFFSET + _DOUBLE_LINE_GAP
+    grid_height = max(120.0, page_height - content_top_from_top - bottom_reserved)
+    line_inset = page_width * _LINE_INSET_RATIO
+    vertical_start_from_top = top_line_from_top + (_DOUBLE_LINE_GAP * 1.75)
+    return {
+        "top_line_from_top": top_line_from_top,
+        "title_from_top": title_from_top,
+        "bottom_reserved": bottom_reserved,
+        "content_top_from_top": content_top_from_top,
+        "grid_height": grid_height,
+        "line_inset": line_inset,
+        "vertical_start_from_top": vertical_start_from_top,
+    }
+
+
+def _draw_reportlab_decorations(
+    c: canvas.Canvas,
+    *,
+    page_width: float,
+    page_height: float,
+    metrics: Dict[str, float],
+    font_name: str,
+    is_first: bool,
+) -> None:
+    inset = metrics["line_inset"]
+    first_line_y = page_height - metrics["top_line_from_top"]
+    second_line_y = page_height - (metrics["top_line_from_top"] + _DOUBLE_LINE_GAP)
+    c.setStrokeColorRGB(0.18, 0.18, 0.18)
+    c.setLineWidth(1.3)
+    c.line(inset, first_line_y, page_width - inset, first_line_y)
+    c.line(inset, second_line_y, page_width - inset, second_line_y)
+
+    vertical_start_y = page_height - metrics["vertical_start_from_top"]
+    vertical_end_y = max(12.0, metrics["bottom_reserved"] - _VERTICAL_END_OFFSET)
+    c.line(page_width / 2, vertical_start_y, page_width / 2, vertical_end_y)
+
+    if is_first:
+        c.setFont(font_name, 34)
+        c.drawCentredString(
+            page_width / 2,
+            page_height - metrics["title_from_top"],
+            _COVER_TITLE,
+        )
+
+    c.setFont(font_name, 16)
+    c.drawCentredString(
+        page_width / 2,
+        metrics["bottom_reserved"] / 2 + 8,
+        _FOOTER_TEXT,
+    )
 
 
 def build_exam_pdf(items: List[Dict[str, object]]) -> bytes:
@@ -68,22 +143,27 @@ def _build_reportlab_pdf(items: List[Dict[str, object]]) -> bytes:
 
     total_pages = max(1, len(pages))
     for page_index, page in enumerate(pages or [{"entries": [], "column_spans": [False, False]}]):
-        header_height = 36 if page_index == 0 else 0
-        grid_top = page_height - margin - header_height
-        grid_height = page_height - margin * 2 - header_height
+        is_first = page_index == 0
+        metrics = _compute_page_metrics(page_width, page_height, is_first)
         column_width = (page_width - margin * 2) / _GRID_COLUMNS
+        grid_height = metrics["grid_height"]
         row_height = grid_height / _GRID_ROWS
+        grid_top = page_height - metrics["content_top_from_top"]
 
-        c.rect(margin, margin, page_width - margin * 2, page_height - margin * 2, stroke=1, fill=0)
+        _draw_reportlab_decorations(
+            c,
+            page_width=page_width,
+            page_height=page_height,
+            metrics=metrics,
+            font_name=font_name,
+            is_first=is_first,
+        )
 
-        if header_height > 0:
-            c.setFont(font_name, font_size)
-            c.drawString(margin + 6, page_height - margin - 18, _HEADER_TEXT)
-            c.line(margin, grid_top, page_width - margin, grid_top)
-
+        c.setStrokeColorRGB(0.18, 0.18, 0.18)
+        c.setLineWidth(1)
         mid_x = margin + column_width
-        c.line(mid_x, margin, mid_x, grid_top)
-        mid_y = margin + row_height
+        mid_y = grid_top - row_height
+        c.line(mid_x, grid_top, mid_x, grid_top - grid_height)
         if not page["column_spans"][0]:
             c.line(margin, mid_y, mid_x, mid_y)
         if not page["column_spans"][1]:
@@ -110,7 +190,7 @@ def _build_reportlab_pdf(items: List[Dict[str, object]]) -> bytes:
         c.setFont(font_name, 9)
         c.drawRightString(
             page_width - margin - 4,
-            margin + 6,
+            metrics["bottom_reserved"] * 0.45,
             f"{page_index + 1} / {total_pages}",
         )
         c.showPage()
@@ -134,28 +214,47 @@ def _build_simple_pdf(items: List[Dict[str, object]]) -> bytes:
     page_ids: List[int] = []
     total_pages = max(1, len(pages))
     for page_index, page in enumerate(pages or [{"entries": [], "column_spans": [False, False]}]):
-        header_height = 36 if page_index == 0 else 0
-        grid_top = page_height - margin - header_height
-        grid_height = page_height - margin * 2 - header_height
+        is_first = page_index == 0
+        metrics = _compute_page_metrics(page_width, page_height, is_first)
         column_width = (page_width - margin * 2) / _GRID_COLUMNS
+        grid_height = metrics["grid_height"]
         row_height = grid_height / _GRID_ROWS
+        grid_top = page_height - metrics["content_top_from_top"]
         mid_x = margin + column_width
-        mid_y = margin + row_height
+        mid_y = grid_top - row_height
 
         stream_parts: List[str] = []
+        first_line_y = page_height - metrics["top_line_from_top"]
+        second_line_y = page_height - (metrics["top_line_from_top"] + _DOUBLE_LINE_GAP)
+        inset = metrics["line_inset"]
         stream_parts.append(
-            f"{margin:.2f} {margin:.2f} {page_width - margin * 2:.2f} {page_height - margin * 2:.2f} re S"
+            f"{inset:.2f} {first_line_y:.2f} m {page_width - inset:.2f} {first_line_y:.2f} l S"
         )
-        if header_height > 0:
-            stream_parts.append(
-                f"{margin:.2f} {grid_top:.2f} m {page_width - margin:.2f} {grid_top:.2f} l S"
-            )
-            stream_parts.append(
-                f"BT /F1 {font_size} Tf {margin + 6:.2f} {page_height - margin - 18:.2f} Td "
-                f"({ _pdf_escape(_HEADER_TEXT) }) Tj ET"
-            )
         stream_parts.append(
-            f"{mid_x:.2f} {margin:.2f} m {mid_x:.2f} {grid_top:.2f} l S"
+            f"{inset:.2f} {second_line_y:.2f} m {page_width - inset:.2f} {second_line_y:.2f} l S"
+        )
+        vertical_start_y = page_height - metrics["vertical_start_from_top"]
+        vertical_end_y = max(12.0, metrics["bottom_reserved"] - _VERTICAL_END_OFFSET)
+        stream_parts.append(
+            f"{page_width / 2:.2f} {vertical_start_y:.2f} m {page_width / 2:.2f} {vertical_end_y:.2f} l S"
+        )
+
+        if is_first:
+            title_y = page_height - metrics["title_from_top"]
+            title_width = _estimate_text_width(_COVER_TITLE, 34)
+            title_x = (page_width - title_width) / 2
+            stream_parts.append(
+                f"BT /F1 34 Tf {title_x:.2f} {title_y:.2f} Td ({_pdf_escape(_COVER_TITLE)}) Tj ET"
+            )
+        footer_width = _estimate_text_width(_FOOTER_TEXT, 16)
+        footer_x = (page_width - footer_width) / 2
+        footer_y = metrics["bottom_reserved"] / 2 + 8
+        stream_parts.append(
+            f"BT /F1 16 Tf {footer_x:.2f} {footer_y:.2f} Td ({_pdf_escape(_FOOTER_TEXT)}) Tj ET"
+        )
+
+        stream_parts.append(
+            f"{mid_x:.2f} {grid_top:.2f} m {mid_x:.2f} {grid_top - grid_height:.2f} l S"
         )
         if not page["column_spans"][0]:
             stream_parts.append(
@@ -180,12 +279,12 @@ def _build_simple_pdf(items: List[Dict[str, object]]) -> bytes:
             line_height = font_size + 2
             stream_parts.append(f"BT /F1 {font_size} Tf {text_x:.2f} {text_y:.2f} Td")
             for line in lines:
-                stream_parts.append(f"({ _pdf_escape(line) }) Tj")
+                stream_parts.append(f"({_pdf_escape(line)}) Tj")
                 stream_parts.append(f"0 {-line_height:.2f} Td")
             stream_parts.append("ET")
 
         stream_parts.append(
-            f"BT /F1 9 Tf {page_width - margin - 4:.2f} {margin + 6:.2f} Td "
+            f"BT /F1 9 Tf {page_width - margin - 4:.2f} {metrics['bottom_reserved'] * 0.45:.2f} Td "
             f"({page_index + 1} / {total_pages}) Tj ET"
         )
 
@@ -240,6 +339,12 @@ def _render_pdf(objects: List[str], catalog_id: int) -> bytes:
 
 def _pdf_escape(text: str) -> str:
     return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+
+def _estimate_text_width(text: str, font_size: float) -> float:
+    if not text:
+        return 0.0
+    return max(font_size, len(text) * font_size * 0.52)
 
 
 def _wrap_text_simple(text: str, max_width: float) -> List[str]:

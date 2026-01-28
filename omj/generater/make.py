@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from generater.ai_gen import ai_gen
 from generater.fix_gen import fix_gen
 from generater.prompt_builder import build_prompt
+from resampling import resample_storage_data
 from storage.storage import get_quest
 
 
@@ -55,4 +56,5 @@ def make(
 
     ai_result = ai_result.model_copy(update={"main_huddle": strategy_level})
 
-    return fix_gen(ai_result, hash_tags, strict_tags=strict_tags)
+    storage_data = fix_gen(ai_result, hash_tags, strict_tags=strict_tags)
+    return resample_storage_data(storage_data)

@@ -143,46 +143,48 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
     required int pageNumber,
     required int totalPages,
   }) {
-    final hasHeader = pageNumber == 1;
-    const headerText = 'Powered By AIFlow | 수학영역 | 학번 | 이름';
+    final isFirstPage = pageNumber == 1;
+    const titleText = 'AIFlow 모의고사';
+    const footerText = 'Learningmate';
+    const doubleLineGap = 4.0;
+    const verticalOffset = 8.0;
+    const double topLineRatioFirst = 0.16;
+    const double topLineRatioRest = 0.12;
+    const double titleRatio = 0.065;
+    const double bottomReservedRatio = 0.09;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final headerHeight = hasHeader ? 36.0 : 0.0;
-        final gridHeight = constraints.maxHeight - headerHeight;
+        final topLineY = constraints.maxHeight *
+            (isFirstPage ? topLineRatioFirst : topLineRatioRest);
+        final bottomReserved = constraints.maxHeight * bottomReservedRatio;
+        final contentTop = topLineY + verticalOffset + doubleLineGap;
+        final gridHeight =
+            (constraints.maxHeight - contentTop - bottomReserved)
+                .clamp(120.0, constraints.maxHeight) as double;
         final columnWidth = constraints.maxWidth / 2;
         final rowHeight = gridHeight / 2;
 
         return Stack(
           children: [
-            if (hasHeader)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: headerHeight,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  alignment: Alignment.centerLeft,
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.black12),
-                    ),
-                  ),
-                  child: const Text(
-                    headerText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _ExamPageDecorPainter(
+                  isFirstPage: isFirstPage,
+                  title: titleText,
+                  footer: footerText,
+                  topLineY: topLineY,
+                  titleY: constraints.maxHeight * titleRatio,
+                  doubleLineGap: doubleLineGap,
+                  bottomReserved: bottomReserved,
                 ),
               ),
+            ),
             Positioned(
-              top: headerHeight,
+              top: contentTop,
               left: 0,
               right: 0,
-              bottom: 0,
+              height: gridHeight,
               child: Stack(
                 clipBehavior: Clip.hardEdge,
                 children: [
@@ -191,6 +193,7 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
                       painter: _GridPainter(
                         splitLeft: !page.columnSpans[0],
                         splitRight: !page.columnSpans[1],
+                        color: const Color(0xFF2F2F2F),
                       ),
                     ),
                   ),
@@ -211,7 +214,7 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
             ),
             Positioned(
               right: 8,
-              bottom: 8,
+              bottom: bottomReserved * 0.45,
               child: Text(
                 '$pageNumber / $totalPages',
                 style: const TextStyle(
@@ -292,19 +295,121 @@ class _PageLayout {
   });
 }
 
+class _ExamPageDecorPainter extends CustomPainter {
+  final bool isFirstPage;
+  final String title;
+  final String footer;
+  final double topLineY;
+  final double titleY;
+  final double doubleLineGap;
+  final double bottomReserved;
+
+  const _ExamPageDecorPainter({
+    required this.isFirstPage,
+    required this.title,
+    required this.footer,
+    required this.topLineY,
+    required this.titleY,
+    required this.doubleLineGap,
+    required this.bottomReserved,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const lineColor = Color(0xFF2F2F2F);
+    final inset = size.width * 0.06;
+    final linePaint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3;
+
+    if (isFirstPage) {
+      final titlePainter = TextPainter(
+        text: TextSpan(
+          text: title,
+          style: const TextStyle(
+            fontSize: 34,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: size.width - inset * 2);
+      titlePainter.paint(
+        canvas,
+        Offset((size.width - titlePainter.width) / 2, titleY),
+      );
+    }
+
+    final firstLineY = topLineY;
+    final secondLineY = topLineY + doubleLineGap;
+    canvas.drawLine(
+      Offset(inset, firstLineY),
+      Offset(size.width - inset, firstLineY),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(inset, secondLineY),
+      Offset(size.width - inset, secondLineY),
+      linePaint,
+    );
+
+    final verticalStart = secondLineY + (doubleLineGap * 0.75);
+    final verticalEnd = size.height - bottomReserved + 8;
+    canvas.drawLine(
+      Offset(size.width / 2, verticalStart),
+      Offset(size.width / 2, verticalEnd),
+      linePaint,
+    );
+
+    final footerPainter = TextPainter(
+      text: TextSpan(
+        text: footer,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Colors.black,
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: size.width - inset * 2);
+    final footerY = size.height - bottomReserved +
+        (bottomReserved - footerPainter.height) / 2;
+    footerPainter.paint(
+      canvas,
+      Offset((size.width - footerPainter.width) / 2, footerY),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ExamPageDecorPainter oldDelegate) {
+    return isFirstPage != oldDelegate.isFirstPage ||
+        title != oldDelegate.title ||
+        footer != oldDelegate.footer ||
+        topLineY != oldDelegate.topLineY ||
+        titleY != oldDelegate.titleY ||
+        doubleLineGap != oldDelegate.doubleLineGap ||
+        bottomReserved != oldDelegate.bottomReserved;
+  }
+}
+
 class _GridPainter extends CustomPainter {
   final bool splitLeft;
   final bool splitRight;
+  final Color color;
 
   _GridPainter({
     required this.splitLeft,
     required this.splitRight,
+    this.color = Colors.black12,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black12
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     final midX = size.width / 2;
@@ -321,7 +426,8 @@ class _GridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _GridPainter oldDelegate) {
     return oldDelegate.splitLeft != splitLeft ||
-        oldDelegate.splitRight != splitRight;
+        oldDelegate.splitRight != splitRight ||
+        oldDelegate.color != color;
   }
 }
 
