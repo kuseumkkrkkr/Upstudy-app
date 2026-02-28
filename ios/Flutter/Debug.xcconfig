@@ -1,1 +1,4 @@
+# Kakao native app key for URL scheme (kakao$(KAKAO_NATIVE_APP_KEY))
+# Set this to your Kakao native app key, e.g. KAKAO_NATIVE_APP_KEY=1234567890abcdef1234567890abcd
+KAKAO_NATIVE_APP_KEY=
 #include "Generated.xcconfig"

@@ -15,6 +15,8 @@ dependencies:
   http: ^1.2.2
   url_launcher: ^6.3.0
   flutter_math_fork: ^0.7.2
+  percent_indicator: ^4.2.3
+  kakao_flutter_sdk_user: ^1.10.0
 
 environment:
   sdk: ^3.9.0

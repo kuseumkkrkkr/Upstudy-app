@@ -1,5 +1,8 @@
 import asyncio
+import json
 import os
+import urllib.error
+import urllib.request
 import uuid
 from typing import Any, Dict, List, Optional
 
@@ -9,7 +12,19 @@ from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
-from auth import create_token, decode_token
+from auth import (
+    authenticate_user,
+    create_token,
+    decode_token,
+    get_user_id_by_username,
+    init_user_db,
+    register_user,
+    validate_email,
+    validate_name,
+    validate_password,
+    validate_school,
+    validate_username,
+)
 from baselines.basemodel import ContentBlocks
 from exam_service import plan_exam_items
 from generater.make import make
@@ -91,6 +106,48 @@ class TokenResponse(BaseModel):
     user_id: str
 
 
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    name: str
+    grade: str
+    track: Optional[str] = None
+    subject: Optional[str] = None
+    school: Optional[str] = None
+    profile_image: Optional[str] = None
+    email: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class UsernameCheckRequest(BaseModel):
+    username: str
+
+
+class UsernameCheckResponse(BaseModel):
+    available: bool
+    reason: Optional[str] = None
+
+
+class FieldValidationRequest(BaseModel):
+    field: str
+    value: str
+
+
+class FieldValidationResponse(BaseModel):
+    valid: bool
+    reason: Optional[str] = None
+
+
+class KakaoLoginRequest(BaseModel):
+    provider: Optional[str] = None
+    access_token: str
+    id_token: Optional[str] = None
+
+
 class QuestSearchResponse(BaseModel):
     quests: List[Dict[str, Any]]
     total: int
@@ -151,11 +208,130 @@ def _get_user_id(
 def _startup() -> None:
     init_db()
     init_exam_db()
+    init_user_db()
 
 
 @app.post("/auth/anonymous", response_model=TokenResponse)
 def issue_anonymous_token() -> TokenResponse:
     user_id = str(uuid.uuid4())
+    return TokenResponse(token=create_token(user_id), user_id=user_id)
+
+
+@app.post("/auth/register", response_model=TokenResponse, status_code=201)
+def register(payload: RegisterRequest) -> TokenResponse:
+    try:
+        user_id = register_user(
+            username=payload.username,
+            password=payload.password,
+            name=payload.name,
+            grade=payload.grade,
+            track=payload.track,
+            subject=payload.subject,
+            school=payload.school,
+            profile_image=payload.profile_image,
+            email=payload.email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return TokenResponse(token=create_token(user_id), user_id=user_id)
+
+
+@app.post("/auth/login", response_model=TokenResponse)
+def login(payload: LoginRequest) -> TokenResponse:
+    user_id = authenticate_user(username=payload.username, password=payload.password)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return TokenResponse(token=create_token(user_id), user_id=user_id)
+
+
+@app.post("/auth/username/check", response_model=UsernameCheckResponse)
+def check_username(payload: UsernameCheckRequest) -> UsernameCheckResponse:
+    error = validate_username(payload.username)
+    if error:
+        return UsernameCheckResponse(available=False, reason=error)
+    if get_user_id_by_username(payload.username):
+        return UsernameCheckResponse(available=False, reason="중복 미확인!")
+    return UsernameCheckResponse(available=True)
+
+
+@app.post("/auth/validate", response_model=FieldValidationResponse)
+def validate_field(payload: FieldValidationRequest) -> FieldValidationResponse:
+    field = payload.field.strip().lower()
+    value = payload.value or ""
+    error: Optional[str] = None
+    if field == "name":
+        error = validate_name(value)
+    elif field == "password":
+        error = validate_password(value)
+    elif field == "email":
+        error = validate_email(value)
+    elif field == "school":
+        error = validate_school(value)
+    elif field == "username":
+        error = validate_username(value)
+    else:
+        raise HTTPException(status_code=400, detail="Unknown validation field")
+    return FieldValidationResponse(valid=error is None, reason=error)
+
+
+def _fetch_kakao_profile(access_token: str) -> Dict[str, Any]:
+    req = urllib.request.Request(
+        "https://kapi.kakao.com/v2/user/me",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            if resp.status != 200:
+                raise HTTPException(status_code=401, detail="Invalid Kakao token")
+            data = resp.read()
+    except urllib.error.HTTPError as exc:
+        detail = f"Kakao token rejected ({exc.code})"
+        raise HTTPException(status_code=401, detail=detail) from exc
+    except urllib.error.URLError as exc:
+        raise HTTPException(status_code=502, detail="Failed to reach Kakao API") from exc
+    try:
+        return json.loads(data.decode("utf-8"))
+    except Exception as exc:  # pragma: no cover - defensive
+        raise HTTPException(status_code=502, detail="Invalid response from Kakao API") from exc
+
+
+@app.post("/auth/kakao", response_model=TokenResponse)
+def login_with_kakao(payload: KakaoLoginRequest) -> TokenResponse:
+    profile = _fetch_kakao_profile(payload.access_token)
+    kakao_id = profile.get("id")
+    if kakao_id is None:
+        raise HTTPException(status_code=401, detail="Invalid Kakao token")
+
+    kakao_account = profile.get("kakao_account") or {}
+    profile_info = kakao_account.get("profile") or {}
+    nickname = (
+        profile_info.get("nickname")
+        or kakao_account.get("email")
+        or f"kakao-{kakao_id}"
+    )
+    email = kakao_account.get("email")
+    profile_image = profile_info.get("profile_image_url")
+    username = f"kakao:{kakao_id}"
+
+    existing_user_id = get_user_id_by_username(username)
+    if existing_user_id:
+        user_id = existing_user_id
+    else:
+        try:
+            user_id = register_user(
+                username=username,
+                password=uuid.uuid4().hex,
+                name=nickname,
+                grade="kakao",
+                profile_image=profile_image,
+                email=email,
+            )
+        except ValueError:
+            # If another request created the user concurrently, fall back to lookup
+            user_id = get_user_id_by_username(username)
+            if not user_id:
+                raise HTTPException(status_code=500, detail="Failed to provision Kakao user")
+
     return TokenResponse(token=create_token(user_id), user_id=user_id)
 
 

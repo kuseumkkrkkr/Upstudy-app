@@ -1,0 +1,1012 @@
+import 'package:flutter/material.dart';
+import 'friend.dart';
+import 'widgets/modals/curriculum_modal.dart';
+import 'widgets/modals/daily_test_modal.dart';
+import 'widgets/modals/learning_tools_modal.dart';
+import 'widgets/modals/social_modal.dart';
+import 'widgets/modals/today_tasks_modal.dart';
+
+const _green = Color(0xFF1B402B);
+const _lightGreen = Color(0xFF45BF63);
+const _headerGreen = Color(0xFF22593A);
+const _grey = Color(0xFFC9C9C9);
+const _bgGrey = Color(0xFFF7F7F7);
+const _shadow = BoxShadow(
+  blurRadius: 4,
+  color: Color(0x33000000),
+  offset: Offset(0, 2),
+);
+
+TextStyle _ts({
+  double size = 16,
+  FontWeight weight = FontWeight.normal,
+  Color color = Colors.black,
+  bool scaleUp = true,
+}) => TextStyle(
+  fontSize: size * (scaleUp ? 1.1 : 1.0),
+  fontWeight: weight,
+  color: color,
+);
+
+BoxDecoration _cardDeco({double radius = 36}) => BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(radius),
+  boxShadow: const [_shadow],
+);
+
+double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
+  final width = MediaQuery.of(context).size.width;
+  final scale = width / 1100;
+  if (scale < min) return min;
+  if (scale > max) return max;
+  return scale;
+}
+
+class MainStudentPage extends StatefulWidget {
+  const MainStudentPage({super.key, this.username});
+
+  final String? username;
+
+  @override
+  State<MainStudentPage> createState() => _MainStudentPageState();
+}
+
+class _MainStudentPageState extends State<MainStudentPage> {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Header(),
+                _HeroSection(username: widget.username),
+                _LearningSection(),
+                _BottomSection(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+
+    return Container(
+      height: 72 * scale,
+      color: Colors.white,
+      child: Row(
+        children: [
+          SizedBox(width: 16 * scale),
+
+          IconButton(
+            iconSize: 28 * scale,
+            icon: const Icon(Icons.menu_outlined, color: _green),
+            onPressed: () {},
+          ),
+
+          // ✅ 메뉴 버튼 ↔ 로고 간 기본 간격
+          SizedBox(width: 12 * scale),
+
+          // ✅ AIFlow 앞 간격
+          SizedBox(width: 12 * scale),
+
+          Text(
+            'AIFlow',
+            style: _ts(
+              size: 36 * scale,
+              weight: FontWeight.bold,
+              color: _green,
+              scaleUp: false,
+            ),
+          ),
+
+          // ✅ AIFlow 뒤 간격
+          SizedBox(width: 120 * scale),
+
+          Expanded(
+            child: Container(
+              color: _headerGreen,
+              height: 72 * scale,
+              alignment: Alignment.centerRight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final item in [
+                      const _NavItemData('학습터'),
+                      const _NavItemData('문서고'),
+                      _NavItemData(
+                        '친구/소셜',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const SoWidget()),
+                          );
+                        },
+                      ),
+                      const _NavItemData('마켓플레이스'),
+                    ])
+                      Padding(
+                        padding: EdgeInsets.only(
+                          right: item.label == '마켓플레이스' ? 24 * scale : 0,
+                        ),
+                        child: _NavItem(
+                          label: item.label,
+                          fontSize: 16 * scale,
+                          onTap: item.onTap,
+                        ),
+                      ),
+                    SizedBox(width: 16 * scale),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavItemData {
+  const _NavItemData(this.label, {this.onTap});
+  final String label;
+  final VoidCallback? onTap;
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.label,
+    required this.fontSize,
+    this.onTap,
+  });
+  final String label;
+  final double fontSize;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Text(
+          label,
+          style: _ts(size: fontSize, color: Colors.white, scaleUp: false),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroSection extends StatelessWidget {
+  const _HeroSection({required this.username});
+  final String? username;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    final name = username?.trim();
+    final displayName = (name == null || name.isEmpty) ? '사용자' : name;
+    return SizedBox(
+      height: 360 * scale,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            'https://images.unsplash.com/photo-1495465798138-718f86d1a4bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8c3R1ZHl8ZW58MHx8fHwxNzcwNDE0OTExfDA&ixlib=rb-4.1.0&q=80&w=1080',
+            fit: BoxFit.cover,
+          ),
+          Container(color: const Color(0xAA000000)),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [StatPager(displayName: displayName)],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class StatPager extends StatefulWidget {
+  const StatPager({super.key, required this.displayName});
+  final String displayName;
+
+  @override
+  State<StatPager> createState() => _StatPagerState();
+}
+
+class _StatPagerState extends State<StatPager> {
+  final PageController _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _prev() {
+    if (_page > 0) {
+      _controller.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _next() {
+    if (_page < 1) {
+      _controller.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  Widget _buildIndicator(double scale) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(2, (i) {
+        final isActive = i == _page;
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 6 * scale),
+          width: isActive ? 18 * scale : 8 * scale,
+          height: 8 * scale,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: isActive
+                ? const Color(0xFF27B24B)
+                : Colors.black.withOpacity(0.35),
+          ),
+        );
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    final pagerHeight = 260 * scale;
+    final pagerWidth = 360 * scale;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          onPressed: _prev,
+          icon: Icon(
+            Icons.arrow_back_ios_rounded,
+            color: Colors.white,
+            size: 26 * scale,
+          ),
+        ),
+        SizedBox(
+          width: pagerWidth,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: pagerWidth,
+                height: pagerHeight,
+                child: PageView(
+                  controller: _controller,
+                  onPageChanged: (i) => setState(() => _page = i),
+                  children: [
+                    _StatPage1(displayName: widget.displayName),
+                    _StatPage2(displayName: widget.displayName),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12 * scale),
+              _buildIndicator(scale),
+            ],
+          ),
+        ),
+        IconButton(
+          onPressed: _next,
+          icon: Icon(
+            Icons.arrow_forward_ios,
+            color: Colors.white,
+            size: 26 * scale,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatPage1 extends StatelessWidget {
+  const _StatPage1({required this.displayName});
+  final String displayName;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+
+    return Column(
+      children: [
+        const Spacer(),
+
+        // 🔹 여기부터가 "하나의 그룹"
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '안녕하세요 $displayName님',
+              style: _ts(
+                size: 36 * scale,
+                color: Colors.white,
+                weight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 12 * scale),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '오늘의 활동률',
+                  style: _ts(size: 12 * scale, color: _grey),
+                ),
+                SizedBox(width: 8 * scale),
+                Text(
+                  '75%',
+                  style: _ts(size: 20 * scale, color: _grey),
+                ),
+              ],
+            ),
+            SizedBox(height: 8 * scale),
+            _SimpleProgressBar(value: 0.75, width: 260 * scale),
+            SizedBox(height: 14 * scale),
+            _SimpleMiniChart(width: 260 * scale, height: 60 * scale),
+            SizedBox(height: 8 * scale),
+            Text(
+              '일주일간의 활동량 추이를 보여줍니다',
+              style: _ts(size: 12 * scale, color: _grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+
+        // 🔹 그룹 끝
+        const Spacer(),
+      ],
+    );
+  }
+}
+
+class _StatPage2 extends StatelessWidget {
+  const _StatPage2({required this.displayName});
+  final String displayName;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+
+    return Padding(
+      padding: EdgeInsets.only(top: 18 * scale, bottom: 8 * scale),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '안녕하세요 $displayName님',
+            style: _ts(
+              size: 36 * scale,
+              color: Colors.white,
+              weight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 12 * scale),
+          SizedBox(height: 10 * scale),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _CircleStat(
+                  percent: 0.8,
+                  color: const Color(0xFFEFB339),
+                  label: '50개',
+                  subtitle: '푼 문제 수',
+                ),
+                SizedBox(width: 16 * scale),
+                _CircleStat(
+                  percent: 0.4,
+                  color: const Color(0xFFEF394D),
+                  label: '9.54',
+                  subtitle: '살린 레이트',
+                ),
+                SizedBox(width: 16 * scale),
+                _CircleStat(
+                  percent: 1.0,
+                  color: const Color(0xFF3965EF),
+                  label: '7일',
+                  subtitle: '이번주 출석일 수',
+                ),
+                SizedBox(width: 16 * scale),
+                _CircleStat(
+                  percent: 0.87,
+                  color: const Color(0xFF03A113),
+                  label: '87%',
+                  subtitle: '평균 정답률',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LearningSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20 * scale, 20 * scale, 20 * scale, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: _bgGrey,
+          borderRadius: BorderRadius.circular(20 * scale),
+          boxShadow: const [_shadow],
+        ),
+
+        // 회색 카드 상·하 동일 패딩
+        padding: EdgeInsets.symmetric(vertical: 20 * scale),
+
+        child: Column(
+          children: [
+            _LearnBanner(),
+
+            // ───────────────── 1번째 Row
+            Padding(
+              padding: EdgeInsets.only(
+                top: 16 * scale,
+                left: 14 * scale,
+                right: 14 * scale,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ProgressCard(
+                      title: '일일 테스트',
+                      subtitle: '상세보기',
+                      progressText: '진행률 15 / 20',
+                      progressValue: 0.6,
+                        onTap: () => showDailyTestModal(context: context),
+                    ),
+                  ),
+                  SizedBox(width: 6 * scale),
+                  Expanded(
+                    child: _ProgressCard(
+                      title: '오늘 할일 4건',
+                      subtitle: '상세보기',
+                      progressText: '과제 A완성\n수행평가 B 완성 등 4건',
+                      progressValue: null,
+                      showProgressBar: false,
+                        onTap: () => showTodayTasksModal(context: context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 6 * scale),
+
+            // ───────────────── 2번째 Row
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14 * scale),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 학습도구
+                      Expanded(
+                        child: _ProgressCard(
+                          title: '학습도구',
+                          subtitle: '',
+                          progressText: '',
+                          progressValue: null,
+                          showProgressBar: false,
+                          onTap: () => showLearningToolsModal(context: context),
+                        ),
+                      ),
+
+                    SizedBox(width: 6 * scale),
+
+                    // 커리큘럼 + 소셜
+                    Expanded(
+                        child: Column(
+                        children: [
+                          _ProgressCard(
+                            title: '커리큘럼 보기',
+                            subtitle: '',
+                            progressText: '진행중 커리큘럼 8건',
+                            progressValue: null,
+                            showProgressBar: false,
+                              onTap: () => showCurriculumModal(context: context),
+                          ),
+
+                          // ⭐ 1번째 Row와 동일한 세로 간격
+                          SizedBox(height: 6 * scale),
+
+                          _ProgressCard(
+                            title: '소셜',
+                            subtitle: '',
+                            progressText: '새로운 알림 3',
+                            progressValue: null,
+                            showProgressBar: false,
+                              onTap: () => showSocialModal(context: context),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LearnBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    return Container(
+      width: double.infinity,
+      height: 56 * scale,
+      margin: EdgeInsets.symmetric(horizontal: 14 * scale),
+      decoration: BoxDecoration(
+        color: _green,
+        borderRadius: BorderRadius.circular(20 * scale),
+        boxShadow: const [_shadow],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.play_arrow, color: Colors.white, size: 32 * scale),
+          Text(
+            '학습하기',
+            style: _ts(
+              size: 28 * scale,
+              weight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressCard extends StatelessWidget {
+  const _ProgressCard({
+    required this.title,
+    required this.subtitle,
+    required this.progressText,
+    required this.progressValue,
+    this.showProgressBar = true,
+    this.height = 100,
+    this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final String progressText;
+  final double? progressValue;
+  final bool showProgressBar;
+  final double height;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    Widget wrapTap(Widget child) {
+      if (onTap == null) return child;
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: child,
+      );
+    }
+
+    return Container(
+      height: height,
+      decoration: _cardDeco(radius: 16 * scale),
+      padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 12 * scale),
+                child: Text(
+                  title,
+                  style: _ts(size: 18 * scale, weight: FontWeight.bold),
+                ),
+              ),
+              if (subtitle.isNotEmpty)
+                wrapTap(
+                  Padding(
+                    padding: EdgeInsets.only(top: 12 * scale, right: 0),
+                    child: Row(
+                      children: [
+                        Text(
+                          subtitle,
+                          style: _ts(size: 12 * scale, weight: FontWeight.bold),
+                        ),
+                        SizedBox(width: 6 * scale),
+                        Icon(Icons.arrow_forward_ios, size: 12 * scale),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                wrapTap(
+                  Padding(
+                    padding: EdgeInsets.only(
+                      top: 12 * scale,
+                      right: 10 * scale,
+                    ),
+                    child: Icon(Icons.arrow_forward_ios, size: 12 * scale),
+                  ),
+                ),
+            ],
+          ),
+          if (showProgressBar && progressValue != null) ...[
+            SizedBox(height: 6 * scale),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6 * scale),
+              child: LinearProgressIndicator(
+                value: progressValue,
+                minHeight: 6 * scale,
+                backgroundColor: const Color(0xFFDDDDDD),
+                color: _lightGreen,
+              ),
+            ),
+          ],
+          if (progressText.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 6 * scale),
+              child: Text(
+                progressText,
+                style: _ts(size: 10 * scale, weight: FontWeight.w600),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20 * scale, 0, 20 * scale, 20 * scale),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Container(
+                  height: 190 * scale,
+                  margin: EdgeInsets.only(top: 12 * scale),
+                  decoration: _cardDeco(radius: 16 * scale),
+                  padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: 12 * scale,
+                          bottom: 6 * scale,
+                        ),
+                        child: Text(
+                          '나의 레이팅',
+                          style: _ts(size: 18 * scale, weight: FontWeight.bold),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '923',
+                            style: _ts(
+                              size: 40 * scale,
+                              weight: FontWeight.w900,
+                            ),
+                          ),
+                          SizedBox(width: 8 * scale),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '+ 5.9',
+                                style: _ts(size: 10 * scale, color: Colors.red),
+                              ),
+                              Text(
+                                '상위 34%',
+                                style: _ts(
+                                  size: 10 * scale,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Divider(thickness: 1, height: 16 * scale),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: 4 * scale,
+                          bottom: 10 * scale,
+                        ),
+                        child: Text(
+                          '레이팅 자세보기 및 보고서 보기',
+                          style: _ts(size: 12 * scale),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(width: 12 * scale),
+              Expanded(
+                child: Container(
+                  height: 190 * scale,
+                  margin: EdgeInsets.only(top: 12 * scale),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16 * scale),
+                    boxShadow: const [_shadow],
+                    image: const DecorationImage(
+                      fit: BoxFit.cover,
+                      image: NetworkImage(
+                        'https://images.unsplash.com/photo-1676302440263-c6b4cea29567?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHw3fHwlRUMlODglOTglRUQlOTUlOTl8ZW58MHx8fHwxNzcwODcxODUyfDA&ixlib=rb-4.1.0&q=80&w=1080',
+                      ),
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.circular(16 * scale),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'AIFLOW LAB',
+                          style: _ts(
+                            size: 30 * scale,
+                            weight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 6 * scale),
+                        Text(
+                          '학습커뮤니티입니다\n인기글/상승 게시물을 확인하세요',
+                          textAlign: TextAlign.center,
+                          style: _ts(
+                            size: 10 * scale,
+                            weight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12 * scale),
+          Container(
+            width: double.infinity,
+            height: 190 * scale,
+            decoration: _cardDeco(radius: 16 * scale),
+            padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(top: 12 * scale),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '이벤트',
+                        style: _ts(size: 18 * scale, weight: FontWeight.bold),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: 8 * scale,
+                          right: 4 * scale,
+                        ),
+                        child: Icon(Icons.arrow_forward_ios, size: 12 * scale),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SimpleProgressBar extends StatelessWidget {
+  const _SimpleProgressBar({required this.value, required this.width});
+  final double value;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    return SizedBox(
+      width: width,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6 * scale),
+        child: LinearProgressIndicator(
+          value: value,
+          minHeight: 6 * scale,
+          backgroundColor: const Color(0x33FFFFFF),
+          color: _lightGreen,
+        ),
+      ),
+    );
+  }
+}
+
+class _SimpleMiniChart extends StatelessWidget {
+  const _SimpleMiniChart({required this.width, required this.height});
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: CustomPaint(painter: _MiniChartPainter()),
+    );
+  }
+}
+
+class _MiniChartPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = _lightGreen
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    const ys = [0.6, 0.3, 0.8, 0.4, 0.7];
+    final dx = size.width / (ys.length - 1);
+    final path = Path();
+    for (var i = 0; i < ys.length; i++) {
+      final x = i * dx;
+      final y = size.height * (1 - ys[i]);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
+}
+
+class _CircleStat extends StatelessWidget {
+  const _CircleStat({
+    required this.percent,
+    required this.color,
+    required this.label,
+    required this.subtitle,
+  });
+  final double percent;
+  final Color color;
+  final String label;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    return Column(
+      children: [
+        SizedBox(
+          width: 52 * scale,
+          height: 52 * scale,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 52 * scale,
+                height: 52 * scale,
+                child: CircularProgressIndicator(
+                  value: percent,
+                  strokeWidth: 5 * scale,
+                  backgroundColor: const Color(0x33FFFFFF),
+                  valueColor: AlwaysStoppedAnimation(color),
+                ),
+              ),
+              Text(
+                label,
+                style: _ts(size: 10 * scale, color: _grey),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 4 * scale),
+        Text(
+          subtitle,
+          style: _ts(size: 10 * scale, color: _grey),
+        ),
+      ],
+    );
+  }
+}
+
+class _DotIndicator extends StatelessWidget {
+  const _DotIndicator({
+    required this.count,
+    required this.current,
+    required this.onTap,
+  });
+  final int count;
+  final int current;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(count, (i) {
+        final active = i == current;
+        return GestureDetector(
+          onTap: () => onTap(i),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin: EdgeInsets.symmetric(horizontal: 3 * scale),
+            width: active ? 14 * scale : 6 * scale,
+            height: 6 * scale,
+            decoration: BoxDecoration(
+              color: active ? _lightGreen : _green,
+              borderRadius: BorderRadius.circular(4 * scale),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}

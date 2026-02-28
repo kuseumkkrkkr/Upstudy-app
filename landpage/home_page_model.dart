@@ -1,0 +1,3 @@
+class HomePageModel {
+  void dispose() {}
+}

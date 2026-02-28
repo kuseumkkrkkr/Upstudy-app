@@ -156,6 +156,14 @@ class ApiClient {
   final http.Client _client = http.Client();
   String? _token;
 
+  void setToken(String token) {
+    _token = token;
+  }
+
+  void clearToken() {
+    _token = null;
+  }
+
   Future<String> _ensureToken() async {
     if (_token != null) {
       return _token!;

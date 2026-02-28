@@ -20,11 +20,18 @@
 s11/
 ├── lib/                          # Flutter 애플리케이션
 │   ├── main.dart                 # 앱 진입점
+│   ├── pages.dart                # AppShell 라우팅/토큰 표시
+│   ├── landing/                  # 랜딩 페이지
+│   │   └── landing_page.dart
+│   ├── auth/                     # 인증 플로우
+│   │   ├── login_page.dart
+│   │   └── signup_page.dart
 │   ├── models/                   # 데이터 모델
 │   │   ├── concept_tag.dart
 │   │   └── content_block.dart    # 콘텐츠 블록 파싱 (text/latex)
 │   ├── pages/                    # 화면 위젯
 │   │   ├── mainpage_widget.dart  # 메인 페이지
+│   │   ├── student.dart          # 학생 대시보드(BuildboxCopyWidget)
 │   │   ├── character_chat_debug_page.dart  # 캐릭터 챗봇 디버깅
 │   │   ├── quick_generate_page.dart       # 1문제 생성/디버깅
 │   │   ├── solution_view_page.dart        # 문제 검색/풀이 흐름 보기
@@ -34,6 +41,7 @@ s11/
 │   │   └── quest_picker_page.dart         # 문제 선택 페이지
 │   ├── services/                 # 비즈니스 로직
 │   │   ├── api_client.dart       # HTTP API 클라이언트
+│   │   ├── auth_service.dart     # 로그인/회원가입 API
 │   │   └── dialog_service.dart   # 다이얼로그 관리
 │   ├── widgets/                  # 재사용 가능한 위젯
 │   │   ├── content_blocks_view.dart
@@ -45,11 +53,14 @@ s11/
 │       └── web_fixed_dialog.dart
 │
 └── omj/                          # Python 백엔드
+    ├── README.md                 # 백엔드 실행/환경 변수 안내
     ├── server.py                 # FastAPI 서버
     ├── main.py                   # CLI 문제 생성 도구
     ├── auth.py                   # JWT 인증
     ├── exam_service.py           # 시험지 생성 로직
     ├── pdf_builder.py            # PDF 생성
+    ├── write2LaTeX.py            # LaTeX 보조 스크립트
+    ├── resampling.py             # 리샘플링 유틸
     ├── quests.db                 # SQLite 데이터베이스
     ├── generater/                # AI 문제 생성
     │   ├── ai_gen.py
@@ -73,9 +84,9 @@ s11/
 
 #### **레이어 구조**
 ```
-Presentation Layer (Pages/Widgets)
+Presentation Layer (Landing/Auth/Pages/Widgets)
         ↓
-Service Layer (ApiClient, DialogService)
+Service Layer (ApiClient, AuthService, DialogService)
         ↓
 Model Layer (ContentBlock, ConceptTag)
 ```
@@ -85,6 +96,11 @@ Model Layer (ContentBlock, ConceptTag)
 - **Singleton 패턴**: `ApiClient.instance` (HTTP 클라이언트)
 - **Factory 패턴**: `ContentBlock.fromMap()`, `ExamItem.fromJson()`
 - **Service Locator**: `DialogService`로 중앙화된 다이얼로그 관리
+- **환경변수 기반 라우팅**: `API_BASE_URL`, `API_LOGIN_PATH`, `API_REGISTER_PATH`
+- **토큰 보장 흐름**: 토큰이 없으면 `ApiClient._ensureToken()`이 `/auth/anonymous` 호출
+- **라우팅 상수**: 각 화면은 `static const routeName` 선언 (예: `/`, `/login`, `/signup`, `/app`)
+- **라우트 인자 전달**: `AppShell`은 `onGenerateRoute`에서 `settings.arguments`로 token을 수신
+- **Material3 테마**: `useMaterial3: true` + `colorSchemeSeed(0xFF45BF63)` 기반 색상 유지
 
 ### 2. 백엔드 (Python/FastAPI)
 
@@ -149,10 +165,11 @@ class MyWidget extends StatefulWidget {
 class _MyWidgetState extends State<MyWidget> {
   // 상태 변수
   bool _loading = false;
-  
+
   // 생명주기 메서드
   @override
   void dispose() {
+    // TextEditingController 등 리소스는 반드시 해제
     super.dispose();
   }
   
@@ -190,6 +207,20 @@ try {
     _loading = false;
   });
   _showMessage('오류 발생');
+}
+```
+
+#### **네비게이션 패턴**
+```dart
+// 데이터 전달이 필요한 화면은 MaterialPageRoute + 생성자 전달
+Navigator.of(context).push(
+  MaterialPageRoute(builder: (_) => AppShell(token: token)),
+);
+
+// 단순 화면은 routes 테이블과 routeName 사용
+routes: {
+  LoginPage.routeName: (_) => const LoginPage(),
+  SignupPage.routeName: (_) => const SignupPage(),
 }
 ```
 
@@ -797,6 +828,8 @@ export OMJ_PDF_FONT_PATH="C:\\Windows\\Fonts\\malgun.ttf"  # PDF 한글 폰트 �
 
 # 프론트엔드
 flutter run --dart-define=API_BASE_URL=http://localhost:8000
+flutter run --dart-define=API_LOGIN_PATH=/auth/login
+flutter run --dart-define=API_REGISTER_PATH=/auth/register
 ```
 
 ---
@@ -1328,4 +1361,4 @@ hotfix/*    - 긴급 수정
 
 프로젝트에 기여하거나 문의사항이 있으시면 이슈를 등록해주세요.
 
-**마지막 업데이트**: 2026년 1월 28일
+**마지막 업데이트**: 2026년 2월 2일

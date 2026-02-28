@@ -28,6 +28,15 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        val kakaoNativeAppKey: String =
+            System.getenv("KAKAO_NATIVE_APP_KEY")
+                ?: project.findProperty("KAKAO_NATIVE_APP_KEY") as String?
+                ?: ""
+        manifestPlaceholders += mapOf(
+            "KAKAO_APP_KEY" to kakaoNativeAppKey,
+            "KAKAO_SCHEME" to if (kakaoNativeAppKey.isNotBlank()) "kakao$kakaoNativeAppKey" else ""
+        )
     }
 
     buildTypes {
