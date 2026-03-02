@@ -1,9 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'friend.dart';
+import 'study_center.dart' as study_center;
 import 'widgets/modals/curriculum_modal.dart';
 import 'widgets/modals/daily_test_modal.dart';
 import 'widgets/modals/learning_tools_modal.dart';
 import 'widgets/modals/social_modal.dart';
+import 'widgets/modals/study_mode_modal.dart';
 import 'widgets/modals/today_tasks_modal.dart';
 
 const _green = Color(0xFF1B402B);
@@ -52,23 +56,80 @@ class MainStudentPage extends StatefulWidget {
 }
 
 class _MainStudentPageState extends State<MainStudentPage> {
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScroll);
+  }
+
+  void _handleScroll() {
+    final offset = _scrollController.offset;
+    if (offset == _scrollOffset) return;
+    setState(() => _scrollOffset = offset);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    final media = MediaQuery.of(context);
+    final safeHeight = media.size.height - media.padding.top - media.padding.bottom;
+    final headerHeight = 72 * scale;
+    final heroHeight = math.max(360 * scale, safeHeight - headerHeight);
+    final fadeDistance = heroHeight;
+    final heroOpacity = fadeDistance <= 0
+        ? 1.0
+        : (1 - (_scrollOffset / fadeDistance)).clamp(0.0, 1.0) as double;
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _Header(),
-                _HeroSection(username: widget.username),
-                _LearningSection(),
-                _BottomSection(),
-              ],
-            ),
+          child: Column(
+            children: [
+              _Header(),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: _HeroScrollPhysics(
+                    heroExtent: heroHeight,
+                    multiplier: 4.4,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _HeroSection(
+                        username: widget.username,
+                        height: heroHeight,
+                        opacity: heroOpacity,
+                        onScrollDown: () {
+                          final target = math.min(
+                            heroHeight,
+                            _scrollController.position.maxScrollExtent,
+                          );
+                          _scrollController.animateTo(
+                            target,
+                            duration: const Duration(milliseconds: 380),
+                            curve: Curves.easeOut,
+                          );
+                        },
+                      ),
+                      _LearningSection(),
+                      _BottomSection(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -124,7 +185,16 @@ class _Header extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (final item in [
-                      const _NavItemData('학습터'),
+                      _NavItemData(
+                        '학습터',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const study_center.SoWidget(),
+                            ),
+                          );
+                        },
+                      ),
                       const _NavItemData('문서고'),
                       _NavItemData(
                         '친구/소셜',
@@ -190,31 +260,93 @@ class _NavItem extends StatelessWidget {
 }
 
 class _HeroSection extends StatelessWidget {
-  const _HeroSection({required this.username});
+  const _HeroSection({
+    required this.username,
+    required this.height,
+    required this.opacity,
+    required this.onScrollDown,
+  });
   final String? username;
+  final double height;
+  final double opacity;
+  final VoidCallback onScrollDown;
 
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
     final name = username?.trim();
     final displayName = (name == null || name.isEmpty) ? '사용자' : name;
-    return SizedBox(
-      height: 360 * scale,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.network(
-            'https://images.unsplash.com/photo-1495465798138-718f86d1a4bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8c3R1ZHl8ZW58MHx8fHwxNzcwNDE0OTExfDA&ixlib=rb-4.1.0&q=80&w=1080',
-            fit: BoxFit.cover,
-          ),
-          Container(color: const Color(0xAA000000)),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [StatPager(displayName: displayName)],
-          ),
-        ],
+    final baseHeroHeight = 360 * scale;
+    final contentScale = (height / baseHeroHeight).clamp(1.1, 1.35) as double;
+    return Opacity(
+      opacity: opacity,
+      child: SizedBox(
+        height: height,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              'https://images.unsplash.com/photo-1495465798138-718f86d1a4bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8c3R1ZHl8ZW58MHx8fHwxNzcwNDE0OTExfDA&ixlib=rb-4.1.0&q=80&w=1080',
+              fit: BoxFit.cover,
+            ),
+            Container(color: const Color(0xAA000000)),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Transform.scale(
+                  scale: contentScale,
+                  child: StatPager(displayName: displayName),
+                ),
+              ],
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 16 * scale),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onScrollDown,
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white70,
+                    size: 36 * scale,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+}
+
+class _HeroScrollPhysics extends ScrollPhysics {
+  const _HeroScrollPhysics({
+    required this.heroExtent,
+    this.multiplier = 1.6,
+    ScrollPhysics? parent,
+  }) : super(parent: parent);
+
+  final double heroExtent;
+  final double multiplier;
+
+  @override
+  _HeroScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _HeroScrollPhysics(
+      heroExtent: heroExtent,
+      multiplier: multiplier,
+      parent: buildParent(ancestor),
+    );
+  }
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
+    final base = parent?.applyPhysicsToUserOffset(position, offset) ?? offset;
+    if (position.pixels < heroExtent) {
+      return base * multiplier;
+    }
+    return base;
   }
 }
 
@@ -471,7 +603,7 @@ class _LearningSection extends StatelessWidget {
 
         child: Column(
           children: [
-            _LearnBanner(),
+            _LearnBanner(onTap: () => showStudyModeModal(context: context)),
 
             // ───────────────── 1번째 Row
             Padding(
@@ -568,31 +700,38 @@ class _LearningSection extends StatelessWidget {
 }
 
 class _LearnBanner extends StatelessWidget {
+  const _LearnBanner({this.onTap});
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
-    return Container(
-      width: double.infinity,
-      height: 56 * scale,
-      margin: EdgeInsets.symmetric(horizontal: 14 * scale),
-      decoration: BoxDecoration(
-        color: _green,
-        borderRadius: BorderRadius.circular(20 * scale),
-        boxShadow: const [_shadow],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.play_arrow, color: Colors.white, size: 32 * scale),
-          Text(
-            '학습하기',
-            style: _ts(
-              size: 28 * scale,
-              weight: FontWeight.w900,
-              color: Colors.white,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: 56 * scale,
+        margin: EdgeInsets.symmetric(horizontal: 14 * scale),
+        decoration: BoxDecoration(
+          color: _green,
+          borderRadius: BorderRadius.circular(20 * scale),
+          boxShadow: const [_shadow],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.play_arrow, color: Colors.white, size: 32 * scale),
+            Text(
+              '학습하기',
+              style: _ts(
+                size: 28 * scale,
+                weight: FontWeight.w900,
+                color: Colors.white,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
