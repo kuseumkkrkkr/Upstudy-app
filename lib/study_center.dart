@@ -100,8 +100,8 @@ class SoWidget extends StatelessWidget {
                     ),
                     _CardData(
                       icon: Icons.ads_click_outlined,
-                      title: '개념이해하기',
-                      subtitle: '개념을 이해하는 퀴즈게임입니다',
+                      title: '개념학습하기',
+                      subtitle: '개념을 학습할 수 있는 공통교재입니다',
                     ),
                     _CardData(
                       icon: Icons.content_paste,
@@ -318,10 +318,7 @@ class _CardRow extends StatelessWidget {
       child: Row(
         children: widgets
             .expand(
-              (w) => [
-                w,
-                if (w != widgets.last) SizedBox(width: 30 * scale),
-              ],
+              (w) => [w, if (w != widgets.last) SizedBox(width: 30 * scale)],
             )
             .toList(),
       ),
