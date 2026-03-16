@@ -1,7 +1,37 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'mainstudent.dart';
+import 'docx_box.dart' as docx;
+import 'package:s11/mainstudent.dart';
+import 'study_center.dart' as study_center;
+import 'widgets/modals/rating_detail_modal.dart';
+import 'widgets/app_drawer.dart';
+
+const _green = Color(0xFF1B402B);
+const _bgGrey = Color(0xFFF7F7F7);
+const _shadow = BoxShadow(
+  blurRadius: 4,
+  color: Color(0x33000000),
+  offset: Offset(0, 2),
+);
+
+TextStyle _ts({
+  double size = 16,
+  FontWeight weight = FontWeight.normal,
+  Color color = Colors.black,
+  bool scaleUp = true,
+}) => TextStyle(
+  fontSize: size * (scaleUp ? 1.1 : 1.0),
+  fontWeight: weight,
+  color: color,
+);
+
+BoxDecoration _cardDeco({double radius = 16, Color color = Colors.white}) =>
+    BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(radius),
+      boxShadow: const [_shadow],
+    );
 
 double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
   final width = MediaQuery.of(context).size.width;
@@ -22,9 +52,8 @@ class SoWidget extends StatefulWidget {
 }
 
 class _SoWidgetState extends State<SoWidget> {
-  static const Color primaryColor = Color(0xFF1B402B);
-  static const Color bgColor = Color(0xFFF5F5F5); // primaryBackground 대체
-  static const Color cardColor = Colors.white; // secondaryBackground 대체
+  static const Color primaryColor = _green;
+  static const Color bgColor = _bgGrey; // primaryBackground 대체
 
   static const TextStyle navStyle = TextStyle(
     color: primaryColor,
@@ -32,27 +61,13 @@ class _SoWidgetState extends State<SoWidget> {
     fontWeight: FontWeight.normal,
   );
 
-  final List<_FriendRank> _friendRanks = const [
-    _FriendRank(rank: 1, name: '지민', ovr: 982, delta: 12),
-    _FriendRank(rank: 2, name: '서준', ovr: 958, delta: 4),
-    _FriendRank(rank: 3, name: '민지', ovr: 941, delta: -2),
-    _FriendRank(rank: 4, name: '도윤', ovr: 910, delta: 1),
-    _FriendRank(rank: 5, name: '하윤', ovr: 904, delta: 0),
-  ];
+  final List<_FriendRank> _friendRanks = const [];
 
-  final List<_FriendInfo> _friends = const [
-    _FriendInfo(name: '지민', status: '집중 모드', ovr: 982),
-    _FriendInfo(name: '서준', status: '학습 중', ovr: 958),
-    _FriendInfo(name: '민지', status: '휴식 중', ovr: 941),
-    _FriendInfo(name: '도윤', status: '문제 풀이', ovr: 910),
-    _FriendInfo(name: '하윤', status: '스터디 참여', ovr: 904),
-  ];
+  final List<_FriendInfo> _friends = const [];
 
-  final List<_MessageInfo> _messages = const [
-    _MessageInfo(name: '민지', lastMessage: '오늘 스터디 자료 공유했어.', timeAgo: '2분 전'),
-    _MessageInfo(name: '서준', lastMessage: '내일 테스트 범위 알려줘!', timeAgo: '1시간 전'),
-    _MessageInfo(name: '하윤', lastMessage: '문제 풀이 같이 해볼래?', timeAgo: '어제'),
-  ];
+  final List<_FriendInfo> _friendSearchCatalog = const [];
+
+  final List<_MessageInfo> _messages = const [];
 
   final List<_GroupInfo> _groups = const [
     _GroupInfo(
@@ -97,41 +112,169 @@ class _SoWidgetState extends State<SoWidget> {
   }
 
   void _openAddFriendModal() {
+    String query = '';
     _showBlurDialog(
       _dialogShell(
         title: '친구 추가',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              '친구의 닉네임을 검색해 추가할 수 있어요.',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                hintText: '닉네임 검색',
-                filled: true,
-                fillColor: bgColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: primaryColor),
+        width: 640,
+        child: StatefulBuilder(
+          builder: (context, setModalState) {
+            final keyword = query.trim();
+            final lowerKeyword = keyword.toLowerCase();
+            final results = keyword.isEmpty
+                ? <_FriendInfo>[]
+                : _friendSearchCatalog
+                    .where(
+                      (friend) =>
+                          friend.name.toLowerCase().contains(lowerKeyword) ||
+                          friend.status.toLowerCase().contains(lowerKeyword),
+                    )
+                    .toList();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  '친구의 닉네임을 검색해 추가할 수 있어요.',
+                  style: TextStyle(fontSize: 16),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 44,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        onChanged: (value) {
+                          setModalState(() => query = value);
+                        },
+                        onSubmitted: (_) {
+                          FocusScope.of(context).unfocus();
+                          setModalState(() {});
+                        },
+                        decoration: InputDecoration(
+                          hintText: '닉네임 검색',
+                          filled: true,
+                          fillColor: bgColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: primaryColor),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      height: 44,
+                      width: 88,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          FocusScope.of(context).unfocus();
+                          setModalState(() {});
+                        },
+                        child: const Text('검색'),
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('검색'),
-              ),
-            ),
-          ],
+                const SizedBox(height: 16),
+                const Text(
+                  '검색 결과',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 260,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: keyword.isEmpty
+                        ? _emptyState('닉네임을 입력해 주세요')
+                        : results.isEmpty
+                            ? _emptyState('검색 결과가 없어요')
+                            : ListView.separated(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                itemCount: results.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final friend = results[index];
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor:
+                                              primaryColor.withOpacity(0.12),
+                                          child: Text(
+                                            friend.name.substring(0, 1),
+                                            style: const TextStyle(
+                                              color: primaryColor,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                friend.name,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                friend.status,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Text(
+                                          'OVR ${friend.ovr}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        OutlinedButton(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: primaryColor,
+                                            side: const BorderSide(
+                                              color: primaryColor,
+                                            ),
+                                          ),
+                                          onPressed: () {},
+                                          child: const Text('추가'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -144,104 +287,72 @@ class _SoWidgetState extends State<SoWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('최근 대화 목록', style: TextStyle(fontSize: 16)),
+            const Text('최근 쪽지 목록', style: TextStyle(fontSize: 16)),
             const SizedBox(height: 16),
-            ..._messages.map((message) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _openMessageCompose(message);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: primaryColor.withOpacity(0.15),
-                          child: Text(
-                            message.name.substring(0, 1),
-                            style: const TextStyle(color: primaryColor),
+            if (_messages.isEmpty)
+              SizedBox(height: 120, child: _emptyState('친구가 없어요!'))
+            else
+              ..._messages.map((message) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _openMessageThread(message);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: primaryColor.withOpacity(0.15),
+                            child: Text(
+                              message.name.substring(0, 1),
+                              style: const TextStyle(color: primaryColor),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                message.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  message.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                message.lastMessage,
-                                style: const TextStyle(fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  message.lastMessage,
+                                  style: const TextStyle(fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Text(
-                          message.timeAgo,
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                      ],
+                          Text(
+                            message.timeAgo,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
           ],
         ),
       ),
     );
   }
 
-  void _openMessageCompose(_MessageInfo info) {
-    _showBlurDialog(
-      _dialogShell(
-        title: '쪽지 보내기',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('받는 사람: ${info.name}', style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 16),
-            TextField(
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: '쪽지를 입력하세요',
-                filled: true,
-                fillColor: bgColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: primaryColor),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 44,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('보내기'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _openMessageThread(_MessageInfo info) {
+    _showBlurDialog(_MessengerDialog(info: info));
   }
 
   void _openGroupManageModal() {
@@ -331,14 +442,13 @@ class _SoWidgetState extends State<SoWidget> {
     required String title,
     required Widget child,
     Widget? trailing,
+    double width = 520,
+    EdgeInsets padding = const EdgeInsets.all(20),
   }) {
     return Container(
-      width: 520,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      width: width,
+      padding: padding,
+      decoration: _cardDeco(radius: 18),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -364,6 +474,20 @@ class _SoWidgetState extends State<SoWidget> {
     );
   }
 
+  Widget _emptyState(String message) {
+    return Center(
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.black54,
+        ),
+      ),
+    );
+  }
+
   Widget _infoPill(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -382,8 +506,8 @@ class _SoWidgetState extends State<SoWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFFEFF5F0),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Text(
         '#$text',
@@ -392,6 +516,129 @@ class _SoWidgetState extends State<SoWidget> {
           color: primaryColor,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+
+  Widget _ratingSummary(double scale) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14 * scale,
+        vertical: 12 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14 * scale),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '894',
+                style: _ts(
+                  size: 36 * scale,
+                  weight: FontWeight.w900,
+                  color: primaryColor,
+                  scaleUp: false,
+                ),
+              ),
+              SizedBox(width: 8 * scale),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '+ 5.9',
+                    style: _ts(
+                      size: 10 * scale,
+                      weight: FontWeight.w600,
+                      color: Colors.red,
+                      scaleUp: false,
+                    ),
+                  ),
+                  Text(
+                    '상위 34%',
+                    style: _ts(
+                      size: 10 * scale,
+                      weight: FontWeight.w600,
+                      color: Colors.black87,
+                      scaleUp: false,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Divider(height: 16 * scale, thickness: 1),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8 * scale),
+              onTap: () => showRatingDetailModal(context: context),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  vertical: 6 * scale,
+                  horizontal: 4 * scale,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '레이팅 상세보기 및 보고서 보기',
+                      style: _ts(
+                        size: 12 * scale,
+                        weight: FontWeight.w600,
+                        color: Colors.black87,
+                        scaleUp: false,
+                      ),
+                    ),
+                    SizedBox(width: 6 * scale),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 12 * scale,
+                      color: primaryColor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tagGroup({
+    required String title,
+    required List<String> tags,
+    required double scale,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(12 * scale),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14 * scale),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: _ts(
+              size: 13 * scale,
+              weight: FontWeight.w700,
+              color: primaryColor,
+              scaleUp: false,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Wrap(
+            spacing: 8 * scale,
+            runSpacing: 6 * scale,
+            children: tags.map(_tagChip).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -407,6 +654,7 @@ class _SoWidgetState extends State<SoWidget> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: bgColor,
+        drawer: const AppDrawer(),
         body: SafeArea(
           top: true,
           child: Stack(
@@ -424,13 +672,15 @@ class _SoWidgetState extends State<SoWidget> {
                       child: Row(
                         children: [
                           SizedBox(width: 16 * scale),
-                          IconButton(
-                            iconSize: 28 * scale,
-                            icon: const Icon(
-                              Icons.menu_outlined,
-                              color: primaryColor,
+                          Builder(
+                            builder: (context) => IconButton(
+                              iconSize: 28 * scale,
+                              icon: const Icon(
+                                Icons.menu_outlined,
+                                color: primaryColor,
+                              ),
+                              onPressed: () => toggleAppDrawer(context),
                             ),
-                            onPressed: () {},
                           ),
                           SizedBox(width: 12 * scale),
                           SizedBox(width: 12 * scale),
@@ -475,14 +725,38 @@ class _SoWidgetState extends State<SoWidget> {
                                               ? 24 * scale
                                               : 0,
                                         ),
-                                        child: Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 12 * scale,
-                                          ),
-                                          child: Text(
-                                            label,
-                                            style: navStyle.copyWith(
-                                              fontSize: 16 * scale,
+                                        child: GestureDetector(
+                                          onTap: label == '학습터'
+                                              ? () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const study_center
+                                                              .SoWidget(),
+                                                    ),
+                                                  );
+                                                }
+                                              : label == '문서고'
+                                                  ? () {
+                                                      Navigator.of(context)
+                                                          .push(
+                                                        MaterialPageRoute(
+                                                          builder: (_) =>
+                                                              const docx
+                                                                  .BookWidget(),
+                                                        ),
+                                                      );
+                                                    }
+                                                  : null,
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 12 * scale,
+                                            ),
+                                            child: Text(
+                                              label,
+                                              style: navStyle.copyWith(
+                                                fontSize: 16 * scale,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -503,10 +777,7 @@ class _SoWidgetState extends State<SoWidget> {
                       child: Container(
                         width: contentWidth,
                         height: 400,
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        decoration: _cardDeco(radius: 16),
                         padding: const EdgeInsets.fromLTRB(26, 16, 26, 20),
                         child: Column(
                           children: [
@@ -524,7 +795,7 @@ class _SoWidgetState extends State<SoWidget> {
                                 SizedBox(width: 20),
                                 Expanded(
                                   child: Text(
-                                    '나의정보',
+                                    '나의 정보',
                                     style: TextStyle(
                                       fontSize: 36,
                                       fontWeight: FontWeight.w600,
@@ -543,7 +814,7 @@ class _SoWidgetState extends State<SoWidget> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          '내 OVR 순위',
+                                          '친구 OVR 순위',
                                           style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
@@ -551,143 +822,149 @@ class _SoWidgetState extends State<SoWidget> {
                                         ),
                                         const SizedBox(height: 10),
                                         Expanded(
-                                          child: ListView.separated(
-                                            physics:
-                                                const NeverScrollableScrollPhysics(),
-                                            itemCount: _friendRanks.length,
-                                            separatorBuilder: (_, __) =>
-                                                const SizedBox(height: 8),
-                                            itemBuilder: (context, index) {
-                                              final rank = _friendRanks[index];
-                                              return Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 14,
-                                                      vertical: 10,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: bgColor,
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    Container(
-                                                      width: 36,
-                                                      height: 36,
-                                                      alignment:
-                                                          Alignment.center,
+                                          child: _friendRanks.isEmpty
+                                              ? _emptyState('친구가 없어요!')
+                                              : ListView.separated(
+                                                  physics:
+                                                      const NeverScrollableScrollPhysics(),
+                                                  itemCount: _friendRanks.length,
+                                                  separatorBuilder: (_, __) =>
+                                                      const SizedBox(height: 8),
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final rank =
+                                                        _friendRanks[index];
+                                                    return Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                        horizontal: 14,
+                                                        vertical: 10,
+                                                      ),
                                                       decoration: BoxDecoration(
-                                                        color: primaryColor
-                                                            .withOpacity(0.12),
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: Text(
-                                                        '${rank.rank}',
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: primaryColor,
+                                                        color: bgColor,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                          12,
                                                         ),
                                                       ),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                      child: Text(
-                                                        rank.name,
-                                                        style: const TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
+                                                      child: Row(
+                                                        children: [
+                                                          Container(
+                                                            width: 36,
+                                                            height: 36,
+                                                            alignment:
+                                                                Alignment.center,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: primaryColor
+                                                                  .withOpacity(
+                                                                0.12,
+                                                              ),
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                            ),
+                                                            child: Text(
+                                                              '${rank.rank}',
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color:
+                                                                    primaryColor,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          Expanded(
+                                                            child: Text(
+                                                              rank.name,
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 16,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            'OVR ${rank.ovr}',
+                                                            style:
+                                                                const TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          Text(
+                                                            rank.delta >= 0
+                                                                ? '+${rank.delta}'
+                                                                : '${rank.delta}',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  rank.delta >=
+                                                                          0
+                                                                      ? primaryColor
+                                                                      : Colors
+                                                                          .black54,
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
-                                                    ),
-                                                    Text(
-                                                      'OVR ${rank.ovr}',
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Text(
-                                                      rank.delta >= 0
-                                                          ? '+${rank.delta}'
-                                                          : '${rank.delta}',
-                                                      style: TextStyle(
-                                                        color: rank.delta >= 0
-                                                            ? primaryColor
-                                                            : Colors.black54,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                    );
+                                                  },
                                                 ),
-                                              );
-                                            },
-                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                   const SizedBox(width: 20),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          '현재 OVR',
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        return SingleChildScrollView(
+                                          physics:
+                                              const ClampingScrollPhysics(),
+                                          child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                              minHeight: constraints.maxHeight,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                _ratingSummary(scale),
+                                                SizedBox(height: 12 * scale),
+                                                _tagGroup(
+                                                  title: '약점 태그',
+                                                  tags: const [
+                                                    '시간관리',
+                                                    '도형',
+                                                    '영어',
+                                                  ],
+                                                  scale: scale,
+                                                ),
+                                                SizedBox(height: 12 * scale),
+                                                _tagGroup(
+                                                  title: '강점 태그',
+                                                  tags: const [
+                                                    '수학',
+                                                    '국어',
+                                                    '집중력',
+                                                  ],
+                                                  scale: scale,
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        const Text(
-                                          '894',
-                                          style: TextStyle(
-                                            fontSize: 44,
-                                            fontWeight: FontWeight.bold,
-                                            color: primaryColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        const Text(
-                                          '약점 태그',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Wrap(
-                                          spacing: 8,
-                                          runSpacing: 6,
-                                          children: [
-                                            _tagChip('시간관리'),
-                                            _tagChip('도형'),
-                                            _tagChip('영어'),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 16),
-                                        const Text(
-                                          '강점 태그',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Wrap(
-                                          spacing: 8,
-                                          runSpacing: 6,
-                                          children: [
-                                            _tagChip('수학'),
-                                            _tagChip('국어'),
-                                            _tagChip('집중력'),
-                                          ],
-                                        ),
-                                      ],
+                                        );
+                                      },
                                     ),
                                   ),
                                 ],
@@ -718,10 +995,7 @@ class _SoWidgetState extends State<SoWidget> {
                                     child: Container(
                                       width: cardW,
                                       height: 400,
-                                      decoration: BoxDecoration(
-                                        color: cardColor,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
+                                      decoration: _cardDeco(radius: 16),
                                       padding: const EdgeInsets.fromLTRB(
                                         22,
                                         18,
@@ -737,7 +1011,7 @@ class _SoWidgetState extends State<SoWidget> {
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
                                               const Text(
-                                                '????',
+                                                '친구',
                                                 style: TextStyle(
                                                   fontSize: 28,
                                                   fontWeight: FontWeight.bold,
@@ -754,86 +1028,99 @@ class _SoWidgetState extends State<SoWidget> {
                                           ),
                                           const SizedBox(height: 10),
                                           Expanded(
-                                            child: ListView.separated(
-                                              physics:
-                                                  const NeverScrollableScrollPhysics(),
-                                              itemCount: _friends.length,
-                                              separatorBuilder: (_, __) =>
-                                                  const SizedBox(height: 8),
-                                              itemBuilder: (context, index) {
-                                                final friend = _friends[index];
-                                                return Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 14,
-                                                        vertical: 10,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: bgColor,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
+                                            child: _friends.isEmpty
+                                                ? _emptyState('친구가 없어요!')
+                                                : ListView.separated(
+                                                    physics:
+                                                        const NeverScrollableScrollPhysics(),
+                                                    itemCount: _friends.length,
+                                                    separatorBuilder: (_, __) =>
+                                                        const SizedBox(height: 8),
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      final friend =
+                                                          _friends[index];
+                                                      return Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                          horizontal: 14,
+                                                          vertical: 10,
                                                         ),
-                                                  ),
-                                                  child: Row(
-                                                    children: [
-                                                      CircleAvatar(
-                                                        backgroundColor:
-                                                            primaryColor
-                                                                .withOpacity(
-                                                                  0.12,
-                                                                ),
-                                                        child: Text(
-                                                          friend.name.substring(
-                                                            0,
-                                                            1,
-                                                          ),
-                                                          style: const TextStyle(
-                                                            color: primaryColor,
+                                                        decoration: BoxDecoration(
+                                                          color: bgColor,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                            12,
                                                           ),
                                                         ),
-                                                      ),
-                                                      const SizedBox(width: 12),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
+                                                        child: Row(
                                                           children: [
-                                                            Text(
-                                                              friend.name,
-                                                              style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
+                                                            CircleAvatar(
+                                                              backgroundColor:
+                                                                  primaryColor
+                                                                      .withOpacity(
+                                                                0.12,
+                                                              ),
+                                                              child: Text(
+                                                                friend.name
+                                                                    .substring(
+                                                                  0,
+                                                                  1,
+                                                                ),
+                                                                style:
+                                                                    const TextStyle(
+                                                                  color:
+                                                                      primaryColor,
+                                                                ),
                                                               ),
                                                             ),
                                                             const SizedBox(
-                                                              height: 4,
+                                                              width: 12,
+                                                            ),
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Text(
+                                                                    friend.name,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    height: 4,
+                                                                  ),
+                                                                  Text(
+                                                                    friend
+                                                                        .status,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
                                                             ),
                                                             Text(
-                                                              friend.status,
+                                                              'OVR ${friend.ovr}',
                                                               style:
                                                                   const TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                  ),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
                                                             ),
                                                           ],
                                                         ),
-                                                      ),
-                                                      Text(
-                                                        'OVR ${friend.ovr}',
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                    ],
+                                                      );
+                                                    },
                                                   ),
-                                                );
-                                              },
-                                            ),
                                           ),
                                         ],
                                       ),
@@ -842,10 +1129,7 @@ class _SoWidgetState extends State<SoWidget> {
                                   Container(
                                     width: cardW,
                                     height: 400,
-                                    decoration: BoxDecoration(
-                                      color: cardColor,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
+                                    decoration: _cardDeco(radius: 16),
                                     padding: const EdgeInsets.fromLTRB(
                                       22,
                                       18,
@@ -859,14 +1143,14 @@ class _SoWidgetState extends State<SoWidget> {
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text(
-                                              '???',
-                                              style: TextStyle(
-                                                fontSize: 28,
-                                                fontWeight: FontWeight.bold,
+                                            children: [
+                                              const Text(
+                                                '쪽지함',
+                                                style: TextStyle(
+                                                  fontSize: 28,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                            ),
                                             IconButton(
                                               icon: const Icon(
                                                 Icons.arrow_forward_ios,
@@ -879,86 +1163,111 @@ class _SoWidgetState extends State<SoWidget> {
                                         ),
                                         const SizedBox(height: 10),
                                         Expanded(
-                                          child: ListView.separated(
-                                            physics:
-                                                const NeverScrollableScrollPhysics(),
-                                            itemCount: _messages.length,
-                                            separatorBuilder: (_, __) =>
-                                                const SizedBox(height: 8),
-                                            itemBuilder: (context, index) {
-                                              final message = _messages[index];
-                                              return Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 14,
-                                                      vertical: 10,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: bgColor,
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    CircleAvatar(
-                                                      backgroundColor:
-                                                          primaryColor
-                                                              .withOpacity(
+                                          child: _messages.isEmpty
+                                              ? _emptyState('친구가 없어요!')
+                                              : ListView.separated(
+                                                  physics:
+                                                      const NeverScrollableScrollPhysics(),
+                                                  itemCount: _messages.length,
+                                                  separatorBuilder: (_, __) =>
+                                                      const SizedBox(height: 8),
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final message =
+                                                        _messages[index];
+                                                    return InkWell(
+                                                      onTap: () =>
+                                                          _openMessageThread(
+                                                        message,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        12,
+                                                      ),
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                          horizontal: 14,
+                                                          vertical: 10,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: bgColor,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            CircleAvatar(
+                                                              backgroundColor:
+                                                                  primaryColor
+                                                                      .withOpacity(
                                                                 0.12,
                                                               ),
-                                                      child: Text(
-                                                        message.name.substring(
-                                                          0,
-                                                          1,
-                                                        ),
-                                                        style: const TextStyle(
-                                                          color: primaryColor,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            message.name,
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
+                                                              child: Text(
+                                                                message.name
+                                                                    .substring(
+                                                                  0,
+                                                                  1,
                                                                 ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 4,
-                                                          ),
-                                                          Text(
-                                                            message.lastMessage,
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontSize: 12,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  color:
+                                                                      primaryColor,
                                                                 ),
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                        ],
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 12,
+                                                            ),
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Text(
+                                                                    message
+                                                                        .name,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    height: 4,
+                                                                  ),
+                                                                  Text(
+                                                                    message
+                                                                        .lastMessage,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                    ),
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              message.timeAgo,
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 11,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
-                                                    ),
-                                                    Text(
-                                                      message.timeAgo,
-                                                      style: const TextStyle(
-                                                        fontSize: 11,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                    );
+                                                  },
                                                 ),
-                                              );
-                                            },
-                                          ),
                                         ),
                                       ],
                                     ),
@@ -977,10 +1286,7 @@ class _SoWidgetState extends State<SoWidget> {
                       child: Container(
                         width: contentWidth,
                         height: 400,
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        decoration: _cardDeco(radius: 16),
                         padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1098,6 +1404,241 @@ class _SoWidgetState extends State<SoWidget> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ChatMessage {
+  const _ChatMessage({
+    required this.text,
+    required this.isMe,
+    required this.time,
+  });
+
+  final String text;
+  final bool isMe;
+  final String time;
+}
+
+class _MessengerDialog extends StatefulWidget {
+  const _MessengerDialog({required this.info});
+
+  final _MessageInfo info;
+
+  @override
+  State<_MessengerDialog> createState() => _MessengerDialogState();
+}
+
+class _MessengerDialogState extends State<_MessengerDialog> {
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  late List<_ChatMessage> _chatMessages;
+
+  @override
+  void initState() {
+    super.initState();
+    _chatMessages = [
+      _ChatMessage(
+        text: widget.info.lastMessage,
+        isMe: false,
+        time: widget.info.timeAgo,
+      ),
+      const _ChatMessage(
+        text: '응! 같이 해보자.',
+        isMe: true,
+        time: '방금',
+      ),
+    ];
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _sendMessage() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _chatMessages.add(
+        _ChatMessage(text: text, isMe: true, time: '방금'),
+      );
+      _controller.clear();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+  }
+
+  Widget _buildBubble(_ChatMessage message) {
+    final isMe = message.isMe;
+    final bubbleColor = isMe ? _green : Colors.white;
+    final textColor = isMe ? Colors.white : Colors.black87;
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: bubbleColor,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
+                bottomLeft: Radius.circular(isMe ? 16 : 4),
+                bottomRight: Radius.circular(isMe ? 4 : 16),
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  blurRadius: 4,
+                  color: Color(0x14000000),
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              message.text,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 14,
+                height: 1.3,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Text(
+              message.time,
+              style: const TextStyle(fontSize: 10, color: Colors.black45),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final width = (size.width * 0.9).clamp(320.0, 720.0).toDouble();
+    final height = (size.height * 0.8).clamp(420.0, 640.0).toDouble();
+
+    return Container(
+      width: width,
+      height: height,
+      decoration: _cardDeco(radius: 18),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: _green.withOpacity(0.12),
+                child: Text(
+                  widget.info.name.substring(0, 1),
+                  style: const TextStyle(color: _green),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.info.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      '채팅 내역은 서버에 저장되지 않아요',
+                      style: TextStyle(fontSize: 11, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                color: _green,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _bgGrey,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: _chatMessages.length,
+                itemBuilder: (context, index) =>
+                    _buildBubble(_chatMessages[index]),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  minLines: 1,
+                  maxLines: 3,
+                  onSubmitted: (_) => _sendMessage(),
+                  decoration: InputDecoration(
+                    hintText: '쪽지를 입력하세요',
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0x22000000)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 44,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: _sendMessage,
+                  child: const Text('전송'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

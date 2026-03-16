@@ -2,7 +2,7 @@ import "package:flutter/material.dart";
 
 import "../services/api_client.dart";
 import "../services/auth_service.dart";
-import "../mainstudent.dart";
+import "package:s11/mainstudent.dart";
 
 class SignupPage extends StatefulWidget {
   static const routeName = '/signup';

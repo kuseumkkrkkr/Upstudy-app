@@ -143,6 +143,35 @@ class TestChatResponse {
   }
 }
 
+class SolveAnalysisResponse {
+  final String analysis;
+  final List<dynamic> recognizedText;
+  final String ocrSource;
+  final String? questId;
+  final List<String> questModel;
+  final List<String> warnings;
+
+  SolveAnalysisResponse({
+    required this.analysis,
+    required this.recognizedText,
+    required this.ocrSource,
+    required this.questModel,
+    required this.warnings,
+    this.questId,
+  });
+
+  factory SolveAnalysisResponse.fromJson(Map<String, dynamic> json) {
+    return SolveAnalysisResponse(
+      analysis: json['analysis'] as String? ?? '',
+      recognizedText: (json['recognized_text'] as List<dynamic>? ?? []),
+      ocrSource: json['ocr_source'] as String? ?? '',
+      questId: json['quest_id'] as String?,
+      questModel: List<String>.from(json['quest_model'] as List<dynamic>? ?? []),
+      warnings: List<String>.from(json['warnings'] as List<dynamic>? ?? []),
+    );
+  }
+}
+
 class ApiClient {
   ApiClient._();
 
@@ -357,5 +386,25 @@ class ApiClient {
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return TestChatResponse.fromJson(payload);
+  }
+
+  Future<SolveAnalysisResponse> submitSolveAnalysis({
+    required Map<String, dynamic> payload,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/analysis/solve');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to analyze solve: ${response.statusCode}');
+    }
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return SolveAnalysisResponse.fromJson(decoded);
   }
 }

@@ -3,7 +3,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:s11/tryout.dart';
+import 'package:s11/widgets/modals/study_modes/book_mode.dart';
+import 'package:s11/widgets/modals/study_modes/course_mode.dart';
+import 'package:s11/widgets/modals/study_modes/exam_mode.dart';
+import 'package:s11/widgets/modals/study_modes/problem_solve_mode.dart';
+import 'package:s11/widgets/modals/study_modes/resume_mode.dart';
+import 'package:s11/widgets/modals/study_modes/weakness_review_mode.dart';
 
 Future<T?> showStudyModeModal<T>({required BuildContext context}) {
   return showDialog<T>(
@@ -40,9 +45,11 @@ class StudypageCopyWidget extends StatelessWidget {
         final maxH = constraints.maxHeight.isFinite
             ? constraints.maxHeight
             : 380.0;
-        final width = math.min(1020.0, maxW * 0.95);
-        final height = math.min(380.0, maxH * 0.95);
-        final scale = (width / 1020.0).clamp(0.6, 1.0);
+        const baseWidth = 1250.0;
+        const baseHeight = 380.0;
+        final width = math.min(baseWidth, maxW * 0.95);
+        final height = math.min(baseHeight, maxH * 0.95);
+        final scale = (width / baseWidth).clamp(0.6, 1.0);
 
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -90,28 +97,38 @@ class StudypageCopyWidget extends StatelessWidget {
                             children:
                                 List.generate(_kModes.length, (index) {
                                       final mode = _kModes[index];
-                                      final isTryout = index == 3;
+                                      VoidCallback? onTap;
+                                      switch (mode.destination) {
+                                        case _ModeDestination.resume:
+                                          onTap = buildResumeAction(context);
+                                          break;
+                                        case _ModeDestination.course:
+                                          onTap = buildCourseAction(context);
+                                          break;
+                                        case _ModeDestination.tryout:
+                                          onTap = buildProblemSolveAction(
+                                            context,
+                                          );
+                                          break;
+                                        case _ModeDestination.exam:
+                                          onTap = buildExamAction(context);
+                                          break;
+                                        case _ModeDestination.book:
+                                          onTap = buildBookAction(context);
+                                          break;
+                                        case _ModeDestination.weaknessReview:
+                                          onTap = buildWeaknessReviewAction(
+                                            context,
+                                          );
+                                          break;
+                                        case _ModeDestination.none:
+                                          onTap = null;
+                                      }
                                       return _ModeCard(
                                         icon: mode.icon,
                                         label: mode.label,
                                         scale: scale,
-                                        onTap: isTryout
-                                            ? () {
-                                                final navigator = Navigator.of(
-                                                  context,
-                                                  rootNavigator: true,
-                                                );
-                                                navigator.pop();
-                                                Future.microtask(
-                                                  () => navigator.push(
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          const BuildpageWidget(),
-                                                    ),
-                                                  ),
-                                                );
-                                              }
-                                            : null,
+                                        onTap: onTap,
                                       );
                                     })
                                     .expand(
@@ -135,18 +152,58 @@ class StudypageCopyWidget extends StatelessWidget {
 }
 
 const _kModes = [
-  _StudyMode(icon: Icons.restart_alt_sharp, label: '이어하기'),
-  _StudyMode(icon: Icons.crop_din_outlined, label: '코스보기'),
-  _StudyMode(icon: Icons.done_outline, label: '약점과복습'),
-  _StudyMode(icon: Icons.north_west_sharp, label: '문제풀기'),
-  _StudyMode(icon: Icons.texture, label: '시험'),
+  _StudyMode(
+    icon: Icons.restart_alt_sharp,
+    label: '이어하기',
+    destination: _ModeDestination.resume,
+  ),
+  _StudyMode(
+    icon: Icons.crop_din_outlined,
+    label: '코스보기',
+    destination: _ModeDestination.course,
+  ),
+  _StudyMode(
+    icon: Icons.done_outline,
+    label: '약점과복습',
+    destination: _ModeDestination.weaknessReview,
+  ),
+  _StudyMode(
+    icon: Icons.north_west_sharp,
+    label: '문제풀기',
+    destination: _ModeDestination.tryout,
+  ),
+  _StudyMode(
+    icon: Icons.texture,
+    label: '시험',
+    destination: _ModeDestination.exam,
+  ),
+  _StudyMode(
+    icon: Icons.menu_book_outlined,
+    label: '교재보기',
+    destination: _ModeDestination.book,
+  ),
 ];
 
+enum _ModeDestination {
+  none,
+  resume,
+  course,
+  weaknessReview,
+  tryout,
+  exam,
+  book,
+}
+
 class _StudyMode {
-  const _StudyMode({required this.icon, required this.label});
+  const _StudyMode({
+    required this.icon,
+    required this.label,
+    this.destination = _ModeDestination.none,
+  });
 
   final IconData icon;
   final String label;
+  final _ModeDestination destination;
 }
 
 class _ModeCard extends StatelessWidget {

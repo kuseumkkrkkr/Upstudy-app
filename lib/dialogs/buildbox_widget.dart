@@ -7,8 +7,17 @@ import '../pages/exam_preview_page.dart';
 
 class BuildboxWidget extends StatefulWidget {
   final String title;
+  final int? fixedQuestionCount;
+  final String submitLabel;
+  final void Function(BuildContext context, String examId)? onExamCreated;
 
-  const BuildboxWidget({super.key, this.title = '모의고사 생성'});
+  const BuildboxWidget({
+    super.key,
+    this.title = '모의고사 생성',
+    this.fixedQuestionCount,
+    this.submitLabel = '다음',
+    this.onExamCreated,
+  });
 
   @override
   State<BuildboxWidget> createState() => _BuildboxWidgetState();
@@ -28,6 +37,9 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
       4,
       (index) => {'id': index, 'tags': <ConceptTag>[]},
     );
+    if (widget.fixedQuestionCount != null) {
+      _textController.text = widget.fixedQuestionCount.toString();
+    }
   }
 
   @override
@@ -86,7 +98,8 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
     if (_isSubmitting) {
       return;
     }
-    final questionCount = int.tryParse(_textController.text.trim());
+    final questionCount =
+        widget.fixedQuestionCount ?? int.tryParse(_textController.text.trim());
     if (questionCount == null || questionCount < 1) {
       _showMessage('Enter a valid question count.');
       return;
@@ -117,6 +130,10 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
         questionCount: questionCount,
       );
       if (!mounted) {
+        return;
+      }
+      if (widget.onExamCreated != null) {
+        widget.onExamCreated!(context, examId);
         return;
       }
       Navigator.of(context).pop();
@@ -368,6 +385,7 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
   }
 
   Widget _buildQuestionCountSection() {
+    final fixedCount = widget.fixedQuestionCount;
     return Column(
       children: [
         const SizedBox(height: 27),
@@ -393,6 +411,7 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
           child: TextField(
             controller: _textController,
             keyboardType: TextInputType.number,
+            enabled: fixedCount == null,
             decoration: InputDecoration(
               hintText: 'TextField',
               filled: true,
@@ -412,6 +431,18 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
             ),
           ),
         ),
+        if (fixedCount != null) ...[
+          const SizedBox(height: 10),
+          const Text(
+            '30문제 고정 - 설정 변경이 불가합니다.',
+            style: TextStyle(
+              color: Colors.redAccent,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ],
     );
   }
@@ -440,9 +471,9 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
                     color: Colors.white,
                   ),
                 )
-              : const Text(
-                  '다음',
-                  style: TextStyle(
+              : Text(
+                  widget.submitLabel,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 40,
                     fontWeight: FontWeight.w600,

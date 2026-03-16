@@ -6,8 +6,17 @@ import '../widgets/content_blocks_view.dart';
 
 class FlowViewPage extends StatefulWidget {
   final Map<String, dynamic> quest;
+  final String title;
+  final String? analysisText;
+  final List<Map<String, dynamic>>? stepCorrectness;
 
-  const FlowViewPage({super.key, required this.quest});
+  const FlowViewPage({
+    super.key,
+    required this.quest,
+    this.title = 'Flow Editor',
+    this.analysisText,
+    this.stepCorrectness,
+  });
 
   @override
   State<FlowViewPage> createState() => _FlowViewPageState();
@@ -16,12 +25,14 @@ class FlowViewPage extends StatefulWidget {
 class _FlowViewPageState extends State<FlowViewPage> {
   late final _FlowGraph _graph;
   _FlowNode? _selected;
+  late final Map<String, _FlowNodeState> _nodeStates;
 
   @override
   void initState() {
     super.initState();
     final solves = widget.quest['solves'] as List<dynamic>? ?? [];
     _graph = _FlowGraphBuilder().build(solves);
+    _nodeStates = _buildNodeStates(widget.stepCorrectness);
   }
 
   @override
@@ -31,7 +42,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
     final questAnswerBlocks = parseContentBlocks(questData['quest_answer']);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Flow Editor'),
+        title: Text(widget.title),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -103,6 +114,37 @@ class _FlowViewPageState extends State<FlowViewPage> {
               textStyle: const TextStyle(fontSize: 14, height: 1.4),
               latexStyle: const TextStyle(fontSize: 14, height: 1.4),
             ),
+            if (widget.analysisText != null) ...[
+              const SizedBox(height: 16),
+              const Text(
+                '분석 요약',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F7FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFCCD8FF)),
+                ),
+                child: ContentBlocksView(
+                  blocks: () {
+                    final trimmed = widget.analysisText!.trim();
+                    final blocks = parseTextWithLatex(trimmed);
+                    if (blocks.isNotEmpty) {
+                      return blocks;
+                    }
+                    return const [
+                      ContentBlock(type: 'text', content: '-'),
+                    ];
+                  }(),
+                  textStyle: const TextStyle(fontSize: 13, height: 1.4),
+                  latexStyle: const TextStyle(fontSize: 13, height: 1.4),
+                  inline: true,
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             const Text(
               '문제 정답',
@@ -126,13 +168,41 @@ class _FlowViewPageState extends State<FlowViewPage> {
         : _FlowCanvas(
             graph: _graph,
             selected: _selected,
+            nodeStates: _nodeStates,
             onNodeTap: (node) => setState(() => _selected = node),
           );
     return Card(
       margin: const EdgeInsets.all(12),
       child: SizedBox(
         height: height,
-        child: content,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_nodeStates.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 6,
+                  children: const [
+                    _LegendChip(
+                      label: '정답',
+                      color: Color(0xFF2D6BFF),
+                    ),
+                    _LegendChip(
+                      label: '오답',
+                      color: Color(0xFFE53935),
+                    ),
+                    _LegendChip(
+                      label: '이후 단계',
+                      color: Color(0xFFBDBDBD),
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(child: content),
+          ],
+        ),
       ),
     );
   }
@@ -198,16 +268,58 @@ class _FlowViewPageState extends State<FlowViewPage> {
       ),
     );
   }
+
+  Map<String, _FlowNodeState> _buildNodeStates(
+    List<Map<String, dynamic>>? stepCorrectness,
+  ) {
+    if (stepCorrectness == null || stepCorrectness.isEmpty) {
+      return {};
+    }
+    final nodes = _graph.nodes.values.toList()
+      ..sort((a, b) => _nodeIndex(a.id).compareTo(_nodeIndex(b.id)));
+    final firstIncorrect = stepCorrectness.indexWhere(
+      (entry) => entry['correct'] == false,
+    );
+    final states = <String, _FlowNodeState>{};
+    for (var i = 0; i < nodes.length; i++) {
+      final node = nodes[i];
+      if (firstIncorrect >= 0) {
+        if (i < firstIncorrect) {
+          states[node.id] = _FlowNodeState.correct;
+        } else if (i == firstIncorrect) {
+          states[node.id] = _FlowNodeState.incorrect;
+        } else {
+          states[node.id] = _FlowNodeState.dim;
+        }
+        continue;
+      }
+      if (i < stepCorrectness.length &&
+          stepCorrectness[i]['correct'] == true) {
+        states[node.id] = _FlowNodeState.correct;
+      }
+    }
+    return states;
+  }
+
+  int _nodeIndex(String id) {
+    final parts = id.split('-');
+    if (parts.length < 2) {
+      return 0;
+    }
+    return int.tryParse(parts.last) ?? 0;
+  }
 }
 
 class _FlowCanvas extends StatelessWidget {
   final _FlowGraph graph;
   final _FlowNode? selected;
+  final Map<String, _FlowNodeState> nodeStates;
   final ValueChanged<_FlowNode> onNodeTap;
 
   const _FlowCanvas({
     required this.graph,
     required this.selected,
+    required this.nodeStates,
     required this.onNodeTap,
   });
 
@@ -247,6 +359,7 @@ class _FlowCanvas extends StatelessWidget {
                 child: _FlowNodeCard(
                   node: node,
                   selected: isSelected,
+                  state: nodeStates[node.id] ?? _FlowNodeState.normal,
                   onTap: () => onNodeTap(node),
                 ),
               );
@@ -261,47 +374,134 @@ class _FlowCanvas extends StatelessWidget {
 class _FlowNodeCard extends StatelessWidget {
   final _FlowNode node;
   final bool selected;
+  final _FlowNodeState state;
   final VoidCallback onTap;
 
   const _FlowNodeCard({
     required this.node,
     required this.selected,
+    required this.state,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected ? Colors.blueAccent : Colors.black12;
+    final baseBorder = selected ? Colors.blueAccent : Colors.black12;
+    final style = _NodeStyle.fromState(state, baseBorder);
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor, width: selected ? 2 : 1),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x12000000),
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Center(
-          child: ClipRect(
-            child: ContentBlocksView(
-              blocks: node.flow.isEmpty
-                  ? [const ContentBlock(type: 'text', content: '-')]
-                  : node.flow,
-              textStyle: const TextStyle(fontSize: 12, height: 1.3),
-              latexStyle: const TextStyle(fontSize: 12, height: 1.3),
-              textAlign: TextAlign.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 2,
+      child: Opacity(
+        opacity: style.opacity,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: style.background,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: style.border, width: selected ? 2 : 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x12000000),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: ClipRect(
+              child: ContentBlocksView(
+                blocks: node.flow.isEmpty
+                    ? [const ContentBlock(type: 'text', content: '-')]
+                    : node.flow,
+                textStyle: const TextStyle(fontSize: 12, height: 1.3),
+                latexStyle: const TextStyle(fontSize: 12, height: 1.3),
+                textAlign: TextAlign.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 2,
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+enum _FlowNodeState { normal, correct, incorrect, dim }
+
+class _NodeStyle {
+  final Color background;
+  final Color border;
+  final double opacity;
+
+  const _NodeStyle({
+    required this.background,
+    required this.border,
+    required this.opacity,
+  });
+
+  factory _NodeStyle.fromState(_FlowNodeState state, Color fallbackBorder) {
+    switch (state) {
+      case _FlowNodeState.correct:
+        return const _NodeStyle(
+          background: Color(0xFFE9F0FF),
+          border: Color(0xFF2D6BFF),
+          opacity: 1,
+        );
+      case _FlowNodeState.incorrect:
+        return const _NodeStyle(
+          background: Color(0xFFFFEBEE),
+          border: Color(0xFFE53935),
+          opacity: 1,
+        );
+      case _FlowNodeState.dim:
+        return _NodeStyle(
+          background: const Color(0xFFF3F3F3),
+          border: fallbackBorder,
+          opacity: 0.45,
+        );
+      case _FlowNodeState.normal:
+        return _NodeStyle(
+          background: Colors.white,
+          border: fallbackBorder,
+          opacity: 1,
+        );
+    }
+  }
+}
+
+class _LegendChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _LegendChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

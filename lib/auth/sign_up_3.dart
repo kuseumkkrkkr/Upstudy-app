@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
-import '../mainstudent.dart';
+import 'package:s11/mainstudent.dart';
 import 'signup_flow.dart';
 
 class BuildpageCopyCopyWidget extends StatefulWidget {

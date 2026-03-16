@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/dialog_service.dart';
 import '../widgets/menu_button.dart';
 import '../widgets/header_bar.dart';
+import '../widgets/app_drawer.dart';
 import 'character_chat_debug_page.dart';
 import 'data_open_page.dart';
 import 'quick_generate_page.dart';
@@ -69,15 +70,17 @@ class _MainpageWidgetState extends State<MainpageWidget> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: Colors.grey[100],
+        drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
             children: [
               // 상단 헤더
-              HeaderBar(
-                onSearchPressed: () =>
-                    DialogService.openDialog(context, title: '검색'),
-                onMenuPressed: () =>
-                    DialogService.openDialog(context, title: '메뉴'),
+              Builder(
+                builder: (context) => HeaderBar(
+                  onSearchPressed: () =>
+                      DialogService.openDialog(context, title: '검색'),
+                  onMenuPressed: () => toggleAppDrawer(context),
+                ),
               ),
 
               // 메뉴 버튼 목록

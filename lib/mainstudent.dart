@@ -1,14 +1,19 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'docx_box.dart' as docx;
 import 'friend.dart';
 import 'study_center.dart' as study_center;
+import 'widgets/app_drawer.dart';
 import 'widgets/modals/curriculum_modal.dart';
 import 'widgets/modals/daily_test_modal.dart';
 import 'widgets/modals/learning_tools_modal.dart';
+import 'widgets/modals/rating_detail_modal.dart';
 import 'widgets/modals/social_modal.dart';
 import 'widgets/modals/study_mode_modal.dart';
 import 'widgets/modals/today_tasks_modal.dart';
+import 'models/course.dart';
+import 'pages/course_pages.dart';
 
 const _green = Color(0xFF1B402B);
 const _lightGreen = Color(0xFF45BF63);
@@ -46,6 +51,16 @@ double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
   return scale;
 }
 
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
+
+String _formatTasksSummary(List<String> tasks) {
+  if (tasks.isEmpty) return '등록된 일정이 없습니다.';
+  if (tasks.length == 1) return tasks.first;
+  if (tasks.length == 2) return '${tasks[0]}\n${tasks[1]}';
+  return '${tasks[0]}\n${tasks[1]} 외 ${tasks.length - 2}개';
+}
+
 class MainStudentPage extends StatefulWidget {
   const MainStudentPage({super.key, this.username});
 
@@ -58,17 +73,41 @@ class MainStudentPage extends StatefulWidget {
 class _MainStudentPageState extends State<MainStudentPage> {
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
+  Map<DateTime, List<String>> _tasksByDate = {};
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
+    final today = _dateOnly(DateTime.now());
+    _tasksByDate = {
+      today: ['과제 A 완료', '수행평가 B 준비', '모의고사 정리'],
+    };
   }
 
   void _handleScroll() {
     final offset = _scrollController.offset;
     if (offset == _scrollOffset) return;
     setState(() => _scrollOffset = offset);
+  }
+
+  void _handleTasksChanged(Map<DateTime, List<String>> updated) {
+    setState(() {
+      _tasksByDate = {
+        for (final entry in updated.entries)
+          _dateOnly(entry.key): List<String>.from(entry.value),
+      };
+    });
+  }
+
+  Future<void> _handleCourseTap() async {
+    final selected = await showCurriculumModal(context: context);
+    if (!mounted || selected == null) {
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => CourseDetailPage(course: selected)),
+    );
   }
 
   @override
@@ -81,18 +120,25 @@ class _MainStudentPageState extends State<MainStudentPage> {
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
     final media = MediaQuery.of(context);
-    final safeHeight = media.size.height - media.padding.top - media.padding.bottom;
+    final safeHeight =
+        media.size.height - media.padding.top - media.padding.bottom;
     final headerHeight = 72 * scale;
     final heroHeight = math.max(360 * scale, safeHeight - headerHeight);
     final fadeDistance = heroHeight;
     final heroOpacity = fadeDistance <= 0
         ? 1.0
         : (1 - (_scrollOffset / fadeDistance)).clamp(0.0, 1.0) as double;
+    final today = _dateOnly(DateTime.now());
+    final todayTasks = _tasksByDate[today] ?? const <String>[];
+    final activeCourse = kSampleCourses.isNotEmpty
+        ? kSampleCourses.first
+        : null;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: Colors.white,
+        drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
             children: [
@@ -123,7 +169,18 @@ class _MainStudentPageState extends State<MainStudentPage> {
                           );
                         },
                       ),
-                      _LearningSection(),
+                      _LearningSection(
+                        todayTasks: todayTasks,
+                        activeCourse: activeCourse,
+                        onCourseTap: _handleCourseTap,
+                        onTodayTasksTap: () {
+                          showTodayTasksModal(
+                            context: context,
+                            tasksByDate: _tasksByDate,
+                            onTasksChanged: _handleTasksChanged,
+                          );
+                        },
+                      ),
                       _BottomSection(),
                     ],
                   ),
@@ -152,13 +209,13 @@ class _Header extends StatelessWidget {
           IconButton(
             iconSize: 28 * scale,
             icon: const Icon(Icons.menu_outlined, color: _green),
-            onPressed: () {},
+            onPressed: () => toggleAppDrawer(context),
           ),
 
-          // ✅ 메뉴 버튼 ↔ 로고 간 기본 간격
+          // 메뉴 버튼과 로고 기본 간격
           SizedBox(width: 12 * scale),
 
-          // ✅ AIFlow 앞 간격
+          // 브랜드 여백
           SizedBox(width: 12 * scale),
 
           Text(
@@ -171,7 +228,7 @@ class _Header extends StatelessWidget {
             ),
           ),
 
-          // ✅ AIFlow 뒤 간격
+          // 브랜드 뒤 여백
           SizedBox(width: 120 * scale),
 
           Expanded(
@@ -195,7 +252,16 @@ class _Header extends StatelessWidget {
                           );
                         },
                       ),
-                      const _NavItemData('문서고'),
+                      _NavItemData(
+                        '문서함',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const docx.BookWidget(),
+                            ),
+                          );
+                        },
+                      ),
                       _NavItemData(
                         '친구/소셜',
                         onTap: () {
@@ -235,11 +301,7 @@ class _NavItemData {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.label,
-    required this.fontSize,
-    this.onTap,
-  });
+  const _NavItem({required this.label, required this.fontSize, this.onTap});
   final String label;
   final double fontSize;
   final VoidCallback? onTap;
@@ -471,12 +533,12 @@ class _StatPage1 extends StatelessWidget {
       children: [
         const Spacer(),
 
-        // 🔹 여기부터가 "하나의 그룹"
+        // ?뵻 ?ш린遺?곌? "?섎굹??洹몃９"
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '안녕하세요 $displayName님',
+              '안녕하세요, $displayName님',
               style: _ts(
                 size: 36 * scale,
                 color: Colors.white,
@@ -505,14 +567,14 @@ class _StatPage1 extends StatelessWidget {
             _SimpleMiniChart(width: 260 * scale, height: 60 * scale),
             SizedBox(height: 8 * scale),
             Text(
-              '일주일간의 활동량 추이를 보여줍니다',
+              '일주일간의 활동 추이를 보여줍니다.',
               style: _ts(size: 12 * scale, color: _grey),
               textAlign: TextAlign.center,
             ),
           ],
         ),
 
-        // 🔹 그룹 끝
+        // ?뵻 洹몃９ ??
         const Spacer(),
       ],
     );
@@ -533,7 +595,7 @@ class _StatPage2 extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            '안녕하세요 $displayName님',
+            '안녕하세요, $displayName님',
             style: _ts(
               size: 36 * scale,
               color: Colors.white,
@@ -552,28 +614,28 @@ class _StatPage2 extends StatelessWidget {
                   percent: 0.8,
                   color: const Color(0xFFEFB339),
                   label: '50개',
-                  subtitle: '푼 문제 수',
+                  subtitle: '문제 풀이',
                 ),
                 SizedBox(width: 16 * scale),
                 _CircleStat(
                   percent: 0.4,
                   color: const Color(0xFFEF394D),
                   label: '9.54',
-                  subtitle: '살린 레이트',
+                  subtitle: '평균 점수',
                 ),
                 SizedBox(width: 16 * scale),
                 _CircleStat(
                   percent: 1.0,
                   color: const Color(0xFF3965EF),
                   label: '7일',
-                  subtitle: '이번주 출석일 수',
+                  subtitle: '이번 주 출석',
                 ),
                 SizedBox(width: 16 * scale),
                 _CircleStat(
                   percent: 0.87,
                   color: const Color(0xFF03A113),
                   label: '87%',
-                  subtitle: '평균 정답률',
+                  subtitle: '정답률',
                 ),
               ],
             ),
@@ -585,9 +647,29 @@ class _StatPage2 extends StatelessWidget {
 }
 
 class _LearningSection extends StatelessWidget {
+  const _LearningSection({
+    required this.todayTasks,
+    required this.activeCourse,
+    required this.onCourseTap,
+    required this.onTodayTasksTap,
+  });
+
+  final List<String> todayTasks;
+  final Course? activeCourse;
+  final VoidCallback onCourseTap;
+  final VoidCallback onTodayTasksTap;
+
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
+    final todayCount = todayTasks.length;
+    final todaySummary = _formatTasksSummary(todayTasks);
+    final progressPercent = activeCourse == null
+        ? null
+        : (activeCourse!.progress * 100).round();
+    final courseSummary = activeCourse == null
+        ? '시작할 과정을 선택하세요.'
+        : '${activeCourse!.title}\n진행률 $progressPercent%';
 
     return Padding(
       padding: EdgeInsets.fromLTRB(20 * scale, 20 * scale, 20 * scale, 0),
@@ -597,15 +679,10 @@ class _LearningSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(20 * scale),
           boxShadow: const [_shadow],
         ),
-
-        // 회색 카드 상·하 동일 패딩
         padding: EdgeInsets.symmetric(vertical: 20 * scale),
-
         child: Column(
           children: [
             _LearnBanner(onTap: () => showStudyModeModal(context: context)),
-
-            // ───────────────── 1번째 Row
             Padding(
               padding: EdgeInsets.only(
                 top: 16 * scale,
@@ -617,73 +694,63 @@ class _LearningSection extends StatelessWidget {
                   Expanded(
                     child: _ProgressCard(
                       title: '일일 테스트',
-                      subtitle: '상세보기',
-                      progressText: '진행률 15 / 20',
+                      subtitle: '자세히 보기',
+                      progressText: '진행 15 / 20',
                       progressValue: 0.6,
-                        onTap: () => showDailyTestModal(context: context),
+                      onTap: () => showDailyTestModal(context: context),
                     ),
                   ),
                   SizedBox(width: 6 * scale),
                   Expanded(
                     child: _ProgressCard(
-                      title: '오늘 할일 4건',
-                      subtitle: '상세보기',
-                      progressText: '과제 A완성\n수행평가 B 완성 등 4건',
+                      title: '오늘 할 일 ${todayCount}개',
+                      subtitle: '자세히 보기',
+                      progressText: todaySummary,
                       progressValue: null,
                       showProgressBar: false,
-                        onTap: () => showTodayTasksModal(context: context),
+                      onTap: onTodayTasksTap,
                     ),
                   ),
                 ],
               ),
             ),
-
             SizedBox(height: 6 * scale),
-
-            // ───────────────── 2번째 Row
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 14 * scale),
               child: IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 학습도구
-                      Expanded(
-                        child: _ProgressCard(
-                          title: '학습도구',
-                          subtitle: '',
-                          progressText: '',
-                          progressValue: null,
-                          showProgressBar: false,
-                          onTap: () => showLearningToolsModal(context: context),
-                        ),
-                      ),
-
-                    SizedBox(width: 6 * scale),
-
-                    // 커리큘럼 + 소셜
                     Expanded(
-                        child: Column(
+                      child: _ProgressCard(
+                        title: '학습 도구',
+                        subtitle: '',
+                        progressText: '',
+                        progressValue: null,
+                        showProgressBar: false,
+                        onTap: () => showLearningToolsModal(context: context),
+                      ),
+                    ),
+                    SizedBox(width: 6 * scale),
+                    Expanded(
+                      child: Column(
                         children: [
                           _ProgressCard(
-                            title: '커리큘럼 보기',
+                            title: '과정 트랙',
                             subtitle: '',
-                            progressText: '진행중 커리큘럼 8건',
-                            progressValue: null,
-                            showProgressBar: false,
-                              onTap: () => showCurriculumModal(context: context),
+                            progressText: courseSummary,
+                            progressValue: activeCourse?.progress,
+                            showProgressBar: activeCourse != null,
+                            onTap: onCourseTap,
                           ),
-
-                          // ⭐ 1번째 Row와 동일한 세로 간격
                           SizedBox(height: 6 * scale),
-
                           _ProgressCard(
-                            title: '소셜',
+                            title: '커뮤니티',
                             subtitle: '',
-                            progressText: '새로운 알림 3',
+                            progressText: '새 메시지 3개',
                             progressValue: null,
                             showProgressBar: false,
-                              onTap: () => showSocialModal(context: context),
+                            onTap: () => showSocialModal(context: context),
                           ),
                         ],
                       ),
@@ -905,9 +972,34 @@ class _BottomSection extends StatelessWidget {
                           top: 4 * scale,
                           bottom: 10 * scale,
                         ),
-                        child: Text(
-                          '레이팅 자세보기 및 보고서 보기',
-                          style: _ts(size: 12 * scale),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8 * scale),
+                            onTap: () =>
+                                showRatingDetailModal(context: context),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 6 * scale,
+                                horizontal: 4 * scale,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '레이팅 자세히 보기 및 보고서 보기',
+                                    style: _ts(size: 12 * scale),
+                                  ),
+                                  SizedBox(width: 6 * scale),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 12 * scale,
+                                    color: _green,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -938,7 +1030,7 @@ class _BottomSection extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'AIFLOW LAB',
+                          'AIFlow',
                           style: _ts(
                             size: 30 * scale,
                             weight: FontWeight.w900,
@@ -947,7 +1039,7 @@ class _BottomSection extends StatelessWidget {
                         ),
                         SizedBox(height: 6 * scale),
                         Text(
-                          '학습커뮤니티입니다\n인기글/상승 게시물을 확인하세요',
+                          '학습 커뮤니티입니다.\n멘토링/상담 게시물을 확인하세요.',
                           textAlign: TextAlign.center,
                           style: _ts(
                             size: 10 * scale,
@@ -977,7 +1069,7 @@ class _BottomSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '이벤트',
+                        '대회 일정',
                         style: _ts(size: 18 * scale, weight: FontWeight.bold),
                       ),
                       Padding(

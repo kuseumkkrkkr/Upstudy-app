@@ -89,3 +89,42 @@ List<ContentBlock> prependTextBlock(
 String contentBlocksToPlainText(List<ContentBlock> blocks) {
   return blocks.map((block) => block.content).join(' ').trim();
 }
+
+List<ContentBlock> parseTextWithLatex(String text) {
+  if (text.trim().isEmpty) {
+    return [];
+  }
+  final blocks = <ContentBlock>[];
+  const delimiter = '\$\$';
+  var cursor = 0;
+  while (cursor < text.length) {
+    final start = text.indexOf(delimiter, cursor);
+    if (start < 0) {
+      final tail = text.substring(cursor);
+      if (tail.isNotEmpty) {
+        blocks.add(ContentBlock(type: 'text', content: tail));
+      }
+      break;
+    }
+    if (start > cursor) {
+      final chunk = text.substring(cursor, start);
+      if (chunk.isNotEmpty) {
+        blocks.add(ContentBlock(type: 'text', content: chunk));
+      }
+    }
+    final end = text.indexOf(delimiter, start + delimiter.length);
+    if (end < 0) {
+      final tail = text.substring(start);
+      if (tail.isNotEmpty) {
+        blocks.add(ContentBlock(type: 'text', content: tail));
+      }
+      break;
+    }
+    final latex = text.substring(start + delimiter.length, end).trim();
+    if (latex.isNotEmpty) {
+      blocks.add(ContentBlock(type: 'latex', content: latex));
+    }
+    cursor = end + 2;
+  }
+  return blocks;
+}

@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from auth import (
@@ -25,6 +26,7 @@ from auth import (
     validate_school,
     validate_username,
 )
+from analysis_service import analyze_submission
 from baselines.basemodel import ContentBlocks
 from exam_service import plan_exam_items
 from generater.make import make
@@ -52,16 +54,22 @@ app = FastAPI()
 security = HTTPBearer(auto_error=False)
 _GEN_SEMAPHORE = asyncio.Semaphore(2)
 
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_ASSETS_DIR = os.path.join(_BASE_DIR, "assets")
+os.makedirs(_ASSETS_DIR, exist_ok=True)
+
 _raw_origins = os.environ.get("OMJ_CORS_ORIGINS", "*")
 _origin_list = [origin.strip() for origin in _raw_origins.split(",") if origin.strip()]
 _allow_all = "*" in _origin_list
 app.add_middleware(
-    CORSMiddleware,
+  CORSMiddleware,
     allow_origins=["*"] if _allow_all else _origin_list,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=False,
 )
+
+app.mount("/assets", StaticFiles(directory=_ASSETS_DIR), name="assets")
 
 
 class RangeInput(BaseModel):
@@ -191,6 +199,29 @@ class TestChatMessageResponse(BaseModel):
     input_token_estimate: int
     output_token_estimate: int
     token_estimate: int
+
+
+class SolveAnalysisRequest(BaseModel):
+    quest_id: Optional[str] = None
+    quest_model: List[str] = Field(default_factory=list)
+    problem: Optional[str] = None
+    problem_index: Optional[int] = None
+    problem_count: Optional[int] = None
+    hash_tags: List[str] = Field(default_factory=list)
+    student_work_image: Optional[str] = None
+    recognized_text: List[Dict[str, Any]] = Field(default_factory=list)
+    writing_events: List[Dict[str, Any]] = Field(default_factory=list)
+    step_correctness: List[Dict[str, Any]] = Field(default_factory=list)
+    time_weakness: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class SolveAnalysisResponse(BaseModel):
+    analysis: str
+    recognized_text: List[Dict[str, Any]] = Field(default_factory=list)
+    ocr_source: str
+    quest_id: Optional[str] = None
+    quest_model: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
 
 
 def _get_user_id(
@@ -463,6 +494,18 @@ def test_chat_message(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return TestChatMessageResponse(**result)
+
+
+@app.post("/analysis/solve", response_model=SolveAnalysisResponse)
+def analyze_solve(
+    payload: SolveAnalysisRequest,
+    user_id: str = Depends(_get_user_id),
+) -> SolveAnalysisResponse:
+    try:
+        result = analyze_submission(payload.model_dump())
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return SolveAnalysisResponse(**result)
 
 
 def _resolve_items(items: List[Dict[str, Any]]) -> List[ExamItemResponse]:

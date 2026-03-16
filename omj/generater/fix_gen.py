@@ -520,15 +520,15 @@ def calculate_difficulty(hash_tags: List[str], ai_solves: List[AISolveStep]) -> 
     """
     Difficulty formula:
         1.0 * hashtag_count
-        + 1.0 * total_flow_count
-        + 1.0 * branch_lane_count (number of branch lanes across all splits)
-        + 1.0 * strategy_difficulty (sum of enter_huddle)
+        + 4.0 * total_flow_count
+        + 3.0 * branch_lane_count (number of branch lanes across all splits)
+        + 2.0 * strategy_difficulty (sum of enter_huddle)
     """
     tag_count = len(_build_tag_mapping(hash_tags))
     flow_count = _count_total_flows(ai_solves)
     branch_lanes = _count_branch_lanes(ai_solves)
     strategy_score = _sum_enter_huddle(ai_solves)
-    return int(tag_count + flow_count + branch_lanes + strategy_score)
+    return int(tag_count + 4 * flow_count + 3 * branch_lanes + 2 * strategy_score)
 
 
 def _convert_ai_solves(

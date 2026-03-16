@@ -48,7 +48,7 @@ API endpoints:
  - `exam`, `exam_item` for exam sessions.
 
 Difficulty formula:
-`difficulty = hashtag_count + total_flow_count + branch_lane_count + sum(enter_huddle)` (weights = 1.0 for now). Branching flows are stored as JSON in the `branches` column of `solve_step`.
+`difficulty = 1*hashtag_count + 4*total_flow_count + 3*branch_lane_count + 2*sum(enter_huddle)`. Branching flows are stored as JSON in the `branches` column of `solve_step`.
 
 ## Structure
 - `main.py`: CLI entry point.

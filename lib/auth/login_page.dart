@@ -3,7 +3,7 @@
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
 import '../services/kakao_login_service.dart';
-import '../mainstudent.dart';
+import 'package:s11/mainstudent.dart';
 import 'sign_up.dart';
 
 class LoginPage extends StatefulWidget {
