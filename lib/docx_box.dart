@@ -1,6 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'widgets/app_drawer.dart';
+import 'friend.dart';
+import 'mainstudent.dart';
+import 'pages/exam_paper_page.dart';
+import 'services/exam_paper_store.dart';
+import 'study_center.dart' as study_center;
 
 void main() => runApp(const MyApp());
 
@@ -29,8 +36,17 @@ class BookWidget extends StatelessWidget {
   static const Color borderColor = Color(0xFFE0E3E7);
   static const Color bgColor = Color(0xFFF8F8F8);
 
+  double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
+    final width = MediaQuery.of(context).size.width;
+    final scale = width / 1100;
+    if (scale < min) return min;
+    if (scale > max) return max;
+    return scale;
+  }
+
   @override
   Widget build(BuildContext context) {
+    unawaited(ExamPaperStore.load());
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -53,79 +69,124 @@ class BookWidget extends StatelessWidget {
 
   // ── 상단 헤더 ──────────────────────────────────────────────────────────────
   Widget _buildHeader(BuildContext context) {
+    final scale = _uiScale(context);
     return Container(
       width: double.infinity,
-      height: 90,
+      height: 72 * scale,
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
+          SizedBox(width: 16 * scale),
           IconButton(
-            icon: const Icon(
-              Icons.menu_outlined,
-              color: primaryGreen,
-              size: 36,
-            ),
+            iconSize: 28 * scale,
+            icon: const Icon(Icons.menu_outlined, color: primaryGreen),
             onPressed: () => toggleAppDrawer(context),
           ),
-          const SizedBox(width: 16),
-          const Text(
-            'AIFlow',
-            style: TextStyle(
-              color: primaryGreen,
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0,
-            ),
-          ),
-          const Spacer(),
-          _navItem('학습터'),
-          _navItem(
-            '문서고',
+          SizedBox(width: 12 * scale),
+          SizedBox(width: 12 * scale),
+          GestureDetector(
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BookWidget()),
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const MainStudentPage()),
+                (route) => false,
               );
             },
+            child: Text(
+              'AIFlow',
+              style: TextStyle(
+                color: primaryGreen,
+                fontSize: 36 * scale,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-          _navItem('친구/소셜'),
-          Padding(
-            padding: const EdgeInsets.only(right: 32),
-            child: _navItem('마켓플레이스'),
+          SizedBox(width: 120 * scale),
+          Expanded(
+            child: Container(
+              color: Colors.white,
+              height: 72 * scale,
+              alignment: Alignment.centerRight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _navItem(
+                      '학습터',
+                      fontSize: 16 * scale,
+                      horizontalPadding: 12 * scale,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const study_center.SoWidget(),
+                          ),
+                        );
+                      },
+                    ),
+                    _navItem(
+                      '문서고',
+                      fontSize: 16 * scale,
+                      horizontalPadding: 12 * scale,
+                    ),
+                    _navItem(
+                      '친구/소셜',
+                      fontSize: 16 * scale,
+                      horizontalPadding: 12 * scale,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SoWidget()),
+                        );
+                      },
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(right: 24 * scale),
+                      child: _navItem(
+                        '마켓플레이스',
+                        fontSize: 16 * scale,
+                        horizontalPadding: 12 * scale,
+                      ),
+                    ),
+                    SizedBox(width: 16 * scale),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _navItem(String label, {VoidCallback? onTap}) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
+  Widget _navItem(
+    String label, {
+    required double fontSize,
+    required double horizontalPadding,
+    VoidCallback? onTap,
+  }) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
     child: GestureDetector(
       onTap: onTap,
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: primaryGreen,
-          fontSize: 20,
+          fontSize: fontSize,
           fontWeight: FontWeight.normal,
         ),
       ),
     ),
   );
-
   // ── 히어로 배너 ────────────────────────────────────────────────────────────
   Widget _buildHeroSection(BuildContext context) {
     final ImageProvider heroImage = kIsWeb
         ? const NetworkImage('http://localhost:8000/assets/bookshelf.png')
         : const AssetImage('assets/bookshelf.png');
+    const List<double> recentRowVerticalPaddings = [12, 12, 12, 12];
     return Container(
       width: double.infinity,
-      height: 550,
+      height: 750,
       decoration: BoxDecoration(
-        image: DecorationImage(
-          fit: BoxFit.cover,
-          image: heroImage,
-        ),
+        image: DecorationImage(fit: BoxFit.cover, image: heroImage),
       ),
       child: Column(
         children: [
@@ -151,9 +212,9 @@ class BookWidget extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 0),
           // 최근 문서 카드 그리드
-          ..._buildRecentRows(),
+          ..._buildRecentRows(rowVerticalPaddings: recentRowVerticalPaddings),
         ],
       ),
     );
@@ -180,23 +241,32 @@ class BookWidget extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildRecentRows() {
+  List<Widget> _buildRecentRows({
+    List<double>? rowVerticalPaddings,
+    double defaultRowVerticalPadding = 12,
+  }) {
     final rows = [
       [_recentCard(label: '대학수학능력시험 문제집', sub: '최근 학습 5분전'), _recentCard()],
       [_recentCard(), _recentCard()],
       [_recentCard(), _recentCard()],
+      [_recentCard(), _recentCard()],
     ];
-    return rows
-        .map(
-          (row) => Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [row[0], const SizedBox(width: 40), row[1]],
-            ),
-          ),
-        )
-        .toList();
+    final paddings =
+        rowVerticalPaddings ??
+        List.filled(rows.length, defaultRowVerticalPadding);
+    return List.generate(rows.length, (index) {
+      final padding = index < paddings.length
+          ? paddings[index]
+          : defaultRowVerticalPadding;
+      final row = rows[index];
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: padding),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [row[0], const SizedBox(width: 40), row[1]],
+        ),
+      );
+    });
   }
 
   Widget _recentCard({String? label, String? sub}) {
@@ -258,6 +328,7 @@ class BookWidget extends StatelessWidget {
 
   // ── 하단 콘텐츠 영역 ───────────────────────────────────────────────────────
   Widget _buildBottomSection(BuildContext context) {
+    const double sectionVerticalGap = 15;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -269,33 +340,60 @@ class BookWidget extends StatelessWidget {
               children: [
                 _buildSectionCard(
                   title: '시험지',
-                  child: Column(
-                    children: [
-                      _documentItem(
-                        color: mediumGreen,
-                        icon: Icons.library_books_outlined,
-                        title: '2022 대학수학능력시험 대비 문제집',
-                        sub: '이수율 78% / 생성일 26.01.19',
-                      ),
-                      const SizedBox(height: 10),
-                      _emptyDocItem(),
-                    ],
+                  child: ValueListenableBuilder<List<ExamPaperEntry>>(
+                    valueListenable: ExamPaperStore.notifier,
+                    builder: (context, items, _) {
+                      final previewItems = items.take(2).toList();
+                      final placeholders = 2 - previewItems.length;
+                      final children = <Widget>[];
+                      if (items.isEmpty) {
+                        children.add(
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              '시험지가 없어요!',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      for (final entry in previewItems) {
+                        children.add(
+                          _documentItem(
+                            color: mediumGreen,
+                            icon: Icons.library_books_outlined,
+                            title: _examTitle(entry),
+                            sub: _examSubtitle(entry),
+                            onTap: () => _openExamPaper(context, entry),
+                          ),
+                        );
+                      }
+                      for (var i = 0; i < placeholders; i++) {
+                        children.add(_emptyDocItem());
+                      }
+                      return Column(
+                        children: _withSpacing(children, 10),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(height: 15),
                 _buildSectionCard(
                   title: '플래시카드',
                   child: Column(
                     children: [
                       _flashcardItem(title: '수열', subtitle: '중간고사 범위'),
                       _flashcardItem(title: 'Title', subtitle: 'Subtitle'),
-                      _flashcardItem(title: 'Title', subtitle: 'Subtitle'),
-                      _flashcardItem(title: 'Title', subtitle: 'Subtitle'),
                     ],
                   ),
                 ),
-                const SizedBox(height: 15),
-                _reportButton(),
+                Padding(
+                  padding: const EdgeInsets.only(top: sectionVerticalGap),
+                  child: _reportButton(),
+                ),
               ],
             ),
           ),
@@ -374,8 +472,9 @@ class BookWidget extends StatelessWidget {
     required IconData icon,
     required String title,
     required String sub,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    final card = Container(
       height: 120,
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
@@ -417,6 +516,15 @@ class BookWidget extends StatelessWidget {
         ],
       ),
     );
+    if (onTap == null) return card;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: card,
+      ),
+    );
   }
 
   Widget _emptyDocItem() {
@@ -426,6 +534,30 @@ class BookWidget extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: borderColor, width: 2),
         borderRadius: BorderRadius.circular(16),
+      ),
+    );
+  }
+
+  List<Widget> _withSpacing(List<Widget> children, double spacing) {
+    if (children.isEmpty) return const <Widget>[];
+    final spaced = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      spaced.add(children[i]);
+      if (i < children.length - 1) {
+        spaced.add(SizedBox(height: spacing));
+      }
+    }
+    return spaced;
+  }
+
+  void _openExamPaper(BuildContext context, ExamPaperEntry entry) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ExamPaperPage(
+          examId: entry.examId,
+          expectedQuestionCount:
+              entry.questionCount > 0 ? entry.questionCount : null,
+        ),
       ),
     );
   }
@@ -445,6 +577,36 @@ class BookWidget extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
     );
+  }
+
+  String _examTitle(ExamPaperEntry entry) {
+    final typeLabel = _examTypeLabel(entry.paperType);
+    return '$typeLabel 시험지';
+  }
+
+  String _examSubtitle(ExamPaperEntry entry) {
+    final count = entry.questionCount > 0 ? entry.questionCount : 0;
+    final dateLabel = _formatExamDate(entry.createdAt);
+    return '문항수 $count / 생성일 $dateLabel';
+  }
+
+  String _examTypeLabel(String raw) {
+    switch (raw) {
+      case 'aiflow':
+        return 'AIflow';
+      case 'csat':
+      default:
+        return '수능';
+    }
+  }
+
+  String _formatExamDate(int millis) {
+    if (millis <= 0) return '--.--.--';
+    final date = DateTime.fromMillisecondsSinceEpoch(millis);
+    final year = (date.year % 100).toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year.$month.$day';
   }
 
   Widget _reportButton() {

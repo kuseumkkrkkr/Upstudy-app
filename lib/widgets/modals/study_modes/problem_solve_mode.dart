@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:s11/models/concept_tag.dart';
+import 'package:s11/services/activity_store.dart';
 import 'package:s11/tryout.dart';
 
 VoidCallback buildProblemSolveAction(BuildContext context) {
@@ -10,6 +11,9 @@ VoidCallback buildProblemSolveAction(BuildContext context) {
     Future.microtask(() async {
       final config = await showProblemSolveModal(context: navigator.context);
       if (config == null) return;
+      try {
+        await ActivityStore.recordProblemSession(config: config.toJson());
+      } catch (_) {}
       navigator.push(
         MaterialPageRoute(
           builder: (_) => BuildpageWidget(config: config),

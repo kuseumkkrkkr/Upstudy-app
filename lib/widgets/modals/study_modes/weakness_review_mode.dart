@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -47,45 +47,45 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     _ReviewAction(icon: Icons.menu_book_outlined, label: '개념 다시보기'),
     _ReviewAction(icon: Icons.quiz_outlined, label: 'OX퀴즈 풀기'),
     _ReviewAction(icon: Icons.style_outlined, label: '플래시카드 보기'),
-    _ReviewAction(icon: Icons.edit_note_outlined, label: '백지복습하기'),
-    _ReviewAction(icon: Icons.chat_bubble_outline, label: '대화형 복습'),
+    _ReviewAction(icon: Icons.edit_note_outlined, label: '백지 복습하기'),
+    _ReviewAction(icon: Icons.chat_bubble_outline, label: '요약형 복습'),
   ];
 
   static final List<_UsageRecord> _records = [
     _UsageRecord(
-      title: '수열 - 등차수열 개념 다시보기',
-      subtitle: '개념 학습 · 2시간 전',
+      title: '수열 - 점화식 개념 다시보기',
+      subtitle: '개념 학습 후 2시간 경과',
       activityType: '개념 학습',
       ageHours: 2,
     ),
     _UsageRecord(
       title: '미적분 - 문제 다시풀기 5문항',
-      subtitle: '문제 풀이 · 6시간 전',
+      subtitle: '문제 풀이 후 6시간 경과',
       activityType: '문제 풀이',
       ageHours: 6,
     ),
     _UsageRecord(
       title: '확률과 통계 - OX퀴즈 10문항',
-      subtitle: '퀴즈 · 1일 전',
-      activityType: '퀴즈',
+      subtitle: '퀴즈 후 1일 경과',
+      activityType: 'OX퀴즈',
       ageHours: 24,
     ),
     _UsageRecord(
       title: '기하 - 플래시카드 복습',
-      subtitle: '플래시카드 · 3일 전',
+      subtitle: '플래시카드 후 3일 경과',
       activityType: '플래시카드',
       ageHours: 72,
     ),
     _UsageRecord(
-      title: '로그함수 - 백지복습',
-      subtitle: '백지복습 · 5일 전',
-      activityType: '백지복습',
+      title: '로그함수 - 백지 복습',
+      subtitle: '백지 복습 후 5일 경과',
+      activityType: '백지 복습',
       ageHours: 120,
     ),
     _UsageRecord(
-      title: '벡터 - 대화형 복습',
-      subtitle: '대화형 · 7일 전',
-      activityType: '대화형',
+      title: '벡터 - 요약형 복습',
+      subtitle: '요약형 후 7일 경과',
+      activityType: '요약형',
       ageHours: 168,
     ),
   ];
@@ -95,10 +95,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   static const _activityOptions = [
     '문제 풀이',
     '개념 학습',
-    '퀴즈',
+    'OX퀴즈',
     '플래시카드',
-    '백지복습',
-    '대화형',
+    '백지 복습',
+    '요약형',
   ];
 
   final Set<int> _selectedDays = {7};
@@ -188,7 +188,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                           Padding(
                             padding: EdgeInsets.only(bottom: 2 * scale),
                             child: Text(
-                              '약점과 복습',
+                              '약점 복습',
                               style: GoogleFonts.inter(
                                 fontSize: 26 * scale,
                                 fontWeight: FontWeight.w600,
@@ -280,7 +280,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '사용 기록',
+            '학습 기록',
             style: GoogleFonts.inter(
               fontSize: 16 * scale,
               fontWeight: FontWeight.w600,
@@ -392,7 +392,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '복습할 범위 선택',
+              '복습 범위 선택',
               style: GoogleFonts.inter(
                 fontSize: 16 * scale,
                 fontWeight: FontWeight.w600,
@@ -597,3 +597,7 @@ class _FilterOption<T> {
   final T value;
   final String label;
 }
+
+
+
+

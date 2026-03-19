@@ -168,6 +168,8 @@ def _ensure_user_table() -> None:
             school TEXT,
             profile_image TEXT,
             email TEXT,
+            ovr INTEGER DEFAULT 0,
+            status TEXT DEFAULT '',
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
             created_at TEXT NOT NULL
@@ -190,6 +192,10 @@ def _ensure_user_table() -> None:
         cur.execute("ALTER TABLE users ADD COLUMN school TEXT")
     if "profile_image" not in cols:
         cur.execute("ALTER TABLE users ADD COLUMN profile_image TEXT")
+    if "ovr" not in cols:
+        cur.execute("ALTER TABLE users ADD COLUMN ovr INTEGER DEFAULT 0")
+    if "status" not in cols:
+        cur.execute("ALTER TABLE users ADD COLUMN status TEXT DEFAULT ''")
     conn.commit()
     conn.close()
 

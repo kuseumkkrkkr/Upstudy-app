@@ -2,6 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import '../models/content_block.dart';
 
+String _sanitizeLatex(String value) {
+  var text = value.trim();
+  if (text.isEmpty) {
+    return text;
+  }
+  if (text.startsWith(r'\(') && text.endsWith(r'\)') && text.length > 4) {
+    text = text.substring(2, text.length - 2).trim();
+  } else if (text.startsWith(r'\[') &&
+      text.endsWith(r'\]') &&
+      text.length > 4) {
+    text = text.substring(2, text.length - 2).trim();
+  } else if (text.startsWith(r'$\$') &&
+      text.endsWith(r'$\$') &&
+      text.length > 4) {
+    text = text.substring(2, text.length - 2).trim();
+  } else if (text.startsWith(r'$') && text.endsWith(r'$') && text.length > 2) {
+    text = text.substring(1, text.length - 1).trim();
+  }
+  if (!text.contains(r'$')) {
+    return text;
+  }
+  final buffer = StringBuffer();
+  for (var i = 0; i < text.length; i++) {
+    final char = text[i];
+    if (char == r'$') {
+      final isEscaped = i > 0 && text[i - 1] == '\\';
+      if (isEscaped) {
+        buffer.write(char);
+      }
+      continue;
+    }
+    buffer.write(char);
+  }
+  return buffer.toString();
+}
+
 class ContentBlocksView extends StatelessWidget {
   final List<ContentBlock> blocks;
   final TextStyle? textStyle;
@@ -27,8 +63,7 @@ class ContentBlocksView extends StatelessWidget {
     if (blocks.isEmpty) {
       return const SizedBox.shrink();
     }
-    final effectiveTextStyle =
-        textStyle ?? DefaultTextStyle.of(context).style;
+    final effectiveTextStyle = textStyle ?? DefaultTextStyle.of(context).style;
     final effectiveLatexStyle = latexStyle ?? effectiveTextStyle;
     if (inline) {
       final spans = <InlineSpan>[];
@@ -37,13 +72,14 @@ class ContentBlocksView extends StatelessWidget {
           continue;
         }
         if (block.isLatex) {
+          final latex = _sanitizeLatex(block.content);
+          if (latex.isEmpty) {
+            continue;
+          }
           spans.add(
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
-              child: Math.tex(
-                block.content,
-                textStyle: effectiveLatexStyle,
-              ),
+              child: Math.tex(latex, textStyle: effectiveLatexStyle),
             ),
           );
         } else {
@@ -65,17 +101,17 @@ class ContentBlocksView extends StatelessWidget {
       if (block.content.isEmpty) {
         continue;
       }
-      final widget = block.isLatex
-          ? Math.tex(
-              block.content,
-              textStyle: effectiveLatexStyle,
-            )
-          : Text(
-              block.content,
-              style: effectiveTextStyle,
-              textAlign: textAlign,
-            );
-      children.add(widget);
+      if (block.isLatex) {
+        final latex = _sanitizeLatex(block.content);
+        if (latex.isEmpty) {
+          continue;
+        }
+        children.add(Math.tex(latex, textStyle: effectiveLatexStyle));
+        continue;
+      }
+      children.add(
+        Text(block.content, style: effectiveTextStyle, textAlign: textAlign),
+      );
     }
     if (children.isEmpty) {
       return const SizedBox.shrink();

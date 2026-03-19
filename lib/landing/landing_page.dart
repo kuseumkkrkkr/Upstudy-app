@@ -9,6 +9,7 @@ class LandingPage extends StatelessWidget {
   void _goToLogin(BuildContext context) {
     showDialog<void>(
       context: context,
+      useRootNavigator: true,
       barrierDismissible: true,
       builder: (_) => Dialog(
         backgroundColor: Colors.white,
@@ -21,15 +22,7 @@ class LandingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true),
-      home: Builder(
-        builder: (context) {
-          return _buildMobileLayout(context);
-        },
-      ),
-    );
+    return _buildMobileLayout(context);
   }
 
   // 모바일 레이아웃

@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../models/course.dart';
+import 'package:s11/models/course.dart';
 
 Future<Course?> showCurriculumModal({required BuildContext context}) {
   return showDialog<Course>(

@@ -40,6 +40,9 @@ List<ContentBlock> parseContentBlocks(dynamic value) {
     if (value.isEmpty) {
       return [];
     }
+    if (value.contains(r'$$')) {
+      return parseTextWithLatex(value);
+    }
     return [ContentBlock(type: 'text', content: value)];
   }
 

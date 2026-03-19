@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../models/course.dart';
+import 'package:s11/models/course.dart';
+import 'package:s11/services/activity_store.dart';
 import '../study_center.dart' show StudyCenterNavBar;
+import 'course_learning_page.dart';
 
 const _green = Color(0xFF1B402B);
 const _lightGreen = Color(0xFF45BF63);
@@ -19,6 +22,11 @@ double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
   if (scale < min) return min;
   if (scale > max) return max;
   return scale;
+}
+
+int _courseNumber(Course course) {
+  final index = kSampleCourses.indexWhere((entry) => entry.id == course.id);
+  return index >= 0 ? index + 1 : 0;
 }
 
 class CourseCatalogPage extends StatelessWidget {
@@ -443,14 +451,33 @@ class _MetaPill extends StatelessWidget {
   }
 }
 
-class CourseDetailPage extends StatelessWidget {
+class CourseDetailPage extends StatefulWidget {
   const CourseDetailPage({super.key, required this.course});
 
   final Course course;
 
   @override
+  State<CourseDetailPage> createState() => _CourseDetailPageState();
+}
+
+class _CourseDetailPageState extends State<CourseDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    final number = _courseNumber(widget.course);
+    unawaited(
+      ActivityStore.recordCourseView(
+        courseId: widget.course.id,
+        courseNumber: number > 0 ? number.toString() : widget.course.id,
+        screen: 'detail',
+      ).catchError((_) {}),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
+    final course = widget.course;
     final progressPercent = (course.progress * 100).round();
     final primaryActionLabel =
         course.progress > 0 ? '코스 계속하기' : '코스 시작하기';
@@ -539,7 +566,13 @@ class CourseDetailPage extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => CourseLearningPage(course: course),
+                            ),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _green,
                           foregroundColor: Colors.white,
@@ -677,8 +710,14 @@ class _DetailHero extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 16 * scale),
-              ElevatedButton(
-                onPressed: () {},
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CourseLearningPage(course: course),
+                      ),
+                    );
+                  },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _green,
                   foregroundColor: Colors.white,

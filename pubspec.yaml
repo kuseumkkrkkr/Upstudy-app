@@ -18,6 +18,8 @@ dependencies:
   percent_indicator: ^4.2.3
   kakao_flutter_sdk_user: ^1.10.0
   shared_preferences: ^2.2.2
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
 
 environment:
   sdk: ^3.9.0

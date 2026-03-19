@@ -1,4 +1,5 @@
-﻿import 'dart:math' as math;
+﻿import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'docx_box.dart' as docx;
@@ -12,7 +13,11 @@ import 'widgets/modals/rating_detail_modal.dart';
 import 'widgets/modals/social_modal.dart';
 import 'widgets/modals/study_mode_modal.dart';
 import 'widgets/modals/today_tasks_modal.dart';
-import 'models/course.dart';
+import 'services/activity_store.dart';
+import 'services/attendance_store.dart';
+import 'services/rating_store.dart';
+import 'services/social_notification_store.dart';
+import '../models/course.dart';
 import 'pages/course_pages.dart';
 
 const _green = Color(0xFF1B402B);
@@ -20,6 +25,7 @@ const _lightGreen = Color(0xFF45BF63);
 const _headerGreen = Color(0xFF22593A);
 const _grey = Color(0xFFC9C9C9);
 const _bgGrey = Color(0xFFF7F7F7);
+const int _problemSolveTarget = 50;
 const _shadow = BoxShadow(
   blurRadius: 4,
   color: Color(0x33000000),
@@ -61,6 +67,36 @@ String _formatTasksSummary(List<String> tasks) {
   return '${tasks[0]}\n${tasks[1]} 외 ${tasks.length - 2}개';
 }
 
+String _formatActivityList(List<String> items, {int maxItems = 6}) {
+  if (items.isEmpty) return '없음';
+  if (items.length <= maxItems) return items.join(', ');
+  final head = items.take(maxItems).join(', ');
+  return '$head 외 ${items.length - maxItems}개';
+}
+
+String _formatSocialNotice(SocialNotificationSnapshot snapshot) {
+  final messages = snapshot.unreadMessages;
+  final requests = snapshot.friendRequests;
+  if (messages <= 0 && requests <= 0) {
+    return '';
+  }
+  final parts = <String>[];
+  if (messages > 0) {
+    parts.add('쪽지 ${messages}건');
+  }
+  if (requests > 0) {
+    parts.add('친구추가 요청 ${requests}건');
+  }
+  return parts.join(' · ');
+}
+String _formatDateLabel(String dateKey) {
+  final parts = dateKey.split('-');
+  if (parts.length == 3) {
+    return '${parts[0]}.${parts[1]}.${parts[2]}';
+  }
+  return dateKey;
+}
+
 class MainStudentPage extends StatefulWidget {
   const MainStudentPage({super.key, this.username});
 
@@ -79,10 +115,15 @@ class _MainStudentPageState extends State<MainStudentPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
-    final today = _dateOnly(DateTime.now());
-    _tasksByDate = {
-      today: ['과제 A 완료', '수행평가 B 준비', '모의고사 정리'],
-    };
+    unawaited(
+      ActivityStore.load().catchError((_) => ActivitySnapshot.empty()),
+    );
+    unawaited(
+      AttendanceStore.ensureDailyAttendance().catchError(
+        (_) => AttendanceSnapshot.empty(),
+      ),
+    );
+    unawaited(RatingStore.refresh());
   }
 
   void _handleScroll() {
@@ -533,7 +574,7 @@ class _StatPage1 extends StatelessWidget {
       children: [
         const Spacer(),
 
-        // ?뵻 ?ш린遺?곌? "?섎굹??洹몃９"
+        // 상단 인사 및 활동 요약 영역
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -574,7 +615,7 @@ class _StatPage1 extends StatelessWidget {
           ],
         ),
 
-        // ?뵻 洹몃９ ??
+        // 하단 여백
         const Spacer(),
       ],
     );
@@ -610,11 +651,21 @@ class _StatPage2 extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _CircleStat(
-                  percent: 0.8,
-                  color: const Color(0xFFEFB339),
-                  label: '50개',
-                  subtitle: '문제 풀이',
+                ValueListenableBuilder<ActivitySnapshot>(
+                  valueListenable: ActivityStore.notifier,
+                  builder: (context, snapshot, _) {
+                    final percent = _problemSolveTarget <= 0
+                        ? 0.0
+                        : (snapshot.totalSolvedCount / _problemSolveTarget)
+                            .clamp(0.0, 1.0)
+                            .toDouble();
+                    return _CircleStat(
+                      percent: percent,
+                      color: const Color(0xFFEFB339),
+                      label: '${snapshot.totalSolvedCount}개',
+                      subtitle: '문제 풀이',
+                    );
+                  },
                 ),
                 SizedBox(width: 16 * scale),
                 _CircleStat(
@@ -624,18 +675,37 @@ class _StatPage2 extends StatelessWidget {
                   subtitle: '평균 점수',
                 ),
                 SizedBox(width: 16 * scale),
-                _CircleStat(
-                  percent: 1.0,
-                  color: const Color(0xFF3965EF),
-                  label: '7일',
-                  subtitle: '이번 주 출석',
+                ValueListenableBuilder<AttendanceSnapshot>(
+                  valueListenable: AttendanceStore.notifier,
+                  builder: (context, snapshot, _) {
+                    final count = snapshot.weekCount;
+                    final percent =
+                        (count / 7).clamp(0.0, 1.0).toDouble();
+                    return _CircleStat(
+                      percent: percent,
+                      color: const Color(0xFF3965EF),
+                      label: '${count}일',
+                      subtitle: '이번 주 출석',
+                    );
+                  },
                 ),
                 SizedBox(width: 16 * scale),
-                _CircleStat(
-                  percent: 0.87,
-                  color: const Color(0xFF03A113),
-                  label: '87%',
-                  subtitle: '정답률',
+                ValueListenableBuilder<ActivitySnapshot>(
+                  valueListenable: ActivityStore.notifier,
+                  builder: (context, snapshot, _) {
+                    final correct = snapshot.totalSolvedCount;
+                    final incorrect = snapshot.totalIncorrectCount;
+                    final total = correct + incorrect;
+                    final percent =
+                        total == 0 ? 0.0 : (correct / total).clamp(0.0, 1.0);
+                    final label = '${(percent * 100).round()}%';
+                    return _CircleStat(
+                      percent: percent,
+                      color: const Color(0xFF03A113),
+                      label: label,
+                      subtitle: '정답률',
+                    );
+                  },
                 ),
               ],
             ),
@@ -692,12 +762,23 @@ class _LearningSection extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: _ProgressCard(
-                      title: '일일 테스트',
-                      subtitle: '자세히 보기',
-                      progressText: '진행 15 / 20',
-                      progressValue: 0.6,
-                      onTap: () => showDailyTestModal(context: context),
+                    child: ValueListenableBuilder<AttendanceSnapshot>(
+                      valueListenable: AttendanceStore.notifier,
+                      builder: (context, snapshot, _) {
+                        final todayDone =
+                            AttendanceStore.isTodayChecked(snapshot);
+                        const total = 1;
+                        final completed = todayDone ? 1 : 0;
+                        final progress = todayDone ? 1.0 : 0.0;
+                        final statusText = todayDone ? '출석 완료' : '출석 필요';
+                        return _ProgressCard(
+                          title: '일일 퀘스트',
+                          subtitle: '자세히 보기',
+                          progressText: '$statusText ($completed / $total)',
+                          progressValue: progress,
+                          onTap: () => showDailyTestModal(context: context),
+                        );
+                      },
                     ),
                   ),
                   SizedBox(width: 6 * scale),
@@ -744,13 +825,19 @@ class _LearningSection extends StatelessWidget {
                             onTap: onCourseTap,
                           ),
                           SizedBox(height: 6 * scale),
-                          _ProgressCard(
-                            title: '커뮤니티',
-                            subtitle: '',
-                            progressText: '새 메시지 3개',
-                            progressValue: null,
-                            showProgressBar: false,
-                            onTap: () => showSocialModal(context: context),
+                          ValueListenableBuilder<SocialNotificationSnapshot>(
+                            valueListenable: SocialNotificationStore.notifier,
+                            builder: (context, snapshot, _) {
+                              final noticeText = _formatSocialNotice(snapshot);
+                              return _ProgressCard(
+                                title: '알림',
+                                subtitle: '',
+                                progressText: noticeText,
+                                progressValue: null,
+                                showProgressBar: false,
+                                onTap: () => showSocialModal(context: context),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -936,35 +1023,57 @@ class _BottomSection extends StatelessWidget {
                           style: _ts(size: 18 * scale, weight: FontWeight.bold),
                         ),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '923',
-                            style: _ts(
-                              size: 40 * scale,
-                              weight: FontWeight.w900,
-                            ),
-                          ),
-                          SizedBox(width: 8 * scale),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      ValueListenableBuilder<RatingSnapshot>(
+                        valueListenable: RatingStore.notifier,
+                        builder: (context, snapshot, _) {
+                          final ovrText = snapshot.isLoaded
+                              ? snapshot.ovr.toStringAsFixed(1)
+                              : '--';
+                          final deltaValue = snapshot.delta;
+                          final deltaColor = deltaValue > 0
+                              ? Colors.red
+                              : deltaValue < 0
+                                  ? Colors.blue
+                                  : Colors.black54;
+                          final deltaText = snapshot.isLoaded
+                              ? (deltaValue >= 0
+                                  ? '+ ${deltaValue.toStringAsFixed(1)}'
+                                  : deltaValue.toStringAsFixed(1))
+                              : '--';
+                          return Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                '+ 5.9',
-                                style: _ts(size: 10 * scale, color: Colors.red),
-                              ),
-                              Text(
-                                '상위 34%',
+                                ovrText,
                                 style: _ts(
-                                  size: 10 * scale,
-                                  color: Colors.black,
+                                  size: 40 * scale,
+                                  weight: FontWeight.w900,
                                 ),
                               ),
+                              SizedBox(width: 8 * scale),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    deltaText,
+                                    style: _ts(
+                                      size: 10 * scale,
+                                      color: deltaColor,
+                                    ),
+                                  ),
+                                  Text(
+                                    '??? 34%',
+                                    style: _ts(
+                                      size: 10 * scale,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
-                          ),
-                        ],
+                          );
+                        },
                       ),
                       Divider(thickness: 1, height: 16 * scale),
                       Padding(
@@ -1055,6 +1164,8 @@ class _BottomSection extends StatelessWidget {
             ],
           ),
           SizedBox(height: 12 * scale),
+          _ActivityHistoryCard(),
+          SizedBox(height: 12 * scale),
           Container(
             width: double.infinity,
             height: 190 * scale,
@@ -1081,6 +1192,99 @@ class _BottomSection extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityHistoryCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    return ValueListenableBuilder<ActivitySnapshot>(
+      valueListenable: ActivityStore.notifier,
+      builder: (context, snapshot, _) {
+        final days = snapshot.sortedDays(limit: 5);
+        return Container(
+          width: double.infinity,
+          decoration: _cardDeco(radius: 16 * scale),
+          padding: EdgeInsets.fromLTRB(18 * scale, 12 * scale, 18 * scale, 14 * scale),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '활동 내역',
+                style: _ts(size: 18 * scale, weight: FontWeight.bold),
+              ),
+              SizedBox(height: 8 * scale),
+              if (days.isEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: 4 * scale),
+                  child: Text(
+                    '기록된 활동이 없습니다.',
+                    style: _ts(size: 12 * scale, color: Colors.black54),
+                  ),
+                )
+              else
+                for (final day in days) _ActivityDayRow(record: day),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ActivityDayRow extends StatelessWidget {
+  const _ActivityDayRow({required this.record});
+
+  final ActivityDayRecord record;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _uiScale(context);
+    final dateLabel = _formatDateLabel(record.dateKey);
+    final problems = _formatActivityList(record.problemNumbers);
+    final books = _formatActivityList(record.bookNumbers);
+    final courses = _formatActivityList(record.courseNumbers);
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10 * scale),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 96 * scale,
+            child: Text(
+              dateLabel,
+              style: _ts(
+                size: 11 * scale,
+                weight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '문제: $problems',
+                  style: _ts(size: 11 * scale, color: Colors.black87),
+                ),
+                SizedBox(height: 2 * scale),
+                Text(
+                  '교재: $books',
+                  style: _ts(size: 11 * scale, color: Colors.black87),
+                ),
+                SizedBox(height: 2 * scale),
+                Text(
+                  '코스: $courses',
+                  style: _ts(size: 11 * scale, color: Colors.black87),
                 ),
               ],
             ),
@@ -1200,6 +1404,7 @@ class _CircleStat extends StatelessWidget {
         SizedBox(height: 4 * scale),
         Text(
           subtitle,
+          textAlign: TextAlign.center,
           style: _ts(size: 10 * scale, color: _grey),
         ),
       ],

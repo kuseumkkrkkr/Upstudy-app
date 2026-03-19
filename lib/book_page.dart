@@ -1,9 +1,18 @@
 ﻿import 'dart:ui';
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:s11/services/bookmark_store.dart';
+import 'package:s11/services/activity_store.dart';
 
-Future<T?> showBookLibraryModal<T>({required BuildContext context}) {
+Future<T?> showBookLibraryModal<T>({
+  required BuildContext context,
+  String headerTitle = '교재보기',
+  String libraryTitle = 'Owned Books',
+  List<BookData>? books,
+  List<String> selectedTags = const [],
+  String? notice,
+}) {
   return showDialog<T>(
     context: context,
     barrierDismissible: true,
@@ -17,11 +26,33 @@ Future<T?> showBookLibraryModal<T>({required BuildContext context}) {
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
               child: Container(color: Colors.black.withOpacity(0.35)),
             ),
-            const Center(child: BookLibraryModal()),
+            Center(
+              child: BookLibraryModal(
+                headerTitle: headerTitle,
+                libraryTitle: libraryTitle,
+                books: books,
+                selectedTags: selectedTags,
+                notice: notice,
+              ),
+            ),
           ],
         ),
       );
     },
+  );
+}
+
+Future<T?> showCommonBookLibraryModal<T>({
+  required BuildContext context,
+  List<String> selectedTags = const [],
+}) {
+  return showBookLibraryModal(
+    context: context,
+    headerTitle: '개념학습 교재',
+    libraryTitle: '공통교재',
+    books: _commonLibraryBooks,
+    selectedTags: selectedTags,
+    notice: '해시태그와 연결되지 않은 기본 제공 교재입니다.',
   );
 }
 
@@ -39,7 +70,18 @@ class BookWidget extends StatefulWidget {
 }
 
 class BookLibraryPage extends StatelessWidget {
-  const BookLibraryPage({super.key});
+  const BookLibraryPage({
+    super.key,
+    this.libraryTitle = 'Owned Books',
+    this.books,
+    this.selectedTags = const [],
+    this.notice,
+  });
+
+  final String libraryTitle;
+  final List<BookData>? books;
+  final List<String> selectedTags;
+  final String? notice;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +123,10 @@ class BookLibraryPage extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => BookWidget(book: book)),
                   );
                 },
+                books: books,
+                title: libraryTitle,
+                selectedTags: selectedTags,
+                notice: notice,
               ),
             ),
           ],
@@ -92,7 +138,20 @@ class BookLibraryPage extends StatelessWidget {
 
 
 class BookLibraryModal extends StatelessWidget {
-  const BookLibraryModal({super.key});
+  const BookLibraryModal({
+    super.key,
+    this.headerTitle = '교재보기',
+    this.libraryTitle = 'Owned Books',
+    this.books,
+    this.selectedTags = const [],
+    this.notice,
+  });
+
+  final String headerTitle;
+  final String libraryTitle;
+  final List<BookData>? books;
+  final List<String> selectedTags;
+  final String? notice;
 
   @override
   Widget build(BuildContext context) {
@@ -114,24 +173,31 @@ class BookLibraryModal extends StatelessWidget {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-              const Text(
-                '교재보기',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              Text(
+                headerTitle,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
           const Divider(height: 1),
-          Expanded(
-            child: _BookLibraryBody(
-              onSelect: (book) {
-                final navigator = Navigator.of(context, rootNavigator: true);
-                navigator.pop();
-                navigator.push(
-                  MaterialPageRoute(builder: (_) => BookWidget(book: book)),
-                );
-              },
+            Expanded(
+              child: _BookLibraryBody(
+                onSelect: (book) {
+                  final navigator = Navigator.of(context, rootNavigator: true);
+                  navigator.pop();
+                  navigator.push(
+                    MaterialPageRoute(builder: (_) => BookWidget(book: book)),
+                  );
+                },
+                books: books,
+                title: libraryTitle,
+                selectedTags: selectedTags,
+                notice: notice,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -139,9 +205,19 @@ class BookLibraryModal extends StatelessWidget {
 }
 
 class _BookLibraryBody extends StatelessWidget {
-  const _BookLibraryBody({required this.onSelect});
+  const _BookLibraryBody({
+    required this.onSelect,
+    this.books,
+    this.title = 'Owned Books',
+    this.selectedTags = const [],
+    this.notice,
+  });
 
   final ValueChanged<BookData> onSelect;
+  final List<BookData>? books;
+  final String title;
+  final List<String> selectedTags;
+  final String? notice;
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +229,9 @@ class _BookLibraryBody extends StatelessWidget {
       color: Color(0x22000000),
       offset: Offset(0, 2),
     );
-    final books = _libraryBooks;
+    final books = this.books ?? _libraryBooks;
+    final hasTags = selectedTags.isNotEmpty;
+    final showNotice = notice != null && notice!.trim().isNotEmpty;
 
     return Column(
       children: [
@@ -162,10 +240,13 @@ class _BookLibraryBody extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Owned Books',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               Text(
                 '${books.length} items',
                 style: const TextStyle(color: Colors.black54, fontSize: 13),
@@ -173,7 +254,53 @@ class _BookLibraryBody extends StatelessWidget {
             ],
           ),
         ),
-        Expanded(
+          if (hasTags || showNotice)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasTags) ...[
+                    const Text(
+                      '선택한 개념',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: selectedTags
+                          .map(
+                            (tag) => Chip(
+                              label: Text(
+                                tag,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                  if (hasTags && showNotice) const SizedBox(height: 6),
+                  if (showNotice)
+                    Text(
+                      notice!,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black54,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          Expanded(
           child: books.isEmpty
               ? const Center(
                   child: Text(
@@ -556,6 +683,7 @@ class _BookWidgetState extends State<BookWidget> {
       final book = widget.book ?? _libraryBooks.first;
       _currentBookId = book.id;
       _currentBookTitle = book.title;
+      _recordBookView(book);
       _chapters = book.chapters;
       _contentEntries = _buildContentEntries(_chapters);
       _sectionKeys = List<GlobalKey>.generate(
@@ -574,6 +702,15 @@ class _BookWidgetState extends State<BookWidget> {
       _contentController.addListener(_handleContentScroll);
       _contentListenerAttached = true;
     }
+  }
+
+  void _recordBookView(BookData book) {
+    final index = _libraryBooks.indexWhere((entry) => entry.id == book.id);
+    final number = index >= 0 ? (index + 1).toString() : book.id;
+    unawaited(
+      ActivityStore.recordBookView(bookId: book.id, bookNumber: number)
+          .catchError((_) {}),
+    );
   }
 
   void _cacheSectionOffsets() {
@@ -2040,6 +2177,15 @@ const List<BookData> _libraryBooks = [
     ],
   ),
 ];
+
+const List<BookData> _commonLibraryBooks = _libraryBooks;
+
+BookData? findLibraryBookById(String id) {
+  for (final book in _libraryBooks) {
+    if (book.id == id) return book;
+  }
+  return null;
+}
 
 
 

@@ -29,7 +29,7 @@ class KakaoLoginService {
   Future<KakaoLoginResult> signIn() async {
     if (!_hasAppKey) {
       throw StateError(
-        'KAKAO_NATIVE_APP_KEY ?? KAKAO_JAVASCRIPT_APP_KEY? ?????.',
+        'KAKAO_NATIVE_APP_KEY 또는 KAKAO_JAVASCRIPT_APP_KEY가 설정되지 않았습니다.',
       );
     }
 
@@ -38,7 +38,7 @@ class KakaoLoginService {
       accessToken: oauthToken.accessToken,
       idToken: oauthToken.idToken,
     );
-    final nickname = await _fetchNickname() ?? '??? ???';
+    final nickname = await _fetchNickname() ?? '사용자';
 
     return KakaoLoginResult(token: appToken, displayName: nickname);
   }

@@ -17,48 +17,48 @@ class MainpageWidget extends StatefulWidget {
 }
 
 class _MainpageWidgetState extends State<MainpageWidget> {
-  // 메뉴 아이템 데이터
+  // �޴� ������ ������
   final List<Map<String, String>> menuItems = [
     {
-      'title': '빠른 생성',
+      'title': '���� ����',
       'image':
           'https://images.unsplash.com/photo-1517770413964-df8ca61194a6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHw4fHxib29rfGVufDB8fHx8MTc2ODYyNzYxNHww&ixlib=rb-4.1.0&q=80&w=1080',
     },
     {
-      'title': '고급 생성',
+      'title': '���� ����',
       'image':
           'https://images.unsplash.com/photo-1676302447092-14a103558511?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwzfHwlRUMlODglOTglRUQlOTUlOTl8ZW58MHx8fHwxNzY4NjI3OTI0fDA&ixlib=rb-4.1.0&q=80&w=1080',
     },
     {
-      'title': '시험지 보기',
+      'title': '������ ����',
       'image':
           'https://images.unsplash.com/photo-1628498188904-036f5e25e93e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwzfHxzdGFycnklMjBuaWdodHxlbnwwfHx8fDE3Njg2MTUzNTd8MA&ixlib=rb-4.1.0&q=80&w=1080',
     },
     {
-      'title': '풀이보기',
+      'title': 'Ǯ�̺���',
       'image':
           'https://images.unsplash.com/photo-1460925895917-afdab827c52f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxfHxkYXRhfGVufDB8fHx8MTc2ODYyODA3M3ww&ixlib=rb-4.1.0&q=80&w=1080',
     },
-    {'title': 'data open', 'image': ''},
+    {'title': '������ ����', 'image': ''},
   ];
 
   void _onMenuItemPressed(String title) {
-    if (title.toLowerCase() == 'data open') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const DataOpenPage()),
-      );
+    if (title == '������ ����') {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const DataOpenPage()));
       return;
     }
-    if (title == '빠른 생성') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const QuickGeneratePage()),
-      );
+    if (title == '���� ����') {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const QuickGeneratePage()));
       return;
     }
-    if (title == '풀이보기') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SolutionViewPage()),
-      );
+    if (title == 'Ǯ�̺���') {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const SolutionViewPage()));
       return;
     }
     DialogService.openDialog(context, title: title);
@@ -74,18 +74,21 @@ class _MainpageWidgetState extends State<MainpageWidget> {
         body: SafeArea(
           child: Column(
             children: [
-              // 상단 헤더
+              // ��� ���
               Builder(
                 builder: (context) => HeaderBar(
                   onSearchPressed: () =>
-                      DialogService.openDialog(context, title: '검색'),
+                      DialogService.openDialog(context, title: '�˻�'),
                   onMenuPressed: () => toggleAppDrawer(context),
                 ),
               ),
 
-              // 메뉴 버튼 목록
+              // �޴� ��ư ���
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -105,7 +108,7 @@ class _MainpageWidgetState extends State<MainpageWidget> {
                         ),
                       );
                     },
-                    child: const Text('캐릭터챗'),
+                    child: const Text('ĳ���� ê'),
                   ),
                 ),
               ),

@@ -6,6 +6,8 @@ import 'friend.dart' as friend;
 import 'package:s11/mainstudent.dart';
 import 'pages/course_pages.dart';
 import 'widgets/app_drawer.dart';
+import 'widgets/tag_picker_dialog.dart';
+import 'widgets/modals/study_modes/exam_mode.dart';
 
 void main() => runApp(const _App());
 
@@ -39,6 +41,22 @@ double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
   return scale;
 }
 
+Future<void> _openConceptStudy(BuildContext context) async {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final tags = await showTagPickerDialog(context: navigator.context);
+  if (tags == null) return;
+  if (tags.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('해시태그를 선택해주세요.')),
+    );
+    return;
+  }
+  await book_page.showCommonBookLibraryModal(
+    context: navigator.context,
+    selectedTags: tags,
+  );
+}
+
 class SoWidget extends StatelessWidget {
   const SoWidget({super.key});
 
@@ -57,14 +75,14 @@ class SoWidget extends StatelessWidget {
               children: [
                 const StudyCenterNavBar(),
                 _HeroBanner(),
-                _SectionHeader(title: '커리큘럼'),
+                _SectionHeader(title: '코스'),
                 const Divider(thickness: 2, height: 2),
                 _CardRow(
                   cards: [
                     _CardData(
                       icon: Icons.search,
-                      title: '커리큘럼 찾기',
-                      subtitle: '수강중인 커리큘럼을 검색합니다',
+                      title: '코스 찾기',
+                      subtitle: '수강중인 코스를 검색합니다',
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -75,8 +93,8 @@ class SoWidget extends StatelessWidget {
                     ),
                     _CardData(
                       icon: Icons.architecture_sharp,
-                      title: '커리큘럼 만들기',
-                      subtitle: '나에게 맞는 커리큘럼을 생성합니다',
+                      title: '코스 만들기',
+                      subtitle: '나에게 맞는 코스를 생성합니다',
                     ),
                     _CardData(
                       icon: Icons.library_books,
@@ -115,6 +133,7 @@ class SoWidget extends StatelessWidget {
                       icon: Icons.ads_click_outlined,
                       title: '개념학습하기',
                       subtitle: '개념을 학습할 수 있는 공통교재입니다',
+                      onTap: () => _openConceptStudy(context),
                     ),
                     _CardData(
                       icon: Icons.content_paste,
@@ -331,25 +350,36 @@ class _CardRow extends StatelessWidget {
   const _CardRow({required this.cards});
   final List<_CardData> cards;
 
+  static const int _columns = 3;
+
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
-    final widgets = <Widget>[];
-    for (final card in cards) {
-      widgets.add(Expanded(child: _MenuCard(data: card)));
-    }
-    for (int i = cards.length; i < 3; i++) {
-      widgets.add(const Expanded(child: SizedBox()));
-    }
+    final gap = 30 * scale;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(30 * scale, 10 * scale, 30 * scale, 0),
-      child: Row(
-        children: widgets
-            .expand(
-              (w) => [w, if (w != widgets.last) SizedBox(width: 30 * scale)],
-            )
-            .toList(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cardWidth =
+              (constraints.maxWidth - gap * (_columns - 1)) / _columns;
+          final children = <Widget>[];
+
+          for (int i = 0; i < _columns; i++) {
+            final card = i < cards.length ? _MenuCard(data: cards[i]) : null;
+            children.add(
+              SizedBox(
+                width: cardWidth,
+                child: card ?? const SizedBox(),
+              ),
+            );
+            if (i != _columns - 1) {
+              children.add(SizedBox(width: gap));
+            }
+          }
+
+          return Row(children: children);
+        },
       ),
     );
   }
@@ -492,7 +522,7 @@ class _ExamBanner extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(right: 60 * scale),
               child: TextButton(
-                onPressed: () {},
+                onPressed: () => startExamFlow(context),
                 style: TextButton.styleFrom(
                   backgroundColor: _kWhite,
                   foregroundColor: _kGreen,

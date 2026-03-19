@@ -35,7 +35,7 @@ class AuthService {
   );
 
   Uri _resolve(String path) {
-    // ???? baseUrl? ????? ???.
+    // baseUrl을 기준으로 상대 경로를 resolve합니다.
     return Uri.parse(ApiClient.baseUrl).resolve(path);
   }
 
@@ -47,12 +47,12 @@ class AuthService {
       body: jsonEncode({'username': username, 'password': password}),
     );
     if (response.statusCode != 200) {
-      throw Exception('??? ?? (status ${response.statusCode})');
+      throw Exception('로그인 실패 (status ${response.statusCode})');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final token = (payload['token'] ?? payload['access_token']) as String?;
     if (token == null || token.isEmpty) {
-      throw Exception('??? ??? ????.');
+      throw Exception('토큰이 없습니다.');
     }
     return token;
   }
@@ -72,12 +72,12 @@ class AuthService {
       }),
     );
     if (response.statusCode != 200) {
-      throw Exception('??? ??? ?? (status ${response.statusCode})');
+      throw Exception('카카오 로그인 실패 (status ${response.statusCode})');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final token = (payload['token'] ?? payload['access_token']) as String?;
     if (token == null || token.isEmpty) {
-      throw Exception('??? ??? ????.');
+      throw Exception('카카오 토큰이 없습니다.');
     }
     return token;
   }
@@ -111,12 +111,12 @@ class AuthService {
       }),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('???? ?? (status ${response.statusCode})');
+      throw Exception('회원가입 실패 (status ${response.statusCode})');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final token = (payload['token'] ?? payload['access_token']) as String?;
     if (token == null || token.isEmpty) {
-      throw Exception('??? ??? ????.');
+      throw Exception('회원가입 토큰이 없습니다.');
     }
     return token;
   }
@@ -129,7 +129,7 @@ class AuthService {
       body: jsonEncode({'username': username}),
     );
     if (response.statusCode != 200) {
-      throw Exception('??? ?? (status ${response.statusCode})');
+      throw Exception('아이디 확인 실패 (status ${response.statusCode})');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return UsernameCheckResult.fromJson(payload);
@@ -146,7 +146,7 @@ class AuthService {
       body: jsonEncode({'field': field, 'value': value}),
     );
     if (response.statusCode != 200) {
-      throw Exception('??? ?? (status ${response.statusCode})');
+      throw Exception('필드 검증 실패 (status ${response.statusCode})');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return FieldValidationResult.fromJson(payload);

@@ -1,6 +1,9 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'services/api_client.dart';
 import 'docx_box.dart' as docx;
 import 'package:s11/mainstudent.dart';
 import 'study_center.dart' as study_center;
@@ -60,35 +63,69 @@ class _SoWidgetState extends State<SoWidget> {
     fontSize: 30,
     fontWeight: FontWeight.normal,
   );
+  static const List<IconData> _groupLogoIcons = [
+    Icons.auto_awesome,
+    Icons.bolt,
+    Icons.eco,
+    Icons.book,
+    Icons.calculate,
+    Icons.school,
+    Icons.psychology,
+    Icons.public,
+    Icons.lightbulb,
+    Icons.star,
+  ];
+  static const List<Color> _groupLogoColors = [
+    Color(0xFF1B402B),
+    Color(0xFF2D5F8B),
+    Color(0xFF8B4A2D),
+    Color(0xFF6A5B2E),
+    Color(0xFF4E5F8B),
+    Color(0xFF7B3B5F),
+    Color(0xFF2E6A5B),
+    Color(0xFF8B5F2D),
+    Color(0xFF5B4E8B),
+    Color(0xFF3B7B5F),
+  ];
 
   final List<_FriendRank> _friendRanks = const [];
 
-  final List<_FriendInfo> _friends = const [];
-
-  final List<_FriendInfo> _friendSearchCatalog = const [];
+  List<_FriendInfo> _friends = [];
 
   final List<_MessageInfo> _messages = const [];
 
-  final List<_GroupInfo> _groups = const [
-    _GroupInfo(
-      name: '수학 올킬',
-      description: '미적분 집중 스터디',
-      members: 8,
-      isPublic: true,
-    ),
-    _GroupInfo(
-      name: '국어 독해',
-      description: '비문학 독해 루틴',
-      members: 5,
-      isPublic: false,
-    ),
-    _GroupInfo(
-      name: '영어 모의고사',
-      description: '주 2회 실전 모의고사',
-      members: 12,
-      isPublic: true,
-    ),
-  ];
+  final List<_GroupInfo> _groups = [];
+
+  final List<_GroupInfo> _groupSearchCatalog = const [];
+
+  final List<String> _groupSearchHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshFriends();
+  }
+
+  Future<void> _refreshFriends() async {
+    try {
+      final profiles = await ApiClient.instance.listFriends();
+      if (!mounted) return;
+      setState(() {
+        _friends = profiles
+            .map(
+              (profile) => _FriendInfo(
+                name: profile.username,
+                status:
+                    profile.status.isNotEmpty ? profile.status : '상태 없음',
+                ovr: profile.ovr,
+              ),
+            )
+            .toList();
+      });
+    } catch (_) {
+      // Ignore fetch failures for now.
+    }
+  }
 
   Future<void> _showBlurDialog(Widget child) async {
     await showGeneralDialog(
@@ -113,23 +150,63 @@ class _SoWidgetState extends State<SoWidget> {
 
   void _openAddFriendModal() {
     String query = '';
+    List<_FriendInfo> results = [];
+    bool isSearching = false;
+    String? errorMessage;
+    final rootContext = context;
     _showBlurDialog(
       _dialogShell(
         title: '친구 추가',
         width: 640,
         child: StatefulBuilder(
           builder: (context, setModalState) {
+            Future<void> performSearch() async {
+              final keyword = query.trim();
+              if (keyword.isEmpty) {
+                setModalState(() {
+                  results = [];
+                  errorMessage = null;
+                });
+                return;
+              }
+              setModalState(() {
+                isSearching = true;
+                errorMessage = null;
+              });
+              try {
+                final profiles = await ApiClient.instance.searchFriends(
+                  query: keyword,
+                  limit: 20,
+                );
+                if (!context.mounted) return;
+                setModalState(() {
+                  results = profiles
+                      .map(
+                        (profile) => _FriendInfo(
+                          name: profile.username,
+                          status: profile.status.isNotEmpty
+                              ? profile.status
+                              : '상태 없음',
+                          ovr: profile.ovr,
+                        ),
+                      )
+                      .toList();
+                });
+              } catch (_) {
+                if (!context.mounted) return;
+                setModalState(() {
+                  results = [];
+                  errorMessage = '검색에 실패했어요';
+                });
+              } finally {
+                if (!context.mounted) return;
+                setModalState(() {
+                  isSearching = false;
+                });
+              }
+            }
+
             final keyword = query.trim();
-            final lowerKeyword = keyword.toLowerCase();
-            final results = keyword.isEmpty
-                ? <_FriendInfo>[]
-                : _friendSearchCatalog
-                    .where(
-                      (friend) =>
-                          friend.name.toLowerCase().contains(lowerKeyword) ||
-                          friend.status.toLowerCase().contains(lowerKeyword),
-                    )
-                    .toList();
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,11 +221,14 @@ class _SoWidgetState extends State<SoWidget> {
                     Expanded(
                       child: TextField(
                         onChanged: (value) {
-                          setModalState(() => query = value);
+                          setModalState(() {
+                            query = value;
+                            results = [];
+                            errorMessage = null;
+                          });
                         },
                         onSubmitted: (_) {
                           FocusScope.of(context).unfocus();
-                          setModalState(() {});
                         },
                         decoration: InputDecoration(
                           hintText: '닉네임 검색',
@@ -170,9 +250,9 @@ class _SoWidgetState extends State<SoWidget> {
                           backgroundColor: primaryColor,
                           foregroundColor: Colors.white,
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           FocusScope.of(context).unfocus();
-                          setModalState(() {});
+                          await performSearch();
                         },
                         child: const Text('검색'),
                       ),
@@ -195,81 +275,125 @@ class _SoWidgetState extends State<SoWidget> {
                     ),
                     child: keyword.isEmpty
                         ? _emptyState('닉네임을 입력해 주세요')
-                        : results.isEmpty
-                            ? _emptyState('검색 결과가 없어요')
-                            : ListView.separated(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                itemCount: results.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  final friend = results[index];
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        CircleAvatar(
-                                          backgroundColor:
-                                              primaryColor.withOpacity(0.12),
-                                          child: Text(
-                                            friend.name.substring(0, 1),
-                                            style: const TextStyle(
-                                              color: primaryColor,
+                        : isSearching
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: primaryColor,
+                                ),
+                              )
+                            : errorMessage != null
+                                ? _emptyState(errorMessage!)
+                                : results.isEmpty
+                                    ? _emptyState('검색 결과가 없어요')
+                                    : ListView.separated(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                        ),
+                                        itemCount: results.length,
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(height: 8),
+                                        itemBuilder: (context, index) {
+                                          final friend = results[index];
+                                          return Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 10,
                                             ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                friend.name,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                friend.status,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Text(
-                                          'OVR ${friend.ovr}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        OutlinedButton(
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: primaryColor,
-                                            side: const BorderSide(
-                                              color: primaryColor,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
-                                          ),
-                                          onPressed: () {},
-                                          child: const Text('추가'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
+                                            child: Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  backgroundColor:
+                                                      primaryColor.withOpacity(
+                                                    0.12,
+                                                  ),
+                                                  child: Text(
+                                                    friend.name.substring(0, 1),
+                                                    style: const TextStyle(
+                                                      color: primaryColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        friend.name,
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        friend.status,
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'OVR ${friend.ovr}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                OutlinedButton(
+                                                  style:
+                                                      OutlinedButton.styleFrom(
+                                                    foregroundColor:
+                                                        primaryColor,
+                                                    side: const BorderSide(
+                                                      color: primaryColor,
+                                                    ),
+                                                  ),
+                                                  onPressed: () async {
+                                                    try {
+                                                      await ApiClient.instance
+                                                          .addFriend(
+                                                        friend.name,
+                                                      );
+                                                      await _refreshFriends();
+                                                      if (!mounted) return;
+                                                      ScaffoldMessenger.of(
+                                                        rootContext,
+                                                      ).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                            '친구가 추가됐어요',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    } catch (_) {
+                                                      if (!mounted) return;
+                                                      ScaffoldMessenger.of(
+                                                        rootContext,
+                                                      ).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                            '친구 추가에 실패했어요',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                  child: const Text('추가'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
                   ),
                 ),
               ],
@@ -355,42 +479,224 @@ class _SoWidgetState extends State<SoWidget> {
     _showBlurDialog(_MessengerDialog(info: info));
   }
 
-  void _openGroupManageModal() {
+  void _openGroupSearchModal() {
+    String query = '';
     _showBlurDialog(
       _dialogShell(
-        title: '그룹 관리',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              '그룹 이름 또는 그룹 ID로 검색하세요.',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                hintText: '그룹 검색 / ID 입력',
-                filled: true,
-                fillColor: bgColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: primaryColor),
+        title: '그룹스터디 찾기',
+        width: 680,
+        child: StatefulBuilder(
+          builder: (context, setModalState) {
+            final keyword = query.trim();
+            final lowerKeyword = keyword.toLowerCase();
+            final results = keyword.isEmpty
+                ? <_GroupInfo>[]
+                : _groupSearchCatalog
+                    .where(
+                      (group) =>
+                          group.name.toLowerCase().contains(lowerKeyword),
+                    )
+                    .toList();
+
+            void applySearch() {
+              final trimmed = query.trim();
+              if (trimmed.isEmpty) return;
+              setState(() {
+                _groupSearchHistory.removeWhere((item) => item == trimmed);
+                _groupSearchHistory.insert(0, trimmed);
+                if (_groupSearchHistory.length > 8) {
+                  _groupSearchHistory.removeRange(
+                    8,
+                    _groupSearchHistory.length,
+                  );
+                }
+              });
+              setModalState(() {});
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  '스터디 이름으로 검색해 참여할 그룹을 찾아보세요.',
+                  style: TextStyle(fontSize: 16),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 44,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        onChanged: (value) {
+                          setModalState(() => query = value);
+                        },
+                        onSubmitted: (_) {
+                          FocusScope.of(context).unfocus();
+                          applySearch();
+                        },
+                        decoration: InputDecoration(
+                          hintText: '스터디 이름 검색',
+                          filled: true,
+                          fillColor: bgColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: primaryColor),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      height: 44,
+                      width: 96,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          FocusScope.of(context).unfocus();
+                          applySearch();
+                        },
+                        child: const Text('검색'),
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('검색'),
-              ),
-            ),
-          ],
+                const SizedBox(height: 16),
+                const Text(
+                  '검색 내역',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                if (_groupSearchHistory.isEmpty)
+                  const Text(
+                    '검색 내역이 없어요',
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: _groupSearchHistory
+                        .map(
+                          (item) => ActionChip(
+                            label: Text(item),
+                            onPressed: () {
+                              setModalState(() => query = item);
+                              applySearch();
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                const SizedBox(height: 16),
+                const Text(
+                  '검색 결과',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 260,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: keyword.isEmpty
+                        ? _emptyState('스터디 이름을 입력해 주세요')
+                        : results.isEmpty
+                            ? _emptyState('검색 결과가 없어요')
+                            : ListView.separated(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                itemCount: results.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final group = results[index];
+                                  final logoIndex = group.logoIndex ?? 0;
+                                  final color = _groupLogoColors[
+                                      logoIndex % _groupLogoColors.length];
+                                  final icon = _groupLogoIcons[
+                                      logoIndex % _groupLogoIcons.length];
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor:
+                                              color.withOpacity(0.15),
+                                          child: Icon(
+                                            icon,
+                                            color: color,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                group.name,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                group.description,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        OutlinedButton(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: primaryColor,
+                                            side: const BorderSide(
+                                              color: primaryColor,
+                                            ),
+                                          ),
+                                          onPressed: () {},
+                                          child: const Text('요청'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openGroupCreateModal() async {
+    await _showBlurDialog(
+      _dialogShell(
+        title: '그룹스터디 만들기',
+        width: 700,
+        child: _GroupCreateDialogBody(
+          onCreate: (group) {
+            setState(() {
+              _groups.add(group);
+            });
+          },
         ),
       ),
     );
@@ -405,7 +711,7 @@ class _SoWidgetState extends State<SoWidget> {
           color: primaryColor,
           onPressed: () {
             Navigator.of(context).pop();
-            _openGroupManageModal();
+            _openGroupSearchModal();
           },
         ),
         child: Column(
@@ -614,32 +920,43 @@ class _SoWidgetState extends State<SoWidget> {
     required List<String> tags,
     required double scale,
   }) {
-    return Container(
-      padding: EdgeInsets.all(12 * scale),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(14 * scale),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: _ts(
-              size: 13 * scale,
-              weight: FontWeight.w700,
-              color: primaryColor,
-              scaleUp: false,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: _ts(
+            size: 13 * scale,
+            weight: FontWeight.w700,
+            color: primaryColor,
+            scaleUp: false,
           ),
-          SizedBox(height: 8 * scale),
-          Wrap(
-            spacing: 8 * scale,
-            runSpacing: 6 * scale,
-            children: tags.map(_tagChip).toList(),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(height: 6 * scale),
+        Row(
+          children: tags
+              .map(
+                (tag) => Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: 6 * scale),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '#$tag',
+                        style: TextStyle(
+                          fontSize: 11 * scale,
+                          color: primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
     );
   }
 
@@ -926,45 +1243,42 @@ class _SoWidgetState extends State<SoWidget> {
                                   ),
                                   const SizedBox(width: 20),
                                   Expanded(
-                                    child: LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        return SingleChildScrollView(
-                                          physics:
-                                              const ClampingScrollPhysics(),
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              minHeight: constraints.maxHeight,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                _ratingSummary(scale),
-                                                SizedBox(height: 12 * scale),
-                                                _tagGroup(
-                                                  title: '약점 태그',
-                                                  tags: const [
-                                                    '시간관리',
-                                                    '도형',
-                                                    '영어',
-                                                  ],
-                                                  scale: scale,
-                                                ),
-                                                SizedBox(height: 12 * scale),
-                                                _tagGroup(
-                                                  title: '강점 태그',
-                                                  tags: const [
-                                                    '수학',
-                                                    '국어',
-                                                    '집중력',
-                                                  ],
-                                                  scale: scale,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _ratingSummary(scale),
+                                        SizedBox(height: 12 * scale),
+                                        _tagGroup(
+                                          title: '약점 태그',
+                                          tags: const [
+                                            '시간관리',
+                                            '도형',
+                                            '영어',
+                                            '서술',
+                                            '실수',
+                                            '속도',
+                                            '집중',
+                                            '어휘',
+                                          ],
+                                          scale: scale,
+                                        ),
+                                        SizedBox(height: 12 * scale),
+                                        _tagGroup(
+                                          title: '강점 태그',
+                                          tags: const [
+                                            '수학',
+                                            '국어',
+                                            '집중력',
+                                            '논리',
+                                            '암기',
+                                            '추론',
+                                            '계산',
+                                            '문해',
+                                          ],
+                                          scale: scale,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -975,7 +1289,7 @@ class _SoWidgetState extends State<SoWidget> {
                       ),
                     ),
 
-                    // ?? ?? ? ? ?? ???????????????????????????
+                    // 중간 카드 영역
                     Padding(
                       padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                       child: Align(
@@ -1115,6 +1429,55 @@ class _SoWidgetState extends State<SoWidget> {
                                                                     FontWeight
                                                                         .w600,
                                                               ),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 6,
+                                                            ),
+                                                            IconButton(
+                                                              icon: const Icon(
+                                                                Icons
+                                                                    .person_remove_alt_1,
+                                                                size: 18,
+                                                                color:
+                                                                    Colors.black54,
+                                                              ),
+                                                              tooltip: '친구 삭제',
+                                                              onPressed:
+                                                                  () async {
+                                                                try {
+                                                                  await ApiClient
+                                                                      .instance
+                                                                      .removeFriend(
+                                                                    friend.name,
+                                                                  );
+                                                                  await _refreshFriends();
+                                                                  if (!mounted) {
+                                                                    return;
+                                                                  }
+                                                                  ScaffoldMessenger
+                                                                      .of(context)
+                                                                      .showSnackBar(
+                                                                    const SnackBar(
+                                                                      content: Text(
+                                                                        '친구가 삭제됐어요',
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                } catch (_) {
+                                                                  if (!mounted) {
+                                                                    return;
+                                                                  }
+                                                                  ScaffoldMessenger
+                                                                      .of(context)
+                                                                      .showSnackBar(
+                                                                    const SnackBar(
+                                                                      content: Text(
+                                                                        '친구 삭제에 실패했어요',
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                }
+                                                              },
                                                             ),
                                                           ],
                                                         ),
@@ -1291,21 +1654,43 @@ class _SoWidgetState extends State<SoWidget> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              '그룹스터디',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  '그룹스터디',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    OutlinedButton(
+                                      onPressed: _openGroupSearchModal,
+                                      child: const Text('그룹스터디 찾기'),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primaryColor,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: _openGroupCreateModal,
+                                      child: const Text('그룹스터디 만들기'),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 14),
                             Expanded(
                               child: _groups.isEmpty
                                   ? Center(
                                       child: InkWell(
-                                        onTap: _openGroupManageModal,
+                                        onTap: _openGroupSearchModal,
                                         child: const Text(
-                                          '그룹에 참여해 보세요',
+                                          '그룹스터디가 없어요',
                                           style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.w600,
@@ -1339,18 +1724,26 @@ class _SoWidgetState extends State<SoWidget> {
                                                   children: [
                                                     CircleAvatar(
                                                       backgroundColor:
-                                                          primaryColor
+                                                          _groupLogoColors[
+                                                                  (group.logoIndex ??
+                                                                          0) %
+                                                                      _groupLogoColors
+                                                                          .length]
                                                               .withOpacity(
-                                                                0.12,
-                                                              ),
-                                                      child: Text(
-                                                        group.name.substring(
-                                                          0,
-                                                          1,
-                                                        ),
-                                                        style: const TextStyle(
-                                                          color: primaryColor,
-                                                        ),
+                                                        0.15,
+                                                      ),
+                                                      child: Icon(
+                                                        _groupLogoIcons[
+                                                            (group.logoIndex ??
+                                                                    0) %
+                                                                _groupLogoIcons
+                                                                    .length],
+                                                        color:
+                                                            _groupLogoColors[
+                                                                (group.logoIndex ??
+                                                                        0) %
+                                                                    _groupLogoColors
+                                                                        .length],
                                                       ),
                                                     ),
                                                     const SizedBox(width: 10),
@@ -1368,10 +1761,21 @@ class _SoWidgetState extends State<SoWidget> {
                                                 ),
                                                 const SizedBox(height: 10),
                                                 Text(
+                                                  '최대 ${group.maxMembers}명',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
                                                   group.description,
                                                   style: const TextStyle(
                                                     fontSize: 12,
                                                   ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                                 const Spacer(),
                                                 Row(
@@ -1405,6 +1809,295 @@ class _SoWidgetState extends State<SoWidget> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _GroupCreateDialogBody extends StatefulWidget {
+  const _GroupCreateDialogBody({required this.onCreate});
+
+  final void Function(_GroupInfo group) onCreate;
+
+  @override
+  State<_GroupCreateDialogBody> createState() => _GroupCreateDialogBodyState();
+}
+
+class _GroupCreateDialogBodyState extends State<_GroupCreateDialogBody> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _maxController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _lockEnabled = false;
+  int? _selectedLogo;
+  bool _nameInvalid = false;
+  bool _descriptionInvalid = false;
+  bool _maxInvalid = false;
+  bool _passwordInvalid = false;
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _maxController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  bool _isValidPassword(String value) {
+    final trimmed = value.trim();
+    if (trimmed.length < 4 || trimmed.length > 10) return false;
+    return RegExp(r'^\d+$').hasMatch(trimmed);
+  }
+
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+    final name = _nameController.text.trim();
+    final description = _descriptionController.text.trim();
+    final maxMembers = int.tryParse(_maxController.text.trim()) ?? 0;
+    final password = _passwordController.text.trim();
+
+    final nameOk = name.isNotEmpty;
+    final descriptionOk = description.isNotEmpty;
+    final maxOk = maxMembers > 0;
+    final passwordOk = !_lockEnabled || _isValidPassword(password);
+
+    setState(() {
+      _nameInvalid = !nameOk;
+      _descriptionInvalid = !descriptionOk;
+      _maxInvalid = !maxOk;
+      _passwordInvalid = _lockEnabled && !passwordOk;
+    });
+
+    if (!nameOk || !descriptionOk || !maxOk || !passwordOk) return;
+
+    final logoIndex = _selectedLogo ??
+        Random().nextInt(_SoWidgetState._groupLogoIcons.length);
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final group = await ApiClient.instance.createStudyGroup(
+        name: name,
+        description: description,
+        maxMembers: maxMembers,
+        isPublic: !_lockEnabled,
+        logoIndex: logoIndex,
+        lockEnabled: _lockEnabled,
+        password: _lockEnabled ? password : null,
+      );
+      if (!mounted) return;
+      widget.onCreate(
+        _GroupInfo(
+          name: group.name,
+          description: group.description,
+          maxMembers: group.maxMembers,
+          members: group.memberIds.length,
+          isPublic: group.isPublic,
+          logoIndex: group.logoIndex,
+        ),
+      );
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('그룹스터디 생성에 실패했어요.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showPassword = _lockEnabled;
+    final primaryColor = _SoWidgetState.primaryColor;
+    final bgColor = _SoWidgetState.bgColor;
+    final groupLogoIcons = _SoWidgetState._groupLogoIcons;
+    final groupLogoColors = _SoWidgetState._groupLogoColors;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          '새 그룹스터디를 만들어 친구를 초대하세요.',
+          style: TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _nameController,
+          decoration: InputDecoration(
+            hintText: '그룹스터디 이름',
+            errorText: _nameInvalid ? '이름을 입력해 주세요' : null,
+            filled: true,
+            fillColor: bgColor,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _descriptionController,
+          minLines: 2,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: '그룹스터디 설명',
+            errorText: _descriptionInvalid ? '설명을 입력해 주세요' : null,
+            filled: true,
+            fillColor: bgColor,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _maxController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(3),
+          ],
+          decoration: InputDecoration(
+            hintText: '그룹스터디 최대 인원',
+            helperText: '숫자만 입력',
+            errorText: _maxInvalid ? '최대 인원을 입력해 주세요' : null,
+            filled: true,
+            fillColor: bgColor,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          '프로필 사진',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('업로드 기능 준비 중')),
+                );
+              },
+              icon: const Icon(Icons.upload),
+              label: const Text('업로드'),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              '로고 선택 또는 미선택 시 랜덤',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: List.generate(groupLogoIcons.length, (index) {
+            final color = groupLogoColors[index];
+            final icon = groupLogoIcons[index];
+            final isSelected = _selectedLogo == index;
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedLogo = index;
+                });
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSelected ? primaryColor : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: Icon(icon, color: color, size: 26),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            const Text(
+              '비밀번호 설정',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            Switch(
+              value: _lockEnabled,
+              activeColor: primaryColor,
+              onChanged: (value) {
+                setState(() {
+                  _lockEnabled = value;
+                  _passwordInvalid = false;
+                });
+              },
+            ),
+          ],
+        ),
+        if (showPassword) ...[
+          TextField(
+            controller: _passwordController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
+            decoration: InputDecoration(
+              hintText: '숫자 4~10자리',
+              helperText: '잠금 시 숫자만 입력할 수 있어요',
+              errorText: _passwordInvalid ? '4~10자리 숫자를 입력해 주세요' : null,
+              filled: true,
+              fillColor: bgColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: primaryColor),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('취소'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _isSubmitting ? null : _submit,
+                child: const Text('만들기'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -1686,12 +2379,16 @@ class _GroupInfo {
   const _GroupInfo({
     required this.name,
     required this.description,
+    required this.maxMembers,
     required this.members,
     required this.isPublic,
+    this.logoIndex,
   });
 
   final String name;
   final String description;
+  final int maxMembers;
   final int members;
   final bool isPublic;
+  final int? logoIndex;
 }

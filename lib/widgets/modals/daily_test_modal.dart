@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../services/attendance_store.dart';
+
 Future<T?> showDailyTestModal<T>({required BuildContext context}) {
   return showDialog<T>(
     context: context,
@@ -31,7 +33,7 @@ class DailyTestModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusWidth = _measureTextWidth(
       context,
-      '6 / 40',
+      '진행 중',
       const TextStyle(fontSize: 14),
     );
     return GestureDetector(
@@ -43,86 +45,95 @@ class DailyTestModal extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 헤더
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.black,
-                      size: 28,
-                    ),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 4),
-                  child: Text('도전과제', style: TextStyle(fontSize: 24)),
-                ),
-              ],
-            ),
+        child: ValueListenableBuilder<AttendanceSnapshot>(
+          valueListenable: AttendanceStore.notifier,
+          builder: (context, snapshot, _) {
+            final todayDone = AttendanceStore.isTodayChecked(snapshot);
+            const total = 1;
+            final completed = todayDone ? 1 : 0;
+            final progress = todayDone ? 1.0 : 0.0;
+            final percentLabel = '${(progress * 100).round()}%';
+            final statusLabel = todayDone ? '완료' : '진행 중';
+            final statusIcon = todayDone
+                ? Icons.check_rounded
+                : Icons.arrow_forward_rounded;
 
-            // 달성률 + 진행바 (가운데 정렬)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(0, 0, 5, 0),
-                      child: Text('달성률', style: TextStyle(fontSize: 14)),
+                    Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.black,
+                          size: 28,
+                        ),
+                      ),
                     ),
                     const Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(0, 0, 50, 0),
-                      child: Text('50%', style: TextStyle(fontSize: 20)),
+                      padding: EdgeInsetsDirectional.only(bottom: 4),
+                      child: Text('일일 퀘스트', style: TextStyle(fontSize: 24)),
                     ),
                   ],
                 ),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: SizedBox(
-                    width: 1100,
-                    height: 6,
-                    child: LinearProgressIndicator(
-                      value: 0.7,
-                      backgroundColor: const Color(0xCCE6E6E6),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF45BF63),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsetsDirectional.only(end: 5),
+                          child: Text('완료율', style: TextStyle(fontSize: 14)),
+                        ),
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(end: 50),
+                          child: Text(
+                            percentLabel,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: SizedBox(
+                        width: 1100,
+                        height: 6,
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          backgroundColor: const Color(0xCCE6E6E6),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFF45BF63),
+                          ),
+                        ),
                       ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        _buildTaskRow(
+                          title: '1일 출석하기',
+                          points: '10P',
+                          status: statusLabel,
+                          icon: statusIcon,
+                          statusWidth: statusWidth,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
-            ),
-
-            // 과제 목록 (가운데 정렬)
-            SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildTaskRow(
-                    title: '40문제 풀기',
-                    points: '12P',
-                    status: '6 / 40',
-                    icon: Icons.arrow_forward,
-                    statusWidth: statusWidth,
-                  ),
-                  _buildTaskRow(
-                    title: '1일 출석하기',
-                    points: '12P',
-                    status: '완료',
-                    icon: Icons.check,
-                    statusWidth: statusWidth,
-                  ),
-                ],
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -154,27 +165,24 @@ class DailyTestModal extends StatelessWidget {
               ),
               Row(
                 children: [
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                    child: SizedBox(
-                      width: 90,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.monetization_on_rounded,
+                  SizedBox(
+                    width: 90,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.monetization_on_rounded,
+                          color: Color(0xFF5DA676),
+                          size: 20,
+                        ),
+                        Text(
+                          points,
+                          style: const TextStyle(
                             color: Color(0xFF5DA676),
-                            size: 20,
+                            fontSize: 16,
                           ),
-                          Text(
-                            points,
-                            style: const TextStyle(
-                              color: Color(0xFF5DA676),
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                   SizedBox(width: pointsPadding),

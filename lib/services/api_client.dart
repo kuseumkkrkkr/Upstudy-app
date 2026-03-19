@@ -150,6 +150,8 @@ class SolveAnalysisResponse {
   final String? questId;
   final List<String> questModel;
   final List<String> warnings;
+  final bool? isCorrect;
+  final List<Map<String, dynamic>> stepCorrectness;
 
   SolveAnalysisResponse({
     required this.analysis,
@@ -158,6 +160,8 @@ class SolveAnalysisResponse {
     required this.questModel,
     required this.warnings,
     this.questId,
+    this.isCorrect,
+    this.stepCorrectness = const [],
   });
 
   factory SolveAnalysisResponse.fromJson(Map<String, dynamic> json) {
@@ -168,6 +172,130 @@ class SolveAnalysisResponse {
       questId: json['quest_id'] as String?,
       questModel: List<String>.from(json['quest_model'] as List<dynamic>? ?? []),
       warnings: List<String>.from(json['warnings'] as List<dynamic>? ?? []),
+      isCorrect: json['is_correct'] as bool?,
+      stepCorrectness: (json['step_correctness'] as List<dynamic>? ?? [])
+          .whereType<Map>()
+          .map((entry) => Map<String, dynamic>.from(entry as Map))
+          .toList(),
+    );
+  }
+}
+
+class UserRating {
+  final double rating;
+  final double ovr;
+  final double ovrDelta;
+  final double recentAccuracy;
+  final int loseStreak;
+
+  UserRating({
+    required this.rating,
+    required this.ovr,
+    required this.ovrDelta,
+    required this.recentAccuracy,
+    required this.loseStreak,
+  });
+
+  factory UserRating.fromJson(Map<String, dynamic> json) {
+    return UserRating(
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      ovr: (json['ovr'] as num?)?.toDouble() ?? 0.0,
+      ovrDelta: (json['ovr_delta'] as num?)?.toDouble() ?? 0.0,
+      recentAccuracy: (json['recent_accuracy'] as num?)?.toDouble() ?? 0.0,
+      loseStreak: (json['lose_streak'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class TagRating {
+  final String tag;
+  final double rating;
+  final double delta;
+  final int attempts;
+
+  TagRating({
+    required this.tag,
+    required this.rating,
+    required this.delta,
+    required this.attempts,
+  });
+
+  factory TagRating.fromJson(Map<String, dynamic> json) {
+    return TagRating(
+      tag: json['tag']?.toString() ?? '',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      delta: (json['delta'] as num?)?.toDouble() ?? 0.0,
+      attempts: (json['attempts'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class FriendProfile {
+  final String userId;
+  final String username;
+  final String? name;
+  final String? profileImage;
+  final int ovr;
+  final String status;
+
+  FriendProfile({
+    required this.userId,
+    required this.username,
+    this.name,
+    this.profileImage,
+    this.ovr = 0,
+    this.status = '',
+  });
+
+  factory FriendProfile.fromJson(Map<String, dynamic> json) {
+    return FriendProfile(
+      userId: json['user_id'] as String? ?? '',
+      username: json['username'] as String? ?? '',
+      name: json['name'] as String?,
+      profileImage: json['profile_image'] as String?,
+      ovr: json['ovr'] as int? ?? 0,
+      status: json['status'] as String? ?? '',
+    );
+  }
+}
+
+class StudyGroup {
+  final String groupId;
+  final String name;
+  final String description;
+  final int maxMembers;
+  final bool isPublic;
+  final int? logoIndex;
+  final bool lockEnabled;
+  final String createdAt;
+  final String creatorId;
+  final List<String> memberIds;
+
+  StudyGroup({
+    required this.groupId,
+    required this.name,
+    required this.description,
+    required this.maxMembers,
+    required this.isPublic,
+    this.logoIndex,
+    required this.lockEnabled,
+    required this.createdAt,
+    required this.creatorId,
+    required this.memberIds,
+  });
+
+  factory StudyGroup.fromJson(Map<String, dynamic> json) {
+    return StudyGroup(
+      groupId: json['group_id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      maxMembers: json['max_members'] as int? ?? 0,
+      isPublic: json['is_public'] as bool? ?? true,
+      logoIndex: json['logo_index'] as int?,
+      lockEnabled: json['lock_enabled'] as bool? ?? false,
+      createdAt: json['created_at'] as String? ?? '',
+      creatorId: json['creator_id'] as String? ?? '',
+      memberIds: List<String>.from(json['member_ids'] as List<dynamic>? ?? []),
     );
   }
 }
@@ -209,6 +337,57 @@ class ApiClient {
     }
     _token = token;
     return token;
+  }
+
+  Future<String?> getUserStorage(String key) async {
+    final token = await _ensureToken();
+    final encodedKey = Uri.encodeComponent(key);
+    final uri = Uri.parse('$baseUrl/user/storage/$encodedKey');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 404) {
+      return null;
+    }
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch storage: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return payload['value']?.toString();
+  }
+
+  Future<void> setUserStorage(String key, String value) async {
+    final token = await _ensureToken();
+    final encodedKey = Uri.encodeComponent(key);
+    final uri = Uri.parse('$baseUrl/user/storage/$encodedKey');
+    final response = await _client.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'value': value}),
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Failed to set storage: ${response.statusCode}');
+    }
+  }
+
+  Future<void> deleteUserStorage(String key) async {
+    final token = await _ensureToken();
+    final encodedKey = Uri.encodeComponent(key);
+    final uri = Uri.parse('$baseUrl/user/storage/$encodedKey');
+    final response = await _client.delete(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      if (response.statusCode == 404) {
+        return;
+      }
+      throw Exception('Failed to delete storage: ${response.statusCode}');
+    }
   }
 
   Future<String> createExam({
@@ -406,5 +585,185 @@ class ApiClient {
     }
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     return SolveAnalysisResponse.fromJson(decoded);
+  }
+
+  Future<UserRating> submitRating({
+    required String questId,
+    required bool isCorrect,
+    required List<String> tags,
+    List<Map<String, dynamic>>? stepCorrectness,
+    double? answerTime,
+    String? submissionId,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/rating/submit');
+    final body = jsonEncode({
+      'quest_id': questId,
+      'is_correct': isCorrect,
+      'tags': tags,
+      if (answerTime != null) 'answer_time': answerTime,
+      if (stepCorrectness != null) 'step_correctness': stepCorrectness,
+      if (submissionId != null) 'submission_id': submissionId,
+    });
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to submit rating: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return UserRating.fromJson(payload);
+  }
+
+  Future<UserRating> fetchUserRating() async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/rating/user');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch rating: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return UserRating.fromJson(payload);
+  }
+
+  Future<List<TagRating>> fetchTagRatings() async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/rating/tags');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch tag ratings: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['tags'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => TagRating.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
+  Future<List<FriendProfile>> searchFriends({
+    required String query,
+    int limit = 20,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friends/search');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'query': query.trim(),
+        'limit': limit,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to search friends: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final users = payload['users'] as List<dynamic>? ?? [];
+    return users
+        .map((item) => FriendProfile.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<FriendProfile>> listFriends() async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friends');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch friends: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final friends = payload['friends'] as List<dynamic>? ?? [];
+    return friends
+        .map((item) => FriendProfile.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<FriendProfile> addFriend(String username) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friends/add');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'username': username.trim()}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to add friend: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return FriendProfile.fromJson(payload);
+  }
+
+  Future<FriendProfile> removeFriend(String username) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friends/remove');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'username': username.trim()}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to remove friend: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return FriendProfile.fromJson(payload);
+  }
+
+  Future<StudyGroup> createStudyGroup({
+    required String name,
+    required String description,
+    required int maxMembers,
+    required bool isPublic,
+    int? logoIndex,
+    bool lockEnabled = false,
+    String? password,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/study-groups');
+    final body = jsonEncode({
+      'name': name.trim(),
+      'description': description.trim(),
+      'max_members': maxMembers,
+      'is_public': isPublic,
+      'logo_index': logoIndex,
+      'lock_enabled': lockEnabled,
+      if (lockEnabled && password != null) 'password': password.trim(),
+    });
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body,
+    );
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create study group: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return StudyGroup.fromJson(payload);
   }
 }

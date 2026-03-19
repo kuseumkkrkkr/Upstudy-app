@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../models/content_block.dart';
 import '../widgets/content_blocks_view.dart';
+import '../widgets/solve_header.dart';
 
 class FlowViewPage extends StatefulWidget {
   final Map<String, dynamic> quest;
@@ -41,43 +43,51 @@ class _FlowViewPageState extends State<FlowViewPage> {
     final questTitleBlocks = parseContentBlocks(questData['quest_title']);
     final questAnswerBlocks = parseContentBlocks(questData['quest_answer']);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 1100;
-          if (isWide) {
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildLeftPanel(questTitleBlocks, questAnswerBlocks),
-                ),
-                Expanded(
-                  flex: 5,
-                  child: _buildCanvasPanel(),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: _buildDetailPanel(),
-                ),
-              ],
-            );
-          }
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            SolveHeader(title: widget.title),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth >= 1100;
+                  if (isWide) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child:
+                              _buildLeftPanel(questTitleBlocks, questAnswerBlocks),
+                        ),
+                        Expanded(
+                          flex: 5,
+                          child: _buildCanvasPanel(),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: _buildDetailPanel(),
+                        ),
+                      ],
+                    );
+                  }
 
-          return ListView(
-            padding: const EdgeInsets.all(12),
-            children: [
-              _buildLeftPanel(questTitleBlocks, questAnswerBlocks),
-              const SizedBox(height: 12),
-              _buildCanvasPanel(height: 520),
-              const SizedBox(height: 12),
-              _buildDetailPanel(),
-            ],
-          );
-        },
+                  return ListView(
+                    padding: const EdgeInsets.all(12),
+                    children: [
+                      _buildLeftPanel(questTitleBlocks, questAnswerBlocks),
+                      const SizedBox(height: 12),
+                      _buildCanvasPanel(height: 520),
+                      const SizedBox(height: 12),
+                      _buildDetailPanel(),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -172,6 +182,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
             onNodeTap: (node) => setState(() => _selected = node),
           );
     return Card(
+      color: Colors.white,
       margin: const EdgeInsets.all(12),
       child: SizedBox(
         height: height,
@@ -200,7 +211,12 @@ class _FlowViewPageState extends State<FlowViewPage> {
                   ],
                 ),
               ),
-            Expanded(child: content),
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: content,
+              ),
+            ),
           ],
         ),
       ),
@@ -340,8 +356,7 @@ class _FlowCanvas extends StatelessWidget {
                 painter: _FlowEdgePainter(
                   edges: graph.edges,
                   positions: graph.positions,
-                  nodeWidth: _FlowGraphBuilder.nodeWidth,
-                  nodeHeight: _FlowGraphBuilder.nodeHeight,
+                  nodeSizes: graph.nodeSizes,
                 ),
               ),
             ),
@@ -350,12 +365,17 @@ class _FlowCanvas extends StatelessWidget {
               if (position == null) {
                 return const SizedBox.shrink();
               }
+              final nodeSize = graph.nodeSizes[node.id] ??
+                  const Size(
+                    _FlowGraphBuilder.nodeWidth,
+                    _FlowGraphBuilder.nodeMinHeight,
+                  );
               final isSelected = selected?.id == node.id;
               return Positioned(
                 left: position.dx,
                 top: position.dy,
-                width: _FlowGraphBuilder.nodeWidth,
-                height: _FlowGraphBuilder.nodeHeight,
+                width: nodeSize.width,
+                height: nodeSize.height,
                 child: _FlowNodeCard(
                   node: node,
                   selected: isSelected,
@@ -510,14 +530,12 @@ class _LegendChip extends StatelessWidget {
 class _FlowEdgePainter extends CustomPainter {
   final List<_FlowEdge> edges;
   final Map<String, Offset> positions;
-  final double nodeWidth;
-  final double nodeHeight;
+  final Map<String, Size> nodeSizes;
 
   _FlowEdgePainter({
     required this.edges,
     required this.positions,
-    required this.nodeWidth,
-    required this.nodeHeight,
+    required this.nodeSizes,
   });
 
   @override
@@ -533,8 +551,21 @@ class _FlowEdgePainter extends CustomPainter {
       if (from == null || to == null) {
         continue;
       }
-      final start = Offset(from.dx + nodeWidth / 2, from.dy + nodeHeight);
-      final end = Offset(to.dx + nodeWidth / 2, to.dy);
+      final fromSize = nodeSizes[edge.fromId] ??
+          const Size(
+            _FlowGraphBuilder.nodeWidth,
+            _FlowGraphBuilder.nodeMinHeight,
+          );
+      final toSize = nodeSizes[edge.toId] ??
+          const Size(
+            _FlowGraphBuilder.nodeWidth,
+            _FlowGraphBuilder.nodeMinHeight,
+          );
+      final start = Offset(
+        from.dx + fromSize.width / 2,
+        from.dy + fromSize.height,
+      );
+      final end = Offset(to.dx + toSize.width / 2, to.dy);
       final midY = (start.dy + end.dy) / 2;
       final path = Path()
         ..moveTo(start.dx, start.dy)
@@ -547,7 +578,9 @@ class _FlowEdgePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FlowEdgePainter oldDelegate) {
-    return oldDelegate.edges != edges || oldDelegate.positions != positions;
+    return oldDelegate.edges != edges ||
+        oldDelegate.positions != positions ||
+        oldDelegate.nodeSizes != nodeSizes;
   }
 }
 
@@ -561,6 +594,7 @@ class _FlowEdge {
 class _FlowNode {
   final String id;
   final List<ContentBlock> flow;
+  final Size size;
   final List<String> hashTags;
   final List<ContentBlock> hintRiddle;
   final List<ContentBlock> answerRiddle;
@@ -572,6 +606,7 @@ class _FlowNode {
   _FlowNode({
     required this.id,
     required this.flow,
+    required this.size,
     required this.hashTags,
     required this.hintRiddle,
     required this.answerRiddle,
@@ -584,12 +619,14 @@ class _FlowGraph {
   final Map<String, Offset> positions;
   final List<_FlowEdge> edges;
   final Size size;
+  final Map<String, Size> nodeSizes;
 
   const _FlowGraph({
     required this.nodes,
     required this.positions,
     required this.edges,
     required this.size,
+    required this.nodeSizes,
   });
 
   factory _FlowGraph.empty() {
@@ -598,13 +635,17 @@ class _FlowGraph {
       positions: {},
       edges: [],
       size: Size(0, 0),
+      nodeSizes: {},
     );
   }
 }
 
 class _FlowGraphBuilder {
   static const double nodeWidth = 220;
-  static const double nodeHeight = 80;
+  static const double nodeMinHeight = 80;
+  static const double nodePadding = 8;
+  static const double nodeTextFontSize = 12;
+  static const double nodeTextLineHeight = 1.3;
   static const double horizontalGap = 140;
   static const double verticalGap = 90;
   static const double canvasPadding = 32;
@@ -626,29 +667,53 @@ class _FlowGraphBuilder {
     final edges = <_FlowEdge>[];
     _collectEdges(root, edges);
 
+    final rowCount = metrics.maxRow + 1;
+    final rowHeights = <int, double>{};
+    for (final entry in gridPositions.entries) {
+      final node = allNodes[entry.key];
+      final height = node?.size.height ?? nodeMinHeight;
+      final current = rowHeights[entry.value.row] ?? 0.0;
+      if (height > current) {
+        rowHeights[entry.value.row] = height;
+      }
+    }
+    for (var row = 0; row < rowCount; row++) {
+      rowHeights.putIfAbsent(row, () => nodeMinHeight);
+    }
+    final rowOffsets = <int, double>{};
+    var cursorY = canvasPadding;
+    for (var row = 0; row < rowCount; row++) {
+      rowOffsets[row] = cursorY;
+      cursorY += rowHeights[row]! + verticalGap;
+    }
+
     final positions = <String, Offset>{};
     for (final entry in gridPositions.entries) {
       final col = entry.value.col - metrics.minCol;
       final row = entry.value.row;
       positions[entry.key] = Offset(
         canvasPadding + col * (nodeWidth + horizontalGap),
-        canvasPadding + row * (nodeHeight + verticalGap),
+        rowOffsets[row] ?? canvasPadding,
       );
     }
 
     final columnCount = metrics.maxCol - metrics.minCol + 1;
-    final rowCount = metrics.maxRow + 1;
     final width = columnCount * nodeWidth +
         (columnCount - 1) * horizontalGap +
         canvasPadding * 2;
-    final height = rowCount * nodeHeight +
-        (rowCount - 1) * verticalGap +
-        canvasPadding * 2;
+    final totalRowHeight =
+        rowHeights.values.fold(0.0, (sum, height) => sum + height);
+    final height =
+        totalRowHeight + (rowCount - 1) * verticalGap + canvasPadding * 2;
+    final nodeSizes = {
+      for (final node in allNodes.values) node.id: node.size,
+    };
     return _FlowGraph(
       nodes: allNodes,
       positions: positions,
       edges: edges,
       size: Size(width, height),
+      nodeSizes: nodeSizes,
     );
   }
 
@@ -670,17 +735,59 @@ class _FlowGraphBuilder {
 
   _FlowNode _buildNode(Map<String, dynamic> raw) {
     final branches = _extractBranches(raw['branches']);
+    final flowBlocks = parseContentBlocks(raw['flow']);
+    final nodeSize = _measureNodeSize(flowBlocks);
     final hashTags = (raw['hash_tag'] as List<dynamic>? ?? [])
         .map((tag) => tag.toString())
         .toList();
     return _FlowNode(
       id: 'node-${_counter++}',
-      flow: parseContentBlocks(raw['flow']),
+      flow: flowBlocks,
+      size: nodeSize,
       hashTags: hashTags,
       hintRiddle: parseContentBlocks(raw['hint_riddle']),
       answerRiddle: parseContentBlocks(raw['answer_riddle']),
       rawBranches: _buildNodes(branches, sequential: false),
     );
+  }
+
+  Size _measureNodeSize(List<ContentBlock> blocks) {
+    final text = _plainText(blocks);
+    if (text.isEmpty) {
+      return const Size(nodeWidth, nodeMinHeight);
+    }
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          fontSize: nodeTextFontSize,
+          height: nodeTextLineHeight,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: null,
+    );
+    painter.layout(maxWidth: nodeWidth - nodePadding * 2);
+    final height = math.max(
+      nodeMinHeight,
+      painter.size.height + nodePadding * 2 + 12,
+    );
+    return Size(nodeWidth, height);
+  }
+
+  String _plainText(List<ContentBlock> blocks) {
+    final buffer = StringBuffer();
+    for (final block in blocks) {
+      final content = block.content.trim();
+      if (content.isEmpty) {
+        continue;
+      }
+      if (buffer.isNotEmpty) {
+        buffer.write(' ');
+      }
+      buffer.write(content);
+    }
+    return buffer.toString();
   }
 
   List<dynamic> _extractBranches(dynamic value) {

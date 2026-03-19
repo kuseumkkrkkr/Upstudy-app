@@ -2,8 +2,6 @@
 
 import 'package:flutter/material.dart';
 
-import 'pages/mainpage_widget.dart';
-
 class AppShell extends StatelessWidget {
   static const routeName = '/app';
 
@@ -56,15 +54,6 @@ class AppShell extends StatelessWidget {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'debug-fab',
-        onPressed: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const MainpageWidget()));
-        },
-        child: const Icon(Icons.android),
       ),
     );
   }

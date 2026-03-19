@@ -30,6 +30,7 @@ from analysis_service import analyze_submission
 from baselines.basemodel import ContentBlocks
 from exam_service import plan_exam_items
 from generater.make import make
+from rating_service import apply_rating_update, fetch_tag_ratings, fetch_user_rating
 from storage.exam_storage import (
     add_exam_items,
     create_exam,
@@ -42,6 +43,25 @@ from storage.exam_storage import (
     update_exam_status,
 )
 from storage.storage import get_quest, init_db, search_quests, store_data
+from storage.social_storage import (
+    add_friend,
+    get_friends,
+    get_user_by_username,
+    init_social_db,
+    remove_friend,
+    search_users_by_username,
+)
+from storage.study_group_storage import (
+    create_study_group,
+    init_study_group_db,
+)
+from storage.rating_storage import init_rating_db
+from storage.user_kv_storage import (
+    delete_user_kv,
+    get_user_kv,
+    init_user_kv_db,
+    set_user_kv,
+)
 from test_chat.service import build_test_chat_response
 
 try:
@@ -224,6 +244,88 @@ class SolveAnalysisResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+class FriendProfile(BaseModel):
+    user_id: str
+    username: str
+    name: Optional[str] = None
+    profile_image: Optional[str] = None
+    ovr: int = 0
+    status: str = ""
+
+
+class FriendSearchRequest(BaseModel):
+    query: str = Field(min_length=1)
+    limit: int = Field(default=20, ge=1, le=50)
+
+
+class FriendSearchResponse(BaseModel):
+    users: List[FriendProfile]
+
+
+class FriendAddRequest(BaseModel):
+    username: str
+
+
+class FriendListResponse(BaseModel):
+    friends: List[FriendProfile]
+
+
+class StudyGroupCreateRequest(BaseModel):
+    name: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    max_members: int = Field(ge=1)
+    is_public: bool = True
+    logo_index: Optional[int] = None
+    lock_enabled: bool = False
+    password: Optional[str] = None
+    member_ids: List[str] = Field(default_factory=list)
+
+
+class StudyGroupResponse(BaseModel):
+    group_id: str
+    name: str
+    description: str
+    max_members: int
+    is_public: bool
+    logo_index: Optional[int] = None
+    lock_enabled: bool
+    created_at: str
+    creator_id: str
+    member_ids: List[str]
+
+
+class UserStoragePayload(BaseModel):
+    value: str
+
+
+class RatingSubmitRequest(BaseModel):
+    quest_id: str
+    is_correct: bool
+    tags: List[str] = Field(default_factory=list)
+    answer_time: Optional[float] = None
+    step_correctness: List[Dict[str, Any]] = Field(default_factory=list)
+    submission_id: Optional[str] = None
+
+
+class RatingResponse(BaseModel):
+    rating: float
+    ovr: float
+    ovr_delta: float
+    recent_accuracy: float
+    lose_streak: int
+
+
+class TagRatingItem(BaseModel):
+    tag: str
+    rating: float
+    delta: float
+    attempts: int
+
+
+class TagRatingsResponse(BaseModel):
+    tags: List[TagRatingItem]
+
+
 def _get_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
@@ -240,6 +342,10 @@ def _startup() -> None:
     init_db()
     init_exam_db()
     init_user_db()
+    init_social_db()
+    init_study_group_db()
+    init_user_kv_db()
+    init_rating_db()
 
 
 @app.post("/auth/anonymous", response_model=TokenResponse)
@@ -275,6 +381,36 @@ def login(payload: LoginRequest) -> TokenResponse:
     return TokenResponse(token=create_token(user_id), user_id=user_id)
 
 
+@app.get("/user/storage/{key}")
+def get_user_storage(
+    key: str,
+    user_id: str = Depends(_get_user_id),
+) -> Dict[str, str]:
+    value = get_user_kv(user_id, key)
+    if value is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"value": value}
+
+
+@app.put("/user/storage/{key}")
+def put_user_storage(
+    key: str,
+    payload: UserStoragePayload,
+    user_id: str = Depends(_get_user_id),
+) -> Dict[str, str]:
+    set_user_kv(user_id, key, payload.value)
+    return {"status": "ok"}
+
+
+@app.delete("/user/storage/{key}")
+def delete_user_storage(
+    key: str,
+    user_id: str = Depends(_get_user_id),
+) -> Dict[str, str]:
+    delete_user_kv(user_id, key)
+    return {"status": "ok"}
+
+
 @app.post("/auth/username/check", response_model=UsernameCheckResponse)
 def check_username(payload: UsernameCheckRequest) -> UsernameCheckResponse:
     error = validate_username(payload.username)
@@ -303,6 +439,81 @@ def validate_field(payload: FieldValidationRequest) -> FieldValidationResponse:
     else:
         raise HTTPException(status_code=400, detail="Unknown validation field")
     return FieldValidationResponse(valid=error is None, reason=error)
+
+
+@app.post("/social/friends/search", response_model=FriendSearchResponse)
+def search_friends(
+    payload: FriendSearchRequest,
+    user_id: str = Depends(_get_user_id),
+) -> FriendSearchResponse:
+    users = search_users_by_username(
+        payload.query,
+        exclude_user_id=user_id,
+        limit=payload.limit,
+    )
+    return FriendSearchResponse(
+        users=[FriendProfile(**user) for user in users],
+    )
+
+
+@app.get("/social/friends", response_model=FriendListResponse)
+def list_friends(user_id: str = Depends(_get_user_id)) -> FriendListResponse:
+    friends = get_friends(user_id)
+    return FriendListResponse(
+        friends=[FriendProfile(**friend) for friend in friends],
+    )
+
+
+@app.post("/social/friends/add", response_model=FriendProfile)
+def add_friend_handler(
+    payload: FriendAddRequest,
+    user_id: str = Depends(_get_user_id),
+) -> FriendProfile:
+    friend = get_user_by_username(payload.username)
+    if not friend:
+        raise HTTPException(status_code=404, detail="User not found")
+    friend_id = friend["user_id"]
+    if friend_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot add yourself")
+    add_friend(user_id, friend_id)
+    return FriendProfile(**friend)
+
+
+@app.post("/social/friends/remove", response_model=FriendProfile)
+def remove_friend_handler(
+    payload: FriendAddRequest,
+    user_id: str = Depends(_get_user_id),
+) -> FriendProfile:
+    friend = get_user_by_username(payload.username)
+    if not friend:
+        raise HTTPException(status_code=404, detail="User not found")
+    friend_id = friend["user_id"]
+    if friend_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot remove yourself")
+    remove_friend(user_id, friend_id)
+    return FriendProfile(**friend)
+
+
+@app.post("/social/study-groups", response_model=StudyGroupResponse, status_code=201)
+def create_study_group_handler(
+    payload: StudyGroupCreateRequest,
+    user_id: str = Depends(_get_user_id),
+) -> StudyGroupResponse:
+    try:
+        group = create_study_group(
+            name=payload.name,
+            description=payload.description,
+            max_members=payload.max_members,
+            is_public=payload.is_public,
+            creator_id=user_id,
+            logo_index=payload.logo_index,
+            lock_enabled=payload.lock_enabled,
+            password=payload.password,
+            member_ids=payload.member_ids,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return StudyGroupResponse(**group)
 
 
 def _fetch_kakao_profile(access_token: str) -> Dict[str, Any]:
@@ -506,6 +717,72 @@ def analyze_solve(
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return SolveAnalysisResponse(**result)
+
+
+@app.post("/rating/submit", response_model=RatingResponse)
+def submit_rating(
+    payload: RatingSubmitRequest,
+    user_id: str = Depends(_get_user_id),
+) -> RatingResponse:
+    quest = get_quest(payload.quest_id)
+    if not quest:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    tags = payload.tags
+    if not tags:
+        tags = (quest.get("info", {}) or {}).get("hash_tag", []) or []
+    result = apply_rating_update(
+        user_id=user_id,
+        quest=quest,
+        is_correct=bool(payload.is_correct),
+        tags=tags,
+        step_correctness=payload.step_correctness,
+        answer_time=payload.answer_time,
+        submission_id=payload.submission_id,
+    )
+    return RatingResponse(
+        rating=result.rating,
+        ovr=result.ovr,
+        ovr_delta=result.ovr_delta,
+        recent_accuracy=result.recent_accuracy,
+        lose_streak=result.lose_streak,
+    )
+
+
+@app.get("/rating/user", response_model=RatingResponse)
+def get_my_rating(user_id: str = Depends(_get_user_id)) -> RatingResponse:
+    result = fetch_user_rating(user_id)
+    return RatingResponse(
+        rating=result.rating,
+        ovr=result.ovr,
+        ovr_delta=result.ovr_delta,
+        recent_accuracy=result.recent_accuracy,
+        lose_streak=result.lose_streak,
+    )
+
+
+@app.get("/rating/user/{target_user_id}", response_model=RatingResponse)
+def get_user_rating(
+    target_user_id: str,
+    user_id: str = Depends(_get_user_id),
+) -> RatingResponse:
+    if target_user_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    result = fetch_user_rating(user_id)
+    return RatingResponse(
+        rating=result.rating,
+        ovr=result.ovr,
+        ovr_delta=result.ovr_delta,
+        recent_accuracy=result.recent_accuracy,
+        lose_streak=result.lose_streak,
+    )
+
+
+@app.get("/rating/tags", response_model=TagRatingsResponse)
+def get_tag_ratings(user_id: str = Depends(_get_user_id)) -> TagRatingsResponse:
+    items = fetch_tag_ratings(user_id)
+    return TagRatingsResponse(
+        tags=[TagRatingItem(**item) for item in items],
+    )
 
 
 def _resolve_items(items: List[Dict[str, Any]]) -> List[ExamItemResponse]:

@@ -10,7 +10,7 @@ class LoginPage extends StatefulWidget {
   static const routeName = '/login';
   const LoginPage({super.key, this.asDialog = false});
 
-  /// Dialog ????? Scaffold ?? ?? ??? ?????.
+  /// Dialog로 사용할 때 모달 형태로 렌더링합니다.
   final bool asDialog;
 
   @override
@@ -45,10 +45,12 @@ class _LoginPageState extends State<LoginPage> {
       );
       ApiClient.instance.setToken(token);
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
+      final navigator = Navigator.of(context, rootNavigator: true);
+      navigator.pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => MainStudentPage(username: _idController.text.trim()),
         ),
+        (route) => false,
       );
     } catch (error) {
       if (!mounted) return;
@@ -73,17 +75,19 @@ class _LoginPageState extends State<LoginPage> {
       final result = await _kakaoLoginService.signIn();
       ApiClient.instance.setToken(result.token);
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
+      final navigator = Navigator.of(context, rootNavigator: true);
+      navigator.pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => MainStudentPage(username: result.displayName),
         ),
+        (route) => false,
       );
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _errorText = error is StateError
             ? error.message
-            : '??? ???? ??????. ${error.toString()}';
+            : '카카오 로그인에 실패했습니다. ${error.toString()}';
       });
     } finally {
       if (mounted) {
@@ -157,13 +161,13 @@ class _LoginPageState extends State<LoginPage> {
         ElevatedButton(
           onPressed: _loading ? null : _submit,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white, // ?? ??
-            foregroundColor: Colors.black, // ??? ?
+            backgroundColor: Colors.white, // 버튼 배경
+            foregroundColor: Colors.black, // 텍스트 색상
             padding: const EdgeInsets.symmetric(vertical: 14),
-            elevation: 0, // ??? ?? (??)
+            elevation: 0, // 그림자 제거
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
-              side: const BorderSide(color: Colors.grey), // ??? (??)
+              side: const BorderSide(color: Colors.grey), // 테두리
             ),
           ),
           child: _loading
@@ -172,7 +176,7 @@ class _LoginPageState extends State<LoginPage> {
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.black, // ?? ????? ?
+                    color: Colors.black, // 로딩 인디케이터 색상
                   ),
                 )
               : const Text('로그인'),
@@ -211,12 +215,12 @@ class _LoginPageState extends State<LoginPage> {
                   ).push(MaterialPageRoute(builder: (_) => const BuildpageWidget()));
                 },
           style: TextButton.styleFrom(
-            backgroundColor: Colors.white, // ? ??
-            foregroundColor: Colors.black, // ??? ?
+            backgroundColor: Colors.white, // 버튼 배경
+            foregroundColor: Colors.black, // 텍스트 색상
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
-              //side: const BorderSide(color: Colors.grey), // ???
+              //side: const BorderSide(color: Colors.grey), // 테두리
             ),
           ),
           child: const Text('아이디가 없으신가요? 회원가입'),

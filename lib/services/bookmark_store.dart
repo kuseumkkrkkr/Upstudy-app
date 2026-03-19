@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'local_db.dart';
 
 class BookmarkItem {
   const BookmarkItem({
@@ -46,8 +49,7 @@ class BookmarkStore {
   static const _key = 'bookmarks_v1';
 
   static Future<List<BookmarkItem>> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key);
+    final raw = await _loadRaw();
     if (raw == null || raw.isEmpty) return <BookmarkItem>[];
     try {
       final decoded = jsonDecode(raw);
@@ -62,9 +64,22 @@ class BookmarkStore {
   }
 
   static Future<void> save(List<BookmarkItem> items) async {
-    final prefs = await SharedPreferences.getInstance();
     final payload = jsonEncode(items.map((item) => item.toJson()).toList());
-    await prefs.setString(_key, payload);
+    await LocalDb.instance.setString(_key, payload);
+  }
+
+  static Future<String?> _loadRaw() async {
+    final db = LocalDb.instance;
+    final cached = await db.getString(_key);
+    if (cached != null && cached.isNotEmpty) return cached;
+    if (kIsWeb) return cached;
+    final prefs = await SharedPreferences.getInstance();
+    final legacy = prefs.getString(_key);
+    if (legacy != null && legacy.isNotEmpty) {
+      await db.setString(_key, legacy);
+      return legacy;
+    }
+    return cached;
   }
 
   static Future<List<BookmarkItem>> add(BookmarkItem item) async {

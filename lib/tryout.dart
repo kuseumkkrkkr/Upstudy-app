@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -6,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:s11/models/content_block.dart';
 import 'package:s11/pages/solve_analysis_page.dart';
 import 'package:s11/services/api_client.dart';
+import 'package:s11/services/activity_store.dart';
+import 'package:s11/services/rating_store.dart';
 import 'package:s11/widgets/content_blocks_view.dart';
 
 class ProblemSolveConfig {
@@ -36,6 +39,21 @@ class ProblemSolveConfig {
       gradeImmediately: gradeImmediately ?? this.gradeImmediately,
       minDifficultyTier: minDifficultyTier ?? this.minDifficultyTier,
       maxDifficultyTier: maxDifficultyTier ?? this.maxDifficultyTier,
+    );
+  }
+
+  factory ProblemSolveConfig.fromJson(Map<String, dynamic> json) {
+    List<String> toStringList(dynamic raw) {
+      if (raw is! List) return const <String>[];
+      return raw.map((entry) => entry.toString()).toList();
+    }
+
+    return ProblemSolveConfig(
+      questionCount: (json['question_count'] as num?)?.toInt() ?? 1,
+      hashTags: toStringList(json['hash_tags']),
+      gradeImmediately: json['grade_immediately'] as bool? ?? true,
+      minDifficultyTier: (json['min_difficulty_tier'] as num?)?.toInt() ?? 3,
+      maxDifficultyTier: (json['max_difficulty_tier'] as num?)?.toInt() ?? 3,
     );
   }
 
@@ -285,11 +303,14 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
           _hashTags.length <= _maxTagCountForTier(_minDifficultyTier);
       final matches =
           reuseEnabled ? await _searchQuestsByTags(_hashTags) : <Map<String, dynamic>>[];
-      final selected = <Map<String, dynamic>>[];
+      final selected =
+          List<Map<String, dynamic>?>.filled(_problemCount, null);
       var matchIndex = 0;
+      final pendingIndices = <int>[];
+      final futures = <Future<Map<String, dynamic>>>[];
       for (var i = 0; i < _problemCount; i++) {
         if (matchIndex < matches.length) {
-          selected.add(matches[matchIndex]);
+          selected[i] = matches[matchIndex];
           matchIndex += 1;
           continue;
         }
@@ -297,14 +318,23 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         final params = _tierParams[tier] ?? _tierParams[3]!;
         final tagCount = _tagCountForTier(tier);
         final tags = _pickRandomTags(_hashTags, tagCount);
-        final generated = await ApiClient.instance.generateQuest(
-          hashTags: tags,
-          solvesCount: params.solvesCount,
-          strategyLevel: params.strategyLevel,
-          branchConditions: params.branchConditions,
-          strictTags: false,
+        pendingIndices.add(i);
+        futures.add(
+          ApiClient.instance.generateQuest(
+            hashTags: tags,
+            solvesCount: params.solvesCount,
+            strategyLevel: params.strategyLevel,
+            branchConditions: params.branchConditions,
+            strictTags: false,
+          ),
         );
-        selected.add(generated);
+      }
+
+      if (futures.isNotEmpty) {
+        final generated = await Future.wait(futures);
+        for (var i = 0; i < generated.length; i++) {
+          selected[pendingIndices[i]] = generated[i];
+        }
       }
 
       for (var i = 0; i < _problemCount; i++) {
@@ -1102,6 +1132,31 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
           : analysis;
       final isCorrect =
           insufficientData ? false : _isSolveCorrect(evaluated, referenceCount);
+      final questId = _currentQuestId();
+      final problemNumber =
+          questId.isNotEmpty ? questId : (_currentProblemIndex + 1).toString();
+      unawaited(
+        _submitRatingUpdate(
+          quest: quest,
+          isCorrect: isCorrect,
+          stepCorrectness: stepCorrectness,
+        ),
+      );
+      if (isCorrect) {
+        try {
+          await ActivityStore.recordProblemSolve(
+            problemId: questId.isNotEmpty ? questId : problemNumber,
+            problemNumber: problemNumber,
+          );
+        } catch (_) {}
+      } else if (!insufficientData) {
+        try {
+          await ActivityStore.recordProblemIncorrect(
+            problemId: questId.isNotEmpty ? questId : problemNumber,
+            problemNumber: problemNumber,
+          );
+        } catch (_) {}
+      }
       if (!mounted) return;
       final route = MaterialPageRoute<SolveAnalysisAction>(
         builder: (_) => SolveAnalysisPage(
@@ -1117,6 +1172,10 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
           : await navigator.push(route);
       gradingShown = false;
       if (!mounted) return;
+      if (action == SolveAnalysisAction.exit) {
+        navigator.maybePop();
+        return;
+      }
       if (action == SolveAnalysisAction.next) {
         _goToNextProblem();
       }
@@ -1190,6 +1249,33 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
           .toList(),
       'time_weakness': timeWeakness.map((item) => item.toJson()).toList(),
     };
+  }
+
+  Future<void> _submitRatingUpdate({
+    required Map<String, dynamic>? quest,
+    required bool isCorrect,
+    required List<Map<String, dynamic>> stepCorrectness,
+  }) async {
+    final questId = _currentQuestId();
+    if (questId.isEmpty) return;
+    final info = quest?['info'] as Map<String, dynamic>? ?? {};
+    final rawTags = (info['hash_tag'] as List<dynamic>? ?? [])
+        .map((tag) => tag.toString())
+        .toList();
+    final tags = rawTags.isNotEmpty ? rawTags : _hashTags;
+    final answerTime = _nowSeconds();
+    try {
+      final rating = await ApiClient.instance.submitRating(
+        questId: questId,
+        isCorrect: isCorrect,
+        tags: tags,
+        stepCorrectness: stepCorrectness,
+        answerTime: answerTime,
+      );
+      RatingStore.updateFromRating(rating);
+    } catch (_) {
+      // ignore rating failures
+    }
   }
 
   Future<Uint8List> _renderStrokesToPng() async {
