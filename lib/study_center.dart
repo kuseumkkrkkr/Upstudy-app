@@ -5,6 +5,7 @@ import 'docx_box.dart' as docx;
 import 'friend.dart' as friend;
 import 'package:s11/mainstudent.dart';
 import 'pages/course_pages.dart';
+import 'pages/textbook_editor_page.dart';
 import 'widgets/app_drawer.dart';
 import 'widgets/tag_picker_dialog.dart';
 import 'widgets/modals/study_modes/exam_mode.dart';
@@ -100,6 +101,13 @@ class SoWidget extends StatelessWidget {
                       icon: Icons.library_books,
                       title: '교재 만들기',
                       subtitle: '맞춤형 교재를 만듭니다',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const TextbookCreationPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -113,6 +121,22 @@ class SoWidget extends StatelessWidget {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => const book_page.BookmarkListPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _CardData(
+                      icon: Icons.library_books_outlined,
+                      title: '교재함',
+                      subtitle: '보유한 교재를 보여줍니다',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const book_page.BookLibraryPage(
+                              libraryTitle: '교재함',
+                              notice: '보유한 교재를 보여줍니다.',
+                              enableDownload: true,
+                            ),
                           ),
                         );
                       },

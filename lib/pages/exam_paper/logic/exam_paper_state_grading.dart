@@ -1,6 +1,35 @@
 part of 'package:s11/pages/exam_paper_page.dart';
 
 mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin {
+  // Gemini prompt/model is handled on the server.
+  static const HeatmapConfig _heatmapConfig = HeatmapConfig();
+  int _resolveExamQuestionCount() {
+    final expected = widget.expectedQuestionCount;
+    if (expected != null && expected > 0) return expected;
+    final status = _examStatus;
+    if (status != null && status.items.isNotEmpty) {
+      return status.items.length;
+    }
+    return 0;
+  }
+
+  int _resolveExamDifficultyTier() {
+    final status = _examStatus;
+    if (status == null || status.items.isEmpty) return 3;
+    var sum = 0;
+    for (final item in status.items) {
+      sum += item.difficultyTier;
+    }
+    final average = (sum / status.items.length).round();
+    return average.clamp(1, 5);
+  }
+
+  String _resolveExamNumber() {
+    final examId = widget.examId?.trim();
+    if (examId != null && examId.isNotEmpty) return examId;
+    return 'local-${DateTime.now().millisecondsSinceEpoch}';
+  }
+
   void _showMessage(String message) {
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -70,6 +99,15 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     if (confirmed == true && mounted) {
       setState(() => _examFinished = true);
       _showMessage('시험이 종료되었습니다.');
+      final examNumber = _resolveExamNumber();
+      unawaited(
+        ActivityStore.recordExamCompletion(
+          examId: examNumber,
+          examNumber: examNumber,
+          questionCount: _resolveExamQuestionCount(),
+          difficultyTier: _resolveExamDifficultyTier(),
+        ).catchError((_) {}),
+      );
       await _startBatchGrading();
 
     }
@@ -253,7 +291,7 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     final quest = await _loadQuest(item.questId);
     final targetRegion = region;
     final relevant = _extractStrokesInRegion(strokes, targetRegion);
-    if (relevant.isEmpty) {
+    if (relevant.length <= 2) {
       return _GradeResult.empty(item.itemIndex, quest: quest);
     }
     final imageBytes =
@@ -266,12 +304,26 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
         _gradingPreviewItemIndex = item.itemIndex;
       });
     }
+    final heatmapPayload = _buildHeatmapForRegion(
+      pageIndex: pageIndex,
+      region: targetRegion,
+    );
+    final heatmapImage = await heatmapPayload.result.renderImage();
+    debugPrint(
+      '[exam grading] images: student=${imageBytes.lengthInBytes}B '
+      'heatmap=${heatmapImage.lengthInBytes}B',
+    );
     final titleBlocks = parseContentBlocks(item.questTitle);
     final problemText = contentBlocksToPlainText(titleBlocks);
+    final referenceSteps = _ReferenceSolveStep.fromQuest(
+      quest == null ? null : quest['solves'],
+    );
+    final referencePayload = _buildReferenceStepsPayload(referenceSteps);
     final payload = {
       'quest_id': item.questId,
       'quest_model': const <String>[],
 
+      if (quest != null) 'quest_json': quest,
       'problem': problemText,
 
       'problem_index': item.itemIndex,
@@ -279,36 +331,24 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
       'problem_count': totalQuestions,
 
       'hash_tags': item.hashTags,
-
-      'student_work_image': base64Encode(imageBytes),
-
+      'reference_steps': referencePayload,
+      'reference_flow_count': referencePayload.length,
       'recognized_text': const <dynamic>[],
-
       'writing_events': const <dynamic>[],
       'step_correctness': const <dynamic>[],
       'time_weakness': const <dynamic>[],
     };
     final response = await ApiClient.instance.submitSolveAnalysis(
       payload: payload,
+      studentWorkImage: imageBytes,
+      heatmapImage: heatmapImage,
     );
-    final analysis = response.analysis.trim();
-    final imageSize = Size(
-      math.max(1, targetRegion.width.round()).toDouble(),
-      math.max(1, targetRegion.height.round()).toDouble(),
-    );
-    final referenceSteps = _ReferenceSolveStep.fromQuest(
-      quest == null ? null : quest['solves'],
-    );
-    final referenceCount = _flattenReferenceSteps(referenceSteps).length;
+    final analysis = '';
     final stepCorrectness = _resolveStepCorrectness(
       response: response,
-      questSteps: referenceSteps,
-      imageSize: imageSize,
     );
     final isCorrect = _resolveIsCorrect(
       response: response,
-      stepCorrectness: stepCorrectness,
-      referenceCount: referenceCount,
     );
     return _GradeResult.success(
       item.itemIndex,
@@ -411,143 +451,17 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
 
   List<Map<String, dynamic>> _resolveStepCorrectness({
     required SolveAnalysisResponse response,
-    required List<_ReferenceSolveStep> questSteps,
-    required Size imageSize,
   }) {
     if (response.stepCorrectness.isNotEmpty) {
       return response.stepCorrectness;
     }
-    final ocrBlocks =
-        _parseOcrBlocksFromResponse(response.recognizedText, imageSize);
-    if (ocrBlocks.isEmpty || questSteps.isEmpty) {
-      return const [];
-    }
-    return _evaluateStepCorrectness(ocrBlocks, questSteps);
+    return const [];
   }
 
   bool? _resolveIsCorrect({
     required SolveAnalysisResponse response,
-    required List<Map<String, dynamic>> stepCorrectness,
-    required int referenceCount,
   }) {
-    if (response.isCorrect != null) {
-      return response.isCorrect;
-    }
-    if (referenceCount <= 0 || stepCorrectness.isEmpty) {
-      return null;
-    }
-    if (stepCorrectness.length < referenceCount) {
-      return null;
-    }
-    for (var i = 0; i < referenceCount; i++) {
-      final correct = stepCorrectness[i]['correct'];
-      if (correct == null) {
-        return null;
-      }
-      if (correct != true) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  List<_OcrBlock> _parseOcrBlocksFromResponse(
-    List<dynamic> rawBlocks,
-    Size imageSize,
-  ) {
-    if (rawBlocks.isEmpty) return <_OcrBlock>[];
-    final blocks = <_OcrBlock>[];
-    for (final entry in rawBlocks) {
-      if (entry is! Map) continue;
-      final map = Map<String, dynamic>.from(entry as Map);
-      final text = map['text']?.toString() ?? '';
-      final rect = _parseOcrRect(map['bbox'], imageSize);
-      if (rect == null) continue;
-      blocks.add(_OcrBlock(text: text, bbox: rect));
-    }
-    return blocks;
-  }
-
-  Rect? _parseOcrRect(dynamic value, Size imageSize) {
-    List<double>? coords;
-    if (value is List && value.length >= 4) {
-      coords = value.take(4).map(_toDouble).toList();
-    } else if (value is Map) {
-      final map = Map<String, dynamic>.from(value as Map);
-      if (map.containsKey('x1') &&
-          map.containsKey('y1') &&
-          map.containsKey('x2') &&
-          map.containsKey('y2')) {
-        coords = [
-          _toDouble(map['x1']),
-          _toDouble(map['y1']),
-          _toDouble(map['x2']),
-          _toDouble(map['y2']),
-        ];
-      }
-    }
-    if (coords == null) return null;
-
-    final maxValue = coords.reduce((a, b) => a > b ? a : b);
-    final isNormalized = maxValue <= 1.5;
-    var left = coords[0];
-    var top = coords[1];
-    var right = coords[2];
-    var bottom = coords[3];
-
-    if (isNormalized) {
-      left *= imageSize.width;
-      right *= imageSize.width;
-      top *= imageSize.height;
-      bottom *= imageSize.height;
-    }
-
-    final l = math.min(left, right).clamp(0.0, imageSize.width).toDouble();
-    final r = math.max(left, right).clamp(0.0, imageSize.width).toDouble();
-    final t = math.min(top, bottom).clamp(0.0, imageSize.height).toDouble();
-    final b = math.max(top, bottom).clamp(0.0, imageSize.height).toDouble();
-    if (r <= l || b <= t) return null;
-    return Rect.fromLTRB(l, t, r, b);
-  }
-
-  double _toDouble(dynamic value) {
-    if (value is num) return value.toDouble();
-    return double.tryParse(value.toString()) ?? 0.0;
-  }
-
-  List<Map<String, dynamic>> _evaluateStepCorrectness(
-    List<_OcrBlock> blocks,
-    List<_ReferenceSolveStep> referenceSteps,
-  ) {
-    if (blocks.isEmpty) return const [];
-    final flattened = _flattenReferenceSteps(referenceSteps);
-    if (flattened.isEmpty) return const [];
-    final orderedBlocks = List<_OcrBlock>.from(blocks)
-      ..sort((a, b) {
-        final dy = a.bbox.top.compareTo(b.bbox.top);
-        if (dy != 0) return dy;
-        return a.bbox.left.compareTo(b.bbox.left);
-      });
-    final results = <Map<String, dynamic>>[];
-    for (var i = 0; i < orderedBlocks.length; i++) {
-      final block = orderedBlocks[i];
-      final reference = i < flattened.length ? flattened[i] : null;
-      if (reference == null) {
-        results.add({
-          'step_id': i + 1,
-          'correct': null,
-        });
-        continue;
-      }
-      final similarity = _textSimilarity(block.text, reference.flowText);
-      final isCorrect = similarity >= 0.6;
-      results.add({
-        'step_id': i + 1,
-        'correct': isCorrect,
-        'similarity': similarity,
-      });
-    }
-    return results;
+    return response.isCorrect;
   }
 
   List<_ReferenceSolveStep> _flattenReferenceSteps(
@@ -566,20 +480,131 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     return flattened;
   }
 
-  double _textSimilarity(String a, String b) {
-    final tokensA = _tokenize(a);
-    final tokensB = _tokenize(b);
-    if (tokensA.isEmpty && tokensB.isEmpty) return 1.0;
-    if (tokensA.isEmpty || tokensB.isEmpty) return 0.0;
-    final intersection = tokensA.intersection(tokensB).length;
-    final union = tokensA.union(tokensB).length;
-    return union == 0 ? 0.0 : intersection / union;
+  List<Map<String, dynamic>> _buildReferenceStepsPayload(
+    List<_ReferenceSolveStep> steps,
+  ) {
+    final flattened = _flattenReferenceSteps(steps);
+    final results = <Map<String, dynamic>>[];
+    for (var i = 0; i < flattened.length; i++) {
+      final step = flattened[i];
+      results.add({
+        'step_id': i + 1,
+        'flow_text': step.flowText,
+        'hint_text': step.hintText,
+        'answer_text': step.answerText,
+        'hash_tags': step.hashTags,
+        'enter_huddle': step.enterHuddle,
+      });
+    }
+    return results;
   }
 
-  Set<String> _tokenize(String text) {
-    final regex = RegExp(r'[A-Za-z0-9가-힣ㄱ-ㅎㅏ-ㅣ]+');
-    final matches = regex.allMatches(text);
-    return matches.map((m) => m.group(0)!.toLowerCase()).toSet();
+  _HeatmapPayload _buildHeatmapForRegion({
+    required int pageIndex,
+    required Rect region,
+  }) {
+    final events = _heatmapEventsByPage[pageIndex] ?? const <HeatmapEvent>[];
+    if (events.isEmpty) {
+      return _HeatmapPayload(
+        result: HeatmapEngine.build(
+          size: Size(region.width, region.height),
+          events: const <HeatmapEvent>[],
+          config: _heatmapConfig,
+        ),
+        highlightBounds: const [],
+      );
+    }
+    final filtered = <HeatmapEvent>[];
+    final strokeBounds = <String, Rect>{};
+    for (final event in events) {
+      switch (event.type) {
+        case HeatmapEventType.undo:
+          filtered.add(event);
+          break;
+        case HeatmapEventType.penStroke:
+          final stroke = event.stroke;
+          if (stroke == null) break;
+          final points = _filterPointsToRegion(stroke.points, region);
+          if (points.isEmpty) break;
+          final bounds = _boundsForPoints(points);
+          if (bounds != null) {
+            strokeBounds[stroke.key] = bounds;
+          }
+          filtered.add(
+            HeatmapEvent.pen(
+              HeatmapStroke(
+                key: stroke.key,
+                points: points,
+                order: event.order,
+              ),
+            ),
+          );
+          break;
+        case HeatmapEventType.eraserStroke:
+          final eraser = event.eraser;
+          if (eraser == null) break;
+          final points = _filterPointsToRegion(eraser.points, region);
+          if (points.isEmpty) break;
+          filtered.add(
+            HeatmapEvent.eraser(
+              HeatmapEraserStroke(
+                points: points,
+                order: event.order,
+              ),
+            ),
+          );
+          break;
+      }
+    }
+    final result = HeatmapEngine.build(
+      size: Size(region.width, region.height),
+      events: filtered,
+      config: _heatmapConfig,
+    );
+    final highlightBounds = <Map<String, dynamic>>[];
+    result.highlightReasons.forEach((key, reasons) {
+      final bounds = strokeBounds[key];
+      if (bounds == null) return;
+      highlightBounds.add({
+        'stroke_key': key,
+        'bounds': _rectToList(bounds),
+        'reasons': reasons.toList(),
+      });
+    });
+    return _HeatmapPayload(
+      result: result,
+      highlightBounds: highlightBounds,
+    );
+  }
+
+  List<Offset> _filterPointsToRegion(List<Offset> points, Rect region) {
+    if (points.isEmpty) return const [];
+    final filtered = <Offset>[];
+    for (final point in points) {
+      if (!region.contains(point)) continue;
+      filtered.add(Offset(point.dx - region.left, point.dy - region.top));
+    }
+    return filtered;
+  }
+
+  Rect? _boundsForPoints(List<Offset> points) {
+    if (points.isEmpty) return null;
+    var minX = points.first.dx;
+    var maxX = points.first.dx;
+    var minY = points.first.dy;
+    var maxY = points.first.dy;
+    for (final point in points.skip(1)) {
+      minX = math.min(minX, point.dx);
+      maxX = math.max(maxX, point.dx);
+      minY = math.min(minY, point.dy);
+      maxY = math.max(maxY, point.dy);
+    }
+    if (maxX <= minX || maxY <= minY) return null;
+    return Rect.fromLTRB(minX, minY, maxX, maxY);
+  }
+
+  List<double> _rectToList(Rect rect) {
+    return <double>[rect.left, rect.top, rect.right, rect.bottom];
   }
 
   List<_QuestionRegion> _currentQuestionRegions() {
@@ -859,4 +884,22 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
 
 
 
+}
+
+class _HeatmapPayload {
+  const _HeatmapPayload({
+    required this.result,
+    required this.highlightBounds,
+  });
+
+  final HeatmapResult result;
+  final List<Map<String, dynamic>> highlightBounds;
+
+  Map<String, dynamic> toMetaJson() {
+    final meta = result.toMetaJson();
+    if (highlightBounds.isNotEmpty) {
+      meta['highlight_bounds'] = highlightBounds;
+    }
+    return meta;
+  }
 }

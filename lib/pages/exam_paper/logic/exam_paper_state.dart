@@ -86,6 +86,18 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
 
   final List<List<_Stroke>> _pagePendingEraseRemoved = <List<_Stroke>>[];
 
+  final Map<int, List<HeatmapEvent>> _heatmapEventsByPage =
+      <int, List<HeatmapEvent>>{};
+  int _heatmapEventCounter = 0;
+  List<Offset>? _currentEraserPoints;
+
+  List<HeatmapEvent> _heatmapEventsForPage(int pageIndex) {
+    return _heatmapEventsByPage.putIfAbsent(
+      pageIndex,
+      () => <HeatmapEvent>[],
+    );
+  }
+
 
   _Stroke? _currentStroke;
   int? _currentStrokePageIndex;
@@ -139,6 +151,7 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   Rect? _gradingPreviewRegion;
   int? _gradingPreviewPageIndex;
   int? _gradingPreviewItemIndex;
+  final Map<int, int?> _selectedOptions = <int, int?>{};
 
 
   double? _estimatedHeaderHeight;

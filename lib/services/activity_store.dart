@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'local_db.dart';
 
 const _activityStoreKey = 'activity_log_v1';
+const int _activityMaxStoredDays = 150;
+const int _activityScoreCap = 2000;
 
 class ActivityEventType {
   static const String problem = 'problem';
@@ -56,14 +58,20 @@ class ActivityDayRecord {
     List<String>? problemNumbers,
     List<String>? bookNumbers,
     List<String>? courseNumbers,
+    List<String>? examNumbers,
+    int? score,
   })  : problemNumbers = problemNumbers ?? <String>[],
         bookNumbers = bookNumbers ?? <String>[],
-        courseNumbers = courseNumbers ?? <String>[];
+        courseNumbers = courseNumbers ?? <String>[],
+        examNumbers = examNumbers ?? <String>[],
+        score = score ?? 0;
 
   final String dateKey;
   final List<String> problemNumbers;
   final List<String> bookNumbers;
   final List<String> courseNumbers;
+  final List<String> examNumbers;
+  final int score;
 
   factory ActivityDayRecord.fromJson(
     String dateKey,
@@ -79,6 +87,8 @@ class ActivityDayRecord {
       problemNumbers: toStringList(json['problems']),
       bookNumbers: toStringList(json['books']),
       courseNumbers: toStringList(json['courses']),
+      examNumbers: toStringList(json['exams']),
+      score: (json['score'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -87,7 +97,26 @@ class ActivityDayRecord {
       'problems': problemNumbers,
       'books': bookNumbers,
       'courses': courseNumbers,
+      'exams': examNumbers,
+      'score': score,
     };
+  }
+
+  ActivityDayRecord copyWith({
+    List<String>? problemNumbers,
+    List<String>? bookNumbers,
+    List<String>? courseNumbers,
+    List<String>? examNumbers,
+    int? score,
+  }) {
+    return ActivityDayRecord(
+      dateKey: dateKey,
+      problemNumbers: problemNumbers ?? this.problemNumbers,
+      bookNumbers: bookNumbers ?? this.bookNumbers,
+      courseNumbers: courseNumbers ?? this.courseNumbers,
+      examNumbers: examNumbers ?? this.examNumbers,
+      score: score ?? this.score,
+    );
   }
 }
 
@@ -96,6 +125,7 @@ class ActivitySnapshot {
     required this.days,
     required this.totalSolvedCount,
     required this.totalIncorrectCount,
+    required this.lastDateKey,
     this.lastEvent,
     this.lastProblemConfig,
   });
@@ -103,6 +133,7 @@ class ActivitySnapshot {
   final Map<String, ActivityDayRecord> days;
   final int totalSolvedCount;
   final int totalIncorrectCount;
+  final String lastDateKey;
   final ActivityEvent? lastEvent;
   final Map<String, dynamic>? lastProblemConfig;
 
@@ -111,6 +142,7 @@ class ActivitySnapshot {
       days: <String, ActivityDayRecord>{},
       totalSolvedCount: 0,
       totalIncorrectCount: 0,
+      lastDateKey: '',
     );
   }
 
@@ -133,6 +165,7 @@ class ActivitySnapshot {
       days: map,
       totalSolvedCount: (json['total_solved'] as num?)?.toInt() ?? 0,
       totalIncorrectCount: (json['total_incorrect'] as num?)?.toInt() ?? 0,
+      lastDateKey: json['last_date']?.toString() ?? '',
       lastEvent: lastEventRaw is Map
           ? ActivityEvent.fromJson(Map<String, dynamic>.from(lastEventRaw))
           : null,
@@ -149,6 +182,7 @@ class ActivitySnapshot {
       },
       'total_solved': totalSolvedCount,
       'total_incorrect': totalIncorrectCount,
+      'last_date': lastDateKey,
       if (lastEvent != null) 'last_event': lastEvent!.toJson(),
       if (lastProblemConfig != null) 'problem_config': lastProblemConfig,
     };
@@ -159,6 +193,24 @@ class ActivitySnapshot {
       ..sort((a, b) => b.dateKey.compareTo(a.dateKey));
     if (limit == null || entries.length <= limit) return entries;
     return entries.take(limit).toList();
+  }
+
+  ActivitySnapshot copyWith({
+    Map<String, ActivityDayRecord>? days,
+    int? totalSolvedCount,
+    int? totalIncorrectCount,
+    String? lastDateKey,
+    ActivityEvent? lastEvent,
+    Map<String, dynamic>? lastProblemConfig,
+  }) {
+    return ActivitySnapshot(
+      days: days ?? this.days,
+      totalSolvedCount: totalSolvedCount ?? this.totalSolvedCount,
+      totalIncorrectCount: totalIncorrectCount ?? this.totalIncorrectCount,
+      lastDateKey: lastDateKey ?? this.lastDateKey,
+      lastEvent: lastEvent ?? this.lastEvent,
+      lastProblemConfig: lastProblemConfig ?? this.lastProblemConfig,
+    );
   }
 }
 
@@ -171,6 +223,11 @@ class ActivityStore {
     if (_loaded) return notifier.value;
     final raw = await _loadRaw();
     if (raw == null || raw.isEmpty) {
+      final normalized = _normalizeSnapshot(
+        ActivitySnapshot.empty(),
+        DateTime.now(),
+      );
+      await _persist(normalized);
       _loaded = true;
       return notifier.value;
     }
@@ -178,7 +235,12 @@ class ActivityStore {
       final decoded = jsonDecode(raw);
       if (decoded is Map<String, dynamic>) {
         final snapshot = ActivitySnapshot.fromJson(decoded);
-        notifier.value = snapshot;
+        final normalized = _normalizeSnapshot(snapshot, DateTime.now());
+        if (normalized != snapshot) {
+          await _persist(normalized);
+        } else {
+          notifier.value = snapshot;
+        }
       }
     } catch (_) {
       // Ignore corrupted payloads.
@@ -190,7 +252,7 @@ class ActivityStore {
   static Future<void> recordProblemSession({
     required Map<String, dynamic> config,
   }) async {
-    final snapshot = await load();
+    final snapshot = await _ensureUpToDate();
     final event = ActivityEvent(
       type: ActivityEventType.problem,
       id: 'session',
@@ -203,6 +265,7 @@ class ActivityStore {
         days: snapshot.days,
         totalSolvedCount: snapshot.totalSolvedCount,
         totalIncorrectCount: snapshot.totalIncorrectCount,
+        lastDateKey: snapshot.lastDateKey,
         lastEvent: event,
         lastProblemConfig: Map<String, dynamic>.from(config),
       ),
@@ -212,18 +275,26 @@ class ActivityStore {
   static Future<void> recordProblemSolve({
     required String problemId,
     required String problemNumber,
+    int? difficultyTier,
   }) async {
-    final snapshot = await load();
+    final snapshot = await _ensureUpToDate();
     final todayKey = _todayKey();
     final existing = snapshot.days[todayKey] ??
         ActivityDayRecord(dateKey: todayKey);
+    final isValid = problemNumber.trim().isNotEmpty;
+    final isDuplicate =
+        !isValid || existing.problemNumbers.contains(problemNumber);
     final updatedProblems = _addUnique(existing.problemNumbers, problemNumber);
-    final updatedDay = ActivityDayRecord(
-      dateKey: todayKey,
-      problemNumbers: updatedProblems,
-      bookNumbers: List<String>.from(existing.bookNumbers),
-      courseNumbers: List<String>.from(existing.courseNumbers),
-    );
+    var updatedDay = existing.copyWith(problemNumbers: updatedProblems);
+    var nextSolvedTotal = snapshot.totalSolvedCount;
+    if (!isDuplicate) {
+      nextSolvedTotal += 1;
+      final updatedCount = updatedProblems.length;
+      final basePoints = _problemBasePointsForIndex(updatedCount);
+      final weight = _problemDifficultyWeight(difficultyTier ?? 3);
+      final deltaScore = (basePoints * weight).round();
+      updatedDay = updatedDay.copyWith(score: updatedDay.score + deltaScore);
+    }
     final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
       ..[todayKey] = updatedDay;
     final priorConfigRaw =
@@ -240,8 +311,9 @@ class ActivityStore {
     await _persist(
       ActivitySnapshot(
         days: updatedDays,
-        totalSolvedCount: snapshot.totalSolvedCount + 1,
+        totalSolvedCount: nextSolvedTotal,
         totalIncorrectCount: snapshot.totalIncorrectCount,
+        lastDateKey: snapshot.lastDateKey,
         lastEvent: event,
         lastProblemConfig: priorConfig,
       ),
@@ -252,7 +324,7 @@ class ActivityStore {
     required String problemId,
     required String problemNumber,
   }) async {
-    final snapshot = await load();
+    final snapshot = await _ensureUpToDate();
     final priorConfigRaw =
         snapshot.lastProblemConfig ?? snapshot.lastEvent?.meta?['config'];
     final priorConfig =
@@ -269,6 +341,7 @@ class ActivityStore {
         days: snapshot.days,
         totalSolvedCount: snapshot.totalSolvedCount,
         totalIncorrectCount: snapshot.totalIncorrectCount + 1,
+        lastDateKey: snapshot.lastDateKey,
         lastEvent: event,
         lastProblemConfig: priorConfig,
       ),
@@ -279,17 +352,20 @@ class ActivityStore {
     required String bookId,
     required String bookNumber,
   }) async {
-    final snapshot = await load();
+    final snapshot = await _ensureUpToDate();
     final todayKey = _todayKey();
     final existing = snapshot.days[todayKey] ??
         ActivityDayRecord(dateKey: todayKey);
+    final isValid = bookNumber.trim().isNotEmpty;
+    final isDuplicate = !isValid || existing.bookNumbers.contains(bookNumber);
     final updatedBooks = _addUnique(existing.bookNumbers, bookNumber);
-    final updatedDay = ActivityDayRecord(
-      dateKey: todayKey,
-      problemNumbers: List<String>.from(existing.problemNumbers),
-      bookNumbers: updatedBooks,
-      courseNumbers: List<String>.from(existing.courseNumbers),
-    );
+    var updatedDay = existing.copyWith(bookNumbers: updatedBooks);
+    if (!isDuplicate) {
+      final priorCount = existing.bookNumbers.length;
+      if (priorCount < 2) {
+        updatedDay = updatedDay.copyWith(score: updatedDay.score + 100);
+      }
+    }
     final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
       ..[todayKey] = updatedDay;
     final event = ActivityEvent(
@@ -303,6 +379,7 @@ class ActivityStore {
         days: updatedDays,
         totalSolvedCount: snapshot.totalSolvedCount,
         totalIncorrectCount: snapshot.totalIncorrectCount,
+        lastDateKey: snapshot.lastDateKey,
         lastEvent: event,
         lastProblemConfig: snapshot.lastProblemConfig,
       ),
@@ -314,17 +391,12 @@ class ActivityStore {
     required String courseNumber,
     String? screen,
   }) async {
-    final snapshot = await load();
+    final snapshot = await _ensureUpToDate();
     final todayKey = _todayKey();
     final existing = snapshot.days[todayKey] ??
         ActivityDayRecord(dateKey: todayKey);
     final updatedCourses = _addUnique(existing.courseNumbers, courseNumber);
-    final updatedDay = ActivityDayRecord(
-      dateKey: todayKey,
-      problemNumbers: List<String>.from(existing.problemNumbers),
-      bookNumbers: List<String>.from(existing.bookNumbers),
-      courseNumbers: updatedCourses,
-    );
+    final updatedDay = existing.copyWith(courseNumbers: updatedCourses);
     final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
       ..[todayKey] = updatedDay;
     final event = ActivityEvent(
@@ -339,7 +411,45 @@ class ActivityStore {
         days: updatedDays,
         totalSolvedCount: snapshot.totalSolvedCount,
         totalIncorrectCount: snapshot.totalIncorrectCount,
+        lastDateKey: snapshot.lastDateKey,
         lastEvent: event,
+        lastProblemConfig: snapshot.lastProblemConfig,
+      ),
+    );
+  }
+
+  static Future<void> recordExamCompletion({
+    required String examId,
+    required String examNumber,
+    required int questionCount,
+    int? difficultyTier,
+  }) async {
+    final snapshot = await _ensureUpToDate();
+    final todayKey = _todayKey();
+    final existing = snapshot.days[todayKey] ??
+        ActivityDayRecord(dateKey: todayKey);
+    final resolvedNumber =
+        examNumber.trim().isNotEmpty ? examNumber : examId.trim();
+    final isValid = resolvedNumber.trim().isNotEmpty;
+    final isDuplicate =
+        !isValid || existing.examNumbers.contains(resolvedNumber);
+    final updatedExams = _addUnique(existing.examNumbers, resolvedNumber);
+    var updatedDay = existing.copyWith(examNumbers: updatedExams);
+    if (!isDuplicate) {
+      final basePoints = _examBasePoints(questionCount);
+      final weight = _examDifficultyWeight(difficultyTier ?? 3);
+      final deltaScore = (basePoints * weight).round();
+      updatedDay = updatedDay.copyWith(score: updatedDay.score + deltaScore);
+    }
+    final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
+      ..[todayKey] = updatedDay;
+    await _persist(
+      ActivitySnapshot(
+        days: updatedDays,
+        totalSolvedCount: snapshot.totalSolvedCount,
+        totalIncorrectCount: snapshot.totalIncorrectCount,
+        lastDateKey: snapshot.lastDateKey,
+        lastEvent: snapshot.lastEvent,
         lastProblemConfig: snapshot.lastProblemConfig,
       ),
     );
@@ -382,5 +492,182 @@ class ActivityStore {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
+  }
+
+  static ActivitySnapshot _normalizeSnapshot(
+    ActivitySnapshot snapshot,
+    DateTime now,
+  ) {
+    final todayKey = _formatDateKey(now);
+    var lastDateKey = snapshot.lastDateKey;
+    var changed = false;
+    if (lastDateKey.isEmpty && snapshot.days.isNotEmpty) {
+      lastDateKey = _latestDateKey(snapshot.days.keys);
+      changed = true;
+    }
+    final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days);
+    if (lastDateKey.isEmpty) {
+      updatedDays.putIfAbsent(
+        todayKey,
+        () => ActivityDayRecord(dateKey: todayKey),
+      );
+      lastDateKey = todayKey;
+      changed = true;
+    } else {
+      final lastDate = _parseDateKey(lastDateKey) ?? now;
+      if (!updatedDays.containsKey(lastDateKey)) {
+        updatedDays[lastDateKey] = ActivityDayRecord(dateKey: lastDateKey);
+        changed = true;
+      }
+      final today = DateTime(now.year, now.month, now.day);
+      var cursor = DateTime(lastDate.year, lastDate.month, lastDate.day);
+      while (cursor.isBefore(today)) {
+        cursor = cursor.add(const Duration(days: 1));
+        final key = _formatDateKey(cursor);
+        if (!updatedDays.containsKey(key)) {
+          updatedDays[key] = ActivityDayRecord(dateKey: key);
+          changed = true;
+        }
+      }
+      lastDateKey = todayKey;
+      if (snapshot.lastDateKey != lastDateKey) {
+        changed = true;
+      }
+    }
+    final trimmedDays = _trimDays(updatedDays, _activityMaxStoredDays);
+    if (trimmedDays.length != updatedDays.length) {
+      changed = true;
+    }
+    if (!changed) return snapshot;
+    return snapshot.copyWith(days: trimmedDays, lastDateKey: lastDateKey);
+  }
+
+  static Future<ActivitySnapshot> _ensureUpToDate() async {
+    final snapshot = _loaded ? notifier.value : await load();
+    final normalized = _normalizeSnapshot(snapshot, DateTime.now());
+    if (normalized != snapshot) {
+      await _persist(normalized);
+      return notifier.value;
+    }
+    return snapshot;
+  }
+
+  static DateTime? _parseDateKey(String key) {
+    final parts = key.split('-');
+    if (parts.length != 3) return null;
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final day = int.tryParse(parts[2]);
+    if (year == null || month == null || day == null) return null;
+    return DateTime(year, month, day);
+  }
+
+  static String _latestDateKey(Iterable<String> keys) {
+    final list = keys.toList()..sort();
+    return list.isEmpty ? '' : list.last;
+  }
+
+  static Map<String, ActivityDayRecord> _trimDays(
+    Map<String, ActivityDayRecord> days,
+    int maxCount,
+  ) {
+    if (days.length <= maxCount) return days;
+    final keys = days.keys.toList()..sort();
+    final removeCount = days.length - maxCount;
+    final toRemove = keys.take(removeCount).toSet();
+    final trimmed = <String, ActivityDayRecord>{};
+    for (final entry in days.entries) {
+      if (!toRemove.contains(entry.key)) {
+        trimmed[entry.key] = entry.value;
+      }
+    }
+    return trimmed;
+  }
+
+  static int scoreCap() => _activityScoreCap;
+
+  static double activityPercentFromScore(int score) {
+    if (_activityScoreCap <= 0) return 0.0;
+    final capped = score.clamp(0, _activityScoreCap).toDouble();
+    return capped / _activityScoreCap;
+  }
+
+  static int activityLevelForScore(int score) {
+    if (score <= 0) return 0;
+    if (score <= 100) return 1;
+    if (score <= 250) return 2;
+    if (score <= 600) return 3;
+    if (score <= 1000) return 4;
+    return 5;
+  }
+
+  static int scoreForDate(ActivitySnapshot snapshot, DateTime date) {
+    final key = _formatDateKey(date);
+    return snapshot.days[key]?.score ?? 0;
+  }
+
+  static List<ActivityDayRecord> recentDays(
+    ActivitySnapshot snapshot,
+    int count,
+  ) {
+    if (count <= 0) return const <ActivityDayRecord>[];
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: count - 1));
+    final results = <ActivityDayRecord>[];
+    for (var i = 0; i < count; i++) {
+      final date = start.add(Duration(days: i));
+      final key = _formatDateKey(date);
+      results.add(
+        snapshot.days[key] ?? ActivityDayRecord(dateKey: key),
+      );
+    }
+    return results;
+  }
+
+  static int _problemBasePointsForIndex(int index) {
+    if (index <= 5) return 2;
+    if (index <= 20) return 3;
+    if (index <= 50) return 4;
+    if (index <= 100) return 5;
+    return 7;
+  }
+
+  static double _problemDifficultyWeight(int tier) {
+    switch (tier.clamp(1, 5)) {
+      case 1:
+        return 0.5;
+      case 2:
+        return 1.0;
+      case 3:
+        return 1.5;
+      case 4:
+        return 3.0;
+      case 5:
+      default:
+        return 5.0;
+    }
+  }
+
+  static int _examBasePoints(int questionCount) {
+    if (questionCount >= 50) return 700;
+    if (questionCount >= 30) return 500;
+    return 200;
+  }
+
+  static double _examDifficultyWeight(int tier) {
+    switch (tier.clamp(1, 5)) {
+      case 1:
+        return 0.4;
+      case 2:
+        return 0.7;
+      case 3:
+        return 1.0;
+      case 4:
+        return 1.5;
+      case 5:
+      default:
+        return 2.0;
+    }
   }
 }

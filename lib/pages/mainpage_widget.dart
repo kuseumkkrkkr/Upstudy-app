@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/dialog_service.dart';
 import '../widgets/menu_button.dart';
 import '../widgets/header_bar.dart';
 import '../widgets/app_drawer.dart';
-import 'character_chat_debug_page.dart';
 import 'data_open_page.dart';
 import 'quick_generate_page.dart';
 import 'solution_view_page.dart';
@@ -17,45 +15,45 @@ class MainpageWidget extends StatefulWidget {
 }
 
 class _MainpageWidgetState extends State<MainpageWidget> {
-  // �޴� ������ ������
+  // 메인 메뉴 목록
   final List<Map<String, String>> menuItems = [
     {
-      'title': '���� ����',
+      'title': '문제 풀이',
       'image':
           'https://images.unsplash.com/photo-1517770413964-df8ca61194a6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHw4fHxib29rfGVufDB8fHx8MTc2ODYyNzYxNHww&ixlib=rb-4.1.0&q=80&w=1080',
     },
     {
-      'title': '���� ����',
+      'title': '문제 생성',
       'image':
           'https://images.unsplash.com/photo-1676302447092-14a103558511?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwzfHwlRUMlODglOTglRUQlOTUlOTl8ZW58MHx8fHwxNzY4NjI3OTI0fDA&ixlib=rb-4.1.0&q=80&w=1080',
     },
     {
-      'title': '������ ����',
+      'title': '학습 분석',
       'image':
           'https://images.unsplash.com/photo-1628498188904-036f5e25e93e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwzfHxzdGFycnklMjBuaWdodHxlbnwwfHx8fDE3Njg2MTUzNTd8MA&ixlib=rb-4.1.0&q=80&w=1080',
     },
     {
-      'title': 'Ǯ�̺���',
+      'title': '풀이보기',
       'image':
           'https://images.unsplash.com/photo-1460925895917-afdab827c52f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxfHxkYXRhfGVufDB8fHx8MTc2ODYyODA3M3ww&ixlib=rb-4.1.0&q=80&w=1080',
     },
-    {'title': '������ ����', 'image': ''},
+    {'title': '데이터 열기', 'image': ''},
   ];
 
   void _onMenuItemPressed(String title) {
-    if (title == '������ ����') {
+    if (title == '데이터 열기') {
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const DataOpenPage()));
       return;
     }
-    if (title == '���� ����') {
+    if (title == '문제 생성') {
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const QuickGeneratePage()));
       return;
     }
-    if (title == 'Ǯ�̺���') {
+    if (title == '풀이보기') {
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const SolutionViewPage()));
@@ -74,42 +72,12 @@ class _MainpageWidgetState extends State<MainpageWidget> {
         body: SafeArea(
           child: Column(
             children: [
-              // ��� ���
+              // 헤더 영역
               Builder(
                 builder: (context) => HeaderBar(
                   onSearchPressed: () =>
-                      DialogService.openDialog(context, title: '�˻�'),
+                      DialogService.openDialog(context, title: '검색'),
                   onMenuPressed: () => toggleAppDrawer(context),
-                ),
-              ),
-
-              // �޴� ��ư ���
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pink,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      textStyle: GoogleFonts.inter(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const CharacterChatDebugPage(),
-                        ),
-                      );
-                    },
-                    child: const Text('ĳ���� ê'),
-                  ),
                 ),
               ),
 

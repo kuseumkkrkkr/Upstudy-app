@@ -34,6 +34,9 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
   bool _loading = false;
   String? _error;
   Map<String, dynamic>? _quest;
+  bool _cubicLoading = false;
+  String? _cubicError;
+  Map<String, dynamic>? _cubicResult;
 
   @override
   void initState() {
@@ -117,6 +120,35 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     }
   }
 
+  Future<void> _generateCubicProblem() async {
+    if (_cubicLoading) {
+      return;
+    }
+    setState(() {
+      _cubicLoading = true;
+      _cubicError = null;
+      _cubicResult = null;
+    });
+    try {
+      final result = await ApiClient.instance.generateCubicProblem();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _cubicResult = result;
+        _cubicLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _cubicError = '문제 생성 실패';
+        _cubicLoading = false;
+      });
+    }
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -144,6 +176,8 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
           _buildPayloadSection(payloadText),
           const SizedBox(height: 12),
           _buildActionSection(questId, questTitleBlocks),
+          const SizedBox(height: 12),
+          _buildCubicSection(),
           if (_loading)
             const Padding(
               padding: EdgeInsets.only(top: 12),
@@ -365,6 +399,66 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCubicSection() {
+    final problemText = _cubicResult?['problem']?.toString() ?? '';
+    final solutionText = _cubicResult?['solution']?.toString() ?? '';
+    final answerText = _cubicResult?['answer']?.toString() ?? '-';
+    final problemBlocks = problemText.isEmpty
+        ? [const ContentBlock(type: 'text', content: '-')]
+        : parseContentBlocks(problemText);
+    final solutionBlocks = solutionText.isEmpty
+        ? [const ContentBlock(type: 'text', content: '-')]
+        : parseContentBlocks(solutionText);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'CSAT 삼차함수 랜덤 생성',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _cubicLoading ? null : _generateCubicProblem,
+              child: const Text('문제 만들기'),
+            ),
+            if (_cubicLoading)
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_cubicError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Center(child: Text(_cubicError!)),
+              ),
+            const SizedBox(height: 12),
+            const Text('문제'),
+            const SizedBox(height: 4),
+            ContentBlocksView(
+              blocks: problemBlocks,
+              textStyle: const TextStyle(fontSize: 13, height: 1.4),
+              latexStyle: const TextStyle(fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            const Text('풀이'),
+            const SizedBox(height: 4),
+            ContentBlocksView(
+              blocks: solutionBlocks,
+              textStyle: const TextStyle(fontSize: 13, height: 1.4),
+              latexStyle: const TextStyle(fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 8),
+            Text('정답: $answerText'),
           ],
         ),
       ),

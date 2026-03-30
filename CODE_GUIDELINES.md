@@ -32,13 +32,11 @@ s11/
 │   ├── pages/                    # 화면 위젯
 │   │   ├── mainpage_widget.dart  # 메인 페이지
 │   │   ├── student.dart          # 학생 대시보드(BuildboxCopyWidget)
-│   │   ├── character_chat_debug_page.dart  # 캐릭터 챗봇 디버깅
 │   │   ├── quick_generate_page.dart       # 1문제 생성/디버깅
 │   │   ├── solution_view_page.dart        # 문제 검색/풀이 흐름 보기
 │   │   ├── data_open_page.dart            # DB 페이지네이션 조회
 │   │   ├── exam_preview_page.dart         # 시험지 미리보기(A4 그리드)
 │   │   ├── flow_view_page.dart            # Flow Editor
-│   │   └── quest_picker_page.dart         # 문제 선택 페이지
 │   ├── services/                 # 비즈니스 로직
 │   │   ├── api_client.dart       # HTTP API 클라이언트
 │   │   ├── auth_service.dart     # 로그인/회원가입 API
@@ -1062,15 +1060,13 @@ Math.tex(
 ### 아키텍처
 
 ```
-Flutter UI (character_chat_debug_page.dart)
-        ↓
-ApiClient.sendTestChatMessage()
-        ↓
+Simulator CLI (simulator/character_chat_simulator.py)
+        ->
 POST /test-chat/message
-        ↓
-test_chat/service.py → build_test_chat_response()
-        ↓
-Gemini API (gemini-2.5-flash-lite)
+        ->
+test_chat/service.py -> build_test_chat_response()
+        ->
+Gemini API (gemini-3.1-flash-lite-flash-lite)
 ```
 
 ### 핵심 파라미터
@@ -1250,15 +1246,14 @@ def _estimate_tokens(text: str) -> int:
 
 ### API 응답 모델
 
-```dart
-// Flutter
-class TestChatResponse {
-  final String assistantMessage;
-  final String? pairSummary;
-  final String prompt;
-  final int inputTokenEstimate;
-  final int outputTokenEstimate;
-  final int totalTokenEstimate;
+```json
+{
+  "assistant_message": "...",
+  "pair_summary": "...",
+  "prompt": "...",
+  "input_token_estimate": 0,
+  "output_token_estimate": 0,
+  "token_estimate": 0
 }
 ```
 
@@ -1280,39 +1275,23 @@ class TestChatMessageResponse(BaseModel):
 export COMETAPI_KEY="your-api-key"
 ```
 
-### UI 구성 (character_chat_debug_page.dart)
+### UI (simulator/character_chat_simulator.py)
 
-```dart
-// 주요 상태 변수
-double _affection = 120;
-double _attendanceDays = 7;
-bool _sending = false;
-int _currentInputTokens = 0;
-int _currentOutputTokens = 0;
-int _totalInputTokens = 0;
-int _totalOutputTokens = 0;
-String? _pairSummary;
-String _promptPreview = '';
-String? _selectedQuestId;
-String? _selectedQuestTitle;
-List<String> _selectedQuestTags = [];
-Map<String, int> _learningRatings = {};
-final TextEditingController _problemNumberController = TextEditingController();
-final TextEditingController _solutionNotesController = TextEditingController();
-final TextEditingController _chatInputController = TextEditingController();
-final List<_ChatMessage> _messages = [];
+CLI commands:
+- /help
+- /config
+- /quest-search tag=<tag> id=<id> text=<text>
+- /quest-pick <index>
+- /rate <tag> <0-256>
+- /prompt
+- /tokens
+- /exit
 
-// 내부 메시지 클래스
-class _ChatMessage {
-  final String text;
-  final bool isUser;
-  const _ChatMessage({required this.text, required this.isUser});
-}
+Run:
+
+```bash
+python simulator/character_chat_simulator.py
 ```
-
----
-
-## 추가 리소스
 
 ### 문서
 - [Flutter 공식 문서](https://flutter.dev/docs)

@@ -449,6 +449,9 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
       _strokes.sort((a, b) => a.order.compareTo(b.order));
     }
 
+    _heatmapEventsForPage(
+      _currentPageIndex,
+    ).add(HeatmapEvent.undo((_heatmapEventCounter++).toDouble()));
     _bumpPaint();
   }
 
@@ -680,6 +683,17 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
       _strokes.add(stroke);
 
       _undoStack.add(_AddAction(stroke));
+
+      final pageIndex = _currentStrokePageIndex ?? _currentPageIndex;
+      _heatmapEventsForPage(pageIndex).add(
+        HeatmapEvent.pen(
+          HeatmapStroke(
+            key: 'p${pageIndex}_${stroke.order}',
+            points: stroke.points.map((point) => point.position).toList(),
+            order: (_heatmapEventCounter++).toDouble(),
+          ),
+        ),
+      );
     }
 
     _currentStroke = null;
@@ -696,6 +710,7 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _eraserActive = true;
 
     _eraserPosition = position;
+    _currentEraserPoints = <Offset>[position];
 
     _eraseAt(position);
 
@@ -706,6 +721,7 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _eraserActive = true;
 
     _eraserPosition = position;
+    _currentEraserPoints?.add(position);
 
     _eraseAt(position);
 
@@ -713,6 +729,10 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
   }
 
   void _finishEraser() {
+    final lastPosition = _eraserPosition;
+    if (lastPosition != null) {
+      _currentEraserPoints?.add(lastPosition);
+    }
     if (_pendingEraseRemoved.isNotEmpty) {
       _undoStack.add(_RemoveAction(List<_Stroke>.from(_pendingEraseRemoved)));
 
@@ -722,6 +742,20 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _eraserActive = false;
 
     _eraserPosition = null;
+
+    final points = _currentEraserPoints;
+    if (points != null && points.isNotEmpty) {
+      final pageIndex = _eraserPageIndex ?? _currentPageIndex;
+      _heatmapEventsForPage(pageIndex).add(
+        HeatmapEvent.eraser(
+          HeatmapEraserStroke(
+            points: List<Offset>.from(points),
+            order: (_heatmapEventCounter++).toDouble(),
+          ),
+        ),
+      );
+    }
+    _currentEraserPoints = null;
     _eraserPageIndex = null;
 
     _bumpPaint();
@@ -799,4 +833,5 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
 
     return normalized.clamp(0.0, 1.0);
   }
+
 }

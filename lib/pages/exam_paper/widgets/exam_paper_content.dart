@@ -6,12 +6,16 @@ class _ExamPaperContent extends StatelessWidget {
     required this.pageNumber,
     required this.totalPages,
     this.statusMessage,
+    this.selectedOptions = const <int, int?>{},
+    this.onOptionSelected,
   });
 
   final _PageLayout? layout;
   final int pageNumber;
   final int totalPages;
   final String? statusMessage;
+  final Map<int, int?> selectedOptions;
+  final void Function(int itemIndex, int optionIndex)? onOptionSelected;
 
   static const TextStyle _baseStyle = TextStyle(
     fontSize: 13.5,
@@ -163,6 +167,8 @@ class _ExamPaperContent extends StatelessWidget {
     final displayTitleBlocks = titleBlocks.isEmpty
         ? [const ContentBlock(type: 'text', content: 'Generating...')]
         : titleBlocks;
+    final optionBlocks = _parseOptionBlocks(item.questOptions);
+    final selectedIndex = selectedOptions[item.itemIndex];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -172,17 +178,114 @@ class _ExamPaperContent extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Expanded(
-          child: ClipRect(
-            child: ContentBlocksView(
-              blocks: displayTitleBlocks,
-              textStyle: _baseStyle.copyWith(fontSize: 12),
-              latexStyle: _baseStyle.copyWith(fontSize: 12),
-              spacing: 2,
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                child: ClipRect(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: ContentBlocksView(
+                      blocks: displayTitleBlocks,
+                      textStyle: _baseStyle.copyWith(fontSize: 12),
+                      latexStyle: _baseStyle.copyWith(fontSize: 12),
+                      spacing: 2,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
+        if (optionBlocks.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          _buildOptionList(
+            itemIndex: item.itemIndex,
+            options: optionBlocks,
+            selectedIndex: selectedIndex,
+          ),
+        ],
       ],
     );
+  }
+
+  List<List<ContentBlock>> _parseOptionBlocks(List<dynamic>? rawOptions) {
+    if (rawOptions == null || rawOptions.isEmpty) return const [];
+    final options = <List<ContentBlock>>[];
+    for (final option in rawOptions) {
+      final blocks = parseContentBlocks(option);
+      if (blocks.isNotEmpty) {
+        options.add(blocks);
+      }
+    }
+    return options;
+  }
+
+  Widget _buildOptionList({
+    required int itemIndex,
+    required List<List<ContentBlock>> options,
+    required int? selectedIndex,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(options.length, (index) {
+        final isSelected = selectedIndex == index;
+        return InkWell(
+          onTap: onOptionSelected == null
+              ? null
+              : () => onOptionSelected!(itemIndex, index),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildOptionCircle(_optionLabel(index), isSelected),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: ContentBlocksView(
+                    blocks: options[index],
+                    textStyle: _optionStyle,
+                    latexStyle: _optionStyle,
+                    inline: true,
+                    spacing: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildOptionCircle(String label, bool selected) {
+    return Container(
+      width: 18,
+      height: 18,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: selected ? const Color(0xFF1B402B) : Colors.transparent,
+        border: Border.all(color: Colors.black, width: 1),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          color: selected ? Colors.white : Colors.black,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  String _optionLabel(int index) {
+    const labels = ['①', '②', '③', '④', '⑤'];
+    if (index >= 0 && index < labels.length) {
+      return labels[index];
+    }
+    return '${index + 1}';
   }
 
   Widget _buildStaticContent() {

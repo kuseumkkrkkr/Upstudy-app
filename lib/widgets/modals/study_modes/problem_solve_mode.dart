@@ -85,6 +85,24 @@ class _ProblemSolveModalState extends State<_ProblemSolveModal> {
     return '현재 난이도: $startLabel ~ $endLabel';
   }
 
+  int _minTagCountForTier(int tier) {
+    final resolved = tier.clamp(1, 5);
+    if (resolved == 1) return 1;
+    if (resolved == 2) return 1;
+    if (resolved == 3) return 3;
+    if (resolved == 4) return 3;
+    return 5;
+  }
+
+  bool _isInsufficientTags(int selectedCount, int maxTier) {
+    return selectedCount < _minTagCountForTier(maxTier);
+  }
+
+  bool _isNarrowRange(int selectedCount, int maxTier) {
+    final minRequired = _minTagCountForTier(maxTier);
+    return selectedCount == minRequired || selectedCount < 10;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -276,6 +294,15 @@ class _ProblemSolveModalState extends State<_ProblemSolveModal> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedTags = _selectedLeafTags();
+    final selectedCount = selectedTags.length;
+    final minTier = _difficultyRange.start.round();
+    final maxTier = _difficultyRange.end.round();
+    final resolvedMaxTier = minTier > maxTier ? minTier : maxTier;
+    final minRequired = _minTagCountForTier(resolvedMaxTier);
+    final insufficientTags = _isInsufficientTags(selectedCount, resolvedMaxTier);
+    final narrowRange = !insufficientTags && _isNarrowRange(selectedCount, resolvedMaxTier);
+
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -380,9 +407,22 @@ class _ProblemSolveModalState extends State<_ProblemSolveModal> {
               ),
               const SizedBox(height: 6),
               Text(
-                '문제가 1문제인데 너무 많은 양의 해시태그를 추가할 경우 원하는 범위가 아닐 수 있음\n현재 해시태그 갯수 ${_selectedLeafTags().length}개',
+                '문제가 1문제인데 너무 많은 양의 해시태그를 추가할 경우 원하는 범위가 아닐 수 있음\n현재 해시태그 갯수 ${selectedCount}개',
                 style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
+              if (insufficientTags) ...[
+                const SizedBox(height: 6),
+                Text(
+                  '${_difficultyLabelFor(resolvedMaxTier)} 난이도의 최소 선택 개념 갯수는 ${minRequired}개입니다.',
+                  style: const TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ] else if (narrowRange) ...[
+                const SizedBox(height: 6),
+                const Text(
+                  '선택된 범위가 좁아 생성에 시간이 더 걸릴 수 있습니다.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFFD97706)),
+                ),
+              ],
               const SizedBox(height: 16),
               const Text(
                 '해시태그',
@@ -440,16 +480,18 @@ class _ProblemSolveModalState extends State<_ProblemSolveModal> {
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    onPressed: () {
-                      final config = ProblemSolveConfig(
-                        questionCount: _parseCount(),
-                        hashTags: _selectedLeafTags(),
-                        gradeImmediately: _gradeImmediately,
-                        minDifficultyTier: _difficultyRange.start.round(),
-                        maxDifficultyTier: _difficultyRange.end.round(),
-                      );
-                      Navigator.of(context).pop(config);
-                    },
+                    onPressed: insufficientTags
+                        ? null
+                        : () {
+                            final config = ProblemSolveConfig(
+                              questionCount: _parseCount(),
+                              hashTags: selectedTags,
+                              gradeImmediately: _gradeImmediately,
+                              minDifficultyTier: minTier,
+                              maxDifficultyTier: maxTier,
+                            );
+                            Navigator.of(context).pop(config);
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1B402B),
                       foregroundColor: Colors.white,

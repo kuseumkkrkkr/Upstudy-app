@@ -8,7 +8,9 @@ CLI and API server that build math quest data with a Gemini-based model and stor
 - API packages: fastapi, uvicorn, pyjwt, reportlab
 
 ## Setup
-- Set `COMETAPI_KEY` in your environment.
+- Create a `.env` file (recommended) and set `COMETAPI_KEY`.
+  - Example: `COMETAPI_KEY=...`
+- Or set `COMETAPI_KEY` in your shell environment.
   - PowerShell example: `$env:COMETAPI_KEY="..."`.
 - Install deps: `pip install -r requirements.txt`
 

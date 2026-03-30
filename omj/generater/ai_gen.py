@@ -1,6 +1,9 @@
 import os
 from google import genai
 from baselines.basemodel import AIQuestResult
+from env_loader import load_env
+
+load_env()
 
 
 # =========================
@@ -34,7 +37,7 @@ def ai_gen(prompt: str) -> AIQuestResult:
         raise RuntimeError("COMETAPI_KEY is not set")
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite",
         contents=prompt,
         config={
             "response_mime_type": "application/json",

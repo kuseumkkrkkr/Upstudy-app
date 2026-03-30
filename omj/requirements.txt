@@ -4,3 +4,4 @@ pydantic
 google-genai
 pyjwt
 reportlab
+sympy

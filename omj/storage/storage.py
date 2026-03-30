@@ -46,6 +46,35 @@ def _parse_content(value: Any) -> dict | None:
     return _normalize_content(value)
 
 
+def _serialize_options(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return json.dumps([_normalize_content(value)], ensure_ascii=False)
+    if isinstance(value, list):
+        normalized = [_normalize_content(item) for item in value]
+        return json.dumps(normalized, ensure_ascii=False)
+    return json.dumps([_normalize_content(value)], ensure_ascii=False)
+
+
+def _parse_options(value: Any) -> list | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if not value:
+            return []
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return [_normalize_content(value)]
+        if isinstance(parsed, list):
+            return [_normalize_content(item) for item in parsed]
+        return [_normalize_content(parsed)]
+    if isinstance(value, list):
+        return [_normalize_content(item) for item in value]
+    return [_normalize_content(value)]
+
+
 def _normalize_nested_steps(value: Any) -> List[Dict[str, Any]]:
     if value is None:
         return []
@@ -119,6 +148,7 @@ def init_db():
             quest_title TEXT NOT NULL,
             quest_image TEXT,
             quest_answer TEXT,
+            codebase_id INTEGER,
             FOREIGN KEY (quest_id) REFERENCES quest_header(quest_id)
         )
         """
@@ -144,6 +174,9 @@ def init_db():
     # Ensure columns exist for legacy DBs
     _ensure_column(cursor, "solve_step", "branches", "TEXT NOT NULL DEFAULT '[]'")
     _ensure_column(cursor, "quest_data", "quest_answer", "TEXT")
+    _ensure_column(cursor, "quest_data", "question_type", "TEXT")
+    _ensure_column(cursor, "quest_data", "quest_options", "TEXT")
+    _ensure_column(cursor, "quest_data", "codebase_id", "INTEGER")
 
     conn.commit()
     conn.close()
@@ -204,14 +237,25 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
         # 3. quest_data insert
         cursor.execute(
             """
-            INSERT INTO quest_data (quest_id, quest_title, quest_image, quest_answer)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO quest_data (
+                quest_id,
+                quest_title,
+                quest_image,
+                quest_answer,
+                question_type,
+                quest_options,
+                codebase_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 quest_id,
                 _serialize_content(data["quest_title"]),
                 data.get("quest_image"),
                 _serialize_content(data.get("quest_answer")),
+                data.get("question_type"),
+                _serialize_options(data.get("quest_options")),
+                data.get("codebase_id"),
             ),
         )
 
@@ -269,7 +313,14 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
         cursor.execute("SELECT * FROM quest_info WHERE quest_id = ?", (quest_id,))
         info_row = cursor.fetchone()
 
-        cursor.execute("SELECT * FROM quest_data WHERE quest_id = ?", (quest_id,))
+        cursor.execute(
+            """
+            SELECT quest_id, quest_title, quest_image, quest_answer, question_type, quest_options, codebase_id
+            FROM quest_data
+            WHERE quest_id = ?
+            """,
+            (quest_id,),
+        )
         data_row = cursor.fetchone()
 
         cursor.execute("SELECT * FROM solve_step WHERE quest_id = ?", (quest_id,))
@@ -293,9 +344,12 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
                 "main_huddle": info_row[6],
             },
             "data": {
-                "quest_title": _parse_content(data_row[1]),
-                "quest_image": data_row[2],
-                "quest_answer": _parse_content(data_row[3]) if len(data_row) > 3 else None,
+                "quest_title": _parse_content(data_row[1]) if data_row else None,
+                "quest_image": data_row[2] if data_row else None,
+                "quest_answer": _parse_content(data_row[3]) if data_row else None,
+                "question_type": data_row[4] if data_row else None,
+                "quest_options": _parse_options(data_row[5]) if data_row else None,
+                "codebase_id": data_row[6] if data_row and len(data_row) > 6 else None,
             },
             "solves": [
                 {

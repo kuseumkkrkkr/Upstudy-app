@@ -1,8 +1,28 @@
 import random
-from typing import Dict, List, Sequence
+from typing import Dict, List, Sequence, Tuple
 
 
 def plan_exam_items(
+    *,
+    ranges: List[Dict[str, List[str]]],
+    difficulty_tier: int,
+    question_count: int,
+    paper_type: str = "aiflow",
+) -> List[Dict[str, object]]:
+    if paper_type == "csat":
+        return _plan_csat_items(
+            ranges=ranges,
+            initial_tier=difficulty_tier,
+            question_count=question_count,
+        )
+    return _plan_aiflow_items(
+        ranges=ranges,
+        difficulty_tier=difficulty_tier,
+        question_count=question_count,
+    )
+
+
+def _plan_aiflow_items(
     *,
     ranges: List[Dict[str, List[str]]],
     difficulty_tier: int,
@@ -48,6 +68,7 @@ def plan_exam_items(
                     "solves_count": params["solves_count"],
                     "strategy_level": params["strategy_level"],
                     "branch_conditions": params["branch_conditions"],
+                    "question_type": "short",
                     "quest_id": None,
                     "flow_count": None,
                     "error": None,
@@ -56,6 +77,180 @@ def plan_exam_items(
             item_index += 1
 
     return items
+
+
+def _plan_csat_items(
+    *,
+    ranges: List[Dict[str, List[str]]],
+    initial_tier: int,
+    question_count: int,
+) -> List[Dict[str, object]]:
+    if question_count != 30:
+        raise ValueError("수능 모드는 30문제만 허용됩니다.")
+    if initial_tier not in (3, 4, 5):
+        raise ValueError("수능 모드는 난이도 3~5만 허용됩니다.")
+
+    common_tags, optional_tags = _split_csat_ranges(ranges)
+    if not common_tags:
+        raise ValueError("공통수학 1,2 해시태그가 필요합니다.")
+    if not optional_tags:
+        raise ValueError("선택 과목 해시태그가 필요합니다.")
+
+    items: List[Dict[str, object]] = []
+    for item_index in range(1, 31):
+        tier = _csat_tier_for_index(item_index, initial_tier)
+        params = _tier_params(tier)
+        tag_count = _tier_tag_count(tier)
+        question_type = "mcq" if item_index <= 15 or item_index >= 23 else "short"
+
+        if item_index <= 22:
+            tags = _pick_csat_tags(
+                common_tags,
+                [],
+                tag_count,
+                require_optional=False,
+            )
+        else:
+            tags = _pick_csat_tags(
+                common_tags,
+                optional_tags,
+                tag_count,
+                require_optional=True,
+            )
+
+        items.append(
+            {
+                "item_index": item_index,
+                "status": "pending",
+                "subject_key": "csat",
+                "hash_tags": tags,
+                "difficulty_tier": tier,
+                "solves_count": params["solves_count"],
+                "strategy_level": params["strategy_level"],
+                "branch_conditions": params["branch_conditions"],
+                "question_type": question_type,
+                "quest_id": None,
+                "flow_count": None,
+                "error": None,
+            }
+        )
+    return items
+
+
+def _split_csat_ranges(ranges: List[Dict[str, List[str]]]) -> Tuple[List[str], List[str]]:
+    common = []
+    optional = []
+    for entry in ranges:
+        key = (entry.get("key") or "").lower()
+        tags = clean_tags(entry.get("tags", []))
+        if not tags:
+            continue
+        if "common" in key or "공통" in key:
+            common.extend(tags)
+        elif "optional" in key or "선택" in key:
+            optional.extend(tags)
+        else:
+            optional.extend(tags)
+    return clean_tags(common), clean_tags(optional)
+
+
+def _csat_tier_for_index(index: int, initial_tier: int) -> int:
+    if index >= 29:
+        return 5
+
+    if initial_tier == 3:
+        if 1 <= index <= 15:
+            return _linear_between(1, 3, index - 1, 15)
+        if 16 <= index <= 18:
+            return _linear_between(1, 2, index - 16, 3)
+        if 19 <= index <= 22:
+            return _linear_between(2, 4, index - 19, 4)
+        if 23 <= index <= 25:
+            return _linear_between(1, 2, index - 23, 3)
+        if 26 <= index <= 28:
+            return _linear_between(2, 4, index - 26, 3)
+
+    if initial_tier == 4:
+        if 1 <= index <= 6:
+            return _linear_between(1, 2, index - 1, 6)
+        if 7 <= index <= 15:
+            return _linear_between(2, 4, index - 7, 9)
+        if 16 <= index <= 18:
+            return _linear_between(1, 2, index - 16, 3)
+        if 19 <= index <= 22:
+            return _linear_between(2, 5, index - 19, 4)
+        if 23 <= index <= 25:
+            return _linear_between(1, 2, index - 23, 3)
+        if 26 <= index <= 28:
+            return _linear_between(2, 5, index - 26, 3)
+
+    if initial_tier == 5:
+        if 1 <= index <= 6:
+            return _linear_between(1, 2, index - 1, 6)
+        if 7 <= index <= 15:
+            return _linear_between(3, 5, index - 7, 9)
+        if 16 <= index <= 18:
+            return _linear_between(1, 2, index - 16, 3)
+        if 19 <= index <= 22:
+            return _linear_between(3, 5, index - 19, 4)
+        if 23 <= index <= 25:
+            return _linear_between(1, 2, index - 23, 3)
+        if 26 <= index <= 28:
+            return _linear_between(3, 5, index - 26, 3)
+
+    return max(1, min(5, initial_tier))
+
+
+def _linear_between(min_tier: int, max_tier: int, index: int, count: int) -> int:
+    if count <= 1:
+        return max(1, min(5, min_tier))
+    ratio = index / (count - 1)
+    tier_value = min_tier + (max_tier - min_tier) * ratio
+    return max(1, min(5, int(round(tier_value))))
+
+
+def _pick_csat_tags(
+    common_tags: Sequence[str],
+    optional_tags: Sequence[str],
+    tag_count: int,
+    *,
+    require_optional: bool,
+) -> List[str]:
+    common_tags = clean_tags(common_tags)
+    optional_tags = clean_tags(optional_tags)
+    if tag_count <= 0:
+        return []
+
+    results: List[str] = []
+    if require_optional:
+        if optional_tags:
+            results.append(random.choice(optional_tags))
+    else:
+        if common_tags:
+            results.append(random.choice(common_tags))
+
+    remaining = max(0, tag_count - len(results))
+    if remaining <= 0:
+        return results
+
+    if require_optional and tag_count >= 2 and optional_tags:
+        target_optional = max(1, (tag_count + 1) // 2)
+        optional_needed = max(0, target_optional - len(results))
+        optional_needed = min(optional_needed, len(optional_tags))
+        for _ in range(optional_needed):
+            pick = random.choice(optional_tags)
+            if pick not in results:
+                results.append(pick)
+
+    pool = common_tags + optional_tags
+    random.shuffle(pool)
+    for tag in pool:
+        if len(results) >= tag_count:
+            break
+        if tag not in results:
+            results.append(tag)
+
+    return results[:tag_count]
 
 
 def clean_tags(tags: Sequence[str]) -> List[str]:

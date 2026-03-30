@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -11,7 +10,9 @@ import 'package:flutter/services.dart';
 
 import '../models/content_block.dart';
 import '../services/api_client.dart';
+import '../services/activity_store.dart';
 import '../services/rating_store.dart';
+import '../utils/heatmap_engine.dart';
 import '../widgets/content_blocks_view.dart';
 import 'flow_view_page.dart';
 

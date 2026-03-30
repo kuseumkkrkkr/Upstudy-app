@@ -1,18 +1,21 @@
 import asyncio
+import base64
 import json
 import os
 import urllib.error
 import urllib.request
 import uuid
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from env_loader import load_env
 from auth import (
     authenticate_user,
     create_token,
@@ -26,10 +29,13 @@ from auth import (
     validate_school,
     validate_username,
 )
-from analysis_service import analyze_submission
+from analysis_service import analyze_pregrade, analyze_submission
+from clean_riddles import build_clean_payload
 from baselines.basemodel import ContentBlocks
 from exam_service import plan_exam_items
-from generater.make import make
+from generater.make import make, make_legacy
+from generater.csat_cubic_generator import generate_problem
+from generater.problem_solve import generate_problem_set
 from rating_service import apply_rating_update, fetch_tag_ratings, fetch_user_rating
 from storage.exam_storage import (
     add_exam_items,
@@ -46,6 +52,7 @@ from storage.storage import get_quest, init_db, search_quests, store_data
 from storage.social_storage import (
     add_friend,
     get_friends,
+    get_user_by_id,
     get_user_by_username,
     init_social_db,
     remove_friend,
@@ -56,6 +63,17 @@ from storage.study_group_storage import (
     init_study_group_db,
 )
 from storage.rating_storage import init_rating_db
+from storage.weakness_storage import (
+    increment_weakness_tags,
+    init_weakness_db,
+    list_weakness_tags,
+)
+from storage.textbook_storage import (
+    create_textbook,
+    get_textbook,
+    init_textbook_db,
+    list_textbooks,
+)
 from storage.user_kv_storage import (
     delete_user_kv,
     get_user_kv,
@@ -78,6 +96,7 @@ _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _ASSETS_DIR = os.path.join(_BASE_DIR, "assets")
 os.makedirs(_ASSETS_DIR, exist_ok=True)
 
+load_env()
 _raw_origins = os.environ.get("OMJ_CORS_ORIGINS", "*")
 _origin_list = [origin.strip() for origin in _raw_origins.split(",") if origin.strip()]
 _allow_all = "*" in _origin_list
@@ -101,6 +120,7 @@ class ExamCreateRequest(BaseModel):
     ranges: List[RangeInput]
     difficulty_tier: int = Field(ge=1, le=5)
     question_count: int = Field(ge=1)
+    paper_type: str = "aiflow"
 
 
 class ExamCreateResponse(BaseModel):
@@ -117,9 +137,11 @@ class ExamItemResponse(BaseModel):
     solves_count: int
     strategy_level: int
     branch_conditions: int
+    question_type: Optional[str] = None
     quest_id: Optional[str] = None
     flow_count: Optional[int] = None
     quest_title: Optional[ContentBlocks] = None
+    quest_options: Optional[List[ContentBlocks]] = None
     error: Optional[str] = None
 
 
@@ -190,10 +212,34 @@ class QuestGenerateRequest(BaseModel):
     branch_conditions: int = Field(ge=0)
     reference_quest_id: Optional[str] = None
     strict_tags: bool = False
+    seed: Optional[int] = None
 
 
 class QuestGenerateResponse(BaseModel):
     quest: Dict[str, Any]
+
+
+class ProblemSolveGenerateRequest(BaseModel):
+    hash_tags: List[str]
+    min_difficulty_tier: int = Field(ge=1, le=5)
+    max_difficulty_tier: int = Field(ge=1, le=5)
+    question_count: int = Field(ge=1)
+    strict_tags: bool = False
+
+
+class ProblemSolveGenerateResponse(BaseModel):
+    quests: List[Dict[str, Any]]
+
+
+class CubicGenerateRequest(BaseModel):
+    seed: Optional[int] = None
+
+
+class CubicGenerateResponse(BaseModel):
+    problem: str
+    answer: int
+    solution: str
+    meta: Dict[str, Any]
 
 
 class TestChatPair(BaseModel):
@@ -224,11 +270,22 @@ class TestChatMessageResponse(BaseModel):
 class SolveAnalysisRequest(BaseModel):
     quest_id: Optional[str] = None
     quest_model: List[str] = Field(default_factory=list)
+    analysis_model: Optional[str] = None
+    analysis_prompt: Optional[str] = None
+    quest_json: Optional[Dict[str, Any]] = None
+    debug: Optional[bool] = None
+    gen_config: Optional[Dict[str, Any]] = None
+    all_ocr: Optional[str] = None
+    hit_mapped: Optional[str] = None
+    user_answer: Optional[str] = None
     problem: Optional[str] = None
     problem_index: Optional[int] = None
     problem_count: Optional[int] = None
     hash_tags: List[str] = Field(default_factory=list)
     student_work_image: Optional[str] = None
+    problem_image: Optional[str] = None
+    reference_steps: List[Dict[str, Any]] = Field(default_factory=list)
+    reference_flow_count: Optional[int] = None
     recognized_text: List[Dict[str, Any]] = Field(default_factory=list)
     writing_events: List[Dict[str, Any]] = Field(default_factory=list)
     step_correctness: List[Dict[str, Any]] = Field(default_factory=list)
@@ -236,12 +293,33 @@ class SolveAnalysisRequest(BaseModel):
 
 
 class SolveAnalysisResponse(BaseModel):
-    analysis: str
-    recognized_text: List[Dict[str, Any]] = Field(default_factory=list)
-    ocr_source: str
+    status: List[Dict[str, Any]] = Field(default_factory=list)
+    in_panic: List[int] = Field(default_factory=list)
+    ai_opinion: str = ""
     quest_id: Optional[str] = None
     quest_model: List[str] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
+    debug: Optional[Dict[str, Any]] = None
+
+
+class SolveOcrRequest(BaseModel):
+    analysis_model: Optional[str] = None
+    analysis_prompt: Optional[str] = None
+    debug: Optional[bool] = None
+    gen_config: Optional[Dict[str, Any]] = None
+    student_work_image: Optional[str] = None
+    heatmap_image: Optional[str] = None
+
+
+class SolveOcrResponse(BaseModel):
+    all_formulas: Optional[List[str]] = None
+    purple_formulas: Optional[List[str]] = None
+    all_ocr: Optional[str] = None
+    hit_mapped: Optional[str] = None
+    user_answer: Optional[str] = None
+    warnings: List[str] = Field(default_factory=list)
+    ocr_source: str = ""
+    debug: Optional[Dict[str, Any]] = None
 
 
 class FriendProfile(BaseModel):
@@ -294,6 +372,123 @@ class StudyGroupResponse(BaseModel):
     member_ids: List[str]
 
 
+class TextbookSection(BaseModel):
+    title: str
+    paragraphs: List[str] = Field(default_factory=list)
+    images: List[str] = Field(default_factory=list)
+
+
+class TextbookChapter(BaseModel):
+    title: str
+    intro: List[str] = Field(default_factory=list)
+    sections: List[TextbookSection] = Field(default_factory=list)
+
+
+class TextbookCreateRequest(BaseModel):
+    title: str
+    subtitle: str = ""
+    category: str = "custom"
+    tags: List[str] = Field(default_factory=list)
+    chapters: List[TextbookChapter] = Field(default_factory=list)
+    cover_color: Optional[int] = None
+
+
+class TextbookResponse(BaseModel):
+    textbook_id: str
+    title: str
+    subtitle: str
+    category: str
+    tags: List[str] = Field(default_factory=list)
+    chapters: List[TextbookChapter] = Field(default_factory=list)
+    cover_color: Optional[int] = None
+    created_at: int
+    updated_at: int
+    created_by: Optional[str] = None
+
+
+class TextbookListResponse(BaseModel):
+    textbooks: List[TextbookResponse]
+
+
+_TEXTBOOK_LIBRARY_KEY = "textbook_library_v1"
+
+
+def _parse_library_payload(raw: Optional[str]) -> List[Dict[str, Any]]:
+    if not raw:
+        return []
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        return []
+    if not isinstance(payload, list):
+        return []
+    items: List[Dict[str, Any]] = []
+    for entry in payload:
+        if isinstance(entry, str):
+            entry = entry.strip()
+            if entry:
+                items.append({"textbook_id": entry})
+            continue
+        if isinstance(entry, dict):
+            text_id = entry.get("textbook_id") or entry.get("id")
+            if text_id:
+                items.append(dict(entry))
+    return items
+
+
+def _library_ids_from_meta(items: List[Dict[str, Any]]) -> List[str]:
+    ids = []
+    for entry in items:
+        text_id = entry.get("textbook_id") or entry.get("id")
+        if text_id:
+            ids.append(str(text_id))
+    return ids
+
+
+def _build_library_meta(book: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "textbook_id": book.get("textbook_id") or book.get("id") or "",
+        "title": book.get("title") or "",
+        "subtitle": book.get("subtitle") or "",
+        "category": book.get("category") or "custom",
+        "tags": book.get("tags") or [],
+        "cover_color": book.get("cover_color"),
+        "created_at": book.get("created_at"),
+        "updated_at": book.get("updated_at"),
+        "created_by": book.get("created_by"),
+        "progress": book.get("progress", 0),
+        "progress_label": book.get("progress_label", ""),
+    }
+
+
+def _ensure_default_library(user_id: str) -> List[str]:
+    raw = get_user_kv(user_id, _TEXTBOOK_LIBRARY_KEY)
+    items = _parse_library_payload(raw)
+    ids = _library_ids_from_meta(items)
+    if ids:
+        return ids
+    common_books = list_textbooks(category="common")
+    if not common_books:
+        return []
+    meta = [_build_library_meta(book) for book in common_books]
+    set_user_kv(user_id, _TEXTBOOK_LIBRARY_KEY, json.dumps(meta, ensure_ascii=False))
+    return _library_ids_from_meta(meta)
+
+
+def _upsert_library_item(user_id: str, book: Dict[str, Any]) -> None:
+    raw = get_user_kv(user_id, _TEXTBOOK_LIBRARY_KEY)
+    items = _parse_library_payload(raw)
+    by_id = {entry.get("textbook_id") or entry.get("id"): entry for entry in items}
+    meta = _build_library_meta(book)
+    book_id = meta.get("textbook_id")
+    if book_id:
+        existing = by_id.get(book_id, {})
+        merged = {**existing, **meta}
+        by_id[book_id] = merged
+    updated = [entry for entry in by_id.values() if entry.get("textbook_id") or entry.get("id")]
+    set_user_kv(user_id, _TEXTBOOK_LIBRARY_KEY, json.dumps(updated, ensure_ascii=False))
+
+
 class UserStoragePayload(BaseModel):
     value: str
 
@@ -326,6 +521,16 @@ class TagRatingsResponse(BaseModel):
     tags: List[TagRatingItem]
 
 
+class WeaknessTagItem(BaseModel):
+    tag: str
+    count: int
+    updated_at: Optional[str] = None
+
+
+class WeaknessTagsResponse(BaseModel):
+    tags: List[WeaknessTagItem] = Field(default_factory=list)
+
+
 def _get_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
@@ -346,6 +551,8 @@ def _startup() -> None:
     init_study_group_db()
     init_user_kv_db()
     init_rating_db()
+    init_weakness_db()
+    init_textbook_db()
 
 
 @app.post("/auth/anonymous", response_model=TokenResponse)
@@ -516,6 +723,60 @@ def create_study_group_handler(
     return StudyGroupResponse(**group)
 
 
+@app.get("/textbooks", response_model=TextbookListResponse)
+def list_textbooks_handler(
+    category: Optional[str] = None,
+    tag: Optional[str] = None,
+    user_id: str = Depends(_get_user_id),
+) -> TextbookListResponse:
+    allowed_ids = _ensure_default_library(user_id)
+    if allowed_ids:
+        items = list_textbooks(
+            category=category,
+            tag=tag,
+            textbook_ids=allowed_ids,
+        )
+    else:
+        items = []
+    return TextbookListResponse(
+        textbooks=[TextbookResponse(**item) for item in items],
+    )
+
+
+@app.get("/textbooks/{textbook_id}", response_model=TextbookResponse)
+def get_textbook_handler(
+    textbook_id: str,
+    user_id: str = Depends(_get_user_id),
+) -> TextbookResponse:
+    allowed_ids = _ensure_default_library(user_id)
+    if not allowed_ids:
+        raise HTTPException(status_code=403, detail="Textbook not assigned")
+    if textbook_id not in allowed_ids:
+        raise HTTPException(status_code=403, detail="Textbook not assigned")
+    item = get_textbook(textbook_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Textbook not found")
+    return TextbookResponse(**item)
+
+
+@app.post("/textbooks", response_model=TextbookResponse, status_code=201)
+def create_textbook_handler(
+    payload: TextbookCreateRequest,
+    user_id: str = Depends(_get_user_id),
+) -> TextbookResponse:
+    if not payload.title.strip():
+        raise HTTPException(status_code=400, detail="title is required")
+    profile = get_user_by_id(user_id) or {}
+    created_by = (
+        (profile.get("name") or "").strip()
+        or (profile.get("username") or "").strip()
+        or user_id
+    )
+    created = create_textbook(payload.dict(), created_by)
+    _upsert_library_item(user_id, created)
+    return TextbookResponse(**created)
+
+
 def _fetch_kakao_profile(access_token: str) -> Dict[str, Any]:
     req = urllib.request.Request(
         "https://kapi.kakao.com/v2/user/me",
@@ -591,6 +852,7 @@ async def create_exam_handler(
             ranges=ranges,
             difficulty_tier=payload.difficulty_tier,
             question_count=payload.question_count,
+            paper_type=payload.paper_type,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -683,6 +945,7 @@ async def generate_quest_handler(
                 payload.branch_conditions,
                 payload.reference_quest_id,
                 payload.strict_tags,
+                payload.seed,
             )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -693,6 +956,87 @@ async def generate_quest_handler(
         raise HTTPException(status_code=500, detail="failed to store quest")
 
     return QuestGenerateResponse(quest=storage_data)
+
+
+@app.post("/quests/generate/batch", response_model=ProblemSolveGenerateResponse)
+async def generate_quest_batch_handler(
+    payload: ProblemSolveGenerateRequest,
+    user_id: str = Depends(_get_user_id),
+) -> ProblemSolveGenerateResponse:
+    hash_tags = [tag.strip() for tag in payload.hash_tags if tag.strip()]
+    if not hash_tags:
+        raise HTTPException(status_code=400, detail="hash_tags must not be empty")
+    try:
+        async with _GEN_SEMAPHORE:
+            quests = await asyncio.to_thread(
+                generate_problem_set,
+                hash_tags=hash_tags,
+                min_difficulty_tier=payload.min_difficulty_tier,
+                max_difficulty_tier=payload.max_difficulty_tier,
+                question_count=payload.question_count,
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    for quest in quests:
+        if not store_data(quest):
+            raise HTTPException(status_code=500, detail="failed to store quest")
+
+    return ProblemSolveGenerateResponse(quests=quests)
+
+
+@app.post("/quests/generate/legacy", response_model=QuestGenerateResponse)
+async def generate_quest_legacy_handler(
+    payload: QuestGenerateRequest,
+    user_id: str = Depends(_get_user_id),
+) -> QuestGenerateResponse:
+    hash_tags = [tag.strip() for tag in payload.hash_tags if tag.strip()]
+    if not hash_tags:
+        raise HTTPException(status_code=400, detail="hash_tags must not be empty")
+    try:
+        async with _GEN_SEMAPHORE:
+            storage_data = await asyncio.to_thread(
+                make_legacy,
+                hash_tags,
+                payload.solves_count,
+                payload.strategy_level,
+                payload.branch_conditions,
+                payload.reference_quest_id,
+                payload.strict_tags,
+                payload.seed,
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    if not store_data(storage_data):
+        raise HTTPException(status_code=500, detail="failed to store quest")
+
+    return QuestGenerateResponse(quest=storage_data)
+
+
+@app.post("/csat/cubic", response_model=CubicGenerateResponse)
+def generate_csat_cubic(
+    payload: CubicGenerateRequest,
+    user_id: str = Depends(_get_user_id),
+) -> CubicGenerateResponse:
+    try:
+        result = generate_problem(seed=payload.seed)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    meta = result.get("meta", {}) or {}
+    params = meta.get("params", {}) or {}
+    solution = _build_cubic_solution_text(params, int(result["answer"]))
+    return CubicGenerateResponse(
+        problem=str(result["problem"]),
+        answer=int(result["answer"]),
+        solution=solution,
+        meta=meta,
+    )
 
 
 @app.post("/test-chat/message", response_model=TestChatMessageResponse)
@@ -707,15 +1051,162 @@ def test_chat_message(
     return TestChatMessageResponse(**result)
 
 
-@app.post("/analysis/solve", response_model=SolveAnalysisResponse)
-def analyze_solve(
-    payload: SolveAnalysisRequest,
-    user_id: str = Depends(_get_user_id),
-) -> SolveAnalysisResponse:
+def _coerce_solve_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    json_fields = {
+        "quest_model",
+        "hash_tags",
+        "recognized_text",
+        "writing_events",
+        "step_correctness",
+        "time_weakness",
+        "reference_steps",
+        "quest_json",
+        "gen_config",
+    }
+    int_fields = {"problem_index", "problem_count", "reference_flow_count"}
+    for key, value in list(payload.items()):
+        if key in json_fields and isinstance(value, str):
+            try:
+                payload[key] = json.loads(value)
+            except Exception:
+                pass
+        if key in int_fields and isinstance(value, str):
+            try:
+                payload[key] = int(value)
+            except Exception:
+                pass
+    return payload
+
+
+async def _parse_solve_payload(
+    request: Request,
+) -> Tuple[Dict[str, Any], Dict[str, bytes]]:
+    content_type = request.headers.get("content-type", "")
+    if content_type.startswith("multipart/form-data"):
+        form = await request.form()
+        payload: Dict[str, Any] = {}
+        files: Dict[str, bytes] = {}
+        for key, value in form.multi_items():
+            if isinstance(value, UploadFile):
+                files[key] = await value.read()
+            else:
+                payload[key] = value
+        return _coerce_solve_payload(payload), files
     try:
-        result = analyze_submission(payload.model_dump())
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    return _coerce_solve_payload(payload), {}
+
+
+def _decode_base64_image(value: Any) -> Optional[bytes]:
+    if not value:
+        return None
+    if not isinstance(value, str):
+        return None
+    try:
+        return base64.b64decode(value)
+    except Exception:
+        return None
+
+
+def _save_solve_image(
+    image_bytes: Optional[bytes],
+    *,
+    prefix: str,
+    user_id: Optional[str],
+) -> Optional[str]:
+    if not image_bytes:
+        return None
+    safe_user = (user_id or "anonymous").replace(os.sep, "_")
+    stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S%fZ")
+    filename = f"{prefix}_{safe_user}_{stamp}.png"
+    path = os.path.join(_ASSETS_DIR, "solve_images", filename)
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as handle:
+            handle.write(image_bytes)
+        return path
+    except Exception:
+        return None
+
+
+@app.post("/analysis/ocr", response_model=SolveOcrResponse)
+async def analyze_ocr(
+    request: Request,
+    user_id: str = Depends(_get_user_id),
+) -> SolveOcrResponse:
+    payload, files = await _parse_solve_payload(request)
+    student_bytes = files.get("student_work_image") or _decode_base64_image(
+        payload.get("student_work_image")
+    )
+    heatmap_bytes = files.get("heatmap_image") or _decode_base64_image(
+        payload.get("heatmap_image")
+    )
+    _save_solve_image(student_bytes, prefix="student_work", user_id=user_id)
+    _save_solve_image(heatmap_bytes, prefix="heatmap", user_id=user_id)
+    try:
+        result = analyze_pregrade(
+            payload,
+            student_work_image_bytes=student_bytes,
+            heatmap_image_bytes=heatmap_bytes,
+        )
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return SolveOcrResponse(**result)
+
+
+@app.post("/analysis/solve", response_model=SolveAnalysisResponse)
+async def analyze_solve(
+    request: Request,
+    user_id: str = Depends(_get_user_id),
+) -> SolveAnalysisResponse:
+    payload, files = await _parse_solve_payload(request)
+    student_bytes = files.get("student_work_image") or _decode_base64_image(
+        payload.get("student_work_image")
+    )
+    problem_bytes = files.get("problem_image") or _decode_base64_image(
+        payload.get("problem_image")
+    )
+    heatmap_bytes = files.get("heatmap_image") or _decode_base64_image(
+        payload.get("heatmap_image")
+    )
+    _save_solve_image(student_bytes, prefix="student_work", user_id=user_id)
+    _save_solve_image(problem_bytes, prefix="problem", user_id=user_id)
+    _save_solve_image(heatmap_bytes, prefix="heatmap", user_id=user_id)
+    try:
+        result = analyze_submission(
+            payload,
+            student_work_image_bytes=student_bytes,
+            problem_image_bytes=problem_bytes,
+            heatmap_image_bytes=heatmap_bytes,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    try:
+        in_panic = result.get("in_panic") or []
+        if in_panic:
+            quest_json = payload.get("quest_json")
+            if isinstance(quest_json, str):
+                try:
+                    quest_json = json.loads(quest_json)
+                except Exception:
+                    quest_json = None
+            quest_id = payload.get("quest_id")
+            quest = quest_json if isinstance(quest_json, dict) else (get_quest(quest_id) if quest_id else None)
+            clean_payload = build_clean_payload(quest if isinstance(quest, dict) else None)
+            flows = clean_payload.get("flows") or []
+            tags: List[str] = []
+            for item in in_panic:
+                try:
+                    idx = int(item)
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= idx < len(flows):
+                    tags.extend(flows[idx].get("hash_tag") or [])
+            increment_weakness_tags(user_id=user_id, tags=tags)
+    except Exception:
+        pass
     return SolveAnalysisResponse(**result)
 
 
@@ -785,14 +1276,24 @@ def get_tag_ratings(user_id: str = Depends(_get_user_id)) -> TagRatingsResponse:
     )
 
 
+@app.get("/weakness/tags", response_model=WeaknessTagsResponse)
+def get_weakness_tags(user_id: str = Depends(_get_user_id)) -> WeaknessTagsResponse:
+    items = list_weakness_tags(user_id)
+    return WeaknessTagsResponse(tags=[WeaknessTagItem(**item) for item in items])
+
+
 def _resolve_items(items: List[Dict[str, Any]]) -> List[ExamItemResponse]:
     resolved: List[ExamItemResponse] = []
     for item in items:
         quest_title = None
+        quest_options = None
+        question_type = item.get("question_type")
         if item.get("quest_id"):
             quest = get_quest(item["quest_id"])
             if quest:
                 quest_title = quest.get("data", {}).get("quest_title")
+                question_type = quest.get("data", {}).get("question_type") or question_type
+                quest_options = quest.get("data", {}).get("quest_options")
                 if item.get("flow_count") is None:
                     item["flow_count"] = len(quest.get("solves", []))
         resolved.append(
@@ -805,13 +1306,33 @@ def _resolve_items(items: List[Dict[str, Any]]) -> List[ExamItemResponse]:
                 solves_count=item["solves_count"],
                 strategy_level=item["strategy_level"],
                 branch_conditions=item["branch_conditions"],
+                question_type=question_type,
                 quest_id=item.get("quest_id"),
                 flow_count=item.get("flow_count"),
                 quest_title=quest_title,
+                quest_options=quest_options,
                 error=item.get("error"),
             )
         )
     return resolved
+
+
+def _build_cubic_solution_text(params: Dict[str, Any], answer: int) -> str:
+    try:
+        r1 = int(params["r1"])
+        r2 = int(params["r2"])
+        k = int(params["k"])
+        m = int(params["m"])
+        a = int(params["a"])
+    except Exception:
+        return f"정답: {answer}"
+
+    return (
+        f"f(x)=(x-{r1})(x-{r2})(x-{a})\n"
+        f"f''(x)=6x-2({r1}+{r2}+{a})\n"
+        f"f''({k})=0 => {r1}+{r2}+{a}=3*{k}\n"
+        f"따라서 f({m})={answer}"
+    )
 
 
 async def _run_exam_generation(exam_id: str) -> None:
@@ -819,11 +1340,15 @@ async def _run_exam_generation(exam_id: str) -> None:
     items = get_exam_items(exam_id)
     used_quest_ids: set[str] = set()
     used_quest_lock = asyncio.Lock()
+    used_codebase_ids: set[int] = set()
+    used_codebase_lock = asyncio.Lock()
     failed_items = await _run_exam_batch(
         exam_id,
         items,
         used_quest_ids,
         used_quest_lock,
+        used_codebase_ids,
+        used_codebase_lock,
         start_status="generating",
         failure_status="retrying",
     )
@@ -836,6 +1361,8 @@ async def _run_exam_generation(exam_id: str) -> None:
             failed_items,
             used_quest_ids,
             used_quest_lock,
+            used_codebase_ids,
+            used_codebase_lock,
             start_status="retrying",
             failure_status="failed",
         )
@@ -851,6 +1378,8 @@ async def _generate_exam_item(
     item: Dict[str, Any],
     used_quest_ids: set[str],
     used_quest_lock: asyncio.Lock,
+    used_codebase_ids: set[int],
+    used_codebase_lock: asyncio.Lock,
     *,
     start_status: str,
     failure_status: str,
@@ -859,6 +1388,7 @@ async def _generate_exam_item(
     update_exam_item(exam_id, item_index, status=start_status, error="")
     try:
         quest_id: Optional[str] = None
+        reserved_quest_id: Optional[str] = None
         if get_total_quest_count() >= 20:
             async with used_quest_lock:
                 quest_id = find_reusable_quest(
@@ -869,10 +1399,29 @@ async def _generate_exam_item(
                 )
                 if quest_id:
                     used_quest_ids.add(quest_id)
+                    reserved_quest_id = quest_id
 
         if quest_id:
             quest = get_quest(quest_id)
-            flow_count = len(quest.get("solves", [])) if quest else item["solves_count"]
+            if item.get("question_type") == "mcq":
+                options = (quest or {}).get("data", {}).get("quest_options") if quest else None
+                if not options:
+                    quest_id = None
+            if quest_id:
+                codebase_id = (quest or {}).get("data", {}).get("codebase_id")
+                if codebase_id is not None:
+                    async with used_codebase_lock:
+                        if codebase_id in used_codebase_ids:
+                            quest_id = None
+                        else:
+                            used_codebase_ids.add(codebase_id)
+            if quest_id:
+                flow_count = len(quest.get("solves", [])) if quest else item["solves_count"]
+            else:
+                flow_count = None
+        else:
+            flow_count = None
+        if quest_id:
             update_exam_item(
                 exam_id,
                 item_index,
@@ -881,16 +1430,26 @@ async def _generate_exam_item(
                 flow_count=flow_count,
             )
             return True
+        if reserved_quest_id and quest_id is None:
+            async with used_quest_lock:
+                used_quest_ids.discard(reserved_quest_id)
 
-        storage_data = await asyncio.to_thread(
-            make,
-            item["hash_tags"],
-            item["solves_count"],
-            item["strategy_level"],
-            item["branch_conditions"],
-            None,
-            False,
-        )
+        async with used_codebase_lock:
+            storage_data = await asyncio.to_thread(
+                make,
+                item["hash_tags"],
+                item["solves_count"],
+                item["strategy_level"],
+                item["branch_conditions"],
+                None,
+                False,
+                None,
+                item.get("question_type"),
+                used_codebase_ids,
+            )
+            codebase_id = (storage_data.get("data") or {}).get("codebase_id")
+            if isinstance(codebase_id, int):
+                used_codebase_ids.add(codebase_id)
         if not store_data(storage_data):
             raise RuntimeError("failed to store quest")
         quest_id = storage_data["header"]["quest_id"]
@@ -918,6 +1477,8 @@ async def _run_exam_batch(
     items: List[Dict[str, Any]],
     used_quest_ids: set[str],
     used_quest_lock: asyncio.Lock,
+    used_codebase_ids: set[int],
+    used_codebase_lock: asyncio.Lock,
     *,
     start_status: str,
     failure_status: str,
@@ -931,6 +1492,8 @@ async def _run_exam_batch(
                 item,
                 used_quest_ids,
                 used_quest_lock,
+                used_codebase_ids,
+                used_codebase_lock,
                 start_status=start_status,
                 failure_status=failure_status,
             )

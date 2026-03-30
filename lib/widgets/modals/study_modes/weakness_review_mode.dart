@@ -3,6 +3,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:s11/services/api_client.dart';
+
+class _ReviewAction {
+  const _ReviewAction({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+}
 
 VoidCallback buildWeaknessReviewAction(BuildContext context) {
   return () {
@@ -51,44 +58,9 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     _ReviewAction(icon: Icons.chat_bubble_outline, label: '요약형 복습'),
   ];
 
-  static final List<_UsageRecord> _records = [
-    _UsageRecord(
-      title: '수열 - 점화식 개념 다시보기',
-      subtitle: '개념 학습 후 2시간 경과',
-      activityType: '개념 학습',
-      ageHours: 2,
-    ),
-    _UsageRecord(
-      title: '미적분 - 문제 다시풀기 5문항',
-      subtitle: '문제 풀이 후 6시간 경과',
-      activityType: '문제 풀이',
-      ageHours: 6,
-    ),
-    _UsageRecord(
-      title: '확률과 통계 - OX퀴즈 10문항',
-      subtitle: '퀴즈 후 1일 경과',
-      activityType: 'OX퀴즈',
-      ageHours: 24,
-    ),
-    _UsageRecord(
-      title: '기하 - 플래시카드 복습',
-      subtitle: '플래시카드 후 3일 경과',
-      activityType: '플래시카드',
-      ageHours: 72,
-    ),
-    _UsageRecord(
-      title: '로그함수 - 백지 복습',
-      subtitle: '백지 복습 후 5일 경과',
-      activityType: '백지 복습',
-      ageHours: 120,
-    ),
-    _UsageRecord(
-      title: '벡터 - 요약형 복습',
-      subtitle: '요약형 후 7일 경과',
-      activityType: '요약형',
-      ageHours: 168,
-    ),
-  ];
+  bool _loading = true;
+  String? _errorMessage;
+  List<WeaknessTag> _weaknessTags = const [];
 
   static const _dayOptions = [3, 7, 14, 30];
   static const _hourOptions = [1, 6, 12, 24, 48, 72];
@@ -104,34 +76,34 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   final Set<int> _selectedDays = {7};
   final Set<int> _selectedHours = {};
   final Set<String> _selectedTypes = {};
-  final Set<int> _selectedRecords = {};
 
-  List<_UsageRecord> _filteredRecords() {
-    return _records.where((record) {
-      var timeMatch = true;
-      if (_selectedDays.isNotEmpty || _selectedHours.isNotEmpty) {
-        timeMatch = false;
-        for (final day in _selectedDays) {
-          if (record.ageHours <= day * 24) {
-            timeMatch = true;
-            break;
-          }
-        }
-        if (!timeMatch) {
-          for (final hour in _selectedHours) {
-            if (record.ageHours <= hour) {
-              timeMatch = true;
-              break;
-            }
-          }
-        }
-      }
-
-      final typeMatch =
-          _selectedTypes.isEmpty || _selectedTypes.contains(record.activityType);
-      return timeMatch && typeMatch;
-    }).toList();
+  @override
+  void initState() {
+    super.initState();
+    _loadWeaknessTags();
   }
+
+  // ✅ FIX 1: 누락된 닫는 중괄호 추가 — 메서드가 제대로 닫히지 않아 build()가 메서드 내부로 파싱되던 문제 수정
+  Future<void> _loadWeaknessTags() async {
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+    try {
+      final tags = await ApiClient.instance.fetchWeaknessTags();
+      if (!mounted) return;
+      setState(() {
+        _weaknessTags = tags;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  } // ← 누락된 닫는 중괄호
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +125,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
         final contentWidth = width - (horizontalPadding * 2);
         final topTileWidth =
             (contentWidth - (gap * (_topActions.length - 1))) /
-                _topActions.length;
+            _topActions.length;
 
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -267,8 +239,9 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     );
   }
 
+  // ✅ FIX 2: _buildRecordPanel을 클래스 내부 메서드로 올바르게 위치
   Widget _buildRecordPanel(double scale) {
-    final records = _filteredRecords();
+    final tags = _weaknessTags;
     return Container(
       padding: EdgeInsets.all(14 * scale),
       decoration: BoxDecoration(
@@ -280,7 +253,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '학습 기록',
+            '약점 태그',
             style: GoogleFonts.inter(
               fontSize: 16 * scale,
               fontWeight: FontWeight.w600,
@@ -288,10 +261,22 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
           ),
           SizedBox(height: 8 * scale),
           Expanded(
-            child: records.isEmpty
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
                 ? Center(
                     child: Text(
-                      '조건에 맞는 기록이 없습니다.',
+                      _errorMessage!,
+                      style: TextStyle(
+                        fontSize: 13 * scale,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                  )
+                : tags.isEmpty
+                ? Center(
+                    child: Text(
+                      '약점 태그가 없습니다.',
                       style: TextStyle(
                         fontSize: 13 * scale,
                         color: Colors.grey.shade600,
@@ -299,76 +284,55 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                     ),
                   )
                 : ListView.separated(
-                    itemCount: records.length,
+                    itemCount: tags.length,
                     separatorBuilder: (_, __) => SizedBox(height: 8 * scale),
                     itemBuilder: (context, index) {
-                      final record = records[index];
-                      final recordIndex = _records.indexOf(record);
-                      final selected = _selectedRecords.contains(recordIndex);
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(10 * scale),
-                        onTap: () {
-                          setState(() {
-                            if (selected) {
-                              _selectedRecords.remove(recordIndex);
-                            } else {
-                              _selectedRecords.add(recordIndex);
-                            }
-                          });
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 10 * scale,
-                            horizontal: 12 * scale,
+                      final item = tags[index];
+                      return Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 10 * scale,
+                          horizontal: 12 * scale,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10 * scale),
+                          border: Border.all(
+                            color: const Color(0xFFE0E0E0),
+                            width: 1,
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10 * scale),
-                            border: Border.all(
-                              color: selected
-                                  ? const Color(0xFF1B402B)
-                                  : const Color(0xFFE0E0E0),
-                              width: selected ? 1.4 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Checkbox(
-                                value: selected,
-                                onChanged: (_) {
-                                  setState(() {
-                                    if (selected) {
-                                      _selectedRecords.remove(recordIndex);
-                                    } else {
-                                      _selectedRecords.add(recordIndex);
-                                    }
-                                  });
-                                },
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 34 * scale,
+                              height: 34 * scale,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF1B402B,
+                                ).withOpacity(0.12),
+                                shape: BoxShape.circle,
                               ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      record.title,
-                                      style: TextStyle(
-                                        fontSize: 13 * scale,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4 * scale),
-                                    Text(
-                                      record.subtitle,
-                                      style: TextStyle(
-                                        fontSize: 11 * scale,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
+                              child: Text(
+                                item.count.toString(),
+                                style: TextStyle(
+                                  fontSize: 12 * scale,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1B402B),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            SizedBox(width: 12 * scale),
+                            Expanded(
+                              child: Text(
+                                item.tag,
+                                style: TextStyle(
+                                  fontSize: 13 * scale,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -379,6 +343,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     );
   }
 
+  // ✅ FIX 3: _buildFilterPanel을 클래스 내부로 이동하고, 선언만 된 필터 상태(_selectedDays 등)를 실제 UI에 연결
   Widget _buildFilterPanel(double scale) {
     return Container(
       padding: EdgeInsets.all(14 * scale),
@@ -392,129 +357,156 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '복습 범위 선택',
+              '필터',
               style: GoogleFonts.inter(
                 fontSize: 16 * scale,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 10 * scale),
-            _buildFilterGroup(
-              title: '기간(일)',
-              options: _dayOptions
-                  .map((day) => _FilterOption<int>(
-                        value: day,
-                        label: '$day일',
-                      ))
-                  .toList(),
-              isSelected: (value) => _selectedDays.contains(value),
-              onToggle: (value) {
-                setState(() {
-                  if (_selectedDays.contains(value)) {
-                    _selectedDays.remove(value);
-                  } else {
-                    _selectedDays.add(value);
-                  }
-                });
-              },
-              scale: scale,
+            SizedBox(height: 12 * scale),
+
+            // 날짜 필터
+            Text(
+              '기간 (일)',
+              style: TextStyle(
+                fontSize: 13 * scale,
+                fontWeight: FontWeight.w500,
+                color: Colors.black54,
+              ),
+            ),
+            SizedBox(height: 6 * scale),
+            Wrap(
+              spacing: 6 * scale,
+              runSpacing: 6 * scale,
+              children: _dayOptions.map((day) {
+                final selected = _selectedDays.contains(day);
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    selected
+                        ? _selectedDays.remove(day)
+                        : _selectedDays.add(day);
+                  }),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10 * scale,
+                      vertical: 6 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? const Color(0xFF1B402B)
+                          : const Color(0xFFF3F3F3),
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Text(
+                      '$day일',
+                      style: TextStyle(
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: selected ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
             SizedBox(height: 12 * scale),
-            _buildFilterGroup(
-              title: '기간(시간)',
-              options: _hourOptions
-                  .map((hour) => _FilterOption<int>(
-                        value: hour,
-                        label: '$hour시간',
-                      ))
-                  .toList(),
-              isSelected: (value) => _selectedHours.contains(value),
-              onToggle: (value) {
-                setState(() {
-                  if (_selectedHours.contains(value)) {
-                    _selectedHours.remove(value);
-                  } else {
-                    _selectedHours.add(value);
-                  }
-                });
-              },
-              scale: scale,
+
+            // 시간 필터
+            Text(
+              '시간 (시)',
+              style: TextStyle(
+                fontSize: 13 * scale,
+                fontWeight: FontWeight.w500,
+                color: Colors.black54,
+              ),
+            ),
+            SizedBox(height: 6 * scale),
+            Wrap(
+              spacing: 6 * scale,
+              runSpacing: 6 * scale,
+              children: _hourOptions.map((hour) {
+                final selected = _selectedHours.contains(hour);
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    selected
+                        ? _selectedHours.remove(hour)
+                        : _selectedHours.add(hour);
+                  }),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10 * scale,
+                      vertical: 6 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? const Color(0xFF1B402B)
+                          : const Color(0xFFF3F3F3),
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Text(
+                      '${hour}h',
+                      style: TextStyle(
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: selected ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
             SizedBox(height: 12 * scale),
-            _buildFilterGroup(
-              title: '활동 종류',
-              options: _activityOptions
-                  .map((type) => _FilterOption<String>(
-                        value: type,
-                        label: type,
-                      ))
-                  .toList(),
-              isSelected: (value) => _selectedTypes.contains(value),
-              onToggle: (value) {
-                setState(() {
-                  if (_selectedTypes.contains(value)) {
-                    _selectedTypes.remove(value);
-                  } else {
-                    _selectedTypes.add(value);
-                  }
-                });
-              },
-              scale: scale,
+
+            // 활동 유형 필터
+            Text(
+              '활동 유형',
+              style: TextStyle(
+                fontSize: 13 * scale,
+                fontWeight: FontWeight.w500,
+                color: Colors.black54,
+              ),
+            ),
+            SizedBox(height: 6 * scale),
+            Wrap(
+              spacing: 6 * scale,
+              runSpacing: 6 * scale,
+              children: _activityOptions.map((type) {
+                final selected = _selectedTypes.contains(type);
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    selected
+                        ? _selectedTypes.remove(type)
+                        : _selectedTypes.add(type);
+                  }),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10 * scale,
+                      vertical: 6 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? const Color(0xFF1B402B)
+                          : const Color(0xFFF3F3F3),
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Text(
+                      type,
+                      style: TextStyle(
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: selected ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildFilterGroup<T>({
-    required String title,
-    required List<_FilterOption<T>> options,
-    required bool Function(T) isSelected,
-    required ValueChanged<T> onToggle,
-    required double scale,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 13 * scale,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: 6 * scale),
-        Column(
-          children: options
-              .map(
-                (option) => Padding(
-                  padding: EdgeInsets.only(bottom: 4 * scale),
-                  child: CheckboxListTile(
-                    value: isSelected(option.value),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: Text(
-                      option.label,
-                      style: TextStyle(fontSize: 12 * scale),
-                    ),
-                    onChanged: (_) => onToggle(option.value),
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      ],
-    );
-  }
-}
-
-class _ReviewAction {
-  const _ReviewAction({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
-}
+} // ← _WeaknessReviewModalState 닫는 중괄호
 
 class _ReviewActionTile extends StatelessWidget {
   const _ReviewActionTile({
@@ -576,28 +568,3 @@ class _ReviewActionTile extends StatelessWidget {
     );
   }
 }
-
-class _UsageRecord {
-  const _UsageRecord({
-    required this.title,
-    required this.subtitle,
-    required this.activityType,
-    required this.ageHours,
-  });
-
-  final String title;
-  final String subtitle;
-  final String activityType;
-  final int ageHours;
-}
-
-class _FilterOption<T> {
-  const _FilterOption({required this.value, required this.label});
-
-  final T value;
-  final String label;
-}
-
-
-
-

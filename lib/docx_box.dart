@@ -2,11 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:s11/book_page.dart' as book_page;
+import 'package:s11/models/textbook.dart';
 import 'widgets/app_drawer.dart';
 import 'friend.dart';
 import 'mainstudent.dart';
 import 'pages/exam_paper_page.dart';
 import 'services/exam_paper_store.dart';
+import 'services/textbook_store.dart';
 import 'study_center.dart' as study_center;
 
 void main() => runApp(const MyApp());
@@ -35,6 +38,8 @@ class BookWidget extends StatelessWidget {
   static const Color mediumGreen = Color(0xFF25B04C);
   static const Color borderColor = Color(0xFFE0E3E7);
   static const Color bgColor = Color(0xFFF8F8F8);
+  static const double _examPreviewHeight = 250;
+  static const double _textbookPreviewHeight = 640;
 
   double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
     final width = MediaQuery.of(context).size.width;
@@ -47,6 +52,7 @@ class BookWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     unawaited(ExamPaperStore.load());
+    unawaited(TextbookStore.loadLibrary());
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -343,10 +349,13 @@ class BookWidget extends StatelessWidget {
                   child: ValueListenableBuilder<List<ExamPaperEntry>>(
                     valueListenable: ExamPaperStore.notifier,
                     builder: (context, items, _) {
+                      final hasItems = items.isNotEmpty;
                       final previewItems = items.take(2).toList();
-                      final placeholders = 2 - previewItems.length;
+                      final placeholders = hasItems
+                          ? 2 - previewItems.length
+                          : 0;
                       final children = <Widget>[];
-                      if (items.isEmpty) {
+                      if (!hasItems) {
                         children.add(
                           const Padding(
                             padding: EdgeInsets.only(bottom: 8),
@@ -375,8 +384,11 @@ class BookWidget extends StatelessWidget {
                       for (var i = 0; i < placeholders; i++) {
                         children.add(_emptyDocItem());
                       }
-                      return Column(
-                        children: _withSpacing(children, 10),
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: _examPreviewHeight,
+                        ),
+                        child: Column(children: _withSpacing(children, 10)),
                       );
                     },
                   ),
@@ -386,6 +398,7 @@ class BookWidget extends StatelessWidget {
                   child: Column(
                     children: [
                       _flashcardItem(title: '수열', subtitle: '중간고사 범위'),
+                      _flashcardItem(title: 'Title', subtitle: 'Subtitle'),
                       _flashcardItem(title: 'Title', subtitle: 'Subtitle'),
                     ],
                   ),
@@ -404,23 +417,68 @@ class BookWidget extends StatelessWidget {
               children: [
                 _buildSectionCard(
                   title: '교재',
-                  child: Column(
-                    children: [
-                      _documentItem(
-                        color: darkGreen,
-                        icon: Icons.book_outlined,
-                        title: '미적분 보충교재',
-                        sub: '이수율 78% / 생성일 26.01.17',
-                      ),
-                      const SizedBox(height: 10),
-                      _emptyDocItem(),
-                      const SizedBox(height: 10),
-                      _emptyDocItem(),
-                      const SizedBox(height: 10),
-                      _emptyDocItem(),
-                      const SizedBox(height: 10),
-                      _emptyDocItem(),
-                    ],
+                  child: FutureBuilder<List<BookData>>(
+                    future: TextbookStore.loadLibrary(),
+                    builder: (context, snapshot) {
+                      final books = snapshot.data ?? const <BookData>[];
+                      final hasItems = books.isNotEmpty;
+                      final previewBooks = books.take(5).toList();
+                      final placeholders = hasItems
+                          ? 5 - previewBooks.length
+                          : 0;
+                      final children = <Widget>[];
+                      if (snapshot.connectionState ==
+                              ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        children.add(
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              '교재를 불러오는 중...',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
+                        );
+                      } else if (!hasItems) {
+                        children.add(
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              '교재가 없어요!',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      for (final book in previewBooks) {
+                        children.add(
+                          _documentItem(
+                            color: book.coverColor ?? darkGreen,
+                            icon: Icons.book_outlined,
+                            title: book.title,
+                            sub: _bookSubtitle(book),
+                            onTap: () => _openTextbook(context, book),
+                          ),
+                        );
+                      }
+                      for (var i = 0; i < placeholders; i++) {
+                        children.add(_emptyDocItem());
+                      }
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: _textbookPreviewHeight,
+                        ),
+                        child: Column(children: _withSpacing(children, 10)),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -555,10 +613,17 @@ class BookWidget extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => ExamPaperPage(
           examId: entry.examId,
-          expectedQuestionCount:
-              entry.questionCount > 0 ? entry.questionCount : null,
+          expectedQuestionCount: entry.questionCount > 0
+              ? entry.questionCount
+              : null,
         ),
       ),
+    );
+  }
+
+  void _openTextbook(BuildContext context, BookData book) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => book_page.BookWidget(book: book)),
     );
   }
 
@@ -590,6 +655,15 @@ class BookWidget extends StatelessWidget {
     return '문항수 $count / 생성일 $dateLabel';
   }
 
+  String _bookSubtitle(BookData book) {
+    final progress = book.progress.clamp(0.0, 1.0);
+    final progressLabel = book.progressLabel.isNotEmpty
+        ? book.progressLabel
+        : '${(progress * 100).round()}%';
+    final dateLabel = _formatBookDate(book.createdAt);
+    return '이수율 $progressLabel / 생성일 $dateLabel';
+  }
+
   String _examTypeLabel(String raw) {
     switch (raw) {
       case 'aiflow':
@@ -609,10 +683,18 @@ class BookWidget extends StatelessWidget {
     return '$year.$month.$day';
   }
 
+  String _formatBookDate(DateTime? date) {
+    if (date == null) return '--.--.--';
+    final year = (date.year % 100).toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year.$month.$day';
+  }
+
   Widget _reportButton() {
     return Container(
       width: double.infinity,
-      height: 72,
+      height: 87,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),

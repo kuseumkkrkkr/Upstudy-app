@@ -1,9 +1,14 @@
-﻿import 'dart:ui';
-
+﻿import 'dart:convert';
+import 'dart:ui';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:s11/services/bookmark_store.dart';
+import 'package:s11/models/textbook.dart';
 import 'package:s11/services/activity_store.dart';
+import 'package:s11/services/api_client.dart';
+import 'package:s11/services/bookmark_store.dart';
+import 'package:s11/services/local_db.dart';
+import 'package:s11/services/textbook_store.dart';
 
 Future<T?> showBookLibraryModal<T>({
   required BuildContext context,
@@ -12,6 +17,7 @@ Future<T?> showBookLibraryModal<T>({
   List<BookData>? books,
   List<String> selectedTags = const [],
   String? notice,
+  String? category,
 }) {
   return showDialog<T>(
     context: context,
@@ -33,6 +39,7 @@ Future<T?> showBookLibraryModal<T>({
                 books: books,
                 selectedTags: selectedTags,
                 notice: notice,
+                category: category,
               ),
             ),
           ],
@@ -50,9 +57,9 @@ Future<T?> showCommonBookLibraryModal<T>({
     context: context,
     headerTitle: '개념학습 교재',
     libraryTitle: '공통교재',
-    books: _commonLibraryBooks,
     selectedTags: selectedTags,
     notice: '해시태그와 연결되지 않은 기본 제공 교재입니다.',
+    category: 'common',
   );
 }
 
@@ -76,12 +83,41 @@ class BookLibraryPage extends StatelessWidget {
     this.books,
     this.selectedTags = const [],
     this.notice,
+    this.category,
+    this.enableDownload = false,
   });
 
   final String libraryTitle;
   final List<BookData>? books;
   final List<String> selectedTags;
   final String? notice;
+  final String? category;
+  final bool enableDownload;
+
+  Future<void> _downloadBook(BuildContext context, BookData book) async {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('웹에서는 교재를 기기에 저장할 수 없습니다.')),
+      );
+      return;
+    }
+    try {
+      final full = await TextbookStore.getById(book.id);
+      if (full == null) {
+        throw Exception('missing book');
+      }
+      await TextbookStore.download(full);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('교재를 저장했습니다.')),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('교재 저장에 실패했습니다.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +153,7 @@ class BookLibraryPage extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: _BookLibraryBody(
+              child: _BookLibraryLoader(
                 onSelect: (book) {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => BookWidget(book: book)),
@@ -127,6 +163,12 @@ class BookLibraryPage extends StatelessWidget {
                 title: libraryTitle,
                 selectedTags: selectedTags,
                 notice: notice,
+                category: category,
+                useLibrary: true,
+                enableDownload: enableDownload,
+                onDownload: enableDownload
+                    ? (book) => _downloadBook(context, book)
+                    : null,
               ),
             ),
           ],
@@ -145,6 +187,7 @@ class BookLibraryModal extends StatelessWidget {
     this.books,
     this.selectedTags = const [],
     this.notice,
+    this.category,
   });
 
   final String headerTitle;
@@ -152,6 +195,7 @@ class BookLibraryModal extends StatelessWidget {
   final List<BookData>? books;
   final List<String> selectedTags;
   final String? notice;
+  final String? category;
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +228,7 @@ class BookLibraryModal extends StatelessWidget {
           ),
           const Divider(height: 1),
             Expanded(
-              child: _BookLibraryBody(
+              child: _BookLibraryLoader(
                 onSelect: (book) {
                   final navigator = Navigator.of(context, rootNavigator: true);
                   navigator.pop();
@@ -196,6 +240,7 @@ class BookLibraryModal extends StatelessWidget {
                 title: libraryTitle,
                 selectedTags: selectedTags,
                 notice: notice,
+                category: category,
               ),
             ),
         ],
@@ -204,13 +249,17 @@ class BookLibraryModal extends StatelessWidget {
   }
 }
 
-class _BookLibraryBody extends StatelessWidget {
-  const _BookLibraryBody({
+class _BookLibraryLoader extends StatelessWidget {
+  const _BookLibraryLoader({
     required this.onSelect,
+    required this.title,
+    required this.selectedTags,
     this.books,
-    this.title = 'Owned Books',
-    this.selectedTags = const [],
     this.notice,
+    this.category,
+    this.useLibrary = false,
+    this.enableDownload = false,
+    this.onDownload,
   });
 
   final ValueChanged<BookData> onSelect;
@@ -218,6 +267,83 @@ class _BookLibraryBody extends StatelessWidget {
   final String title;
   final List<String> selectedTags;
   final String? notice;
+  final String? category;
+  final bool useLibrary;
+  final bool enableDownload;
+  final ValueChanged<BookData>? onDownload;
+
+  @override
+  Widget build(BuildContext context) {
+    if (books != null) {
+      return _BookLibraryBody(
+        onSelect: onSelect,
+        books: books!,
+        title: title,
+        selectedTags: selectedTags,
+        notice: notice,
+        enableDownload: enableDownload,
+        onDownload: onDownload,
+      );
+    }
+    if (useLibrary) {
+      return FutureBuilder<List<BookData>>(
+        future: TextbookStore.loadLibrary(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final data = snapshot.data ?? const <BookData>[];
+          return _BookLibraryBody(
+            onSelect: onSelect,
+            books: data,
+            title: title,
+            selectedTags: selectedTags,
+            notice: notice,
+            enableDownload: enableDownload,
+            onDownload: onDownload,
+          );
+        },
+      );
+    }
+    return FutureBuilder<List<BookData>>(
+      future: TextbookStore.load(category: category, tags: selectedTags),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final data = snapshot.data ?? TextbookStore.fallbackBooks;
+        return _BookLibraryBody(
+          onSelect: onSelect,
+          books: data,
+          title: title,
+          selectedTags: selectedTags,
+          notice: notice,
+          enableDownload: enableDownload,
+          onDownload: onDownload,
+        );
+      },
+    );
+  }
+}
+
+class _BookLibraryBody extends StatelessWidget {
+  const _BookLibraryBody({
+    required this.onSelect,
+    required this.books,
+    this.title = 'Owned Books',
+    this.selectedTags = const [],
+    this.notice,
+    this.enableDownload = false,
+    this.onDownload,
+  });
+
+  final ValueChanged<BookData> onSelect;
+  final List<BookData> books;
+  final String title;
+  final List<String> selectedTags;
+  final String? notice;
+  final bool enableDownload;
+  final ValueChanged<BookData>? onDownload;
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +355,6 @@ class _BookLibraryBody extends StatelessWidget {
       color: Color(0x22000000),
       offset: Offset(0, 2),
     );
-    final books = this.books ?? _libraryBooks;
     final hasTags = selectedTags.isNotEmpty;
     final showNotice = notice != null && notice!.trim().isNotEmpty;
 
@@ -317,6 +442,7 @@ class _BookLibraryBody extends StatelessWidget {
                     final label = book.progressLabel.isNotEmpty
                         ? book.progressLabel
                         : '${(progress * 100).round()}% complete';
+                    final showDownload = enableDownload && onDownload != null;
                     return InkWell(
                       onTap: () => onSelect(book),
                       child: Container(
@@ -385,6 +511,40 @@ class _BookLibraryBody extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
+                            if (showDownload)
+                              InkWell(
+                                onTap: () => onDownload?.call(book),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: border, width: 1),
+                                    color: Colors.white,
+                                  ),
+                                  child: Row(
+                                    children: const [
+                                      Icon(
+                                        Icons.download,
+                                        size: 14,
+                                        color: Colors.black87,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        '다운로드',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            if (showDownload) const SizedBox(width: 10),
                             const Icon(
                               Icons.arrow_forward_ios,
                               size: 16,
@@ -416,6 +576,7 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
   void initState() {
     super.initState();
     _future = BookmarkStore.load();
+    unawaited(TextbookStore.load());
   }
 
   Future<void> _refresh() async {
@@ -425,7 +586,7 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
   }
 
   BookData? _findBook(String id) {
-    for (final book in _libraryBooks) {
+    for (final book in TextbookStore.cachedBooks) {
       if (book.id == id) return book;
     }
     return null;
@@ -588,11 +749,13 @@ class _BookWidgetState extends State<BookWidget> {
 
   static const double _eraserRadius = 24;
   static const double _minPointDistance = 1.2;
+  static const String _annotationKeyPrefix = 'textbook_annotations_v1_';
 
   final ScrollController _tocController = ScrollController();
   final ScrollController _contentController = ScrollController();
   final GlobalKey _contentKey = GlobalKey();
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
+  Timer? _annotationSaveTimer;
 
   List<BookChapter> _chapters = const [];
   List<_ContentEntry> _contentEntries = const [];
@@ -600,8 +763,10 @@ class _BookWidgetState extends State<BookWidget> {
   List<bool> _chapterExpanded = const [];
   bool _initialized = false;
   bool _contentListenerAttached = false;
+  bool _loadingFullBook = false;
   String _currentBookId = '';
   String _currentBookTitle = '';
+  BookData? _currentBook;
   int? _pendingInitialEntryIndex;
   List<BookmarkItem> _bookmarks = <BookmarkItem>[];
 
@@ -640,6 +805,8 @@ class _BookWidgetState extends State<BookWidget> {
     final entryChanged =
         widget.initialEntryIndex != oldWidget.initialEntryIndex;
     if (bookChanged || entryChanged) {
+      _annotationSaveTimer?.cancel();
+      unawaited(_persistAnnotations());
       _initialized = false;
       _sectionOffsets = <double>[];
       _activeEntryIndex = 0;
@@ -648,6 +815,7 @@ class _BookWidgetState extends State<BookWidget> {
       _eraserPosition = null;
       _highlighterStart = null;
       _pendingInitialEntryIndex = widget.initialEntryIndex;
+      _currentBook = null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _contentController.jumpTo(0);
@@ -659,11 +827,17 @@ class _BookWidgetState extends State<BookWidget> {
 
   @override
   void dispose() {
+    _annotationSaveTimer?.cancel();
+    unawaited(_persistAnnotations());
     _tocController.dispose();
     _contentController.dispose();
     _paintVersion.dispose();
     super.dispose();
   }
+
+  bool get _supportsAnnotations => true;
+
+  bool get _canPersistAnnotations => !kIsWeb;
 
   bool get _isDrawingTool => _toolMode != _ToolMode.none;
 
@@ -672,15 +846,23 @@ class _BookWidgetState extends State<BookWidget> {
 
   void _bumpPaint() {
     _paintVersion.value = _paintVersion.value + 1;
+    if (kIsWeb && mounted) {
+      setState(() {});
+    }
   }
 
   void _setToolMode(_ToolMode mode) {
+    if (!_supportsAnnotations) {
+      _showAnnotationBlocked();
+      return;
+    }
     setState(() => _toolMode = _toolMode == mode ? _ToolMode.none : mode);
   }
 
   void _initializeIfNeeded({bool attachListeners = false}) {
     if (!_initialized) {
-      final book = widget.book ?? _libraryBooks.first;
+      final book = widget.book ?? TextbookStore.cachedBooks.first;
+      _currentBook = book;
       _currentBookId = book.id;
       _currentBookTitle = book.title;
       _recordBookView(book);
@@ -693,6 +875,8 @@ class _BookWidgetState extends State<BookWidget> {
       _chapterExpanded = List<bool>.filled(_chapters.length, true);
       _pendingInitialEntryIndex ??= widget.initialEntryIndex;
       _initialized = true;
+      _loadAnnotations();
+      _ensureFullBookLoaded();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _cacheSectionOffsets();
         _applyInitialScroll();
@@ -705,13 +889,129 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   void _recordBookView(BookData book) {
-    final index = _libraryBooks.indexWhere((entry) => entry.id == book.id);
-    final number = index >= 0 ? (index + 1).toString() : book.id;
+    final number = TextbookStore.displayNumberFor(book);
     unawaited(
       ActivityStore.recordBookView(bookId: book.id, bookNumber: number)
           .catchError((_) {}),
     );
   }
+
+  Future<void> _ensureFullBookLoaded() async {
+    if (_loadingFullBook) return;
+    final book = _currentBook;
+    if (book == null || book.chapters.isNotEmpty) return;
+    if (book.id.trim().isEmpty) return;
+    _loadingFullBook = true;
+    try {
+      final fetched = await TextbookStore.getById(book.id);
+      if (!mounted) return;
+      if (fetched == null || fetched.chapters.isEmpty) return;
+      setState(() {
+        _currentBook = fetched;
+        _currentBookId = fetched.id;
+        _currentBookTitle = fetched.title;
+        _chapters = fetched.chapters;
+        _contentEntries = _buildContentEntries(_chapters);
+        _sectionKeys = List<GlobalKey>.generate(
+          _contentEntries.length,
+          (_) => GlobalKey(),
+        );
+        _chapterExpanded = List<bool>.filled(_chapters.length, true);
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _cacheSectionOffsets();
+        _applyInitialScroll();
+      });
+    } finally {
+      _loadingFullBook = false;
+    }
+  }
+
+  String _annotationKey() => '$_annotationKeyPrefix$_currentBookId';
+
+  void _showAnnotationBlocked() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('웹에서는 필기 저장이 지원되지 않습니다.')),
+    );
+  }
+
+  Future<void> _loadAnnotations() async {
+    if (!_canPersistAnnotations) return;
+    if (_currentBookId.isEmpty) return;
+    final raw = await LocalDb.instance.getString(_annotationKey());
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return;
+      final loaded = <_Stroke>[];
+      for (final item in decoded) {
+        if (item is Map) {
+          loaded.add(_strokeFromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _strokes
+          ..clear()
+          ..addAll(loaded);
+      });
+      _bumpPaint();
+    } catch (_) {
+      // Ignore corrupted annotation payloads.
+    }
+  }
+
+  void _scheduleAnnotationSave() {
+    if (!_canPersistAnnotations) return;
+    _annotationSaveTimer?.cancel();
+    _annotationSaveTimer = Timer(
+      const Duration(milliseconds: 600),
+      () => unawaited(_persistAnnotations()),
+    );
+  }
+
+  Future<void> _persistAnnotations() async {
+    if (!_canPersistAnnotations) return;
+    if (_currentBookId.isEmpty) return;
+    final key = _annotationKey();
+    if (_strokes.isEmpty) {
+      await LocalDb.instance.delete(key);
+      return;
+    }
+    final payload = jsonEncode(_strokes.map(_strokeToJson).toList());
+    await LocalDb.instance.setString(key, payload);
+  }
+
+  Map<String, dynamic> _strokeToJson(_Stroke stroke) {
+    return {
+      'color': stroke.color.value,
+      'width': stroke.width,
+      'points': stroke.points
+          .map((point) => [point.dx, point.dy])
+          .toList(growable: false),
+    };
+  }
+
+  _Stroke _strokeFromJson(Map<String, dynamic> json) {
+    final colorValue = (json['color'] as num?)?.toInt() ?? Colors.black.value;
+    final width = (json['width'] as num?)?.toDouble() ?? 3.0;
+    final stroke = _Stroke(color: Color(colorValue), width: width);
+    final points = json['points'];
+    if (points is List) {
+      for (final entry in points) {
+        if (entry is List && entry.length >= 2) {
+          final dx = (entry[0] as num?)?.toDouble();
+          final dy = (entry[1] as num?)?.toDouble();
+          if (dx != null && dy != null) {
+            stroke.addPoint(Offset(dx, dy));
+          }
+        }
+      }
+    }
+    return stroke;
+  }
+
 
   void _cacheSectionOffsets() {
     final contentBox =
@@ -986,6 +1286,10 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   Future<void> _openPenSettings() async {
+    if (!_supportsAnnotations) {
+      _showAnnotationBlocked();
+      return;
+    }
     final result = await showModalBottomSheet<_ToolSettings>(
       context: context,
       backgroundColor: Colors.white,
@@ -1154,6 +1458,7 @@ class _BookWidgetState extends State<BookWidget> {
       _highlighterStart = null;
     }
     _activePointer = null;
+    _scheduleAnnotationSave();
     _bumpPaint();
   }
 
@@ -1163,6 +1468,7 @@ class _BookWidgetState extends State<BookWidget> {
     _currentStroke = null;
     _eraserPosition = null;
     _highlighterStart = null;
+    _scheduleAnnotationSave();
     _bumpPaint();
   }
 
@@ -1356,6 +1662,7 @@ class _BookWidgetState extends State<BookWidget> {
     final current = total == 0 ? 0 : _activeEntryIndex + 1;
     final hasEntries = _contentEntries.isNotEmpty;
     final isBookmarked = hasEntries && _isBookmarked(_activeEntryIndex);
+    final annotationsEnabled = _supportsAnnotations;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
       child: Column(
@@ -1370,27 +1677,33 @@ class _BookWidgetState extends State<BookWidget> {
               const SizedBox(width: 8),
               _toolIcon(
                 icon: Icons.create,
-                active: _toolMode == _ToolMode.pen,
-                onTap: () => _setToolMode(_ToolMode.pen),
+                active: annotationsEnabled && _toolMode == _ToolMode.pen,
+                onTap:
+                    annotationsEnabled ? () => _setToolMode(_ToolMode.pen) : _showAnnotationBlocked,
               ),
               const SizedBox(width: 8),
               _toolIcon(
                 icon: Icons.brush,
-                active: _toolMode == _ToolMode.highlighter,
-                onTap: () => _setToolMode(_ToolMode.highlighter),
+                active:
+                    annotationsEnabled && _toolMode == _ToolMode.highlighter,
+                onTap: annotationsEnabled
+                    ? () => _setToolMode(_ToolMode.highlighter)
+                    : _showAnnotationBlocked,
               ),
               const SizedBox(width: 8),
               _toolIcon(
                 icon: Icons.color_lens_sharp,
                 active: false,
-                onTap: _openPenSettings,
+                onTap: annotationsEnabled ? _openPenSettings : _showAnnotationBlocked,
                 foreground: _activeInkColor,
               ),
               const SizedBox(width: 8),
               _toolIcon(
                 icon: Icons.cleaning_services_outlined,
-                active: _toolMode == _ToolMode.eraser,
-                onTap: () => _setToolMode(_ToolMode.eraser),
+                active: annotationsEnabled && _toolMode == _ToolMode.eraser,
+                onTap: annotationsEnabled
+                    ? () => _setToolMode(_ToolMode.eraser)
+                    : _showAnnotationBlocked,
               ),
             ],
           ),
@@ -1496,6 +1809,7 @@ class _BookWidgetState extends State<BookWidget> {
         thumbVisibility: true,
         child: SingleChildScrollView(
           controller: _contentController,
+          physics: _isDrawingTool ? const NeverScrollableScrollPhysics() : null,
           padding: const EdgeInsets.fromLTRB(20, 20, 24, 40),
           child: Stack(
             children: [
@@ -1561,12 +1875,44 @@ class _BookWidgetState extends State<BookWidget> {
                     style: const TextStyle(fontSize: 16, height: 1.6),
                   ),
                 ),
+              for (final image in entry.images)
+                if (image.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image(
+                        image: _resolveImageProvider(image),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, _, __) => Container(
+                          height: 180,
+                          color: const Color(0xFFEDEDED),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            '이미지를 불러올 수 없습니다.',
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
             ],
           ),
         ),
       );
     }
     return blocks;
+  }
+
+  ImageProvider _resolveImageProvider(String source) {
+    final trimmed = source.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return NetworkImage(trimmed);
+    }
+    if (trimmed.startsWith('/')) {
+      return NetworkImage('${ApiClient.baseUrl}$trimmed');
+    }
+    return AssetImage(trimmed);
   }
 
   List<_TocEntry> _visibleTocEntries() {
@@ -1599,57 +1945,20 @@ class _BookWidgetState extends State<BookWidget> {
   }
 }
 
-class BookData {
-  const BookData({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.chapters,
-    this.progress = 0,
-    this.progressLabel = '',
-    this.coverColor,
-  });
-
-  final String id;
-  final String title;
-  final String subtitle;
-  final List<BookChapter> chapters;
-  final double progress;
-  final String progressLabel;
-  final Color? coverColor;
-}
-
-class BookChapter {
-  const BookChapter({
-    required this.title,
-    required this.intro,
-    required this.sections,
-  });
-
-  final String title;
-  final List<String> intro;
-  final List<BookSection> sections;
-}
-
-class BookSection {
-  const BookSection({required this.title, required this.paragraphs});
-
-  final String title;
-  final List<String> paragraphs;
-}
-
 class _ContentEntry {
   const _ContentEntry({
     required this.chapterIndex,
     required this.level,
     required this.title,
     required this.paragraphs,
+    required this.images,
   });
 
   final int chapterIndex;
   final int level;
   final String title;
   final List<String> paragraphs;
+  final List<String> images;
 }
 
 class _TocEntry {
@@ -1897,6 +2206,7 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
         level: 0,
         title: chapter.title,
         paragraphs: chapter.intro,
+        images: const [],
       ),
     );
     for (final section in chapter.sections) {
@@ -1906,285 +2216,12 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
           level: 1,
           title: section.title,
           paragraphs: section.paragraphs,
+          images: section.images,
         ),
       );
     }
   }
   return entries;
-}
-
-const List<BookData> _libraryBooks = [
-  BookData(
-    id: 'counting_combinatorics',
-    title: 'Counting & Combinatorics',
-    subtitle: 'Permutation, combination, binomial',
-    progress: 0.72,
-    progressLabel: '72% complete',
-    coverColor: Color(0xFF1B402B),
-    chapters: [
-      BookChapter(
-        title: '1. Permutation',
-        intro: [
-          'Permutation is the study of ordered arrangements. Changing the order '
-              'creates a new outcome, even if the elements are the same.',
-        ],
-        sections: [
-          BookSection(
-            title: '1-1. Basic Counting',
-            paragraphs: [
-              'Choose r items from n and arrange them. The count is written as '
-                  'nPr and computed with factorials.',
-              'Factorials grow quickly, so always simplify expressions before '
-                  'calculating large values.',
-            ],
-          ),
-          BookSection(
-            title: '1-2. Permutation With Repetition',
-            paragraphs: [
-              'When repetition is allowed, each position can reuse any of the n '
-                  'items. The total becomes n^r.',
-              'Use this model for passwords, sequences, and codes where items '
-                  'can repeat.',
-            ],
-          ),
-          BookSection(
-            title: '1-3. Circular Arrangements',
-            paragraphs: [
-              'For a circle, rotations are considered the same. Fix one element '
-                  'and arrange the rest to avoid overcounting.',
-              'If reflections are also identical, divide by two once rotations '
-                  'are handled.',
-            ],
-          ),
-        ],
-      ),
-      BookChapter(
-        title: '2. Combination',
-        intro: [
-          'Combination ignores order. We only care about which elements are '
-              'selected, not how they are arranged.',
-        ],
-        sections: [
-          BookSection(
-            title: '2-1. Definition',
-            paragraphs: [
-              'Choosing r items from n without order is nCr. It is computed as '
-                  'n! / (r!(n-r)!).',
-              'Notice that nCr = nC(n-r). Use this symmetry to simplify work.',
-            ],
-          ),
-          BookSection(
-            title: '2-2. Pascal Relation',
-            paragraphs: [
-              'Pascal\'s identity states nCr = (n-1)C(r-1) + (n-1)Cr.',
-              'This relation builds Pascal\'s triangle and helps in recursive '
-                  'counting problems.',
-            ],
-          ),
-          BookSection(
-            title: '2-3. Applications',
-            paragraphs: [
-              'Combinations appear in probability, sampling, and grouping tasks.',
-              'Always check whether order matters before choosing between '
-                  'permutations and combinations.',
-            ],
-          ),
-        ],
-      ),
-      BookChapter(
-        title: '3. Binomial Theorem',
-        intro: [
-          'The binomial theorem expands (a + b)^n into a sum of n+1 terms with '
-              'combination coefficients.',
-        ],
-        sections: [
-          BookSection(
-            title: '3-1. Expansion',
-            paragraphs: [
-              'Each term takes the form nCk * a^(n-k) * b^k.',
-              'The coefficients match the row of Pascal\'s triangle for n.',
-            ],
-          ),
-          BookSection(
-            title: '3-2. Coefficient Practice',
-            paragraphs: [
-              'Identify the term by matching the exponents. Then read the '
-                  'coefficient directly from nCk.',
-              'Use symmetry in coefficients to reduce the number of cases.',
-            ],
-          ),
-          BookSection(
-            title: '3-3. Approximations',
-            paragraphs: [
-              'When b is small, only a few terms of the expansion may dominate.',
-              'This idea leads to useful approximations in algebra and calculus.',
-            ],
-          ),
-        ],
-      ),
-    ],
-  ),
-  BookData(
-    id: 'calculus_supplement',
-    title: 'Calculus Supplement',
-    subtitle: 'Limits, derivatives, integrals',
-    progress: 0.46,
-    progressLabel: '46% complete',
-    coverColor: Color(0xFF1E88E5),
-    chapters: [
-      BookChapter(
-        title: '1. Limits',
-        intro: [
-          'Limits describe the value a function approaches near a point.',
-        ],
-        sections: [
-          BookSection(
-            title: '1-1. Graphical Limits',
-            paragraphs: [
-              'Use graphs to estimate a limit from both sides.',
-              'Check for jumps, holes, or asymptotes that block continuity.',
-            ],
-          ),
-          BookSection(
-            title: '1-2. Algebraic Limits',
-            paragraphs: [
-              'Factor or rationalize expressions to remove indeterminate forms.',
-              'After simplification, substitute the target value.',
-            ],
-          ),
-        ],
-      ),
-      BookChapter(
-        title: '2. Derivatives',
-        intro: [
-          'Derivatives measure instantaneous change and slope.',
-        ],
-        sections: [
-          BookSection(
-            title: '2-1. Definition',
-            paragraphs: [
-              'The derivative is the limit of the difference quotient.',
-              'It captures the slope of the tangent line at a point.',
-            ],
-          ),
-          BookSection(
-            title: '2-2. Rules',
-            paragraphs: [
-              'Use the product, quotient, and chain rules to differentiate.',
-              'Keep track of constants and simplify the final expression.',
-            ],
-          ),
-        ],
-      ),
-      BookChapter(
-        title: '3. Integrals',
-        intro: [
-          'Integrals accumulate area and invert differentiation.',
-        ],
-        sections: [
-          BookSection(
-            title: '3-1. Indefinite Integrals',
-            paragraphs: [
-              'Find an antiderivative and add the constant of integration.',
-              'Reverse common derivative rules to integrate quickly.',
-            ],
-          ),
-          BookSection(
-            title: '3-2. Definite Integrals',
-            paragraphs: [
-              'Evaluate the antiderivative at upper and lower bounds.',
-              'Use area interpretation to check if the value is reasonable.',
-            ],
-          ),
-        ],
-      ),
-    ],
-  ),
-  BookData(
-    id: 'geometry_practice',
-    title: 'Geometry Practice',
-    subtitle: 'Vectors, transformations, solids',
-    progress: 0.18,
-    progressLabel: '18% complete',
-    coverColor: Color(0xFFEF5350),
-    chapters: [
-      BookChapter(
-        title: '1. Vectors',
-        intro: [
-          'Vectors encode magnitude and direction in the plane.',
-        ],
-        sections: [
-          BookSection(
-            title: '1-1. Components',
-            paragraphs: [
-              'Represent vectors by their x and y components.',
-              'Add and subtract vectors by combining components.',
-            ],
-          ),
-          BookSection(
-            title: '1-2. Dot Product',
-            paragraphs: [
-              'The dot product connects angle and magnitude.',
-              'Use it to test perpendicularity or project vectors.',
-            ],
-          ),
-        ],
-      ),
-      BookChapter(
-        title: '2. Transformations',
-        intro: [
-          'Transformations move or reshape figures in the plane.',
-        ],
-        sections: [
-          BookSection(
-            title: '2-1. Rotation',
-            paragraphs: [
-              'Rotations preserve distance and angle but change orientation.',
-              'Track points using rotation matrices or geometry.',
-            ],
-          ),
-          BookSection(
-            title: '2-2. Reflection',
-            paragraphs: [
-              'Reflections flip a figure across a line.',
-              'Identify the mirror line and map each point across it.',
-            ],
-          ),
-        ],
-      ),
-      BookChapter(
-        title: '3. Solid Geometry',
-        intro: [
-          'Solids extend plane geometry into three dimensions.',
-        ],
-        sections: [
-          BookSection(
-            title: '3-1. Volume',
-            paragraphs: [
-              'Use standard formulas for prisms, cylinders, and cones.',
-              'Decompose complex solids into simpler parts.',
-            ],
-          ),
-          BookSection(
-            title: '3-2. Surface Area',
-            paragraphs: [
-              'Unfold solids into nets to compute surface area.',
-              'Sum the areas of all faces carefully.',
-            ],
-          ),
-        ],
-      ),
-    ],
-  ),
-];
-
-const List<BookData> _commonLibraryBooks = _libraryBooks;
-
-BookData? findLibraryBookById(String id) {
-  for (final book in _libraryBooks) {
-    if (book.id == id) return book;
-  }
-  return null;
 }
 
 

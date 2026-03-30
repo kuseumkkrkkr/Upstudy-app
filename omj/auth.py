@@ -11,6 +11,9 @@ from datetime import datetime
 from typing import Optional
 
 from storage.storage import DB_PATH
+from env_loader import load_env
+
+load_env()
 
 try:
     import jwt as pyjwt

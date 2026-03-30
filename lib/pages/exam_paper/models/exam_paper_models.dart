@@ -103,10 +103,18 @@ class _OcrBlock {
 
 class _ReferenceSolveStep {
   final String flowText;
+  final List<String> hashTags;
+  final String hintText;
+  final String answerText;
+  final int enterHuddle;
   final List<_ReferenceSolveStep> branches;
 
   const _ReferenceSolveStep({
     required this.flowText,
+    this.hashTags = const [],
+    this.hintText = '',
+    this.answerText = '',
+    this.enterHuddle = 0,
     this.branches = const [],
   });
 
@@ -121,7 +129,20 @@ class _ReferenceSolveStep {
   static _ReferenceSolveStep _fromServerMap(Map<String, dynamic> step) {
     final flowText = _contentBlocksToText(step['flow']);
     final branches = fromQuest(step['branches']);
-    return _ReferenceSolveStep(flowText: flowText, branches: branches);
+    final hintText = _contentBlocksToText(step['hint_riddle']);
+    final answerText = _contentBlocksToText(step['answer_riddle']);
+    final hashTags = (step['hash_tag'] as List<dynamic>? ?? const [])
+        .map((tag) => tag.toString())
+        .toList();
+    final enterHuddle = (step['enter_huddle'] as int?) ?? 0;
+    return _ReferenceSolveStep(
+      flowText: flowText,
+      hintText: hintText,
+      answerText: answerText,
+      hashTags: hashTags,
+      enterHuddle: enterHuddle,
+      branches: branches,
+    );
   }
 }
 

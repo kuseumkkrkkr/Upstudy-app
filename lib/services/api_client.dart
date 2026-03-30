@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -22,9 +23,11 @@ class ExamItem {
   final int solvesCount;
   final int strategyLevel;
   final int branchConditions;
+  final String? questionType;
   final String? questId;
   final int? flowCount;
   final dynamic questTitle;
+  final List<dynamic>? questOptions;
   final String? error;
 
   ExamItem({
@@ -36,9 +39,11 @@ class ExamItem {
     required this.solvesCount,
     required this.strategyLevel,
     required this.branchConditions,
+    this.questionType,
     this.questId,
     this.flowCount,
     this.questTitle,
+    this.questOptions,
     this.error,
   });
 
@@ -52,9 +57,11 @@ class ExamItem {
       solvesCount: json['solves_count'] as int,
       strategyLevel: json['strategy_level'] as int,
       branchConditions: json['branch_conditions'] as int,
+      questionType: json['question_type'] as String?,
       questId: json['quest_id'] as String?,
       flowCount: json['flow_count'] as int?,
       questTitle: json['quest_title'],
+      questOptions: json['quest_options'] as List<dynamic>?,
       error: json['error'] as String?,
     );
   }
@@ -65,11 +72,7 @@ class ExamStatus {
   final String status;
   final List<ExamItem> items;
 
-  ExamStatus({
-    required this.examId,
-    required this.status,
-    required this.items,
-  });
+  ExamStatus({required this.examId, required this.status, required this.items});
 
   factory ExamStatus.fromJson(Map<String, dynamic> json) {
     return ExamStatus(
@@ -108,75 +111,157 @@ class QuestSearchResult {
   }
 }
 
-class TestChatResponse {
-  final String assistantMessage;
-  final String? pairSummary;
-  final String prompt;
-  final int inputTokenEstimate;
-  final int outputTokenEstimate;
-  final int totalTokenEstimate;
+class FlowStatus {
+  final int flowNumber;
+  final String status; // "O" or "X"
 
-  TestChatResponse({
-    required this.assistantMessage,
-    required this.prompt,
-    required this.inputTokenEstimate,
-    required this.outputTokenEstimate,
-    required this.totalTokenEstimate,
-    this.pairSummary,
+  FlowStatus({required this.flowNumber, required this.status});
+
+  bool get isCorrect => status.toUpperCase() == 'O';
+}
+
+class SolveAnalysisResponse {
+  final List<FlowStatus> status;
+  final List<int> inPanic;
+  final String aiOpinion;
+  final String? questId;
+  final List<String> questModel;
+  final List<String> warnings;
+  final Map<String, dynamic>? debugInfo;
+
+  SolveAnalysisResponse({
+    required this.status,
+    required this.inPanic,
+    required this.aiOpinion,
+    required this.questModel,
+    required this.warnings,
+    this.questId,
+    this.debugInfo,
   });
 
-  factory TestChatResponse.fromJson(Map<String, dynamic> json) {
-    final total = json['token_estimate'] as int? ?? 0;
-    final input = json['input_token_estimate'] as int?;
-    final output = json['output_token_estimate'] as int?;
-    final resolvedInput = input ?? total;
-    final resolvedOutput = output ?? (input != null && total > 0 ? total - input : 0);
-    final resolvedTotal = total > 0 ? total : resolvedInput + resolvedOutput;
-    return TestChatResponse(
-      assistantMessage: json['assistant_message'] as String? ?? '',
-      pairSummary: json['pair_summary'] as String?,
-      prompt: json['prompt'] as String? ?? '',
-      inputTokenEstimate: resolvedInput,
-      outputTokenEstimate: resolvedOutput,
-      totalTokenEstimate: resolvedTotal,
+  static List<FlowStatus> _parseStatus(dynamic value) {
+    final results = <FlowStatus>[];
+    if (value is List) {
+      for (var i = 0; i < value.length; i++) {
+        final entry = value[i];
+        if (entry is Map) {
+          final map = Map<String, dynamic>.from(entry as Map);
+          final flowRaw = map['flow_number'] ?? map['step_id'] ?? map['index'];
+          final flowNumber = int.tryParse(flowRaw?.toString() ?? '') ?? i;
+          final statusRaw = map['status'] ?? map['correct'] ?? map['value'];
+          final statusText = statusRaw?.toString().trim().toUpperCase() ?? 'X';
+          results.add(
+            FlowStatus(
+              flowNumber: flowNumber,
+              status: statusText == 'O' ? 'O' : 'X',
+            ),
+          );
+        } else {
+          final statusText = entry.toString().trim().toUpperCase();
+          results.add(
+            FlowStatus(
+              flowNumber: i,
+              status: statusText == 'O' ? 'O' : 'X',
+            ),
+          );
+        }
+      }
+      return results;
+    }
+    return results;
+  }
+
+  static List<int> _parseInPanic(dynamic value) {
+    if (value is List) {
+      return value
+          .map((item) => int.tryParse(item.toString()))
+          .whereType<int>()
+          .toList();
+    }
+    final parsed = int.tryParse(value?.toString() ?? '');
+    return parsed == null ? <int>[] : [parsed];
+  }
+
+  List<Map<String, dynamic>> get stepCorrectness {
+    final sorted = List<FlowStatus>.from(status)
+      ..sort((a, b) => a.flowNumber.compareTo(b.flowNumber));
+    return sorted
+        .map(
+          (entry) => {
+            'step_id': entry.flowNumber,
+            'correct': entry.isCorrect,
+          },
+        )
+        .toList();
+  }
+
+  bool? get isCorrect {
+    if (status.isEmpty) return null;
+    return status.every((entry) => entry.isCorrect);
+  }
+
+  factory SolveAnalysisResponse.fromJson(Map<String, dynamic> json) {
+    final debugRaw = json['debug'];
+    final debugInfo =
+        debugRaw is Map ? Map<String, dynamic>.from(debugRaw) : null;
+    final status = _parseStatus(
+      json['status'] ?? json['flow_status'] ?? json['step_correctness'],
+    );
+    return SolveAnalysisResponse(
+      status: status,
+      inPanic: _parseInPanic(json['in_panic']),
+      aiOpinion: json['ai_opinion']?.toString().trim() ?? '',
+      questId: json['quest_id'] as String?,
+      questModel: List<String>.from(
+        json['quest_model'] as List<dynamic>? ?? [],
+      ),
+      warnings: List<String>.from(json['warnings'] as List<dynamic>? ?? []),
+      debugInfo: debugInfo,
     );
   }
 }
 
-class SolveAnalysisResponse {
-  final String analysis;
-  final List<dynamic> recognizedText;
-  final String ocrSource;
-  final String? questId;
-  final List<String> questModel;
+class SolveOcrResponse {
+  final String? allOcr;
+  final String? hitMapped;
+  final String? userAnswer;
   final List<String> warnings;
-  final bool? isCorrect;
-  final List<Map<String, dynamic>> stepCorrectness;
+  final String ocrSource;
+  final Map<String, dynamic>? debugInfo;
 
-  SolveAnalysisResponse({
-    required this.analysis,
-    required this.recognizedText,
-    required this.ocrSource,
-    required this.questModel,
+  SolveOcrResponse({
+    required this.allOcr,
+    required this.hitMapped,
+    required this.userAnswer,
     required this.warnings,
-    this.questId,
-    this.isCorrect,
-    this.stepCorrectness = const [],
+    required this.ocrSource,
+    this.debugInfo,
   });
 
-  factory SolveAnalysisResponse.fromJson(Map<String, dynamic> json) {
-    return SolveAnalysisResponse(
-      analysis: json['analysis'] as String? ?? '',
-      recognizedText: (json['recognized_text'] as List<dynamic>? ?? []),
-      ocrSource: json['ocr_source'] as String? ?? '',
-      questId: json['quest_id'] as String?,
-      questModel: List<String>.from(json['quest_model'] as List<dynamic>? ?? []),
+  static String? _normalizeNullableText(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    if (text.isEmpty) return null;
+    final lowered = text.toLowerCase();
+    if (lowered == 'null' || lowered == 'none' || lowered == 'nil' || text == '없음') {
+      return null;
+    }
+    return text;
+  }
+
+  factory SolveOcrResponse.fromJson(Map<String, dynamic> json) {
+    final debugRaw = json['debug'];
+    final debugInfo =
+        debugRaw is Map ? Map<String, dynamic>.from(debugRaw) : null;
+    return SolveOcrResponse(
+      allOcr: _normalizeNullableText(json['all_ocr']),
+      hitMapped: _normalizeNullableText(json['hit_mapped']),
+      userAnswer: _normalizeNullableText(
+        json['user_answer'] ?? json['student_answer'] ?? json['answer'],
+      ),
       warnings: List<String>.from(json['warnings'] as List<dynamic>? ?? []),
-      isCorrect: json['is_correct'] as bool?,
-      stepCorrectness: (json['step_correctness'] as List<dynamic>? ?? [])
-          .whereType<Map>()
-          .map((entry) => Map<String, dynamic>.from(entry as Map))
-          .toList(),
+      ocrSource: json['ocr_source'] as String? ?? '',
+      debugInfo: debugInfo,
     );
   }
 }
@@ -226,6 +311,22 @@ class TagRating {
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       delta: (json['delta'] as num?)?.toDouble() ?? 0.0,
       attempts: (json['attempts'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class WeaknessTag {
+  final String tag;
+  final int count;
+  final String? updatedAt;
+
+  WeaknessTag({required this.tag, required this.count, this.updatedAt});
+
+  factory WeaknessTag.fromJson(Map<String, dynamic> json) {
+    return WeaknessTag(
+      tag: json['tag']?.toString() ?? '',
+      count: (json['count'] as num?)?.toInt() ?? 0,
+      updatedAt: json['updated_at']?.toString(),
     );
   }
 }
@@ -321,6 +422,7 @@ class ApiClient {
     _token = null;
   }
 
+
   Future<String> _ensureToken() async {
     if (_token != null) {
       return _token!;
@@ -394,6 +496,7 @@ class ApiClient {
     required List<ExamRangeRequest> ranges,
     required int difficultyTier,
     required int questionCount,
+    String paperType = 'aiflow',
   }) async {
     final token = await _ensureToken();
     final uri = Uri.parse('$baseUrl/exams');
@@ -401,6 +504,7 @@ class ApiClient {
       'ranges': ranges.map((range) => range.toJson()).toList(),
       'difficulty_tier': difficultyTier,
       'question_count': questionCount,
+      'paper_type': paperType,
     });
     final response = await _client.post(
       uri,
@@ -478,6 +582,7 @@ class ApiClient {
     required int branchConditions,
     String? referenceQuestId,
     bool strictTags = false,
+    int? seed,
   }) async {
     final token = await _ensureToken();
     final uri = Uri.parse('$baseUrl/quests/generate');
@@ -489,6 +594,7 @@ class ApiClient {
       if (referenceQuestId != null && referenceQuestId.trim().isNotEmpty)
         'reference_quest_id': referenceQuestId.trim(),
       'strict_tags': strictTags,
+      if (seed != null) 'seed': seed,
     });
     final response = await _client.post(
       uri,
@@ -507,6 +613,69 @@ class ApiClient {
       throw Exception('Missing quest data in response');
     }
     return quest;
+  }
+
+  Future<List<Map<String, dynamic>>> generateProblemSet({
+    required List<String> hashTags,
+    required int minDifficultyTier,
+    required int maxDifficultyTier,
+    required int questionCount,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/quests/generate/batch');
+    final body = jsonEncode({
+      'hash_tags': hashTags,
+      'min_difficulty_tier': minDifficultyTier,
+      'max_difficulty_tier': maxDifficultyTier,
+      'question_count': questionCount,
+    });
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body,
+    );
+    if (response.statusCode != 200) {
+      String message = 'Failed to generate problem set: ${response.statusCode}';
+      try {
+        final payload = jsonDecode(response.body) as Map<String, dynamic>;
+        final detail = payload['detail'];
+        if (detail is String && detail.trim().isNotEmpty) {
+          message = detail.trim();
+        }
+      } catch (_) {}
+      throw Exception(message);
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final quests = (payload['quests'] as List<dynamic>? ?? [])
+        .map((quest) => quest as Map<String, dynamic>)
+        .toList();
+    if (quests.isEmpty) {
+      throw Exception('Missing quests in response');
+    }
+    return quests;
+  }
+
+  Future<Map<String, dynamic>> generateCubicProblem({int? seed}) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/csat/cubic');
+    final body = jsonEncode({if (seed != null) 'seed': seed});
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body,
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to generate cubic problem: ${response.statusCode}',
+      );
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   Future<QuestSearchResult> fetchQuestPage({
@@ -530,61 +699,70 @@ class ApiClient {
     return QuestSearchResult.fromJson(payload);
   }
 
-  Future<TestChatResponse> sendTestChatMessage({
-    required String userMessage,
-    required int affection,
-    required int attendanceDays,
-    String? questId,
-    String? problemNumber,
-    String? solutionNotes,
-    Map<String, int>? learningRatings,
-    List<Map<String, String>>? recentPairs,
-  }) async {
-    final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/test-chat/message');
-    final body = jsonEncode({
-      'user_message': userMessage,
-      'affection': affection,
-      'attendance_days': attendanceDays,
-      if (questId != null) 'quest_id': questId,
-      if (problemNumber != null) 'problem_number': problemNumber,
-      if (solutionNotes != null) 'solution_notes': solutionNotes,
-      if (learningRatings != null) 'learning_ratings': learningRatings,
-      if (recentPairs != null) 'recent_pairs': recentPairs,
-    });
-    final response = await _client.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: body,
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to send chat: ${response.statusCode}');
-    }
-    final payload = jsonDecode(response.body) as Map<String, dynamic>;
-    return TestChatResponse.fromJson(payload);
-  }
-
   Future<SolveAnalysisResponse> submitSolveAnalysis({
     required Map<String, dynamic> payload,
+    Uint8List? studentWorkImage,
+    Uint8List? problemImage,
+    Uint8List? heatmapImage,
   }) async {
     final token = await _ensureToken();
     final uri = Uri.parse('$baseUrl/analysis/solve');
+    final payloadWithImages = Map<String, dynamic>.from(payload);
+    if (studentWorkImage != null && studentWorkImage.isNotEmpty) {
+      payloadWithImages['student_work_image'] = base64Encode(studentWorkImage);
+    }
+    if (problemImage != null && problemImage.isNotEmpty) {
+      payloadWithImages['problem_image'] = base64Encode(problemImage);
+    }
+    if (heatmapImage != null && heatmapImage.isNotEmpty) {
+      payloadWithImages['heatmap_image'] = base64Encode(heatmapImage);
+    }
     final response = await _client.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode(payload),
+      body: jsonEncode(payloadWithImages),
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to analyze solve: ${response.statusCode}');
+      throw Exception(
+        'Failed to analyze solve: ${response.statusCode} ${response.body}',
+      );
     }
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     return SolveAnalysisResponse.fromJson(decoded);
+  }
+
+  Future<SolveOcrResponse> submitSolveOcr({
+    required Map<String, dynamic> payload,
+    Uint8List? studentWorkImage,
+    Uint8List? heatmapImage,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/analysis/ocr');
+    final payloadWithImages = Map<String, dynamic>.from(payload);
+    if (studentWorkImage != null && studentWorkImage.isNotEmpty) {
+      payloadWithImages['student_work_image'] = base64Encode(studentWorkImage);
+    }
+    if (heatmapImage != null && heatmapImage.isNotEmpty) {
+      payloadWithImages['heatmap_image'] = base64Encode(heatmapImage);
+    }
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payloadWithImages),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to OCR solve: ${response.statusCode} ${response.body}',
+      );
+    }
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return SolveOcrResponse.fromJson(decoded);
   }
 
   Future<UserRating> submitRating({
@@ -652,6 +830,24 @@ class ApiClient {
         .toList();
   }
 
+  Future<List<WeaknessTag>> fetchWeaknessTags() async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/weakness/tags');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch weakness tags: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['tags'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => WeaknessTag.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
   Future<List<FriendProfile>> searchFriends({
     required String query,
     int limit = 20,
@@ -664,10 +860,7 @@ class ApiClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'query': query.trim(),
-        'limit': limit,
-      }),
+      body: jsonEncode({'query': query.trim(), 'limit': limit}),
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to search friends: ${response.statusCode}');
@@ -765,5 +958,67 @@ class ApiClient {
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return StudyGroup.fromJson(payload);
+  }
+
+  Future<List<Map<String, dynamic>>> listTextbooks({
+    String? category,
+    String? tag,
+  }) async {
+    final token = await _ensureToken();
+    final params = <String, String>{};
+    if (category != null && category.trim().isNotEmpty) {
+      params['category'] = category.trim();
+    }
+    if (tag != null && tag.trim().isNotEmpty) {
+      params['tag'] = tag.trim();
+    }
+    final uri = Uri.parse(
+      '$baseUrl/textbooks',
+    ).replace(queryParameters: params);
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch textbooks: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['textbooks'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> getTextbook(String textbookId) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/textbooks/$textbookId');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch textbook: ${response.statusCode}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> createTextbook(
+    Map<String, dynamic> payload,
+  ) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/textbooks');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to create textbook: ${response.statusCode}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 }

@@ -4,6 +4,7 @@ import 'package:s11/models/course.dart';
 import 'package:s11/pages/course_learning_page.dart';
 import 'package:s11/pages/course_pages.dart';
 import 'package:s11/services/activity_store.dart';
+import 'package:s11/services/textbook_store.dart';
 import 'package:s11/tryout.dart';
 
 VoidCallback buildResumeAction(BuildContext context) {
@@ -21,7 +22,7 @@ VoidCallback buildResumeAction(BuildContext context) {
       }
       switch (last.type) {
         case ActivityEventType.book:
-          final book = findLibraryBookById(last.id);
+          final book = await TextbookStore.getById(last.id);
           if (book == null) {
             _showMessage(messenger, '최근 교재를 찾을 수 없습니다.');
             return;

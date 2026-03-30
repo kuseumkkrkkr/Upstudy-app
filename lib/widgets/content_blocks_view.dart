@@ -76,12 +76,29 @@ class ContentBlocksView extends StatelessWidget {
           if (latex.isEmpty) {
             continue;
           }
-          spans.add(
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: Math.tex(latex, textStyle: effectiveLatexStyle),
-            ),
+          final mathWidget = Math.tex(
+            latex,
+            textStyle: effectiveLatexStyle,
+            mathStyle: MathStyle.text,
           );
+          final breakResult = mathWidget.texBreak();
+          if (breakResult.parts.isEmpty) {
+            spans.add(
+              WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: mathWidget,
+              ),
+            );
+          } else {
+            for (final part in breakResult.parts) {
+              spans.add(
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: part,
+                ),
+              );
+            }
+          }
         } else {
           spans.add(TextSpan(text: block.content));
         }
@@ -93,6 +110,7 @@ class ContentBlocksView extends StatelessWidget {
         TextSpan(style: effectiveTextStyle, children: spans),
         textAlign: textAlign,
         softWrap: true,
+        overflow: TextOverflow.clip,
       );
     }
 

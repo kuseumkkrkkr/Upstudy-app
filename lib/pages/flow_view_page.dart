@@ -9,14 +9,12 @@ import '../widgets/solve_header.dart';
 class FlowViewPage extends StatefulWidget {
   final Map<String, dynamic> quest;
   final String title;
-  final String? analysisText;
   final List<Map<String, dynamic>>? stepCorrectness;
 
   const FlowViewPage({
     super.key,
     required this.quest,
     this.title = 'Flow Editor',
-    this.analysisText,
     this.stepCorrectness,
   });
 
@@ -124,37 +122,6 @@ class _FlowViewPageState extends State<FlowViewPage> {
               textStyle: const TextStyle(fontSize: 14, height: 1.4),
               latexStyle: const TextStyle(fontSize: 14, height: 1.4),
             ),
-            if (widget.analysisText != null) ...[
-              const SizedBox(height: 16),
-              const Text(
-                '분석 요약',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F7FF),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFCCD8FF)),
-                ),
-                child: ContentBlocksView(
-                  blocks: () {
-                    final trimmed = widget.analysisText!.trim();
-                    final blocks = parseTextWithLatex(trimmed);
-                    if (blocks.isNotEmpty) {
-                      return blocks;
-                    }
-                    return const [
-                      ContentBlock(type: 'text', content: '-'),
-                    ];
-                  }(),
-                  textStyle: const TextStyle(fontSize: 13, height: 1.4),
-                  latexStyle: const TextStyle(fontSize: 13, height: 1.4),
-                  inline: true,
-                ),
-              ),
-            ],
             const SizedBox(height: 16),
             const Text(
               '문제 정답',

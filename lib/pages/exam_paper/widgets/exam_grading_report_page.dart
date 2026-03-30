@@ -239,7 +239,7 @@ class _ExamGradingReportPage extends StatelessWidget {
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
-            child: _buildDetailContent(result),
+            child: const SizedBox.shrink(),
           ),
           if (result.warnings.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -262,7 +262,6 @@ class _ExamGradingReportPage extends StatelessWidget {
                       builder: (_) => FlowViewPage(
                         quest: result.quest!,
                         title: '문제 ${result.itemIndex} 풀이 흐름',
-                        analysisText: result.analysis,
                         stepCorrectness: result.stepCorrectness,
                       ),
                     ),
@@ -279,35 +278,6 @@ class _ExamGradingReportPage extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-
-  Widget _buildDetailContent(_GradeResult result) {
-    if (result.empty) {
-      return const Text(
-        '작성된 답안이 없습니다.',
-        style: TextStyle(fontSize: 13),
-      );
-    }
-    if (result.error != null) {
-      return Text(
-        result.error!,
-        style: const TextStyle(fontSize: 13),
-      );
-    }
-    final analysis = result.analysis?.trim() ?? '';
-    final blocks = parseTextWithLatex(analysis);
-    if (blocks.isEmpty) {
-      return const Text(
-        '분석 결과가 없습니다.',
-        style: TextStyle(fontSize: 13),
-      );
-    }
-    return ContentBlocksView(
-      blocks: blocks,
-      textStyle: const TextStyle(fontSize: 13, height: 1.45),
-      latexStyle: const TextStyle(fontSize: 13, height: 1.45),
-      inline: true,
     );
   }
 

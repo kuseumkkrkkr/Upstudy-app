@@ -5,8 +5,9 @@ import 'package:s11/services/api_client.dart';
 import 'package:s11/services/exam_paper_store.dart';
 
 const int _defaultExamQuestionCount = 30;
-const int _minExamQuestionCount = 5;
-const int _maxExamQuestionCount = 30;
+const int _csatQuestionCount = 30;
+const int _aiflowMinQuestionCount = 10;
+const int _aiflowMaxQuestionCount = 60;
 
 class ExamBuildResult {
   const ExamBuildResult({required this.examId, required this.questionCount});
@@ -77,6 +78,10 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
       TextEditingController(text: _defaultExamQuestionCount.toString());
   final TextEditingController _tagSearchController = TextEditingController();
   late final List<ConceptTag> _tagTree;
+  ConceptTag? _commonSubjectOne;
+  ConceptTag? _commonSubjectTwo;
+  List<ConceptTag> _optionalSubjects = const [];
+  ConceptTag? _selectedOptionalSubject;
   String _tagQuery = '';
   double _difficultyValue = 3;
   bool _submitting = false;
@@ -87,6 +92,8 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
   void initState() {
     super.initState();
     _tagTree = _deepCopyTags(conceptTagData);
+    _initializeCsatSubjects();
+    _applyPaperTypeRules();
   }
 
   @override
@@ -112,6 +119,42 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
         .toList();
   }
 
+  void _initializeCsatSubjects() {
+    _commonSubjectOne = _findTopLevelTag('공통수학1');
+    _commonSubjectTwo = _findTopLevelTag('공통수학2');
+    _optionalSubjects = _tagTree
+        .where(
+          (tag) =>
+              tag.name != _commonSubjectOne?.name &&
+              tag.name != _commonSubjectTwo?.name,
+        )
+        .toList();
+    if (_optionalSubjects.isNotEmpty) {
+      _selectedOptionalSubject ??= _optionalSubjects.first;
+    }
+  }
+
+  ConceptTag? _findTopLevelTag(String name) {
+    for (final tag in _tagTree) {
+      if (tag.name == name) {
+        return tag;
+      }
+    }
+    return null;
+  }
+
+  bool get _isCsat => _paperType == _ExamPaperType.csat;
+
+  int get _minExamQuestionCount =>
+      _isCsat ? _csatQuestionCount : _aiflowMinQuestionCount;
+
+  int get _maxExamQuestionCount =>
+      _isCsat ? _csatQuestionCount : _aiflowMaxQuestionCount;
+
+  int get _minDifficultyTier => _isCsat ? 3 : 1;
+
+  int get _maxDifficultyTier => 5;
+
   String _normalizeTag(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
@@ -123,6 +166,9 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
   }
 
   void _toggleTagSelection(ConceptTag tag) {
+    if (_isCsat) {
+      return;
+    }
     final state = _getSelectionState(tag);
     final shouldSelect = state != _SelectionState.selected;
     setState(() => _setSelectionRecursively(tag, shouldSelect));
@@ -211,7 +257,73 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
   }
 
   int _difficultyTierFromSlider() {
-    return _difficultyValue.round().clamp(1, 5);
+    return _difficultyValue
+        .round()
+        .clamp(_minDifficultyTier, _maxDifficultyTier)
+        .toInt();
+  }
+
+  List<ConceptTag> _collectLeafTags(List<ConceptTag> tags) {
+    final results = <ConceptTag>[];
+    for (final tag in tags) {
+      if (tag.children.isEmpty) {
+        results.add(tag);
+      } else {
+        results.addAll(_collectLeafTags(tag.children));
+      }
+    }
+    return results;
+  }
+
+  void _applyPaperTypeRules() {
+    if (_isCsat) {
+      _setQuestionCount(_csatQuestionCount);
+      if (_difficultyValue < _minDifficultyTier) {
+        _difficultyValue = _minDifficultyTier.toDouble();
+      } else if (_difficultyValue > _maxDifficultyTier) {
+        _difficultyValue = _maxDifficultyTier.toDouble();
+      }
+      _applyCsatSelections();
+    } else {
+      if (_difficultyValue < _minDifficultyTier) {
+        _difficultyValue = _minDifficultyTier.toDouble();
+      } else if (_difficultyValue > _maxDifficultyTier) {
+        _difficultyValue = _maxDifficultyTier.toDouble();
+      }
+    }
+  }
+
+  void _applyCsatSelections() {
+    _clearSelections(_tagTree);
+    if (_commonSubjectOne != null) {
+      _setSelectionRecursively(_commonSubjectOne!, true);
+    }
+    if (_commonSubjectTwo != null) {
+      _setSelectionRecursively(_commonSubjectTwo!, true);
+    }
+    if (_selectedOptionalSubject != null) {
+      _setSelectionRecursively(_selectedOptionalSubject!, true);
+    }
+  }
+
+  void _clearSelections(List<ConceptTag> tags) {
+    for (final tag in tags) {
+      tag.isSelected = false;
+      if (tag.children.isNotEmpty) {
+        _clearSelections(tag.children);
+      }
+    }
+  }
+
+  List<String> _leafTagsForSubject(ConceptTag? subject) {
+    if (subject == null) return const [];
+    final leaves = _collectLeafTags([subject]);
+    if (leaves.isNotEmpty) {
+      return leaves.map((tag) => _normalizeTag(tag.displayName)).toList();
+    }
+    return _normalizeTag(subject.displayName).isEmpty
+        ? const []
+        : [_normalizeTag(subject.displayName)];
   }
 
   void _setQuestionCount(int value) {
@@ -256,18 +368,39 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
     }
     final questionCount = _parseQuestionCount();
     final tags = _selectedLeafTags();
-    if (tags.isEmpty) {
-      _showMessage('해시태그를 선택해주세요.');
-      return;
+    if (_isCsat) {
+      if (_selectedOptionalSubject == null) {
+        _showMessage('선택 과목을 선택해주세요.');
+        return;
+      }
+    } else {
+      if (tags.isEmpty) {
+        _showMessage('해시태그를 선택해주세요.');
+        return;
+      }
     }
     setState(() => _submitting = true);
     try {
+      final ranges = _isCsat
+          ? [
+              ExamRangeRequest(
+                key: 'common',
+                tags: [
+                  ..._leafTagsForSubject(_commonSubjectOne),
+                  ..._leafTagsForSubject(_commonSubjectTwo),
+                ],
+              ),
+              ExamRangeRequest(
+                key: 'optional',
+                tags: _leafTagsForSubject(_selectedOptionalSubject),
+              ),
+            ]
+          : [ExamRangeRequest(key: 'range-0', tags: tags)];
       final examId = await ApiClient.instance.createExam(
-        ranges: [
-          ExamRangeRequest(key: 'range-0', tags: tags),
-        ],
+        ranges: ranges,
         difficultyTier: _difficultyTierFromSlider(),
         questionCount: questionCount,
+        paperType: _paperTypeKey(_paperType),
       );
       if (!mounted) {
         return;
@@ -329,7 +462,7 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                             ? Icons.keyboard_arrow_down
                             : Icons.keyboard_arrow_right,
                       ),
-                      onPressed: () => _toggleExpanded(tag),
+                      onPressed: _isCsat ? null : () => _toggleExpanded(tag),
                     )
                   else
                     const SizedBox(width: 32),
@@ -340,7 +473,7 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                             ? false
                             : null,
                     tristate: true,
-                    onChanged: (_) => _toggleTagSelection(tag),
+                    onChanged: _isCsat ? null : (_) => _toggleTagSelection(tag),
                   ),
                   Expanded(
                     child: Text(
@@ -363,6 +496,12 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
   Widget build(BuildContext context) {
     final selectedCount = _selectedLeafTags().length;
     final nodes = _filteredNodes(_tagTree);
+    final minTier = _minDifficultyTier;
+    final maxTier = _maxDifficultyTier;
+    final difficultyLabels = [
+      for (var tier = minTier; tier <= maxTier; tier++)
+        _difficultyLabelFor(tier),
+    ];
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -390,6 +529,8 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                   IconButton(
                     onPressed: _submitting
                         ? null
+                        : _isCsat
+                            ? null
                         : () {
                             final value = _parseQuestionCount();
                             if (value <= _minExamQuestionCount) return;
@@ -401,7 +542,7 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                     width: 80,
                     child: TextField(
                       controller: _questionCountController,
-                      enabled: !_submitting,
+                      enabled: !_submitting && !_isCsat,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       decoration: const InputDecoration(
@@ -423,6 +564,8 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                   IconButton(
                     onPressed: _submitting
                         ? null
+                        : _isCsat
+                            ? null
                         : () {
                             final value = _parseQuestionCount();
                             if (value >= _maxExamQuestionCount) return;
@@ -464,7 +607,12 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                     selected: selected,
                     onSelected: _submitting
                         ? null
-                        : (_) => setState(() => _paperType = type),
+                        : (_) {
+                            setState(() {
+                              _paperType = type;
+                              _applyPaperTypeRules();
+                            });
+                          },
                     selectedColor: const Color(0xFF1B402B),
                     backgroundColor: const Color(0xFFEFEFEF),
                     showCheckmark: false,
@@ -482,9 +630,9 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
               ),
               Slider(
                 value: _difficultyValue,
-                min: 1,
-                max: 5,
-                divisions: 4,
+                min: minTier.toDouble(),
+                max: maxTier.toDouble(),
+                divisions: (maxTier - minTier).clamp(1, 4).toInt(),
                 label: _difficultyLabelFor(_difficultyTierFromSlider()),
                 onChanged: _submitting
                     ? null
@@ -492,13 +640,9 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text('하', style: TextStyle(fontSize: 12)),
-                  Text('중하', style: TextStyle(fontSize: 12)),
-                  Text('중', style: TextStyle(fontSize: 12)),
-                  Text('중상', style: TextStyle(fontSize: 12)),
-                  Text('상', style: TextStyle(fontSize: 12)),
-                ],
+                children: difficultyLabels
+                    .map((label) => Text(label, style: const TextStyle(fontSize: 12)))
+                    .toList(),
               ),
               const SizedBox(height: 6),
               Text(
@@ -528,32 +672,74 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
-              TextField(
-                controller: _tagSearchController,
-                decoration: const InputDecoration(
-                  hintText: '해시태그 검색',
-                  isDense: true,
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
+              if (_isCsat) ...[
+                const Text(
+                  '공통수학1, 공통수학2는 전체 포함됩니다.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
-                onChanged: (value) => setState(() => _tagQuery = value),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 220,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 10),
+                const Text(
+                  '선택 과목',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
-                child: nodes.isEmpty
-                    ? const Center(child: Text('검색 결과가 없습니다.'))
-                    : Scrollbar(
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
-                          children: [_buildTree(nodes)],
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  children: _optionalSubjects.map((subject) {
+                    final selected = _selectedOptionalSubject == subject;
+                    return ChoiceChip(
+                      label: Text(
+                        subject.displayName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: selected ? Colors.white : Colors.black87,
+                          fontWeight:
+                              selected ? FontWeight.w600 : FontWeight.w500,
                         ),
                       ),
-              ),
+                      selected: selected,
+                      onSelected: _submitting
+                          ? null
+                          : (_) {
+                              setState(() {
+                                _selectedOptionalSubject = subject;
+                                _applyCsatSelections();
+                              });
+                            },
+                      selectedColor: const Color(0xFF1B402B),
+                      backgroundColor: const Color(0xFFEFEFEF),
+                      showCheckmark: false,
+                    );
+                  }).toList(),
+                ),
+              ] else ...[
+                TextField(
+                  controller: _tagSearchController,
+                  decoration: const InputDecoration(
+                    hintText: '해시태그 검색',
+                    isDense: true,
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) => setState(() => _tagQuery = value),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F7F7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: nodes.isEmpty
+                      ? const Center(child: Text('검색 결과가 없습니다.'))
+                      : Scrollbar(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+                            children: [_buildTree(nodes)],
+                          ),
+                        ),
+                ),
+              ],
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,

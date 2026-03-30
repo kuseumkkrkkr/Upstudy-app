@@ -21,6 +21,8 @@ def resample_storage_data(storage: Dict[str, Any]) -> Dict[str, Any]:
         for key in ("quest_title", "quest_answer"):
             if key in data:
                 data[key] = _resample_field(data[key])
+        if "quest_options" in data and isinstance(data["quest_options"], list):
+            data["quest_options"] = [_resample_field(option) for option in data["quest_options"]]
 
     solves = cloned.get("solves")
     if isinstance(solves, list):

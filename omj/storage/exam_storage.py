@@ -37,6 +37,7 @@ def init_exam_db() -> None:
             solves_count INTEGER NOT NULL,
             strategy_level INTEGER NOT NULL,
             branch_conditions INTEGER NOT NULL,
+            question_type TEXT,
             quest_id TEXT,
             flow_count INTEGER,
             error TEXT,
@@ -52,8 +53,17 @@ def init_exam_db() -> None:
         """
     )
 
+    _ensure_column(cursor, "exam_item", "question_type", "TEXT")
+
     conn.commit()
     conn.close()
+
+
+def _ensure_column(cursor: sqlite3.Cursor, table: str, column: str, definition: str) -> None:
+    cursor.execute(f"PRAGMA table_info({table})")
+    existing = {row[1] for row in cursor.fetchall()}
+    if column not in existing:
+        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def _now_iso() -> str:
@@ -109,6 +119,7 @@ def add_exam_items(exam_id: str, items: List[Dict[str, Any]]) -> None:
             item["solves_count"],
             item["strategy_level"],
             item["branch_conditions"],
+            item.get("question_type"),
             item.get("quest_id"),
             item.get("flow_count"),
             item.get("error"),
@@ -127,11 +138,12 @@ def add_exam_items(exam_id: str, items: List[Dict[str, Any]]) -> None:
             solves_count,
             strategy_level,
             branch_conditions,
+            question_type,
             quest_id,
             flow_count,
             error
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         payload,
     )
@@ -212,6 +224,7 @@ def get_exam_items(exam_id: str) -> List[Dict[str, Any]]:
             solves_count,
             strategy_level,
             branch_conditions,
+            question_type,
             quest_id,
             flow_count,
             error
@@ -235,9 +248,10 @@ def get_exam_items(exam_id: str) -> List[Dict[str, Any]]:
                 "solves_count": row[5],
                 "strategy_level": row[6],
                 "branch_conditions": row[7],
-                "quest_id": row[8],
-                "flow_count": row[9],
-                "error": row[10],
+                "question_type": row[8],
+                "quest_id": row[9],
+                "flow_count": row[10],
+                "error": row[11],
             }
         )
     return items
