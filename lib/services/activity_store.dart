@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'auth_storage.dart';
 import 'local_db.dart';
 
 const _activityStoreKey = 'activity_log_v1';
@@ -218,8 +219,26 @@ class ActivityStore {
   static final ValueNotifier<ActivitySnapshot> notifier =
       ValueNotifier<ActivitySnapshot>(ActivitySnapshot.empty());
   static bool _loaded = false;
+  static String _storageKey = _activityStoreKey;
+  static String? _activeUsername;
+
+  /// Make sure the storage key follows the currently signed-in user.
+  /// When the user changes we reset the in-memory snapshot so each account
+  /// sees only its own activity data.
+  static Future<void> _syncUserScope() async {
+    final username = (await AuthStorage.instance.readUsername())?.trim();
+    final scopedKey = (username == null || username.isEmpty)
+        ? _activityStoreKey
+        : '$_activityStoreKey::$username';
+    if (_activeUsername == username && _storageKey == scopedKey) return;
+    _activeUsername = username;
+    _storageKey = scopedKey;
+    _loaded = false;
+    notifier.value = ActivitySnapshot.empty();
+  }
 
   static Future<ActivitySnapshot> load() async {
+    await _syncUserScope();
     if (_loaded) return notifier.value;
     final raw = await _loadRaw();
     if (raw == null || raw.isEmpty) {
@@ -276,6 +295,7 @@ class ActivityStore {
     required String problemId,
     required String problemNumber,
     int? difficultyTier,
+    Map<String, dynamic>? meta,
   }) async {
     final snapshot = await _ensureUpToDate();
     final todayKey = _todayKey();
@@ -301,12 +321,16 @@ class ActivityStore {
         snapshot.lastProblemConfig ?? snapshot.lastEvent?.meta?['config'];
     final priorConfig =
         priorConfigRaw is Map ? Map<String, dynamic>.from(priorConfigRaw) : null;
+    final mergedMeta = <String, dynamic>{};
+    if (priorConfig != null) mergedMeta['config'] = priorConfig;
+    if (meta != null) mergedMeta.addAll(meta);
+
     final event = ActivityEvent(
       type: ActivityEventType.problem,
       id: problemId,
       number: problemNumber,
       timestamp: DateTime.now().millisecondsSinceEpoch,
-      meta: priorConfig == null ? null : {'config': priorConfig},
+      meta: mergedMeta.isEmpty ? null : mergedMeta,
     );
     await _persist(
       ActivitySnapshot(
@@ -323,18 +347,23 @@ class ActivityStore {
   static Future<void> recordProblemIncorrect({
     required String problemId,
     required String problemNumber,
+    Map<String, dynamic>? meta,
   }) async {
     final snapshot = await _ensureUpToDate();
     final priorConfigRaw =
         snapshot.lastProblemConfig ?? snapshot.lastEvent?.meta?['config'];
     final priorConfig =
         priorConfigRaw is Map ? Map<String, dynamic>.from(priorConfigRaw) : null;
+    final mergedMeta = <String, dynamic>{};
+    if (priorConfig != null) mergedMeta['config'] = priorConfig;
+    if (meta != null) mergedMeta.addAll(meta);
+
     final event = ActivityEvent(
       type: ActivityEventType.problem,
       id: problemId,
       number: problemNumber,
       timestamp: DateTime.now().millisecondsSinceEpoch,
-      meta: priorConfig == null ? null : {'config': priorConfig},
+      meta: mergedMeta.isEmpty ? null : mergedMeta,
     );
     await _persist(
       ActivitySnapshot(
@@ -456,21 +485,23 @@ class ActivityStore {
   }
 
   static Future<void> _persist(ActivitySnapshot snapshot) async {
+    await _syncUserScope();
     notifier.value = snapshot;
     _loaded = true;
     await LocalDb.instance
-        .setString(_activityStoreKey, jsonEncode(snapshot.toJson()));
+        .setString(_storageKey, jsonEncode(snapshot.toJson()));
   }
 
   static Future<String?> _loadRaw() async {
+    // load uses the user-scoped key prepared in _syncUserScope
     final db = LocalDb.instance;
-    final cached = await db.getString(_activityStoreKey);
+    final cached = await db.getString(_storageKey);
     if (cached != null && cached.isNotEmpty) return cached;
     if (kIsWeb) return cached;
     final prefs = await SharedPreferences.getInstance();
-    final legacy = prefs.getString(_activityStoreKey);
+    final legacy = prefs.getString(_storageKey);
     if (legacy != null && legacy.isNotEmpty) {
-      await db.setString(_activityStoreKey, legacy);
+      await db.setString(_storageKey, legacy);
       return legacy;
     }
     return cached;
@@ -543,6 +574,7 @@ class ActivityStore {
   }
 
   static Future<ActivitySnapshot> _ensureUpToDate() async {
+    await _syncUserScope();
     final snapshot = _loaded ? notifier.value : await load();
     final normalized = _normalizeSnapshot(snapshot, DateTime.now());
     if (normalized != snapshot) {

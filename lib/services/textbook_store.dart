@@ -11,6 +11,7 @@ class TextbookStore {
   static const String _libraryKey = 'textbook_library_v1';
   static const String _libraryCacheKey = 'textbook_library_cache_v1';
   static const String _cachePrefix = 'textbook_cache_v1_';
+  static const int maxLibraryItems = 10;
 
   static const BookData _testBook = BookData(
     id: 'test_textbook',
@@ -143,7 +144,10 @@ class TextbookStore {
     final items = await loadLibrary();
     if (items.any((entry) => entry.id == book.id)) return;
     final updated = [...items, _stripToLibraryMeta(book)];
-    await saveLibraryMeta(updated);
+    final trimmed = updated.length > maxLibraryItems
+        ? updated.sublist(updated.length - maxLibraryItems)
+        : updated;
+    await saveLibraryMeta(trimmed);
   }
 
   static Future<void> download(BookData book) async {

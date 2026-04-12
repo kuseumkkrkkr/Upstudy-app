@@ -1,11 +1,20 @@
 from __future__ import annotations
 
-import random
+import multiprocessing
 import re
 import types
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from baselines.basemodel import AIQuestResult
+from baselines.basemodel import AISolveStep, AIQuestResult, ContentBlocks
+
+
+def _log_done(role: str) -> None:
+    print(f"[{role}] 실행완료")
+
+
+# =========================
+# Utility helpers
+# =========================
 
 
 def estimate_difficulty(
@@ -14,7 +23,9 @@ def estimate_difficulty(
     strategy_level: int,
     branch_conditions: int,
 ) -> int:
-    return int(tag_count + 4 * solves_count + 3 * branch_conditions + 2 * strategy_level)
+    value = int(tag_count + 4 * solves_count + 3 * branch_conditions + 2 * strategy_level)
+    _log_done("difficulty 계산")
+    return value
 
 
 def compile_code(code: str) -> types.ModuleType:
@@ -23,11 +34,14 @@ def compile_code(code: str) -> types.ModuleType:
     generate_func = module.__dict__.get("generate_problem")
     if not callable(generate_func):
         raise RuntimeError("generate_problem 함수가 없습니다.")
+    _log_done("코드 컴파일")
+    print(f"[입력] compile_code code_length={len(code)}")
     return module
 
 
 def normalize_signs(text: str) -> str:
     if not text:
+        _log_done("부호 정규화")
         return text
     patterns = [
         (r"\-\s*\-\s*", "+"),
@@ -40,21 +54,219 @@ def normalize_signs(text: str) -> str:
         for pattern, repl in patterns:
             cleaned = re.sub(pattern, repl, cleaned)
     cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    _log_done("부호 정규화")
+    print(f"[입력] normalize_signs len_before={len(text)} len_after={len(cleaned)}")
     return cleaned
 
 
-def normalize_tag(tag: str) -> str:
-    return tag.strip().lstrip("#").strip()
+def _coerce_blocks(value: Any, field_name: str) -> ContentBlocks:
+    blocks = ContentBlocks.model_validate(value)
+    cleaned_blocks: List[Dict[str, str]] = []
+    for block in blocks.blocks:
+        content = str(block.content or "")
+        if not content.strip():
+            continue
+        if block.type == "text":
+            content = normalize_signs(content)
+        cleaned_blocks.append({"type": block.type, "content": content})
+    _log_done(f"{field_name} 정규화")
+    print(f"[입력] _coerce_blocks field={field_name} blocks={len(cleaned_blocks)}")
+    return ContentBlocks.model_validate({"blocks": cleaned_blocks})
+
+
+def _normalize_solve_step(
+    step: Dict[str, Any],
+    *,
+    fallback_tags: List[str],
+    expected_branches: Optional[int],
+    depth: int = 0,
+) -> AISolveStep:
+    flow = _coerce_blocks(step.get("flow"), f"solves[{depth}].flow")
+    hint = _coerce_blocks(step.get("hint_riddle"), f"solves[{depth}].hint_riddle")
+    answer_riddle = _coerce_blocks(step.get("answer_riddle"), f"solves[{depth}].answer_riddle")
+    enter_huddle = step.get("enter_huddle", 0)
+    tags = step.get("hash_tag")
+    if tags is None:
+        tags = fallback_tags
+    if isinstance(tags, str):
+        tags = [tags]
+    if tags is None:
+        tags = []
+    branches_raw = step.get("branches") or []
+    branches = [
+        _normalize_solve_step(
+            branch,
+            fallback_tags=fallback_tags,
+            expected_branches=expected_branches,  # no trimming
+            depth=depth + 1,
+        )
+        for branch in branches_raw
+        if isinstance(branch, dict)
+    ]
+    _log_done("solve 정규화")
+    return AISolveStep(
+        flow=flow,
+        hint_riddle=hint,
+        answer_riddle=answer_riddle,
+        hash_tag=list(tags),
+        enter_huddle=enter_huddle,
+        branches=branches,
+    )
+
+
+def _solution_from_solves(solves: List[AISolveStep]) -> ContentBlocks:
+    texts: List[str] = []
+
+    def _append(step: AISolveStep, prefix: str = "") -> None:
+        flow_text = " ".join(block.content for block in step.flow.blocks if block.content)
+        if flow_text:
+            texts.append(f"{prefix}flow: {flow_text}")
+        hint_text = " ".join(block.content for block in step.hint_riddle.blocks if block.content)
+        if hint_text:
+            texts.append(f"{prefix}hint: {hint_text}")
+        ans_text = " ".join(block.content for block in step.answer_riddle.blocks if block.content)
+        if ans_text:
+            texts.append(f"{prefix}answer: {ans_text}")
+        for branch in step.branches:
+            _append(branch, prefix + "branch> ")
+
+    for solve in solves:
+        _append(solve)
+    _log_done("solution 빌드")
+    return ContentBlocks.model_validate({"blocks": [{"type": "text", "content": " ".join(texts)}]})
+
+
+# =========================
+# Core validation & runtime
+# =========================
+
+
+def validate_result(
+    result: Dict[str, Any],
+    *,
+    fallback_hash_tags: Optional[Sequence[str]] = None,
+    expected_solves: Optional[int] = None,
+    expected_branches: Optional[int] = None,
+    main_huddle: Optional[int] = None,
+) -> Dict[str, Any]:
+    if not isinstance(result, dict):
+        raise ValueError("generate_problem must return a dict.")
+
+    quest_title = _coerce_blocks(result.get("quest_title"), "quest_title")
+    quest_answer = _coerce_blocks(result.get("quest_answer"), "quest_answer")
+
+    # 그대로 사용 (형식 강제 없음)
+    answer_value: Any = result.get("answer", quest_answer)
+
+    primary_hash_tag = result.get("primary_hash_tag") or ""
+
+    solves_raw = result.get("solves") or []
+    fallback_tags = [primary_hash_tag] if primary_hash_tag else list(fallback_hash_tags or [])
+    solves: List[AISolveStep] = []
+    for step in solves_raw:
+        if not isinstance(step, dict):
+            continue
+        solves.append(
+            _normalize_solve_step(
+                step,
+                fallback_tags=fallback_tags,
+                expected_branches=expected_branches,
+            )
+        )
+    if not solves:
+        raise ValueError("solves must not be empty.")
+
+    mh = main_huddle if main_huddle is not None else result.get("main_huddle", 0)
+
+    ai_result = AIQuestResult(
+        quest_title=quest_title,
+        quest_answer=quest_answer,
+        quest_model=["unified-codebase"],
+        main_huddle=mh,
+        primary_hash_tag=primary_hash_tag,
+        quest_image=result.get("quest_image"),
+        solves=solves,
+    )
+
+    solution_blocks = _coerce_blocks(
+        result.get("solution") or _solution_from_solves(solves),
+        "solution",
+    )
+
+    _log_done("결과 검증")
+    return {
+        "ai_result": ai_result,
+        "problem": quest_title,
+        "answer": answer_value,
+        "solution": solution_blocks,
+        "meta": result.get("meta") or {},
+    }
+
+
+def build_ai_result(
+    *,
+    problem: Any,
+    answer: int,
+    solution: Any,
+    hash_tags: Sequence[str],
+    solves_count: int,
+    strategy_level: int,
+    branch_conditions: int,
+) -> AIQuestResult:
+    title_blocks = _coerce_blocks(problem, "problem")
+    answer_blocks = _coerce_blocks(answer, "answer")
+    solution_blocks = _coerce_blocks(solution, "solution")
+    fallback_tag = hash_tags[0] if hash_tags else ""
+
+    root_steps: List[AISolveStep] = []
+    for _ in range(max(1, solves_count)):
+        root_steps.append(
+            AISolveStep(
+                flow=solution_blocks,
+                hint_riddle=solution_blocks,
+                answer_riddle=solution_blocks,
+                hash_tag=[fallback_tag] if fallback_tag else [],
+                enter_huddle=strategy_level,
+                branches=[],
+            )
+        )
+
+    if branch_conditions > 0 and root_steps:
+        root_steps[0].branches = [
+            AISolveStep(
+                flow=solution_blocks,
+                hint_riddle=solution_blocks,
+                answer_riddle=solution_blocks,
+                hash_tag=[fallback_tag] if fallback_tag else [],
+                enter_huddle=strategy_level,
+                branches=[],
+            )
+            for _ in range(branch_conditions)
+        ]
+
+    _log_done("AI 결과 빌드")
+    return AIQuestResult(
+        quest_title=title_blocks,
+        quest_answer=answer_blocks,
+        quest_model=["unified-codebase"],
+        main_huddle=int(strategy_level),
+        primary_hash_tag=fallback_tag,
+        quest_image=None,
+        solves=root_steps,
+    )
 
 
 def select_codebase(
     codebases: Sequence[Dict[str, Any]],
     hash_tags: Sequence[str],
     desired_difficulty: int,
-    rng: random.Random,
+    rng: Any,
 ) -> Dict[str, Any]:
     if not codebases:
-        raise RuntimeError("등록된 코드베이스가 없습니다.")
+        raise RuntimeError("등록된 codebase가 없습니다.")
+
+    def normalize_tag(tag: str) -> str:
+        return tag.strip().lstrip("#").strip()
 
     desired_tags = {normalize_tag(tag) for tag in hash_tags if normalize_tag(tag)}
     scored: List[Tuple[int, int, Dict[str, Any]]] = []
@@ -71,120 +283,130 @@ def select_codebase(
     scored.sort(key=lambda item: (item[0], -item[1]), reverse=True)
     best_score = scored[0][0]
     candidates = [entry for score, _, entry in scored if score == best_score]
-    return rng.choice(candidates) if candidates else scored[0][2]
+    choice = rng.choice(candidates) if candidates else scored[0][2]
+    _log_done("codebase 선택")
+    return choice
 
 
 def run_codebase(entry: Dict[str, Any], seed: Optional[int]) -> Dict[str, Any]:
     code = entry.get("code") or ""
     if not code.strip():
-        raise RuntimeError("코드베이스 코드가 비어 있습니다.")
+        raise RuntimeError("Codebase code is empty.")
+    result = _run_codebase_with_timeout(code, seed, timeout_seconds=None)
+    _log_done("codebase 실행")
+    return result
+
+
+def run_codebase_inline(entry: Dict[str, Any], seed: Optional[int]) -> Dict[str, Any]:
+    """
+    단일 프로세스에서 바로 generate_problem을 실행 (타임아웃/격리 없음).
+    속도는 빠르지만 코드 오류가 그대로 전파된다.
+    """
+    code = entry.get("code") or ""
+    if not code.strip():
+        raise RuntimeError("Codebase code is empty.")
     module = compile_code(code)
     generate_func = module.__dict__.get("generate_problem")
     result = generate_func(seed=seed)
     if not isinstance(result, dict):
-        raise ValueError("generate_problem 결과가 dict가 아닙니다.")
+        raise ValueError("generate_problem result is not a dict.")
+    _log_done("codebase 인라인 실행")
     return result
 
-# 검증 함수
-def validate_result(result: Dict[str, Any]) -> Dict[str, Any]:
-    problem = str(result.get("problem") or "").strip()
-    if not problem:
-        raise ValueError("problem이 비어 있습니다.")
 
-    raw_answer = result.get("answer")
-    if isinstance(raw_answer, bool):
-        raise ValueError("answer는 bool이 될 수 없습니다.")
-    try:
-        answer = int(raw_answer)
-    except Exception as exc:
-        raise ValueError("answer는 정수여야 합니다.") from exc
-    if answer == 0 or abs(answer) > 50:
-        raise ValueError("answer 범위가 유효하지 않습니다.")
-
-    meta = result.get("meta") or {}
-    solution = result.get("solution") or meta.get("solution") or ""
-    solution = str(solution).strip()
-    if not solution:
-        raise ValueError("solution이 비어 있습니다.")
-
-    problem = normalize_signs(problem)
-    solution = normalize_signs(solution)
-
-    return {
-        "problem": problem,
-        "answer": answer,
-        "solution": solution,
-        "meta": meta,
-    }
-
-
-def _split_solution(text: str) -> List[str]:
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    if len(lines) >= 2:
-        return lines
-
-    parts = [part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if part.strip()]
-    if len(parts) >= 2:
-        return parts
-
-    return [text.strip()] if text.strip() else []
-
-
-def build_ai_result(
+def _run_codebase_with_timeout(
+    code: str,
+    seed: Optional[int],
     *,
-    problem: str,
-    answer: int,
-    solution: str,
-    hash_tags: Sequence[str],
-    solves_count: int,
-    strategy_level: int,
-    branch_conditions: int,
-) -> AIQuestResult:
-    segments = _split_solution(solution)
-    if not segments:
-        segments = [solution]
+    timeout_seconds: Optional[float],
+) -> Dict[str, Any]:
+    manager = multiprocessing.Manager()
+    stage = manager.dict()
+    stage["value"] = "start"
+    result_queue: multiprocessing.Queue = multiprocessing.Queue()
+    worker = multiprocessing.Process(
+        target=_codebase_worker,
+        args=(code, seed, result_queue, stage),
+        daemon=True,
+    )
+    try:
+        worker.start()
+        if timeout_seconds is None:
+            worker.join()
+        else:
+            worker.join(timeout_seconds)
+            if worker.is_alive():
+                worker.terminate()
+                worker.join()
+                stage_value = stage.get("value", "unknown")
+                raise TimeoutError(f"codebase execution timeout (stage: {stage_value})")
+        if result_queue.empty():
+            raise RuntimeError("codebase execution failed")
+        payload = result_queue.get()
+        if not payload.get("ok"):
+            raise RuntimeError(payload.get("error") or "codebase execution failed")
+        result = payload.get("result")
+        if not isinstance(result, dict):
+            raise ValueError("generate_problem result is not a dict.")
+        _log_done("codebase 실행(워커)")
+        return result
+    finally:
+        manager.shutdown()
 
-    enter_huddle = max(0, min(10, int(strategy_level) * 3))
-    root_count = max(1, solves_count)
-    root_steps: List[Dict[str, Any]] = []
-    for idx in range(root_count):
-        flow = segments[min(idx, len(segments) - 1)]
-        hint = segments[0]
-        answer_riddle = solution if idx == root_count - 1 else flow
-        root_steps.append(
-            {
-                "flow": flow,
-                "hint_riddle": hint,
-                "answer_riddle": answer_riddle,
-                "enter_huddle": enter_huddle,
-                "branches": [],
-            }
-        )
 
-    branch_total = max(0, int(branch_conditions))
-    if branch_total > 0:
-        branch_indices = list(range(root_count))
-        branch_cursor = 0
-        for branch_idx in range(branch_total):
-            target_root = branch_indices[branch_cursor % len(branch_indices)]
-            branch_cursor += 1
-            branch_flow = segments[min(branch_idx, len(segments) - 1)]
-            branch_steps = {
-                "flow": f"{branch_flow} (조건 {branch_idx + 1})",
-                "hint_riddle": segments[0],
-                "answer_riddle": solution,
-                "enter_huddle": enter_huddle,
-                "branches": [],
-            }
-            root_steps[target_root]["branches"].append(branch_steps)
+def _codebase_worker(
+    code: str,
+    seed: Optional[int],
+    queue: multiprocessing.Queue,
+    stage: Dict[str, Any],
+) -> None:
+    try:
+        stage["value"] = "compile"
+        module = compile_code(code)
+        stage["value"] = "generate_problem"
+        generate_func = module.__dict__.get("generate_problem")
+        result = generate_func(seed=seed)
+        queue.put({"ok": True, "result": result})
+    except Exception as exc:
+        queue.put({"ok": False, "error": f"{exc} (stage: {stage.get('value', 'unknown')})"})
 
-    ai_payload = {
-        "quest_title": problem,
-        "quest_answer": str(answer),
-        "quest_model": ["codebase"],
-        "main_huddle": int(strategy_level),
-        "primary_hash_tag": hash_tags[0] if hash_tags else "",
-        "quest_image": None,
-        "solves": root_steps,
-    }
-    return AIQuestResult.model_validate(ai_payload)
+
+# Backward-compatible no-op to satisfy existing imports
+def warmup_sympy_pool(*args: Any, **kwargs: Any) -> None:  # pragma: no cover
+    _log_done("sympy warmup(skip)")
+    return None
+
+
+def _extract_answer_value(answer_payload: Any) -> Optional[int]:
+    text = ""
+    if isinstance(answer_payload, ContentBlocks):
+        text = " ".join(block.content for block in answer_payload.blocks if block.content)
+    elif isinstance(answer_payload, dict):
+        blocks = answer_payload.get("blocks")
+        if isinstance(blocks, list):
+            parts = []
+            for block in blocks:
+                if isinstance(block, dict):
+                    content = block.get("content")
+                    if content:
+                        parts.append(str(content).strip())
+            text = " ".join(parts)
+    elif isinstance(answer_payload, str):
+        text = answer_payload.strip()
+    else:
+        text = str(answer_payload)
+
+    cleaned = re.sub(r"[^\d-]+", " ", text)
+    tokens = [token for token in cleaned.split() if token not in ("", "-", "+")]
+    for token in tokens:
+        try:
+            return int(token)
+        except ValueError:
+            continue
+    digits = re.findall(r"-?\d+", text)
+    if digits:
+        try:
+            return int(digits[0])
+        except ValueError:
+            pass
+    return None

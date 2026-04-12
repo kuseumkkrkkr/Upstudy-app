@@ -34,6 +34,9 @@ def _normalize_tag(tag: str) -> str:
     return (tag or "").strip().lstrip("#").strip().lower()
 
 
+_EXCLUDED_TAGS = {_normalize_tag("사칙연산")}
+
+
 def _clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
 
@@ -119,7 +122,7 @@ def _build_tag_flow_map(steps: List[Dict[str, Any]]) -> Dict[str, List[float]]:
             continue
         for raw in tags:
             norm = _normalize_tag(str(raw))
-            if not norm:
+            if not norm or norm in _EXCLUDED_TAGS:
                 continue
             tag_map.setdefault(norm, []).append(enter_value)
     return tag_map
@@ -155,7 +158,7 @@ def _build_tag_correct_map(
             continue
         for raw in tags:
             norm = _normalize_tag(str(raw))
-            if not norm:
+            if not norm or norm in _EXCLUDED_TAGS:
                 continue
             counts = tag_counts.setdefault(norm, {"correct": 0, "incorrect": 0})
             if correctness:

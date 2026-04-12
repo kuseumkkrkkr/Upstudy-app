@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
@@ -23,8 +25,9 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     5: _TierParams(solvesCount: 6, strategyLevel: 3, branchConditions: 2),
   };
 
-  final TextEditingController _tagsController =
-      TextEditingController(text: '#다항식');
+  final TextEditingController _tagsController = TextEditingController(
+    text: '#다항식',
+  );
   final TextEditingController _referenceController = TextEditingController();
   double _difficultyTier = 3;
   int _solvesCount = 4;
@@ -32,8 +35,11 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
   int _branchConditions = 1;
   bool _strictTags = false;
   bool _loading = false;
-  String? _error;
+  String _statusMessage = '문제를 생성 중입니다';
+  Timer? _statusTimer;
+  String? _requestId;
   Map<String, dynamic>? _quest;
+  String? _error;
   bool _cubicLoading = false;
   String? _cubicError;
   Map<String, dynamic>? _cubicResult;
@@ -48,7 +54,38 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
   void dispose() {
     _tagsController.dispose();
     _referenceController.dispose();
+    _statusTimer?.cancel();
     super.dispose();
+  }
+
+  String _buildRequestId() {
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    final suffix = math.Random().nextInt(1 << 32);
+    return '$stamp-$suffix';
+  }
+
+  void _startStatusPolling(String requestId) {
+    _statusTimer?.cancel();
+    _statusMessage = '문제를 생성 중입니다';
+    _statusTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      try {
+        final status = await ApiClient.instance.fetchQuestGenerateStatus(
+          requestId: requestId,
+        );
+        final message = status['message']?.toString() ?? '';
+        if (!mounted) {
+          return;
+        }
+        if (message.isNotEmpty && message != _statusMessage) {
+          setState(() => _statusMessage = message);
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _stopStatusPolling() {
+    _statusTimer?.cancel();
+    _statusTimer = null;
   }
 
   void _applyTierParams(int tier) {
@@ -90,9 +127,12 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     }
     setState(() {
       _loading = true;
-      _error = null;
       _quest = null;
+      _error = null;
     });
+    final requestId = _buildRequestId();
+    _requestId = requestId;
+    _startStatusPolling(requestId);
     try {
       final quest = await ApiClient.instance.generateQuest(
         hashTags: tags,
@@ -101,6 +141,7 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
         branchConditions: _branchConditions,
         referenceQuestId: _referenceController.text.trim(),
         strictTags: _strictTags,
+        requestId: requestId,
       );
       if (!mounted) {
         return;
@@ -114,9 +155,13 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
         return;
       }
       setState(() {
-        _error = '문제 생성 실패';
         _loading = false;
+        _error = '문제 생성 실패: ${error.toString()}';
       });
+    } finally {
+      if (mounted) {
+        _stopStatusPolling();
+      }
     }
   }
 
@@ -150,9 +195,9 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -163,9 +208,7 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     final questTitleBlocks = _extractQuestTitleBlocks(_quest);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('빠른 생성 (1문제 디버깅)'),
-      ),
+      appBar: AppBar(title: const Text('빠른 생성 (1문제 디버깅)')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -399,6 +442,13 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
                 ),
               ],
             ),
+            if (_loading) ...[
+              const SizedBox(height: 12),
+              Text(
+                _statusMessage,
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+            ],
           ],
         ),
       ),
@@ -478,10 +528,7 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label),
-            Text(value.toString()),
-          ],
+          children: [Text(label), Text(value.toString())],
         ),
         Slider(
           value: value.toDouble(),
@@ -503,9 +550,7 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     return header['quest_id']?.toString().trim() ?? '';
   }
 
-  List<ContentBlock> _extractQuestTitleBlocks(
-    Map<String, dynamic>? quest,
-  ) {
+  List<ContentBlock> _extractQuestTitleBlocks(Map<String, dynamic>? quest) {
     if (quest == null) {
       return [];
     }

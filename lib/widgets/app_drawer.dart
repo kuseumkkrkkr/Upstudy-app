@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../landing/landing_page.dart';
+import '../services/api_client.dart';
+
 const _drawerGreen = Color(0xFF1B402B);
 
 class AppDrawer extends StatelessWidget {
@@ -34,6 +37,19 @@ class AppDrawer extends StatelessWidget {
               leading: const Icon(Icons.settings_outlined, color: _drawerGreen),
               title: const Text('설정'),
               onTap: () => Navigator.of(context).pop(),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: _drawerGreen),
+              title: const Text('로그아웃'),
+              onTap: () async {
+                Navigator.of(context).pop();
+                final navigator = Navigator.of(context, rootNavigator: true);
+                await ApiClient.instance.clearToken();
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LandingPage()),
+                  (route) => false,
+                );
+              },
             ),
           ],
         ),

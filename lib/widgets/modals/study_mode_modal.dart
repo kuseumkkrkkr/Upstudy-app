@@ -10,6 +10,13 @@ import 'package:s11/widgets/modals/study_modes/problem_solve_mode.dart';
 import 'package:s11/widgets/modals/study_modes/resume_mode.dart';
 import 'package:s11/widgets/modals/study_modes/weakness_review_mode.dart';
 
+const _green = Color(0xFF1B402B);
+const _shadow = BoxShadow(
+  blurRadius: 4,
+  color: Color(0x33000000),
+  offset: Offset(0, 2),
+);
+
 Future<T?> showStudyModeModal<T>({required BuildContext context}) {
   return showDialog<T>(
     context: context,
@@ -222,31 +229,27 @@ class _ModeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16 * scale),
+      borderRadius: BorderRadius.circular(20 * scale),
       child: Container(
         width: 180 * scale,
         height: 260 * scale,
         decoration: BoxDecoration(
-          color: const Color(0xFFEBEBEB),
-          borderRadius: BorderRadius.circular(16 * scale),
-          boxShadow: const [
-            BoxShadow(
-              blurRadius: 4,
-              color: Color(0x33000000),
-              offset: Offset(0, 2),
-            ),
-          ],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20 * scale),
+          border: Border.all(color: _green, width: 2),
+          boxShadow: const [_shadow],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 90 * scale),
+            Icon(icon, size: 90 * scale, color: _green),
             SizedBox(height: 8 * scale),
             Text(
               label,
               style: GoogleFonts.inter(
                 fontSize: 24 * scale,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w800,
+                color: _green,
               ),
             ),
           ],

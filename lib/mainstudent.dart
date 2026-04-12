@@ -15,7 +15,7 @@ import 'widgets/modals/today_tasks_modal.dart';
 import 'pages/learning_tools/notepad_page.dart';
 import 'pages/learning_tools/timer_page.dart';
 import 'pages/learning_tools/focus_mode_page.dart';
-import 'pages/learning_tools/chat_placeholder_page.dart';
+import 'pages/learning_tools/server_chat_page.dart';
 import 'widgets/learning_tools/learning_tools_strip.dart';
 import 'services/activity_store.dart';
 import 'services/attendance_store.dart';
@@ -38,11 +38,29 @@ const List<Color> _activityTileColors = [
   Color(0xFF1C6D3B),
 ];
 const int _problemSolveTarget = 50;
-const _shadow = BoxShadow(
-  blurRadius: 4,
-  color: Color(0x33000000),
-  offset: Offset(0, 2),
-);
+const _shadow = BoxShadow(
+  blurRadius: 4,
+  color: Color(0x33000000),
+  offset: Offset(0, 2),
+);
+
+const double _ratingFloor = 1200;
+const double _ratingDisplayMax = 32767;
+const double _ratingOvrDivider = 128;
+
+double _ratingDisplay(double rating) {
+  return (math.max(rating, _ratingFloor) - _ratingFloor)
+      .clamp(0, _ratingDisplayMax)
+      .toDouble();
+}
+
+double _ratingOvr(double rating) {
+  return _ratingDisplay(rating) / _ratingOvrDivider;
+}
+
+String _formatRatingOvr(double rating) {
+  return _ratingOvr(rating).toStringAsFixed(1);
+}
 
 TextStyle _ts({
   double size = 16,
@@ -79,21 +97,11 @@ String _formatTasksSummary(List<String> tasks) {
   return '${tasks[0]}\n${tasks[1]} 외 ${tasks.length - 2}개';
 }
 
-String _formatSocialNotice(SocialNotificationSnapshot snapshot) {
-  final messages = snapshot.unreadMessages;
-  final requests = snapshot.friendRequests;
-  if (messages <= 0 && requests <= 0) {
-    return '';
-  }
-  final parts = <String>[];
-  if (messages > 0) {
-    parts.add('쪽지 ${messages}건');
-  }
-  if (requests > 0) {
-    parts.add('친구추가 요청 ${requests}건');
-  }
-  return parts.join(' · ');
-}
+String _formatSocialNotice(SocialNotificationSnapshot snapshot) {
+  final total = snapshot.unreadMessages + snapshot.friendRequests + snapshot.friendRemovals;
+  if (total <= 0) return '알림 없음';
+  return '놓친 알림 ${total}개';
+}
 
 String _formatDateLabel(String dateKey) {
   final parts = dateKey.split('-');
@@ -869,7 +877,7 @@ class _LearningSection extends StatelessWidget {
                               onChat: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => const ChatPlaceholderPage(),
+                                    builder: (_) => const ServerChatPage(),
                                   ),
                                 );
                               },
@@ -929,29 +937,30 @@ class _LearnBanner extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 56 * scale,
-        margin: EdgeInsets.symmetric(horizontal: 14 * scale),
-        decoration: BoxDecoration(
-          color: _green,
-          borderRadius: BorderRadius.circular(20 * scale),
-          boxShadow: const [_shadow],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.play_arrow, color: Colors.white, size: 32 * scale),
-            Text(
-              '학습하기',
-              style: _ts(
-                size: 28 * scale,
-                weight: FontWeight.w900,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
+      child: Container(
+        width: double.infinity,
+        height: 56 * scale,
+        margin: EdgeInsets.symmetric(horizontal: 14 * scale),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20 * scale),
+          boxShadow: const [_shadow],
+          border: Border.all(color: _green, width: 2),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.play_arrow, color: _green, size: 32 * scale),
+            Text(
+              '학습하기',
+              style: _ts(
+                size: 28 * scale,
+                weight: FontWeight.w900,
+                color: _green,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1090,17 +1099,17 @@ class _BottomSection extends StatelessWidget {
                         ),
                       ),
                       ValueListenableBuilder<RatingSnapshot>(
-                        valueListenable: RatingStore.notifier,
-                        builder: (context, snapshot, _) {
-                          final ovrText = snapshot.isLoaded
-                              ? snapshot.ovr.toStringAsFixed(1)
-                              : '--';
-                          final deltaValue = snapshot.delta;
-                          final deltaColor = deltaValue > 0
-                              ? Colors.red
-                              : deltaValue < 0
-                              ? Colors.blue
-                              : Colors.black54;
+                        valueListenable: RatingStore.notifier,
+                        builder: (context, snapshot, _) {
+                          final ovrText = snapshot.isLoaded
+                              ? _formatRatingOvr(snapshot.ovr)
+                              : '--';
+                          final deltaValue = snapshot.delta / _ratingOvrDivider;
+                          final deltaColor = deltaValue > 0
+                              ? Colors.red
+                              : deltaValue < 0
+                              ? Colors.blue
+                              : Colors.black54;
                           final deltaText = snapshot.isLoaded
                               ? (deltaValue >= 0
                                     ? '+ ${deltaValue.toStringAsFixed(1)}'

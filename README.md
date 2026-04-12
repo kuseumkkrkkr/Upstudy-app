@@ -25,3 +25,11 @@ Flutter í´ë¼ì´ì–¸íŠ¸ì™€ ë¡œì»¬ Python(FastAPI) ë°±ì—”ë“œê°€ ì—°ë™ë˜ëŠ” í”„ë
 ## ê°œë°œ ë…¸íŠ¸
 - `lib/services/auth_service.dart`ì—ì„œ ë¡œê·¸ì¸/íšŒì›ê°€ì… ìš”ì²­ì„ ë‹´ë‹¹í•˜ë©°, ìœ„ì˜ dart-define ê°’ìœ¼ë¡œ ê²½ë¡œë¥¼ ì£¼ì…í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
 - ê¸°ë³¸ ê²½ë¡œë¡œ 404ê°€ ë‚œë‹¤ë©´ ì„œë²„ ìŠ¤í™ì— ë§ì¶° `API_LOGIN_PATH`, `API_REGISTER_PATH`ë¥¼ ì§€ì •í•´ ì£¼ì„¸ìš”.
+## µ¥ÀÌÅÍ ÀúÀå À§Ä¡
+- ¼­¹ö(FastAPI, omj): `omj/quests.db` (SQLite). Äù½ºÆ® º»¹®/ÇØ¼³ `quest_header/info/data/solve_step`, ¸ğÀÇ°í»ç `exam/exam_item`, »ç¿ëÀÚ/·Î±×ÀÎ `users`, ³­ÀÌµµ/Á¤´ä·ü `rating_*`, Ä£±¸/DM `friend_requests`, `friends`, `messages`, »ç¿ëÀÚº° Å°°ª `user_kv`, Ãë¾à ÅÂ±× `weakness_tags` µîÀ» º¸°ü.
+- ±³Àç Àü¿ë DB: `omj/textbook.db` (SQLite). »ç¿ëÀÚ Ä¿½ºÅÒ/°ø¿ë ±³ÀçÀÇ ¸ŞÅ¸, Ã©ÅÍ, ¼½¼Ç, ÀÌ¹ÌÁö °æ·Î¸¦ JSONÀ¸·Î ÀúÀå.
+- ÄÚµåº£ÀÌ½º/½Ãµå Ä³½Ã: `omj/codebases.db` (`generater/codebase_store.py`), È¯°æ º¯¼ö `CODEBASE_DB_PATH`·Î °æ·Î ÀçÁöÁ¤ °¡´É.
+- ¾÷·Îµå ÀÌ¹ÌÁö: `/analysis/ocr`¡¤`/analysis/solve` ¿äÃ»¿¡ Æ÷ÇÔµÈ ÇĞ»ı Ç®ÀÌ/È÷Æ®¸Ê ÀÌ¹ÌÁö´Â `omj/assets/solve_images/*.png`¿¡ ÆÄÀÏ·Î ³²À½.
+- ·ÎÄÃ ¾Û(¸ğ¹ÙÀÏ/µ¥½ºÅ©Åé): `s11_local.db`(sqflite, Å×ÀÌºí `kv_store`)¿¡ JSON ¹®ÀÚ¿­À» key-value·Î ÀúÀå. `activity_store`, `attendance_store`, `bookmark_store`, `exam_paper_store`, `book_page`, `notepad_page` µîÀÌ »ç¿ëÀÚº° ½ºÄÚÇÁ Å°(`*_v1` È¤Àº `*_v1::<username>`)·Î ÀĞ°í ¾¸.
+- À¥ ºôµå: `local_db_web.dart`°¡ API `/user/storage`¸¦ ÅëÇØ ¼­¹öÀÇ `user_kv` Å×ÀÌºíÀ» ¿ø°İ key-value ÀúÀå¼Ò·Î »ç¿ë.
+Release build: run flutter build <target> --dart-define=API_BASE_URL=https://<prod-host> (required to avoid localhost).

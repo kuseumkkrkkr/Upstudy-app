@@ -240,7 +240,7 @@ List<List<ContentBlock>> _flattenFlows(List<dynamic> solves, {int depth = 0}) {
   for (final entry in solves) {
     final map = entry as Map<String, dynamic>? ?? {};
     final prefix = '  ' * depth;
-    final flowBlocks = parseContentBlocks(map['flow']);
+    final flowBlocks = normalizeFlowBlocks(parseContentBlocks(map['flow']));
     results.add(prependTextBlock(flowBlocks, '$prefix- '));
     final branches = map['branches'] as List<dynamic>? ?? [];
     if (branches.isNotEmpty) {

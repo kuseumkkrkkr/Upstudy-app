@@ -39,6 +39,7 @@ class ExamPaperEntry {
 
 class ExamPaperStore {
   static const _key = 'exam_papers_v1';
+  static const int maxItems = 30;
   static final ValueNotifier<List<ExamPaperEntry>> notifier =
       ValueNotifier<List<ExamPaperEntry>>(<ExamPaperEntry>[]);
   static bool _loaded = false;
@@ -74,7 +75,7 @@ class ExamPaperStore {
       entry,
       for (final item in items)
         if (item.examId != entry.examId) item,
-    ];
+    ].take(maxItems).toList(growable: false);
     await _persist(updated);
     return updated;
   }

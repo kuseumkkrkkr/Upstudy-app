@@ -1,20 +1,34 @@
 from __future__ import annotations
 
+import json
 import os
 import random
 import textwrap
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 from google import genai
 
 from env_loader import load_env
-from generater.codebase_runner import compile_code, validate_result
+from generater.codebase_repair import repair_codebase
+from generater.codebase_runner import run_codebase, validate_result
+
+
+def _log_done(label: str) -> None:
+    print(f"[{label}] 실행완료")
+
+
+def _print_progress(current: int, total: int, status: str) -> None:
+    bar_len = 30
+    filled = int(bar_len * current / total)
+    bar = "█" * filled + "-" * (bar_len - filled)
+    print(f"[진행률] |{bar}| {current}/{total} ({status})")
 
 
 load_env()
 
 COMETAPI_KEY = os.environ.get("COMETAPI_KEY")
 BASE_URL = "https://api.cometapi.com"
+DEFAULT_MODEL = "gemini-3-flash"
 
 _client = genai.Client(
     http_options={"api_version": "v1beta", "base_url": BASE_URL},
@@ -22,116 +36,205 @@ _client = genai.Client(
 )
 
 
-def build_prompt(
-    tags: List[str],
-    difficulty: int,
-    solves_count: int,
-    strategy_level: int,
-    branch_conditions: int,
-) -> str:
-    tags_json = ", ".join(tags)
-
-    base_meta = textwrap.dedent(
-        f"""
-        - meta에는 반드시 다음을 포함해야 합니다:
-            {{
-              "difficulty": {difficulty},
-              "concept": "...",
-              "params": {{...}},
-              "hash_tags": {tags}
-            }}
-        """
-    ).strip()
-
-    body = textwrap.dedent(
-        f"""
-        수능 스타일의 수학 문제를 생성하는 Python 모듈을 작성하여야 한다
-        다음 해시태그를 주제로 반드시 포함하여야 함: {tags_json}
-
-        서비스 난이도 설정:
-        - solves_count = {solves_count}
-        - strategy_level = {strategy_level}
-        - branch_conditions = {branch_conditions}
-        - 계산된 난이도 점수 = {difficulty}
-
-        필수 인터페이스:
-        - generate_problem(seed=None) 함수를 구현해야 합니다.
-        - 반환 형식:
-            {{
-                "problem": str,
-                "answer": int,
-                "solution": str,
-                "meta": dict
-            }}
-        {base_meta}
-
-        필수 제약 조건:
-        - 정답은 정수이며 0이 아니어야 하고, 절댓값은 100 이하
-        - 파라미터는 작은 정수 사용 (가능하면 [-5, 5] 범위)
-        - seed가 주어지면 반드시 결정론적으로 동일한 결과 생성
-        - 최대 100번 재시도 후 실패 시 Exception 발생
-        - sympy를 사용하여 최종 정답 검증
-        - 함수는 모듈화하고 print 사용 금지
-
-        단순 문제 방지 조건:
-        - 너무 쉬운 문제는 금지 (예: abs(answer) <= 5)
-        - 최소 2개의 구조 기반 안티-쇼트컷 검증 로직 구현 (브루트포스 방지)
-        - 문제 및 해설에서 부호 표현을 깔끔하게 유지 ("x - -2", "+ -", "- +" 금지)
-
-        주제 가이드:
-        - 해시태그와 일관된 문제 유형 선택
-        - 작은 정수 파라미터로도 풀이 가능한 구조 유지
-
-        출력은 반드시 전체 Python 코드만 반환하세요. 설명은 포함하지 마세요.
-        """
-    ).strip()
-
-    return body
+class CodebaseGenerationError(RuntimeError):
+    """Raised when the unified generation pipeline gives up."""
 
 
 def _extract_code_text(text: str) -> str:
-    raw = text.strip()
+    print(f"[입력] raw_text_length={len(text or '')}")
+    raw = (text or "").strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[-1]
     if raw.endswith("```"):
         raw = raw.rsplit("\n", 1)[0]
-    return raw.strip()
+    value = raw.strip()
+    _log_done("코드 텍스트 추출")
+    return value
 
 
-def _build_repair_prompt(base_prompt: str, code_text: str, error_message: str) -> str:
-    snippet = code_text.strip()
-    if len(snippet) > 4000:
-        snippet = snippet[-4000:]
+def _build_generation_prompt(
+    *,
+    hash_tags: List[str],
+    solves_count: int,
+    branch_conditions: int,
+    main_huddle: int,
+) -> str:
+    print(
+        f"[입력] build_generation_prompt hash_tags={hash_tags}, "
+        f"solves_count={solves_count}, branch_conditions={branch_conditions}, main_huddle={main_huddle}"
+    )
+    tags_json = json.dumps(hash_tags, ensure_ascii=False)
+    branch_note = (
+        "- branch_conditions 만큼 분기 레인을 만든다. branches 배열에 조건별 레인을 추가한다."
+        if branch_conditions > 0
+        else "- 분기가 필요 없으면 branches 는 빈 리스트로 둔다."
+    )
+    prompt = f"""
+    수학/과학 문제를 무한히 생성하는 단일 Python 스크립트를 작성하라.
+    - 입력 hash_tags: {tags_json}
+    - root_flows(solves 길이): {solves_count}
+    - branch_conditions: {branch_conditions}
+    - 답 변수는 정수 k ( -20 ~ 20, 0 제외 ) 한 개만 사용한다.
+    - random.Random(seed) 로 모든 난수를 생성해 동일 seed 시 동일 문제를 재현한다.
+    - k 를 기준으로 역방향으로 공식을 설계하여 quest_answer 가 항상 k 가 되도록 한다.
+    - 외부 라이브러리, 파일/네트워크 접근 금지. 표준 라이브러리만 사용.
+    - generate_problem(seed=None) 하나만 공개하고, 호출 시 아래 JSON 스키마를 그대로 반환한다.
+    - 모든 수식 문자열은 $...$ 로 감싼다.
+    - main_huddle 은 {main_huddle} 으로 설정한다.
+    - primary_hash_tag 는 hash_tags 중 대표 1개를 선택한다.
+    {branch_note}
 
-    return textwrap.dedent(
-        f"""
-        이전에 생성된 코드가 실행 또는 컴파일에 실패했습니다.
+    반환 스키마(키/구조를 변경하지 말 것):
+    {{
+      "quest_title": "문제 본문 수식 $...$안에 ",
+      "quest_answer": "정답값 $...$",
+      "main_huddle": {main_huddle},
+      "primary_hash_tag": "hash_tags 중 가장 대표적인 태그 1개",
+      "quest_image": null,
+      "solves": [
+        {{
+          "flow": "요약 텍스트와 수식 $...$",
+          "hash_tag": ["hash_tags 중 현재 solves에 가장 부합하는 1개 선택"],
+          "hint_riddle": "힌트 텍스트와 수식 $...$",
+          "answer_riddle": "상세 풀이 설명 텍스트와 수식 $...$",
+          "enter_huddle": 0,
+          "branches": [
+            {{
+              "flow": "...",
+              "hash_tag": ["hash_tags 중 선택"],
+              "hint_riddle": "...",
+              "answer_riddle": "...",
+              "enter_huddle": 0,
+              "branches": []
+            }}
+          ]
+        }}
+      ]
+    }}
 
-        오류:
-        {error_message}
-
-        이전 코드 (불완전할 수 있음):
-        {snippet}
-
-        원래 프롬프트:
-        {base_prompt}
-
-        전체 수정된 Python 코드를 다시 작성하세요.
-        출력이 잘린 경우 누락된 부분을 포함하세요.
-        그렇지 않다면 요구사항을 만족하도록 전체를 재작성하세요.
-        """
-    ).strip()
+    오직 순수 Python 코드만 반환하고 마크다운 코드펜스는 넣지 말라.
+    """
+    result = textwrap.dedent(prompt).strip()
+    _log_done("프롬프트 생성")
+    return result
 
 
-def _request_code(prompt: str) -> str:
+def _request_code(prompt: str, *, model: str = DEFAULT_MODEL) -> str:
+    print(f"[입력] LLM model={model}, prompt_len={len(prompt)}")
     if not COMETAPI_KEY:
         raise RuntimeError("COMETAPI_KEY is not set")
-
     response = _client.models.generate_content(
-        model="gemini-3.1-flash-lite",
+        model=model,
         contents=prompt,
     )
+    _log_done("LLM 호출")
     return response.text or ""
+
+
+def _review_codebase(
+    *,
+    prompt: str,
+    code_text: str,
+    hash_tags: List[str],
+    solves_count: int,
+    branch_conditions: int,
+    main_huddle: int,
+) -> Tuple[str, str]:
+    print(
+        "[입력] review_codebase "
+        f"solves_count={solves_count}, branch_conditions={branch_conditions}, main_huddle={main_huddle}"
+    )
+    try:
+        _ = validate_result(
+            run_codebase({"code": code_text}, seed=123456),
+            fallback_hash_tags=hash_tags,
+            expected_solves=solves_count,
+            expected_branches=branch_conditions,
+            main_huddle=main_huddle,
+        )
+        _log_done("1차 리뷰")
+        return code_text, "0"
+    except Exception as exc:
+        repaired = repair_codebase(
+            prompt=prompt,
+            code_text=code_text,
+            error_message=f"[review] {exc}",
+        )
+        _log_done("diff 수정")
+        return repaired["code"], "patched"
+
+
+def _execute_once(
+    code_text: str,
+    *,
+    seed: int,
+    hash_tags: List[str],
+    solves_count: int,
+    branch_conditions: int,
+    main_huddle: int,
+) -> Dict[str, Any]:
+    print(
+        f"[입력] execute_once seed={seed}, solves_count={solves_count}, "
+        f"branch_conditions={branch_conditions}, main_huddle={main_huddle}"
+    )
+    raw = run_codebase({"code": code_text}, seed=seed)
+    result = validate_result(
+        raw,
+        fallback_hash_tags=hash_tags,
+        expected_solves=solves_count,
+        expected_branches=branch_conditions,
+        main_huddle=main_huddle,
+    )
+    _log_done("단일 실행 검증")
+    return result
+
+
+def _attempt_repair(
+    *,
+    prompt: str,
+    code_text: str,
+    error_message: str,
+) -> str:
+    print(f"[입력] attempt_repair error_message={error_message[:200]}")
+    repaired = repair_codebase(
+        prompt=prompt,
+        code_text=code_text,
+        error_message=error_message,
+    )
+    _log_done("실패 후 diff 수정")
+    return repaired["code"]
+
+
+def _collect_seed_bank(
+    code_text: str,
+    *,
+    attempts: int,
+    hash_tags: List[str],
+    solves_count: int,
+    branch_conditions: int,
+    main_huddle: int,
+) -> List[int]:
+    rng = random.Random(2026)
+    seeds: List[int] = []
+    for idx in range(1, attempts + 1):
+        seed = rng.randint(1, 1_000_000_000)
+        try:
+            _execute_once(
+                code_text,
+                seed=seed,
+                hash_tags=hash_tags,
+                solves_count=solves_count,
+                branch_conditions=branch_conditions,
+                main_huddle=main_huddle,
+            )
+            seeds.append(seed)
+            print(f"[코드베이스실행] {idx}/{attempts} 시도 ... 성공")
+        except Exception:
+            print(f"[코드베이스실행] {idx}/{attempts} 시도 ... 실패")
+            continue
+        _print_progress(idx, attempts, "seed 검증 중")
+    _log_done("seed 수집")
+    return seeds
 
 
 def generate_codebase(
@@ -143,44 +246,95 @@ def generate_codebase(
     branch_conditions: int,
     max_attempts: int = 3,
 ) -> Dict[str, Any]:
+    """
+    Unified pipeline:
+    1) LLM으로 코드 생성
+    2) 1회 리뷰(실패 시 diff 수정 1회)
+    3) 실행 실패 시 diff 기반 수정 최대 3회, 그래도 실패면 새 코드 재생성
+    4) 최초 성공 후 100회 추가 실행, 성공 seed 수집
+    """
     if not tags:
         raise ValueError("tags must not be empty")
-
-    base_prompt = build_prompt(
-        tags,
-        difficulty,
-        solves_count,
-        strategy_level,
-        branch_conditions,
+    prompt = _build_generation_prompt(
+        hash_tags=tags,
+        solves_count=solves_count,
+        branch_conditions=branch_conditions,
+        main_huddle=strategy_level,
     )
+    print(
+        f"[입력] generate_codebase tags={tags}, difficulty={difficulty}, "
+        f"solves_count={solves_count}, strategy_level={strategy_level}, branch_conditions={branch_conditions}, "
+        f"max_attempts={max_attempts}"
+    )
+    regen_attempts = 0
+    last_error: Optional[Exception] = None
+    total_steps = 5  # prompt/llm, review, seed-collect, finish, regen loops
 
-    prompt = base_prompt
-    last_error: Exception | None = None
-
-    for _ in range(max_attempts):
+    while regen_attempts < max_attempts:
         code_text = _extract_code_text(_request_code(prompt))
+        _print_progress(1, total_steps, "프롬프트/LLM 완료")
+        code_text, review_status = _review_codebase(
+            prompt=prompt,
+            code_text=code_text,
+            hash_tags=tags,
+            solves_count=solves_count,
+            branch_conditions=branch_conditions,
+            main_huddle=strategy_level,
+        )
+        _print_progress(2, total_steps, "리뷰 완료")
 
-        try:
-            module = compile_code(code_text)
+        repaired_runs = 0
+        while repaired_runs < 3:
             seed = random.randint(1, 1_000_000_000)
-            result = module.generate_problem(seed=seed)
+            try:
+                validated = _execute_once(
+                    code_text,
+                    seed=seed,
+                    hash_tags=tags,
+                    solves_count=solves_count,
+                    branch_conditions=branch_conditions,
+                    main_huddle=strategy_level,
+                )
+                seed_bank = _collect_seed_bank(
+                    code_text,
+                    attempts=6,
+                    hash_tags=tags,
+                    solves_count=solves_count,
+                    branch_conditions=branch_conditions,
+                    main_huddle=strategy_level,
+                )
+                validated["review_status"] = review_status
+                _log_done("generate_codebase 완료")
+                _print_progress(5, total_steps, "최종 완료")
+                return {
+                    "prompt": prompt,
+                    "code": code_text,
+                    "mode": "unified",
+                    "tags": tags,
+                    "difficulty": difficulty,
+                    "tier": None,
+                    "solves_count": solves_count,
+                    "strategy_level": strategy_level,
+                    "branch_conditions": branch_conditions,
+                    "seed_cache": seed_bank,
+                    "validated_sample": {
+                        "seed": seed,
+                        "ai_result": validated.get("ai_result"),
+                    },
+                }
+            except Exception as exc:
+                last_error = exc
+                repaired_runs += 1
+                print(f"[diff 수정] {repaired_runs}/3 회차 ... 실패: {exc}")
+                if repaired_runs >= 3:
+                    break
+                code_text = _attempt_repair(
+                    prompt=prompt,
+                    code_text=code_text,
+                    error_message=str(exc),
+                )
 
-            validate_result(result)
+        regen_attempts += 1
+        _print_progress(regen_attempts, max_attempts, "재생성 시도")
 
-            return {
-                "prompt": base_prompt,
-                "code": code_text,
-                "mode": "tag_driven",
-                "tags": tags,
-                "difficulty": difficulty,
-                "tier": None,
-                "solves_count": solves_count,
-                "strategy_level": strategy_level,
-                "branch_conditions": branch_conditions,
-            }
-
-        except Exception as exc:
-            last_error = exc
-            prompt = _build_repair_prompt(base_prompt, code_text, str(exc))
-
-    raise RuntimeError(f"codebase generation failed: {last_error}")
+    raise CodebaseGenerationError(f"codebase generation failed: {last_error}")

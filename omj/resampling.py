@@ -3,14 +3,21 @@ import re
 from typing import Any, Dict, List
 
 # 기존 $...$ 인라인 LaTeX 패턴
-LATEX_PATTERN = re.compile(r"(?<!\\)\${1,2}(.*?)(?<!\\)\${1,2}", re.DOTALL)
+LATEX_PATTERN = re.compile(
+    r"(?<!\\)\${1,2}(.*?)(?<!\\)\${1,2}|\\\((.*?)\\\)|\\\[(.*?)\\\]",
+    re.DOTALL,
+)
 # $ 없이 LaTeX 명령어 패턴 (\frac, \sum 등)
 LATEX_CMD_PATTERN = re.compile(r"(\\[a-zA-Z]+(?:\{.*?\})*)")  
 
 _STEP_FIELDS = ("flow", "hint_riddle", "answer_riddle")
 
 
-def resample_storage_data(storage: Dict[str, Any]) -> Dict[str, Any]:
+def resample_storage_data(
+    storage: Dict[str, Any],
+    *,
+    coerce_text_only: bool = False,
+) -> Dict[str, Any]:
     """
     Split inline $...$ LaTeX inside text blocks into separate latex/text blocks.
     Applies to quest_title, quest_answer, and solve steps (excluding hash_tag and enter_huddle).
@@ -20,32 +27,49 @@ def resample_storage_data(storage: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(data, dict):
         for key in ("quest_title", "quest_answer"):
             if key in data:
-                data[key] = _resample_field(data[key])
+                data[key] = _resample_field(data[key], coerce_text_only=coerce_text_only)
         if "quest_options" in data and isinstance(data["quest_options"], list):
-            data["quest_options"] = [_resample_field(option) for option in data["quest_options"]]
+            data["quest_options"] = [
+                _resample_field(option, coerce_text_only=coerce_text_only)
+                for option in data["quest_options"]
+            ]
 
     solves = cloned.get("solves")
     if isinstance(solves, list):
-        cloned["solves"] = [_resample_solve_step(step) for step in solves]
+        cloned["solves"] = [
+            _resample_solve_step(step, coerce_text_only=coerce_text_only)
+            for step in solves
+        ]
 
     return cloned
 
 
-def _resample_solve_step(step: Dict[str, Any]) -> Dict[str, Any]:
+def _resample_solve_step(
+    step: Dict[str, Any],
+    *,
+    coerce_text_only: bool = False,
+) -> Dict[str, Any]:
     updated = copy.deepcopy(step)
     for field in _STEP_FIELDS:
         if field in updated:
-            updated[field] = _resample_field(updated[field])
+            updated[field] = _resample_field(updated[field], coerce_text_only=coerce_text_only)
     if isinstance(updated.get("branches"), list):
-        updated["branches"] = [_resample_solve_step(branch) for branch in updated["branches"]]
+        updated["branches"] = [
+            _resample_solve_step(branch, coerce_text_only=coerce_text_only)
+            for branch in updated["branches"]
+        ]
     return updated
 
 
-def _resample_field(value: Any) -> Dict[str, List[Dict[str, str]]]:
+def _resample_field(
+    value: Any,
+    *,
+    coerce_text_only: bool = False,
+) -> Dict[str, List[Dict[str, str]]]:
     blocks = _normalize_to_blocks(value)
     split_blocks: List[Dict[str, str]] = []
     for block in blocks:
-        split_blocks.extend(_split_block(block))
+        split_blocks.extend(_split_block(block, coerce_text_only=coerce_text_only))
     merged = _merge_adjacent_blocks(split_blocks)
     return {"blocks": merged}
 
@@ -73,11 +97,19 @@ def _coerce_block(block: Any) -> Dict[str, str]:
     return {"type": "text", "content": str(block)}
 
 
-def _split_block(block: Dict[str, str]) -> List[Dict[str, str]]:
+def _split_block(
+    block: Dict[str, str],
+    *,
+    coerce_text_only: bool = False,
+) -> List[Dict[str, str]]:
     block_type = (block.get("type") or "text").lower()
     content = block.get("content") or ""
     if block_type != "text":
-        return [{"type": block_type, "content": content}]
+        if not coerce_text_only:
+            return [{"type": block_type, "content": content}]
+        if not content:
+            return []
+        return _split_text_content(f"${content}$")
     return _split_text_content(content)
 
 
@@ -94,7 +126,7 @@ def _split_text_content(text: str) -> List[Dict[str, str]]:
         if start > last_idx:
             prefix = text[last_idx:start]
             blocks.extend(_split_latex_commands(prefix))  # LaTeX 명령어 분화
-        latex_body = match.group(1)
+        latex_body = next((group for group in match.groups() if group is not None), "")
         if latex_body.strip():
             blocks.append({"type": "latex", "content": latex_body})
         else:

@@ -43,7 +43,10 @@ class _LoginPageState extends State<LoginPage> {
         username: _idController.text.trim(),
         password: _pwController.text,
       );
-      ApiClient.instance.setToken(token);
+      await ApiClient.instance.setToken(
+        token,
+        username: _idController.text.trim(),
+      );
       if (!mounted) return;
       final navigator = Navigator.of(context, rootNavigator: true);
       navigator.pushAndRemoveUntil(
@@ -73,7 +76,10 @@ class _LoginPageState extends State<LoginPage> {
     });
     try {
       final result = await _kakaoLoginService.signIn();
-      ApiClient.instance.setToken(result.token);
+      await ApiClient.instance.setToken(
+        result.token,
+        username: result.displayName,
+      );
       if (!mounted) return;
       final navigator = Navigator.of(context, rootNavigator: true);
       navigator.pushAndRemoveUntil(

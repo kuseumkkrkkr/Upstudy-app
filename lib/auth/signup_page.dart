@@ -58,7 +58,10 @@ class _SignupPageState extends State<SignupPage> {
             ? null
             : _emailController.text.trim(),
       );
-      ApiClient.instance.setToken(token);
+      await ApiClient.instance.setToken(
+        token,
+        username: _idController.text.trim(),
+      );
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(

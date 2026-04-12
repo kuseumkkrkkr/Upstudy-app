@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codebase Admin</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        color: #222;
+      }
+      h1 {
+        margin: 0 0 8px 0;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin: 8px 0 16px 0;
+      }
+      input[type="text"] {
+        width: min(560px, 90vw);
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      button {
+        padding: 8px 12px;
+        border: 1px solid #bbb;
+        border-radius: 6px;
+        background: #f6f6f6;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #efefef;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13px;
+      }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f3f3f3;
+      }
+      .ok { color: #0b7a2b; font-weight: 600; }
+      .warning { color: #b36b00; font-weight: 600; }
+      .disabled { color: #b00020; font-weight: 600; }
+      .meta {
+        color: #666;
+        font-size: 12px;
+      }
+      .error {
+        color: #b00020;
+        margin-top: 8px;
+      }
+      .success {
+        color: #0b7a2b;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Codebase Admin</h1>
+    <div class="row">
+      <button id="refreshStats">Refresh</button>
+      <button id="seedRun">Run Seed Validation</button>
+      <button id="seedEnable">Enable</button>
+      <button id="seedDisable">Disable</button>
+    </div>
+    <div class="meta" id="seedStatus">Seed status: -</div>
+    <div id="msg"></div>
+    <div style="margin-top: 16px;">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Attempts</th>
+            <th>Successes</th>
+            <th>Success %</th>
+            <th>Cached Seeds</th>
+            <th>Difficulty</th>
+            <th>Tags</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div style="margin-top: 20px;">
+      <h2>Recent Logs</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Codebase</th>
+            <th>Seed</th>
+            <th>Status</th>
+            <th>Stage</th>
+            <th>Error Type</th>
+            <th>Error Message</th>
+            <th>Elapsed (ms)</th>
+            <th>Source</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="logRows"></tbody>
+      </table>
+    </div>
+    <div style="margin-top: 20px;">
+      <h2>Agent Logs</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Codebase</th>
+            <th>Action</th>
+            <th>Status</th>
+            <th>Attempt</th>
+            <th>Error</th>
+            <th>Detail</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="agentRows"></tbody>
+      </table>
+    </div>
+    <script>
+      const msg = document.getElementById("msg");
+      const rows = document.getElementById("rows");
+      const logRows = document.getElementById("logRows");
+      const agentRows = document.getElementById("agentRows");
+      const seedStatus = document.getElementById("seedStatus");
+
+      function setMessage(text, type) {
+        msg.className = type || "";
+        msg.textContent = text || "";
+      }
+
+      async function fetchJson(path) {
+        const res = await fetch(path);
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || res.statusText);
+        }
+        return res.json();
+      }
+
+      async function refreshSeedStatus() {
+        try {
+          const data = await fetchJson("/admin/seed/status");
+          seedStatus.textContent =
+            `Seed status: enabled=${data.enabled} | interval=${data.interval_seconds}s | ` +
+            `batch=${data.batch_size} | attempts=${data.attempts_per_codebase} | max_successes=${data.max_successes_per_codebase}`;
+        } catch (err) {
+          seedStatus.textContent = "Seed status: -";
+        }
+      }
+
+      async function refreshLogs() {
+        try {
+          const data = await fetchJson("/admin/seed/logs?limit=200");
+          logRows.innerHTML = "";
+          for (const row of data.logs || []) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${row.id ?? ""}</td>
+              <td>${row.codebase_id ?? ""}</td>
+              <td>${row.seed ?? ""}</td>
+              <td>${row.status ?? ""}</td>
+              <td>${row.stage ?? ""}</td>
+              <td>${row.error_type ?? ""}</td>
+              <td>${row.error_message ?? ""}</td>
+              <td>${row.elapsed_ms ?? ""}</td>
+              <td>${row.source ?? ""}</td>
+              <td>${row.created_at ?? ""}</td>
+            `;
+            logRows.appendChild(tr);
+          }
+        } catch (err) {
+          setMessage(err.message || "Failed to load logs.", "error");
+        }
+      }
+
+      async function refreshAgentLogs() {
+        try {
+          const data = await fetchJson("/admin/agent/logs?limit=200");
+          agentRows.innerHTML = "";
+          for (const row of data.logs || []) {
+            const tr = document.createElement("tr");
+            const detail =
+              row.detail && typeof row.detail === "object"
+                ? JSON.stringify(row.detail)
+                : row.detail ?? "";
+            tr.innerHTML = `
+              <td>${row.id ?? ""}</td>
+              <td>${row.codebase_id ?? ""}</td>
+              <td>${row.action ?? ""}</td>
+              <td>${row.status ?? ""}</td>
+              <td>${row.attempt ?? ""}</td>
+              <td>${row.error_message ?? ""}</td>
+              <td>${detail}</td>
+              <td>${row.created_at ?? ""}</td>
+            `;
+            agentRows.appendChild(tr);
+          }
+        } catch (err) {
+          setMessage(err.message || "Failed to load agent logs.", "error");
+        }
+      }
+
+      async function refreshStats() {
+        setMessage("", "");
+        try {
+          const data = await fetchJson("/admin/codebases.json");
+          rows.innerHTML = "";
+          for (const row of data.codebases || []) {
+            const tr = document.createElement("tr");
+            const status = row.status || "";
+            const rate = typeof row.success_rate === "number" ? row.success_rate.toFixed(1) : "-";
+            tr.innerHTML = `
+              <td>${row.id ?? ""}</td>
+              <td>${row.name ?? ""}</td>
+              <td class="${status}">${status}</td>
+              <td>${row.attempts ?? 0}</td>
+              <td>${row.successes ?? 0}</td>
+              <td>${rate}</td>
+              <td>${row.cached_seeds ?? 0}</td>
+              <td>${row.difficulty ?? ""}</td>
+              <td>${(row.tags || []).join(", ")}</td>
+              <td>${row.created_at ?? ""}</td>
+            `;
+            rows.appendChild(tr);
+          }
+          await refreshSeedStatus();
+          await refreshLogs();
+          await refreshAgentLogs();
+          setMessage("Refreshed.", "success");
+        } catch (err) {
+          setMessage(err.message || "Failed to refresh.", "error");
+        }
+      }
+
+      document.getElementById("refreshStats").addEventListener("click", refreshStats);
+
+      document.getElementById("seedRun").addEventListener("click", async () => {
+        setMessage("", "");
+        try {
+          const data = await fetchJson("/admin/seed/run");
+          setMessage(`Seed run done: attempts=${data.attempts}, successes=${data.successes}.`, "success");
+          await refreshStats();
+        } catch (err) {
+          setMessage(err.message || "Seed run failed.", "error");
+        }
+      });
+
+      document.getElementById("seedEnable").addEventListener("click", async () => {
+        try {
+          await fetchJson("/admin/seed/toggle?enabled=1");
+          await refreshSeedStatus();
+        } catch (err) {
+          setMessage(err.message || "Enable failed.", "error");
+        }
+      });
+
+      document.getElementById("seedDisable").addEventListener("click", async () => {
+        try {
+          await fetchJson("/admin/seed/toggle?enabled=0");
+          await refreshSeedStatus();
+        } catch (err) {
+          setMessage(err.message || "Disable failed.", "error");
+        }
+      });
+
+      refreshStats();
+    </script>
+  </body>
+</html>

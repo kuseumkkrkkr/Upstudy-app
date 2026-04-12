@@ -13,20 +13,20 @@ String _sanitizeLatex(String value) {
       text.endsWith(r'\]') &&
       text.length > 4) {
     text = text.substring(2, text.length - 2).trim();
-  } else if (text.startsWith(r'$\$') &&
-      text.endsWith(r'$\$') &&
+  } else if (text.startsWith(r'$$') &&
+      text.endsWith(r'$$') &&
       text.length > 4) {
     text = text.substring(2, text.length - 2).trim();
-  } else if (text.startsWith(r'$') && text.endsWith(r'$') && text.length > 2) {
+  } else if (text.startsWith('\$') && text.endsWith('\$') && text.length > 2) {
     text = text.substring(1, text.length - 1).trim();
   }
-  if (!text.contains(r'$')) {
+  if (!text.contains('\$')) {
     return text;
   }
   final buffer = StringBuffer();
   for (var i = 0; i < text.length; i++) {
     final char = text[i];
-    if (char == r'$') {
+    if (char == '\$') {
       final isEscaped = i > 0 && text[i - 1] == '\\';
       if (isEscaped) {
         buffer.write(char);

@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional
 # =========================
 
 DB_PATH = "quests.db"
+# Keep the last store_data error so API handlers can return detail
+_LAST_STORE_ERROR: Optional[str] = None
 
 
 def _normalize_content(value: Any) -> dict | None:
@@ -177,6 +179,8 @@ def init_db():
     _ensure_column(cursor, "quest_data", "question_type", "TEXT")
     _ensure_column(cursor, "quest_data", "quest_options", "TEXT")
     _ensure_column(cursor, "quest_data", "codebase_id", "INTEGER")
+    _ensure_column(cursor, "quest_data", "seed", "INTEGER")
+    _ensure_column(cursor, "quest_data", "hash_tag", "TEXT")
 
     conn.commit()
     conn.close()
@@ -189,6 +193,8 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
     Args:
         storage_data: Data from fix_gen() with keys header/info/data/solves.
     """
+    global _LAST_STORE_ERROR
+    _LAST_STORE_ERROR = None
     try:
         init_db()
         conn = sqlite3.connect(DB_PATH)
@@ -244,9 +250,11 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
                 quest_answer,
                 question_type,
                 quest_options,
-                codebase_id
+                codebase_id,
+                seed,
+                hash_tag
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 quest_id,
@@ -256,6 +264,8 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
                 data.get("question_type"),
                 _serialize_options(data.get("quest_options")),
                 data.get("codebase_id"),
+                data.get("seed"),
+                json.dumps(info.get("hash_tag", []), ensure_ascii=False),
             ),
         )
 
@@ -285,14 +295,21 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
         return True
 
     except sqlite3.IntegrityError as e:
-        print(f"무결성 오류: {e}")
+        _LAST_STORE_ERROR = f"무결성 오류: {e}"
+        print(_LAST_STORE_ERROR)
         return False
     except Exception as e:
-        print(f"저장 오류: {e}")
+        _LAST_STORE_ERROR = f"저장 오류: {e}"
+        print(_LAST_STORE_ERROR)
         import traceback
 
         traceback.print_exc()
         return False
+
+
+def get_last_store_error() -> Optional[str]:
+    """Return the last error message set by store_data (if any)."""
+    return _LAST_STORE_ERROR
 
 
 def get_quest(quest_id: str) -> Dict[str, Any] | None:
@@ -315,7 +332,7 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
 
         cursor.execute(
             """
-            SELECT quest_id, quest_title, quest_image, quest_answer, question_type, quest_options, codebase_id
+            SELECT quest_id, quest_title, quest_image, quest_answer, question_type, quest_options, codebase_id, seed, hash_tag
             FROM quest_data
             WHERE quest_id = ?
             """,
@@ -350,6 +367,8 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
                 "question_type": data_row[4] if data_row else None,
                 "quest_options": _parse_options(data_row[5]) if data_row else None,
                 "codebase_id": data_row[6] if data_row and len(data_row) > 6 else None,
+                "seed": data_row[7] if data_row and len(data_row) > 7 else None,
+                "hash_tag": json.loads(data_row[8]) if data_row and len(data_row) > 8 and data_row[8] else [],
             },
             "solves": [
                 {

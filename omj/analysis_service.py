@@ -14,7 +14,7 @@ load_env()
 
 COMETAPI_KEY = os.environ.get("COMETAPI_KEY")
 BASE_URL = "https://api.cometapi.com"
-ANALYSIS_MODEL = os.environ.get("OMJ_ANALYSIS_MODEL", "gemini-3.1-flash-lite")
+ANALYSIS_MODEL = os.environ.get("OMJ_ANALYSIS_MODEL", "gemini-2.5-flash-lite")
 
 _client = genai.Client(
     http_options={"api_version": "v1beta", "base_url": BASE_URL},

@@ -30,8 +30,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
   @override
   void initState() {
     super.initState();
-    final solves = widget.quest['solves'] as List<dynamic>? ?? [];
-    _graph = _FlowGraphBuilder().build(solves);
+    _graph = _FlowGraphBuilder().build(widget.quest['solves']);
     _nodeStates = _buildNodeStates(widget.stepCorrectness);
   }
 
@@ -619,8 +618,8 @@ class _FlowGraphBuilder {
 
   int _counter = 0;
 
-  _FlowGraph build(List<dynamic> solves) {
-    final nodes = _buildNodes(solves, sequential: true);
+  _FlowGraph build(dynamic solves) {
+    final nodes = _buildNodes(_extractBranches(solves), sequential: true);
     if (nodes.isEmpty) {
       return _FlowGraph.empty();
     }
@@ -685,10 +684,22 @@ class _FlowGraphBuilder {
   }
 
   List<_FlowNode> _buildNodes(List<dynamic> rawList, {required bool sequential}) {
-    final nodes = rawList
-        .whereType<Map<String, dynamic>>()
-        .map(_buildNode)
-        .toList();
+    final nodes = <_FlowNode>[];
+    for (final entry in rawList) {
+      final decoded = _decodeValue(entry);
+      if (!sequential && decoded is List<dynamic>) {
+        final laneNodes = _buildNodes(decoded, sequential: true);
+        if (laneNodes.isNotEmpty) {
+          nodes.add(laneNodes.first);
+        }
+        continue;
+      }
+      final map = _coerceStepMap(decoded);
+      if (map == null) {
+        continue;
+      }
+      nodes.add(_buildNode(map));
+    }
     if (sequential && nodes.isNotEmpty) {
       for (var i = 0; i < nodes.length - 1; i++) {
         nodes[i].next = nodes[i + 1];
@@ -702,7 +713,7 @@ class _FlowGraphBuilder {
 
   _FlowNode _buildNode(Map<String, dynamic> raw) {
     final branches = _extractBranches(raw['branches']);
-    final flowBlocks = parseContentBlocks(raw['flow']);
+    final flowBlocks = normalizeFlowBlocks(parseContentBlocks(raw['flow']));
     final nodeSize = _measureNodeSize(flowBlocks);
     final hashTags = (raw['hash_tag'] as List<dynamic>? ?? [])
         .map((tag) => tag.toString())
@@ -712,8 +723,8 @@ class _FlowGraphBuilder {
       flow: flowBlocks,
       size: nodeSize,
       hashTags: hashTags,
-      hintRiddle: parseContentBlocks(raw['hint_riddle']),
-      answerRiddle: parseContentBlocks(raw['answer_riddle']),
+      hintRiddle: normalizeFlowBlocks(parseContentBlocks(raw['hint_riddle'])),
+      answerRiddle: normalizeFlowBlocks(parseContentBlocks(raw['answer_riddle'])),
       rawBranches: _buildNodes(branches, sequential: false),
     );
   }
@@ -758,27 +769,64 @@ class _FlowGraphBuilder {
   }
 
   List<dynamic> _extractBranches(dynamic value) {
-    if (value is List<dynamic>) {
-      return value;
+    final decoded = _decodeValue(value);
+    if (decoded is List<dynamic>) {
+      return decoded.map(_decodeValue).toList();
     }
-    if (value is String) {
-      try {
-        final decoded = jsonDecode(value);
-        if (decoded is List<dynamic>) {
-          return decoded;
-        }
-      } catch (_) {}
+    if (decoded is Map<String, dynamic>) {
+      final inner = decoded['branches'] ?? decoded['solves'] ?? decoded['steps'];
+      if (inner is List<dynamic>) {
+        return inner.map(_decodeValue).toList();
+      }
     }
     return const [];
+  }
+
+  dynamic _decodeValue(dynamic value) {
+    if (value is! String) {
+      return value;
+    }
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(value);
+    } catch (_) {
+      return value;
+    }
+    if (decoded is String) {
+      try {
+        final second = jsonDecode(decoded);
+        return second;
+      } catch (_) {
+        return decoded;
+      }
+    }
+    return decoded;
+  }
+
+  Map<String, dynamic>? _coerceStepMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, entry) => MapEntry(key.toString(), entry));
+    }
+    if (value is String) {
+      final decoded = _decodeValue(value);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      if (decoded is Map) {
+        return decoded.map((key, entry) => MapEntry(key.toString(), entry));
+      }
+    }
+    return null;
   }
 
   void _normalizeBranches(_FlowNode node) {
     for (final child in node.rawBranches) {
       _normalizeBranches(child);
     }
-    if (node.rawBranches.length == 1) {
-      node.inline = node.rawBranches.first;
-    } else {
+    if (node.rawBranches.isNotEmpty) {
       node.branchLanes = node.rawBranches;
     }
   }

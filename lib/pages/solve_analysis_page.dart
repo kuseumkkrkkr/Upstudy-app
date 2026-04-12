@@ -31,7 +31,9 @@ class SolveAnalysisPage extends StatelessWidget {
     if (solves is! List) return steps;
 
     void visit(Map<String, dynamic> step) {
-      steps.add(parseContentBlocks(step['answer_riddle']));
+      steps.add(
+        normalizeFlowBlocks(parseContentBlocks(step['answer_riddle'])),
+      );
       final branches = step['branches'];
       if (branches is List) {
         for (final branch in branches) {

@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
+import 'auth_storage.dart';
 
 class ExamRangeRequest {
   final String key;
@@ -26,6 +29,8 @@ class ExamItem {
   final String? questionType;
   final String? questId;
   final int? flowCount;
+  final int? codebaseId;
+  final int? seed;
   final dynamic questTitle;
   final List<dynamic>? questOptions;
   final String? error;
@@ -42,6 +47,8 @@ class ExamItem {
     this.questionType,
     this.questId,
     this.flowCount,
+    this.codebaseId,
+    this.seed,
     this.questTitle,
     this.questOptions,
     this.error,
@@ -60,6 +67,8 @@ class ExamItem {
       questionType: json['question_type'] as String?,
       questId: json['quest_id'] as String?,
       flowCount: json['flow_count'] as int?,
+      codebaseId: json['codebase_id'] as int?,
+      seed: json['seed'] as int?,
       questTitle: json['quest_title'],
       questOptions: json['quest_options'] as List<dynamic>?,
       error: json['error'] as String?,
@@ -159,10 +168,7 @@ class SolveAnalysisResponse {
         } else {
           final statusText = entry.toString().trim().toUpperCase();
           results.add(
-            FlowStatus(
-              flowNumber: i,
-              status: statusText == 'O' ? 'O' : 'X',
-            ),
+            FlowStatus(flowNumber: i, status: statusText == 'O' ? 'O' : 'X'),
           );
         }
       }
@@ -187,10 +193,7 @@ class SolveAnalysisResponse {
       ..sort((a, b) => a.flowNumber.compareTo(b.flowNumber));
     return sorted
         .map(
-          (entry) => {
-            'step_id': entry.flowNumber,
-            'correct': entry.isCorrect,
-          },
+          (entry) => {'step_id': entry.flowNumber, 'correct': entry.isCorrect},
         )
         .toList();
   }
@@ -202,8 +205,9 @@ class SolveAnalysisResponse {
 
   factory SolveAnalysisResponse.fromJson(Map<String, dynamic> json) {
     final debugRaw = json['debug'];
-    final debugInfo =
-        debugRaw is Map ? Map<String, dynamic>.from(debugRaw) : null;
+    final debugInfo = debugRaw is Map
+        ? Map<String, dynamic>.from(debugRaw)
+        : null;
     final status = _parseStatus(
       json['status'] ?? json['flow_status'] ?? json['step_correctness'],
     );
@@ -243,7 +247,10 @@ class SolveOcrResponse {
     final text = value.toString().trim();
     if (text.isEmpty) return null;
     final lowered = text.toLowerCase();
-    if (lowered == 'null' || lowered == 'none' || lowered == 'nil' || text == '없음') {
+    if (lowered == 'null' ||
+        lowered == 'none' ||
+        lowered == 'nil' ||
+        text == '없음') {
       return null;
     }
     return text;
@@ -251,8 +258,9 @@ class SolveOcrResponse {
 
   factory SolveOcrResponse.fromJson(Map<String, dynamic> json) {
     final debugRaw = json['debug'];
-    final debugInfo =
-        debugRaw is Map ? Map<String, dynamic>.from(debugRaw) : null;
+    final debugInfo = debugRaw is Map
+        ? Map<String, dynamic>.from(debugRaw)
+        : null;
     return SolveOcrResponse(
       allOcr: _normalizeNullableText(json['all_ocr']),
       hitMapped: _normalizeNullableText(json['hit_mapped']),
@@ -331,6 +339,58 @@ class WeaknessTag {
   }
 }
 
+class OxQuizQuestion {
+  final int? id;
+  final String tag;
+  final String question;
+  final bool answer;
+
+  OxQuizQuestion({
+    required this.tag,
+    required this.question,
+    required this.answer,
+    this.id,
+  });
+
+  factory OxQuizQuestion.fromJson(Map<String, dynamic> json) {
+    return OxQuizQuestion(
+      id: json['id'] as int?,
+      tag: json['tag']?.toString() ?? '',
+      question: json['question']?.toString() ?? '',
+      answer: json['answer'] as bool? ?? false,
+    );
+  }
+}
+
+class ProblemHabitItem {
+  final int codebaseId;
+  final String seed;
+  final List<String> tags;
+  final String? questTitle;
+  final int retryCount;
+  final String updatedAt;
+
+  ProblemHabitItem({
+    required this.codebaseId,
+    required this.seed,
+    required this.tags,
+    required this.retryCount,
+    required this.updatedAt,
+    this.questTitle,
+  });
+
+  factory ProblemHabitItem.fromJson(Map<String, dynamic> json) {
+    return ProblemHabitItem(
+      codebaseId: json['codebase_id'] as int? ?? 0,
+      seed: json['seed']?.toString() ?? '',
+      tags: List<String>.from(json['tags'] as List<dynamic>? ?? []),
+      questTitle: json['quest_title']?.toString(),
+      retryCount: json['retry_count'] as int? ?? 0,
+      updatedAt: json['updated_at']?.toString() ?? '',
+    );
+  }
+}
+
 class FriendProfile {
   final String userId;
   final String username;
@@ -356,6 +416,37 @@ class FriendProfile {
       profileImage: json['profile_image'] as String?,
       ovr: json['ovr'] as int? ?? 0,
       status: json['status'] as String? ?? '',
+    );
+  }
+}
+
+class FriendRequest {
+  final String id;
+  final String username;
+  final String direction;
+  final String status;
+  final String? message;
+  final DateTime createdAt;
+
+  FriendRequest({
+    required this.id,
+    required this.username,
+    required this.direction,
+    required this.status,
+    required this.createdAt,
+    this.message,
+  });
+
+  factory FriendRequest.fromJson(Map<String, dynamic> json) {
+    final createdRaw = json['created_at']?.toString() ?? '';
+    final created = DateTime.tryParse(createdRaw) ?? DateTime.now();
+    return FriendRequest(
+      id: json['id']?.toString() ?? '',
+      username: json['username']?.toString() ?? '',
+      direction: json['direction']?.toString() ?? 'incoming',
+      status: json['status']?.toString() ?? 'pending',
+      message: json['message']?.toString(),
+      createdAt: created,
     );
   }
 }
@@ -401,8 +492,173 @@ class StudyGroup {
   }
 }
 
+class StudyGroupMessage {
+  final String messageId;
+  final String groupId;
+  final String userId;
+  final String text;
+  final String createdAt;
+
+  StudyGroupMessage({
+    required this.messageId,
+    required this.groupId,
+    required this.userId,
+    required this.text,
+    required this.createdAt,
+  });
+
+  factory StudyGroupMessage.fromJson(Map<String, dynamic> json) {
+    return StudyGroupMessage(
+      messageId: json['message_id']?.toString() ?? '',
+      groupId: json['group_id']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? '',
+      text: json['text']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? '',
+    );
+  }
+}
+
+class StudyGroupTopic {
+  final String groupId;
+  final String topic;
+  final String updatedAt;
+
+  StudyGroupTopic({
+    required this.groupId,
+    required this.topic,
+    required this.updatedAt,
+  });
+
+  factory StudyGroupTopic.fromJson(Map<String, dynamic> json) {
+    return StudyGroupTopic(
+      groupId: json['group_id']?.toString() ?? '',
+      topic: json['topic']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
+    );
+  }
+}
+
+class StudyGroupExam {
+  final String groupId;
+  final String examId;
+  final String title;
+  final String createdAt;
+
+  StudyGroupExam({
+    required this.groupId,
+    required this.examId,
+    required this.title,
+    required this.createdAt,
+  });
+
+  factory StudyGroupExam.fromJson(Map<String, dynamic> json) {
+    return StudyGroupExam(
+      groupId: json['group_id']?.toString() ?? '',
+      examId: json['exam_id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? '',
+    );
+  }
+}
+
+class DirectMessage {
+  final String id;
+  final String from;
+  final String to;
+  final String text;
+  final DateTime createdAt;
+  final bool isMine;
+
+  DirectMessage({
+    required this.id,
+    required this.from,
+    required this.to,
+    required this.text,
+    required this.createdAt,
+    required this.isMine,
+  });
+
+  factory DirectMessage.fromJson(Map<String, dynamic> json) {
+    final created = DateTime.tryParse(json['created_at']?.toString() ?? '');
+    return DirectMessage(
+      id: json['id']?.toString() ?? '',
+      from: json['from']?.toString() ?? '',
+      to: json['to']?.toString() ?? '',
+      text: json['text']?.toString() ?? '',
+      createdAt: created ?? DateTime.now(),
+      isMine: json['is_mine'] as bool? ?? false,
+    );
+  }
+}
+
+class ServerChatStats {
+  final double attendanceScore;
+  final int solvedToday;
+  final double accuracyToday;
+  final double visibleOvr;
+
+  const ServerChatStats({
+    required this.attendanceScore,
+    required this.solvedToday,
+    required this.accuracyToday,
+    required this.visibleOvr,
+  });
+
+  factory ServerChatStats.fromJson(Map<String, dynamic> json) {
+    return ServerChatStats(
+      attendanceScore: (json['attendance_score'] as num?)?.toDouble() ?? 0.0,
+      solvedToday: (json['solved_today'] as num?)?.toInt() ?? 0,
+      accuracyToday: (json['accuracy_today'] as num?)?.toDouble() ?? 0.0,
+      visibleOvr: (json['visible_ovr'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class ServerChatResponse {
+  final String assistantMessage;
+  final double affectionScore;
+  final Map<String, double> affectionBreakdown;
+  final String character;
+  final String characterName;
+  final ServerChatStats stats;
+  final int historySize;
+  final int userTurns;
+
+  const ServerChatResponse({
+    required this.assistantMessage,
+    required this.affectionScore,
+    required this.affectionBreakdown,
+    required this.character,
+    required this.characterName,
+    required this.stats,
+    required this.historySize,
+    required this.userTurns,
+  });
+
+  factory ServerChatResponse.fromJson(Map<String, dynamic> json) {
+    final breakdownRaw = json['affection_breakdown'] as Map<String, dynamic>? ?? {};
+    final breakdown = breakdownRaw.map(
+      (key, value) => MapEntry(key, (value as num?)?.toDouble() ?? 0.0),
+    );
+    return ServerChatResponse(
+      assistantMessage: json['assistant_message'] as String? ?? '',
+      affectionScore: (json['affection_score'] as num?)?.toDouble() ?? 0.0,
+      affectionBreakdown: breakdown,
+      character: json['character'] as String? ?? 'female',
+      characterName: json['character_name'] as String? ?? '',
+      stats: ServerChatStats.fromJson(
+        Map<String, dynamic>.from(json['stats'] as Map? ?? {}),
+      ),
+      historySize: (json['history_size'] as num?)?.toInt() ?? 0,
+      userTurns: (json['user_turns'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class ApiClient {
-  ApiClient._();
+  ApiClient._() {
+    _assertBaseUrlConfigured();
+  }
 
   static final ApiClient instance = ApiClient._();
 
@@ -413,19 +669,41 @@ class ApiClient {
 
   final http.Client _client = http.Client();
   String? _token;
+  bool _loadedPersistedToken = false;
 
-  void setToken(String token) {
+  void _assertBaseUrlConfigured() {
+    final isLocal = baseUrl.contains('localhost') || baseUrl.contains('127.0.0.1');
+    if (isLocal && kReleaseMode) {
+      throw StateError(
+        'API_BASE_URL is not configured. Pass --dart-define=API_BASE_URL=<prod> when building.',
+      );
+    }
+  }
+
+  Future<void> setToken(String token, {String? username}) async {
     _token = token;
+    await AuthStorage.instance.saveToken(token, username: username);
   }
 
-  void clearToken() {
+  Future<void> clearToken() async {
     _token = null;
+    await AuthStorage.instance.clear();
   }
 
+  Future<String> requireToken() => _ensureToken();
 
   Future<String> _ensureToken() async {
+    _assertBaseUrlConfigured();
     if (_token != null) {
       return _token!;
+    }
+    if (!_loadedPersistedToken) {
+      _loadedPersistedToken = true;
+      final stored = await AuthStorage.instance.readToken();
+      if (stored != null && stored.isNotEmpty) {
+        _token = stored;
+        return stored;
+      }
     }
     final uri = Uri.parse('$baseUrl/auth/anonymous');
     final response = await _client.post(uri);
@@ -583,6 +861,7 @@ class ApiClient {
     String? referenceQuestId,
     bool strictTags = false,
     int? seed,
+    String? requestId,
   }) async {
     final token = await _ensureToken();
     final uri = Uri.parse('$baseUrl/quests/generate');
@@ -595,6 +874,7 @@ class ApiClient {
         'reference_quest_id': referenceQuestId.trim(),
       'strict_tags': strictTags,
       if (seed != null) 'seed': seed,
+      if (requestId != null) 'request_id': requestId,
     });
     final response = await _client.post(
       uri,
@@ -613,6 +893,23 @@ class ApiClient {
       throw Exception('Missing quest data in response');
     }
     return quest;
+  }
+
+  Future<Map<String, dynamic>> fetchQuestGenerateStatus({
+    required String requestId,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse(
+      '$baseUrl/quests/generate/status',
+    ).replace(queryParameters: {'request_id': requestId});
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      return {};
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   Future<List<Map<String, dynamic>>> generateProblemSet({
@@ -848,6 +1145,129 @@ class ApiClient {
         .toList();
   }
 
+  Future<List<ProblemHabitItem>> fetchProblemHabits({
+    int days = 60,
+    String? tag,
+    int limit = 200,
+  }) async {
+    final token = await _ensureToken();
+    final params = {
+      'days': days.toString(),
+      'limit': limit.toString(),
+      if (tag != null && tag.trim().isNotEmpty) 'tag': tag.trim(),
+    };
+    final uri = Uri.parse('$baseUrl/habit/problem').replace(queryParameters: params);
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch problem habits: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['items'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => ProblemHabitItem.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
+  Future<void> recordProblemHabit({
+    required int codebaseId,
+    required String seed,
+    List<String> tags = const [],
+    String? questTitle,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/habit/problem');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'codebase_id': codebaseId,
+        'seed': seed,
+        'tags': tags,
+        if (questTitle != null) 'quest_title': questTitle,
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to record problem habit: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> replayProblemHabit({
+    required int codebaseId,
+    required String seed,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/habit/problem/replay');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'codebase_id': codebaseId, 'seed': seed}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Replay failed: ${response.statusCode}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<List<OxQuizQuestion>> generateOxQuiz({
+    required List<String> tags,
+    int perTag = 3,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/ox_quiz/generate');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'tags': tags, 'per_tag': perTag}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to generate OX quiz: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['questions'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => OxQuizQuestion.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
+  Future<List<OxQuizQuestion>> listOxQuiz({
+    required List<String> tags,
+    int perTag = 3,
+  }) async {
+    final token = await _ensureToken();
+    final params = {
+      'tags': tags.join(','),
+      'per_tag': perTag.toString(),
+    };
+    final uri = Uri.parse('$baseUrl/ox_quiz').replace(queryParameters: params);
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch OX quiz: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['questions'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => OxQuizQuestion.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
   Future<List<FriendProfile>> searchFriends({
     required String query,
     int limit = 20,
@@ -925,6 +1345,87 @@ class ApiClient {
     return FriendProfile.fromJson(payload);
   }
 
+  Future<List<FriendRequest>> listFriendRequests() async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friend-requests');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch friend requests: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['requests'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => FriendRequest.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
+  Future<FriendRequest> sendFriendRequest({
+    required String username,
+    String? message,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friend-requests');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'username': username.trim(), if (message != null) 'message': message}),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to send friend request: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return FriendRequest.fromJson(payload);
+  }
+
+  Future<FriendProfile> acceptFriendRequest(String requestId) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friend-requests/$requestId/accept');
+    final response = await _client.post(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to accept friend request: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return FriendProfile.fromJson(payload);
+  }
+
+  Future<FriendRequest> cancelFriendRequest(String requestId) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friend-requests/$requestId/cancel');
+    final response = await _client.post(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to cancel friend request: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return FriendRequest.fromJson(payload);
+  }
+
+  Future<FriendRequest> declineFriendRequest(String requestId) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/friend-requests/$requestId/decline');
+    final response = await _client.post(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to decline friend request: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return FriendRequest.fromJson(payload);
+  }
+
   Future<StudyGroup> createStudyGroup({
     required String name,
     required String description,
@@ -958,6 +1459,326 @@ class ApiClient {
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return StudyGroup.fromJson(payload);
+  }
+
+  Future<List<StudyGroup>> listMyStudyGroups() async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/study-groups/mine');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load study groups: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final groups = payload['groups'] as List<dynamic>? ?? [];
+    return groups
+        .map((g) => StudyGroup.fromJson(g as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<StudyGroup> joinStudyGroup({
+    required String groupId,
+    String? password,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/join');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'password': password}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to join study group: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return StudyGroup.fromJson(payload);
+  }
+
+  Future<List<StudyGroupMessage>> fetchStudyGroupMessages({
+    required String groupId,
+    int limit = 50,
+    String? before,
+  }) async {
+    final token = await _ensureToken();
+    final params = <String, String>{'limit': limit.toString()};
+    if (before != null) params['before'] = before;
+    final uri = Uri.parse(
+      '$baseUrl/social/study-groups/$groupId/messages',
+    ).replace(queryParameters: params);
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load group messages: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final messages = payload['messages'] as List<dynamic>? ?? [];
+    return messages
+        .map((m) => StudyGroupMessage.fromJson(m as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<StudyGroupMessage> sendStudyGroupMessage({
+    required String groupId,
+    required String text,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/messages');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'text': text}),
+    );
+    if (response.statusCode != 201) {
+      throw Exception('Failed to send group message: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return StudyGroupMessage.fromJson(payload);
+  }
+
+  Future<StudyGroupTopic> getStudyGroupTopic(String groupId) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/topic');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load group topic: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return StudyGroupTopic.fromJson(payload);
+  }
+
+  Future<StudyGroupTopic> setStudyGroupTopic({
+    required String groupId,
+    required String topic,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/topic');
+    final response = await _client.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'topic': topic}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update group topic: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return StudyGroupTopic.fromJson(payload);
+  }
+
+  Future<List<StudyGroupExam>> listStudyGroupExams(String groupId) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/exams');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load group exams: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final exams = payload['exams'] as List<dynamic>? ?? [];
+    return exams
+        .map((e) => StudyGroupExam.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<StudyGroupExam> addStudyGroupExam({
+    required String groupId,
+    required String examId,
+    String? title,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/exams');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'exam_id': examId, 'title': title}),
+    );
+    if (response.statusCode != 201) {
+      throw Exception('Failed to add group exam: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return StudyGroupExam.fromJson(payload);
+  }
+
+  Future<List<DirectMessage>> fetchDirectMessages({
+    required String peerUsername,
+    int limit = 30,
+    String? beforeMessageId,
+    int maxTotal = 2000,
+  }) async {
+    final token = await _ensureToken();
+    final params = <String, String>{
+      'peer': peerUsername.trim(),
+      'limit': limit.toString(),
+      'max_total': maxTotal.toString(),
+    };
+    if (beforeMessageId != null && beforeMessageId.trim().isNotEmpty) {
+      params['before'] = beforeMessageId.trim();
+    }
+    final uri = Uri.parse(
+      '$baseUrl/social/messages',
+    ).replace(queryParameters: params);
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load messages: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['messages'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => DirectMessage.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
+  Future<DirectMessage> sendDirectMessage({
+    required String peerUsername,
+    required String text,
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/messages');
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'peer': peerUsername.trim(), 'text': text.trim()}),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to send message: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return DirectMessage.fromJson(payload);
+  }
+
+  Future<List<DirectMessage>> fetchConversationThreads({
+    int limit = 15,
+    String? before,
+  }) async {
+    final token = await _ensureToken();
+    final params = <String, String>{
+      'limit': limit.toString(),
+    };
+    if (before != null && before.trim().isNotEmpty) {
+      params['before'] = before.trim();
+    }
+    final uri = Uri.parse('$baseUrl/social/conversations')
+        .replace(queryParameters: params);
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load conversations: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = payload['messages'] as List<dynamic>? ?? [];
+    return items
+        .whereType<Map>()
+        .map((item) => DirectMessage.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
+  Future<void> deleteConversation(String peerUsername) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/social/messages/${Uri.encodeComponent(peerUsername)}/delete');
+    final response = await _client.post(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete conversation: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, String>> getServerChatProfile() async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/serverchat/config');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch character: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return {
+      'character': payload['character']?.toString() ?? 'female',
+      'character_name': payload['character_name']?.toString() ?? '',
+    };
+  }
+
+  Future<String> setServerChatCharacter(String character) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/serverchat/config');
+    final response = await _client.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'character': character}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save character: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return payload['character']?.toString() ?? character;
+  }
+
+  Future<ServerChatResponse> sendServerChatMessage({
+    required String message,
+    String? character,
+    String? questTitle,
+    String? flow,
+    String? ocr,
+    String mode = 'chat',
+  }) async {
+    final token = await _ensureToken();
+    final uri = Uri.parse('$baseUrl/serverchat/message');
+    final body = <String, dynamic>{
+      'user_message': message,
+      'mode': mode,
+      if (character != null) 'character': character,
+      if (questTitle != null) 'quest_title': questTitle,
+      if (flow != null) 'flow': flow,
+      if (ocr != null) 'ocr': ocr,
+    };
+    final response = await _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to send chat: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    return ServerChatResponse.fromJson(payload);
   }
 
   Future<List<Map<String, dynamic>>> listTextbooks({

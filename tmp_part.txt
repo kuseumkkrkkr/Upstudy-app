@@ -1,0 +1,120 @@
+              children: [
+                Builder(builder: (context) => _buildHeader(context)),
+                _buildHeroSection(context),
+                _buildBottomSection(context),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ???? ??단 ??더 ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+  Widget _buildHeader(BuildContext context) {
+    final scale = _uiScale(context);
+    return Container(
+      width: double.infinity,
+      height: 72 * scale,
+      color: Colors.white,
+      child: Row(
+        children: [
+          SizedBox(width: 16 * scale),
+          IconButton(
+            iconSize: 28 * scale,
+            icon: const Icon(Icons.menu_outlined, color: BookWidget.primaryGreen),
+            onPressed: () => toggleAppDrawer(context),
+          ),
+          SizedBox(width: 12 * scale),
+          SizedBox(width: 12 * scale),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const MainStudentPage()),
+                (route) => false,
+              );
+            },
+            child: Text(
+              'AIFlow',
+              style: TextStyle(
+                color: BookWidget.primaryGreen,
+                fontSize: 36 * scale,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SizedBox(width: 120 * scale),
+          Expanded(
+            child: Container(
+              color: Colors.white,
+              height: 72 * scale,
+              alignment: Alignment.centerRight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _navItem(
+                      '??습??,
+                      fontSize: 16 * scale,
+                      horizontalPadding: 12 * scale,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const study_center.SoWidget(),
+                          ),
+                        );
+                      },
+                    ),
+                    _navItem(
+                      '문서??,
+                      fontSize: 16 * scale,
+                      horizontalPadding: 12 * scale,
+                    ),
+                    _navItem(
+                      '친구/??셜',
+                      fontSize: 16 * scale,
+                      horizontalPadding: 12 * scale,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SoWidget()),
+                        );
+                      },
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(right: 24 * scale),
+                      child: _navItem(
+                        '마켓??레??스',
+                        fontSize: 16 * scale,
+                        horizontalPadding: 12 * scale,
+                      ),
+                    ),
+                    SizedBox(width: 16 * scale),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _navItem(
+    String label, {
+    required double fontSize,
+    required double horizontalPadding,
+    VoidCallback? onTap,
+  }) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+    child: GestureDetector(
+      onTap: onTap,
+      child: Text(
+        label,
+        style: TextStyle(
+          color: BookWidget.primaryGreen,
+          fontSize: fontSize,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+    ),

@@ -86,6 +86,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   int _maxDifficultyTier = 3;
   bool _analysisBusy = false;
   bool _questLoading = false;
+  double _generationProgress = 0.0;
   String? _questError;
   final List<Map<String, dynamic>?> _quests = <Map<String, dynamic>?>[];
   final List<int?> _selectedChoices = <int?>[];
@@ -128,7 +129,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   void _applyConfig(ProblemSolveConfig config) {
-    _problemCount = math.max(1, config.questionCount);
+    final clampedCount = config.questionCount.clamp(4, 40).toInt();
+    _problemCount = clampedCount;
     _hashTags = List<String>.from(config.hashTags);
     _gradeImmediately = config.gradeImmediately;
     final minTier = math
@@ -220,6 +222,30 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     return _quests[_currentProblemIndex];
   }
 
+  String _problemFingerprint(Map<String, dynamic>? quest, int index) {
+    final data = quest == null ? null : quest['data'] as Map<String, dynamic>?;
+    final codebaseId = data?['codebase_id'];
+    final seedValue = data?['seed'];
+    if (codebaseId != null && seedValue != null) {
+      return 'cb${codebaseId}_s${seedValue}';
+    }
+    final questId = (quest?['header']?['quest_id'] ?? '').toString().trim();
+    if (questId.isNotEmpty) return questId;
+    return (index + 1).toString();
+  }
+
+  Map<String, dynamic> _problemMeta(Map<String, dynamic>? quest) {
+    final data = quest == null ? null : quest['data'] as Map<String, dynamic>?;
+    final questId = (quest?['header']?['quest_id'] ?? '').toString().trim();
+    final meta = <String, dynamic>{};
+    if (questId.isNotEmpty) meta['quest_id'] = questId;
+    if (data != null) {
+      if (data['codebase_id'] != null) meta['codebase_id'] = data['codebase_id'];
+      if (data['seed'] != null) meta['seed'] = data['seed'];
+    }
+    return meta;
+  }
+
   String _currentQuestId() {
     final quest = _currentQuest;
     if (quest == null) return '';
@@ -307,6 +333,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     }
     setState(() {
       _questLoading = true;
+      _generationProgress = 0.0;
       _questError = null;
     });
 
@@ -326,6 +353,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       }
       setState(() {
         _questLoading = false;
+        _generationProgress = 1.0;
         _questError = null;
       });
     } catch (error, stackTrace) {
@@ -333,6 +361,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       debugPrint(stackTrace.toString());
       setState(() {
         _questLoading = false;
+        _generationProgress = 0.0;
         _questError = error.toString().replaceFirst('Exception: ', '');
       });
     }
@@ -550,10 +579,16 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   Future<void> _openLlmSettings() async {
-    final tempController = TextEditingController(text: _genTemperature.toStringAsFixed(2));
-    final topPController = TextEditingController(text: _genTopP.toStringAsFixed(2));
+    final tempController = TextEditingController(
+      text: _genTemperature.toStringAsFixed(2),
+    );
+    final topPController = TextEditingController(
+      text: _genTopP.toStringAsFixed(2),
+    );
     final topKController = TextEditingController(text: _genTopK.toString());
-    final maxTokensController = TextEditingController(text: _genMaxTokens.toString());
+    final maxTokensController = TextEditingController(
+      text: _genMaxTokens.toString(),
+    );
     final result = await showDialog<_GenConfig>(
       context: context,
       builder: (context) {
@@ -593,10 +628,12 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
               onPressed: () {
                 Navigator.of(context).pop(
                   _GenConfig(
-                    temperature: double.tryParse(tempController.text) ?? _genTemperature,
+                    temperature:
+                        double.tryParse(tempController.text) ?? _genTemperature,
                     topP: double.tryParse(topPController.text) ?? _genTopP,
                     topK: int.tryParse(topKController.text) ?? _genTopK,
-                    maxTokens: int.tryParse(maxTokensController.text) ?? _genMaxTokens,
+                    maxTokens:
+                        int.tryParse(maxTokensController.text) ?? _genMaxTokens,
                   ),
                 );
               },
@@ -842,17 +879,69 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          top: true,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildHeader(),
-              Expanded(child: _buildCanvasArea()),
-              _buildToolbar(),
-            ],
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              top: true,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildHeader(),
+                  Expanded(child: _buildCanvasArea()),
+                  _buildToolbar(),
+                ],
+              ),
+            ),
+          ),
+          if (_questLoading) _buildGenerationOverlay(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenerationOverlay() {
+    final progressValue =
+        (_generationProgress > 0 && _generationProgress < 1) ? _generationProgress : null;
+    return Positioned.fill(
+      child: IgnorePointer(
+        ignoring: false,
+        child: Container(
+          color: Colors.black.withOpacity(0.35),
+          child: Center(
+            child: Container(
+              width: 360,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 12,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '문제 생성중...',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  LinearProgressIndicator(value: progressValue),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '생성된 문제부터 순서대로 배치해요. 최대 6분까지 기다릴 수 있어요.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -1325,7 +1414,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('필기 수가 너무 적어 채점을 시작할 수 없습니다.')));
+      ).showSnackBar(const SnackBar(content: Text('올바른 풀이를 작성해주세요')));
       return;
     }
     setState(() => _analysisBusy = true);
@@ -1335,8 +1424,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     gradingShown = true;
     try {
       final studentWorkImage = await _renderStrokesToPng();
-      final problemImage =
-          _sendProblemImage ? await _renderProblemToPng() : Uint8List(0);
+      final problemImage = _sendProblemImage
+          ? await _renderProblemToPng()
+          : Uint8List(0);
       final heatmapResult = _buildHeatmapResult();
       final heatmapImage = await heatmapResult.renderImage();
       debugPrint(
@@ -1365,7 +1455,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
               ocrPayload: const {},
               ocrDebug: null,
               ocrResult:
-                  (response.debugInfo?['ocr'] as Map<String, dynamic>?) ?? const {},
+                  (response.debugInfo?['ocr'] as Map<String, dynamic>?) ??
+                  const {},
               gradingPayload: payload,
               gradingDebug: response.debugInfo,
               gradingResult: {
@@ -1414,8 +1505,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
             )
           : null;
       final questId = _currentQuestId();
-      final problemNumber =
-          questId.isNotEmpty ? questId : (_currentProblemIndex + 1).toString();
+      final fingerprint = _problemFingerprint(quest, _currentProblemIndex);
+      final problemMeta = _problemMeta(quest);
       unawaited(
         _submitRatingUpdate(
           quest: quest,
@@ -1426,15 +1517,18 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       if (isCorrect) {
         try {
           await ActivityStore.recordProblemSolve(
-            problemId: questId.isNotEmpty ? questId : problemNumber,
-            problemNumber: problemNumber,
+            problemId: fingerprint,
+            problemNumber: fingerprint,
+            difficultyTier: _tierForProblemIndex(_currentProblemIndex),
+            meta: problemMeta.isEmpty ? null : problemMeta,
           );
         } catch (_) {}
       } else if (!insufficientData) {
         try {
           await ActivityStore.recordProblemIncorrect(
-            problemId: questId.isNotEmpty ? questId : problemNumber,
-            problemNumber: problemNumber,
+            problemId: fingerprint,
+            problemNumber: fingerprint,
+            meta: problemMeta.isEmpty ? null : problemMeta,
           );
         } catch (_) {}
       }
@@ -1498,7 +1592,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     };
   }
 
-
   Map<String, dynamic> _buildGenConfig() {
     return {
       'temperature': _genTemperature,
@@ -1507,7 +1600,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       'max_output_tokens': _genMaxTokens,
     };
   }
-
 
   List<Map<String, dynamic>> _buildReferenceStepsPayload(
     List<_ReferenceSolveStep> steps,

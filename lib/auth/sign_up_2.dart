@@ -191,7 +191,10 @@ class _BuildpageCopyWidgetState extends State<BuildpageCopyWidget> {
         subject: widget.draft.subject,
         school: widget.draft.schoolName,
       );
-      ApiClient.instance.setToken(token);
+      await ApiClient.instance.setToken(
+        token,
+        username: _idController.text.trim(),
+      );
       if (!mounted) return;
       final completedSteps = _completedSteps + 1; // signup submission step
       Navigator.of(context).pushReplacement(

@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../services/social_notification_store.dart';
+
 Future<T?> showSocialModal<T>({required BuildContext context}) {
   return showDialog<T>(
     context: context,
@@ -48,24 +50,47 @@ class SocialModal extends StatelessWidget {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-              const Text('소셜', style: TextStyle(fontSize: 22)),
+              const Text('알림', style: TextStyle(fontSize: 22)),
+              const Spacer(),
+              TextButton(
+                onPressed: () => SocialNotificationStore.update(
+                  unreadMessages: 0,
+                  friendRemovals: 0,
+                ),
+                child: const Text('읽음 처리'),
+              ),
             ],
           ),
           const Padding(
             padding: EdgeInsetsDirectional.fromSTEB(24, 0, 24, 12),
             child: Text(
-              '최근 알림과 친구 소식을 확인하세요.',
+              '최근 받은 쪽지, 친구 요청, 친구 삭제 알림을 확인하세요.',
               style: TextStyle(fontSize: 15),
             ),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              children: const [
-                _SocialItem(text: '친구 A가 새 글을 올렸습니다.'),
-                _SocialItem(text: '친구 B가 문제 풀이를 완료했습니다.'),
-                _SocialItem(text: '새로운 팔로워가 있습니다.'),
-              ],
+            child: ValueListenableBuilder<SocialNotificationSnapshot>(
+              valueListenable: SocialNotificationStore.notifier,
+              builder: (context, snapshot, _) {
+                final items = <String>[];
+                if (snapshot.unreadMessages > 0) {
+                  items.add('새 쪽지 ${snapshot.unreadMessages}건이 도착했습니다.');
+                }
+                if (snapshot.friendRequests > 0) {
+                  items.add('친구 요청 ${snapshot.friendRequests}건이 있습니다.');
+                }
+                if (snapshot.friendRemovals > 0) {
+                  items.add('친구 삭제 알림 ${snapshot.friendRemovals}건이 있습니다.');
+                }
+                if (items.isEmpty) {
+                  items.add('새로운 알림이 없습니다.');
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) => _SocialItem(text: items[index]),
+                );
+              },
             ),
           ),
         ],

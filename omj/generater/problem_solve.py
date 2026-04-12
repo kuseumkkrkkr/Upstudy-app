@@ -2,17 +2,22 @@ from __future__ import annotations
 
 import os
 import random
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from generater.codebase_gen import generate_codebase
 from generater.codebase_runner import (
-    build_ai_result,
     estimate_difficulty,
     run_codebase,
     validate_result,
 )
-from generater.codebase_store import load_codebases, save_codebase
+from generater.codebase_store import (
+    compute_code_hash,
+    list_cached_seeds,
+    load_codebases,
+    save_codebase,
+)
 from generater.question_format import apply_question_format
 from generater.fix_gen import fix_gen
 from resampling import resample_storage_data
@@ -111,6 +116,53 @@ def pick_random_tags(pool: Sequence[str], count: int, rng: random.Random) -> Lis
     return pool_list[:count]
 
 
+def infer_tier_from_params(
+    solves_count: int,
+    strategy_level: int,
+    branch_conditions: int,
+) -> int:
+    for tier, params in TIER_PARAMS.items():
+        if (
+            solves_count == params.solves_count
+            and strategy_level == params.strategy_level
+            and branch_conditions == params.branch_conditions
+        ):
+            return tier
+    best_tier = 3
+    best_score = 1_000_000
+    for tier, params in TIER_PARAMS.items():
+        score = (
+            abs(params.solves_count - solves_count) * 2
+            + abs(params.strategy_level - strategy_level)
+            + abs(params.branch_conditions - branch_conditions) * 2
+        )
+        if score < best_score:
+            best_score = score
+            best_tier = tier
+    return best_tier
+
+
+def _buffer_tag_count_for_tier(tier: int, rng: random.Random) -> int:
+    tier = int(max(1, min(5, tier)))
+    if tier <= 2:
+        return 1 + rng.randint(0, 1)
+    if tier <= 4:
+        return 3 + rng.randint(0, 1)
+    return 5
+
+
+def select_tags_for_tier(tag_pool: Sequence[str], tier: int, rng: random.Random) -> List[str]:
+    if not tag_pool:
+        return []
+    tier = int(max(1, min(5, tier)))
+    if len(tag_pool) > max_tag_count_for_tier(tier):
+        count = _buffer_tag_count_for_tier(tier, rng)
+    else:
+        count = tag_count_for_tier(tier, rng)
+    count = min(count, len(tag_pool))
+    return pick_random_tags(tag_pool, count, rng)
+
+
 def _infer_tier(entry: Dict[str, Any]) -> Optional[int]:
     tier = entry.get("tier")
     if isinstance(tier, int):
@@ -199,26 +251,27 @@ def _build_quest_from_codebase(
     question_type: str,
 ) -> Dict[str, Any]:
     raw_result = run_codebase(entry, seed)
-    result = validate_result(raw_result)
-    ai_result = build_ai_result(
-        problem=result["problem"],
-        answer=result["answer"],
-        solution=result["solution"],
-        hash_tags=tags,
-        solves_count=params.solves_count,
-        strategy_level=params.strategy_level,
-        branch_conditions=params.branch_conditions,
+    result = validate_result(
+        raw_result,
+        fallback_hash_tags=tags,
+        expected_solves=params.solves_count,
+        expected_branches=params.branch_conditions,
+        main_huddle=params.strategy_level,
     )
+    ai_result = result.get("ai_result")
+    if ai_result is None:
+        raise RuntimeError("ai_result missing after validation")
     storage_data = fix_gen(ai_result, tags, strict_tags=False)
     apply_question_format(
         storage_data,
         question_type=question_type,
-        answer=int(result["answer"]),
+        answer=result["answer"],
         rng=random.Random(seed or random.randint(1, 1_000_000_000)),
     )
     if isinstance(storage_data.get("data"), dict):
         storage_data["data"]["codebase_id"] = entry.get("id")
-    return resample_storage_data(storage_data)
+        storage_data["data"]["seed"] = seed
+    return resample_storage_data(storage_data, coerce_text_only=True)
 
 
 def _assign_counts(
@@ -237,19 +290,22 @@ def _assign_counts(
     return assignments, remaining
 
 
+
+
 def generate_problem_set(
     *,
-    hash_tags: List[str],
+    hash_tags: list[str],
     min_difficulty_tier: int,
     max_difficulty_tier: int,
     question_count: int,
-    seed: Optional[int] = None,
-) -> List[Dict[str, Any]]:
+    seed: int | None = None,
+    recent_codebase_seeds: dict[int, list[int]] | None = None,
+) -> list[dict[str, Any]]:
     clean_tags = normalize_tags(hash_tags)
     if not clean_tags:
-        raise ValueError("hash_tags must not be empty")
-    if question_count < 1:
-        raise ValueError("question_count must be >= 1")
+        raise ValueError('hash_tags must not be empty')
+    if question_count < 4 or question_count > 40:
+        raise ValueError('question_count must be between 4 and 40')
 
     min_tier = int(max(1, min(5, min_difficulty_tier)))
     max_tier = int(max(1, min(5, max_difficulty_tier)))
@@ -258,93 +314,134 @@ def generate_problem_set(
 
     min_required = min_tag_count_for_tier(max_tier)
     if len(clean_tags) < min_required:
-        raise ValueError(f"최고 난이도(티어 {max_tier}) 최소 선택 개념 갯수는 {min_required}개입니다.")
+        raise ValueError(
+            f'최대 난이도({max_tier})를 위해 필요한 최소 태그 수는 {min_required}개입니다.'
+        )
 
-    narrow_range = len(clean_tags) == min_required or len(clean_tags) < 10
-    rng = random.Random(seed or int.from_bytes(os.urandom(4), "big"))
+    recent_map: dict[int, set[int]] = {}
+    if recent_codebase_seeds:
+        for key, values in recent_codebase_seeds.items():
+            try:
+                cid = int(key)
+            except Exception:
+                continue
+            recent_map[cid] = {int(v) for v in values}
 
+    rng = random.Random(seed or int.from_bytes(os.urandom(4), 'big'))
     tiers = [tier_for_index(i, question_count, min_tier, max_tier) for i in range(question_count)]
-    tag_counts = [tag_count_for_tier(tier, rng) for tier in tiers]
-    per_problem_tags = [pick_random_tags(clean_tags, count, rng) for count in tag_counts]
+    per_problem_tags = [select_tags_for_tier(clean_tags, tier, rng) for tier in tiers]
 
-    codebases = load_codebases()
-    strict_pool, relaxed_pool = filter_codebases(codebases, clean_tags, min_tier, max_tier)
-    filtered_pool = list(strict_pool)
-    if len(filtered_pool) < question_count:
-        for entry in relaxed_pool:
-            if entry not in filtered_pool:
-                filtered_pool.append(entry)
+    selected_tag_set = {normalize_tag(tag) for tag in clean_tags}
 
-    selected_codebases: List[Dict[str, Any]] = []
-    generated_codebases: List[Dict[str, Any]] = []
+    def _entry_within_selection(entry: dict[str, Any]) -> bool:
+        entry_tags = {normalize_tag(tag) for tag in (entry.get('tags') or []) if normalize_tag(tag)}
+        return bool(entry_tags) and entry_tags.issubset(selected_tag_set)
 
-    if narrow_range:
-        assignments: List[Tuple[Dict[str, Any], int]] = []
-        remaining = question_count
-        if filtered_pool:
-            rng.shuffle(filtered_pool)
-            assignments, remaining = _assign_counts(filtered_pool, remaining, rng)
-        while remaining > 0:
-            tier = rng.randint(min_tier, max_tier)
-            new_tags = pick_random_tags(clean_tags, max(min_required, min_tag_count_for_tier(tier)), rng)
-            new_entry = _generate_and_store_codebase(new_tags, tier, rng)
-            generated_codebases.append(new_entry)
-            count = rng.randint(1, min(4, remaining))
-            assignments.append((new_entry, count))
-            remaining -= count
-        for entry, count in assignments:
-            selected_codebases.extend([entry] * count)
-        rng.shuffle(selected_codebases)
-        selected_codebases = selected_codebases[:question_count]
-    else:
-        new_count = max(1, round(question_count * 0.05))
-        if filtered_pool and len(filtered_pool) >= question_count:
-            rng.shuffle(filtered_pool)
-            reuse_count = max(0, question_count - new_count)
-            selected_codebases = filtered_pool[:reuse_count]
-            for _ in range(new_count):
-                tier = rng.randint(min_tier, max_tier)
-                new_tags = pick_random_tags(clean_tags, max(min_required, min_tag_count_for_tier(tier)), rng)
-                new_entry = _generate_and_store_codebase(new_tags, tier, rng)
-                generated_codebases.append(new_entry)
-                selected_codebases.append(new_entry)
-        else:
-            if filtered_pool:
-                selected_codebases = list(filtered_pool)
-            deficit = question_count - len(selected_codebases)
-            for _ in range(deficit):
-                tier = rng.randint(min_tier, max_tier)
-                new_tags = pick_random_tags(clean_tags, max(min_required, min_tag_count_for_tier(tier)), rng)
-                new_entry = _generate_and_store_codebase(new_tags, tier, rng)
-                generated_codebases.append(new_entry)
-                selected_codebases.append(new_entry)
+    eligible_codebases = [entry for entry in load_codebases() if _entry_within_selection(entry)]
 
-    quests: List[Dict[str, Any]] = []
+    new_count = question_count
+    if eligible_codebases:
+        new_count = 0
+        if question_count >= 10:
+            new_count += round(question_count * 0.2)
+        if question_count >= 30:
+            new_count += round(question_count * 0.1)
+        new_count = min(question_count, new_count)
+    reuse_count = max(0, question_count - new_count)
+
+    plan: list[dict[str, Any]] = []
+    reuse_cursor = 0
     for idx in range(question_count):
-        entry = selected_codebases[idx % len(selected_codebases)]
+        tags_for_problem = per_problem_tags[idx] or clean_tags[:]
         tier = tiers[idx]
-        params = TIER_PARAMS.get(tier, TIER_PARAMS[3])
-        tags_for_problem = per_problem_tags[idx]
-        if not tags_for_problem:
-            tags_for_problem = clean_tags[:]
-        seed_value = rng.randint(1, 1_000_000_000)
-        try:
-            quest = _build_quest_from_codebase(
-                entry,
-                tags_for_problem,
-                params,
-                seed_value,
-                question_type="short",
-            )
-        except Exception:
-            new_entry = _generate_and_store_codebase(tags_for_problem, tier, rng)
-            quest = _build_quest_from_codebase(
-                new_entry,
-                tags_for_problem,
-                params,
-                seed_value,
-                question_type="short",
-            )
-        quests.append(quest)
+        if idx < reuse_count and eligible_codebases:
+            entry = eligible_codebases[reuse_cursor % len(eligible_codebases)]
+            reuse_cursor += 1
+        else:
+            entry = None
+        plan.append({'index': idx, 'entry': entry, 'tags': tags_for_problem, 'tier': tier})
 
-    return quests
+    fallback_candidates = [entry for entry in eligible_codebases]
+    quests: list[dict[str, Any] | None] = [None] * question_count
+
+    def _generate_single(task: dict[str, Any], seed_base: int) -> dict[str, Any]:
+        entry = task['entry']
+        tier = task['tier']
+        tags_for_problem = task['tags']
+        params = TIER_PARAMS.get(tier, TIER_PARAMS[3])
+        local_rng = random.Random(seed_base)
+
+        def _build(entry_obj: dict[str, Any], allow_fallback: bool) -> dict[str, Any]:
+            code_hash = compute_code_hash(entry_obj.get('code') or '')
+            entry_id = entry_obj.get('id')
+            avoid = recent_map.get(int(entry_id), set()) if entry_id is not None else set()
+
+            seed_candidates = list_cached_seeds(entry_id, code_hash, limit=150) if entry_id is not None else []
+            seed_candidates = [s for s in seed_candidates if s not in avoid]
+            seen: set[int] = set()
+
+            for seed_value in seed_candidates:
+                if seed_value in seen:
+                    continue
+                seen.add(seed_value)
+                try:
+                    quest = _build_quest_from_codebase(
+                        entry_obj,
+                        tags_for_problem,
+                        params,
+                        seed_value,
+                        question_type='short',
+                    )
+                    if entry_id is not None:
+                        recent_map.setdefault(int(entry_id), set()).add(int(seed_value))
+                    return quest
+                except Exception:
+                    continue
+
+            attempts = 0
+            last_error: Exception | None = None
+            while attempts < 300:
+                seed_value = local_rng.randint(1, 1_000_000_000)
+                if seed_value in avoid or seed_value in seen:
+                    continue
+                attempts += 1
+                seen.add(seed_value)
+                try:
+                    quest = _build_quest_from_codebase(
+                        entry_obj,
+                        tags_for_problem,
+                        params,
+                        seed_value,
+                        question_type='short',
+                    )
+                    if entry_id is not None:
+                        recent_map.setdefault(int(entry_id), set()).add(int(seed_value))
+                    return quest
+                except Exception as exc:
+                    last_error = exc
+                    continue
+
+            if allow_fallback and fallback_candidates:
+                fallback_pool = [cand for cand in fallback_candidates if cand is not entry_obj]
+                if fallback_pool:
+                    fallback_entry = local_rng.choice(fallback_pool)
+                    return _build(fallback_entry, False)
+            raise last_error or RuntimeError('no valid seed for codebase')
+
+        if entry is None:
+            new_entry = _generate_and_store_codebase(tags_for_problem, tier, local_rng)
+            return _build(new_entry, False)
+        return _build(entry, True)
+
+    max_workers = min(8, max(2, question_count))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_map = {
+            executor.submit(_generate_single, task, rng.randint(1, 1_000_000_000)): task
+            for task in plan
+        }
+        for future in as_completed(future_map):
+            task = future_map[future]
+            idx = task['index']
+            quests[idx] = future.result()
+
+    return [quest for quest in quests if quest is not None]

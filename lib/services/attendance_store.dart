@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'auth_storage.dart';
 import 'local_db.dart';
 
 const _attendanceStoreKey = 'attendance_log_v1';
@@ -60,8 +61,23 @@ class AttendanceStore {
   static final ValueNotifier<AttendanceSnapshot> notifier =
       ValueNotifier<AttendanceSnapshot>(AttendanceSnapshot.empty());
   static bool _loaded = false;
+  static String _storageKey = _attendanceStoreKey;
+  static String? _activeUsername;
+
+  static Future<void> _syncUserScope() async {
+    final username = (await AuthStorage.instance.readUsername())?.trim();
+    final scopedKey = (username == null || username.isEmpty)
+        ? _attendanceStoreKey
+        : '$_attendanceStoreKey::$username';
+    if (_activeUsername == username && _storageKey == scopedKey) return;
+    _activeUsername = username;
+    _storageKey = scopedKey;
+    _loaded = false;
+    notifier.value = AttendanceSnapshot.empty();
+  }
 
   static Future<AttendanceSnapshot> load() async {
+    await _syncUserScope();
     if (_loaded) return notifier.value;
     final raw = await _loadRaw();
     AttendanceSnapshot snapshot = AttendanceSnapshot.empty();
@@ -86,6 +102,7 @@ class AttendanceStore {
   }
 
   static Future<AttendanceSnapshot> ensureDailyAttendance() async {
+    await _syncUserScope();
     final snapshot = _loaded ? notifier.value : await load();
     final now = DateTime.now();
     final weekKey = _weekKeyFor(now);
@@ -130,21 +147,23 @@ class AttendanceStore {
   }
 
   static Future<void> _persist(AttendanceSnapshot snapshot) async {
+    await _syncUserScope();
     notifier.value = snapshot;
     _loaded = true;
     await LocalDb.instance
-        .setString(_attendanceStoreKey, jsonEncode(snapshot.toJson()));
+        .setString(_storageKey, jsonEncode(snapshot.toJson()));
   }
 
   static Future<String?> _loadRaw() async {
+    // load uses the user-scoped key prepared in _syncUserScope
     final db = LocalDb.instance;
-    final cached = await db.getString(_attendanceStoreKey);
+    final cached = await db.getString(_storageKey);
     if (cached != null && cached.isNotEmpty) return cached;
     if (kIsWeb) return cached;
     final prefs = await SharedPreferences.getInstance();
-    final legacy = prefs.getString(_attendanceStoreKey);
+    final legacy = prefs.getString(_storageKey);
     if (legacy != null && legacy.isNotEmpty) {
-      await db.setString(_attendanceStoreKey, legacy);
+      await db.setString(_storageKey, legacy);
       return legacy;
     }
     return cached;

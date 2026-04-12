@@ -2,7 +2,7 @@ part of s11.tryout;
 
 class ProblemSolveConfig {
   const ProblemSolveConfig({
-    this.questionCount = 1,
+    this.questionCount = 4,
     this.hashTags = const <String>[],
     this.gradeImmediately = true,
     this.minDifficultyTier = 3,
@@ -36,9 +36,11 @@ class ProblemSolveConfig {
       if (raw is! List) return const <String>[];
       return raw.map((entry) => entry.toString()).toList();
     }
+    final parsedCount = (json['question_count'] as num?)?.toInt() ?? 4;
+    final clampedCount = parsedCount.clamp(4, 40);
 
     return ProblemSolveConfig(
-      questionCount: (json['question_count'] as num?)?.toInt() ?? 1,
+      questionCount: clampedCount.toInt(),
       hashTags: toStringList(json['hash_tags']),
       gradeImmediately: json['grade_immediately'] as bool? ?? true,
       minDifficultyTier: (json['min_difficulty_tier'] as num?)?.toInt() ?? 3,

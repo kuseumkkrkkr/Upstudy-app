@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -58,7 +59,7 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
       for (final item in tags) {
         final key = _normalize(item.tag);
         if (key.isEmpty) continue;
-        map[key] = item;
+        map[key] = _normalizeTagRating(item);
       }
       if (!mounted) return;
       setState(() {
@@ -155,7 +156,12 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
       ..sort((a, b) => b.delta.compareTo(a.delta));
     return items
         .take(5)
-        .map((item) => _TagDelta(label: _labelForTag(item.tag), delta: item.delta))
+        .map(
+          (item) => _TagDelta(
+            label: _labelForTag(item.tag),
+            delta: _visibleDelta(item.rating, item.delta),
+          ),
+        )
         .toList();
   }
 
@@ -164,7 +170,12 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
       ..sort((a, b) => a.delta.compareTo(b.delta));
     return items
         .take(5)
-        .map((item) => _TagDelta(label: _labelForTag(item.tag), delta: item.delta))
+        .map(
+          (item) => _TagDelta(
+            label: _labelForTag(item.tag),
+            delta: _visibleDelta(item.rating, item.delta),
+          ),
+        )
         .toList();
   }
 
@@ -201,9 +212,10 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
           .map((tag) => _tagRatings[tag]?.rating)
           .whereType<double>()
           .toList();
-      final avg = ratings.isEmpty
+      final ovrs = ratings.map(_tagOvrValue).toList();
+      final avg = ovrs.isEmpty
           ? 0.0
-          : ratings.reduce((a, b) => a + b) / ratings.length;
+          : ovrs.reduce((a, b) => a + b) / ovrs.length;
       stats.add(
         _RadarStat(
           label: root.displayName.replaceAll('#', ''),
@@ -570,19 +582,15 @@ class _SearchBody extends StatelessWidget {
                           final tag = suggestions[index];
                           final key = _normalize(tag);
                           final rating = tagRatings[key]?.rating;
-                          final ratingText = rating == null
-                              ? 'OVR --'
-                              : 'OVR ${rating.toStringAsFixed(1)}';
                           return ListTile(
                             title: Text(tag),
-                            trailing: Text(
-                              ratingText,
-                              style: TextStyle(
-                                fontSize: 12 * scale,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1B402B),
-                              ),
-                            ),
+                            trailing: rating == null
+                                ? const SizedBox(width: 40, height: 40)
+                                : _TagRatingProgressBar(
+                                    rating: rating,
+                                    size: 36 * scale,
+                                    strokeWidth: 4 * scale,
+                                  ),
                           );
                         },
                       ),
@@ -778,14 +786,6 @@ class _TagScoreColumn extends StatelessWidget {
                       style: TextStyle(fontSize: 13 * scale),
                     ),
                   ),
-                  Text(
-                    item.score.toStringAsFixed(1),
-                    style: TextStyle(
-                      fontSize: 12 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: highlight,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -822,7 +822,7 @@ class _OvrRadarCard extends StatelessWidget {
               lineColor: const Color(0xFF1B402B),
               fillColor: const Color(0x331B402B),
               labelColor: Colors.black87,
-              maxValue: 2400,
+              maxValue: _tagOvrMax,
             ),
           ),
         );
@@ -1126,4 +1126,133 @@ List<String> _flattenConceptTags(List<ConceptTag> tags) {
 
 String _normalize(String value) {
   return value.replaceAll('#', '').toLowerCase().trim();
+}
+
+const double _tagRatingFloor = 1200;
+const double _tagDisplayMax = 32767;
+const double _tagOvrDivider = 128;
+const double _tagOvrMax = _tagDisplayMax / _tagOvrDivider;
+
+double _normalizedTagRatingValue(double rating) {
+  return math.max(rating, _tagRatingFloor);
+}
+
+TagRating _normalizeTagRating(TagRating item) {
+  return TagRating(
+    tag: item.tag,
+    rating: _normalizedTagRatingValue(item.rating),
+    delta: item.delta,
+    attempts: item.attempts,
+  );
+}
+
+double _tagDisplayValue(double rating) {
+  return (_normalizedTagRatingValue(rating) - _tagRatingFloor)
+      .clamp(0, _tagDisplayMax)
+      .toDouble();
+}
+
+double _tagOvrValue(double rating) {
+  return _tagDisplayValue(rating) / _tagOvrDivider;
+}
+
+double _visibleDelta(double rating, double delta) {
+  final current = _tagOvrValue(rating);
+  final previous = _tagOvrValue(rating - delta);
+  return current - previous;
+}
+
+class _TagRatingProgressBar extends StatefulWidget {
+  const _TagRatingProgressBar({
+    required this.rating,
+    required this.size,
+    required this.strokeWidth,
+  });
+
+  final double rating;
+  final double size;
+  final double strokeWidth;
+
+  @override
+  State<_TagRatingProgressBar> createState() => _TagRatingProgressBarState();
+}
+
+class _TagRatingProgressBarState extends State<_TagRatingProgressBar> {
+  bool _showBubble = false;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    _timer?.cancel();
+    setState(() => _showBubble = true);
+    _timer = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) {
+        setState(() => _showBubble = false);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final display = _tagDisplayValue(widget.rating);
+    final progress = (display / _tagDisplayMax).clamp(0.0, 1.0);
+    final ovrText = _tagOvrValue(widget.rating).toStringAsFixed(1);
+    final bubble = AnimatedOpacity(
+      opacity: _showBubble ? 1 : 0,
+      duration: const Duration(milliseconds: 140),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black87,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          ovrText,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+
+    return GestureDetector(
+      onTap: _handleTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            left: -(widget.size),
+            child: bubble,
+          ),
+          Container(
+            width: 50,
+            height: widget.strokeWidth * 1.3,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(widget.strokeWidth * 1.3),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+            ),
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: progress,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B402B),
+                  borderRadius: BorderRadius.circular(widget.strokeWidth * 1.3),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

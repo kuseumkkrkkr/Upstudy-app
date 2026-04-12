@@ -71,6 +71,8 @@ def _plan_aiflow_items(
                     "question_type": "short",
                     "quest_id": None,
                     "flow_count": None,
+                    "codebase_id": None,
+                    "seed": None,
                     "error": None,
                 }
             )
@@ -131,6 +133,8 @@ def _plan_csat_items(
                 "question_type": question_type,
                 "quest_id": None,
                 "flow_count": None,
+                "codebase_id": None,
+                "seed": None,
                 "error": None,
             }
         )
