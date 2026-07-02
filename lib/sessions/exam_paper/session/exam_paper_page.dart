@@ -1,0 +1,46 @@
+﻿import 'dart:async';
+import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+
+import 'package:s11/shared/data/models/content_block.dart';
+import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/business/repositories/activity_store.dart';
+import 'package:s11/shared/business/repositories/rating_store.dart';
+import 'package:s11/shared/business/usecases/heatmap_engine.dart';
+import 'package:s11/shared/ui/components/content_blocks_view.dart';
+import 'package:s11/sessions/tryout_solve/ui/pages/flow_view_page.dart';
+
+part 'package:s11/sessions/exam_paper/business/exam_paper_state.dart';
+part 'package:s11/sessions/exam_paper/business/exam_paper_state_interaction.dart';
+part 'package:s11/sessions/exam_paper/ui/exam_paper_state_ui.dart';
+part 'package:s11/sessions/exam_paper/business/exam_paper_state_grading.dart';
+part 'package:s11/sessions/exam_paper/business/exam_paper_layout.dart';
+part 'package:s11/sessions/exam_paper/shared/exam_paper_models.dart';
+part 'package:s11/sessions/exam_paper/ui/exam_paper_content.dart';
+part 'package:s11/sessions/exam_paper/ui/exam_grading_report_page.dart';
+part 'package:s11/sessions/exam_paper/ui/exam_paper_toolbar_widgets.dart';
+part 'package:s11/sessions/exam_paper/ui/exam_paper_painter.dart';
+part 'package:s11/sessions/exam_paper/ui/mini_chooser.dart';
+
+class ExamPaperPage extends StatefulWidget {
+  const ExamPaperPage({
+    super.key,
+    this.examId,
+    this.expectedQuestionCount,
+    this.timeLimitMinutes,
+  });
+
+  final String? examId;
+  final int? expectedQuestionCount;
+  final int? timeLimitMinutes;
+
+  @override
+  State<ExamPaperPage> createState() => _ExamPaperPageState();
+}
+

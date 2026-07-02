@@ -1,0 +1,9 @@
+{
+  "_comment": "실제 사용 시 이 파일을 config.json으로 복사하고 값을 채워넣으세요.",
+  "api_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+  "model": "gemini-1.5-flash",
+  "api_key": "YOUR_API_KEY_HERE",
+  "max_workers": 3,
+  "timeout_seconds": 120,
+  "output_file": "gen_textbook/generated_textbooks.json"
+}

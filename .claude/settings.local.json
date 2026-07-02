@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze *)",
+      "Bash(python -c ' *)",
+      "Bash(flutter clean *)",
+      "Bash(flutter pub *)",
+      "Bash(python3 *)",
+      "PowerShell($content = Get-Content \"C:\\\\Users\\\\82102\\\\Desktop\\\\s11\\\\omj\\\\server.py\" -Raw -Encoding UTF8; $idx = $content.IndexOf\\(\"def _normalize_tag_text\\(tag: str\\) -> str:\"\\); $content.Substring\\([Math]::Max\\(0,$idx-30\\), 35\\) | Format-Hex)"
+    ]
+  }
+}

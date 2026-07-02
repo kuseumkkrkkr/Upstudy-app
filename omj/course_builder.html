@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8" /><title>코스 빌더</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<style>
+body{font-family:"Pretendard","Inter",-apple-system,sans-serif;margin:0;padding:0;background:#f6f7fb;color:#0d1b2a}
+header{background:linear-gradient(120deg,#1b402b,#45bf63);color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{margin:0;font-size:22px}
+main{max-width:1120px;margin:24px auto 40px;padding:0 18px}
+section{background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:18px 18px 12px;margin-bottom:16px}
+label{display:block;font-weight:600;margin:12px 0 6px}
+input,textarea,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #d9dde5;background:#fafbff;font-size:14px}
+textarea{resize:vertical;min-height:80px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.muted{color:#5f6c7b;font-size:13px}button{cursor:pointer;border:none;border-radius:12px;padding:10px 14px;font-weight:700}
+.ghost{background:#eef2f8;color:#1b402b}.primary{background:#1b402b;color:#fff}.danger{color:#b42318;background:#fdecec}
+.unit{border:1px solid #e1e6ef;border-radius:12px;padding:12px;margin-top:10px}.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.badge{background:#45bf63;color:#fff;padding:4px 8px;border-radius:8px;font-size:12px}#log{white-space:pre-wrap;background:#0b1c2c;color:#d7f9e9;padding:12px;border-radius:10px;font-family:ui-monospace,Consolas;min-height:60px}
+.small{font-size:12px;color:#4b5563}.preview{border:1px solid #d9dde5;border-radius:10px;padding:10px;min-height:60px;background:#fdfefe}
+.card{border:1px solid #e1e6ef;border-radius:14px;padding:14px;margin-top:10px;background:#fcfdff;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:10px;background:#eef2f8;font-size:12px}.stack{display:flex;flex-direction:column;gap:10px}
+.line{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}.line input,.line textarea{flex:1}
+.preview-book{border:1px solid #e1e6ef;border-radius:12px;padding:12px;margin-top:10px;background:#fff}
+.preview-ch{margin-top:10px;padding:10px;border:1px dashed #d9dde5;border-radius:10px}
+</style></head>
+<body>
+<header><div><h1>코스 빌더</h1><div class="muted">교재 1개 + 모듈화된 동작으로 코스 설계</div></div>
+<div class="flex" style="gap:10px;align-items:center;"><input id="tokenInput" placeholder="Bearer 토큰 (비워두면 자동 발급)" style="width:260px;background:rgba(255,255,255,0.14);color:white;border-color:rgba(255,255,255,0.25);" />
+<button class="ghost" onclick="autoToken()">토큰 자동</button><button class="ghost" onclick="loadCourses()">불러오기</button><button class="primary" onclick="submitCourse()">코스 저장</button></div></header>
+<main>
+<section>
+  <div class="row"><div><label>코스 ID (영문)</label><input id="courseId" placeholder="ex) algebra-foundation" /></div>
+  <div><label>난이도</label><select id="difficulty"><option value="">선택</option><option value="초급">초급</option><option value="중급">중급</option><option value="고급">고급</option></select></div></div>
+  <label>코스 제목</label><input id="title" placeholder="예: 미적분 완전정복 (8주)" />
+  <label>코스 설명</label><textarea id="description" placeholder="누가, 무엇을, 어떻게 학습하는지"></textarea>
+  <div class="row"><div><label>학습 기간/분량</label><input id="duration" placeholder="예: 2주, 6주, 12시간" /></div>
+  <div><label>목표 OVR (선택)</label><input id="targetOvr" type="number" min="0" max="400" step="1" value="0" /></div></div>
+  <div class="row"><div><label>태그 (콤마 구분)</label><input id="tags" placeholder="미적분, 수열, 기출" /></div>
+  <div><label>집중 키워드</label><input id="focusTags" placeholder="미분, 적분" /></div></div>
+  <label>일정/진행 메모</label><input id="schedule" placeholder="예: 주 2회 1시간, 2주차 모의고사" />
+  <div class="flex" style="margin-top:10px;"><label style="margin:0;">데모코스</label><input id="isDemo" type="checkbox" /><span class="muted">체험 전용일 때 체크</span></div>
+</section>
+
+<section>
+  <div class="flex" style="justify-content:space-between;align-items:center;">
+    <div><strong>교재 만들기 · 학생 뷰 미리보기</strong><div class="muted">코스당 교재 1개. 챕터/섹션/문단을 플러터 학생 뷰처럼 편집하고 바로 미리보기.</div></div>
+    <div class="flex" style="gap:8px;align-items:center;">
+      <button class="ghost" onclick="addChapter()">+ 챕터 추가</button>
+      <button class="primary" onclick="createAndAttachTextbook()">교재 생성 & 지정</button>
+    </div>
+  </div>
+  <div class="row"><div><label>교재 제목</label><input id="tbTitle" placeholder="예: 미적분 개념서" /></div><div><label>교재 부제목</label><input id="tbSubtitle" placeholder="예: 극한·미분·적분 핵심" /></div></div>
+  <label>태그 (선택)</label><input id="tbTags" placeholder="미적분, 개념, 실습" />
+  <div id="chapters" class="stack" style="margin-top:12px;"></div>
+  <div class="row" style="margin-top:12px;"><div><label>수식 입력기 (LaTeX)</label><input id="tbLatex" placeholder="예: \\int_0^1 x^2 dx" oninput="updateLatexPreview()" /></div>
+  <div><label>수식 미리보기</label><div id="latexPreview" class="preview">입력하면 즉시 렌더링됩니다.</div></div></div>
+  <div class="small">지정 교재 ID: <span id="tbIdDisplay">(없음)</span> · 총 페이지: <span id="tbPagesDisplay">0P</span></div>
+  <div class="preview-book" id="bookPreview">
+    <div class="muted">학생 뷰 미리보기: 교재를 만들면 여기서 구조를 확인합니다.</div>
+  </div>
+</section>
+
+<section>
+  <div class="flex" style="justify-content:space-between;align-items:center;">
+    <div><strong>AI 커리큘럼 빌더</strong><div class="muted">블록 순서만 추천 (교재 생성 없음)</div></div>
+    <button class="primary" onclick="aiBuild()">AI 자동 배열</button>
+  </div>
+  <div class="row"><div><label>학습 목표 / 요구사항</label><textarea id="aiGoal" placeholder="예: 2주 안에 극한·미분 완료"></textarea></div>
+  <div><label>난이도 / 총 학습 시간(분)</label><div class="row"><div><select id="aiDifficulty"><option value="초급">초급</option><option value="중급">중급</option><option value="고급">고급</option></select></div><div><input id="aiMinutes" type="number" min="30" step="10" value="90" /></div></div>
+  <label>교재 제목 / 소제목(배열 참고용)</label><div class="row"><input id="aiTextbookTitle" placeholder="예: 미적분 핵심 노트" /><input id="aiTextbookSubtitle" placeholder="예: 극한~적분 압축" /></div></div></div>
+</section>
+
+<section>
+  <div class="flex" style="justify-content:space-between;align-items:center;">
+    <div><strong>모듈 구성</strong><div class="muted">모듈 유형을 선택하면 필요한 동작 입력칸이 나타납니다. (문제 풀이 / 교재 열람)</div></div>
+    <button class="ghost" onclick="addUnit()">+ 모듈 추가</button>
+  </div>
+  <div id="units"></div>
+</section>
+
+<datalist id="tagList"></datalist>
+
+<section>
+  <div class="flex" style="justify-content:space-between;align-items:center;">
+    <div><strong>로그</strong><div class="muted">토큰/교재/문제/코스 저장 결과</div></div>
+    <button class="ghost" onclick="clearLog()">지우기</button>
+  </div>
+  <div id="log"></div>
+</section>
+</main>
+
+<script>
+const unitsEl=document.getElementById('units');
+const logEl=document.getElementById('log');
+const chaptersEl=document.getElementById('chapters');
+const previewEl=document.getElementById('bookPreview');
+const tagListEl=document.getElementById('tagList');
+let latestTextbookId='';
+let bookPages=0;
+let chapters=[];
+let allTags=[];
+
+const uid=()=>Math.random().toString(16).slice(2)+Date.now().toString(16);
+function log(msg){const t=new Date().toLocaleTimeString();logEl.textContent=`[${t}] ${msg}\n`+logEl.textContent;}
+function clearLog(){logEl.textContent='';}
+
+async function autoToken(){try{const r=await fetch('/auth/anonymous',{method:'POST'});const d=await r.json();if(!r.ok)throw new Error(d.detail||r.statusText);if(!d.token)throw new Error('토큰 없음');document.getElementById('tokenInput').value=d.token;log('익명 토큰 발급');}catch(e){log('토큰 발급 실패: '+e.message);}}
+async function ensureToken(){const i=document.getElementById('tokenInput');if(i.value.trim())return i.value.trim();await autoToken();return i.value.trim();}
+
+function updateLatexPreview(){const latex=document.getElementById('tbLatex').value||'';const box=document.getElementById('latexPreview');box.textContent=latex?`$$${latex}$$`:'입력하면 즉시 렌더링됩니다.';if(window.MathJax&&window.MathJax.typesetPromise){MathJax.typesetPromise([box]).catch(console.error);} }
+
+function newSection(){return{id:uid(),title:'',paragraphs:[''],images:[]};}
+function newChapter(){return{id:uid(),title:'',sections:[newSection()]};}
+
+function computePages(){let pages=0;chapters.forEach(ch=>{pages+=1;pages+=ch.sections.length;});return pages;}
+
+function addChapter(){chapters.push(newChapter());renderChapters();}
+function renderChapters(){if(!chapters.length)chapters.push(newChapter());chaptersEl.innerHTML='';chapters.forEach((ch,ci)=>{const card=document.createElement('div');card.className='card';card.dataset.ch=ch.id;card.innerHTML=`<div class="flex" style="justify-content:space-between;align-items:center;"><div class="chip">챕터 ${ci+1}</div><div class="flex" style="gap:6px;"><button class="ghost" data-action="add-section" data-ch="${ch.id}">+ 섹션 추가</button><button class="ghost danger" data-action="remove-ch" data-ch="${ch.id}">삭제</button></div></div><label>챕터 제목</label><input data-action="ch-title" data-ch="${ch.id}" value="${ch.title||''}" />
+<div data-list="sections" data-ch="${ch.id}" class="stack" style="margin-top:8px;"></div>`;chaptersEl.appendChild(card);
+  const sWrap=card.querySelector('[data-list="sections"]');sWrap.innerHTML='';ch.sections.forEach((sec,si)=>{const sCard=document.createElement('div');sCard.className='card';sCard.style.background='#fff';sCard.dataset.sec=sec.id; sCard.innerHTML=`<div class="flex" style="justify-content:space-between;align-items:center;"><div class="chip">섹션 ${si+1}</div><button class="ghost danger" data-action="remove-sec" data-ch="${ch.id}" data-sec="${sec.id}">삭제</button></div><label>섹션 제목</label><input data-action="sec-title" data-ch="${ch.id}" data-sec="${sec.id}" value="${sec.title||''}" /><div style="font-weight:600;margin-top:6px;">문단</div><div data-list="paras" data-ch="${ch.id}" data-sec="${sec.id}"></div><button class="ghost" data-action="add-para" data-ch="${ch.id}" data-sec="${sec.id}">+ 문단 추가</button><div style="font-weight:600;margin-top:10px;">이미지 URL</div><div data-list="imgs" data-ch="${ch.id}" data-sec="${sec.id}"></div><button class="ghost" data-action="add-img" data-ch="${ch.id}" data-sec="${sec.id}">+ 이미지 추가</button>`;sWrap.appendChild(sCard);
+    const pWrap=sCard.querySelector('[data-list="paras"]');pWrap.innerHTML='';sec.paragraphs.forEach((p,pi)=>{const line=document.createElement('div');line.className='line';line.innerHTML=`<textarea data-action="para" data-ch="${ch.id}" data-sec="${sec.id}" data-idx="${pi}" rows="2" placeholder="문단 ${pi+1}">${p||''}</textarea><button class="ghost danger" data-action="remove-para" data-ch="${ch.id}" data-sec="${sec.id}" data-idx="${pi}">X</button>`;pWrap.appendChild(line);});
+    const iWrap=sCard.querySelector('[data-list="imgs"]');iWrap.innerHTML='';sec.images.forEach((img,ii)=>{const line=document.createElement('div');line.className='line';line.innerHTML=`<input data-action="img" data-ch="${ch.id}" data-sec="${sec.id}" data-idx="${ii}" placeholder="이미지 URL ${ii+1}" value="${img||''}" /><button class="ghost danger" data-action="remove-img" data-ch="${ch.id}" data-sec="${sec.id}" data-idx="${ii}">X</button>`;iWrap.appendChild(line);});
+  });
+});
+  renderPreview();
+}
+chaptersEl.addEventListener('click',e=>{const a=e.target.dataset.action;if(!a)return;e.preventDefault();const chId=e.target.dataset.ch;const secId=e.target.dataset.sec;const idx=Number(e.target.dataset.idx);const ch=chapters.find(c=>c.id===chId);const sec=ch?.sections.find(s=>s.id===secId);switch(a){case'add-section':ch.sections.push(newSection());break;case'remove-ch':chapters=chapters.filter(c=>c.id!==chId);break;case'remove-sec':ch.sections=ch.sections.filter(s=>s.id!==secId);if(!ch.sections.length)ch.sections.push(newSection());break;case'add-para':sec.paragraphs.push('');break;case'remove-para':sec.paragraphs.splice(idx,1);if(!sec.paragraphs.length)sec.paragraphs.push('');break;case'add-img':sec.images.push('');break;case'remove-img':sec.images.splice(idx,1);break;}renderChapters();});
+chaptersEl.addEventListener('input',e=>{const a=e.target.dataset.action;if(!a)return;const chId=e.target.dataset.ch;const secId=e.target.dataset.sec;const idx=Number(e.target.dataset.idx);const ch=chapters.find(c=>c.id===chId);const sec=ch?.sections.find(s=>s.id===secId);if(a==='ch-title')ch.title=e.target.value;if(a==='sec-title')sec.title=e.target.value;if(a==='para')sec.paragraphs[idx]=e.target.value;if(a==='img')sec.images[idx]=e.target.value;renderPreview();});
+
+function renderPreview(){const title=document.getElementById('tbTitle').value.trim();const sub=document.getElementById('tbSubtitle').value.trim();let html=`<div style="font-weight:800;font-size:18px;">${title||'교재 제목 미입력'}</div><div class="muted" style="margin-bottom:8px;">${sub||'부제목/설명'}</div>`;chapters.forEach((ch,ci)=>{html+=`<div class="preview-ch"><div style="font-weight:700;">챕터 ${ci+1}. ${ch.title||'제목 없음'}</div>`;ch.sections.forEach((s,si)=>{html+=`<div style="margin-top:6px; font-weight:600;">${ci+1}-${si+1}. ${s.title||'섹션 제목 없음'}</div>`;s.paragraphs.forEach(p=>{html+=`<div style="margin:2px 0; line-height:1.4;">${p||''}</div>`;});if(s.images.length)html+=`<div class="muted" style="margin-top:4px;">이미지 ${s.images.length}개 링크 포함</div>`;});html+='</div>';});previewEl.innerHTML=html || '<div class="muted">학생 뷰 미리보기: 교재를 만들면 여기 표시됩니다.</div>';bookPages=computePages();document.getElementById('tbPagesDisplay').textContent=`${bookPages}P`;if(window.MathJax&&window.MathJax.typesetPromise){MathJax.typesetPromise([previewEl]).catch(console.error);} }
+
+function addUnit(prefill={}){const wrap=document.createElement('div');wrap.className='unit';wrap.innerHTML=`<div class="flex" style="justify-content:space-between;align-items:center;"><div class="badge">모듈</div><button class="ghost" type="button" onclick="this.closest('.unit').remove()">삭제</button></div><label>모듈 제목</label><input class="u-title" placeholder="예: 문제 풀이 1" value="${prefill.title||''}" /><label>모듈 유형</label><select class="u-type"><option value="문제 풀이 모듈">문제 풀이 모듈</option><option value="교재 열람 모듈">교재 열람 모듈</option></select><div class="card" style="margin-top:10px;"><div class="chip">설정</div><div data-body></div></div><label>예상 소요(분)</label><input class="u-minutes" type="number" min="0" value="${prefill.estimated_minutes||15}" />`;
+  unitsEl.appendChild(wrap);
+  const typeSel=wrap.querySelector('.u-type');
+  typeSel.value=prefill.type||'문제 풀이 모듈';
+  renderUnitBody(wrap,typeSel.value,prefill.detail);
+  typeSel.addEventListener('change',e=>renderUnitBody(wrap,e.target.value));
+}
+
+function renderUnitBody(unit,type,detail){const body=unit.querySelector('[data-body]');const bookInfo=latestTextbookId?`현재 교재 ${latestTextbookId} (${bookPages}P)`:'교재 없음';if(type==='문제 풀이 모듈'){const d=detail||{};const diff=d.difficulty_label||'중';body.innerHTML=`<div class="row"><div><label>해시태그</label><input class="m-tags" list="tagList" placeholder="해시태그를 선택/입력" value="${(d.hash_tags||[]).join(', ')}" /></div><div><label>생성할 문제 수</label><input class="m-count" type="number" min="1" value="${d.question_count||5}" /></div></div><div class="row"><div><label>난이도</label><select class="m-diff"><option value="하"${diff==='하'?' selected':''}>하</option><option value="중"${diff==='중'?' selected':''}>중</option><option value="상"${diff==='상'?' selected':''}>상</option></select></div><div><label>통과 정답률(%)</label><input class="m-pass" type="number" min="1" max="100" value="${d.pass_rate||100}" /></div></div><div class="small">해시태그는 fix_gen.py에 정의된 목록만 자동완성됩니다.</div>`;}else{body.innerHTML=`<div class="row3"><div><label>열람 시작 페이지</label><input class="m-from" type="number" min="1" value="1" /></div><div><label>열람 종료 페이지</label><input class="m-to" type="number" min="1" value="1" /></div><div><label>최소 이수 시간(분)</label><input class="m-minutes" type="number" min="0" value="0" /></div></div><div class="flex" style="margin-top:8px;"><label style="margin:0;">최소 이수시간 적용</label><input class="m-enforce" type="checkbox" /><span class="muted">${bookInfo}</span></div><div class="small">종료 페이지는 교재 총 ${bookPages}P 이내여야 합니다.</div>`;if(detail&&detail.page_to){body.querySelector('.m-from').value=detail.page_from||1;body.querySelector('.m-to').value=detail.page_to;body.querySelector('.m-minutes').value=detail.min_minutes||0;body.querySelector('.m-enforce').checked=!!detail.enforce_min_minutes;}}
+}
+
+function requireField(v,l){if(!v||!v.trim())throw new Error(`${l}를(을) 입력해주세요.`);return v.trim();}
+
+async function createAndAttachTextbook(){try{const token=await ensureToken();const title=requireField(document.getElementById('tbTitle').value,'교재 제목');const subtitle=document.getElementById('tbSubtitle').value.trim();const tags=(document.getElementById('tbTags').value||'').split(',').map(t=>t.trim()).filter(Boolean);const latex=document.getElementById('tbLatex').value.trim();const payloadChapters=chapters.map((ch,ci)=>{const sections=ch.sections.map((sec,si)=>({title:(sec.title||'').trim()||`섹션 ${si+1}`,paragraphs:sec.paragraphs.map(p=>p.trim()).filter(Boolean),images:sec.images.map(i=>i.trim()).filter(Boolean)})).filter(s=>s.paragraphs.length||s.images.length||s.title);return{title:(ch.title||'').trim()||`챕터 ${ci+1}`,intro:[],sections:sections.length?sections:[{title:'섹션 1',paragraphs:[],images:[]}]};}).filter(c=>c.sections.length);
+  const payload={title,subtitle,tags,category:'custom',chapters:payloadChapters};
+  if(latex){if(!payload.chapters.length)payload.chapters.push({title:'추가',intro:[],sections:[{title:'수식',paragraphs:[],images:[]} ]});const last=payload.chapters[payload.chapters.length-1].sections;last[last.length-1].paragraphs.push(`$${latex}$`);} 
+  log('교재 생성 요청...');const resp=await fetch('/textbooks',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(payload)});const data=await resp.json();if(!resp.ok)throw new Error(data.detail||resp.statusText);latestTextbookId=data.textbook_id;bookPages=computePages();document.getElementById('tbIdDisplay').textContent=latestTextbookId;document.getElementById('tbPagesDisplay').textContent=`${bookPages}P`;log('교재 생성 완료: '+latestTextbookId);}catch(e){log('교재 생성 실패: '+e.message);} }
+
+function buildPayload(){const payload={id:requireField(document.getElementById('courseId').value,'코스 ID'),title:requireField(document.getElementById('title').value,'코스 제목'),description:requireField(document.getElementById('description').value,'코스 설명'),difficulty:requireField(document.getElementById('difficulty').value,'난이도'),duration:requireField(document.getElementById('duration').value,'학습 기간/분량'),description_tags:(document.getElementById('tags').value||'').split(',').map(t=>t.trim()).filter(Boolean),focus_tags:(document.getElementById('focusTags').value||'').split(',').map(t=>t.trim()).filter(Boolean),schedule:document.getElementById('schedule').value||null,target_ovr:Number(document.getElementById('targetOvr').value||0),is_demo:document.getElementById('isDemo').checked,units:[],textbook_id:latestTextbookId||null,textbook_pages:bookPages};
+  if(!payload.textbook_id)throw new Error('교재를 먼저 생성/지정해주세요.');
+  if(bookPages<=0)throw new Error('교재에 최소 1개의 챕터/섹션을 추가하세요.');
+  const unitEls=Array.from(document.querySelectorAll('.unit'));if(!unitEls.length)throw new Error('모듈은 최소 1개 이상 필요합니다.');
+  unitEls.forEach((el,idx)=>{const title=requireField(el.querySelector('.u-title').value,`모듈 ${idx+1} 제목`);const type=el.querySelector('.u-type').value;const est=Number(el.querySelector('.u-minutes').value||0);let detail=null;let missionTitle='';if(type==='문제 풀이 모듈'){const tags=(el.querySelector('.m-tags').value||'').split(',').map(t=>t.trim()).filter(Boolean);if(!tags.length)throw new Error(`모듈 ${idx+1}: 해시태그를 선택하세요.`);const invalid=allTags.length?tags.filter(t=>!allTags.includes(t)):[];
+    if(invalid.length)throw new Error(`모듈 ${idx+1}: 미지원 해시태그 ${invalid.join(', ')}`);const count=Math.max(1,Number(el.querySelector('.m-count').value||1));const diff=el.querySelector('.m-diff').value||'중';const tier=diff==='하'?1:diff==='상'?5:3;const passRate=Math.min(100,Math.max(1,Number(el.querySelector('.m-pass').value||100)));detail={type:'problem_solve',hash_tags:tags,question_count:count,difficulty_label:diff,difficulty_tier:tier,pass_rate:passRate};missionTitle='문제 풀이';}else{const from=Math.max(1,Number(el.querySelector('.m-from').value||1));const to=Math.max(from,Number(el.querySelector('.m-to').value||from));if(to>bookPages)throw new Error(`모듈 ${idx+1}: 종료 페이지는 ${bookPages}P 이내여야 합니다.`);const minMinutes=Math.max(0,Number(el.querySelector('.m-minutes').value||0));const enforce=el.querySelector('.m-enforce').checked;detail={type:'textbook_view',textbook_id:payload.textbook_id,page_from:from,page_to:to,min_minutes:minMinutes,enforce_min_minutes:enforce,page_count:bookPages};missionTitle='교재 열람';}
+    payload.units.push({title,type:detail.type,detail:JSON.stringify(detail),estimated_minutes:est,missions:[{title:missionTitle,detail:JSON.stringify(detail),action_label:'Start'}]});
+  });
+  return payload;
+}
+
+function clearUnits(){unitsEl.innerHTML='';}
+function aiBuild(){clearUnits();addUnit({title:'문제 풀이 모듈'});addUnit({title:'교재 열람 모듈',type:'교재 열람 모듈'});log('AI 추천 템플릿을 배치했습니다. 필요에 맞게 수정하세요.');}
+
+async function submitCourse(){try{const token=await ensureToken();const payload=buildPayload();log('코스 저장 중...');const resp=await fetch('/courses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token.trim()},body:JSON.stringify(payload)});const data=await resp.json();if(!resp.ok)throw new Error(data.detail||resp.statusText);log('저장 완료: '+JSON.stringify(data,null,2));}catch(e){log('에러: '+e.message);} }
+
+async function loadCourses(){try{const token=await ensureToken();log('코스 목록을 불러옵니다...');const resp=await fetch('/courses',{headers:{'Authorization':'Bearer '+token.trim()}});const data=await resp.json();if(!resp.ok)throw new Error(data.detail||resp.statusText);if(!Array.isArray(data.courses))throw new Error('응답 형식 오류');log(`${data.courses.length}개 코스를 불러왔습니다.`);if(!data.courses.length)return;clearUnits();const c=data.courses[0];document.getElementById('courseId').value=c.id||'';document.getElementById('title').value=c.title||'';document.getElementById('description').value=c.description||'';document.getElementById('difficulty').value=c.difficulty||'';document.getElementById('duration').value=c.duration||'';document.getElementById('tags').value=(c.tags||[]).join(', ');document.getElementById('focusTags').value=(c.focus_tags||[]).join(', ');document.getElementById('schedule').value=c.schedule||'';document.getElementById('targetOvr').value=c.target_ovr||0;document.getElementById('isDemo').checked=!!c.is_demo;latestTextbookId=c.textbook_id||'';bookPages=c.textbook_pages||0;document.getElementById('tbIdDisplay').textContent=latestTextbookId||'(없음)';document.getElementById('tbPagesDisplay').textContent=`${bookPages}P`;if(Array.isArray(c.units)&&c.units.length){c.units.forEach(u=>{let detail={};try{detail=typeof u.detail==='string'?JSON.parse(u.detail):u.detail||{};}catch(_){}const isTextbook=detail.type==='textbook_view';addUnit({title:u.title||'',type:isTextbook?'교재 열람 모듈':'문제 풀이 모듈',estimated_minutes:u.estimated_minutes||0,detail});});}else{addUnit({title:'문제 풀이 모듈'});addUnit({title:'교재 열람 모듈',type:'교재 열람 모듈'});} }catch(e){log('에러: '+e.message);} }
+
+async function loadHashTags(){try{const resp=await fetch('/courses/hash-tags');const data=await resp.json();if(!resp.ok)throw new Error(data.detail||resp.statusText);allTags=data.tags||[];tagListEl.innerHTML=allTags.map(t=>`<option value="${t}">`).join('');}catch(e){log('해시태그 불러오기 실패: '+e.message);}}
+
+addChapter();renderChapters();addUnit();loadHashTags();
+</script>
+</body></html>
