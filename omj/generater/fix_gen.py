@@ -345,6 +345,9 @@ SUBJECT_TAG_RULES = [
 ]
 
 
+import functools
+
+@functools.lru_cache(maxsize=512)
 def _normalize_tag(tag: str) -> str:
     return tag.strip().lstrip("#").strip()
 
@@ -359,6 +362,25 @@ def _build_tag_mapping(hash_tags: List[str]) -> dict:
         if normalized and normalized not in mapping:
             mapping[normalized] = raw
     return mapping
+
+
+def _normalize_step_tags(tags: List[str], tag_mapping: dict) -> List[str]:
+    if not tags:
+        return []
+    seen = set()
+    resolved: List[str] = []
+    for tag in tags:
+        if not isinstance(tag, str):
+            continue
+        normalized = _normalize_tag(tag)
+        if not normalized:
+            continue
+        mapped = tag_mapping.get(normalized)
+        if not mapped or mapped in seen:
+            continue
+        seen.add(mapped)
+        resolved.append(mapped)
+    return resolved
 
 
 def _clean_hash_tags(hash_tags: List[str]) -> List[str]:
@@ -391,6 +413,10 @@ def _select_solve_step_tags(
     fallback = fallback_tag or tag_mapping[ordered_norms[0]]
     results = []
     for step in solves_flat:
+        ai_tags = _normalize_step_tags(getattr(step, "hash_tag", []) or [], tag_mapping)
+        if ai_tags:
+            results.append(ai_tags)
+            continue
         text = " ".join(
             [
                 _content_to_text(step.flow),
@@ -423,6 +449,32 @@ def _content_to_text(content: ContentBlocks | dict | list | str | None) -> str:
         return str(content)
 
 
+def _has_content(content: ContentBlocks | dict | list | str | None) -> bool:
+    return bool(_content_to_text(content).strip())
+
+
+def _to_blocks(content: ContentBlocks | dict | list | str | None) -> ContentBlocks:
+    if isinstance(content, ContentBlocks):
+        return content
+    return ContentBlocks.model_validate(content)
+
+
+def _fallback_blocks() -> ContentBlocks:
+    return ContentBlocks.model_validate({"blocks": [{"type": "text", "content": "-"}]})
+
+
+def _ensure_blocks(
+    primary: ContentBlocks | dict | list | str | None,
+    *fallbacks: ContentBlocks | dict | list | str | None,
+) -> ContentBlocks:
+    if _has_content(primary):
+        return _to_blocks(primary)
+    for fallback in fallbacks:
+        if _has_content(fallback):
+            return _to_blocks(fallback)
+    return _fallback_blocks()
+
+
 def generate_quest_id(subject_code: int) -> str:
     """Build quest ID: {subject_code}/{yymmdd}/{hhmmssff}"""
     if not isinstance(subject_code, int):
@@ -430,7 +482,7 @@ def generate_quest_id(subject_code: int) -> str:
 
     now = datetime.now()
     date_part = now.strftime("%y%m%d")
-    time_part = f"{now:%H%M%S}{int(now.microsecond / 10000):02d}"
+    time_part = f"{now:%H%M%S%f}"
     return f"{subject_code:03d}/{date_part}/{time_part}"
 
 
@@ -542,11 +594,23 @@ def _convert_ai_solves(
         except StopIteration as exc:
             raise ValueError("insufficient tags for solve steps") from exc
 
+        flow = _ensure_blocks(ai_step.flow, ai_step.hint_riddle, ai_step.answer_riddle)
+        hint_riddle = _ensure_blocks(
+            ai_step.hint_riddle,
+            ai_step.flow,
+            ai_step.answer_riddle,
+        )
+        answer_riddle = _ensure_blocks(
+            ai_step.answer_riddle,
+            ai_step.flow,
+            ai_step.hint_riddle,
+        )
+
         step = SolveStep(
-            flow=ai_step.flow,
+            flow=flow,
             hash_tag=tags_for_step,
-            hint_riddle=ai_step.hint_riddle,
-            answer_riddle=ai_step.answer_riddle,
+            hint_riddle=hint_riddle,
+            answer_riddle=answer_riddle,
             enter_huddle=ai_step.enter_huddle,
             branches=_convert_ai_solves(ai_step.branches, tag_iter),
         )

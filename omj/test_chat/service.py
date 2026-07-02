@@ -5,6 +5,9 @@ from typing import Any, Dict, List, Optional, Tuple
 from google import genai
 
 from storage.storage import get_quest
+from env_loader import load_env
+
+load_env()
 
 COMETAPI_KEY = os.environ.get("COMETAPI_KEY")
 BASE_URL = "https://api.cometapi.com"
@@ -140,7 +143,7 @@ def _generate_chat_response(prompt: str) -> str:
         raise RuntimeError("COMETAPI_KEY is not set")
 
     response = _client.models.generate_content(
-        model="gemini-2.5-flash-lite",
+        model="gemini-3.1-flash-lite",
         contents=prompt,
     )
     text = (response.text or "").strip()

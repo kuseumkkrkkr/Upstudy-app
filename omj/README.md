@@ -8,7 +8,9 @@ CLI and API server that build math quest data with a Gemini-based model and stor
 - API packages: fastapi, uvicorn, pyjwt, reportlab
 
 ## Setup
-- Set `COMETAPI_KEY` in your environment.
+- Create a `.env` file (recommended) and set `COMETAPI_KEY`.
+  - Example: `COMETAPI_KEY=...`
+- Or set `COMETAPI_KEY` in your shell environment.
   - PowerShell example: `$env:COMETAPI_KEY="..."`.
 - Install deps: `pip install -r requirements.txt`
 
@@ -46,6 +48,9 @@ API endpoints:
 - Stores records in `quests.db`:
 - `quest_header`, `quest_info`, `quest_data`, `solve_step`.
  - `exam`, `exam_item` for exam sessions.
+
+Rating / ELO documentation:
+- [RATING_ALGORITHM.md](./RATING_ALGORITHM.md) - rating input variables, derived signals, and output fields.
 
 Difficulty formula:
 `difficulty = 1*hashtag_count + 4*total_flow_count + 3*branch_lane_count + 2*sum(enter_huddle)`. Branching flows are stored as JSON in the `branches` column of `solve_step`.

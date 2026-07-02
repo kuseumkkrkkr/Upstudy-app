@@ -37,8 +37,11 @@ def init_exam_db() -> None:
             solves_count INTEGER NOT NULL,
             strategy_level INTEGER NOT NULL,
             branch_conditions INTEGER NOT NULL,
+            question_type TEXT,
             quest_id TEXT,
             flow_count INTEGER,
+            codebase_id INTEGER,
+            seed INTEGER,
             error TEXT,
             FOREIGN KEY (exam_id) REFERENCES exam(exam_id)
         )
@@ -52,8 +55,19 @@ def init_exam_db() -> None:
         """
     )
 
+    _ensure_column(cursor, "exam_item", "question_type", "TEXT")
+    _ensure_column(cursor, "exam_item", "codebase_id", "INTEGER")
+    _ensure_column(cursor, "exam_item", "seed", "INTEGER")
+
     conn.commit()
     conn.close()
+
+
+def _ensure_column(cursor: sqlite3.Cursor, table: str, column: str, definition: str) -> None:
+    cursor.execute(f"PRAGMA table_info({table})")
+    existing = {row[1] for row in cursor.fetchall()}
+    if column not in existing:
+        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def _now_iso() -> str:
@@ -109,8 +123,11 @@ def add_exam_items(exam_id: str, items: List[Dict[str, Any]]) -> None:
             item["solves_count"],
             item["strategy_level"],
             item["branch_conditions"],
+            item.get("question_type"),
             item.get("quest_id"),
             item.get("flow_count"),
+            int(item["codebase_id"]) if item.get("codebase_id") is not None else None,
+            int(item["seed"]) if item.get("seed") is not None else None,
             item.get("error"),
         )
         for item in items
@@ -127,11 +144,14 @@ def add_exam_items(exam_id: str, items: List[Dict[str, Any]]) -> None:
             solves_count,
             strategy_level,
             branch_conditions,
+            question_type,
             quest_id,
             flow_count,
+            codebase_id,
+            seed,
             error
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         payload,
     )
@@ -146,6 +166,8 @@ def update_exam_item(
     status: Optional[str] = None,
     quest_id: Optional[str] = None,
     flow_count: Optional[int] = None,
+    codebase_id: Optional[int] = None,
+    seed: Optional[int] = None,
     error: Optional[str] = None,
 ) -> None:
     updates = []
@@ -159,6 +181,12 @@ def update_exam_item(
     if flow_count is not None:
         updates.append("flow_count = ?")
         params.append(flow_count)
+    if codebase_id is not None:
+        updates.append("codebase_id = ?")
+        params.append(int(codebase_id))
+    if seed is not None:
+        updates.append("seed = ?")
+        params.append(int(seed))
     if error is not None:
         updates.append("error = ?")
         params.append(error)
@@ -212,8 +240,11 @@ def get_exam_items(exam_id: str) -> List[Dict[str, Any]]:
             solves_count,
             strategy_level,
             branch_conditions,
+            question_type,
             quest_id,
             flow_count,
+            codebase_id,
+            seed,
             error
         FROM exam_item
         WHERE exam_id = ?
@@ -235,9 +266,12 @@ def get_exam_items(exam_id: str) -> List[Dict[str, Any]]:
                 "solves_count": row[5],
                 "strategy_level": row[6],
                 "branch_conditions": row[7],
-                "quest_id": row[8],
-                "flow_count": row[9],
-                "error": row[10],
+                "question_type": row[8],
+                "quest_id": row[9],
+                "flow_count": row[10],
+                "codebase_id": row[11],
+                "seed": row[12],
+                "error": row[13],
             }
         )
     return items

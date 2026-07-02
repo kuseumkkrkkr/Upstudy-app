@@ -1,15 +1,30 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 
-import 'auth/login_page.dart';
-import 'auth/sign_up.dart';
-import 'landing/landing_page.dart';
-import 'pages.dart';
+import 'package:s11/app/router.dart';
+import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/auth/auth_storage.dart';
+import 'package:s11/shared/theme/app_colors.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _initKakaoSdk();
-  runApp(const AIFlowApp());
+
+  final storedToken = await AuthStorage.instance.readToken() ?? '';
+  final storedUsername = await AuthStorage.instance.readUsername();
+  if (storedToken.isNotEmpty) {
+    await ApiClient.instance.setToken(
+      storedToken,
+      username: storedUsername,
+    );
+  }
+
+  runApp(
+    AIFlowApp(
+      initialToken: storedToken,
+      initialUsername: storedUsername,
+    ),
+  );
 }
 
 void _initKakaoSdk() {
@@ -36,7 +51,14 @@ void _initKakaoSdk() {
 }
 
 class AIFlowApp extends StatelessWidget {
-  const AIFlowApp({super.key});
+  const AIFlowApp({
+    super.key,
+    this.initialToken = '',
+    this.initialUsername,
+  });
+
+  final String initialToken;
+  final String? initialUsername;
 
   @override
   Widget build(BuildContext context) {
@@ -45,20 +67,13 @@ class AIFlowApp extends StatelessWidget {
       title: 'AIFlow',
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF45BF63),
+        colorSchemeSeed: AppColors.primaryLight,
       ),
-      home: const LandingPage(),
-      routes: {
-        LoginPage.routeName: (_) => const LoginPage(),
-        BuildpageWidget.routeName: (_) => const BuildpageWidget(),
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == AppShell.routeName) {
-          final token = settings.arguments as String? ?? '';
-          return MaterialPageRoute(builder: (_) => AppShell(token: token));
-        }
-        return null;
-      },
+      initialRoute: initialToken.isNotEmpty
+          ? AppRoutes.app
+          : AppRoutes.landing,
+      routes: appRoutes(context),
+      onGenerateRoute: onGenerateAppRoute,
     );
   }
 }

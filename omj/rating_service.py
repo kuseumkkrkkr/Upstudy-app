@@ -34,8 +34,16 @@ def _normalize_tag(tag: str) -> str:
     return (tag or "").strip().lstrip("#").strip().lower()
 
 
+_EXCLUDED_TAGS = {_normalize_tag("사칙연산")}
+
+
 def _clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
+
+
+def _difficulty_signal(difficulty: float) -> float:
+    logged = math.log1p(max(0.0, difficulty))
+    return (logged - CONFIG.DIFFICULTY_LOG_CENTER) / CONFIG.DIFFICULTY_LOG_SCALE
 
 
 def compute_expected_score(user_rating: float, problem_rating: float) -> float:
@@ -69,14 +77,13 @@ def compute_barrier(enter_huddles: List[float], main_huddle: float) -> float:
 
 
 def compute_problem_weight(difficulty: float, barrier: float) -> float:
-    w_tag = 1.0
-    w_barrier = barrier / 10.0
-    w_diff = difficulty / 10.0
-    return CONFIG.LAMBDA * w_tag + CONFIG.MU * w_barrier + CONFIG.NU * w_diff
+    signal = _difficulty_signal(difficulty)
+    return _clamp(0.82 + 0.12 * signal + 0.03 * barrier, 0.75, 1.25)
 
 
 def compute_problem_rating(difficulty: float, barrier: float) -> float:
-    return _clamp(1000.0 + 40.0 * difficulty + 30.0 * barrier, 800.0, 2200.0)
+    signal = _difficulty_signal(difficulty)
+    return _clamp(1080.0 + 180.0 * signal + 24.0 * barrier, 900.0, 1700.0)
 
 
 def compute_time_factor(answer_time: Optional[float], flow_rate: float, main_huddle: float) -> float:
@@ -119,7 +126,7 @@ def _build_tag_flow_map(steps: List[Dict[str, Any]]) -> Dict[str, List[float]]:
             continue
         for raw in tags:
             norm = _normalize_tag(str(raw))
-            if not norm:
+            if not norm or norm in _EXCLUDED_TAGS:
                 continue
             tag_map.setdefault(norm, []).append(enter_value)
     return tag_map
@@ -155,7 +162,7 @@ def _build_tag_correct_map(
             continue
         for raw in tags:
             norm = _normalize_tag(str(raw))
-            if not norm:
+            if not norm or norm in _EXCLUDED_TAGS:
                 continue
             counts = tag_counts.setdefault(norm, {"correct": 0, "incorrect": 0})
             if correctness:
@@ -213,24 +220,24 @@ def apply_rating_update(
     user_id: str,
     quest: Dict[str, Any],
     is_correct: bool,
-    tags: Iterable[str],
-    step_correctness: List[Dict[str, Any]],
-    answer_time: Optional[float] = None,
-    submission_id: Optional[str] = None,
+    submitted_tags: Iterable[str],
+    step_outcomes: List[Dict[str, Any]],
+    response_time_seconds: Optional[float] = None,
+    submission_ref: Optional[str] = None,
 ) -> RatingResult:
-    normalized_tags = [_normalize_tag(tag) for tag in tags if _normalize_tag(tag)]
-    normalized_tags = list(dict.fromkeys(normalized_tags))
+    unique_tags = [_normalize_tag(tag) for tag in submitted_tags if _normalize_tag(tag)]
+    unique_tags = list(dict.fromkeys(unique_tags))
 
-    info = quest.get("info", {}) or {}
-    difficulty = float(info.get("difficulty") or 0)
-    main_huddle = float(info.get("main_huddle") or 0)
-    flow_rate = float(info.get("flow_rate") or 0)
+    quest_info = quest.get("info", {}) or {}
+    quest_difficulty = float(quest_info.get("difficulty") or 0)
+    main_huddle = float(quest_info.get("main_huddle") or 0)
+    quest_flow_rate = float(quest_info.get("flow_rate") or 0)
 
-    solves = quest.get("solves") or []
-    flat_steps = _flatten_solve_steps(solves)
-    tag_flow_map = _build_tag_flow_map(flat_steps)
-    total_flow_count = len(flat_steps)
-    tag_correct_map = _build_tag_correct_map(flat_steps, step_correctness)
+    solve_steps = quest.get("solves") or []
+    flattened_steps = _flatten_solve_steps(solve_steps)
+    tag_flow_by_tag = _build_tag_flow_map(flattened_steps)
+    total_step_count = len(flattened_steps)
+    tag_correct_by_tag = _build_tag_correct_map(flattened_steps, step_outcomes)
 
     now = _now_utc()
 
@@ -240,8 +247,8 @@ def apply_rating_update(
     try:
         conn.execute("BEGIN IMMEDIATE")
 
-        if submission_id:
-            if not mark_submission(conn, user_id=user_id, submission_id=submission_id):
+        if submission_ref:
+            if not mark_submission(conn, user_id=user_id, submission_id=submission_ref):
                 # already processed
                 user = get_user(conn, user_id)
                 if not user:
@@ -264,7 +271,7 @@ def apply_rating_update(
         if not user:
             user = create_user(conn, user_id=user_id, rating=CONFIG.DEFAULT_RATING)
 
-        user_rating = float(user["rating"])
+        current_rating = float(user["rating"])
         lose_streak = int(user["lose_streak"])
         last_attempt_at = _parse_iso(user.get("last_attempt_at"))
         recent_results_raw = user.get("recent_results") or "[]"
@@ -278,128 +285,130 @@ def apply_rating_update(
         recent_count = int(user.get("recent_count") or 0)
         recent_sum = int(user.get("recent_sum") or 0)
 
-        tag_stats = get_tag_stats(conn, user_id, normalized_tags)
+        user_tag_stats = get_tag_stats(conn, user_id, unique_tags)
 
-        r_u = _clamp(user_rating / CONFIG.U_MAX, 0.0, 1.0)
-        r_r = recent_sum / recent_count if recent_count > 0 else 0.5
+        # User rating 자체는 expected_score에 이미 반영되므로,
+        # confidence는 과도한 상향 편향을 막기 위해 기준값 1.0으로 둔다.
+        user_confidence = 1.0
+        recent_accuracy_signal = recent_sum / recent_count if recent_count > 0 else 0.5
         if last_attempt_at:
             days = max(0.0, (now - last_attempt_at).total_seconds() / 86400.0)
-            r_t = math.exp(-days / CONFIG.TAU_DAYS)
+            recency_signal = math.exp(-days / CONFIG.TAU_DAYS)
         else:
-            r_t = 1.0
+            recency_signal = 1.0
 
-        base_time_factor = compute_time_factor(answer_time, flow_rate, main_huddle)
+        time_signal = compute_time_factor(response_time_seconds, quest_flow_rate, main_huddle)
 
-        k_eff = compute_k_factor(lose_streak)
-        delta_user = 0.0
+        effective_k_factor = compute_k_factor(lose_streak)
+        rating_delta_total = 0.0
 
         tag_updates: List[Dict[str, Any]] = []
         tag_rating_sum = float(user.get("tag_rating_sum") or 0.0)
         tag_rating_count = int(user.get("tag_rating_count") or 0)
 
         # compute weights denominator
-        valid_flow_count = total_flow_count if total_flow_count > 0 else 0
+        flow_step_count = total_step_count if total_step_count > 0 else 0
 
-        for tag in normalized_tags:
-            flows_t = tag_flow_map.get(tag, [])
-            if not flows_t:
+        for tag in unique_tags:
+            tag_flow_entries = tag_flow_by_tag.get(tag, [])
+            if not tag_flow_entries:
                 # still track attempts, but skip rating update
-                stats = tag_stats.get(tag)
+                stats = user_tag_stats.get(tag)
                 attempts = int(stats["attempts"]) + 1 if stats else 1
-                rating_value = float(stats["rating"]) if stats else user_rating
-                rating_prev = rating_value
+                tag_current_rating = float(stats["rating"]) if stats else current_rating
+                tag_previous_rating = tag_current_rating
                 if not stats:
-                    tag_rating_sum += rating_value
+                    tag_rating_sum += tag_current_rating
                     tag_rating_count += 1
                 tag_updates.append(
                     {
                         "user_id": user_id,
                         "tag": tag,
                         "attempts": attempts,
-                        "rating": rating_value,
-                        "rating_prev": rating_prev,
+                        "rating": tag_current_rating,
+                        "rating_prev": tag_previous_rating,
                         "updated_at": now.isoformat(timespec="seconds") + "Z",
                     }
                 )
                 continue
 
-            barrier_t = compute_barrier(flows_t, main_huddle)
-            problem_weight_t = compute_problem_weight(difficulty, barrier_t)
-            problem_rating_t = compute_problem_rating(difficulty, barrier_t)
-            expected = compute_expected_score(user_rating, problem_rating_t)
+            tag_barrier = compute_barrier(tag_flow_entries, main_huddle)
+            tag_weight = compute_problem_weight(quest_difficulty, tag_barrier)
+            tag_rating = compute_problem_rating(quest_difficulty, tag_barrier)
+            expected_score = compute_expected_score(current_rating, tag_rating)
 
-            tag_correct = tag_correct_map.get(tag)
-            if tag_correct is None:
-                r_tag = 1 if is_correct else 0
+            tag_outcome = tag_correct_by_tag.get(tag)
+            if tag_outcome is None:
+                tag_result = 1 if is_correct else 0
             else:
-                r_tag = 1 if tag_correct else 0
+                tag_result = 1 if tag_outcome else 0
 
-            stats = tag_stats.get(tag)
+            stats = user_tag_stats.get(tag)
             attempts = int(stats["attempts"]) + 1 if stats else 1
-            r_c_t = _clamp(attempts / CONFIG.C_MAX, 0.0, 1.0)
+            attempt_confidence = _clamp(attempts / CONFIG.C_MAX, 0.0, 1.0)
 
-            if tag_correct is True:
-                r_time_t = 1.0
-            elif tag_correct is False:
-                r_time_t = base_time_factor
+            if tag_outcome is True:
+                time_confidence = 1.0
+            elif tag_outcome is False:
+                time_confidence = time_signal
             else:
-                r_time_t = 1.0 if is_correct else base_time_factor
+                time_confidence = 1.0 if is_correct else time_signal
 
-            confidence_t = (
-                CONFIG.ALPHA * r_u
-                + CONFIG.BETA * r_c_t
-                + CONFIG.GAMMA * r_r
-                + CONFIG.DELTA * r_t
-            ) * r_time_t
+            confidence_weight = (
+                CONFIG.ALPHA * user_confidence
+                + CONFIG.BETA * attempt_confidence
+                + CONFIG.GAMMA * recent_accuracy_signal
+                + CONFIG.DELTA * recency_signal
+            ) * time_confidence
 
-            delta_t = k_eff * (r_tag - expected) * confidence_t * problem_weight_t
-            delta_t = _clamp(delta_t, -CONFIG.DELTA_MAX, CONFIG.DELTA_MAX)
+            tag_rating_delta = effective_k_factor * (tag_result - expected_score) * confidence_weight * tag_weight
+            tag_rating_delta = _clamp(tag_rating_delta, -CONFIG.DELTA_MAX, CONFIG.DELTA_MAX)
 
-            rating_value = float(stats["rating"]) if stats else user_rating
-            rating_prev = rating_value
-            new_rating = rating_value + delta_t
+            tag_current_rating = float(stats["rating"]) if stats else current_rating
+            tag_previous_rating = tag_current_rating
+            tag_new_rating = tag_current_rating + tag_rating_delta
 
             if stats:
-                tag_rating_sum += new_rating - rating_value
+                tag_rating_sum += tag_new_rating - tag_current_rating
             else:
-                tag_rating_sum += new_rating
+                tag_rating_sum += tag_new_rating
                 tag_rating_count += 1
 
-            w_t = len(flows_t) / valid_flow_count if valid_flow_count > 0 else 0.0
-            delta_user += delta_t * w_t
+            tag_flow_weight = len(tag_flow_entries) / flow_step_count if flow_step_count > 0 else 0.0
+            rating_delta_total += tag_rating_delta * tag_flow_weight
 
             tag_updates.append(
                 {
                     "user_id": user_id,
                     "tag": tag,
                     "attempts": attempts,
-                    "rating": new_rating,
-                    "rating_prev": rating_prev,
+                    "rating": tag_new_rating,
+                    "rating_prev": tag_previous_rating,
                     "updated_at": now.isoformat(timespec="seconds") + "Z",
                 }
             )
 
-        if normalized_tags and valid_flow_count == 0:
+        if unique_tags and flow_step_count == 0:
             # fallback: equal weights if no flow info
-            per = 1.0 / max(1, len(normalized_tags))
-            delta_user = sum(
-                (item["rating"] - (tag_stats.get(item["tag"], {}).get("rating") or user_rating))
-                * per
+            per_tag_weight = 1.0 / max(1, len(unique_tags))
+            rating_delta_total = sum(
+                (item["rating"] - (user_tag_stats.get(item["tag"], {}).get("rating") or current_rating))
+                * per_tag_weight
                 for item in tag_updates
             )
 
-        new_rating = user_rating + delta_user
+        user_new_rating = current_rating + rating_delta_total
 
         # update recent results (ring buffer)
         recent_results, recent_index, recent_count, recent_sum = _update_recent_results(
             recent_results, recent_index, recent_count, recent_sum, 1 if is_correct else 0
         )
 
-        ovr_prev = float(user.get("ovr") or user_rating)
+        ovr_prev = float(user.get("ovr") or current_rating)
         if tag_rating_count > 0:
             ovr = tag_rating_sum / tag_rating_count
         else:
-            ovr = new_rating
+            ovr = user_new_rating
 
         now_iso = now.isoformat(timespec="seconds") + "Z"
         conn.execute(
@@ -421,7 +430,7 @@ def apply_rating_update(
             WHERE user_id = ?
             """,
             (
-                new_rating,
+                user_new_rating,
                 ovr,
                 ovr_prev,
                 0 if is_correct else lose_streak + 1,
@@ -443,7 +452,7 @@ def apply_rating_update(
 
         recent_accuracy = recent_sum / recent_count if recent_count > 0 else 0.0
         return RatingResult(
-            rating=new_rating,
+            rating=user_new_rating,
             ovr=ovr,
             ovr_delta=ovr - ovr_prev,
             recent_accuracy=recent_accuracy,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -82,6 +82,10 @@ class AISolveStep(BaseModel):
     flow: ContentBlocks
     hint_riddle: ContentBlocks
     answer_riddle: ContentBlocks
+    hash_tag: List[str] = Field(
+        default_factory=list,
+        description="Hashtags applicable to this step",
+    )
     enter_huddle: int = Field(..., ge=0, le=10)
     branches: List["AISolveStep"] = Field(
         default_factory=list,
@@ -97,6 +101,19 @@ class AIQuestResult(BaseModel):
     primary_hash_tag: str = Field("", description="Most representative hash tag for the quest")
     quest_image: Optional[str] = Field(None, description="Optional quest image path or URL")
     solves: List[AISolveStep]
+
+
+class FormulaPlan(BaseModel):
+    answer_vars: List[str] = Field(..., description="Answer variable symbols.")
+    equations: List[str] = Field(..., description="SymPy equations in order.")
+    guardrails: List[str] = Field(
+        default_factory=list,
+        description="SymPy-compatible constraints, e.g., a != 0, x > 0.",
+    )
+    ranges: Dict[str, List[int]] = Field(
+        default_factory=dict,
+        description="Variable ranges for random sampling, e.g., {\"a\": [-9, 9]}.",
+    )
 
 
 # Resolve forward references for recursive models

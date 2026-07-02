@@ -8,9 +8,12 @@ import sqlite3
 import time
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from storage.storage import DB_PATH
+from env_loader import load_env
+
+load_env()
 
 try:
     import jwt as pyjwt
@@ -86,30 +89,32 @@ def _get_secret() -> str:
     return "dev-secret-change-me"
 
 
-def create_token(user_id: str) -> str:
+def create_token(user_id: str, role: Optional[str] = None) -> str:
     payload = {
         "sub": user_id,
         "exp": int(time.time()) + TOKEN_TTL_SECONDS,
         "iat": int(time.time()),
     }
+    if role:
+        payload["role"] = role
     if _HAS_PYJWT:
         return pyjwt.encode(payload, _get_secret(), algorithm=ALGORITHM)
     return _encode_fallback(payload, _get_secret())
 
 
-def decode_token(token: str) -> Optional[str]:
+def decode_token(token: str) -> Optional[dict]:
     secret = _get_secret()
     if _HAS_PYJWT:
         try:
             payload = pyjwt.decode(token, secret, algorithms=[ALGORITHM])
         except Exception:
             return None
-        return payload.get("sub")
+        return payload
     try:
         payload = _decode_fallback(token, secret)
     except Exception:
         return None
-    return payload.get("sub")
+    return payload
 
 
 def _encode_fallback(payload: dict, secret: str) -> str:
@@ -170,6 +175,7 @@ def _ensure_user_table() -> None:
             email TEXT,
             ovr INTEGER DEFAULT 0,
             status TEXT DEFAULT '',
+            role TEXT DEFAULT 'student',
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
             created_at TEXT NOT NULL
@@ -196,6 +202,8 @@ def _ensure_user_table() -> None:
         cur.execute("ALTER TABLE users ADD COLUMN ovr INTEGER DEFAULT 0")
     if "status" not in cols:
         cur.execute("ALTER TABLE users ADD COLUMN status TEXT DEFAULT ''")
+    if "role" not in cols:
+        cur.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'student'")
     conn.commit()
     conn.close()
 
@@ -343,3 +351,446 @@ def authenticate_user(*, username: str, password: str) -> Optional[str]:
     if hmac.compare_digest(stored_hash, computed):
         return user_id
     return None
+
+
+def register_teacher(
+    *,
+    email: str,
+    password: str,
+    name: str,
+) -> str:
+    """Register a new teacher account. Email is used as the username."""
+    email = email.strip().lower()
+    name = name.strip()
+    if not email or not password or not name:
+        raise ValueError("email, password, and name are required")
+
+    error = validate_email(email)
+    if error:
+        raise ValueError(error)
+    # Teachers use email as username; relax password rules slightly
+    if len(password) < 6:
+        raise ValueError("password must be at least 6 characters")
+
+    _ensure_user_table()
+    promoted_user = _promote_existing_teacher_account(
+        email=email,
+        password=password,
+        name=name,
+    )
+    if promoted_user:
+        return promoted_user["user_id"]
+
+    user_id = str(uuid.uuid4())
+    salt = uuid.uuid4().hex
+    password_hash = _hash_password(password, salt)
+    created_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            INSERT INTO users (
+                user_id,
+                username,
+                name,
+                grade,
+                track,
+                subject,
+                school,
+                profile_image,
+                email,
+                role,
+                password_hash,
+                salt,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                email,           # username = email
+                name,
+                "teacher",       # grade placeholder
+                None,
+                None,
+                None,
+                None,
+                email,
+                "teacher",
+                password_hash,
+                salt,
+                created_at,
+            ),
+        )
+        conn.commit()
+    except sqlite3.IntegrityError as exc:
+        conn.rollback()
+        raise ValueError("email already registered") from exc
+    finally:
+        conn.close()
+
+    return user_id
+
+
+def _looks_like_teacher_account(username: str, email: Optional[str], grade: Optional[str]) -> bool:
+    normalized_username = (username or "").strip().lower()
+    normalized_email = (email or "").strip().lower()
+    normalized_grade = (grade or "").strip().lower()
+    if not EMAIL_RE.match(normalized_username):
+        return False
+    return normalized_grade == "teacher" or normalized_email == normalized_username
+
+
+def _promote_existing_teacher_account(
+    *,
+    email: str,
+    password: str,
+    name: Optional[str] = None,
+) -> Optional[dict]:
+    email = email.strip().lower()
+    if not email or not password:
+        return None
+
+    _ensure_user_table()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT user_id, username, name, grade, email, role, password_hash, salt
+        FROM users
+        WHERE username = ?
+        """,
+        (email,),
+    )
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return None
+
+    user_id, username, stored_name, grade, stored_email, role, stored_hash, salt = row
+    computed = _hash_password(password, salt)
+    if not hmac.compare_digest(stored_hash, computed):
+        conn.close()
+        return None
+
+    if str(role or "").strip().lower() == "teacher":
+        conn.close()
+        return {
+            "user_id": user_id,
+            "username": username,
+            "name": stored_name,
+            "role": "teacher",
+        }
+
+    if not _looks_like_teacher_account(username, stored_email, grade):
+        conn.close()
+        return None
+
+    update_name = (name or stored_name or "").strip()
+    cur.execute(
+        """
+        UPDATE users
+        SET role = 'teacher',
+            grade = 'teacher',
+            email = ?,
+            name = COALESCE(NULLIF(?, ''), name)
+        WHERE user_id = ?
+        """,
+        (email, update_name, user_id),
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "user_id": user_id,
+        "username": username,
+        "name": update_name or stored_name,
+        "role": "teacher",
+    }
+
+
+def authenticate_teacher(*, email: str, password: str) -> Optional[dict]:
+    """Authenticate a teacher by email/password. Returns dict with user_id, username, name, role or None."""
+    email = email.strip().lower()
+    if not email or not password:
+        return None
+
+    _ensure_user_table()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT user_id, username, name, grade, email, role, password_hash, salt
+        FROM users
+        WHERE username = ?
+        """,
+        (email,),
+    )
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return None
+    user_id, username, name, grade, stored_email, role, stored_hash, salt = row
+    computed = _hash_password(password, salt)
+    if not hmac.compare_digest(stored_hash, computed):
+        conn.close()
+        return None
+
+    normalized_role = str(role or "").strip().lower()
+    if normalized_role != "teacher":
+        if not _looks_like_teacher_account(username, stored_email, grade):
+            conn.close()
+            return None
+        cur.execute(
+            """
+            UPDATE users
+            SET role = 'teacher',
+                grade = 'teacher',
+                email = ?
+            WHERE user_id = ?
+            """,
+            (email, user_id),
+        )
+        conn.commit()
+        normalized_role = "teacher"
+    conn.close()
+    return {
+        "user_id": user_id,
+        "username": username,
+        "name": name,
+        "role": normalized_role,
+    }
+
+
+def get_user_by_id(user_id: str) -> Optional[dict]:
+    user_id = user_id.strip()
+    if not user_id:
+        return None
+    _ensure_user_table()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT
+            user_id,
+            username,
+            name,
+            grade,
+            track,
+            subject,
+            school,
+            profile_image,
+            email,
+            role
+        FROM users
+        WHERE user_id = ?
+        """,
+        (user_id,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "user_id": row[0],
+        "username": row[1],
+        "name": row[2],
+        "grade": row[3],
+        "track": row[4],
+        "subject": row[5],
+        "school": row[6],
+        "profile_image": row[7],
+        "email": row[8],
+        "role": row[9],
+    }
+
+
+def update_user_profile(
+    *,
+    user_id: str,
+    username: Optional[str] = None,
+    name: Optional[str] = None,
+    grade: Optional[str] = None,
+    track: Optional[str] = None,
+    subject: Optional[str] = None,
+    school: Optional[str] = None,
+    profile_image: Optional[str] = None,
+    email: Optional[str] = None,
+    password: Optional[str] = None,
+) -> dict:
+    current = get_user_by_id(user_id)
+    if not current:
+        raise ValueError("user not found")
+
+    updates: List[tuple[str, str]] = []
+    params: List[str] = []
+
+    role = current.get("role") or "student"
+
+    if username is not None:
+        value = username.strip()
+        if not value:
+            raise ValueError("username is required")
+        if role == "teacher":
+            value = value.lower()
+            error = validate_email(value)
+            if error:
+                raise ValueError(error)
+        else:
+            error = validate_username(value)
+            if error:
+                raise ValueError(error)
+        _ensure_user_table()
+        cur = sqlite3.connect(DB_PATH).cursor()
+        cur.execute("SELECT user_id FROM users WHERE username = ?", (value,))
+        row = cur.fetchone()
+        cur.connection.close()
+        existed_user_id = row[0] if row else None
+        if existed_user_id and existed_user_id != user_id:
+            raise ValueError("username already exists")
+        updates.append(("username", value))
+        if role == "teacher":
+            updates.append(("email", value))
+
+    if email is not None and role != "teacher":
+        normalized_email = email.strip().lower()
+        if normalized_email:
+            error = validate_email(normalized_email)
+            if error:
+                raise ValueError(error)
+            updates.append(("email", normalized_email))
+
+    if name is not None:
+        value = name.strip()
+        error = validate_name(value)
+        if error:
+            raise ValueError(error)
+        updates.append(("name", value))
+
+    if grade is not None:
+        updates.append(("grade", grade.strip() or None))
+    if track is not None:
+        updates.append(("track", track.strip() or None))
+    if subject is not None:
+        updates.append(("subject", subject.strip() or None))
+    if school is not None:
+        school_value = school.strip()
+        if school_value:
+            error = validate_school(school_value)
+            if error:
+                raise ValueError(error)
+            updates.append(("school", school_value))
+        else:
+            updates.append(("school", None))
+    if profile_image is not None:
+        updates.append(("profile_image", profile_image.strip() or None))
+
+    if password is not None:
+        new_password = password.strip()
+        if not new_password:
+            raise ValueError("password is required")
+        if role == "teacher":
+            if len(new_password) < 6:
+                raise ValueError("password must be at least 6 characters")
+        else:
+            error = validate_password(new_password)
+            if error:
+                raise ValueError(error)
+        salt = uuid.uuid4().hex
+        updates.append(("password_hash", _hash_password(new_password, salt)))
+        updates.append(("salt", salt))
+
+    if not updates:
+        return current
+
+    sets = ", ".join([f"{column} = ?" for column, _ in updates])
+    params = [value for _, value in updates]
+    params.append(user_id)
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    try:
+        cur.execute(f"UPDATE users SET {sets} WHERE user_id = ?", params)
+        conn.commit()
+    except sqlite3.IntegrityError as exc:
+        conn.rollback()
+        if "UNIQUE" in str(exc).upper():
+            raise ValueError("username already exists") from exc
+        raise
+    finally:
+        conn.close()
+
+    updated = get_user_by_id(user_id)
+    if updated is None:
+        raise ValueError("user not found")
+    return updated
+
+
+def delete_user_account(user_id: str, *, password: str) -> None:
+    current = get_user_by_id(user_id)
+    if not current:
+        raise ValueError("user not found")
+
+    if not password:
+        raise ValueError("password is required")
+
+    _ensure_user_table()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT password_hash, salt FROM users WHERE user_id = ?",
+        (user_id,),
+    )
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        raise ValueError("user not found")
+
+    stored_hash, salt = row
+    computed = _hash_password(password, salt)
+    if not hmac.compare_digest(stored_hash, computed):
+        conn.close()
+        raise ValueError("invalid password")
+
+    # Best effort user-data cleanup (no hard dependency on other schemas).
+    cur.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+
+def get_user_role(user_id: str) -> Optional[str]:
+    """Return the role for a given user_id, or None if not found."""
+    if not user_id:
+        return None
+    _ensure_user_table()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT role FROM users WHERE user_id = ?", (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+
+def get_user_by_email(email: str) -> Optional[dict]:
+    """Return user dict for a given email (username), or None if not found."""
+    email = email.strip().lower()
+    if not email:
+        return None
+    _ensure_user_table()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT user_id, username, name, grade, role FROM users WHERE username = ?",
+        (email,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "user_id": row[0],
+        "username": row[1],
+        "name": row[2],
+        "grade": row[3],
+        "role": row[4],
+    }
