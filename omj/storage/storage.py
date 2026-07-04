@@ -185,6 +185,8 @@ def init_db():
     _ensure_column(cursor, "quest_data", "codebase_id", "INTEGER")
     _ensure_column(cursor, "quest_data", "seed", "INTEGER")
     _ensure_column(cursor, "quest_data", "hash_tag", "TEXT")
+    _ensure_column(cursor, "quest_data", "choice_answer_index", "INTEGER")
+    _ensure_column(cursor, "quest_data", "meta_json", "TEXT")
 
     conn.commit()
     conn.close()
@@ -256,9 +258,11 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
                 quest_options,
                 codebase_id,
                 seed,
-                hash_tag
+                hash_tag,
+                choice_answer_index,
+                meta_json
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 quest_id,
@@ -270,6 +274,8 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
                 data.get("codebase_id"),
                 data.get("seed"),
                 json.dumps(info.get("hash_tag", []), ensure_ascii=False),
+                data.get("choice_answer_index"),
+                json.dumps(data.get("meta") or data.get("mcq_conversion") or {}, ensure_ascii=False),
             ),
         )
 
@@ -336,7 +342,7 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
 
         cursor.execute(
             """
-            SELECT quest_id, quest_title, quest_image, quest_answer, question_type, quest_options, codebase_id, seed, hash_tag
+            SELECT quest_id, quest_title, quest_image, quest_answer, question_type, quest_options, codebase_id, seed, hash_tag, choice_answer_index, meta_json
             FROM quest_data
             WHERE quest_id = ?
             """,
@@ -373,6 +379,8 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
                 "codebase_id": data_row[6] if data_row and len(data_row) > 6 else None,
                 "seed": data_row[7] if data_row and len(data_row) > 7 else None,
                 "hash_tag": json.loads(data_row[8]) if data_row and len(data_row) > 8 and data_row[8] else [],
+                "choice_answer_index": data_row[9] if data_row and len(data_row) > 9 else None,
+                "meta": json.loads(data_row[10]) if data_row and len(data_row) > 10 and data_row[10] else {},
             },
             "solves": [
                 {
@@ -386,12 +394,52 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
                 for row in solves_rows
             ],
         }
+        if isinstance(result["data"].get("meta"), dict):
+            meta = result["data"]["meta"]
+            if isinstance(meta.get("mcq_conversion"), dict):
+                result["data"]["mcq_conversion"] = meta["mcq_conversion"]
+            elif "answer_index" in meta:
+                result["data"]["mcq_conversion"] = meta
 
         return result
 
     except Exception as e:
         print(f"조회 오류: {e}")
         return None
+
+
+def update_quest_mcq(
+    quest_id: str,
+    *,
+    quest_options: list,
+    choice_answer_index: int,
+    meta: Optional[Dict[str, Any]] = None,
+) -> bool:
+    """Persist multiple-choice options and answer metadata for an existing quest."""
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE quest_data
+        SET question_type = ?,
+            quest_options = ?,
+            choice_answer_index = ?,
+            meta_json = ?
+        WHERE quest_id = ?
+        """,
+        (
+            "multiple_choice",
+            _serialize_options(quest_options),
+            int(choice_answer_index),
+            json.dumps(meta or {}, ensure_ascii=False),
+            quest_id,
+        ),
+    )
+    changed = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return changed
 
 
 def search_quests(

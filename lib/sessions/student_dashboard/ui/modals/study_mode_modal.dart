@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,7 +7,7 @@ import 'package:s11/sessions/course/ui/modals/resume_mode.dart';
 import 'package:s11/sessions/exam_paper/ui/modals/exam_mode.dart';
 import 'package:s11/sessions/textbook/ui/modals/book_mode.dart';
 import 'package:s11/sessions/tryout_solve/ui/modals/problem_solve_mode.dart';
-import 'package:s11/sessions/tryout_solve/ui/modals/weakness_review_mode.dart';
+import 'package:s11/sessions/review_course/review_course.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 
 const _green = Color(0xFF1B402B);
@@ -62,50 +62,48 @@ class StudypageCopyWidget extends StatelessWidget {
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
-                          children: List.generate(_kModes.length, (index) {
-                            final mode = _kModes[index];
-                            VoidCallback? onTap;
-                            switch (mode.destination) {
-                              case _ModeDestination.resume:
-                                onTap = buildResumeAction(context);
-                                break;
-                              case _ModeDestination.course:
-                                onTap = buildCourseAction(context);
-                                break;
-                              case _ModeDestination.tryout:
-                                onTap = buildProblemSolveAction(context);
-                                break;
-                              case _ModeDestination.exam:
-                                onTap = buildExamAction(context);
-                                break;
-                              case _ModeDestination.book:
-                                onTap = buildBookAction(context);
-                                break;
-                              case _ModeDestination.weaknessReview:
-                                final rootNavigator = Navigator.of(
-                                  context,
-                                  rootNavigator: true,
-                                );
-                                onTap = buildWeaknessReviewAction(
-                                  context,
-                                  reopenStudyModal: () {
-                                    showStudyModeModal(
-                                      context: rootNavigator.context,
+                          children:
+                              List.generate(_kModes.length, (index) {
+                                    final mode = _kModes[index];
+                                    VoidCallback? onTap;
+                                    switch (mode.destination) {
+                                      case _ModeDestination.resume:
+                                        onTap = buildResumeAction(context);
+                                        break;
+                                      case _ModeDestination.course:
+                                        onTap = buildCourseAction(context);
+                                        break;
+                                      case _ModeDestination.tryout:
+                                        onTap = buildProblemSolveAction(
+                                          context,
+                                        );
+                                        break;
+                                      case _ModeDestination.exam:
+                                        onTap = buildExamAction(context);
+                                        break;
+                                      case _ModeDestination.book:
+                                        onTap = buildBookAction(context);
+                                        break;
+                                      case _ModeDestination.weaknessReview:
+                                        onTap = () => showReviewCoursePage(
+                                          context: context,
+                                        );
+                                        break;
+                                      case _ModeDestination.none:
+                                        onTap = null;
+                                    }
+                                    return _ModeCard(
+                                      icon: mode.icon,
+                                      label: mode.label,
+                                      scale: scale,
+                                      onTap: onTap,
                                     );
-                                  },
-                                );
-                                break;
-                              case _ModeDestination.none:
-                                onTap = null;
-                            }
-                            return _ModeCard(
-                              icon: mode.icon,
-                              label: mode.label,
-                              scale: scale,
-                              onTap: onTap,
-                            );
-                          }).expand((w) => [w, SizedBox(width: 20 * scale)]).toList()
-                            ..removeLast(),
+                                  })
+                                  .expand(
+                                    (w) => [w, SizedBox(width: 20 * scale)],
+                                  )
+                                  .toList()
+                                ..removeLast(),
                         ),
                       ),
                     ),

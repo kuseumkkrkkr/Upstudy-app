@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/theme/app_colors.dart';
@@ -39,7 +39,9 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
         });
         return;
       }
-      final daily = await ApiClient.instance.fetchDailyQuests(courseId: firstId);
+      final daily = await ApiClient.instance.fetchDailyQuests(
+        courseId: firstId,
+      );
       setState(() {
         _courseId = firstId;
         _dailyItems = daily;
@@ -65,9 +67,9 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
       setState(() => _dailyItems = updated);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('완료 처리 실패: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('완료 처리 실패: $e')));
     }
   }
 
@@ -94,7 +96,9 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
           final progressText = '${item.progress}/${item.target}';
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             elevation: 1,
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -104,7 +108,10 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -120,9 +127,14 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: _statusColor(item.status).withValues(alpha: 0.12),
+                          color: _statusColor(
+                            item.status,
+                          ).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -139,7 +151,10 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                   const SizedBox(height: 10),
                   Text(
                     item.title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -151,12 +166,25 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                     '진행도: $progressText',
                     style: const TextStyle(fontSize: 13, color: Colors.black54),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '보상: ${item.rewardPoints}P',
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
                     child: FilledButton.tonal(
-                      onPressed: done ? null : () => _completeQuest(item.id),
-                      child: Text(done ? '완료됨' : '완료 처리'),
+                      onPressed: done && !item.rewardClaimed
+                          ? () => _completeQuest(item.id)
+                          : null,
+                      child: Text(
+                        item.rewardClaimed
+                            ? '수령 완료'
+                            : done
+                            ? '보상 수령'
+                            : '진행 중',
+                      ),
                     ),
                   ),
                 ],
@@ -183,8 +211,8 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
-              : _buildDailyList(),
+          ? Center(child: Text(_error!))
+          : _buildDailyList(),
     );
   }
 }

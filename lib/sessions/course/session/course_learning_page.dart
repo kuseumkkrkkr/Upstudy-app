@@ -182,20 +182,29 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
     final scaffold = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
-      final problems = await ApiClient.instance.fetchUnitProblems(
-        courseId: _course.id,
-        unitIndex: _course.units.indexOf(unit),
-      );
+      final moduleId =
+          (detail['id'] ?? detail['module_id'] ?? detail['moduleId'] ?? '')
+              .toString();
+      final problems = moduleId.isNotEmpty
+          ? await ApiClient.instance.loadCourseProblemSolve(
+              courseId: _course.id,
+              moduleId: moduleId,
+            )
+          : await ApiClient.instance.fetchUnitProblems(
+              courseId: _course.id,
+              unitIndex: _course.units.indexOf(unit),
+            );
       final quests = (problems['quests'] as List<dynamic>? ?? [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
       if (quests.isEmpty) {
-        scaffold.showSnackBar(
-          const SnackBar(content: Text('臾몄젣瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??')),
-        );
+        scaffold.showSnackBar(const SnackBar(content: Text('문제를 불러오지 못했습니다.')));
         return;
       }
-      final passRate = (problems['pass_rate'] as num?)?.toInt() ?? 100;
+      final passRate =
+          (problems['pass_rate'] as num?)?.toInt() ??
+          (detail['pass_rate'] as num?)?.toInt() ??
+          90;
       final hashTags = (detail['hash_tags'] as List<dynamic>? ?? [])
           .map((e) => e.toString())
           .toList();
@@ -209,12 +218,28 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
         courseId: _course.id,
         unitIndex: _course.units.indexOf(unit),
         quests: quests,
+        onComplete:
+            ({
+              required int correctCount,
+              required int totalCount,
+              required bool passed,
+              int? elapsedSeconds,
+            }) async {
+              if (moduleId.isEmpty) return;
+              await ApiClient.instance.submitCourseRuntimeModule(
+                courseId: _course.id,
+                moduleId: moduleId,
+                correctCount: correctCount,
+                totalCount: totalCount,
+                elapsedSeconds: elapsedSeconds ?? 0,
+              );
+            },
       );
       navigator.push(
         MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
       );
     } catch (e) {
-      scaffold.showSnackBar(SnackBar(content: Text('臾몄젣 濡쒕뱶 ?ㅽ뙣: $e')));
+      scaffold.showSnackBar(SnackBar(content: Text('문제 로드 실패: $e')));
     }
   }
 

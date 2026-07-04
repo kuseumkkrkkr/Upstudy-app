@@ -38,7 +38,10 @@ MAX_PROBLEMS_PER_MODULE = 10
 
 def _effective_pass_policy(course: CourseV2, module: CourseModule) -> PassPolicy:
     """Return the module-level pass_policy if set, otherwise the course-level."""
-    return module.pass_policy or course.pass_policy
+    policy = module.pass_policy or course.pass_policy
+    if module.pass_rate is not None and module.pass_policy is None:
+        policy = policy.model_copy(update={"required_accuracy": float(module.pass_rate)})
+    return policy
 
 
 def evaluate_module_pass(

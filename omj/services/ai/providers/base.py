@@ -1,15 +1,15 @@
-"""AI Provider adapter layer.
-
-Provides:
-- AIProvider: abstract interface for all AI backends
-- KimiProvider: concrete implementation for Kimi 2.5 via OpenAI-compatible endpoint
-- get_default_provider(): returns the default provider instance
-"""
-import os
+"""AI Provider adapter layer backed by SAM."""
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Callable
+from typing import Any, Optional
 from pydantic import BaseModel
+
+from services.ai.sam_client import (
+    DEFAULT_FALLBACK_MODEL,
+    DEFAULT_PROVIDER_MODEL,
+    chat_completion_text,
+    generate_json,
+)
 
 
 class AIProvider(ABC):
@@ -65,18 +65,17 @@ class AIProvider(ABC):
         return None
 
 
-class KimiProvider(AIProvider):
-    """Kimi 2.5 via OpenAI-compatible API."""
+class SAMProvider(AIProvider):
+    """SAM OpenAI-compatible provider."""
 
     def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
-        import openai
-        self._api_key = api_key or os.getenv("KIMI_API_KEY") or os.getenv("COMETAPI_KEY")
-        self._base_url = base_url or os.getenv("KIMI_BASE_URL", "https://api.moonshot.cn/v1")
-        self._client = openai.OpenAI(api_key=self._api_key, base_url=self._base_url)
+        # api_key/base_url are accepted for backward construction compatibility.
+        self._api_key = api_key
+        self._base_url = base_url
 
     @property
     def name(self) -> str:
-        return "kimi"
+        return "sam"
 
     def generate(
         self,
@@ -87,94 +86,45 @@ class KimiProvider(AIProvider):
         temperature: float = 0.7,
         max_tokens: int = 4096,
     ) -> dict:
-        model = model or os.getenv("KIMI_DEFAULT_MODEL", "kimi-k2-5")
+        model = model or DEFAULT_PROVIDER_MODEL
         if schema:
-            response = self._client.chat.completions.create(
+            parsed = generate_json(
                 model=model,
-                messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"},
+                prompt=prompt,
+                schema=schema,
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            text = response.choices[0].message.content
-            parsed = json.loads(text)
-            # Validate against schema
-            validated = schema.model_validate(parsed)
-            return {"text": text, "parsed": validated.model_dump()}
-        else:
-            response = self._client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
-            return {"text": response.choices[0].message.content}
-
-    def stream(self, prompt: str, *, model: Optional[str] = None, temperature: float = 0.7, max_tokens: int = 4096):
-        model = model or os.getenv("KIMI_DEFAULT_MODEL", "kimi-k2-5")
-        return self._client.chat.completions.create(
+            return {"text": json.dumps(parsed, ensure_ascii=False), "parsed": parsed}
+        text = chat_completion_text(
             model=model,
-            messages=[{"role": "user", "content": prompt}],
+            prompt=prompt,
             temperature=temperature,
             max_tokens=max_tokens,
-            stream=True,
         )
-
-
-class GeminiProvider(AIProvider):
-    """Google Gemini via google-genai SDK (legacy compatibility)."""
-
-    def __init__(self, api_key: Optional[str] = None):
-        import google.genai as genai
-        self._api_key = api_key or os.getenv("COMETAPI_KEY")
-        self._client = genai.Client(
-            http_options={"api_version": "v1beta", "base_url": os.getenv("GEMINI_BASE_URL")},
-            api_key=self._api_key,
-        )
-
-    @property
-    def name(self) -> str:
-        return "gemini"
-
-    def generate(
-        self,
-        prompt: str,
-        *,
-        schema: Optional[type[BaseModel]] = None,
-        model: Optional[str] = None,
-        temperature: float = 0.7,
-        max_tokens: int = 4096,
-    ) -> dict:
-        model = model or os.getenv("GEMINI_DEFAULT_MODEL", "gemini-3.1-flash-lite")
-        if schema:
-            response = self._client.models.generate_content(
-                model=model,
-                contents=prompt,
-                config={
-                    "response_mime_type": "application/json",
-                    "response_json_schema": schema.model_json_schema(),
-                },
-            )
-        else:
-            response = self._client.models.generate_content(
-                model=model,
-                contents=prompt,
-            )
-        text = response.text
-        result: dict = {"text": text}
-        if schema:
-            import json
-            parsed = json.loads(text)
-            validated = schema.model_validate(parsed)
-            result["parsed"] = validated.model_dump()
-        return result
+        return {"text": text}
 
     def stream(self, prompt: str, *, model: Optional[str] = None, temperature: float = 0.7, max_tokens: int = 4096):
-        model = model or os.getenv("GEMINI_DEFAULT_MODEL", "gemini-3.1-flash-lite")
-        return self._client.models.generate_content(
-            model=model,
-            contents=prompt,
-            stream=True,
+        raise NotImplementedError("SAM streaming is not wired in this provider yet")
+
+
+class KimiProvider(SAMProvider):
+    """Backward-compatible name for the old default provider."""
+
+    def __init__(self, api_key: Optional[str] = None):
+        super().__init__(api_key=api_key)
+
+
+class GeminiProvider(SAMProvider):
+    """Backward-compatible fallback provider name, now routed through SAM."""
+
+    def generate(self, prompt: str, *, schema: Optional[type[BaseModel]] = None, model: Optional[str] = None, temperature: float = 0.7, max_tokens: int = 4096) -> dict:
+        return super().generate(
+            prompt,
+            schema=schema,
+            model=model or DEFAULT_FALLBACK_MODEL,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
 
 
@@ -184,12 +134,7 @@ _DEFAULT_PROVIDER: Optional[AIProvider] = None
 def get_default_provider() -> AIProvider:
     global _DEFAULT_PROVIDER
     if _DEFAULT_PROVIDER is None:
-        # Prefer Kimi 2.5 as default per PLANnow.md
-        try:
-            _DEFAULT_PROVIDER = KimiProvider()
-        except Exception:
-            # Fallback to Gemini if Kimi env is missing
-            _DEFAULT_PROVIDER = GeminiProvider()
+        _DEFAULT_PROVIDER = SAMProvider()
     return _DEFAULT_PROVIDER
 
 

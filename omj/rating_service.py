@@ -14,7 +14,7 @@ from storage.rating_storage import (
     mark_submission,
     upsert_tag_stats,
 )
-from storage.storage import DB_PATH
+from storage.storage import DB_PATH, get_quest
 
 
 def _now_utc() -> datetime:
@@ -213,6 +213,13 @@ class RatingResult:
     ovr_delta: float
     recent_accuracy: float
     lose_streak: int
+
+
+@dataclass
+class PlacementRatingResult(RatingResult):
+    confidence: float
+    strong_tags: List[Dict[str, Any]]
+    weak_tags: List[Dict[str, Any]]
 
 
 def apply_rating_update(
@@ -463,6 +470,230 @@ def apply_rating_update(
         raise
     finally:
         conn.close()
+
+
+def apply_level_test_placement(
+    *,
+    user_id: str,
+    session_id: str,
+    answers: List[Dict[str, Any]],
+) -> PlacementRatingResult:
+    """Apply a completed level-test placement as an initial rating estimate."""
+    if len(answers) < 50:
+        raise ValueError("level test requires 50 answers before rating placement")
+
+    samples = _build_placement_samples(answers)
+    if not samples:
+        raise ValueError("level test answers contain no usable quest samples")
+
+    estimated_rating = _estimate_rating_from_samples(samples)
+    tag_ratings = _estimate_tag_ratings(samples, estimated_rating)
+    estimated_ovr = (
+        sum(tag_ratings.values()) / len(tag_ratings)
+        if tag_ratings
+        else estimated_rating
+    )
+    correct_count = sum(1 for sample in samples if sample["is_correct"])
+    recent_results = [1 if sample["is_correct"] else 0 for sample in samples[-50:]]
+    confidence = _clamp(len(samples) / 50.0, 0.0, 1.0)
+    now = _now_utc().isoformat(timespec="seconds") + "Z"
+    submission_ref = f"level-test:{session_id}"
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.isolation_level = None
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        if not mark_submission(conn, user_id=user_id, submission_id=submission_ref):
+            user = get_user(conn, user_id) or create_user(
+                conn,
+                user_id=user_id,
+                rating=CONFIG.DEFAULT_RATING,
+            )
+            recent_accuracy = (
+                user["recent_sum"] / user["recent_count"]
+                if user["recent_count"] > 0
+                else 0.0
+            )
+            conn.execute("COMMIT")
+            return PlacementRatingResult(
+                rating=user["rating"],
+                ovr=user["ovr"],
+                ovr_delta=user["ovr"] - user["ovr_prev"],
+                recent_accuracy=recent_accuracy,
+                lose_streak=user["lose_streak"],
+                confidence=confidence,
+                strong_tags=_rank_tag_results(tag_ratings, reverse=True),
+                weak_tags=_rank_tag_results(tag_ratings, reverse=False),
+            )
+
+        user = get_user(conn, user_id)
+        if not user:
+            user = create_user(conn, user_id=user_id, rating=CONFIG.DEFAULT_RATING)
+
+        ovr_prev = float(user.get("ovr") or CONFIG.DEFAULT_RATING)
+        old_tag_stats = get_tag_stats(conn, user_id, tag_ratings.keys())
+        tag_updates = []
+        for tag, rating in tag_ratings.items():
+            previous = (
+                float(old_tag_stats[tag]["rating"])
+                if tag in old_tag_stats
+                else estimated_rating
+            )
+            attempts = _tag_attempt_count(samples, tag)
+            tag_updates.append(
+                {
+                    "user_id": user_id,
+                    "tag": tag,
+                    "attempts": max(1, attempts),
+                    "rating": rating,
+                    "rating_prev": previous,
+                    "updated_at": now,
+                }
+            )
+
+        conn.execute(
+            """
+            UPDATE user_rating
+            SET rating = ?,
+                ovr = ?,
+                ovr_prev = ?,
+                lose_streak = ?,
+                last_attempt_at = ?,
+                recent_results = ?,
+                recent_index = ?,
+                recent_count = ?,
+                recent_sum = ?,
+                tag_rating_sum = ?,
+                tag_rating_count = ?,
+                updated_at = ?
+            WHERE user_id = ?
+            """,
+            (
+                estimated_rating,
+                estimated_ovr,
+                ovr_prev,
+                0 if samples[-1]["is_correct"] else 1,
+                now,
+                json.dumps(recent_results),
+                len(recent_results) % 50,
+                len(recent_results),
+                correct_count,
+                sum(tag_ratings.values()),
+                len(tag_ratings),
+                now,
+                user_id,
+            ),
+        )
+        upsert_tag_stats(conn, tag_updates)
+        conn.execute("COMMIT")
+        return PlacementRatingResult(
+            rating=estimated_rating,
+            ovr=estimated_ovr,
+            ovr_delta=estimated_ovr - ovr_prev,
+            recent_accuracy=correct_count / len(recent_results),
+            lose_streak=0 if samples[-1]["is_correct"] else 1,
+            confidence=confidence,
+            strong_tags=_rank_tag_results(tag_ratings, reverse=True),
+            weak_tags=_rank_tag_results(tag_ratings, reverse=False),
+        )
+    except Exception:
+        conn.execute("ROLLBACK")
+        raise
+    finally:
+        conn.close()
+
+
+def _build_placement_samples(answers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    samples: List[Dict[str, Any]] = []
+    for answer in answers:
+        quest = get_quest(str(answer.get("quest_id") or ""))
+        if not quest:
+            continue
+        info = quest.get("info", {}) or {}
+        raw_tags = answer.get("tags") or info.get("hash_tag") or []
+        tags = list(dict.fromkeys(_normalize_tag(str(tag)) for tag in raw_tags if _normalize_tag(str(tag))))
+        if not tags:
+            continue
+        problem_rating = _placement_problem_rating(quest, tags)
+        samples.append(
+            {
+                "quest_id": answer.get("quest_id"),
+                "is_correct": bool(answer.get("is_correct")),
+                "tags": tags,
+                "problem_rating": problem_rating,
+            }
+        )
+    return samples
+
+
+def _placement_problem_rating(quest: Dict[str, Any], tags: List[str]) -> float:
+    info = quest.get("info", {}) or {}
+    try:
+        difficulty = float(info.get("difficulty") or 0)
+    except (TypeError, ValueError):
+        difficulty = 0.0
+    try:
+        main_huddle = float(info.get("main_huddle") or 0)
+    except (TypeError, ValueError):
+        main_huddle = 0.0
+    flattened_steps = _flatten_solve_steps(quest.get("solves") or [])
+    tag_flow_by_tag = _build_tag_flow_map(flattened_steps)
+    ratings = []
+    for tag in tags:
+        barrier = compute_barrier(tag_flow_by_tag.get(tag, []), main_huddle)
+        ratings.append(compute_problem_rating(difficulty, barrier))
+    if not ratings:
+        return compute_problem_rating(difficulty, compute_barrier([], main_huddle))
+    return sum(ratings) / len(ratings)
+
+
+def _estimate_rating_from_samples(samples: List[Dict[str, Any]]) -> float:
+    best_rating = CONFIG.DEFAULT_RATING
+    best_score = float("-inf")
+    for rating in [800 + i * 5 for i in range(281)]:
+        score = 0.0
+        for sample in samples:
+            expected = compute_expected_score(float(rating), float(sample["problem_rating"]))
+            expected = _clamp(expected, 0.001, 0.999)
+            score += math.log(expected if sample["is_correct"] else 1.0 - expected)
+        if score > best_score:
+            best_score = score
+            best_rating = float(rating)
+    return best_rating
+
+
+def _estimate_tag_ratings(
+    samples: List[Dict[str, Any]],
+    global_rating: float,
+) -> Dict[str, float]:
+    by_tag: Dict[str, List[Dict[str, Any]]] = {}
+    for sample in samples:
+        for tag in sample["tags"]:
+            by_tag.setdefault(tag, []).append(sample)
+
+    result: Dict[str, float] = {}
+    for tag, tag_samples in by_tag.items():
+        local_rating = _estimate_rating_from_samples(tag_samples)
+        shrink = len(tag_samples) / (len(tag_samples) + 5.0)
+        result[tag] = shrink * local_rating + (1.0 - shrink) * global_rating
+    return result
+
+
+def _tag_attempt_count(samples: List[Dict[str, Any]], tag: str) -> int:
+    return sum(1 for sample in samples if tag in sample["tags"])
+
+
+def _rank_tag_results(
+    tag_ratings: Dict[str, float],
+    *,
+    reverse: bool,
+) -> List[Dict[str, Any]]:
+    ordered = sorted(tag_ratings.items(), key=lambda item: item[1], reverse=reverse)
+    return [
+        {"tag": tag, "rating": round(rating, 2)}
+        for tag, rating in ordered[:5]
+    ]
 
 
 def fetch_user_rating(user_id: str) -> RatingResult:

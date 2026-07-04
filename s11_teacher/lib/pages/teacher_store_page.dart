@@ -1,0 +1,324 @@
+// UTF-8 only: This file must be read/written as UTF-8.
+import 'package:flutter/material.dart';
+
+import '../services/api_client.dart';
+import '../shared/ui/ios26/ios26_chrome.dart';
+import '../widgets/teacher_app_drawer.dart';
+
+class TeacherStorePage extends StatefulWidget {
+  const TeacherStorePage({super.key});
+
+  static const routeName = '/teacher-store';
+
+  @override
+  State<TeacherStorePage> createState() => _TeacherStorePageState();
+}
+
+class _TeacherStorePageState extends State<TeacherStorePage> {
+  bool _loading = true;
+  bool _busy = false;
+  Map<String, dynamic> _summary = const <String, dynamic>{};
+
+  int get _balance => (_summary['balance_points'] as num?)?.toInt() ?? 0;
+
+  List<Map<String, dynamic>> get _items {
+    final raw = _summary['items'] as List<dynamic>? ?? const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final summary = await ApiClient.instance.fetchTeacherStoreSummary();
+      if (!mounted) return;
+      setState(() => _summary = summary);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('상점 로드 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _topUp(int amount) async {
+    await _runBusy(() => ApiClient.instance.topUpTeacherStoreTest(amount));
+  }
+
+  Future<void> _purchase(String itemId) async {
+    await _runBusy(() => ApiClient.instance.purchaseTeacherStoreItem(itemId));
+  }
+
+  Future<void> _runBusy(Future<Map<String, dynamic>> Function() action) async {
+    setState(() => _busy = true);
+    try {
+      final summary = await action();
+      if (!mounted) return;
+      setState(() => _summary = summary);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('상점 처리 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      endDrawer: const TeacherAppDrawer(
+        currentRoute: TeacherStorePage.routeName,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF101828), Color(0xFF155E75), Color(0xFFE0F2FE)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _TopBar(onRefresh: _busy ? null : _load),
+              Expanded(
+                child: _loading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _load,
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+                          children: [
+                            _BalancePanel(
+                              balance: _balance,
+                              busy: _busy,
+                              onTopUp: _topUp,
+                            ),
+                            const SizedBox(height: 18),
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final compact = constraints.maxWidth < 720;
+                                return Wrap(
+                                  spacing: 14,
+                                  runSpacing: 14,
+                                  children: _items
+                                      .map(
+                                        (item) => SizedBox(
+                                          width: compact
+                                              ? constraints.maxWidth
+                                              : (constraints.maxWidth - 14) / 2,
+                                          child: _StoreItemCard(
+                                            item: item,
+                                            busy: _busy,
+                                            onPurchase: _purchase,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onRefresh});
+
+  final VoidCallback? onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+      child: Row(
+        children: [
+          IconButton.filledTonal(
+            tooltip: '뒤로',
+            onPressed: () => Navigator.maybePop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              '스토어',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          IconButton.filledTonal(
+            tooltip: '새로고침',
+            onPressed: onRefresh,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SizedBox(width: 8),
+          Builder(
+            builder: (context) => IconButton.filledTonal(
+              tooltip: '메뉴',
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+              icon: const Icon(Icons.menu_rounded),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BalancePanel extends StatelessWidget {
+  const _BalancePanel({
+    required this.balance,
+    required this.busy,
+    required this.onTopUp,
+  });
+
+  final int balance;
+  final bool busy;
+  final ValueChanged<int> onTopUp;
+
+  @override
+  Widget build(BuildContext context) {
+    const amounts = [100, 500, 1000, 5000, 10000];
+    return Ios26FrostedCard(
+      radius: 26,
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$balance P',
+            style: const TextStyle(
+              color: Color(0xFF0F172A),
+              fontSize: 42,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '테스트 충전 배너',
+            style: TextStyle(color: Colors.black.withValues(alpha: 0.62)),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: amounts
+                .map(
+                  (amount) => FilledButton.tonalIcon(
+                    onPressed: busy ? null : () => onTopUp(amount),
+                    icon: const Icon(Icons.add_card_rounded),
+                    label: Text('+$amount'),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StoreItemCard extends StatelessWidget {
+  const _StoreItemCard({
+    required this.item,
+    required this.busy,
+    required this.onPurchase,
+  });
+
+  final Map<String, dynamic> item;
+  final bool busy;
+  final ValueChanged<String> onPurchase;
+
+  @override
+  Widget build(BuildContext context) {
+    final itemId = item['item_id']?.toString() ?? '';
+    final owned = item['owned'] == true;
+    final price = (item['price_points'] as num?)?.toInt() ?? 0;
+    return Ios26FrostedCard(
+      radius: 22,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(_iconFor(itemId), color: const Color(0xFF155E75), size: 34),
+          const SizedBox(height: 14),
+          Text(
+            item['title']?.toString() ?? itemId,
+            style: const TextStyle(
+              color: Color(0xFF0F172A),
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            item['description']?.toString() ?? '',
+            style: TextStyle(
+              color: Colors.black.withValues(alpha: 0.66),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Text(
+                '$price P',
+                style: const TextStyle(
+                  color: Color(0xFF0F172A),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: owned || busy || itemId.isEmpty
+                    ? null
+                    : () => onPurchase(itemId),
+                icon: Icon(
+                  owned ? Icons.verified_rounded : Icons.shopping_bag_rounded,
+                ),
+                label: Text(owned ? '보유 중' : '구매'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _iconFor(String itemId) {
+    switch (itemId) {
+      case 'textbook_db':
+        return Icons.library_books_rounded;
+      case 'exam_db':
+        return Icons.assignment_rounded;
+      default:
+        return Icons.extension_rounded;
+    }
+  }
+}

@@ -106,6 +106,117 @@ class StudyGroupTeacherFlowTests(unittest.TestCase):
         self.assertIn("teacher@example.com", usernames)
         self.assertIn("stud01", usernames)
 
+    def test_teacher_group_system_notice_flow(self) -> None:
+        teacher_token = self._register_teacher()
+        student_token = self._register_student()
+
+        create_resp = self.client.post(
+            "/social/study-groups",
+            headers={"Authorization": f"Bearer {teacher_token}"},
+            json={
+                "name": "공지 그룹",
+                "description": "공지 테스트용",
+                "max_members": 10,
+                "is_public": True,
+                "lock_enabled": False,
+                "invite_code": "NOTICE1",
+            },
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        group = create_resp.json()
+
+        join_resp = self.client.post(
+            "/social/study-groups/join-by-code",
+            headers={"Authorization": f"Bearer {student_token}"},
+            json={"invite_code": "NOTICE1"},
+        )
+        self.assertEqual(join_resp.status_code, 200)
+
+        upsert_resp = self.client.put(
+            f"/social/study-groups/{group['group_id']}/notices",
+            headers={"Authorization": f"Bearer {teacher_token}"},
+            json={
+                "title": "중요 공지",
+                "content_html": "<h1>공지</h1><p>테스트 본문</p>",
+            },
+        )
+        self.assertEqual(upsert_resp.status_code, 200)
+        notice = upsert_resp.json()
+        self.assertEqual(notice["title"], "중요 공지")
+
+        notices_resp = self.client.get(
+            f"/social/study-groups/{group['group_id']}/notices",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        self.assertEqual(notices_resp.status_code, 200)
+        notices = notices_resp.json()["notices"]
+        self.assertEqual(len(notices), 1)
+        self.assertEqual(notices[0]["content_html"], "<h1>공지</h1><p>테스트 본문</p>")
+
+        system_resp = self.client.get(
+            "/social/study-groups/notices/my/system",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        self.assertEqual(system_resp.status_code, 200)
+        system_notices = system_resp.json()["notices"]
+        self.assertEqual(len(system_notices), 1)
+        self.assertEqual(system_notices[0]["group_id"], group["group_id"])
+        self.assertEqual(system_notices[0]["group_name"], "공지 그룹")
+
+        delete_resp = self.client.delete(
+            f"/social/study-groups/{group['group_id']}/notices",
+            params={"title": "중요 공지"},
+            headers={"Authorization": f"Bearer {teacher_token}"},
+        )
+        self.assertEqual(delete_resp.status_code, 204)
+
+        empty_resp = self.client.get(
+            "/social/study-groups/notices/my/system",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        self.assertEqual(empty_resp.status_code, 200)
+        self.assertEqual(empty_resp.json()["notices"], [])
+
+    def test_global_system_notice_flow(self) -> None:
+        teacher_token = self._register_teacher()
+        student_token = self._register_student()
+
+        put_resp = self.client.put(
+            "/account/system-notices",
+            headers={"Authorization": f"Bearer {teacher_token}"},
+            json={
+                "title": "전체 공지",
+                "content_html": "<h1>전체 안내</h1><p>모든 사용자 대상</p>",
+            },
+        )
+        self.assertEqual(put_resp.status_code, 200)
+        payload = put_resp.json()
+        self.assertEqual(payload["data"]["title"], "전체 공지")
+
+        list_resp = self.client.get(
+            "/account/system-notices",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        self.assertEqual(list_resp.status_code, 200)
+        items = list_resp.json()["data"]["items"]
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["scope"], "global")
+        self.assertEqual(items[0]["title"], "전체 공지")
+
+        delete_resp = self.client.delete(
+            "/account/system-notices",
+            params={"title": "전체 공지"},
+            headers={"Authorization": f"Bearer {teacher_token}"},
+        )
+        self.assertEqual(delete_resp.status_code, 200)
+
+        empty_resp = self.client.get(
+            "/account/system-notices",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        self.assertEqual(empty_resp.status_code, 200)
+        self.assertEqual(empty_resp.json()["data"]["items"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

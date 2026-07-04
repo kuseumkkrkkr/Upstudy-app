@@ -64,6 +64,8 @@ class AppDrawer extends StatelessWidget {
                       fontSize: 13,
                     ),
                   ),
+                  const SizedBox(height: 18),
+                  const _DrawerAccountSummary(),
                 ],
               ),
             ),
@@ -132,6 +134,90 @@ class AppDrawer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DrawerAccountSummary extends StatefulWidget {
+  const _DrawerAccountSummary();
+
+  @override
+  State<_DrawerAccountSummary> createState() => _DrawerAccountSummaryState();
+}
+
+class _DrawerAccountSummaryState extends State<_DrawerAccountSummary> {
+  late final Future<AccountSummary> _summary = ApiClient.instance
+      .fetchAccountSummary();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<AccountSummary>(
+      future: _summary,
+      builder: (context, snapshot) {
+        final account = snapshot.data;
+        if (account == null) {
+          return const SizedBox(height: 54);
+        }
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppDrawer._surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E7DE)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: account.levelProgress,
+                        minHeight: 8,
+                        backgroundColor: Colors.white,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppColors.success,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'lv. ${account.level}',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.monetization_on_rounded,
+                    color: Color(0xFFD59B19),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${account.totalPoints}',
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

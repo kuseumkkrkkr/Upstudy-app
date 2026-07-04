@@ -6,6 +6,28 @@ import 'api_client.dart';
 class CourseService {
   CourseService._();
 
+  static Course courseFromJsonForTest(Map<String, dynamic> json) {
+    return _courseFromJson(json);
+  }
+
+  static int? parseRecommendedDurationDays(String? value) {
+    final text = (value ?? '').trim().toLowerCase().replaceAll(' ', '');
+    if (text.isEmpty) return null;
+    final plain = int.tryParse(text);
+    if (plain != null) return plain;
+    final match = RegExp(
+      r'(\d+)(일|주|개월|달|day|days|week|weeks|month|months)',
+    ).firstMatch(text);
+    if (match == null) return null;
+    final amount = int.parse(match.group(1)!);
+    final unit = match.group(2)!;
+    if (unit == '주' || unit.startsWith('week')) return amount * 7;
+    if (unit == '개월' || unit == '달' || unit.startsWith('month')) {
+      return amount * 30;
+    }
+    return amount;
+  }
+
   static Future<List<Course>> fetchCourses({
     String? keyword,
     String? tag,
@@ -43,6 +65,10 @@ class CourseService {
             (item) => _courseFromJson(Map<String, dynamic>.from(item as Map)),
           )
           .toList();
+      if (courses.isEmpty) {
+        final assigned = await _fallbackMyCoursesFromAcademyAssignments(token);
+        if (assigned.isNotEmpty) return assigned;
+      }
       return courses;
     }
 
@@ -52,11 +78,57 @@ class CourseService {
       // enrollment data in its response).
       final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
       if (fromEnrollments.isNotEmpty) return fromEnrollments;
+      final fromAssignments = await _fallbackMyCoursesFromAcademyAssignments(
+        token,
+      );
+      if (fromAssignments.isNotEmpty) return fromAssignments;
       final fromCourses = await _fallbackMyCoursesFromCourses(token);
       return fromCourses;
     }
 
     throw Exception('Failed to load my courses: ${resp.statusCode}');
+  }
+
+  static Future<List<Course>> _fallbackMyCoursesFromAcademyAssignments(
+    String token,
+  ) async {
+    final uri = Uri.parse(
+      '${ApiClient.baseUrl}/academy/assignments/my',
+    ).replace(queryParameters: {'kind': 'course'});
+    final resp = await ApiClient.instance.authedGet(uri, token: token);
+    if (resp.statusCode != 200) return const <Course>[];
+    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
+    final data = payload['data'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(payload['data'] as Map)
+        : payload;
+    final items = data['items'] as List<dynamic>? ?? const [];
+    final courseIds = <String>[];
+    for (final item in items) {
+      if (item is! Map) continue;
+      final id = item['ref_id']?.toString() ?? '';
+      if (id.isNotEmpty && !courseIds.contains(id)) {
+        courseIds.add(id);
+      }
+    }
+    final courses = <Course>[];
+    for (final courseId in courseIds) {
+      try {
+        final courseUri = Uri.parse('${ApiClient.baseUrl}/courses/v2/$courseId');
+        final courseResp = await ApiClient.instance.authedGet(
+          courseUri,
+          token: token,
+        );
+        if (courseResp.statusCode != 200) continue;
+        final body = jsonDecode(courseResp.body) as Map<String, dynamic>;
+        final raw = body['data'] is Map<String, dynamic>
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : body;
+        courses.add(_courseFromJson(raw));
+      } catch (_) {
+        // Ignore broken assignment records so the rest of the list can render.
+      }
+    }
+    return courses;
   }
 
   static Future<Course> enroll(String courseId) async {
@@ -253,7 +325,7 @@ class CourseService {
         ? Map<String, dynamic>.from(json['progress'] as Map)
         : const <String, dynamic>{};
 
-    final unitsRaw = json['units'] as List<dynamic>? ?? [];
+    final unitsRaw = _normalizedUnits(json);
     final units = <CourseUnit>[];
     final completedUnits = unitsRaw.isEmpty
         ? 0
@@ -329,5 +401,28 @@ class CourseService {
       textbookId: json['textbook_id']?.toString() ?? '',
       textbookPages: (json['textbook_pages'] as num?)?.toInt() ?? 0,
     );
+  }
+
+  static List<dynamic> _normalizedUnits(Map<String, dynamic> json) {
+    final unitsRaw = json['units'] as List<dynamic>? ?? const [];
+    if (unitsRaw.isNotEmpty) {
+      return unitsRaw;
+    }
+
+    final modulesRaw = json['modules'] as List<dynamic>? ?? const [];
+    return modulesRaw.whereType<Map>().map((raw) {
+      final module = Map<String, dynamic>.from(raw);
+      return <String, dynamic>{
+        'title': module['title']?.toString() ?? '',
+        'type': module['type']?.toString() ?? '',
+        'detail': module,
+        'estimated_minutes':
+            (module['estimated_minutes'] as num?)?.toInt() ??
+            (module['exam_duration'] as num?)?.toInt() ??
+            (module['min_minutes'] as num?)?.toInt() ??
+            0,
+        'missions': const <dynamic>[],
+      };
+    }).toList(growable: false);
   }
 }

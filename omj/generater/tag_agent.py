@@ -7,8 +7,13 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from pydantic import BaseModel, Field
 
 from baselines.basemodel import AIQuestResult, AISolveStep, ContentBlocks, blocks_to_text
-from generater.ai_gen import COMETAPI_KEY, client
 from generater.codebase_store import save_agent_log
+from services.ai.sam_client import (
+    DEFAULT_TAG_AGENT_MODEL,
+    SAM_API_KEY_ENV,
+    generate_json,
+    is_sam_configured,
+)
 
 
 class TagAssignmentError(RuntimeError):
@@ -126,21 +131,12 @@ allowed_tags: {tags_json}
 missing_steps: {payload}
 """.strip()
 
-    response = client.models.generate_content(
-        model="kimi-k2.5",
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json",
-            "response_json_schema": _TagPatchResult.model_json_schema(),
-        },
+    parsed = generate_json(
+        model=DEFAULT_TAG_AGENT_MODEL,
+        prompt=prompt,
+        schema=_TagPatchResult,
+        temperature=0.1,
     )
-
-    json_text = response.text
-    if json_text.startswith("```"):
-        json_text = json_text.lstrip("`").split("\n", 1)[-1]
-    if json_text.endswith("```"):
-        json_text = json_text.rsplit("\n", 1)[0]
-    parsed = json.loads(json_text)
     return _TagPatchResult.model_validate(parsed)
 
 
@@ -165,7 +161,7 @@ def enforce_step_tags(ai_result: AIQuestResult, hash_tags: List[str]) -> AIQuest
             }
         )
 
-    if not missing or not COMETAPI_KEY:
+    if not missing or not is_sam_configured():
         return ai_result
 
     patches = _request_tag_patches(missing, list(tag_mapping.values()))
@@ -385,13 +381,13 @@ def enforce_storage_step_tags(
             )
             return storage_data
 
-        if not COMETAPI_KEY:
+        if not is_sam_configured():
             save_agent_log(
                 codebase_id=codebase_id,
                 action=action,
                 status="failure",
                 attempt=attempt,
-                error_message="COMETAPI_KEY is not set",
+                error_message=f"{SAM_API_KEY_ENV} is not set",
                 detail=detail,
             )
             continue

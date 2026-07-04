@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -29,21 +29,25 @@ class Ios26TopBar extends StatelessWidget {
     super.key,
     required this.brandColor,
     this.title = 'AIFlow',
+    this.onBack,
     this.onMenu,
     this.onTitleTap,
     this.items = const <Ios26NavItem>[],
     this.actionIcons = const <Ios26ActionIcon>[],
     this.trailingIcons = const <Ios26ActionIcon>[],
+    this.trailing,
     this.leftInset,
   });
 
   final Color brandColor;
   final String title;
+  final VoidCallback? onBack;
   final VoidCallback? onMenu;
   final VoidCallback? onTitleTap;
   final List<Ios26NavItem> items;
   final List<Ios26ActionIcon> actionIcons;
   final List<Ios26ActionIcon> trailingIcons;
+  final Widget? trailing;
   final double? leftInset;
 
   @override
@@ -70,11 +74,22 @@ class Ios26TopBar extends StatelessWidget {
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.menu_rounded, color: brandColor),
-                onPressed: onMenu,
-              ),
-              const SizedBox(width: 6),
+              if (onBack != null) ...[
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: brandColor,
+                  ),
+                  onPressed: onBack,
+                ),
+                const SizedBox(width: 2),
+              ] else ...[
+                IconButton(
+                  icon: Icon(Icons.menu_rounded, color: brandColor),
+                  onPressed: onMenu,
+                ),
+                const SizedBox(width: 6),
+              ],
               GestureDetector(
                 onTap: onTitleTap,
                 child: Text(
@@ -110,19 +125,22 @@ class Ios26TopBar extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (trailing != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: trailing!,
+                ),
               if ((trailingIcons.isNotEmpty || actionIcons.isNotEmpty))
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    for (final item in (trailingIcons.isNotEmpty
-                        ? trailingIcons
-                        : actionIcons))
+                    for (final item
+                        in (trailingIcons.isNotEmpty
+                            ? trailingIcons
+                            : actionIcons))
                       Padding(
                         padding: const EdgeInsets.only(left: 8),
-                        child: _ActionIcon(
-                          item: item,
-                          brandColor: brandColor,
-                        ),
+                        child: _ActionIcon(item: item, brandColor: brandColor),
                       ),
                   ],
                 ),

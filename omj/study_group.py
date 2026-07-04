@@ -12,14 +12,18 @@ from storage.study_group_storage import (
     add_group_exam,
     append_group_message,
     create_study_group,
+    delete_group_notice_by_title,
+    get_group,
     get_group_by_invite_code,
     get_group_topic,
     join_group,
     join_group_by_invite_code,
     list_member_ids,
+    list_group_notices,
     list_group_exams,
     list_group_messages,
     list_groups_for_user,
+    list_system_notices_for_user,
     list_shared_group_exams,
     list_shared_group_problems,
     list_shared_group_flows,
@@ -30,6 +34,7 @@ from storage.study_group_storage import (
     delete_shared_flow,
     search_study_groups,
     set_group_topic,
+    upsert_group_notice,
 )
 from storage.social_storage import get_user_by_id
 
@@ -114,6 +119,26 @@ class StudyGroupMessageResponse(BaseModel):
     user_id: str
     text: str
     created_at: str
+
+
+class StudyGroupNoticeRequest(BaseModel):
+    title: str = Field(min_length=1)
+    content_html: str = Field(min_length=1)
+
+
+class StudyGroupNoticeResponse(BaseModel):
+    notice_id: str
+    group_id: str
+    title: str
+    content_html: str
+    created_by_user_id: str
+    created_at: str
+    updated_at: str
+    group_name: Optional[str] = None
+
+
+class StudyGroupNoticeListResponse(BaseModel):
+    notices: List[StudyGroupNoticeResponse]
 
 
 class SharedFlowRequest(BaseModel):
@@ -417,6 +442,33 @@ def _assert_group_member(user_id: str, group_id: str) -> None:
         raise HTTPException(status_code=403, detail="Not a member of the group")
 
 
+def _assert_notice_manager(auth_payload: dict, group_id: str) -> dict:
+    user_id = str(auth_payload["user_id"])
+    _assert_group_member(user_id, group_id)
+    group = get_group(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="group not found")
+    if str(group.get("owner_role") or "student").lower() != "teacher":
+        raise HTTPException(status_code=400, detail="system notices are only available for teacher groups")
+    if not _is_teacher_role(auth_payload):
+        raise HTTPException(status_code=403, detail="Only teachers/admins can manage system notices")
+    return group
+
+
+@study_group_router.get(
+    "/notices/my/system",
+    response_model=StudyGroupNoticeListResponse,
+)
+def list_my_system_notices_handler(
+    limit: int = Query(20, ge=1, le=100),
+    user_id: str = Depends(_get_user_id),
+) -> StudyGroupNoticeListResponse:
+    items = list_system_notices_for_user(user_id, limit=limit)
+    return StudyGroupNoticeListResponse(
+        notices=[StudyGroupNoticeResponse(**item) for item in items]
+    )
+
+
 @study_group_router.get(
     "/{group_id}/shared-problems",
     response_model=StudyGroupSharedProblemListResponse,
@@ -612,6 +664,63 @@ def join_study_group_handler(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _to_group_response(group)
+
+
+@study_group_router.get(
+    "/{group_id}/notices",
+    response_model=StudyGroupNoticeListResponse,
+)
+def list_group_notices_handler(
+    group_id: str,
+    limit: int = Query(20, ge=1, le=100),
+    user_id: str = Depends(_get_user_id),
+) -> StudyGroupNoticeListResponse:
+    _assert_group_member(user_id, group_id)
+    items = list_group_notices(group_id, limit=limit)
+    return StudyGroupNoticeListResponse(
+        notices=[StudyGroupNoticeResponse(**item) for item in items]
+    )
+
+
+@study_group_router.put(
+    "/{group_id}/notices",
+    response_model=StudyGroupNoticeResponse,
+)
+def upsert_group_notice_handler(
+    group_id: str,
+    payload: StudyGroupNoticeRequest,
+    auth_payload: dict = Depends(_get_auth_payload),
+) -> StudyGroupNoticeResponse:
+    _assert_notice_manager(auth_payload, group_id)
+    try:
+        item = upsert_group_notice(
+            group_id,
+            title=payload.title,
+            content_html=payload.content_html,
+            created_by_user_id=str(auth_payload["user_id"]),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return StudyGroupNoticeResponse(**item)
+
+
+@study_group_router.delete(
+    "/{group_id}/notices",
+    status_code=204,
+)
+def delete_group_notice_handler(
+    group_id: str,
+    title: str = Query(..., min_length=1),
+    auth_payload: dict = Depends(_get_auth_payload),
+):
+    _assert_notice_manager(auth_payload, group_id)
+    try:
+        deleted = delete_group_notice_by_title(group_id, title)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if not deleted:
+        raise HTTPException(status_code=404, detail="notice not found")
+    return Response(status_code=204)
 
 
 @study_group_router.get(

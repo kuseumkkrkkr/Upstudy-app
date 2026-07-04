@@ -8,6 +8,8 @@ class AuthStorage {
 
   static const _tokenKey = 'auth.jwt';
   static const _usernameKey = 'auth.username';
+  static const _legacyTokenKey = 'jwt_token';
+  static const _legacyUsernameKey = 'username';
 
   Future<void> saveToken(String token, {String? username}) async {
     final prefs = await SharedPreferences.getInstance();
@@ -24,17 +26,19 @@ class AuthStorage {
 
   Future<String?> readToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return prefs.getString(_tokenKey) ?? prefs.getString(_legacyTokenKey);
   }
 
   Future<String?> readUsername() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_usernameKey);
+    return prefs.getString(_usernameKey) ?? prefs.getString(_legacyUsernameKey);
   }
 
   Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_usernameKey);
+    await prefs.remove(_legacyTokenKey);
+    await prefs.remove(_legacyUsernameKey);
   }
 }

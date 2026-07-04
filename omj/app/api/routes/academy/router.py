@@ -12,6 +12,10 @@ Provides CRUD + business-logic endpoints for:
 - TimetablePreference / TimetablePlan (heuristic v1)
 - StudentOverviewSnapshot (auto-build)
 """
+import re
+import sqlite3
+import uuid
+from datetime import datetime, timedelta
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -19,8 +23,14 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import get_current_user
 from domain.academy import repository as repo
-from storage.social_storage import are_friends
+from domain.course import v2_repository as course_v2_repo
+from storage.social_storage import append_message, are_friends, get_user_by_id
 from storage.social_storage import search_users_by_username
+from storage.study_group_storage import append_group_message
+from storage.rating_storage import create_user, get_user, list_tag_stats
+from storage.solve_history import list_solve_history
+from storage.storage import DB_PATH
+from storage.weakness_storage import list_weakness_tags
 
 router = APIRouter(prefix="/academy", tags=["academy"])
 
@@ -38,6 +48,192 @@ def _ensure_friend_access_or_403(caller_user_id: str, target_user_id: str) -> No
         return
     if not are_friends(caller_user_id, target_user_id):
         raise HTTPException(status_code=403, detail="Only friend students are accessible")
+
+
+def _parse_duration_days(value: Optional[str]) -> Optional[int]:
+    text = str(value or "").strip().lower()
+    if not text:
+        return None
+    compact = re.sub(r"\s+", "", text)
+    match = re.fullmatch(r"(\d+)", compact)
+    if match:
+        return max(0, int(match.group(1)))
+    match = re.search(r"(\d+)(일|day|days)", compact)
+    if match:
+        return max(0, int(match.group(1)))
+    match = re.search(r"(\d+)(주|week|weeks)", compact)
+    if match:
+        return max(0, int(match.group(1)) * 7)
+    match = re.search(r"(\d+)(개월|달|month|months)", compact)
+    if match:
+        return max(0, int(match.group(1)) * 30)
+    return None
+
+
+def _validate_course_due_date(course_id: str, due_date: Optional[str]) -> None:
+    if not due_date:
+        return
+    course = course_v2_repo.get_course_v2(course_id)
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    allowed_days = _parse_duration_days(course.duration)
+    if allowed_days is None:
+        raise HTTPException(status_code=400, detail="course_duration_unbounded")
+    try:
+        due = datetime.strptime(due_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="due_date must be YYYY-MM-DD")
+    max_due = (datetime.utcnow().date() + timedelta(days=allowed_days))
+    if due > max_due:
+        raise HTTPException(status_code=400, detail="course_due_date_exceeds_duration")
+
+
+def _enroll_course_v2_for_students(course_id: str, user_ids: List[str]) -> None:
+    course = course_v2_repo.get_course_v2(course_id)
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    for user_id in user_ids:
+        state = course_v2_repo.get_runtime_state(user_id, course_id)
+        if not state:
+            state = {
+                "status": "in_progress",
+                "assigned_by_teacher": True,
+                "assigned_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            }
+        else:
+            state["assigned_by_teacher"] = True
+        course_v2_repo.upsert_runtime_state(user_id, course_id, state)
+
+
+def _send_assignment_notice(
+    *,
+    sender_user_id: str,
+    group_id: str,
+    target_user_ids: List[str],
+    chat_mode: str,
+    text: str,
+) -> List[str]:
+    errors: List[str] = []
+    mode = chat_mode
+    if mode == "auto":
+        active_count = len(
+            [
+                item
+                for item in repo.list_group_members(group_id=group_id, status="active")
+                if str(item.get("role") or "student").lower() == "student"
+            ]
+        )
+        mode = "group" if len(target_user_ids) == active_count else "direct"
+    if mode == "group":
+        try:
+            append_group_message(group_id=group_id, user_id=sender_user_id, text=text)
+        except Exception as exc:
+            errors.append(f"group:{exc}")
+        return errors
+    now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    sender = get_user_by_id(sender_user_id)
+    sender_name = (sender or {}).get("username") or sender_user_id
+    for target_user_id in target_user_ids:
+        try:
+            append_message(
+                message_id=str(uuid.uuid4()),
+                user_id=sender_user_id,
+                peer_id=target_user_id,
+                text=text,
+                created_at=now,
+                is_mine=True,
+            )
+            append_message(
+                message_id=str(uuid.uuid4()),
+                user_id=target_user_id,
+                peer_id=sender_user_id,
+                text=text,
+                created_at=now,
+                is_mine=False,
+            )
+        except Exception as exc:
+            errors.append(f"direct:{target_user_id}:{sender_name}:{exc}")
+    return errors
+
+
+def _json_list(value: object) -> list:
+    if not value:
+        return []
+    if isinstance(value, list):
+        return value
+    try:
+        parsed = json.loads(str(value))
+        return parsed if isinstance(parsed, list) else []
+    except Exception:
+        return []
+
+
+def _assignment_progress_for_student(user_id: str) -> dict:
+    rows = repo.list_my_assignments(user_id=user_id)
+    homework = []
+    courses = []
+    for row in rows:
+        kind = str(row.get("kind") or "")
+        item = {
+            "assignment_id": row.get("assignment_id"),
+            "submission_id": row.get("submission_id"),
+            "title": row.get("title") or row.get("ref_id"),
+            "ref_id": row.get("ref_id"),
+            "due_date": row.get("due_date"),
+            "status": row.get("submission_status") or "pending",
+        }
+        if kind == "course":
+            state = course_v2_repo.get_runtime_state(user_id, str(row.get("ref_id") or ""))
+            item["runtime_state"] = state
+            item["progress"] = state.get("progress") or state.get("percent") or 0
+            courses.append(item)
+        elif kind == "homework":
+            homework.append(item)
+    return {"homework": homework, "courses": courses}
+
+
+def _build_student_analysis(user_id: str) -> dict:
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        rating = get_user(conn, user_id)
+        if not rating:
+            rating = create_user(conn, user_id=user_id, rating=1000.0)
+            conn.commit()
+        recent_results = _json_list(rating.get("recent_results"))
+        recent_count = int(rating.get("recent_count") or 0)
+        recent_sum = int(rating.get("recent_sum") or 0)
+        tag_stats = list_tag_stats(conn, user_id)
+    finally:
+        conn.close()
+
+    assignments = _assignment_progress_for_student(user_id)
+    return {
+        "user_id": user_id,
+        "rating": {
+            "rating": float(rating.get("rating") or 0),
+            "ovr": float(rating.get("ovr") or 0),
+            "ovr_prev": float(rating.get("ovr_prev") or 0),
+            "ovr_delta": float(rating.get("ovr") or 0) - float(rating.get("ovr_prev") or 0),
+            "recent_accuracy": (recent_sum / recent_count) if recent_count > 0 else 0.0,
+            "recent_results": recent_results,
+            "recent_count": recent_count,
+        },
+        "solve_history": list_solve_history(user_id=user_id, days=30, limit=20),
+        "weakness_tags": list_weakness_tags(user_id)[:12],
+        "tag_ratings": [
+            {
+                "tag": item.get("tag"),
+                "attempts": item.get("attempts"),
+                "rating": item.get("rating"),
+                "delta": float(item.get("rating") or 0) - float(item.get("rating_prev") or 0),
+            }
+            for item in tag_stats[:12]
+        ],
+        "homework": assignments["homework"],
+        "courses": assignments["courses"],
+        "student_schedule": repo.list_student_schedule_tasks(user_id=user_id, limit=100),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -755,17 +951,31 @@ def delete_consult_note(note_id: str, user: dict = Depends(get_current_user)):
 
 class AssignmentCreate(BaseModel):
     group_id: str
-    kind: str = Field(..., pattern=r"^(exam|problem|course)$")
+    kind: str = Field(..., pattern=r"^(exam|problem|course|homework)$")
     ref_id: str
     title: Optional[str] = None
     message: Optional[str] = None
     due_date: Optional[str] = None  # YYYY-MM-DD
+    target_user_ids: Optional[List[str]] = None
+    chat_mode: str = Field(default="auto", pattern=r"^(auto|group|direct)$")
+
+
+class AssignmentUpdate(BaseModel):
+    title: Optional[str] = None
+    message: Optional[str] = None
+    due_date: Optional[str] = None
+
+
+class StudentScheduleSync(BaseModel):
+    tasks_by_date: dict[str, List[str]] = Field(default_factory=dict)
 
 
 @router.post("/assignments", response_model=ApiResponse)
 def create_assignment(body: AssignmentCreate, user: dict = Depends(get_current_user)):
     if user.get("role") not in ("teacher", "admin"):
         raise HTTPException(status_code=403, detail="Only teachers/admins can create assignments")
+    if body.kind == "course":
+        _validate_course_due_date(body.ref_id, body.due_date)
     data = repo.create_assignment(
         group_id=body.group_id,
         sender_user_id=user.get("user_id"),
@@ -774,7 +984,22 @@ def create_assignment(body: AssignmentCreate, user: dict = Depends(get_current_u
         title=body.title,
         message=body.message,
         due_date=body.due_date,
+        target_user_ids=body.target_user_ids,
     )
+    target_user_ids = data.get("target_user_ids") or []
+    if body.kind == "course":
+        _enroll_course_v2_for_students(body.ref_id, target_user_ids)
+    title = body.title or ("코스" if body.kind == "course" else "숙제")
+    notice = body.message or f"{title} 배정이 도착했습니다."
+    delivery_errors = _send_assignment_notice(
+        sender_user_id=user.get("user_id"),
+        group_id=body.group_id,
+        target_user_ids=target_user_ids,
+        chat_mode=body.chat_mode,
+        text=notice,
+    )
+    if delivery_errors:
+        data["delivery_errors"] = delivery_errors
     return ApiResponse(data=data)
 
 
@@ -788,12 +1013,67 @@ def list_assignments(
     return ApiResponse(data={"items": data})
 
 
+@router.get("/assignments/my", response_model=ApiResponse)
+def list_my_assignments(
+    kind: Optional[str] = None,
+    user: dict = Depends(get_current_user),
+):
+    data = repo.list_my_assignments(user_id=user.get("user_id"), kind=kind)
+    return ApiResponse(data={"items": data})
+
+
+@router.patch("/assignments/{assignment_id}", response_model=ApiResponse)
+def update_assignment(
+    assignment_id: str,
+    body: AssignmentUpdate,
+    user: dict = Depends(get_current_user),
+):
+    if user.get("role") not in ("teacher", "admin"):
+        raise HTTPException(status_code=403, detail="Only teachers/admins can update assignments")
+    current = repo.get_assignment(assignment_id)
+    if not current:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    if current.get("kind") == "course" and body.due_date is not None:
+        _validate_course_due_date(current.get("ref_id"), body.due_date)
+    data = repo.update_assignment(
+        assignment_id,
+        title=body.title,
+        message=body.message,
+        due_date=body.due_date,
+    )
+    if not data:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    return ApiResponse(data=data)
+
+
 @router.delete("/assignments/{assignment_id}", response_model=ApiResponse)
 def delete_assignment(assignment_id: str, user: dict = Depends(get_current_user)):
     if user.get("role") not in ("teacher", "admin"):
         raise HTTPException(status_code=403, detail="Only teachers/admins can delete assignments")
     deleted = repo.delete_assignment(assignment_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
+
+
+@router.get("/analysis/students/{student_user_id}", response_model=ApiResponse)
+def get_student_analysis(student_user_id: str, user: dict = Depends(get_current_user)):
+    if user.get("role") not in ("teacher", "admin"):
+        if user.get("user_id") != student_user_id:
+            raise HTTPException(status_code=403, detail="Can only view your own analysis")
+    data = _build_student_analysis(student_user_id)
+    return ApiResponse(data=data)
+
+
+@router.put("/students/me/schedule", response_model=ApiResponse)
+def sync_my_student_schedule(
+    body: StudentScheduleSync,
+    user: dict = Depends(get_current_user),
+):
+    items = repo.replace_student_schedule_tasks(
+        user_id=user.get("user_id"),
+        tasks_by_date=body.tasks_by_date,
+        source="student",
+    )
+    return ApiResponse(data={"items": items})
 
 
 # ---------------------------------------------------------------------------

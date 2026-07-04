@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import time
+import random
 from datetime import date
 from typing import Any, Optional
 
@@ -14,7 +15,8 @@ from domain.course import engine
 from domain.course import v2_repository as repo
 from domain.academy import repository as academy_repo
 from domain.course.v2_models import CourseModule, CourseModuleType
-from storage.textbook_storage import get_textbook
+from storage.textbook_storage import get_textbook, is_teacher_manual_textbook
+from storage.storage import get_quest, search_quests, update_quest_mcq
 
 router = APIRouter(prefix="/courses/v2/runtime", tags=["courses-v2-runtime"])
 
@@ -340,6 +342,168 @@ def _can_access_course(request: Request, course) -> bool:
     return False
 
 
+def _blocks_to_text(value: Any) -> str:
+    if isinstance(value, dict):
+        blocks = value.get("blocks")
+        if isinstance(blocks, list):
+            return " ".join(
+                str(block.get("content", "")).strip()
+                for block in blocks
+                if isinstance(block, dict) and str(block.get("content", "")).strip()
+            ).strip()
+    return str(value or "").strip()
+
+
+def _number_or_none(value: Any) -> Optional[float]:
+    text = _blocks_to_text(value)
+    if not text:
+        return None
+    try:
+        return float(text)
+    except Exception:
+        return None
+
+
+def _build_choices(answer_value: Any, *, pattern: str = "pm2", shuffle: bool = True) -> tuple[list[dict[str, Any]], int]:
+    answer_num = _number_or_none(answer_value)
+    if answer_num is None:
+        answer_text = _blocks_to_text(answer_value) or "0"
+        values = [answer_text]
+        while len(values) < 5:
+            values.append(f"{answer_text}_{len(values)}")
+        if shuffle:
+            random.shuffle(values)
+        answer_index = values.index(answer_text)
+        return [{"blocks": [{"type": "text", "content": str(item)}]} for item in values], answer_index
+
+    answer_int = int(round(answer_num))
+    offsets = {
+        "pm1": [-2, -1, 0, 1, 2],
+        "mixed": [-2, -1, 0, 2, 4],
+    }.get(pattern, [-4, -2, 0, 2, 4])
+    values = [answer_int + offset for offset in offsets]
+    while len(set(values)) < 5:
+        values.append(answer_int + random.randint(-10, 10))
+    values = list(dict.fromkeys(values))[:5]
+    if shuffle:
+        random.shuffle(values)
+    answer_index = values.index(answer_int)
+    return [{"blocks": [{"type": "text", "content": str(item)}]} for item in values], answer_index
+
+
+def _ensure_mcq_quest(quest: dict[str, Any], module: CourseModule) -> dict[str, Any]:
+    data = quest.get("data") if isinstance(quest.get("data"), dict) else {}
+    qtype = str(data.get("question_type") or "").lower()
+    objectify = str(getattr(module, "objectify_mode", "") or "").lower()
+    if qtype in {"multiple_choice", "mcq"} or objectify not in {"multiple_choice", "mcq", "objectify"}:
+        return quest
+
+    policy = getattr(module, "mcq_policy", None)
+    policy = policy if isinstance(policy, dict) else {}
+    options, answer_index = _build_choices(
+        data.get("quest_answer"),
+        pattern=str(policy.get("offset_pattern") or "pm2"),
+        shuffle=policy.get("random_choices") is not False,
+    )
+    quest_id = str((quest.get("header") or {}).get("quest_id") or "")
+    if quest_id:
+        update_quest_mcq(
+            quest_id,
+            quest_options=options,
+            choice_answer_index=answer_index,
+            meta={
+                "mcq_conversion": {
+                    "source_quest_id": quest_id,
+                    "mcq_policy": policy or {"offset_pattern": "pm2", "random_choices": True},
+                    "answer_index": answer_index,
+                    "hints_forbidden": True,
+                },
+                "variant_meta": {"variant_input_mode": "course_runtime_mcq", "is_mcq_branch": True},
+            },
+        )
+    data["question_type"] = "multiple_choice"
+    data["quest_options"] = options
+    data["choice_answer_index"] = answer_index
+    quest["data"] = data
+    return quest
+
+
+def _problem_ids_from_module(module: CourseModule) -> list[str]:
+    raw = module.problem_ids or getattr(module, "selected_problem_ids", None) or []
+    if not isinstance(raw, list):
+        return []
+    return [str(item).strip() for item in raw if str(item).strip()]
+
+
+def _load_module_quests(module: CourseModule) -> list[dict[str, Any]]:
+    quests: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for quest_id in _problem_ids_from_module(module):
+        quest = get_quest(quest_id)
+        if not quest:
+            continue
+        qid = str((quest.get("header") or {}).get("quest_id") or quest_id)
+        if qid in seen:
+            continue
+        seen.add(qid)
+        quests.append(_ensure_mcq_quest(quest, module))
+
+    if quests:
+        return quests
+
+    query = getattr(module, "problem_query", None)
+    query = query if isinstance(query, dict) else {}
+    hash_tags = module.hash_tags or query.get("hash_tags") or []
+    hash_tag = ",".join(str(tag).strip() for tag in hash_tags if str(tag).strip())
+    text = str(query.get("text") or query.get("text_query") or "").strip()
+    limit = int(module.question_count or module.max_problems or 10)
+    if not hash_tag and not text:
+        return []
+    result = search_quests(
+        hash_tag=hash_tag or None,
+        text_query=text or None,
+        page=1,
+        page_size=max(1, min(limit, 50)),
+    )
+    for quest in result.get("quests", []):
+        if isinstance(quest, dict):
+            quests.append(_ensure_mcq_quest(quest, module))
+    return quests[:limit]
+
+
+@router.post("/problem-solve/load", response_model=ApiResponse)
+async def problem_solve_load(
+    request: Request,
+    body: dict[str, Any],
+    _user=Depends(get_current_user),
+):
+    course_id = str(body.get("course_id") or "").strip()
+    module_id = str(body.get("module_id") or "").strip()
+    if not course_id or not module_id:
+        return _wrap(None, "course_id and module_id are required")
+    course = repo.get_course_v2(course_id)
+    if course is None or not _can_access_course(request, course):
+        return _wrap(None, "Course not found")
+    module = course.get_module(module_id)
+    if module is None or module.type != CourseModuleType.problem_solve:
+        return _wrap(None, "Problem solve module not found")
+    quests = _load_module_quests(module)
+    pass_rate = int(module.pass_rate if module.pass_rate is not None else 90)
+    return _wrap(
+        {
+            "course_id": course_id,
+            "module_id": module_id,
+            "quests": quests,
+            "pass_rate": pass_rate,
+            "runtime_attempt": {
+                "started_at": int(time.time()),
+                "first_submit_locked": False,
+            },
+        },
+        "Problem solve module loaded",
+    )
+
+
 @router.post("/next", response_model=ApiResponse)
 async def runtime_next(
     request: Request,
@@ -476,6 +640,7 @@ async def runtime_submit(
     correct_count: int = int(body.get("correct_count", 0))
     total_count: int = int(body.get("total_count", 0))
     elapsed_seconds: Optional[int] = body.get("elapsed_seconds")
+    per_problem_elapsed_seconds = body.get("per_problem_elapsed_seconds")
 
     if not course_id or not module_id:
         return _wrap(None, "course_id and module_id are required")
@@ -520,9 +685,21 @@ async def runtime_submit(
     )
 
     module_results = dict(state.get("module_results") or {})
+    previous_result = module_results.get(module_id) if isinstance(module_results.get(module_id), dict) else {}
+    first_elapsed_seconds = previous_result.get("first_elapsed_seconds")
+    if first_elapsed_seconds is None and elapsed_seconds is not None:
+        first_elapsed_seconds = elapsed_seconds
+    first_problem_elapsed = previous_result.get("first_problem_elapsed_seconds")
+    if first_problem_elapsed is None and isinstance(per_problem_elapsed_seconds, list):
+        first_problem_elapsed = per_problem_elapsed_seconds
     module_results[module_id] = {
         "passed": pass_result["passed"],
         "accuracy": pass_result["accuracy"],
+        "correct_count": correct_count,
+        "total_count": total_count,
+        "first_elapsed_seconds": first_elapsed_seconds,
+        "first_problem_elapsed_seconds": first_problem_elapsed,
+        "latest_elapsed_seconds": elapsed_seconds,
     }
     state["module_results"] = module_results
 
@@ -592,6 +769,8 @@ async def textbook_view_start(
 
     if not course_id or not textbook_id:
         return _wrap(None, "course_id and textbook_id are required")
+    if is_teacher_manual_textbook(textbook_id):
+        return _wrap(None, "Course textbook module not found")
 
     course = repo.get_course_v2(course_id)
     if course is None:
@@ -692,6 +871,8 @@ async def textbook_view_heartbeat(
 
     if not course_id or not textbook_id:
         return _wrap(None, "course_id and textbook_id are required")
+    if is_teacher_manual_textbook(textbook_id):
+        return _wrap(None, "Course textbook module not found")
 
     course = repo.get_course_v2(course_id)
     if course is None:
@@ -791,6 +972,8 @@ async def textbook_view_complete(
 
     if not course_id or not textbook_id:
         return _wrap(None, "course_id and textbook_id are required")
+    if is_teacher_manual_textbook(textbook_id):
+        return _wrap(None, "Course textbook module not found")
 
     course = repo.get_course_v2(course_id)
     if course is None:

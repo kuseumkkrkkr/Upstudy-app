@@ -1,20 +1,26 @@
 # Graph Tools Session
 
-This session handles JSX graph rendering and embedding for mathematical graph tools.
+This session provides the `AIFlow Graph` experience: a concise AIFlow-style graph explorer backed by `JSXGraph`.
 
 ## Structure
 
-- `session/` – Entry pages and session-level logic
-- `ui/pages/` – Page-level widgets
-- `ui/widgets/` – Reusable widgets (JSX graph embed variants: web, native, stub)
-- `ui/modals/` – Dialogs and bottom sheets
-- `shared/` – Models and utilities shared within the session
-- `business/` – Business logic and state management
+- `session/` – page entry points
+- `ui/widgets/` – platform-specific HTML embed adapters
+- `shared/aiflow_graph_document.dart` – graph scene document API
+- `shared/aiflow_graph_example_catalog.dart` – searchable subject example catalog
+- `shared/jsx_graph_html_builder.dart` – HTML renderer builder
+- `API.md` – public session API and renderer contract
 
-## Moved Files
+## Current UX Goals
 
-- `lib/pages/jsx_graph_page.dart` -> `session/jsx_graph_page.dart`
-- `lib/pages/jsx_graph_embed.dart` -> `ui/widgets/jsx_graph_embed.dart`
-- `lib/pages/jsx_graph_embed_web.dart` -> `ui/widgets/jsx_graph_embed_web.dart`
-- `lib/pages/jsx_graph_embed_native.dart` -> `ui/widgets/jsx_graph_embed_native.dart`
-- `lib/pages/jsx_graph_embed_stub.dart` -> `ui/widgets/jsx_graph_embed_stub.dart`
+- AIFlow-aligned compact header and card layout
+- searchable subject example catalog
+- JSXGraph-backed function, line, and scatter rendering
+- fast viewport reset and zoom controls
+- simple graph settings for axes, grid, degree mode, and viewport lock
+
+## Platform Notes
+
+- Web uses `iframe srcdoc`
+- Native uses `InAppWebView`
+- Rendering depends on the official `JSXGraph` CDN

@@ -1,17 +1,17 @@
 # Quest Generator
 
-CLI and API server that build math quest data with a Gemini-based model and store results in a SQLite database.
+CLI and API server that build math quest data with SAM OpenAI-compatible models and store results in a SQLite database.
 
 ## Requirements
 - Python 3.10+ (sqlite3 is built-in)
-- pip packages: pydantic, google-genai
+- pip packages: pydantic, openai, google-genai
 - API packages: fastapi, uvicorn, pyjwt, reportlab
 
 ## Setup
-- Create a `.env` file (recommended) and set `COMETAPI_KEY`.
-  - Example: `COMETAPI_KEY=...`
-- Or set `COMETAPI_KEY` in your shell environment.
-  - PowerShell example: `$env:COMETAPI_KEY="..."`.
+- Create a `.env` file (recommended) and set `SAM_API_KEY`.
+  - Example: `SAM_API_KEY=...`
+- Or set `SAM_API_KEY` in your shell environment.
+  - PowerShell example: `$env:SAM_API_KEY="..."`.
 - Install deps: `pip install -r requirements.txt`
 
 ## Run (CLI)
@@ -33,7 +33,7 @@ uvicorn server:app --reload
 ```
 
 Environment variables:
-- `COMETAPI_KEY`: required for AI generation.
+- `SAM_API_KEY`: required for AI generation.
 - `OMJ_JWT_SECRET`: secret for JWT tokens (defaults to a dev value).
 - `OMJ_PDF_FONT_PATH`: optional TTF font path for PDF rendering (recommended for non-ASCII text).
 

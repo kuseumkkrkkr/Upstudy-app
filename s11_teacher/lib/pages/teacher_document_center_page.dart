@@ -95,12 +95,6 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
     return text.isEmpty ? fallback : text;
   }
 
-  int _int(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return int.tryParse(value?.toString() ?? '') ?? 0;
-  }
-
   String _documentId(Map<String, dynamic>? document) {
     if (document == null) return '';
     return _text(
@@ -178,26 +172,8 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
             Expanded(
               child: Column(
                 children: [
-                  _DocumentHero(
-                    documentCount: _documents.length,
-                    folderCount: _folders.length - 1,
-                    linkedCount: _documents
-                        .where(
-                          (d) =>
-                              _int(
-                                d['linked_course_count'] ?? d['course_count'],
-                              ) >
-                              0,
-                        )
-                        .length,
-                    minuteCount: _documents.fold<int>(
-                      0,
-                      (sum, d) =>
-                          sum + _int(d['duration_minutes'] ?? d['min_minutes']),
-                    ),
-                  ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
@@ -333,112 +309,6 @@ class _FolderRail extends StatelessWidget {
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DocumentHero extends StatelessWidget {
-  const _DocumentHero({
-    required this.documentCount,
-    required this.folderCount,
-    required this.linkedCount,
-    required this.minuteCount,
-  });
-
-  final int documentCount;
-  final int folderCount;
-  final int linkedCount;
-  final int minuteCount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      child: Ios26FrostedCard(
-        radius: 26,
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '교재를 복사하지 않고 권한으로 연결합니다',
-              style: TextStyle(
-                color: kCourseGreen,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '이 문서함은 교사용 코스 생성에서 사용할 교재만 보여줍니다.',
-              style: TextStyle(color: Colors.black.withValues(alpha: 0.58)),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _MetricPill(
-                  icon: Icons.menu_book_rounded,
-                  label: '교재',
-                  value: '$documentCount개',
-                ),
-                _MetricPill(
-                  icon: Icons.folder_rounded,
-                  label: '폴더',
-                  value: '$folderCount개',
-                ),
-                _MetricPill(
-                  icon: Icons.link_rounded,
-                  label: '코스 연결',
-                  value: '$linkedCount개',
-                ),
-                _MetricPill(
-                  icon: Icons.timer_rounded,
-                  label: '분량',
-                  value: '$minuteCount분',
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MetricPill extends StatelessWidget {
-  const _MetricPill({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F8F4),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: kCourseGreen),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-          const SizedBox(width: 6),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
         ],
       ),
     );

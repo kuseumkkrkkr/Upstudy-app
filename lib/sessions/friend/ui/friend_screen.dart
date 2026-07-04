@@ -19,6 +19,7 @@ const Color _borderColor = Color(0x1A000000); // rgba(0,0,0,0.10)
 const Color _textMuted = Color(0xFF6B7280);
 const Color _redAccent = Color(0xFFE24B4A);
 const String _docxFontFamily = 'Inter';
+const int _ratingEstimateMinSolved = 50;
 
 const TextStyle _labelSm = TextStyle(
   fontFamily: _docxFontFamily,
@@ -101,6 +102,7 @@ class _SoWidgetState extends State<SoWidget> {
   @override
   void initState() {
     super.initState();
+    unawaited(ActivityStore.load().catchError((_) => ActivitySnapshot.empty()));
     unawaited(_refreshPageData());
     SocialMessageHub.addListener(_handleIncomingDirectMessage);
     SocialWebSocketService.instance.addHandler(_handleSocketEvent);
@@ -920,6 +922,34 @@ class _SoWidgetState extends State<SoWidget> {
   }
 
   // ── 친구 요청 타일 ──────────────────────────────────────────
+  Widget _ratingSummaryLocked(BuildContext context, int remainingCount) {
+    final safeRemaining = remainingCount < 0 ? 0 : remainingCount;
+    return SizedBox(
+      height: 180,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.lock_outline, color: _textMuted, size: 28),
+            const SizedBox(height: 8),
+            const Text('아직 레이팅을 볼 수 없어요', style: _bodyMd),
+            const SizedBox(height: 4),
+            Text('레이팅 추정까지 $safeRemaining문제 남았어요', style: _bodyMdMuted),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LevelTestHomePage()),
+                );
+              },
+              child: const Text('문제 풀러 가기'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _requestTile(_FriendRequest request, {required bool incoming}) {
     final name = request.username;
     final createdLabel =
@@ -2257,7 +2287,27 @@ class _SoWidgetState extends State<SoWidget> {
                                             ],
                                           ),
                                           const SizedBox(height: 14),
-                                          _ratingSummaryGrid(),
+                                          ValueListenableBuilder<
+                                            ActivitySnapshot
+                                          >(
+                                            valueListenable:
+                                                ActivityStore.notifier,
+                                            builder:
+                                                (context, activitySnapshot, _) {
+                                                  final remainingCount =
+                                                      _ratingEstimateMinSolved -
+                                                      activitySnapshot
+                                                          .totalSolvedCount;
+                                                  final isEligible =
+                                                      remainingCount <= 0;
+                                                  return isEligible
+                                                      ? _ratingSummaryGrid()
+                                                      : _ratingSummaryLocked(
+                                                          context,
+                                                          remainingCount,
+                                                        );
+                                                },
+                                          ),
                                         ],
                                       ),
                                     ),

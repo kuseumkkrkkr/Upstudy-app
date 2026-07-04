@@ -1,4 +1,4 @@
-﻿part of 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
+part of 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 
 class ProblemSolveConfig {
   const ProblemSolveConfig({
@@ -12,6 +12,8 @@ class ProblemSolveConfig {
     this.unitIndex,
     this.quests = const <Map<String, dynamic>>[],
     this.onComplete,
+    this.ratingEnabled = true,
+    this.onProblemGraded,
   });
 
   final int questionCount;
@@ -23,9 +25,25 @@ class ProblemSolveConfig {
   final String courseId;
   final int? unitIndex;
   final List<Map<String, dynamic>> quests;
+  final bool ratingEnabled;
+
   /// Called when all problems are graded with [correctCount], [totalCount],
   /// and whether the student [passed] the module.
-  final void Function({required int correctCount, required int totalCount, required bool passed, int? elapsedSeconds})? onComplete;
+  final void Function({
+    required int correctCount,
+    required int totalCount,
+    required bool passed,
+    int? elapsedSeconds,
+  })?
+  onComplete;
+  final FutureOr<void> Function({
+    required int itemIndex,
+    required Map<String, dynamic>? quest,
+    required bool isCorrect,
+    required List<Map<String, dynamic>> stepCorrectness,
+    int? elapsedSeconds,
+  })?
+  onProblemGraded;
 
   ProblemSolveConfig copyWith({
     int? questionCount,
@@ -37,7 +55,22 @@ class ProblemSolveConfig {
     String? courseId,
     int? unitIndex,
     List<Map<String, dynamic>>? quests,
-    void Function({required int correctCount, required int totalCount, required bool passed, int? elapsedSeconds})? onComplete,
+    void Function({
+      required int correctCount,
+      required int totalCount,
+      required bool passed,
+      int? elapsedSeconds,
+    })?
+    onComplete,
+    bool? ratingEnabled,
+    FutureOr<void> Function({
+      required int itemIndex,
+      required Map<String, dynamic>? quest,
+      required bool isCorrect,
+      required List<Map<String, dynamic>> stepCorrectness,
+      int? elapsedSeconds,
+    })?
+    onProblemGraded,
   }) {
     return ProblemSolveConfig(
       questionCount: questionCount ?? this.questionCount,
@@ -50,6 +83,8 @@ class ProblemSolveConfig {
       unitIndex: unitIndex ?? this.unitIndex,
       quests: quests ?? this.quests,
       onComplete: onComplete ?? this.onComplete,
+      ratingEnabled: ratingEnabled ?? this.ratingEnabled,
+      onProblemGraded: onProblemGraded ?? this.onProblemGraded,
     );
   }
 
@@ -71,6 +106,7 @@ class ProblemSolveConfig {
       passRate: (json['pass_rate'] as num?)?.toInt() ?? 100,
       courseId: json['course_id']?.toString() ?? '',
       unitIndex: (json['unit_index'] as num?)?.toInt(),
+      ratingEnabled: json['rating_enabled'] as bool? ?? true,
       quests: (json['quests'] as List<dynamic>? ?? const [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
@@ -87,6 +123,7 @@ class ProblemSolveConfig {
       'pass_rate': passRate,
       'course_id': courseId,
       if (unitIndex != null) 'unit_index': unitIndex,
+      'rating_enabled': ratingEnabled,
       'quests': quests,
     };
   }

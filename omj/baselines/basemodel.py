@@ -102,6 +102,14 @@ class AIQuestResult(BaseModel):
     quest_image: Optional[str] = Field(None, description="Optional quest image path or URL")
     solves: List[AISolveStep]
 
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_quest_model(cls, value: Any) -> Any:
+        if isinstance(value, dict) and isinstance(value.get("quest_model"), str):
+            value = dict(value)
+            value["quest_model"] = [value["quest_model"]]
+        return value
+
 
 class FormulaPlan(BaseModel):
     answer_vars: List[str] = Field(..., description="Answer variable symbols.")

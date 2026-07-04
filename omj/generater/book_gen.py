@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Book Generator (concept textbook auto-generation)
-Reuses ai_gen.py Gemini/CometAPI calling pattern.
+Reuses the shared SAM OpenAI-compatible calling pattern.
 Each leaf concept produces a detailed JSON textbook under gen_textbook/output/*.json.
 Usage:
     python omj/generater/book_gen.py --leaves all_leaves.txt --output gen_textbook/output --max-workers 3
@@ -22,7 +22,9 @@ if _PROJECT_ROOT not in sys.path:
 import env_loader
 env_loader.load_env()
 
-from generater.ai_gen import client, DEFAULT_MODEL
+from services.ai.sam_client import DEFAULT_PROBLEM_MODEL, generate_json
+
+DEFAULT_MODEL = DEFAULT_PROBLEM_MODEL
 
 # ---- Korean prompt template loaded from base64 to avoid shell escaping ----
 _BOOK_PROMPT_TEMPLATE = base64.b64decode(
@@ -58,17 +60,14 @@ def _extract_json_text(raw: str) -> str:
 
 
 def call_api_sync(prompt: str, model: str = DEFAULT_MODEL) -> str:
-    """Synchronous Gemini/CometAPI call."""
-    response = client.models.generate_content(
+    """Synchronous SAM call."""
+    data = generate_json(
         model=model,
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json",
-            "temperature": 0.3,
-            "maxOutputTokens": 4096,
-        },
+        prompt=prompt,
+        temperature=0.3,
+        max_tokens=4096,
     )
-    return _extract_json_text(response.text or "")
+    return json.dumps(data, ensure_ascii=False)
 
 
 async def generate_concept(concept: dict, model: str, output_dir: str) -> str:

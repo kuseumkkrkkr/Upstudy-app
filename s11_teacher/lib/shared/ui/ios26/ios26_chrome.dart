@@ -28,7 +28,7 @@ class Ios26TopBar extends StatelessWidget {
   const Ios26TopBar({
     super.key,
     required this.brandColor,
-    this.title = '에이아이플로우',
+    this.title = 'AIFlow',
     this.onBack,
     this.onMenu,
     this.onTitleTap,

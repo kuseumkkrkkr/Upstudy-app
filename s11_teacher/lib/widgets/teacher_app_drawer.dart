@@ -3,6 +3,7 @@ import 'package:s11_teacher/pages/course_list_page.dart';
 import 'package:s11_teacher/pages/group_study/group_study.dart';
 import 'package:s11_teacher/pages/problem_editor_page.dart';
 import 'package:s11_teacher/pages/teacher_social_page.dart';
+import 'package:s11_teacher/pages/teacher_store_page.dart';
 import 'package:s11_teacher/services/api_client.dart';
 import 'package:s11_teacher/widgets/design_tokens.dart';
 import 'package:s11_teacher/shared/ui/ios26/ios26_chrome.dart';
@@ -166,6 +167,22 @@ class TeacherAppDrawer extends StatelessWidget {
                               builder: (_) => const ProblemEditorPage(),
                             ),
                           );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      _TeacherDrawerNavAction(
+                        icon: Icons.storefront_rounded,
+                        title: '스토어',
+                        subtitle: '문제, 교재, 시험지 DB와 포인트를 관리합니다.',
+                        selected: currentRoute == TeacherStorePage.routeName,
+                        onTap: () {
+                          Navigator.pop(context);
+                          if (currentRoute == TeacherStorePage.routeName) {
+                            return;
+                          }
+                          Navigator.of(
+                            context,
+                          ).pushNamed(TeacherStorePage.routeName);
                         },
                       ),
                       const SizedBox(height: 10),

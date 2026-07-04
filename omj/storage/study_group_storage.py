@@ -109,6 +109,27 @@ def init_study_group_db() -> None:
     )
     cur.execute(
         """
+        CREATE TABLE IF NOT EXISTS study_group_notices (
+            notice_id TEXT PRIMARY KEY,
+            group_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            content_html TEXT NOT NULL,
+            created_by_user_id TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+    cur.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_study_group_notices_group_title "
+        "ON study_group_notices (group_id, title)"
+    )
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_study_group_notices_group_updated "
+        "ON study_group_notices (group_id, updated_at DESC)"
+    )
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS study_group_topics (
             group_id TEXT PRIMARY KEY,
             topic TEXT NOT NULL,
@@ -708,6 +729,179 @@ def list_group_messages(
             "created_at": r[3],
         }
         for r in rows
+    ]
+
+
+def upsert_group_notice(
+    group_id: str,
+    *,
+    title: str,
+    content_html: str,
+    created_by_user_id: str,
+) -> Dict[str, object]:
+    clean_title = (title or "").strip()
+    clean_content = (content_html or "").strip()
+    if not clean_title:
+        raise ValueError("title is required")
+    if not clean_content:
+        raise ValueError("content_html is required")
+
+    now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    conn = _get_conn()
+    try:
+        cur = conn.execute(
+            """
+            SELECT notice_id, created_at
+            FROM study_group_notices
+            WHERE group_id = ? AND title = ?
+            LIMIT 1
+            """,
+            (group_id, clean_title),
+        )
+        row = cur.fetchone()
+        if row:
+            notice_id = row[0]
+            created_at = row[1]
+            conn.execute(
+                """
+                UPDATE study_group_notices
+                SET content_html = ?, created_by_user_id = ?, updated_at = ?
+                WHERE notice_id = ?
+                """,
+                (clean_content, created_by_user_id, now, notice_id),
+            )
+        else:
+            notice_id = str(uuid.uuid4())
+            created_at = now
+            conn.execute(
+                """
+                INSERT INTO study_group_notices (
+                    notice_id,
+                    group_id,
+                    title,
+                    content_html,
+                    created_by_user_id,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    notice_id,
+                    group_id,
+                    clean_title,
+                    clean_content,
+                    created_by_user_id,
+                    created_at,
+                    now,
+                ),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return {
+        "notice_id": notice_id,
+        "group_id": group_id,
+        "title": clean_title,
+        "content_html": clean_content,
+        "created_by_user_id": created_by_user_id,
+        "created_at": created_at,
+        "updated_at": now,
+    }
+
+
+def list_group_notices(group_id: str, *, limit: int = 50) -> List[Dict[str, object]]:
+    conn = _get_conn()
+    try:
+        cur = conn.execute(
+            """
+            SELECT notice_id, group_id, title, content_html, created_by_user_id, created_at, updated_at
+            FROM study_group_notices
+            WHERE group_id = ?
+            ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC
+            LIMIT ?
+            """,
+            (group_id, max(1, min(limit, 100))),
+        )
+        rows = cur.fetchall()
+    finally:
+        conn.close()
+    return [
+        {
+            "notice_id": row[0],
+            "group_id": row[1],
+            "title": row[2],
+            "content_html": row[3],
+            "created_by_user_id": row[4],
+            "created_at": row[5],
+            "updated_at": row[6],
+        }
+        for row in rows
+    ]
+
+
+def delete_group_notice_by_title(group_id: str, title: str) -> bool:
+    clean_title = (title or "").strip()
+    if not clean_title:
+        raise ValueError("title is required")
+
+    conn = _get_conn()
+    try:
+        cur = conn.execute(
+            "DELETE FROM study_group_notices WHERE group_id = ? AND title = ?",
+            (group_id, clean_title),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def list_system_notices_for_user(
+    user_id: str,
+    *,
+    limit: int = 50,
+) -> List[Dict[str, object]]:
+    conn = _get_conn()
+    try:
+        cur = conn.execute(
+            """
+            SELECT
+                n.notice_id,
+                n.group_id,
+                sg.name,
+                n.title,
+                n.content_html,
+                n.created_by_user_id,
+                n.created_at,
+                n.updated_at
+            FROM study_group_notices n
+            JOIN study_group_members m
+              ON m.group_id = n.group_id
+             AND m.user_id = ?
+            JOIN study_groups sg
+              ON sg.group_id = n.group_id
+            WHERE LOWER(COALESCE(sg.owner_role, 'student')) = 'teacher'
+            ORDER BY datetime(n.updated_at) DESC, datetime(n.created_at) DESC
+            LIMIT ?
+            """,
+            (user_id, max(1, min(limit, 100))),
+        )
+        rows = cur.fetchall()
+    finally:
+        conn.close()
+    return [
+        {
+            "notice_id": row[0],
+            "group_id": row[1],
+            "group_name": row[2],
+            "title": row[3],
+            "content_html": row[4],
+            "created_by_user_id": row[5],
+            "created_at": row[6],
+            "updated_at": row[7],
+        }
+        for row in rows
     ]
 
 

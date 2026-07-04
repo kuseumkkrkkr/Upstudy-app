@@ -1,6 +1,5 @@
 ﻿import json
 import math
-import os
 import random
 import sqlite3
 import time
@@ -8,19 +7,21 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-from google import genai
-
 from env_loader import load_env
 from rating_service import fetch_user_rating, fetch_tag_ratings
+from services.ai.sam_client import (
+    DEFAULT_CHAT_MODEL,
+    SAM_API_KEY_ENV,
+    chat_completion_text,
+    is_sam_configured,
+)
 from storage.storage import DB_PATH
 from storage.user_kv_storage import get_user_kv, set_user_kv
 from user_habit import list_problem_history
 
 load_env()
 
-BASE_URL = "https://api.cometapi.com"
-MODEL_NAME = os.environ.get("OMJ_CHAT_MODEL", "gemini-3.1-flash-lite")
-COMETAPI_KEY = os.environ.get("COMETAPI_KEY")
+MODEL_NAME = DEFAULT_CHAT_MODEL
 
 # SQLite helpers ------------------------------------------------------------
 
@@ -366,12 +367,6 @@ def _build_prompt(
     return "\n\n".join(section for section in prompt_sections if section)
 
 
-def _make_client() -> genai.Client:
-    if not COMETAPI_KEY:
-        raise RuntimeError("COMETAPI_KEY is not set")
-    return genai.Client(http_options={"api_version": "v1beta", "base_url": BASE_URL}, api_key=COMETAPI_KEY)
-
-
 def generate_reply(
     *,
     character: str,
@@ -397,9 +392,14 @@ def generate_reply(
         mode=mode,
         counseling=counseling,
     )
-    client = _make_client()
-    response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
-    text = (response.text or "").strip()
+    if not is_sam_configured():
+        raise RuntimeError(f"{SAM_API_KEY_ENV} is not set")
+    text = chat_completion_text(
+        model=MODEL_NAME,
+        prompt=prompt,
+        temperature=0.7,
+        max_tokens=1024,
+    ).strip()
     if text.startswith("```"):
         text = text.lstrip("`").split("\n", 1)[-1]
     if text.endswith("```"):

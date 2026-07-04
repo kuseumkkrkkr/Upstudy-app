@@ -197,6 +197,49 @@ def _row_to_course(row: sqlite3.Row) -> CourseV2:
     return CourseV2.model_validate(data)
 
 
+def _normalize_sort(sort: Optional[str], order: Optional[str]) -> tuple[str, str]:
+    sort_key = (sort or "updated_at").strip().lower()
+    order_key = (order or "desc").strip().lower()
+    if sort_key not in {"updated_at", "created_at", "title", "target_ovr", "difficulty"}:
+        sort_key = "updated_at"
+    if order_key not in {"asc", "desc"}:
+        order_key = "desc"
+    return sort_key, order_key
+
+
+def _build_filters(
+    *,
+    query: Optional[str] = None,
+    tag: Optional[str] = None,
+    owner_user_id: Optional[str] = None,
+    is_public: Optional[bool] = None,
+) -> tuple[list[str], list[Any]]:
+    clauses: list[str] = []
+    params: list[Any] = []
+
+    q_norm = (query or "").strip().lower()
+    if q_norm:
+        clauses.append("(LOWER(title) LIKE ? OR LOWER(description) LIKE ?)")
+        like = f"%{q_norm}%"
+        params.extend([like, like])
+
+    tag_norm = (tag or "").strip().lower()
+    if tag_norm:
+        clauses.append("(LOWER(tags) LIKE ? OR LOWER(focus_tags) LIKE ?)")
+        like = f"%{tag_norm}%"
+        params.extend([like, like])
+
+    if owner_user_id is not None:
+        clauses.append("owner_user_id = ?")
+        params.append(owner_user_id)
+
+    if is_public is not None:
+        clauses.append("is_public = ?")
+        params.append(1 if is_public else 0)
+
+    return clauses, params
+
+
 # ---------------------------------------------------------------------------
 # CRUD
 # ---------------------------------------------------------------------------
@@ -327,41 +370,57 @@ def list_courses_v2(
     query: Optional[str] = None,
     tag: Optional[str] = None,
     limit: int = 50,
+    offset: int = 0,
     recommend_for_ovr: Optional[int] = None,
     owner_user_id: Optional[str] = None,
     is_public: Optional[bool] = None,
+    sort: Optional[str] = None,
+    order: Optional[str] = None,
 ) -> list[CourseV2]:
     """List CourseV2 instances with optional filtering."""
     _ensure_course_v2_tables()
+    sort_key, order_key = _normalize_sort(sort, order)
+    clauses, params = _build_filters(
+        query=query,
+        tag=tag,
+        owner_user_id=owner_user_id,
+        is_public=is_public,
+    )
+    where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    order_sql = f"ORDER BY {sort_key} {order_key}, id DESC"
+    sql = f"SELECT * FROM course_v2 {where_sql} {order_sql} LIMIT ? OFFSET ?"
+    params = list(params)
+    params.extend([max(1, limit), max(0, offset)])
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
-        rows = conn.execute(
-            "SELECT * FROM course_v2 ORDER BY updated_at DESC"
-        ).fetchall()
-
-    q_norm = (query or "").strip().lower()
-    tag_norm = (tag or "").strip().lower()
-    results: list[CourseV2] = []
-
-    for row in rows:
-        course = _row_to_course(row)
-        if q_norm:
-            hay = f"{course.title} {course.description}".lower()
-            if q_norm not in hay:
-                continue
-        if tag_norm:
-            if not any(tag_norm in t.lower() for t in course.tags):
-                continue
-        if owner_user_id and course.owner_user_id != owner_user_id:
-            continue
-        if is_public is not None and bool(course.is_public) != bool(is_public):
-            continue
-        results.append(course)
+        rows = conn.execute(sql, params).fetchall()
+    results = [_row_to_course(row) for row in rows]
 
     if recommend_for_ovr is not None:
         results.sort(key=lambda c: abs(c.target_ovr - recommend_for_ovr))
 
     return results[:limit]
+
+
+def count_courses_v2(
+    *,
+    query: Optional[str] = None,
+    tag: Optional[str] = None,
+    owner_user_id: Optional[str] = None,
+    is_public: Optional[bool] = None,
+) -> int:
+    _ensure_course_v2_tables()
+    clauses, params = _build_filters(
+        query=query,
+        tag=tag,
+        owner_user_id=owner_user_id,
+        is_public=is_public,
+    )
+    where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    sql = f"SELECT COUNT(*) FROM course_v2 {where_sql}"
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute(sql, params).fetchone()
+    return int((row or [0])[0])
 
 
 def count_courses_by_visibility(owner_user_id: str, is_public: bool, *, exclude_course_id: Optional[str] = None) -> int:

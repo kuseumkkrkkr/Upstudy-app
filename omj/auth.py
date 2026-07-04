@@ -86,7 +86,7 @@ def _get_secret() -> str:
     secret = os.environ.get("OMJ_JWT_SECRET")
     if secret:
         return secret
-    return "dev-secret-change-me"
+    return "dev-secret-change-me-use-omj-jwt-secret-in-production"
 
 
 def create_token(user_id: str, role: Optional[str] = None) -> str:

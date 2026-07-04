@@ -155,6 +155,7 @@ from storage.storage import (
     init_db,
     search_quests,
     store_data,
+    update_quest_mcq,
 )
 from domain.quest.search_view import enrich_quest_search_item, quest_title_text
 from services.ai.providers.base import get_default_provider
@@ -184,7 +185,7 @@ from storage.ox_quiz_storage import (
     fetch_questions_by_tags,
     insert_questions,
 )
-from generater.ai_gen import client as gen_client, DEFAULT_MODEL as GEN_DEFAULT_MODEL, COMETAPI_KEY
+from services.ai.sam_client import DEFAULT_TAG_AGENT_MODEL, generate_json, is_sam_configured
 
 from storage.social_storage import (
     add_friend,
@@ -209,6 +210,14 @@ from storage.study_group_storage import init_study_group_db
 from study_group import study_group_router
 
 from storage.rating_storage import init_rating_db
+from storage.teacher_store import (
+    has_entitlement as teacher_has_entitlement,
+    init_teacher_store_db,
+    purchase as teacher_store_purchase,
+    summary as teacher_store_summary,
+    top_up_test as teacher_store_top_up_test,
+)
+from storage.student_account_store import init_student_account_db
 
 from storage.weakness_storage import (
 
@@ -222,11 +231,15 @@ from storage.weakness_storage import (
 
 from storage.textbook_storage import (
 
+    TEACHER_MANUAL_TEXTBOOK_ID,
+
     create_textbook,
 
     get_textbook,
 
     init_textbook_db,
+
+    is_teacher_manual_textbook,
 
     list_textbooks,
 
@@ -395,6 +408,13 @@ def include_api_routers() -> None:
         _safe_include_router(academy_router, name="app.api.routes.academy.router")
     except Exception as exc:
         logger.error("failed to load academy router: %s", exc)
+
+    # Account progress router
+    try:
+        from app.api.routes.account.router import router as account_router
+        _safe_include_router(account_router, name="app.api.routes.account.router")
+    except Exception as exc:
+        logger.error("failed to load account router: %s", exc)
 
 
 include_api_routers()
@@ -573,6 +593,8 @@ async def _startup_event() -> None:
     init_solve_history_db()
     init_weakness_db()
     init_rating_db()
+    init_teacher_store_db()
+    init_student_account_db()
     init_user_db()
     init_course_db()
     _init_variant_tray_db()
@@ -585,12 +607,44 @@ async def _startup_event() -> None:
         max_concurrent=worker_concurrency,
     )
     await app.state.job_worker.start()
+    asyncio.create_task(_ensure_level_test_template_pool())
 
 
 @app.on_event("shutdown")
 async def _shutdown_event() -> None:
     if hasattr(app.state, "job_worker"):
         await app.state.job_worker.stop()
+
+
+async def _ensure_level_test_template_pool() -> None:
+    target_count = max(0, int(os.getenv("LEVEL_TEST_TEMPLATE_TARGET", "5")))
+    if target_count <= 0:
+        return
+    try:
+        from domain.level_test import engine as level_test_engine
+        from domain.level_test import repository as level_test_repo
+
+        while level_test_repo.count_ready_placement_templates() < target_count:
+            template_id = level_test_repo.create_placement_template(
+                version=level_test_engine.PLACEMENT_VERSION,
+                subject_mix=level_test_engine.placement_subject_mix(),
+                difficulty_profile=level_test_engine.placement_difficulty_profile(),
+                status="generating",
+            )
+            try:
+                items = await asyncio.to_thread(
+                    level_test_engine.build_placement_template_items
+                )
+                if len(items) != level_test_engine.PLACEMENT_QUESTION_COUNT:
+                    raise RuntimeError("level-test template is incomplete")
+                level_test_repo.add_placement_template_items(template_id, items)
+                level_test_repo.set_placement_template_status(template_id, "ready")
+            except Exception as exc:
+                logger.error("failed to generate level-test template: %s", exc)
+                level_test_repo.set_placement_template_status(template_id, "failed")
+                return
+    except Exception as exc:
+        logger.error("failed to ensure level-test template pool: %s", exc)
 
 
 def _save_seed_history(user_id: str, entries: List[Dict[str, Any]]) -> None:
@@ -1897,6 +1951,12 @@ class TextbookResponse(BaseModel):
 
     created_by: Optional[str] = None
 
+    is_teacher_manual: bool = False
+
+    is_course_selectable: bool = True
+
+    student_visible: bool = True
+
 
 
 
@@ -1910,6 +1970,87 @@ class TextbookListResponse(BaseModel):
 
 
 _TEXTBOOK_LIBRARY_KEY = "textbook_library_v1"
+
+_TEACHER_MANUAL_TEXTBOOK_ID = TEACHER_MANUAL_TEXTBOOK_ID
+
+
+def _with_textbook_visibility_flags(item: Dict[str, Any]) -> Dict[str, Any]:
+    payload = dict(item)
+    if is_teacher_manual_textbook(payload.get("textbook_id")):
+        payload.update(
+            {
+                "is_teacher_manual": True,
+                "is_course_selectable": False,
+                "student_visible": False,
+            }
+        )
+    return payload
+
+
+def _teacher_manual_document() -> Dict[str, Any]:
+    item = get_textbook(_TEACHER_MANUAL_TEXTBOOK_ID)
+    if item:
+        return _with_textbook_visibility_flags(item)
+    now_ms = int(time.time() * 1000)
+    return {
+        "textbook_id": _TEACHER_MANUAL_TEXTBOOK_ID,
+        "title": "설명서 기본 교재",
+        "subtitle": "교사용 문서함과 코스 교재 권한 연결 안내",
+        "category": "설명서",
+        "tags": ["설명서", "교사용", "문서함"],
+        "chapters": [
+            {
+                "title": "1. 문서함 사용 설명",
+                "intro": [
+                    "이 교재는 모든 교사가 공통으로 확인하는 설명서 기본 교재입니다.",
+                    "학생에게는 표시되지 않으며 코스 교재로 등록할 수 없습니다.",
+                ],
+                "sections": [
+                    {
+                        "title": "1-1. 문서함",
+                        "paragraphs": [
+                            "문서함은 교사용 코스 생성에서 사용할 수 있는 교재와 안내 문서를 모아 보여줍니다.",
+                            "설명서 기본 교재는 교사용 안내 전용이므로 학생 학습 화면에는 노출되지 않습니다.",
+                        ],
+                        "images": [],
+                    },
+                    {
+                        "title": "1-2. 권한 연결",
+                        "paragraphs": [
+                            "교재는 복사본을 만들지 않고 권한으로 연결합니다.",
+                            "코스에는 학습용 교재만 등록할 수 있으며 설명서 기본 교재는 선택 목록에서 제외됩니다.",
+                        ],
+                        "images": [],
+                    },
+                ],
+            },
+        ],
+        "cover_color": 0xFF1B402B,
+        "created_at": now_ms,
+        "updated_at": now_ms,
+        "created_by": "system",
+        "is_teacher_manual": True,
+        "is_course_selectable": False,
+        "student_visible": False,
+    }
+
+
+def _effective_role_from_payload(auth_payload: Dict[str, Any]) -> tuple[str, str]:
+    user_id = str(auth_payload.get("sub") or "")
+    token_role = str(auth_payload.get("role") or "").strip().lower()
+    profile = get_user_by_id(user_id) or {}
+    db_role = str(profile.get("role") or "").strip().lower()
+    effective_role = db_role or token_role
+    if effective_role not in {"teacher", "admin"} and token_role in {"teacher", "admin"}:
+        effective_role = token_role
+    if db_role != effective_role:
+        _promote_user_role_from_token(user_id, effective_role)
+    return user_id, effective_role
+
+
+def _is_teacher_or_admin_payload(auth_payload: Dict[str, Any]) -> bool:
+    _, role = _effective_role_from_payload(auth_payload)
+    return role in {"teacher", "admin"}
 
 
 
@@ -3027,7 +3168,7 @@ def list_textbooks_handler(
 
     return TextbookListResponse(
 
-        textbooks=[TextbookResponse(**item) for item in items],
+        textbooks=[TextbookResponse(**_with_textbook_visibility_flags(item)) for item in items],
 
     )
 
@@ -3045,21 +3186,12 @@ def list_teacher_documents(
 
 ) -> TextbookListResponse:
 
-    user_id = str(auth_payload.get("sub") or "")
-    token_role = str(auth_payload.get("role") or "").strip().lower()
-    profile = get_user_by_id(user_id) or {}
-    db_role = str(profile.get("role") or "").strip().lower()
-    effective_role = db_role or token_role
-    if effective_role not in {"teacher", "admin"} and token_role in {"teacher", "admin"}:
-        effective_role = token_role
+    user_id, effective_role = _effective_role_from_payload(auth_payload)
     if effective_role not in {"teacher", "admin"}:
         raise HTTPException(status_code=403, detail="Teacher only")
-    if db_role != effective_role:
-        _promote_user_role_from_token(user_id, effective_role)
 
-    allowed_ids = _ensure_default_library(user_id)
-    if not allowed_ids:
-        return TextbookListResponse(textbooks=[])
+    has_textbook_db = teacher_has_entitlement(user_id, "textbook_db")
+    allowed_ids = [] if has_textbook_db else _ensure_default_library(user_id)
 
     category = None
     normalized_type = (type or "").strip().lower()
@@ -3068,15 +3200,28 @@ def list_teacher_documents(
     elif normalized_type == "common":
         category = "common"
 
-    items = list_textbooks(
-        category=category,
-        tag=tag,
-        textbook_ids=allowed_ids,
-    )
+    items: List[Dict[str, Any]] = []
+    if normalized_type in {"", "textbook", "textbooks"}:
+        items.append(_teacher_manual_document())
+    if has_textbook_db:
+        items.extend(
+            list_textbooks(
+                category=category,
+                tag=tag,
+            )
+        )
+    elif allowed_ids:
+        items.extend(
+            list_textbooks(
+                category=category,
+                tag=tag,
+                textbook_ids=allowed_ids,
+            )
+        )
 
     return TextbookListResponse(
 
-        textbooks=[TextbookResponse(**item) for item in items],
+        textbooks=[TextbookResponse(**_with_textbook_visibility_flags(item)) for item in items],
 
     )
 
@@ -3090,9 +3235,19 @@ def get_textbook_handler(
 
     textbook_id: str,
 
-    user_id: str = Depends(_get_user_id),
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
 
 ) -> TextbookResponse:
+
+    user_id = str(auth_payload.get("sub") or "")
+
+    if is_teacher_manual_textbook(textbook_id):
+        if not _is_teacher_or_admin_payload(auth_payload):
+            raise HTTPException(status_code=403, detail="Textbook not assigned")
+        item = get_textbook(textbook_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Textbook not found")
+        return TextbookResponse(**_with_textbook_visibility_flags(item))
 
     allowed_ids = _ensure_default_library(user_id)
 
@@ -3110,7 +3265,7 @@ def get_textbook_handler(
 
         raise HTTPException(status_code=404, detail="Textbook not found")
 
-    return TextbookResponse(**item)
+    return TextbookResponse(**_with_textbook_visibility_flags(item))
 
 
 
@@ -3203,6 +3358,11 @@ def create_course_handler(
         raise HTTPException(status_code=400, detail="title is required")
     if not payload.textbook_id.strip():
         raise HTTPException(status_code=400, detail="textbook_id is required")
+    if is_teacher_manual_textbook(payload.textbook_id):
+        raise HTTPException(
+            status_code=400,
+            detail="teacher_manual_textbook_not_course_selectable",
+        )
     raw = payload.dict()
     try:
         cid = upsert_course(raw, is_demo=payload.is_demo)
@@ -3674,7 +3834,7 @@ def search_exam_editor_problems_handler(
         page=page,
         page_size=page_size,
     )
-    if source_connected:
+    if source_connected or teacher_has_entitlement(user_id, "problem_db"):
         quests = search_quests(hash_tag=hash_tag, text_query=text, page=page, page_size=page_size)
         quest_items = quests.get("quests", [])
         user_known = {str(item.get("quest_id")) for item in result["items"]}
@@ -3696,6 +3856,62 @@ def search_exam_editor_problems_handler(
             )
         result["total"] = len(result["items"])
     return ExamEditorSearchResponse(source_connected=source_connected, **result)
+
+
+@app.get("/teacher/store/summary")
+def teacher_store_summary_handler(
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
+) -> Dict[str, Any]:
+    user_id, effective_role = _effective_role_from_payload(auth_payload)
+    if effective_role not in {"teacher", "admin"}:
+        raise HTTPException(status_code=403, detail="Teacher only")
+    return teacher_store_summary(user_id)
+
+
+@app.get("/teacher/store/items")
+def teacher_store_items_handler(
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
+) -> Dict[str, Any]:
+    user_id, effective_role = _effective_role_from_payload(auth_payload)
+    if effective_role not in {"teacher", "admin"}:
+        raise HTTPException(status_code=403, detail="Teacher only")
+    data = teacher_store_summary(user_id)
+    return {
+        "items": data["items"],
+        "balance_points": data["balance_points"],
+        "entitlements": data["entitlements"],
+    }
+
+
+@app.post("/teacher/store/top-up-test")
+def teacher_store_top_up_test_handler(
+    payload: Dict[str, Any],
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
+) -> Dict[str, Any]:
+    user_id, effective_role = _effective_role_from_payload(auth_payload)
+    if effective_role not in {"teacher", "admin"}:
+        raise HTTPException(status_code=403, detail="Teacher only")
+    try:
+        return teacher_store_top_up_test(user_id, int(payload.get("amount") or 0))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/teacher/store/purchase")
+def teacher_store_purchase_handler(
+    payload: Dict[str, Any],
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
+) -> Dict[str, Any]:
+    user_id, effective_role = _effective_role_from_payload(auth_payload)
+    if effective_role not in {"teacher", "admin"}:
+        raise HTTPException(status_code=403, detail="Teacher only")
+    item_id = str(payload.get("item_id") or "").strip()
+    if not item_id:
+        raise HTTPException(status_code=400, detail="item_id is required")
+    try:
+        return teacher_store_purchase(user_id, item_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/exam-editor/tray/import")
@@ -4358,10 +4574,20 @@ def convert_variant_to_mcq(
         "answer_index": answer_index,
         "hints_forbidden": True,
     }
+    data["choice_answer_index"] = answer_index
     data["variant_meta"] = {
         "variant_input_mode": "mcq_convert",
         "is_mcq_branch": True,
     }
+    update_quest_mcq(
+        payload.base_quest_ref.quest_id,
+        quest_options=option_blocks,
+        choice_answer_index=answer_index,
+        meta={
+            "mcq_conversion": data["mcq_conversion"],
+            "variant_meta": data["variant_meta"],
+        },
+    )
     quest["data"] = data
     _insert_variant_tray_item(
         user_id=user_id,
@@ -4383,19 +4609,21 @@ def grade_variant_solve(
     if not quest:
         raise HTTPException(status_code=404, detail="Quest not found")
     data = (quest.get("data", {}) or {})
-    is_mcq = str(data.get("question_type") or "").lower() == "multiple_choice"
+    is_mcq = str(data.get("question_type") or "").lower() in {"multiple_choice", "mcq"}
     mcq_meta = data.get("mcq_conversion", {}) if isinstance(data.get("mcq_conversion"), dict) else {}
-    answer_index = mcq_meta.get("answer_index")
+    answer_index = data.get("choice_answer_index")
+    if answer_index is None:
+        answer_index = mcq_meta.get("answer_index")
     selected = payload.selected_index
     raw_correct = bool(selected is not None and answer_index is not None and int(selected) == int(answer_index))
-    pass_result = True if is_mcq else raw_correct
+    pass_result = raw_correct
     return {
         "quest_id": payload.quest_id,
         "question_type": data.get("question_type"),
         "raw_correct": raw_correct,
         "pass": pass_result,
         "hints_forbidden": True,
-        "reason": "mcq_forgiven_policy" if is_mcq and not raw_correct else "normal",
+        "reason": "incorrect_choice" if is_mcq and not raw_correct else "normal",
     }
 
 
@@ -4441,7 +4669,7 @@ def _dummy_ox_questions(tag: str, start_index: int, count: int) -> List[Tuple[st
 def _generate_ox_questions_with_ai(tag: str, need: int) -> List[Tuple[str, bool]]:
     if need <= 0:
         return []
-    if not COMETAPI_KEY:
+    if not is_sam_configured():
         # fallback to dummy if key missing
         return _dummy_ox_questions(tag, 0, need)
 
@@ -4456,35 +4684,12 @@ def _generate_ox_questions_with_ai(tag: str, need: int) -> List[Tuple[str, bool]
         "- Avoid duplicate meaning within this batch. Language: Korean."
     )
     try:
-        response = gen_client.models.generate_content(
-            model=GEN_DEFAULT_MODEL,
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-                "response_json_schema": {
-                    "type": "object",
-                    "properties": {
-                        "items": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "question": {"type": "string"},
-                                    "answer": {"type": "boolean"},
-                                },
-                                "required": ["question", "answer"],
-                            },
-                        }
-                    },
-                    "required": ["items"],
-                },
-            },
+        parsed = generate_json(
+            model=DEFAULT_TAG_AGENT_MODEL,
+            prompt=prompt,
+            temperature=0.2,
+            max_tokens=1024,
         )
-        data_text = response.text or ""
-        try:
-            parsed = json.loads(data_text)
-        except json.JSONDecodeError:
-            parsed = {}
         items = parsed.get("items") if isinstance(parsed, dict) else None
         qa: List[Tuple[str, bool]] = []
         if isinstance(items, list):

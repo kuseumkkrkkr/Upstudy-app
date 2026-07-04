@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import json
-import os
 import random
 import textwrap
 import threading
 from typing import Any, Dict, List, Optional, Tuple
 
-from google import genai
-
 from env_loader import load_env
 from generater.codebase_repair import repair_codebase
 from generater.codebase_runner import run_codebase, run_codebase_batch, validate_result
+from services.ai.sam_client import (
+    DEFAULT_CODEBASE_MODEL,
+    SAM_API_KEY_ENV,
+    chat_completion_text,
+    is_sam_configured,
+)
 
 
 def _log_done(label: str) -> None:
@@ -27,14 +30,7 @@ def _print_progress(current: int, total: int, status: str) -> None:
 
 load_env()
 
-COMETAPI_KEY = os.environ.get("COMETAPI_KEY")
-BASE_URL = "https://api.cometapi.com"
-DEFAULT_MODEL = "gemini-3.5-flash"
-
-_client = genai.Client(
-    http_options={"api_version": "v1beta", "base_url": BASE_URL},
-    api_key=COMETAPI_KEY,
-)
+DEFAULT_MODEL = DEFAULT_CODEBASE_MODEL
 
 
 class CodebaseGenerationError(RuntimeError):
@@ -122,14 +118,16 @@ def _build_generation_prompt(
 
 def _request_code(prompt: str, *, model: str = DEFAULT_MODEL) -> str:
     print(f"[입력] LLM model={model}, prompt_len={len(prompt)}")
-    if not COMETAPI_KEY:
-        raise RuntimeError("COMETAPI_KEY is not set")
-    response = _client.models.generate_content(
+    if not is_sam_configured():
+        raise RuntimeError(f"{SAM_API_KEY_ENV} is not set")
+    text = chat_completion_text(
         model=model,
-        contents=prompt,
+        prompt=prompt,
+        temperature=0.2,
+        max_tokens=8192,
     )
     _log_done("LLM 호출")
-    return response.text or ""
+    return text
 
 
 def _review_codebase(

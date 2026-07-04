@@ -89,7 +89,7 @@ class RuntimeFlags(BaseModel):
 class CourseModule(BaseModel):
     """A single module inside a V2 course."""
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="allow")
 
     id: str = Field(..., description="Unique module id within the course")
     type: CourseModuleType
@@ -100,7 +100,13 @@ class CourseModule(BaseModel):
 
     # Problem-solve / exam-solve constraints
     problem_ids: Optional[list[str]] = None
+    hash_tags: Optional[list[str]] = None
+    question_count: Optional[int] = Field(default=None, ge=1)
+    pass_rate: Optional[int] = Field(default=None, ge=0, le=100)
+    objectify_mode: Optional[str] = None
     exam_id: Optional[str] = None
+    exam_duration: Optional[int] = Field(default=None, ge=1)
+    show_timer: Optional[bool] = None
     max_problems: int = Field(default=10, ge=1, le=50)
     textbook_id: Optional[str] = None
     page_from: Optional[int] = None

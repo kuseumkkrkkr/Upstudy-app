@@ -15,6 +15,20 @@ from typing import Optional, List, Dict, Any
 from storage.storage import DB_PATH
 
 
+def _normalize_user_ids(user_ids: Optional[List[str]]) -> List[str]:
+    if not user_ids:
+        return []
+    result: List[str] = []
+    seen = set()
+    for raw in user_ids:
+        value = str(raw or "").strip()
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Table bootstrap
 # ---------------------------------------------------------------------------
@@ -339,6 +353,26 @@ def _ensure_academy_tables() -> None:
             summary_json TEXT,
             created_at TEXT
         )
+        """
+    )
+
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS student_schedule_task (
+            task_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            date TEXT NOT NULL,
+            title TEXT NOT NULL,
+            source TEXT NOT NULL DEFAULT 'student',
+            created_at TEXT,
+            updated_at TEXT
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_student_schedule_task_user_date
+        ON student_schedule_task (user_id, date)
         """
     )
 
@@ -1624,6 +1658,7 @@ def create_assignment(
     title: Optional[str] = None,
     message: Optional[str] = None,
     due_date: Optional[str] = None,
+    target_user_ids: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     _ensure_academy_tables()
     assignment_id = _generate_id()
@@ -1640,8 +1675,7 @@ def create_assignment(
     conn.commit()
     conn.close()
 
-    # Auto-create pending submissions for all active members
-    _auto_create_submissions(assignment_id, group_id)
+    submissions = _auto_create_submissions(assignment_id, group_id, target_user_ids)
 
     return {
         "assignment_id": assignment_id,
@@ -1653,20 +1687,62 @@ def create_assignment(
         "message": message,
         "due_date": due_date,
         "created_at": now,
+        "target_user_ids": [item["user_id"] for item in submissions],
+        "submission_count": len(submissions),
     }
 
 
-def _auto_create_submissions(assignment_id: str, group_id: str) -> None:
-    """Create pending submissions for all active group members."""
+def _active_group_user_ids(group_id: str) -> List[str]:
     _ensure_academy_tables()
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute(
-        "SELECT user_id FROM academy_group_member WHERE group_id = ? AND status = 'active'",
+        """
+        SELECT user_id
+        FROM academy_group_member
+        WHERE group_id = ?
+          AND status = 'active'
+          AND lower(COALESCE(role, 'student')) = 'student'
+        """,
         (group_id,),
     )
-    members = cur.fetchall()
-    for (user_id,) in members:
+    rows = cur.fetchall()
+    conn.close()
+    user_ids = [str(row[0]) for row in rows if row and row[0]]
+    if user_ids:
+        return user_ids
+    try:
+        from storage.study_group_storage import get_group, list_member_ids
+
+        group = get_group(group_id) or {}
+        creator_id = str(group.get("creator_id") or "")
+        return [
+            str(user_id)
+            for user_id in list_member_ids(group_id)
+            if str(user_id) and str(user_id) != creator_id
+        ]
+    except Exception:
+        return []
+
+
+def _auto_create_submissions(
+    assignment_id: str,
+    group_id: str,
+    target_user_ids: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
+    """Create pending submissions for selected active group members."""
+    active_users = set(_active_group_user_ids(group_id))
+    selected = _normalize_user_ids(target_user_ids)
+    if selected:
+        user_ids = [user_id for user_id in selected if user_id in active_users]
+    else:
+        user_ids = list(active_users)
+
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    submissions: List[Dict[str, Any]] = []
+    for user_id in user_ids:
         submission_id = _generate_id()
         cur.execute(
             """
@@ -1675,8 +1751,17 @@ def _auto_create_submissions(assignment_id: str, group_id: str) -> None:
             """,
             (submission_id, assignment_id, user_id),
         )
+        submissions.append(
+            {
+                "submission_id": submission_id,
+                "assignment_id": assignment_id,
+                "user_id": user_id,
+                "status": "pending",
+            }
+        )
     conn.commit()
     conn.close()
+    return submissions
 
 
 def get_assignment(assignment_id: str) -> Optional[Dict[str, Any]]:
@@ -1716,15 +1801,169 @@ def list_assignments(
     return [dict(r) for r in rows]
 
 
+def list_my_assignments(user_id: str, kind: Optional[str] = None) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    params: List[Any] = [user_id]
+    kind_sql = ""
+    if kind:
+        kind_sql = "AND a.kind = ?"
+        params.append(kind)
+    cur.execute(
+        f"""
+        SELECT
+            a.*,
+            s.submission_id,
+            s.user_id AS submission_user_id,
+            s.status AS submission_status,
+            s.submitted_at,
+            s.data_json
+        FROM group_submission s
+        JOIN group_assignment a ON a.assignment_id = s.assignment_id
+        WHERE s.user_id = ?
+        {kind_sql}
+        ORDER BY COALESCE(a.due_date, a.created_at) ASC, a.created_at DESC
+        """,
+        params,
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def update_assignment(
+    assignment_id: str,
+    *,
+    title: Optional[str] = None,
+    message: Optional[str] = None,
+    due_date: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    _ensure_academy_tables()
+    fields: List[str] = []
+    values: List[Any] = []
+    if title is not None:
+        fields.append("title = ?")
+        values.append(title)
+    if message is not None:
+        fields.append("message = ?")
+        values.append(message)
+    if due_date is not None:
+        fields.append("due_date = ?")
+        values.append(due_date)
+    if not fields:
+        return get_assignment(assignment_id)
+    values.append(assignment_id)
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        f"UPDATE group_assignment SET {', '.join(fields)} WHERE assignment_id = ?",
+        values,
+    )
+    conn.commit()
+    changed = cur.rowcount > 0
+    conn.close()
+    return get_assignment(assignment_id) if changed else None
+
+
 def delete_assignment(assignment_id: str) -> bool:
     _ensure_academy_tables()
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
+    cur.execute("DELETE FROM group_submission WHERE assignment_id = ?", (assignment_id,))
     cur.execute("DELETE FROM group_assignment WHERE assignment_id = ?", (assignment_id,))
     conn.commit()
     deleted = cur.rowcount > 0
     conn.close()
     return deleted
+
+
+# ---------------------------------------------------------------------------
+# StudentScheduleTask
+# ---------------------------------------------------------------------------
+
+def replace_student_schedule_tasks(
+    *,
+    user_id: str,
+    tasks_by_date: Dict[str, List[str]],
+    source: str = "student",
+) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    now = _now_iso()
+    clean: List[Dict[str, Any]] = []
+    for date, titles in (tasks_by_date or {}).items():
+        date_text = str(date or "").strip()
+        if not date_text:
+            continue
+        for title in titles or []:
+            title_text = str(title or "").strip()
+            if not title_text:
+                continue
+            clean.append(
+                {
+                    "task_id": _generate_id(),
+                    "user_id": user_id,
+                    "date": date_text,
+                    "title": title_text,
+                    "source": source,
+                    "created_at": now,
+                    "updated_at": now,
+                }
+            )
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM student_schedule_task WHERE user_id = ? AND source = ?",
+        (user_id, source),
+    )
+    cur.executemany(
+        """
+        INSERT INTO student_schedule_task (
+            task_id, user_id, date, title, source, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                item["task_id"],
+                item["user_id"],
+                item["date"],
+                item["title"],
+                item["source"],
+                item["created_at"],
+                item["updated_at"],
+            )
+            for item in clean
+        ],
+    )
+    conn.commit()
+    conn.close()
+    return clean
+
+
+def list_student_schedule_tasks(
+    *,
+    user_id: str,
+    limit: int = 100,
+) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT *
+        FROM student_schedule_task
+        WHERE user_id = ?
+        ORDER BY date ASC, created_at ASC
+        LIMIT ?
+        """,
+        (user_id, max(1, min(limit, 500))),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 # ---------------------------------------------------------------------------

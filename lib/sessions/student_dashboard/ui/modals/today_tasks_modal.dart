@@ -11,6 +11,7 @@ Future<T?> showTodayTasksModal<T>({
   required BuildContext context,
   required Map<DateTime, List<String>> tasksByDate,
   required ValueChanged<Map<DateTime, List<String>>> onTasksChanged,
+  Map<DateTime, List<String>> lockedTasksByDate = const {},
 }) {
   return showDialog<T>(
     context: context,
@@ -28,6 +29,7 @@ Future<T?> showTodayTasksModal<T>({
             Center(
               child: TodayTasksModal(
                 initialTasksByDate: tasksByDate,
+                lockedTasksByDate: lockedTasksByDate,
                 onTasksChanged: onTasksChanged,
               ),
             ),
@@ -43,9 +45,11 @@ class TodayTasksModal extends StatefulWidget {
     super.key,
     required this.initialTasksByDate,
     required this.onTasksChanged,
+    this.lockedTasksByDate = const {},
   });
 
   final Map<DateTime, List<String>> initialTasksByDate;
+  final Map<DateTime, List<String>> lockedTasksByDate;
   final ValueChanged<Map<DateTime, List<String>>> onTasksChanged;
 
   @override
@@ -58,6 +62,7 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
   late DateTime _selectedDate;
   late DateTime _visibleMonth;
   late Map<DateTime, List<String>> _tasksByDate;
+  late Map<DateTime, List<String>> _lockedTasksByDate;
 
   @override
   void initState() {
@@ -66,6 +71,7 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
     _selectedDate = _today;
     _visibleMonth = DateTime(_today.year, _today.month);
     _tasksByDate = _cloneTasks(widget.initialTasksByDate);
+    _lockedTasksByDate = _cloneTasks(widget.lockedTasksByDate);
     _tasksByDate.putIfAbsent(_selectedDate, () => []);
   }
 
@@ -131,6 +137,7 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
   @override
   Widget build(BuildContext context) {
     final tasks = _tasksByDate[_selectedDate] ?? const <String>[];
+    final lockedTasks = _lockedTasksByDate[_selectedDate] ?? const <String>[];
     final isToday = _isSameDay(_selectedDate, _today);
     final selectedLabel = isToday ? '오늘' : _formatDate(_selectedDate);
 
@@ -178,6 +185,7 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
                       child: _TaskPanel(
                         dateLabel: selectedLabel,
                         tasks: tasks,
+                        lockedTasks: lockedTasks,
                         onAdd: _addTask,
                         onDelete: _deleteTask,
                         controller: _taskController,
@@ -192,6 +200,7 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
                         selectedDate: _selectedDate,
                         visibleMonth: _visibleMonth,
                         tasksByDate: _tasksByDate,
+                        lockedTasksByDate: _lockedTasksByDate,
                         onSelectDate: _selectDate,
                         onChangeMonth: _changeMonth,
                       ),
@@ -211,6 +220,7 @@ class _TaskPanel extends StatelessWidget {
   const _TaskPanel({
     required this.dateLabel,
     required this.tasks,
+    required this.lockedTasks,
     required this.onAdd,
     required this.onDelete,
     required this.controller,
@@ -218,6 +228,7 @@ class _TaskPanel extends StatelessWidget {
 
   final String dateLabel;
   final List<String> tasks;
+  final List<String> lockedTasks;
   final VoidCallback onAdd;
   final ValueChanged<int> onDelete;
   final TextEditingController controller;
@@ -233,12 +244,12 @@ class _TaskPanel extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '총 ${tasks.length}건',
+          '총 ${tasks.length + lockedTasks.length}건',
           style: const TextStyle(fontSize: 14, color: Colors.black54),
         ),
         const SizedBox(height: 12),
         Expanded(
-          child: tasks.isEmpty
+          child: tasks.isEmpty && lockedTasks.isEmpty
               ? const Center(
                   child: Text(
                     '등록된 일정이 없습니다.',
@@ -246,12 +257,20 @@ class _TaskPanel extends StatelessWidget {
                   ),
                 )
               : ListView.separated(
-                  itemCount: tasks.length,
+                  itemCount: lockedTasks.length + tasks.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
+                    if (index < lockedTasks.length) {
+                      return _TaskRow(
+                        label: lockedTasks[index],
+                        locked: true,
+                        onDelete: () {},
+                      );
+                    }
+                    final taskIndex = index - lockedTasks.length;
                     return _TaskRow(
-                      label: tasks[index],
-                      onDelete: () => onDelete(index),
+                      label: tasks[taskIndex],
+                      onDelete: () => onDelete(taskIndex),
                     );
                   },
                 ),
@@ -304,10 +323,15 @@ class _TaskPanel extends StatelessWidget {
 }
 
 class _TaskRow extends StatelessWidget {
-  const _TaskRow({required this.label, required this.onDelete});
+  const _TaskRow({
+    required this.label,
+    required this.onDelete,
+    this.locked = false,
+  });
 
   final String label;
   final VoidCallback onDelete;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -319,12 +343,22 @@ class _TaskRow extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (locked) ...[
+            const Icon(Icons.school_outlined, size: 18, color: _accentGreen),
+            const SizedBox(width: 8),
+          ],
           Expanded(child: Text(label, style: const TextStyle(fontSize: 15))),
-          IconButton(
-            icon: const Icon(Icons.close, size: 18),
-            onPressed: onDelete,
-            tooltip: '삭제',
-          ),
+          if (locked)
+            const Tooltip(
+              message: '교사가 내준 숙제',
+              child: Icon(Icons.lock_outline, size: 18, color: Colors.black45),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.close, size: 18),
+              onPressed: onDelete,
+              tooltip: '삭제',
+            ),
         ],
       ),
     );
@@ -337,6 +371,7 @@ class _CalendarPanel extends StatelessWidget {
     required this.selectedDate,
     required this.visibleMonth,
     required this.tasksByDate,
+    required this.lockedTasksByDate,
     required this.onSelectDate,
     required this.onChangeMonth,
   });
@@ -345,6 +380,7 @@ class _CalendarPanel extends StatelessWidget {
   final DateTime selectedDate;
   final DateTime visibleMonth;
   final Map<DateTime, List<String>> tasksByDate;
+  final Map<DateTime, List<String>> lockedTasksByDate;
   final ValueChanged<DateTime> onSelectDate;
   final ValueChanged<int> onChangeMonth;
 
@@ -419,7 +455,8 @@ class _CalendarPanel extends StatelessWidget {
               final isDisabled = dateOnly.isBefore(today);
               final isSelected = _isSameDay(dateOnly, selectedDate);
               final isToday = _isSameDay(dateOnly, today);
-              final hasTasks = (tasksByDate[dateOnly]?.isNotEmpty ?? false);
+              final hasTasks = (tasksByDate[dateOnly]?.isNotEmpty ?? false) ||
+                  (lockedTasksByDate[dateOnly]?.isNotEmpty ?? false);
 
               return _CalendarDayCell(
                 day: dayNumber,

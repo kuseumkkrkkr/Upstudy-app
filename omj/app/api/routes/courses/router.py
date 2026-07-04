@@ -11,6 +11,7 @@ from app.api.deps import get_current_user
 from app.api.routes.courses import service
 from app.schemas.common import ApiResponse
 from domain.course.v2_models import CourseV2
+from domain.course import v2_repository as repo
 
 router = APIRouter(prefix="/courses/v2", tags=["courses-v2"])
 
@@ -68,19 +69,57 @@ async def list_courses_v2(
     query: Optional[str] = None,
     tag: Optional[str] = None,
     limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0, le=2000),
     recommend_for_ovr: Optional[int] = None,
     mine_only: bool = False,
+    visibility: Optional[str] = Query(default=None, pattern="^(all|public|private)$"),
+    sort: Optional[str] = Query(default="updated_at", pattern="^(updated_at|created_at|title|target_ovr|difficulty)$"),
+    order: Optional[str] = Query(default="desc", pattern="^(asc|desc)$"),
+    include_total: bool = False,
     user=Depends(get_current_user),
 ):
+    visibility = (visibility or "all").strip().lower()
     courses = service.list_courses_v2(
         user=user,
         query=query,
         tag=tag,
         limit=limit,
+        offset=offset,
         recommend_for_ovr=recommend_for_ovr,
         mine_only=mine_only,
+        visibility=None if visibility == "all" else visibility,
+        sort=sort,
+        order=order,
     )
-    return _wrap(courses)
+    if not include_total:
+        return _wrap(courses)
+
+    role = str(user.get("role") or "")
+    owner_filter: Optional[str] = None
+    public_filter: Optional[bool] = None
+    if role == "student":
+        public_filter = True
+    elif visibility == "public":
+        public_filter = True
+    elif visibility == "private":
+        public_filter = False
+    elif mine_only:
+        owner_filter = str(user.get("user_id") or "")
+
+    total = repo.count_courses_v2(
+        query=query,
+        tag=tag,
+        owner_user_id=owner_filter,
+        is_public=public_filter,
+    )
+    return _wrap(
+        {
+            "items": courses,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
+    )
 
 
 class GroupBindRequest(BaseModel):

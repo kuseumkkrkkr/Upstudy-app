@@ -8,6 +8,7 @@ import 'pages/course_list_page.dart';
 import 'pages/exam_paper_builder_page.dart';
 import 'pages/problem_editor_page.dart';
 import 'pages/teacher_social_page.dart';
+import 'pages/teacher_store_page.dart';
 import 'pages/textbook_builder_page.dart';
 import 'pages/group_study/group_study.dart';
 import 'pages/teacher_document_center_page.dart';
@@ -39,6 +40,7 @@ class TeacherApp extends StatelessWidget {
         '/exam-builder': (context) => const ExamPaperBuilderPage(),
         '/problem-editor': (context) => const ProblemEditorPage(),
         TeacherSocialPage.routeName: (context) => const TeacherSocialPage(),
+        TeacherStorePage.routeName: (context) => const TeacherStorePage(),
         '/textbook-builder': (context) => const TextbookBuilderPage(),
         TeacherDocumentCenterPage.routeName: (context) =>
             const TeacherDocumentCenterPage(),

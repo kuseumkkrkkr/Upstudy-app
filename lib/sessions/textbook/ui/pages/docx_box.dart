@@ -18,6 +18,7 @@ import 'package:s11/shared/business/repositories/bookmark_store.dart';
 import 'package:s11/shared/business/repositories/problem_bookmark_store.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/data/models/course.dart';
+import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 
@@ -366,11 +367,16 @@ class _BookWidgetState extends State<BookWidget> {
         const Ios26NavItem(label: '문서함', active: true),
         Ios26NavItem(
           label: '친구/소셜',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const SoWidget()),
-          ),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const SoWidget())),
         ),
-        const Ios26NavItem(label: '마켓플레이스'),
+        Ios26NavItem(
+          label: '마켓플레이스',
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const MarketplacePage())),
+        ),
       ],
     );
   }
@@ -385,7 +391,12 @@ class _BookWidgetState extends State<BookWidget> {
     final vertical = width < 860;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, isCompact ? 10 : 14, 16, isCompact ? 10 : 12),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        isCompact ? 10 : 14,
+        16,
+        isCompact ? 10 : 12,
+      ),
       child: _buildSectionCard(
         title: '문서함',
         child: Padding(
@@ -417,7 +428,8 @@ class _BookWidgetState extends State<BookWidget> {
                   _heroStatChip('교재 ${_libraryBooks.length}'),
                   ValueListenableBuilder<List<ExamPaperEntry>>(
                     valueListenable: ExamPaperStore.notifier,
-                    builder: (_, items, __) => _heroStatChip('시험지 ${items.length}'),
+                    builder: (_, items, __) =>
+                        _heroStatChip('시험지 ${items.length}'),
                   ),
                   _heroStatChip('책 북마크 ${_bookBookmarks.length}'),
                   _heroStatChip('문제 북마크 ${_problemBookmarks.allItems.length}'),
@@ -1264,7 +1276,9 @@ class _BookWidgetState extends State<BookWidget> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: BookWidget.primaryGreen.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: BookWidget.primaryGreen.withValues(alpha: 0.2),
+            ),
             boxShadow: const [
               BoxShadow(
                 blurRadius: 10,
@@ -1276,7 +1290,11 @@ class _BookWidgetState extends State<BookWidget> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              const Icon(Icons.search_sharp, size: 22, color: Color(0xFF4F6057)),
+              const Icon(
+                Icons.search_sharp,
+                size: 22,
+                color: Color(0xFF4F6057),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -1324,258 +1342,253 @@ class _BookWidgetState extends State<BookWidget> {
       maxWidth: 760,
       maxHeight: 700,
       child: StatefulBuilder(
-              builder: (context, setState) {
-                final dialogContext = context;
-                Future<void> deleteSelected() async {
-                  final ids = List<String>.from(selected);
-                  if (isExam) {
-                    for (final id in ids) {
-                      await ExamPaperStore.remove(id);
-                    }
-                  }
-                  selected.clear();
-                  editMode = false;
-                  setState(() {});
-                }
+        builder: (context, setState) {
+          final dialogContext = context;
+          Future<void> deleteSelected() async {
+            final ids = List<String>.from(selected);
+            if (isExam) {
+              for (final id in ids) {
+                await ExamPaperStore.remove(id);
+              }
+            }
+            selected.clear();
+            editMode = false;
+            setState(() {});
+          }
 
-                Widget listWidget() {
-                  if (isExam) {
-                    return ValueListenableBuilder<List<ExamPaperEntry>>(
-                      valueListenable: ExamPaperStore.notifier,
-                      builder: (context, items, _) {
-                        final ordered = List<ExamPaperEntry>.from(items);
-                        if (_pinnedExamId != null) {
-                          ordered.sort((a, b) {
-                            if (a.examId == _pinnedExamId) return -1;
-                            if (b.examId == _pinnedExamId) return 1;
-                            return b.createdAt.compareTo(a.createdAt);
-                          });
-                        }
-                        if (ordered.isEmpty) {
-                          return const Center(
-                            child: Text(
-                              '아직 없어요!',
-                              style: TextStyle(color: Colors.black54),
-                            ),
-                          );
-                        }
-                        return ListView.separated(
-                          itemCount: ordered.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final entry = ordered[index];
-                            final checked = selected.contains(entry.examId);
-                            final isPinned = _pinnedExamId == entry.examId;
-                            return ListTile(
-                              leading: editMode
-                                  ? Checkbox(
-                                      value: checked,
-                                      onChanged: (v) => setState(() {
-                                        if (v == true)
-                                          selected.add(entry.examId);
-                                        else
-                                          selected.remove(entry.examId);
-                                      }),
-                                    )
-                                  : CircleAvatar(
-                                      backgroundColor: BookWidget.mediumGreen,
-                                      child: const Icon(
-                                        Icons.file_copy_outlined,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                              title: Text(
-                                _examTitle(entry),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                                _examSubtitle(entry),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              trailing: editMode
-                                  ? null
-                                  : Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          tooltip: isPinned ? '고정해제' : '고정',
-                                          onPressed: () => _setPinnedExam(
-                                            isPinned ? null : entry.examId,
-                                          ),
-                                          icon: Icon(
-                                            isPinned
-                                                ? Icons.push_pin
-                                                : Icons.push_pin_outlined,
-                                            size: 18,
-                                          ),
-                                        ),
-                                        const Icon(
-                                          Icons.chevron_right_rounded,
-                                          size: 16,
-                                        ),
-                                      ],
-                                    ),
-                              onTap: () {
-                                if (editMode) return;
-                                Navigator.of(dialogContext).pop();
-                                _openExamPaper(rootContext, entry);
-                              },
-                            );
-                          },
-                        );
-                      },
+          Widget listWidget() {
+            if (isExam) {
+              return ValueListenableBuilder<List<ExamPaperEntry>>(
+                valueListenable: ExamPaperStore.notifier,
+                builder: (context, items, _) {
+                  final ordered = List<ExamPaperEntry>.from(items);
+                  if (_pinnedExamId != null) {
+                    ordered.sort((a, b) {
+                      if (a.examId == _pinnedExamId) return -1;
+                      if (b.examId == _pinnedExamId) return 1;
+                      return b.createdAt.compareTo(a.createdAt);
+                    });
+                  }
+                  if (ordered.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        '아직 없어요!',
+                        style: TextStyle(color: Colors.black54),
+                      ),
                     );
                   }
-
-                  return FutureBuilder<List<BookData>>(
-                    future: TextbookStore.loadLibrary(),
-                    builder: (context, snapshot) {
-                      final books = snapshot.data ?? const <BookData>[];
-                      if (snapshot.connectionState == ConnectionState.waiting &&
-                          !snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      return ValueListenableBuilder<String>(
-                        valueListenable: _bookSearchQuery,
-                        builder: (context, query, _) {
-                          final lower = query.toLowerCase();
-                          final filtered = books.where((book) {
-                            if (lower.isEmpty) return true;
-                            return book.title.toLowerCase().contains(lower) ||
-                                book.subtitle.toLowerCase().contains(lower) ||
-                                book.tags
-                                    .join(' ')
-                                    .toLowerCase()
-                                    .contains(lower);
-                          }).toList();
-                          if (filtered.isEmpty) {
-                            return const Center(
-                              child: Text(
-                                '아직 없어요!',
-                                style: TextStyle(color: Colors.black54),
+                  return ListView.separated(
+                    itemCount: ordered.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final entry = ordered[index];
+                      final checked = selected.contains(entry.examId);
+                      final isPinned = _pinnedExamId == entry.examId;
+                      return ListTile(
+                        leading: editMode
+                            ? Checkbox(
+                                value: checked,
+                                onChanged: (v) => setState(() {
+                                  if (v == true)
+                                    selected.add(entry.examId);
+                                  else
+                                    selected.remove(entry.examId);
+                                }),
+                              )
+                            : CircleAvatar(
+                                backgroundColor: BookWidget.mediumGreen,
+                                child: const Icon(
+                                  Icons.file_copy_outlined,
+                                  color: Colors.white,
+                                ),
                               ),
-                            );
-                          }
-                          return ListView.separated(
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final book = filtered[index];
-                              final checked = selected.contains(book.id);
-                              final isPinned = _pinnedBook?.id == book.id;
-                              return ListTile(
-                                leading: editMode
-                                    ? Checkbox(
-                                        value: checked,
-                                        onChanged: (v) => setState(() {
-                                          if (v == true)
-                                            selected.add(book.id);
-                                          else
-                                            selected.remove(book.id);
-                                        }),
-                                      )
-                                    : CircleAvatar(
-                                        backgroundColor:
-                                            book.coverColor ??
-                                            BookWidget.darkGreen,
-                                        child: const Icon(
-                                          Icons.book_outlined,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                title: Text(
-                                  book.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                subtitle: Text(
-                                  _bookSubtitle(book),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                trailing: editMode
-                                    ? null
-                                    : Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            tooltip: isPinned ? '고정해제' : '고정',
-                                            onPressed: () => _pinBook(book),
-                                            icon: Icon(
-                                              isPinned
-                                                  ? Icons.push_pin
-                                                  : Icons.push_pin_outlined,
-                                              size: 18,
-                                            ),
-                                          ),
-                                          const Icon(
-                                            Icons.chevron_right_rounded,
-                                            size: 16,
-                                          ),
-                                        ],
-                                      ),
-                                onTap: () {
-                                  if (editMode) return;
-                                  Navigator.of(dialogContext).pop();
-                                  _openTextbook(rootContext, book);
-                                },
-                              );
-                            },
-                          );
+                        title: Text(
+                          _examTitle(entry),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          _examSubtitle(entry),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: editMode
+                            ? null
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: isPinned ? '고정해제' : '고정',
+                                    onPressed: () => _setPinnedExam(
+                                      isPinned ? null : entry.examId,
+                                    ),
+                                    icon: Icon(
+                                      isPinned
+                                          ? Icons.push_pin
+                                          : Icons.push_pin_outlined,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                        onTap: () {
+                          if (editMode) return;
+                          Navigator.of(dialogContext).pop();
+                          _openExamPaper(rootContext, entry);
                         },
                       );
                     },
                   );
-                }
+                },
+              );
+            }
 
-                return Ios26ModalShell(
-                  title: isExam ? '보관된 시험지' : '보관된 교재',
-                  onClose: () => Navigator.of(dialogContext).pop(),
-                  trailing: IconButton(
-                    tooltip: selected.isNotEmpty
-                        ? '선택 삭제'
-                        : (editMode ? '편집 종료' : '편집'),
-                    icon: Icon(
-                      selected.isNotEmpty
-                          ? Icons.delete_outline
-                          : Icons.edit_outlined,
-                      color: BookWidget.primaryGreen,
-                    ),
-                    onPressed: selected.isNotEmpty
-                        ? deleteSelected
-                        : () => setState(() {
-                            if (editMode) {
-                              editMode = false;
-                              selected.clear();
-                            } else {
-                              editMode = true;
-                            }
-                          }),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (!isExam) ...[
-                        const SizedBox(height: 10),
-                        _searchField(
-                          controller: _bookSearchController,
-                          hintText: '교재 제목 또는 태그 검색',
-                          onChanged: (v) => _bookSearchQuery.value = v.trim(),
+            return FutureBuilder<List<BookData>>(
+              future: TextbookStore.loadLibrary(),
+              builder: (context, snapshot) {
+                final books = snapshot.data ?? const <BookData>[];
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return ValueListenableBuilder<String>(
+                  valueListenable: _bookSearchQuery,
+                  builder: (context, query, _) {
+                    final lower = query.toLowerCase();
+                    final filtered = books.where((book) {
+                      if (lower.isEmpty) return true;
+                      return book.title.toLowerCase().contains(lower) ||
+                          book.subtitle.toLowerCase().contains(lower) ||
+                          book.tags.join(' ').toLowerCase().contains(lower);
+                    }).toList();
+                    if (filtered.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          '아직 없어요!',
+                          style: TextStyle(color: Colors.black54),
                         ),
-                      ],
-                      const SizedBox(height: 12),
-                      Expanded(child: listWidget()),
-                    ],
-                  ),
-                  ),
+                      );
+                    }
+                    return ListView.separated(
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final book = filtered[index];
+                        final checked = selected.contains(book.id);
+                        final isPinned = _pinnedBook?.id == book.id;
+                        return ListTile(
+                          leading: editMode
+                              ? Checkbox(
+                                  value: checked,
+                                  onChanged: (v) => setState(() {
+                                    if (v == true)
+                                      selected.add(book.id);
+                                    else
+                                      selected.remove(book.id);
+                                  }),
+                                )
+                              : CircleAvatar(
+                                  backgroundColor:
+                                      book.coverColor ?? BookWidget.darkGreen,
+                                  child: const Icon(
+                                    Icons.book_outlined,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                          title: Text(
+                            book.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            _bookSubtitle(book),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: editMode
+                              ? null
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      tooltip: isPinned ? '고정해제' : '고정',
+                                      onPressed: () => _pinBook(book),
+                                      icon: Icon(
+                                        isPinned
+                                            ? Icons.push_pin
+                                            : Icons.push_pin_outlined,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                          onTap: () {
+                            if (editMode) return;
+                            Navigator.of(dialogContext).pop();
+                            _openTextbook(rootContext, book);
+                          },
+                        );
+                      },
+                    );
+                  },
                 );
               },
+            );
+          }
+
+          return Ios26ModalShell(
+            title: isExam ? '보관된 시험지' : '보관된 교재',
+            onClose: () => Navigator.of(dialogContext).pop(),
+            trailing: IconButton(
+              tooltip: selected.isNotEmpty
+                  ? '선택 삭제'
+                  : (editMode ? '편집 종료' : '편집'),
+              icon: Icon(
+                selected.isNotEmpty
+                    ? Icons.delete_outline
+                    : Icons.edit_outlined,
+                color: BookWidget.primaryGreen,
+              ),
+              onPressed: selected.isNotEmpty
+                  ? deleteSelected
+                  : () => setState(() {
+                      if (editMode) {
+                        editMode = false;
+                        selected.clear();
+                      } else {
+                        editMode = true;
+                      }
+                    }),
             ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!isExam) ...[
+                    const SizedBox(height: 10),
+                    _searchField(
+                      controller: _bookSearchController,
+                      hintText: '교재 제목 또는 태그 검색',
+                      onChanged: (v) => _bookSearchQuery.value = v.trim(),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Expanded(child: listWidget()),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1606,121 +1619,123 @@ class _BookWidgetState extends State<BookWidget> {
       context: context,
       maxWidth: 780,
       maxHeight: 640,
-      child: Builder(builder: (context) {
-        final page = PageController();
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            String? pinnedId = isBook
-                ? _pinnedBookBookmarkId
-                : _pinnedProblemBookmarkId;
-            return Ios26ModalShell(
-              title: isBook ? '책 북마크' : '문제 북마크',
-              onClose: () => Navigator.of(context).pop(),
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: PageView.builder(
-                      controller: page,
-                      itemCount: rawItems.isEmpty ? 1 : rawItems.length,
-                      itemBuilder: (context, index) {
-                        if (rawItems.isEmpty) {
-                          return const Center(child: Text('북마크가 없습니다.'));
-                        }
-                        final item = rawItems[index];
-                        final id = item['id']?.toString();
-                        final isPinned =
-                            id != null && id.isNotEmpty && id == pinnedId;
-                        return Padding(
-                          padding: const EdgeInsets.all(18),
-                          child: Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(18),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          item['title']?.toString() ?? '-',
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w800,
+      child: Builder(
+        builder: (context) {
+          final page = PageController();
+          return StatefulBuilder(
+            builder: (context, setModalState) {
+              String? pinnedId = isBook
+                  ? _pinnedBookBookmarkId
+                  : _pinnedProblemBookmarkId;
+              return Ios26ModalShell(
+                title: isBook ? '책 북마크' : '문제 북마크',
+                onClose: () => Navigator.of(context).pop(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: PageView.builder(
+                        controller: page,
+                        itemCount: rawItems.isEmpty ? 1 : rawItems.length,
+                        itemBuilder: (context, index) {
+                          if (rawItems.isEmpty) {
+                            return const Center(child: Text('북마크가 없습니다.'));
+                          }
+                          final item = rawItems[index];
+                          final id = item['id']?.toString();
+                          final isPinned =
+                              id != null && id.isNotEmpty && id == pinnedId;
+                          return Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(18),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            item['title']?.toString() ?? '-',
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                           ),
                                         ),
+                                        if (isPinned)
+                                          const Icon(
+                                            Icons.push_pin,
+                                            color: BookWidget.primaryGreen,
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      item['sub']?.toString() ?? '',
+                                      style: const TextStyle(
+                                        color: Colors.black54,
                                       ),
-                                      if (isPinned)
-                                        const Icon(
-                                          Icons.push_pin,
-                                          color: BookWidget.primaryGreen,
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    item['sub']?.toString() ?? '',
-                                    style: const TextStyle(
-                                      color: Colors.black54,
                                     ),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    '저장: ${_formatExamDate((item['created'] as int?) ?? 0)}',
-                                    style: const TextStyle(
-                                      color: Colors.black45,
+                                    const Spacer(),
+                                    Text(
+                                      '저장: ${_formatExamDate((item['created'] as int?) ?? 0)}',
+                                      style: const TextStyle(
+                                        color: Colors.black45,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: rawItems.isEmpty
-                                ? null
-                                : () async {
-                                    var current = 0;
-                                    if (page.hasClients &&
-                                        page.position.hasContentDimensions) {
-                                      current = page.page?.round() ?? 0;
-                                    }
-                                    final currentId = rawItems[current]['id']
-                                        ?.toString();
-                                    await _pinBookmark(
-                                      isBook: isBook,
-                                      id: currentId,
-                                    );
-                                    if (!mounted) return;
-                                    setModalState(() => pinnedId = currentId);
-                                  },
-                            child: const Text('핀 고정'),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: rawItems.isEmpty
+                                  ? null
+                                  : () async {
+                                      var current = 0;
+                                      if (page.hasClients &&
+                                          page.position.hasContentDimensions) {
+                                        current = page.page?.round() ?? 0;
+                                      }
+                                      final currentId = rawItems[current]['id']
+                                          ?.toString();
+                                      await _pinBookmark(
+                                        isBook: isBook,
+                                        id: currentId,
+                                      );
+                                      if (!mounted) return;
+                                      setModalState(() => pinnedId = currentId);
+                                    },
+                              child: const Text('핀 고정'),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('닫기'),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('닫기'),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      }),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 

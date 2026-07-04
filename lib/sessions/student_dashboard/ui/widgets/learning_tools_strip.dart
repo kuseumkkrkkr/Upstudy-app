@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const _toolAccentColor = Color(0xFF1B402B);
+
 class LearningToolsStrip extends StatelessWidget {
   const LearningToolsStrip({
     super.key,
@@ -23,25 +25,25 @@ class LearningToolsStrip extends StatelessWidget {
           icon: Icons.edit_note_rounded,
           label: '노트패드',
           onTap: onNotepad,
-          accentColor: const Color(0xFF246B45),
+          accentColor: _toolAccentColor,
         ),
         _ToolItem(
           icon: Icons.timer_rounded,
           label: '타이머',
           onTap: onTimer,
-          accentColor: const Color(0xFF2D6CDF),
+          accentColor: _toolAccentColor,
         ),
         _ToolItem(
           icon: Icons.center_focus_strong_rounded,
           label: '집중 모드',
           onTap: onFocusMode,
-          accentColor: const Color(0xFFD07A23),
+          accentColor: _toolAccentColor,
         ),
         _ToolItem(
           icon: Icons.stacked_line_chart_rounded,
           label: '그래프 그리기',
           onTap: onGraph,
-          accentColor: const Color(0xFF7C3AED),
+          accentColor: _toolAccentColor,
         ),
       ],
     );

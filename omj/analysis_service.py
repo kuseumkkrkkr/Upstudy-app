@@ -1,25 +1,21 @@
 ﻿import base64
 import json
-import os
 from typing import Any, Dict, List, Optional, Tuple
-
-from google import genai
 
 from storage.storage import get_quest
 from clean_riddles import build_clean_payload
 from env_loader import load_env
+from services.ai.sam_client import (
+    DEFAULT_ANALYSIS_MODEL,
+    SAM_API_KEY_ENV,
+    generate_json,
+    is_sam_configured,
+)
 
 load_env()
 
 
-COMETAPI_KEY = os.environ.get("COMETAPI_KEY")
-BASE_URL = "https://api.cometapi.com"
-ANALYSIS_MODEL = os.environ.get("OMJ_ANALYSIS_MODEL", "gemini-2.5-flash-lite")
-
-_client = genai.Client(
-    http_options={"api_version": "v1beta", "base_url": BASE_URL},
-    api_key=COMETAPI_KEY,
-)
+ANALYSIS_MODEL = DEFAULT_ANALYSIS_MODEL
 
 _DEFAULT_OCR_PROMPT = """
 너는 수학 OCR 추출기다.
@@ -267,42 +263,11 @@ def analyze_pregrade(
         "hit_mapped": hit_mapped,
         "user_answer": user_answer,
         "warnings": warnings,
-        "ocr_source": "gemini",
+        "ocr_source": "sam",
         "debug": debug_info,
     }
 
 
-def _build_multi_image_contents(
-    prompt: str,
-    images: List[bytes],
-) -> Any:
-    images = [img for img in images if img]
-    if not images:
-        return prompt
-    try:
-        from google.genai import types
-
-        parts = [types.Part.from_text(prompt)]
-        for image_bytes in images:
-            parts.append(
-                types.Part.from_bytes(
-                    data=image_bytes, mime_type=_infer_mime_type(image_bytes)
-                )
-            )
-        return [types.Content(role="user", parts=parts)]
-    except Exception:
-        parts = [{"text": prompt}]
-        for image_bytes in images:
-            encoded = base64.b64encode(image_bytes).decode("utf-8")
-            parts.append(
-                {
-                    "inline_data": {
-                        "mime_type": _infer_mime_type(image_bytes),
-                        "data": encoded,
-                    }
-                }
-            )
-        return [{"role": "user", "parts": parts}]
 def _generate_json_with_images(
     *,
     prompt: str,
@@ -310,31 +275,36 @@ def _generate_json_with_images(
     images: List[bytes],
     gen_config: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Dict[str, Any], Optional[str]]:
-    if not COMETAPI_KEY:
-        return {}, "COMETAPI_KEY is not set"
-    contents = _build_multi_image_contents(prompt, images)
-    # Default model behaviors based on the provided example
-    config: Dict[str, Any] = {
-        "response_mime_type": "application/json",
-        "temperature": 0.1,
-        "top_p": 0.3,
-        "media_resolution": "MEDIA_RESOLUTION_MEDIUM",
-    }
+    if not is_sam_configured():
+        return {}, f"{SAM_API_KEY_ENV} is not set"
+
+    config: Dict[str, Any] = {"temperature": 0.1, "top_p": 0.3, "max_tokens": 4096}
     if gen_config:
-        config.update(gen_config)
-    response = _client.models.generate_content(
-        model=model,
-        contents=contents,
-        config=config,
-    )
-    raw = _strip_code_fences((response.text or "").strip())
+        if "temperature" in gen_config:
+            config["temperature"] = gen_config["temperature"]
+        if "top_p" in gen_config:
+            config["top_p"] = gen_config["top_p"]
+        if "max_output_tokens" in gen_config:
+            config["max_tokens"] = gen_config["max_output_tokens"]
+
     try:
-        data = json.loads(raw)
+        data = generate_json(
+            model=model,
+            prompt=prompt,
+            images=images,
+            temperature=config["temperature"],
+            top_p=config["top_p"],
+            max_tokens=config["max_tokens"],
+        )
         if isinstance(data, dict):
             return data, None
-    except Exception:
+    except json.JSONDecodeError:
         return {}, "grading json parse failed"
+    except Exception as exc:
+        return {}, f"grading request failed: {exc}"
     return {}, "grading returned invalid format"
+
+
 def _normalize_status_list(value: Any, flow_count: int) -> List[Dict[str, Any]]:
     results: List[Dict[str, Any]] = [
         {"flow_number": i, "status": "X"} for i in range(max(flow_count, 0))
@@ -534,14 +504,6 @@ def _decode_base64(raw: Any) -> bytes:
         return b""
 
 
-def _infer_mime_type(image_bytes: bytes) -> str:
-    if len(image_bytes) >= 3 and image_bytes[:3] == b"\xff\xd8\xff":
-        return "image/jpeg"
-    if len(image_bytes) >= 8 and image_bytes[:8] == b"\x89PNG\r\n\x1a\n":
-        return "image/png"
-    return "application/octet-stream"
-
-
 def _augment_grading_prompt(
     *,
     analysis_prompt: str,
@@ -599,33 +561,9 @@ def _extract_models_from_payload(payload: Dict[str, Any]) -> List[str]:
     return []
 
 
-def _delete_uploaded_files(files: List[Any]) -> None:
-    if not files:
-        return
-    for uploaded in files:
-        try:
-            name = getattr(uploaded, "name", None) or getattr(uploaded, "id", None)
-            if name:
-                _client.files.delete(name)
-        except Exception:
-            continue
-
-
 def _normalize_optional_text(value: Any) -> Optional[str]:
     if value is None:
         return None
     text = str(value).strip()
     return text if text else None
-
-
-def _strip_code_fences(text: str) -> str:
-    if text.startswith("```"):
-        text = text.lstrip("`").split("\n", 1)[-1]
-    if text.endswith("```"):
-        text = text.rsplit("\n", 1)[0]
-    return text.strip()
-
-
-
-
 

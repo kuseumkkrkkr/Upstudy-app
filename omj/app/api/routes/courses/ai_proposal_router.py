@@ -116,9 +116,7 @@ async def ai_propose_course(
 
     # Call AI with forced JSON output
     try:
-        # Kimi supports response_format={"type": "json_object"}
-        # Gemini supports response_mime_type="application/json"
-        # Both providers handle schema via their generate() method
+        # The SAM-backed provider handles JSON/schema formatting internally.
         raw_response = provider.generate(prompt)
 
         import json

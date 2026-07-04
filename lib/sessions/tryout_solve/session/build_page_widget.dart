@@ -56,6 +56,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   _EraserStroke? _currentEraserStroke;
   final List<_ProblemSnapshot?> _problemSnapshots = <_ProblemSnapshot?>[];
   final Stopwatch _problemClock = Stopwatch();
+  final Stopwatch _sessionClock = Stopwatch();
   bool _continueLoaded = false;
 
   double _problemElapsedOffset = 0.0;
@@ -83,22 +84,26 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   int _currentProblemIndex = 0;
   List<String> _hashTags = <String>[];
   bool _gradeImmediately = true;
+  bool _ratingEnabled = true;
   int _minDifficultyTier = 3;
   int _maxDifficultyTier = 3;
   int _passRate = 100;
   int _correctCount = 0;
   int _gradedCount = 0;
+  bool _completionReported = false;
   bool _analysisBusy = false;
   bool _questLoading = false;
   double _generationProgress = 0.0;
   String? _questError;
   final List<Map<String, dynamic>?> _quests = <Map<String, dynamic>?>[];
   final List<int?> _selectedChoices = <int?>[];
+  final List<bool> _problemGraded = <bool>[];
 
   @override
   void initState() {
     super.initState();
     _applyConfig(widget.config ?? const ProblemSolveConfig());
+    _sessionClock.start();
     if (_quests.whereType<Map<String, dynamic>>().isEmpty) {
       _loadQuestsForTags();
     } else {
@@ -112,6 +117,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _scrollController.dispose();
     _paintVersion.dispose();
     _problemClock.stop();
+    _sessionClock.stop();
     super.dispose();
   }
 
@@ -144,6 +150,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         : clampedCount;
     _hashTags = List<String>.from(config.hashTags);
     _gradeImmediately = config.gradeImmediately;
+    _ratingEnabled = config.ratingEnabled;
     final minTier = math
         .min(config.minDifficultyTier, config.maxDifficultyTier)
         .clamp(1, 5)
@@ -157,6 +164,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _passRate = config.passRate;
     _correctCount = 0;
     _gradedCount = 0;
+    _completionReported = false;
     _problemSnapshots
       ..clear()
       ..addAll(List<_ProblemSnapshot?>.filled(_problemCount, null));
@@ -164,6 +172,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _problemElapsedOffset = 0.0;
     _problemClock.stop();
     _problemClock.reset();
+    _sessionClock
+      ..reset()
+      ..start();
     _strokeHistory.clear();
     _eraserHistory.clear();
     _currentEraserStroke = null;
@@ -184,6 +195,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
           null,
         ),
       );
+    _problemGraded
+      ..clear()
+      ..addAll(List<bool>.filled(_problemCount, false));
     _questError = null;
     _questLoading = false;
     if (config.quests.isNotEmpty) {
@@ -1236,6 +1250,13 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: Chip(
+                avatar: const Icon(Icons.timer_outlined, size: 16),
+                label: Text('풀이 시간 ${_sessionClock.elapsed.inSeconds}초'),
+              ),
+            ),
             if (_questLoading)
               Row(
                 children: const [
@@ -1548,12 +1569,136 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     );
   }
 
+  Future<void> _handleObjectiveGrade() async {
+    final selectedIndex = _currentSelectedChoice();
+    if (selectedIndex == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('보기를 선택해 주세요.')));
+      return;
+    }
+    if (_currentProblemIndex < _problemGraded.length &&
+        _problemGraded[_currentProblemIndex]) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('이미 제출한 문제입니다.')));
+      return;
+    }
+    final questId = _currentQuestId();
+    if (questId.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('문제 ID가 없습니다.')));
+      return;
+    }
+    setState(() => _analysisBusy = true);
+    try {
+      final result = await ApiClient.instance.gradeVariantSolve(
+        questId: questId,
+        selectedIndex: selectedIndex,
+      );
+      final isCorrect = result['raw_correct'] == true || result['pass'] == true;
+      final quest = _currentQuest;
+      final fingerprint = _problemFingerprint(quest, _currentProblemIndex);
+      final problemMeta = _problemMeta(quest);
+      if (_currentProblemIndex < _problemGraded.length) {
+        _problemGraded[_currentProblemIndex] = true;
+      }
+      _gradedCount += 1;
+      if (isCorrect) _correctCount += 1;
+      await widget.config?.onProblemGraded?.call(
+        itemIndex: _currentProblemIndex + 1,
+        quest: quest,
+        isCorrect: isCorrect,
+        stepCorrectness: const <Map<String, dynamic>>[],
+        elapsedSeconds: _sessionClock.elapsed.inSeconds,
+      );
+      try {
+        if (isCorrect) {
+          await ActivityStore.recordProblemSolve(
+            problemId: fingerprint,
+            problemNumber: fingerprint,
+            difficultyTier: _tierForProblemIndex(_currentProblemIndex),
+            meta: problemMeta.isEmpty ? null : problemMeta,
+          );
+        } else {
+          await ActivityStore.recordProblemIncorrect(
+            problemId: fingerprint,
+            problemNumber: fingerprint,
+            meta: problemMeta.isEmpty ? null : problemMeta,
+          );
+        }
+      } catch (_) {}
+      if (!mounted) return;
+      final elapsed = _sessionClock.elapsed.inSeconds;
+      final hasNext = _currentProblemIndex < _problemCount - 1;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text(isCorrect ? '정답' : '오답'),
+          content: Text('풀이 시간 ${elapsed}초'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (hasNext) _goToNextProblem();
+              },
+              child: Text(hasNext ? '다음 문제' : '확인'),
+            ),
+          ],
+        ),
+      );
+      _completeCourseModuleIfNeeded();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('채점 실패: $error')));
+    } finally {
+      if (mounted) setState(() => _analysisBusy = false);
+    }
+  }
+
+  void _completeCourseModuleIfNeeded() {
+    if (_completionReported || _passRate <= 0 || _gradedCount < _problemCount) {
+      return;
+    }
+    _completionReported = true;
+    final achieved = (_correctCount / _problemCount * 100).round();
+    final passed = achieved >= _passRate;
+    final elapsed = _sessionClock.elapsed.inSeconds;
+    widget.config?.onComplete?.call(
+      correctCount: _correctCount,
+      totalCount: _problemCount,
+      passed: passed,
+      elapsedSeconds: elapsed,
+    );
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(passed ? '통과' : '미통과'),
+        content: Text('정답률 $achieved% (요구 $_passRate%)\n풀이 시간 ${elapsed}초'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleGrade() async {
     if (_analysisBusy) return;
     if (_toolMode == _ToolMode.pen && _currentStroke != null) {
       _finishStroke();
     } else if (_toolMode == _ToolMode.eraser && _eraserActive) {
       _finishEraser();
+    }
+    if (_currentQuestOptionBlocks().isNotEmpty) {
+      await _handleObjectiveGrade();
+      return;
     }
     if (_strokes.length <= 2) {
       if (!mounted) return;
@@ -1649,15 +1794,23 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
               },
             )
           : null;
-      final questId = _currentQuestId();
       final fingerprint = _problemFingerprint(quest, _currentProblemIndex);
       final problemMeta = _problemMeta(quest);
-      unawaited(
-        _submitRatingUpdate(
-          quest: quest,
-          isCorrect: isCorrect,
-          stepCorrectness: stepCorrectness,
-        ),
+      if (_ratingEnabled) {
+        unawaited(
+          _submitRatingUpdate(
+            quest: quest,
+            isCorrect: isCorrect,
+            stepCorrectness: stepCorrectness,
+          ),
+        );
+      }
+      await widget.config?.onProblemGraded?.call(
+        itemIndex: _currentProblemIndex + 1,
+        quest: quest,
+        isCorrect: isCorrect,
+        stepCorrectness: stepCorrectness,
+        elapsedSeconds: _sessionClock.elapsed.inSeconds,
       );
       if (isCorrect) {
         try {
@@ -1715,31 +1868,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       ).showSnackBar(SnackBar(content: Text('Grading failed: $error')));
     } finally {
       if (mounted) {
-        if (_passRate > 0 && _gradedCount >= _problemCount) {
-          final achieved = (_correctCount / _problemCount * 100).round();
-          final passed = achieved >= _passRate;
-          final elapsed = _problemClock.elapsed.inSeconds;
-          // Invoke optional completion callback before showing dialog.
-          widget.config?.onComplete?.call(
-            correctCount: _correctCount,
-            totalCount: _problemCount,
-            passed: passed,
-            elapsedSeconds: elapsed,
-          );
-          showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-              title: Text(passed ? '통과' : '미통과'),
-              content: Text('정답률 ${achieved}% (요구 ${_passRate}%)'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('확인'),
-                ),
-              ],
-            ),
-          );
-        }
+        _completeCourseModuleIfNeeded();
         setState(() => _analysisBusy = false);
       }
     }

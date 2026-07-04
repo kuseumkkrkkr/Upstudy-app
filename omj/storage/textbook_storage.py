@@ -5,6 +5,11 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 DB_PATH = "textbook.db"
+TEACHER_MANUAL_TEXTBOOK_ID = "teacher_manual_default"
+
+
+def is_teacher_manual_textbook(textbook_id: Any) -> bool:
+    return str(textbook_id or "").strip() == TEACHER_MANUAL_TEXTBOOK_ID
 
 
 def init_textbook_db() -> None:
@@ -28,6 +33,7 @@ def init_textbook_db() -> None:
     )
     conn.commit()
     _ensure_default_textbook(cur)
+    _ensure_teacher_manual_textbook(cur)
     conn.commit()
     conn.close()
 
@@ -36,6 +42,7 @@ def list_textbooks(
     category: Optional[str] = None,
     tag: Optional[str] = None,
     textbook_ids: Optional[List[str]] = None,
+    include_teacher_manual: bool = False,
 ) -> List[Dict[str, Any]]:
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -55,6 +62,9 @@ def list_textbooks(
             placeholders = ", ".join("?" for _ in cleaned_ids)
             where_clauses.append(f"textbook_id IN ({placeholders})")
             params.extend(cleaned_ids)
+    if not include_teacher_manual:
+        where_clauses.append("textbook_id != ?")
+        params.append(TEACHER_MANUAL_TEXTBOOK_ID)
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
     query += " ORDER BY created_at DESC"
@@ -245,7 +255,10 @@ def _normalize_string_list(value: Any) -> List[str]:
 
 
 def _ensure_default_textbook(cur: sqlite3.Cursor) -> None:
-    cur.execute("SELECT COUNT(*) FROM textbooks")
+    cur.execute(
+        "SELECT COUNT(*) FROM textbooks WHERE textbook_id != ?",
+        (TEACHER_MANUAL_TEXTBOOK_ID,),
+    )
     row = cur.fetchone()
     if row and row[0] > 0:
         return
@@ -299,6 +312,67 @@ def _ensure_default_textbook(cur: sqlite3.Cursor) -> None:
             "교재 사용법 안내",
             "common",
             json.dumps(["테스트", "안내"], ensure_ascii=False),
+            json.dumps(chapters, ensure_ascii=False),
+            0xFF1B402B,
+            now_ms,
+            now_ms,
+            "system",
+        ),
+    )
+
+
+def _ensure_teacher_manual_textbook(cur: sqlite3.Cursor) -> None:
+    now_ms = int(time.time() * 1000)
+    chapters = [
+        {
+            "title": "1. 문서함 사용 설명",
+            "intro": [
+                "이 교재는 모든 교사가 공통으로 확인하는 설명서 기본 교재입니다.",
+                "학생에게는 표시되지 않으며 코스 교재로 등록할 수 없습니다.",
+            ],
+            "sections": [
+                {
+                    "title": "1-1. 문서함",
+                    "paragraphs": [
+                        "문서함은 교사용 코스 생성에서 사용할 수 있는 교재와 안내 문서를 모아 보여줍니다.",
+                        "설명서 기본 교재는 교사용 안내 전용이므로 학생 학습 화면에는 노출되지 않습니다.",
+                    ],
+                    "images": [],
+                },
+                {
+                    "title": "1-2. 권한 연결",
+                    "paragraphs": [
+                        "교재는 복사본을 만들지 않고 권한으로 연결합니다.",
+                        "코스에는 학습용 교재만 등록할 수 있으며 설명서 기본 교재는 선택 목록에서 제외됩니다.",
+                    ],
+                    "images": [],
+                },
+            ],
+        }
+    ]
+    cur.execute(
+        """
+        INSERT INTO textbooks (
+            textbook_id, title, subtitle, category, tags, chapters, cover_color,
+            created_at, updated_at, created_by
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(textbook_id) DO UPDATE SET
+            title = excluded.title,
+            subtitle = excluded.subtitle,
+            category = excluded.category,
+            tags = excluded.tags,
+            chapters = excluded.chapters,
+            cover_color = excluded.cover_color,
+            updated_at = excluded.updated_at,
+            created_by = excluded.created_by
+        """,
+        (
+            TEACHER_MANUAL_TEXTBOOK_ID,
+            "설명서 기본 교재",
+            "교사용 문서함과 코스 교재 권한 연결 안내",
+            "설명서",
+            json.dumps(["설명서", "교사용", "문서함"], ensure_ascii=False),
             json.dumps(chapters, ensure_ascii=False),
             0xFF1B402B,
             now_ms,

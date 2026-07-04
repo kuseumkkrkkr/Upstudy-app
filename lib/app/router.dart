@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:s11/app/pages.dart';
 import 'package:s11/shared/data/models/course_module_config.dart';
 
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
@@ -9,6 +8,7 @@ import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/auth/ui/pages/sign_up.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
+import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 
 import 'package:s11/features/challenges/challenges.dart';
 import 'package:s11/features/student_runtime/student_runtime.dart';
@@ -32,7 +32,8 @@ class AppRoutes {
 
   // ─── Landing / Shell ───
   static const String landing = '/';
-  static const String app = AppShell.routeName;
+  static const String app = '/app';
+  static const String studentDashboard = '/student/dashboard';
 
   // ─── Learning ───
   static const String studentRuntime = StudentRuntimePage.routeName;
@@ -67,7 +68,15 @@ class AppRoutes {
 /// Only routes that do **not** require constructor arguments should be
 /// registered here. Argument-bearing pages are handled by
 /// [onGenerateAppRoute].
-Map<String, WidgetBuilder> appRoutes(BuildContext context) {
+Map<String, WidgetBuilder> appRoutes(
+  BuildContext context, {
+  required bool isAuthenticated,
+}) {
+  WidgetBuilder authedStudentDashboard() {
+    return (_) =>
+        isAuthenticated ? const MainStudentPage() : const LandingPage();
+  }
+
   return {
     // Auth
     AppRoutes.login: (_) => const LoginPage(),
@@ -78,7 +87,8 @@ Map<String, WidgetBuilder> appRoutes(BuildContext context) {
 
     // Landing / Shell
     AppRoutes.landing: (_) => const LandingPage(),
-    AppRoutes.app: (_) => const AppShell(),
+    AppRoutes.app: authedStudentDashboard(),
+    AppRoutes.studentDashboard: authedStudentDashboard(),
 
     // Learning
     AppRoutes.studentRuntime: (_) => const StudentRuntimePage(),
@@ -116,15 +126,6 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     return MaterialPageRoute(
       settings: settings,
       builder: (_) => GroupJoinPage(inviteCode: code),
-    );
-  }
-
-  // AppShell with optional token
-  if (name == AppRoutes.app) {
-    final token = settings.arguments as String? ?? '';
-    return MaterialPageRoute(
-      settings: settings,
-      builder: (_) => AppShell(token: token),
     );
   }
 

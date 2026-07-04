@@ -288,6 +288,10 @@ class DailyQuestItem {
   final int target;
   final int progress;
   final String status;
+  final int rewardPoints;
+  final bool rewardClaimed;
+  final int claimedPoints;
+  final String claimStatus;
 
   const DailyQuestItem({
     required this.id,
@@ -296,6 +300,10 @@ class DailyQuestItem {
     required this.target,
     required this.progress,
     required this.status,
+    this.rewardPoints = 0,
+    this.rewardClaimed = false,
+    this.claimedPoints = 0,
+    this.claimStatus = '',
   });
 
   factory DailyQuestItem.fromJson(Map<String, dynamic> json) {
@@ -306,7 +314,88 @@ class DailyQuestItem {
       target: (json['target'] as num?)?.toInt() ?? 1,
       progress: (json['progress'] as num?)?.toInt() ?? 0,
       status: (json['status'] ?? 'pending').toString(),
+      rewardPoints: (json['reward_points'] as num?)?.toInt() ?? 0,
+      rewardClaimed: json['reward_claimed'] == true,
+      claimedPoints: (json['claimed_points'] as num?)?.toInt() ?? 0,
+      claimStatus: (json['claim_status'] ?? '').toString(),
     );
+  }
+}
+
+class AccountSummary {
+  final int totalPoints;
+  final int activityScore;
+  final int level;
+  final int currentLevelScore;
+  final int nextLevelScore;
+  final double levelProgress;
+  final int dailyPoints;
+  final int dailyPointLimit;
+  final int dailyPointsRemaining;
+  final int activityDisplayDailyCap;
+  final int grantedPoints;
+  final bool duplicateReward;
+  final bool dailyCapReached;
+
+  const AccountSummary({
+    this.totalPoints = 0,
+    this.activityScore = 0,
+    this.level = 1,
+    this.currentLevelScore = 0,
+    this.nextLevelScore = 100,
+    this.levelProgress = 0,
+    this.dailyPoints = 0,
+    this.dailyPointLimit = 100,
+    this.dailyPointsRemaining = 100,
+    this.activityDisplayDailyCap = 2000,
+    this.grantedPoints = 0,
+    this.duplicateReward = false,
+    this.dailyCapReached = false,
+  });
+
+  factory AccountSummary.fromJson(Map<String, dynamic> json) {
+    final rewardRaw = json['reward'];
+    final reward = rewardRaw is Map
+        ? Map<String, dynamic>.from(rewardRaw)
+        : const <String, dynamic>{};
+    return AccountSummary(
+      totalPoints: (json['total_points'] as num?)?.toInt() ?? 0,
+      activityScore: (json['activity_score'] as num?)?.toInt() ?? 0,
+      level: (json['level'] as num?)?.toInt() ?? 1,
+      currentLevelScore: (json['current_level_score'] as num?)?.toInt() ?? 0,
+      nextLevelScore: (json['next_level_score'] as num?)?.toInt() ?? 100,
+      levelProgress:
+          ((json['level_progress'] as num?)?.toDouble().clamp(0.0, 1.0) ?? 0.0)
+              .toDouble(),
+      dailyPoints: (json['daily_points'] as num?)?.toInt() ?? 0,
+      dailyPointLimit: (json['daily_point_limit'] as num?)?.toInt() ?? 100,
+      dailyPointsRemaining:
+          (json['daily_points_remaining'] as num?)?.toInt() ?? 100,
+      activityDisplayDailyCap:
+          (json['activity_display_daily_cap'] as num?)?.toInt() ?? 2000,
+      grantedPoints: (reward['granted_points'] as num?)?.toInt() ?? 0,
+      duplicateReward: reward['duplicate'] == true,
+      dailyCapReached: reward['daily_cap_reached'] == true,
+    );
+  }
+}
+
+class DailyQuestBundle {
+  final List<DailyQuestItem> items;
+  final AccountSummary account;
+
+  const DailyQuestBundle({required this.items, required this.account});
+
+  factory DailyQuestBundle.fromJson(Map<String, dynamic> json) {
+    final items = (json['items'] as List<dynamic>? ?? const [])
+        .whereType<Map>()
+        .map((e) => DailyQuestItem.fromJson(Map<String, dynamic>.from(e)))
+        .toList(growable: false);
+    final accountRaw = json['account'];
+    final account = accountRaw is Map
+        ? AccountSummary.fromJson(Map<String, dynamic>.from(accountRaw))
+        : const AccountSummary();
+    return DailyQuestBundle(items: items, account: account);
   }
 }
 
@@ -802,6 +891,30 @@ class GroupSubmission {
   }
 }
 
+class StudentAssignmentTask {
+  const StudentAssignmentTask({
+    required this.assignment,
+    required this.submission,
+  });
+
+  final GroupAssignment assignment;
+  final GroupSubmission submission;
+
+  factory StudentAssignmentTask.fromJson(Map<String, dynamic> json) {
+    return StudentAssignmentTask(
+      assignment: GroupAssignment.fromJson(json),
+      submission: GroupSubmission.fromJson({
+        'submission_id': json['submission_id'],
+        'assignment_id': json['assignment_id'],
+        'user_id': json['submission_user_id'] ?? json['user_id'],
+        'status': json['submission_status'] ?? json['status'],
+        'submitted_at': json['submitted_at'],
+        'data_json': json['data_json'],
+      }),
+    );
+  }
+}
+
 class SubmissionReport {
   final String reportId;
   final String submissionId;
@@ -1075,6 +1188,22 @@ class ApiClient {
     return _parse(res, parser);
   }
 
+  Future<ApiResponse<T>> _patch<T>(
+    String path,
+    Map<String, dynamic> body, {
+    T Function(dynamic)? parser,
+  }) async {
+    await _ensureToken();
+    final uri = Uri.parse('$baseUrl$path');
+    log('PATCH $uri', name: 'ApiClient');
+    final res = await http.patch(
+      uri,
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    return _parse(res, parser);
+  }
+
   Future<ApiResponse<T>> _delete<T>(
     String path, {
     Map<String, dynamic>? body,
@@ -1092,11 +1221,16 @@ class ApiClient {
   }
 
   ApiResponse<T> _parse<T>(http.Response res, T Function(dynamic)? parser) {
-    final dynamic decoded = jsonDecode(res.body);
+    final dynamic decoded = res.body.trim().isEmpty
+        ? <String, dynamic>{}
+        : jsonDecode(res.body);
     final Map<String, dynamic> body = decoded is Map<String, dynamic>
         ? decoded
         : <String, dynamic>{'data': decoded};
     if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (body.isEmpty) {
+        return ApiResponse<T>(success: true, data: null, message: null);
+      }
       final bool wrapped =
           body.containsKey('data') ||
           body.containsKey('success') ||
@@ -1584,6 +1718,39 @@ class ApiClient {
       );
     }
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> loadCourseProblemSolve({
+    required String courseId,
+    required String moduleId,
+  }) async {
+    final res = await _post<Map<String, dynamic>>(
+      '/courses/v2/runtime/problem-solve/load',
+      {'course_id': courseId, 'module_id': moduleId},
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    return res.data ?? const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> submitCourseRuntimeModule({
+    required String courseId,
+    required String moduleId,
+    required int correctCount,
+    required int totalCount,
+    required int elapsedSeconds,
+    Map<String, int>? perProblemElapsedSeconds,
+  }) async {
+    final res =
+        await _post<Map<String, dynamic>>('/courses/v2/runtime/submit', {
+          'course_id': courseId,
+          'module_id': moduleId,
+          'correct_count': correctCount,
+          'total_count': totalCount,
+          'elapsed_seconds': elapsedSeconds,
+          if (perProblemElapsedSeconds != null)
+            'per_problem_elapsed_seconds': perProblemElapsedSeconds,
+        }, parser: (d) => Map<String, dynamic>.from(d as Map));
+    return res.data ?? const <String, dynamic>{};
   }
 
   Future<List<Map<String, dynamic>>> listQuestTray({int limit = 100}) async {
@@ -2112,8 +2279,53 @@ class ApiClient {
     );
   }
 
+  Future<ApiResponse<List<StudentAssignmentTask>>> listMyAssignments({
+    String? kind,
+  }) async {
+    return _get(
+      '/academy/assignments/my',
+      parser: (d) {
+        return (d['items'] as List)
+            .map((e) => StudentAssignmentTask.fromJson(e))
+            .toList();
+      },
+      query: {if (kind != null) 'kind': kind},
+    );
+  }
+
+  Future<ApiResponse<GroupAssignment>> updateAssignment({
+    required String assignmentId,
+    String? title,
+    String? message,
+    String? dueDate,
+  }) async {
+    return _patch(
+      '/academy/assignments/$assignmentId',
+      {
+        if (title != null) 'title': title,
+        if (message != null) 'message': message,
+        if (dueDate != null) 'due_date': dueDate,
+      },
+      parser: (d) => GroupAssignment.fromJson(d),
+    );
+  }
+
   Future<ApiResponse<void>> deleteAssignment(String assignmentId) async {
     return _delete('/academy/assignments/$assignmentId');
+  }
+
+  Future<ApiResponse<void>> syncMyStudentSchedule(
+    Map<DateTime, List<String>> tasksByDate,
+  ) async {
+    final payload = <String, List<String>>{
+      for (final entry in tasksByDate.entries)
+        _dateKey(entry.key): List<String>.from(entry.value),
+    };
+    return _put('/academy/students/me/schedule', {'tasks_by_date': payload});
+  }
+
+  static String _dateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   // --- GroupSubmission ---
@@ -2364,6 +2576,124 @@ class UserRating {
   );
 }
 
+class LevelTestPlacementQuestion {
+  final int itemIndex;
+  final int phase;
+  final String subjectKey;
+  final List<String> hashTags;
+  final int difficultyTier;
+  final String questId;
+  final double problemRating;
+  final Map<String, dynamic> quest;
+
+  const LevelTestPlacementQuestion({
+    required this.itemIndex,
+    required this.phase,
+    required this.subjectKey,
+    required this.hashTags,
+    required this.difficultyTier,
+    required this.questId,
+    required this.problemRating,
+    required this.quest,
+  });
+
+  factory LevelTestPlacementQuestion.fromJson(Map<String, dynamic> json) {
+    return LevelTestPlacementQuestion(
+      itemIndex: (json['item_index'] as num?)?.toInt() ?? 0,
+      phase: (json['phase'] as num?)?.toInt() ?? 1,
+      subjectKey: (json['subject_key'] ?? '').toString(),
+      hashTags: (json['hash_tags'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .toList(),
+      difficultyTier: (json['difficulty_tier'] as num?)?.toInt() ?? 3,
+      questId: (json['quest_id'] ?? '').toString(),
+      problemRating: (json['problem_rating'] as num?)?.toDouble() ?? 1200.0,
+      quest: Map<String, dynamic>.from(json['quest'] as Map? ?? const {}),
+    );
+  }
+}
+
+class LevelTestPlacementSession {
+  final String sessionId;
+  final String templateId;
+  final int questionCount;
+  final List<LevelTestPlacementQuestion> questions;
+
+  const LevelTestPlacementSession({
+    required this.sessionId,
+    required this.templateId,
+    required this.questionCount,
+    required this.questions,
+  });
+
+  factory LevelTestPlacementSession.fromJson(Map<String, dynamic> json) {
+    return LevelTestPlacementSession(
+      sessionId: (json['session_id'] ?? '').toString(),
+      templateId: (json['template_id'] ?? '').toString(),
+      questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
+      questions: (json['questions'] as List<dynamic>? ?? const [])
+          .map(
+            (e) => LevelTestPlacementQuestion.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class LevelTestPlacementResult {
+  final String sessionId;
+  final double rating;
+  final double ovr;
+  final double ovrDelta;
+  final double recentAccuracy;
+  final int loseStreak;
+  final double confidence;
+  final List<Map<String, dynamic>> strongTags;
+  final List<Map<String, dynamic>> weakTags;
+
+  const LevelTestPlacementResult({
+    required this.sessionId,
+    required this.rating,
+    required this.ovr,
+    required this.ovrDelta,
+    required this.recentAccuracy,
+    required this.loseStreak,
+    required this.confidence,
+    required this.strongTags,
+    required this.weakTags,
+  });
+
+  factory LevelTestPlacementResult.fromJson(Map<String, dynamic> json) {
+    return LevelTestPlacementResult(
+      sessionId: (json['session_id'] ?? '').toString(),
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      ovr: (json['ovr'] as num?)?.toDouble() ?? 0.0,
+      ovrDelta: (json['ovr_delta'] as num?)?.toDouble() ?? 0.0,
+      recentAccuracy: (json['recent_accuracy'] as num?)?.toDouble() ?? 0.0,
+      loseStreak: (json['lose_streak'] as num?)?.toInt() ?? 0,
+      confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
+      strongTags: (json['strong_tags'] as List<dynamic>? ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      weakTags: (json['weak_tags'] as List<dynamic>? ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+    );
+  }
+
+  UserRating toUserRating() {
+    return UserRating(
+      rating: rating,
+      ovr: ovr,
+      ovrDelta: ovrDelta,
+      recentAccuracy: recentAccuracy,
+      loseStreak: loseStreak,
+    );
+  }
+}
+
 class WeaknessTag {
   final String tag;
   final int count;
@@ -2506,6 +2836,44 @@ class StudyGroupMessage {
     this.text = '',
     this.createdAt = '',
   });
+}
+
+class StudyGroupNotice {
+  final String noticeId;
+  final String groupId;
+  final String? groupName;
+  final String scope;
+  final String title;
+  final String contentHtml;
+  final String createdByUserId;
+  final String createdAt;
+  final String updatedAt;
+
+  const StudyGroupNotice({
+    this.noticeId = '',
+    this.groupId = '',
+    this.groupName,
+    this.scope = 'group',
+    this.title = '',
+    this.contentHtml = '',
+    this.createdByUserId = '',
+    this.createdAt = '',
+    this.updatedAt = '',
+  });
+
+  factory StudyGroupNotice.fromJson(Map<String, dynamic> json) {
+    return StudyGroupNotice(
+      noticeId: json['notice_id']?.toString() ?? '',
+      groupId: json['group_id']?.toString() ?? '',
+      groupName: json['group_name']?.toString(),
+      scope: json['scope']?.toString() ?? 'group',
+      title: json['title']?.toString() ?? '',
+      contentHtml: json['content_html']?.toString() ?? '',
+      createdByUserId: json['created_by_user_id']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
+    );
+  }
 }
 
 class ServerChatMessage {
@@ -2741,16 +3109,16 @@ extension ApiClientLegacyCompat on ApiClient {
       return <String, dynamic>{'quests': const <Map<String, dynamic>>[]};
     }
 
-    final res = await _post<Map<String, dynamic>>('/quests/generate/batch', {
-      'hash_tags': tags,
-      'min_difficulty_tier': minTier,
-      'max_difficulty_tier': maxTier,
-      'question_count': questionCount,
-    }, parser: (d) => Map<String, dynamic>.from(d as Map));
-    return <String, dynamic>{
-      'quests': (res.data?['quests'] as List<dynamic>? ?? const []),
-      'pass_rate': 100,
-    };
+    final quests = <Map<String, dynamic>>[];
+    await for (final quest in generateProblemSetStream(
+      hashTags: tags,
+      minDifficultyTier: minTier,
+      maxDifficultyTier: maxTier,
+      questionCount: questionCount,
+    )) {
+      quests.add(quest);
+    }
+    return <String, dynamic>{'quests': quests, 'pass_rate': 100};
   }
 
   Stream<Map<String, dynamic>> generateProblemSetStream({
@@ -2772,15 +3140,59 @@ extension ApiClientLegacyCompat on ApiClient {
         .where((e) => e.trim().isNotEmpty)
         .toList();
     if (tags.isEmpty) return;
-    final res = await _post<Map<String, dynamic>>('/quests/generate/batch', {
+
+    final safeQuestionCount = (questionCount ?? 3).clamp(3, 30).toInt();
+    final safeMaxTier = (maxDifficultyTier ?? 3)
+        .clamp(1, tags.length.clamp(1, 5))
+        .toInt();
+    final safeMinTier = (minDifficultyTier ?? 2).clamp(1, safeMaxTier).toInt();
+
+    await _ensureToken();
+    final request = http.Request(
+      'POST',
+      Uri.parse('${ApiClient.baseUrl}/quests/generate/stream'),
+    );
+    request.headers.addAll({..._headers, 'Accept': 'text/event-stream'});
+    request.body = jsonEncode({
       'hash_tags': tags,
-      'question_count': (questionCount ?? 1).clamp(1, 30),
-      'min_difficulty_tier': (minDifficultyTier ?? 2).clamp(1, 5),
-      'max_difficulty_tier': (maxDifficultyTier ?? 3).clamp(1, 5),
-    }, parser: (d) => Map<String, dynamic>.from(d as Map));
-    final quests = (res.data?['quests'] as List<dynamic>? ?? const []);
-    for (final q in quests) {
-      yield Map<String, dynamic>.from(q as Map);
+      'question_count': safeQuestionCount,
+      'min_difficulty_tier': safeMinTier,
+      'max_difficulty_tier': safeMaxTier,
+    });
+
+    final client = http.Client();
+    try {
+      final response = await client.send(request);
+      if (response.statusCode != 200) {
+        final body = await response.stream.bytesToString();
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: body.isEmpty ? 'Failed to generate problem set' : body,
+        );
+      }
+
+      await for (final line
+          in response.stream
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())) {
+        if (!line.startsWith('data:')) continue;
+        final data = line.substring(5).trim();
+        if (data.isEmpty) continue;
+        if (data == '[DONE]') break;
+
+        final decoded = jsonDecode(data);
+        if (decoded is Map && decoded['error'] != null) {
+          throw ApiException(
+            statusCode: 500,
+            message: decoded['error'].toString(),
+          );
+        }
+        if (decoded is Map) {
+          yield Map<String, dynamic>.from(decoded);
+        }
+      }
+    } finally {
+      client.close();
     }
   }
 
@@ -2896,14 +3308,71 @@ extension ApiClientLegacyCompat on ApiClient {
     List<String>? tags,
     List<Map<String, dynamic>>? stepCorrectness,
     num? answerTime,
+    String? submissionId,
   }) async {
-    return const UserRating(
-      rating: 0,
-      ovr: 0,
-      ovrDelta: 0,
-      recentAccuracy: 0,
-      loseStreak: 0,
+    final id = questId?.trim();
+    if (id == null || id.isEmpty || isCorrect == null) {
+      return const UserRating(
+        rating: 0,
+        ovr: 0,
+        ovrDelta: 0,
+        recentAccuracy: 0,
+        loseStreak: 0,
+      );
+    }
+    final res = await _post<Map<String, dynamic>>('/rating/submit', {
+      'quest_id': id,
+      'is_correct': isCorrect,
+      'tags': tags ?? const <String>[],
+      if (answerTime != null) 'answer_time': answerTime,
+      'step_correctness': stepCorrectness ?? const <Map<String, dynamic>>[],
+      if (submissionId != null && submissionId.trim().isNotEmpty)
+        'submission_id': submissionId.trim(),
+    }, parser: (d) => Map<String, dynamic>.from(d as Map));
+    return UserRating.fromJson(res.data ?? const {});
+  }
+
+  Future<LevelTestPlacementSession> startLevelTestPlacement() async {
+    final res = await _post<Map<String, dynamic>>(
+      '/level-tests/placement/start',
+      const <String, dynamic>{},
+      parser: (d) => Map<String, dynamic>.from(d as Map),
     );
+    return LevelTestPlacementSession.fromJson(res.data ?? const {});
+  }
+
+  Future<void> submitLevelTestPlacementAnswer({
+    required String sessionId,
+    required int itemIndex,
+    required String questId,
+    required bool isCorrect,
+    num? answerTime,
+    List<Map<String, dynamic>> stepCorrectness = const [],
+    List<String> tags = const [],
+  }) async {
+    await _post<Map<String, dynamic>>(
+      '/level-tests/placement/$sessionId/answer',
+      {
+        'item_index': itemIndex,
+        'quest_id': questId,
+        'is_correct': isCorrect,
+        if (answerTime != null) 'answer_time': answerTime,
+        'step_correctness': stepCorrectness,
+        'tags': tags,
+      },
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+  }
+
+  Future<LevelTestPlacementResult> submitLevelTestPlacement(
+    String sessionId,
+  ) async {
+    final res = await _post<Map<String, dynamic>>(
+      '/level-tests/placement/$sessionId/submit',
+      const <String, dynamic>{},
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    return LevelTestPlacementResult.fromJson(res.data ?? const {});
   }
 
   Future<UserRating> fetchUserRating() async {
@@ -2932,6 +3401,14 @@ extension ApiClientLegacyCompat on ApiClient {
     return UserRating.fromJson(res.data ?? const {});
   }
 
+  Future<AccountSummary> fetchAccountSummary() async {
+    final res = await _get<Map<String, dynamic>>(
+      '/account/summary',
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    return AccountSummary.fromJson(res.data ?? const <String, dynamic>{});
+  }
+
   Future<Map<String, dynamic>> createTextbook(
     Map<String, dynamic> payload,
   ) async {
@@ -2941,20 +3418,35 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<List<DailyQuestItem>> fetchDailyQuests({
     required String courseId,
   }) async {
+    final bundle = await fetchDailyQuestBundle(courseId: courseId);
+    return bundle.items;
+  }
+
+  Future<DailyQuestBundle> fetchDailyQuestBundle({
+    required String courseId,
+  }) async {
     final res = await _get<Map<String, dynamic>>(
       '/challenges/daily-quests',
       query: {'course_id': courseId},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
-    final data = res.data ?? const <String, dynamic>{};
-    final items = (data['items'] as List<dynamic>? ?? const []);
-    return items
-        .whereType<Map>()
-        .map((e) => DailyQuestItem.fromJson(Map<String, dynamic>.from(e)))
-        .toList(growable: false);
+    return DailyQuestBundle.fromJson(res.data ?? const <String, dynamic>{});
   }
 
   Future<List<DailyQuestItem>> submitDailyQuestEvent({
+    required String courseId,
+    required String eventType,
+    int value = 1,
+  }) async {
+    final bundle = await submitDailyQuestEventBundle(
+      courseId: courseId,
+      eventType: eventType,
+      value: value,
+    );
+    return bundle.items;
+  }
+
+  Future<DailyQuestBundle> submitDailyQuestEventBundle({
     required String courseId,
     required String eventType,
     int value = 1,
@@ -2964,15 +3456,21 @@ extension ApiClientLegacyCompat on ApiClient {
       {'course_id': courseId, 'event_type': eventType, 'value': value},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
-    final data = res.data ?? const <String, dynamic>{};
-    final items = (data['items'] as List<dynamic>? ?? const []);
-    return items
-        .whereType<Map>()
-        .map((e) => DailyQuestItem.fromJson(Map<String, dynamic>.from(e)))
-        .toList(growable: false);
+    return DailyQuestBundle.fromJson(res.data ?? const <String, dynamic>{});
   }
 
   Future<List<DailyQuestItem>> completeDailyQuest({
+    required String courseId,
+    required String questId,
+  }) async {
+    final bundle = await completeDailyQuestBundle(
+      courseId: courseId,
+      questId: questId,
+    );
+    return bundle.items;
+  }
+
+  Future<DailyQuestBundle> completeDailyQuestBundle({
     required String courseId,
     required String questId,
   }) async {
@@ -2981,12 +3479,7 @@ extension ApiClientLegacyCompat on ApiClient {
       {'course_id': courseId, 'quest_id': questId},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
-    final data = res.data ?? const <String, dynamic>{};
-    final items = (data['items'] as List<dynamic>? ?? const []);
-    return items
-        .whereType<Map>()
-        .map((e) => DailyQuestItem.fromJson(Map<String, dynamic>.from(e)))
-        .toList(growable: false);
+    return DailyQuestBundle.fromJson(res.data ?? const <String, dynamic>{});
   }
 
   Future<List<Map<String, dynamic>>> listTextbooks({
@@ -2997,7 +3490,8 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get<Map<String, dynamic>>(
       '/textbooks',
       query: {
-        if (category != null && category.trim().isNotEmpty) 'category': category.trim(),
+        if (category != null && category.trim().isNotEmpty)
+          'category': category.trim(),
         if (tag != null && tag.trim().isNotEmpty) 'tag': tag.trim(),
         if (type != null && type.trim().isNotEmpty) 'type': type.trim(),
       },
@@ -3025,9 +3519,7 @@ extension ApiClientLegacyCompat on ApiClient {
     final path = '/courses/v2/$courseId/documents';
     final res = await _get<Map<String, dynamic>>(
       path,
-      query: {
-        if (type != null && type.trim().isNotEmpty) 'type': type.trim(),
-      },
+      query: {if (type != null && type.trim().isNotEmpty) 'type': type.trim()},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     final data = res.data;
@@ -3397,6 +3889,80 @@ extension ApiClientLegacyCompat on ApiClient {
     String? password,
   }) async {
     await joinStudyGroup(groupId: groupId, password: password);
+  }
+
+  Future<List<StudyGroupNotice>> listMySystemGroupNotices({
+    int limit = 20,
+  }) async {
+    final res = await _get(
+      '/social/study-groups/notices/my/system',
+      query: {'limit': '$limit'},
+      parser: (d) {
+        final items = (d['notices'] as List<dynamic>? ?? const []);
+        return items
+            .whereType<Map>()
+            .map((e) => StudyGroupNotice.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      },
+    );
+    return res.data ?? const [];
+  }
+
+  Future<List<StudyGroupNotice>> listGlobalSystemNotices({
+    int limit = 20,
+  }) async {
+    final res = await _get(
+      '/account/system-notices',
+      query: {'limit': '$limit'},
+      parser: (d) {
+        final items = (d['items'] as List<dynamic>? ?? const []);
+        return items
+            .whereType<Map>()
+            .map((e) => StudyGroupNotice.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      },
+    );
+    return res.data ?? const [];
+  }
+
+  Future<List<StudyGroupNotice>> listGroupNotices(
+    String groupId, {
+    int limit = 20,
+  }) async {
+    final res = await _get(
+      '/social/study-groups/$groupId/notices',
+      query: {'limit': '$limit'},
+      parser: (d) {
+        final items = (d['notices'] as List<dynamic>? ?? const []);
+        return items
+            .whereType<Map>()
+            .map((e) => StudyGroupNotice.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      },
+    );
+    return res.data ?? const [];
+  }
+
+  Future<StudyGroupNotice> upsertGroupNotice({
+    required String groupId,
+    required String title,
+    required String contentHtml,
+  }) async {
+    final res = await _put(
+      '/social/study-groups/$groupId/notices',
+      {'title': title.trim(), 'content_html': contentHtml},
+      parser: (d) => StudyGroupNotice.fromJson(Map<String, dynamic>.from(d)),
+    );
+    return res.data ?? const StudyGroupNotice();
+  }
+
+  Future<void> deleteGroupNoticeByTitle({
+    required String groupId,
+    required String title,
+  }) async {
+    await _delete(
+      '/social/study-groups/$groupId/notices?title=${Uri.encodeQueryComponent(title.trim())}',
+    );
   }
 
   Future<List<GroupSharedProblem>> listGroupSharedProblems(

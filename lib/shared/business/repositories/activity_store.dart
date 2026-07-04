@@ -7,7 +7,7 @@ import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/services/storage/local_db.dart';
 
 const _activityStoreKey = 'activity_log_v1';
-const int _activityMaxStoredDays = 150;
+const int _activityMaxStoredDays = 60;
 const int _activityScoreCap = 2000;
 
 class ActivityEventType {
@@ -62,11 +62,11 @@ class ActivityDayRecord {
     List<String>? courseNumbers,
     List<String>? examNumbers,
     int? score,
-  })  : problemNumbers = problemNumbers ?? <String>[],
-        bookNumbers = bookNumbers ?? <String>[],
-        courseNumbers = courseNumbers ?? <String>[],
-        examNumbers = examNumbers ?? <String>[],
-        score = score ?? 0;
+  }) : problemNumbers = problemNumbers ?? <String>[],
+       bookNumbers = bookNumbers ?? <String>[],
+       courseNumbers = courseNumbers ?? <String>[],
+       examNumbers = examNumbers ?? <String>[],
+       score = score ?? 0;
 
   final String dateKey;
   final List<String> problemNumbers;
@@ -305,8 +305,8 @@ class ActivityStore {
   }) async {
     final snapshot = await _ensureUpToDate();
     final todayKey = _todayKey();
-    final existing = snapshot.days[todayKey] ??
-        ActivityDayRecord(dateKey: todayKey);
+    final existing =
+        snapshot.days[todayKey] ?? ActivityDayRecord(dateKey: todayKey);
     final isValid = problemNumber.trim().isNotEmpty;
     final isDuplicate =
         !isValid || existing.problemNumbers.contains(problemNumber);
@@ -325,8 +325,9 @@ class ActivityStore {
       ..[todayKey] = updatedDay;
     final priorConfigRaw =
         snapshot.lastProblemConfig ?? snapshot.lastEvent?.meta?['config'];
-    final priorConfig =
-        priorConfigRaw is Map ? Map<String, dynamic>.from(priorConfigRaw) : null;
+    final priorConfig = priorConfigRaw is Map
+        ? Map<String, dynamic>.from(priorConfigRaw)
+        : null;
     final mergedMeta = <String, dynamic>{};
     if (priorConfig != null) mergedMeta['config'] = priorConfig;
     if (meta != null) mergedMeta.addAll(meta);
@@ -358,8 +359,9 @@ class ActivityStore {
     final snapshot = await _ensureUpToDate();
     final priorConfigRaw =
         snapshot.lastProblemConfig ?? snapshot.lastEvent?.meta?['config'];
-    final priorConfig =
-        priorConfigRaw is Map ? Map<String, dynamic>.from(priorConfigRaw) : null;
+    final priorConfig = priorConfigRaw is Map
+        ? Map<String, dynamic>.from(priorConfigRaw)
+        : null;
     final mergedMeta = <String, dynamic>{};
     if (priorConfig != null) mergedMeta['config'] = priorConfig;
     if (meta != null) mergedMeta.addAll(meta);
@@ -389,8 +391,8 @@ class ActivityStore {
   }) async {
     final snapshot = await _ensureUpToDate();
     final todayKey = _todayKey();
-    final existing = snapshot.days[todayKey] ??
-        ActivityDayRecord(dateKey: todayKey);
+    final existing =
+        snapshot.days[todayKey] ?? ActivityDayRecord(dateKey: todayKey);
     final isValid = bookNumber.trim().isNotEmpty;
     final isDuplicate = !isValid || existing.bookNumbers.contains(bookNumber);
     final updatedBooks = _addUnique(existing.bookNumbers, bookNumber);
@@ -428,8 +430,8 @@ class ActivityStore {
   }) async {
     final snapshot = await _ensureUpToDate();
     final todayKey = _todayKey();
-    final existing = snapshot.days[todayKey] ??
-        ActivityDayRecord(dateKey: todayKey);
+    final existing =
+        snapshot.days[todayKey] ?? ActivityDayRecord(dateKey: todayKey);
     final updatedCourses = _addUnique(existing.courseNumbers, courseNumber);
     final updatedDay = existing.copyWith(courseNumbers: updatedCourses);
     final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
@@ -461,10 +463,11 @@ class ActivityStore {
   }) async {
     final snapshot = await _ensureUpToDate();
     final todayKey = _todayKey();
-    final existing = snapshot.days[todayKey] ??
-        ActivityDayRecord(dateKey: todayKey);
-    final resolvedNumber =
-        examNumber.trim().isNotEmpty ? examNumber : examId.trim();
+    final existing =
+        snapshot.days[todayKey] ?? ActivityDayRecord(dateKey: todayKey);
+    final resolvedNumber = examNumber.trim().isNotEmpty
+        ? examNumber
+        : examId.trim();
     final isValid = resolvedNumber.trim().isNotEmpty;
     final isDuplicate =
         !isValid || existing.examNumbers.contains(resolvedNumber);
@@ -518,8 +521,10 @@ class ActivityStore {
     await _syncUserScope();
     notifier.value = snapshot;
     _loaded = true;
-    await LocalDb.instance
-        .setString(_storageKey, jsonEncode(snapshot.toJson()));
+    await LocalDb.instance.setString(
+      _storageKey,
+      jsonEncode(snapshot.toJson()),
+    );
   }
 
   static Future<String?> _loadRaw() async {
@@ -674,15 +679,16 @@ class ActivityStore {
   ) {
     if (count <= 0) return const <ActivityDayRecord>[];
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day)
-        .subtract(Duration(days: count - 1));
+    final start = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: count - 1));
     final results = <ActivityDayRecord>[];
     for (var i = 0; i < count; i++) {
       final date = start.add(Duration(days: i));
       final key = _formatDateKey(date);
-      results.add(
-        snapshot.days[key] ?? ActivityDayRecord(dateKey: key),
-      );
+      results.add(snapshot.days[key] ?? ActivityDayRecord(dateKey: key));
     }
     return results;
   }

@@ -17,6 +17,7 @@ from domain.challenge.engine import (
 from domain.challenge.models import StudentChallengeProgress
 from domain.challenge import repository as repo
 from domain.course import v2_repository as course_repo
+from storage import student_account_store
 from storage.user_kv_storage import get_user_kv, set_user_kv
 from services.ai.providers.base import get_default_provider
 
@@ -74,6 +75,33 @@ def _quest_target(quest_type: str) -> int:
     return int(defaults.get(quest_type, 1))
 
 
+def _quest_reward_points(quest_type: str) -> int:
+    return student_account_store.DAILY_QUEST_REWARD_POINTS
+
+
+def _normalize_daily_items(data: dict[str, Any]) -> dict[str, Any]:
+    items = data.get("items")
+    if not isinstance(items, list):
+        data["items"] = []
+        return data
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        quest_type = str(item.get("quest_type") or "")
+        item["target"] = max(1, int(item.get("target") or _quest_target(quest_type)))
+        item["progress"] = max(0, int(item.get("progress") or 0))
+        item["reward_points"] = _quest_reward_points(quest_type)
+        item.setdefault("reward_claimed", False)
+        item.setdefault("claimed_points", 0)
+    return data
+
+
+def _with_account_summary(data: dict[str, Any], user_id: str) -> dict[str, Any]:
+    out = _normalize_daily_items(dict(data))
+    out["account"] = student_account_store.get_account_summary(user_id)
+    return out
+
+
 def _build_daily_items(
     available_types: list[str],
     min_count: int,
@@ -100,6 +128,9 @@ def _build_daily_items(
                 "target": _quest_target(quest_type),
                 "progress": 0,
                 "status": "pending",
+                "reward_points": _quest_reward_points(quest_type),
+                "reward_claimed": False,
+                "claimed_points": 0,
             }
         )
     return out
@@ -134,7 +165,10 @@ def _load_or_create_daily_quests(user_id: str, course_id: str) -> dict[str, Any]
         try:
             data = json.loads(raw)
             if isinstance(data, dict) and isinstance(data.get("items"), list):
-                return data
+                normalized = _normalize_daily_items(data)
+                if normalized != data:
+                    set_user_kv(user_id, key, json.dumps(normalized, ensure_ascii=False))
+                return normalized
         except json.JSONDecodeError:
             pass
 
@@ -148,7 +182,7 @@ def _load_or_create_daily_quests(user_id: str, course_id: str) -> dict[str, Any]
 
 
 def get_daily_quests(user_id: str, course_id: str) -> dict[str, Any]:
-    return _load_or_create_daily_quests(user_id, course_id)
+    return _with_account_summary(_load_or_create_daily_quests(user_id, course_id), user_id)
 
 
 def apply_daily_quest_event(user_id: str, body: Dict[str, Any]) -> tuple[dict[str, Any], bool]:
@@ -160,20 +194,37 @@ def apply_daily_quest_event(user_id: str, body: Dict[str, Any]) -> tuple[dict[st
 
     data = _load_or_create_daily_quests(user_id, course_id)
     updated = False
+    awarded_account: dict[str, Any] | None = None
     for item in data.get("items", []):
         if item.get("quest_type") != event_type:
             continue
         if item.get("status") == "completed":
             continue
-        item["progress"] = int(item.get("progress") or 0) + max(1, value)
-        if int(item["progress"]) >= int(item.get("target") or 1):
+        target = max(1, int(item.get("target") or 1))
+        item["progress"] = min(target, int(item.get("progress") or 0) + max(1, min(value, target)))
+        if int(item["progress"]) >= target:
             item["status"] = "completed"
+            awarded_account = student_account_store.award_daily_quest_points(
+                user_id=user_id,
+                course_id=course_id,
+                quest_id=str(item.get("id") or ""),
+                reward_points=int(item.get("reward_points") or _quest_reward_points(str(item.get("quest_type") or ""))),
+                date_key=str(data.get("date") or _daily_today()),
+            )
+            item["reward_claimed"] = True
+            item["claimed_points"] = int(item.get("claimed_points") or 0) + int(
+                (awarded_account.get("reward") or {}).get("granted_points") or 0
+            )
+            item["claim_status"] = "claimed"
         updated = True
 
     if updated:
         key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
         set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
-    return data, updated
+    response = _with_account_summary(data, user_id)
+    if awarded_account is not None:
+        response["account"] = awarded_account
+    return response, updated
 
 
 def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
@@ -185,11 +236,31 @@ def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
     data = _load_or_create_daily_quests(user_id, course_id)
     for item in data.get("items", []):
         if item.get("id") == quest_id:
-            item["progress"] = int(item.get("target") or 1)
-            item["status"] = "completed"
+            target = max(1, int(item.get("target") or 1))
+            is_completed = item.get("status") == "completed" and int(item.get("progress") or 0) >= target
+            if not is_completed:
+                item["claim_status"] = "verification_required"
+                key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
+                set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
+                return _with_account_summary(data, user_id)
+
+            reward = student_account_store.award_daily_quest_points(
+                user_id=user_id,
+                course_id=course_id,
+                quest_id=quest_id,
+                reward_points=int(item.get("reward_points") or _quest_reward_points(str(item.get("quest_type") or ""))),
+                date_key=str(data.get("date") or _daily_today()),
+            )
+            item["reward_claimed"] = True
+            item["claimed_points"] = int(item.get("claimed_points") or 0) + int(
+                (reward.get("reward") or {}).get("granted_points") or 0
+            )
+            item["claim_status"] = "claimed"
             key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
             set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
-            return data
+            response = _with_account_summary(data, user_id)
+            response["account"] = reward
+            return response
     raise HTTPException(status_code=404, detail="quest not found")
 
 

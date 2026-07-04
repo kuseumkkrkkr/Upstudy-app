@@ -10,21 +10,54 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _initKakaoSdk();
 
-  final storedToken = await AuthStorage.instance.readToken() ?? '';
-  final storedUsername = await AuthStorage.instance.readUsername();
-  if (storedToken.isNotEmpty) {
-    await ApiClient.instance.setToken(
-      storedToken,
-      username: storedUsername,
-    );
-  }
+  final session = await _restoreStartupSession();
 
   runApp(
-    AIFlowApp(
-      initialToken: storedToken,
-      initialUsername: storedUsername,
-    ),
+    AIFlowApp(initialToken: session.token, initialUsername: session.username),
   );
+}
+
+Future<_StartupSession> _restoreStartupSession() async {
+  final storedToken = (await AuthStorage.instance.readToken())?.trim() ?? '';
+  final storedUsername = (await AuthStorage.instance.readUsername())?.trim();
+  if (storedToken.isEmpty) return const _StartupSession.signedOut();
+
+  await ApiClient.instance.setToken(storedToken, username: storedUsername);
+  try {
+    final profile = await ApiClient.instance.getMyProfile().timeout(
+      const Duration(seconds: 5),
+    );
+    final profileUsername = profile.username.trim();
+    final displayName = profile.name.trim();
+    final username = displayName.isNotEmpty
+        ? displayName
+        : profileUsername.isNotEmpty
+        ? profileUsername
+        : storedUsername;
+    if (username != null && username.isNotEmpty) {
+      await AuthStorage.instance.saveUsername(username);
+    }
+    return _StartupSession(token: storedToken, username: username);
+  } on ApiException catch (error) {
+    if (error.statusCode == 401 || error.statusCode == 403) {
+      await ApiClient.instance.clearToken();
+      return const _StartupSession.signedOut();
+    }
+    debugPrint('JWT validation failed without auth rejection: $error');
+    return _StartupSession(token: storedToken, username: storedUsername);
+  } catch (error) {
+    debugPrint('JWT validation skipped: $error');
+    return _StartupSession(token: storedToken, username: storedUsername);
+  }
+}
+
+class _StartupSession {
+  const _StartupSession({required this.token, this.username});
+
+  const _StartupSession.signedOut() : token = '', username = null;
+
+  final String token;
+  final String? username;
 }
 
 void _initKakaoSdk() {
@@ -51,11 +84,7 @@ void _initKakaoSdk() {
 }
 
 class AIFlowApp extends StatelessWidget {
-  const AIFlowApp({
-    super.key,
-    this.initialToken = '',
-    this.initialUsername,
-  });
+  const AIFlowApp({super.key, this.initialToken = '', this.initialUsername});
 
   final String initialToken;
   final String? initialUsername;
@@ -70,9 +99,9 @@ class AIFlowApp extends StatelessWidget {
         colorSchemeSeed: AppColors.primaryLight,
       ),
       initialRoute: initialToken.isNotEmpty
-          ? AppRoutes.app
+          ? AppRoutes.studentDashboard
           : AppRoutes.landing,
-      routes: appRoutes(context),
+      routes: appRoutes(context, isAuthenticated: initialToken.isNotEmpty),
       onGenerateRoute: onGenerateAppRoute,
     );
   }

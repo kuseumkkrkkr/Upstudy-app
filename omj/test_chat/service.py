@@ -1,21 +1,16 @@
 import math
-import os
 from typing import Any, Dict, List, Optional, Tuple
-
-from google import genai
 
 from storage.storage import get_quest
 from env_loader import load_env
+from services.ai.sam_client import (
+    DEFAULT_CHAT_MODEL,
+    SAM_API_KEY_ENV,
+    chat_completion_text,
+    is_sam_configured,
+)
 
 load_env()
-
-COMETAPI_KEY = os.environ.get("COMETAPI_KEY")
-BASE_URL = "https://api.cometapi.com"
-
-_client = genai.Client(
-    http_options={"api_version": "v1beta", "base_url": BASE_URL},
-    api_key=COMETAPI_KEY,
-)
 
 PERSONA_PROMPT = (
     "너는 여자 과외 선생님이다. 말투는 매우 간결하고 필요한것만 전하며, "
@@ -139,17 +134,18 @@ def _build_prompt(
 
 
 def _generate_chat_response(prompt: str) -> str:
-    if not COMETAPI_KEY:
-        raise RuntimeError("COMETAPI_KEY is not set")
+    if not is_sam_configured():
+        raise RuntimeError(f"{SAM_API_KEY_ENV} is not set")
 
-    response = _client.models.generate_content(
-        model="gemini-3.1-flash-lite",
-        contents=prompt,
-    )
-    text = (response.text or "").strip()
+    text = chat_completion_text(
+        model=DEFAULT_CHAT_MODEL,
+        prompt=prompt,
+        temperature=0.7,
+        max_tokens=1024,
+    ).strip()
     cleaned = _strip_code_fences(text)
     if not cleaned:
-        raise RuntimeError("Empty response from Gemini")
+        raise RuntimeError("Empty response from model")
     return cleaned
 
 

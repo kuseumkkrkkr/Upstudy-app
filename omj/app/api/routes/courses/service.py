@@ -9,7 +9,7 @@ from domain.course import engine
 from domain.course import v2_repository as repo
 from domain.course.v2_models import CourseModule, CourseModuleType, CourseV2
 from domain.academy import repository as academy_repo
-from storage.textbook_storage import get_textbook, list_textbooks
+from storage.textbook_storage import get_textbook, is_teacher_manual_textbook, list_textbooks
 
 
 def _can_manage(user: dict, course: CourseV2) -> bool:
@@ -74,6 +74,15 @@ def _collect_course_textbook_ids(course: CourseV2) -> list[str]:
     return ids
 
 
+def _ensure_course_textbooks_selectable(course: CourseV2) -> None:
+    for textbook_id in _collect_course_textbook_ids(course):
+        if is_teacher_manual_textbook(textbook_id):
+            raise HTTPException(
+                status_code=400,
+                detail="teacher_manual_textbook_not_course_selectable",
+            )
+
+
 def _find_textbook_module(course: CourseV2, module_id: str, detail: dict[str, Any]) -> Optional[CourseModule]:
     if module_id:
         target = next((m for m in course.modules if m.id == module_id), None)
@@ -108,6 +117,8 @@ def _find_textbook_module(course: CourseV2, module_id: str, detail: dict[str, An
 
 
 def _ensure_textbook_access(course: CourseV2, user: dict, textbook_id: str) -> bool:
+    if is_teacher_manual_textbook(textbook_id):
+        return False
     if not _has_private_course_access(user, course):
         return False
     allowed_ids = _collect_course_textbook_ids(course)
@@ -138,6 +149,8 @@ def list_course_documents(
 
     items: list[dict[str, Any]] = []
     for textbook_id in textbook_ids:
+        if is_teacher_manual_textbook(textbook_id):
+            continue
         item = get_textbook(textbook_id)
         if item:
             items.append(item)
@@ -169,6 +182,7 @@ def create_course_v2(user: dict, course: CourseV2) -> CourseV2:
     if not owner_user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
     course.owner_user_id = owner_user_id
+    _ensure_course_textbooks_selectable(course)
     _enforce_visibility_limit(owner_user_id, bool(course.is_public))
     course = engine.insert_forced_wrong_answer_modules(course)
     repo.create_course_v2(course)
@@ -193,6 +207,7 @@ def update_course_v2(user: dict, course_id: str, course: CourseV2) -> CourseV2:
 
     course.id = course_id
     course.owner_user_id = existing.owner_user_id
+    _ensure_course_textbooks_selectable(course)
     _enforce_visibility_limit(
         course.owner_user_id,
         bool(course.is_public),
@@ -219,8 +234,12 @@ def list_courses_v2(
     query: Optional[str],
     tag: Optional[str],
     limit: int,
+    offset: int,
     recommend_for_ovr: Optional[int],
     mine_only: bool,
+    visibility: Optional[str] = None,
+    sort: Optional[str] = None,
+    order: Optional[str] = None,
 ) -> list[CourseV2]:
     role = str(user.get("role") or "")
     owner_filter: Optional[str] = None
@@ -228,23 +247,24 @@ def list_courses_v2(
 
     if role == "student":
         public_filter = True
+    elif visibility == "public":
+        public_filter = True
+    elif visibility == "private":
+        public_filter = False
     elif mine_only:
         owner = str(user.get("user_id") or "")
-        courses = repo.list_courses_v2(
-            query=query,
-            tag=tag,
-            limit=limit,
-            recommend_for_ovr=recommend_for_ovr,
-        )
-        return [c for c in courses if not str(c.owner_user_id or "").strip() or c.owner_user_id == owner][:limit]
+        owner_filter = owner
 
     courses = repo.list_courses_v2(
         query=query,
         tag=tag,
         limit=limit,
+        offset=offset,
         recommend_for_ovr=recommend_for_ovr,
         owner_user_id=owner_filter,
         is_public=public_filter,
+        sort=sort,
+        order=order,
     )
     return [c for c in courses if _has_private_course_access(user, c)]
 
@@ -270,6 +290,7 @@ def bind_course_academy_group(
     course.access_academy_id = academy_id
     course.access_group_id = group_id
     course.is_public = False
+    _ensure_course_textbooks_selectable(course)
     if not course.id.startswith("academy_"):
         course.id = f"academy_{academy_id}__group_{group_id}__{course.id}"
     repo.delete_course_v2(course_id)

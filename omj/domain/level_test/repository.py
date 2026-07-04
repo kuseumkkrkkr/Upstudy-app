@@ -5,6 +5,7 @@ Uses raw sqlite3 against the shared ``quests.db`` file.
 from __future__ import annotations
 
 import json
+import uuid
 import sqlite3
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -19,7 +20,7 @@ from storage.storage import DB_PATH
 
 
 def _ensure_level_test_tables() -> None:
-    """Create ``speed_test``, ``power_test``, and ``level_test_result`` tables if missing."""
+    """Create level-test tables if missing."""
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
@@ -74,12 +75,411 @@ def _ensure_level_test_tables() -> None:
         """
     )
 
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS level_test_template (
+            template_id TEXT PRIMARY KEY,
+            status TEXT NOT NULL,
+            version TEXT NOT NULL,
+            subject_mix TEXT NOT NULL,
+            difficulty_profile TEXT NOT NULL,
+            used_count INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS level_test_template_item (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            template_id TEXT NOT NULL,
+            item_index INTEGER NOT NULL,
+            phase INTEGER NOT NULL,
+            subject_key TEXT NOT NULL,
+            hash_tags TEXT NOT NULL,
+            difficulty_tier INTEGER NOT NULL,
+            quest_id TEXT NOT NULL,
+            codebase_id INTEGER,
+            seed INTEGER,
+            problem_rating REAL NOT NULL DEFAULT 1200,
+            created_at TEXT NOT NULL,
+            UNIQUE(template_id, item_index)
+        )
+        """
+    )
+
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS level_test_session (
+            session_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            template_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            estimated_rating REAL,
+            estimated_ovr REAL,
+            confidence REAL,
+            strong_tags_json TEXT,
+            weak_tags_json TEXT,
+            started_at TEXT NOT NULL,
+            submitted_at TEXT
+        )
+        """
+    )
+
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS level_test_answer (
+            session_id TEXT NOT NULL,
+            item_index INTEGER NOT NULL,
+            quest_id TEXT NOT NULL,
+            is_correct INTEGER NOT NULL,
+            answer_time REAL,
+            step_correctness_json TEXT NOT NULL,
+            tags_json TEXT NOT NULL,
+            submitted_at TEXT NOT NULL,
+            PRIMARY KEY(session_id, item_index)
+        )
+        """
+    )
+
+    cur.execute(
+        """
+        CREATE INDEX IF NOT EXISTS level_test_session_user_idx
+        ON level_test_session(user_id, started_at DESC)
+        """
+    )
+
+    cur.execute(
+        """
+        CREATE INDEX IF NOT EXISTS level_test_template_status_idx
+        ON level_test_template(status, used_count, created_at)
+        """
+    )
+
     conn.commit()
     conn.close()
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# ---------------------------------------------------------------------------
+# Placement template/session CRUD
+# ---------------------------------------------------------------------------
+
+
+def create_placement_template(
+    *,
+    version: str,
+    subject_mix: Dict[str, Any],
+    difficulty_profile: Dict[str, Any],
+    status: str = "generating",
+) -> str:
+    _ensure_level_test_tables()
+    template_id = str(uuid.uuid4())
+    now = _now_iso()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO level_test_template (
+            template_id, status, version, subject_mix, difficulty_profile,
+            used_count, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+        """,
+        (
+            template_id,
+            status,
+            version,
+            json.dumps(subject_mix, ensure_ascii=False),
+            json.dumps(difficulty_profile, ensure_ascii=False),
+            now,
+            now,
+        ),
+    )
+    conn.commit()
+    conn.close()
+    return template_id
+
+
+def set_placement_template_status(template_id: str, status: str) -> None:
+    _ensure_level_test_tables()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE level_test_template
+        SET status = ?, updated_at = ?
+        WHERE template_id = ?
+        """,
+        (status, _now_iso(), template_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def add_placement_template_items(
+    template_id: str,
+    items: List[Dict[str, Any]],
+) -> None:
+    if not items:
+        return
+    _ensure_level_test_tables()
+    now = _now_iso()
+    payload = [
+        (
+            template_id,
+            int(item["item_index"]),
+            int(item.get("phase") or 1),
+            str(item.get("subject_key") or ""),
+            json.dumps(item.get("hash_tags") or [], ensure_ascii=False),
+            int(item.get("difficulty_tier") or 3),
+            str(item.get("quest_id") or ""),
+            item.get("codebase_id"),
+            item.get("seed"),
+            float(item.get("problem_rating") or 1200),
+            now,
+        )
+        for item in items
+        if item.get("quest_id")
+    ]
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.executemany(
+        """
+        INSERT OR REPLACE INTO level_test_template_item (
+            template_id, item_index, phase, subject_key, hash_tags,
+            difficulty_tier, quest_id, codebase_id, seed, problem_rating, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        payload,
+    )
+    conn.commit()
+    conn.close()
+
+
+def count_ready_placement_templates() -> int:
+    _ensure_level_test_tables()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM level_test_template WHERE status = 'ready'")
+    count = int(cur.fetchone()[0] or 0)
+    conn.close()
+    return count
+
+
+def pick_ready_placement_template(user_id: str) -> Optional[Dict[str, Any]]:
+    _ensure_level_test_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT t.*
+        FROM level_test_template t
+        WHERE t.status = 'ready'
+          AND t.template_id NOT IN (
+              SELECT template_id
+              FROM level_test_session
+              WHERE user_id = ?
+              ORDER BY started_at DESC
+              LIMIT 3
+          )
+        ORDER BY t.used_count ASC, t.created_at ASC
+        LIMIT 1
+        """,
+        (user_id,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def get_placement_template_items(template_id: str) -> List[Dict[str, Any]]:
+    _ensure_level_test_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT *
+        FROM level_test_template_item
+        WHERE template_id = ?
+        ORDER BY item_index ASC
+        """,
+        (template_id,),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    items = []
+    for row in rows:
+        item = dict(row)
+        try:
+            item["hash_tags"] = json.loads(item.get("hash_tags") or "[]")
+        except json.JSONDecodeError:
+            item["hash_tags"] = []
+        items.append(item)
+    return items
+
+
+def create_placement_session(*, user_id: str, template_id: str) -> str:
+    _ensure_level_test_tables()
+    session_id = str(uuid.uuid4())
+    now = _now_iso()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO level_test_session (
+            session_id, user_id, template_id, status, started_at
+        )
+        VALUES (?, ?, ?, 'started', ?)
+        """,
+        (session_id, user_id, template_id, now),
+    )
+    cur.execute(
+        """
+        UPDATE level_test_template
+        SET used_count = used_count + 1, updated_at = ?
+        WHERE template_id = ?
+        """,
+        (now, template_id),
+    )
+    conn.commit()
+    conn.close()
+    return session_id
+
+
+def get_placement_session(session_id: str) -> Optional[Dict[str, Any]]:
+    _ensure_level_test_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM level_test_session WHERE session_id = ?",
+        (session_id,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def upsert_placement_answer(
+    *,
+    session_id: str,
+    item_index: int,
+    quest_id: str,
+    is_correct: bool,
+    answer_time: Optional[float],
+    step_correctness: List[Dict[str, Any]],
+    tags: List[str],
+) -> None:
+    _ensure_level_test_tables()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO level_test_answer (
+            session_id, item_index, quest_id, is_correct, answer_time,
+            step_correctness_json, tags_json, submitted_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(session_id, item_index) DO UPDATE SET
+            quest_id = excluded.quest_id,
+            is_correct = excluded.is_correct,
+            answer_time = excluded.answer_time,
+            step_correctness_json = excluded.step_correctness_json,
+            tags_json = excluded.tags_json,
+            submitted_at = excluded.submitted_at
+        """,
+        (
+            session_id,
+            int(item_index),
+            quest_id,
+            1 if is_correct else 0,
+            answer_time,
+            json.dumps(step_correctness, ensure_ascii=False),
+            json.dumps(tags, ensure_ascii=False),
+            _now_iso(),
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def list_placement_answers(session_id: str) -> List[Dict[str, Any]]:
+    _ensure_level_test_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT *
+        FROM level_test_answer
+        WHERE session_id = ?
+        ORDER BY item_index ASC
+        """,
+        (session_id,),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    answers = []
+    for row in rows:
+        answer = dict(row)
+        try:
+            answer["step_correctness"] = json.loads(answer.pop("step_correctness_json") or "[]")
+        except json.JSONDecodeError:
+            answer["step_correctness"] = []
+        try:
+            answer["tags"] = json.loads(answer.pop("tags_json") or "[]")
+        except json.JSONDecodeError:
+            answer["tags"] = []
+        answer["is_correct"] = bool(answer["is_correct"])
+        answers.append(answer)
+    return answers
+
+
+def complete_placement_session(
+    *,
+    session_id: str,
+    estimated_rating: float,
+    estimated_ovr: float,
+    confidence: float,
+    strong_tags: List[Dict[str, Any]],
+    weak_tags: List[Dict[str, Any]],
+) -> None:
+    _ensure_level_test_tables()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE level_test_session
+        SET status = 'graded',
+            estimated_rating = ?,
+            estimated_ovr = ?,
+            confidence = ?,
+            strong_tags_json = ?,
+            weak_tags_json = ?,
+            submitted_at = ?
+        WHERE session_id = ?
+        """,
+        (
+            estimated_rating,
+            estimated_ovr,
+            confidence,
+            json.dumps(strong_tags, ensure_ascii=False),
+            json.dumps(weak_tags, ensure_ascii=False),
+            _now_iso(),
+            session_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
 
 
 # ---------------------------------------------------------------------------

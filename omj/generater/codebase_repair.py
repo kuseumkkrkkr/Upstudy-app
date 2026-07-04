@@ -1,24 +1,19 @@
 from __future__ import annotations
 
 import difflib
-import os
 import textwrap
-from typing import Any, Dict, Optional
-
-from google import genai
+from typing import Any, Dict
 
 from env_loader import load_env
+from services.ai.sam_client import (
+    DEFAULT_CODEBASE_REPAIR_MODEL,
+    SAM_API_KEY_ENV,
+    chat_completion_text,
+    is_sam_configured,
+)
 
 
 load_env()
-
-COMETAPI_KEY = os.environ.get("COMETAPI_KEY")
-BASE_URL = "https://api.cometapi.com"
-
-_client = genai.Client(
-    http_options={"api_version": "v1beta", "base_url": BASE_URL},
-    api_key=COMETAPI_KEY,
-)
 
 
 def _extract_code_text(text: str) -> str:
@@ -70,8 +65,8 @@ def repair_codebase(
     code_text: str,
     error_message: str,
 ) -> Dict[str, Any]:
-    if not COMETAPI_KEY:
-        raise RuntimeError("COMETAPI_KEY is not set")
+    if not is_sam_configured():
+        raise RuntimeError(f"{SAM_API_KEY_ENV} is not set")
 
     repair_prompt = _build_repair_prompt(
         prompt=prompt,
@@ -79,11 +74,14 @@ def repair_codebase(
         error_message=error_message,
     )
 
-    response = _client.models.generate_content(
-        model="kimi-k2.5",
-        contents=repair_prompt,
+    new_code = _extract_code_text(
+        chat_completion_text(
+            model=DEFAULT_CODEBASE_REPAIR_MODEL,
+            prompt=repair_prompt,
+            temperature=0.1,
+            max_tokens=8192,
+        )
     )
-    new_code = _extract_code_text(response.text or "")
     if not new_code or "def generate_problem" not in new_code:
         raise RuntimeError("repair model did not return valid code")
 
