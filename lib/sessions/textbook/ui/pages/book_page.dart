@@ -12,13 +12,13 @@ import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/business/repositories/bookmark_store.dart';
 import 'package:s11/shared/services/storage/local_db.dart';
 import 'package:s11/shared/business/repositories/textbook_store.dart';
+import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/ui/graphs/graph_selector.dart';
-
 
 Future<T?> showBookLibraryModal<T>({
   required BuildContext context,
   String headerTitle = '교재보기',
-  String libraryTitle = 'Owned Books',
+  String libraryTitle = '교재함',
   List<BookData>? books,
   List<String> selectedTags = const [],
   String? notice,
@@ -84,7 +84,7 @@ class BookWidget extends StatefulWidget {
 class BookLibraryPage extends StatelessWidget {
   const BookLibraryPage({
     super.key,
-    this.libraryTitle = 'Owned Books',
+    this.libraryTitle = '교재함',
     this.books,
     this.selectedTags = const [],
     this.notice,
@@ -101,9 +101,9 @@ class BookLibraryPage extends StatelessWidget {
 
   Future<void> _downloadBook(BuildContext context, BookData book) async {
     if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('웹에서는 교재를 기기에 저장할 수 없습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('웹에서는 교재를 기기에 저장할 수 없습니다.')));
       return;
     }
     try {
@@ -113,14 +113,14 @@ class BookLibraryPage extends StatelessWidget {
       }
       await TextbookStore.download(full);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('교재를 저장했습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('교재를 저장했습니다.')));
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('교재 저장에 실패했습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('교재 저장에 실패했습니다.')));
     }
   }
 
@@ -143,7 +143,10 @@ class BookLibraryPage extends StatelessWidget {
                 children: [
                   IconButton(
                     iconSize: 36,
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF3B3B3B)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF3B3B3B),
+                    ),
                     onPressed: () => Navigator.maybePop(context),
                   ),
                   Text(
@@ -183,7 +186,11 @@ class BookLibraryPage extends StatelessWidget {
                         Expanded(
                           child: Text(
                             '문서고',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: primary),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: primary,
+                            ),
                           ),
                         ),
                       ],
@@ -193,7 +200,9 @@ class BookLibraryPage extends StatelessWidget {
                     child: _BookLibraryLoader(
                       onSelect: (book) {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => BookWidget(book: book)),
+                          MaterialPageRoute(
+                            builder: (_) => BookWidget(book: book),
+                          ),
                         );
                       },
                       books: books,
@@ -218,12 +227,11 @@ class BookLibraryPage extends StatelessWidget {
   }
 }
 
-
 class BookLibraryModal extends StatelessWidget {
   const BookLibraryModal({
     super.key,
     this.headerTitle = '교재보기',
-    this.libraryTitle = 'Owned Books',
+    this.libraryTitle = '교재함',
     this.books,
     this.selectedTags = const [],
     this.notice,
@@ -267,22 +275,22 @@ class BookLibraryModal extends StatelessWidget {
             ],
           ),
           const Divider(height: 1),
-            Expanded(
-              child: _BookLibraryLoader(
-                onSelect: (book) {
-                  final navigator = Navigator.of(context, rootNavigator: true);
-                  navigator.pop();
-                  navigator.push(
-                    MaterialPageRoute(builder: (_) => BookWidget(book: book)),
-                  );
-                },
-                books: books,
-                title: libraryTitle,
-                selectedTags: selectedTags,
-                notice: notice,
-                category: category,
-              ),
+          Expanded(
+            child: _BookLibraryLoader(
+              onSelect: (book) {
+                final navigator = Navigator.of(context, rootNavigator: true);
+                navigator.pop();
+                navigator.push(
+                  MaterialPageRoute(builder: (_) => BookWidget(book: book)),
+                );
+              },
+              books: books,
+              title: libraryTitle,
+              selectedTags: selectedTags,
+              notice: notice,
+              category: category,
             ),
+          ),
         ],
       ),
     );
@@ -370,7 +378,7 @@ class _BookLibraryBody extends StatelessWidget {
   const _BookLibraryBody({
     required this.onSelect,
     required this.books,
-    this.title = 'Owned Books',
+    this.title = '교재함',
     this.selectedTags = const [],
     this.notice,
     this.enableDownload = false,
@@ -405,71 +413,68 @@ class _BookLibraryBody extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               Text(
-                '${books.length} items',
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '총 ${books.length}권',
                 style: const TextStyle(color: Colors.black54, fontSize: 13),
               ),
             ],
           ),
         ),
-          if (hasTags || showNotice)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hasTags) ...[
-                    const Text(
-                      '선택한 개념',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black54,
-                      ),
+        if (hasTags || showNotice)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasTags) ...[
+                  const Text(
+                    '선택한 개념',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
                     ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: selectedTags
-                          .map(
-                            (tag) => Chip(
-                              label: Text(
-                                tag,
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              visualDensity: VisualDensity.compact,
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: selectedTags
+                        .map(
+                          (tag) => Chip(
+                            label: Text(
+                              tag,
+                              style: const TextStyle(fontSize: 11),
                             ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                  if (hasTags && showNotice) const SizedBox(height: 6),
-                  if (showNotice)
-                    Text(
-                      notice!,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.black54,
-                      ),
-                    ),
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        )
+                        .toList(),
+                  ),
                 ],
-              ),
+                if (hasTags && showNotice) const SizedBox(height: 6),
+                if (showNotice)
+                  Text(
+                    notice!,
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  ),
+              ],
             ),
-          Expanded(
+          ),
+        Expanded(
           child: books.isEmpty
               ? const Center(
                   child: Text(
-                    'No books available.',
+                    '표시할 교재가 없습니다.',
                     style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
                 )
@@ -481,7 +486,7 @@ class _BookLibraryBody extends StatelessWidget {
                     final progress = book.progress.clamp(0.0, 1.0);
                     final label = book.progressLabel.isNotEmpty
                         ? book.progressLabel
-                        : '${(progress * 100).round()}% complete';
+                        : '${(progress * 100).round()}% 완료';
                     final showDownload = enableDownload && onDownload != null;
                     return TweenAnimationBuilder<double>(
                       duration: const Duration(milliseconds: 220),
@@ -492,115 +497,120 @@ class _BookLibraryBody extends StatelessWidget {
                         child: Opacity(opacity: t, child: child),
                       ),
                       child: InkWell(
-                      onTap: () => onSelect(book),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: border, width: 1),
-                          boxShadow: const [shadow],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 58,
-                              height: 74,
-                              decoration: BoxDecoration(
-                                color: book.coverColor ?? primaryLight,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.menu_book,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    book.title,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    book.subtitle,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(6),
-                                    child: LinearProgressIndicator(
-                                      value: progress,
-                                      minHeight: 6,
-                                      backgroundColor: const Color(0xFFE8E8E8),
-                                      color: primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    label,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            if (showDownload)
-                              InkWell(
-                                onTap: () => onDownload?.call(book),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: border, width: 1),
-                                    color: Colors.white,
-                                  ),
-                                  child: Row(
-                                    children: const [
-                                      Icon(
-                                        Icons.download,
-                                        size: 14,
-                                        color: Colors.black87,
-                                      ),
-                                      SizedBox(width: 6),
-                                      Text(
-                                        '다운로드',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                        onTap: () => onSelect(book),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: border, width: 1),
+                            boxShadow: const [shadow],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 58,
+                                height: 74,
+                                decoration: BoxDecoration(
+                                  color: book.coverColor ?? primaryLight,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.menu_book,
+                                  color: Colors.white,
+                                  size: 28,
                                 ),
                               ),
-                            if (showDownload) const SizedBox(width: 10),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                              color: Colors.black26,
-                            ),
-                          ],
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      book.title,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      book.subtitle,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: LinearProgressIndicator(
+                                        value: progress,
+                                        minHeight: 6,
+                                        backgroundColor: const Color(
+                                          0xFFE8E8E8,
+                                        ),
+                                        color: primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      label,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              if (showDownload)
+                                InkWell(
+                                  onTap: () => onDownload?.call(book),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: border,
+                                        width: 1,
+                                      ),
+                                      color: Colors.white,
+                                    ),
+                                    child: Row(
+                                      children: const [
+                                        Icon(
+                                          Icons.download,
+                                          size: 14,
+                                          color: Colors.black87,
+                                        ),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          '다운로드',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              if (showDownload) const SizedBox(width: 10),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: Colors.black26,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                       ),
                     );
                   },
@@ -665,7 +675,10 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
                 children: [
                   IconButton(
                     iconSize: 36,
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF3B3B3B)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF3B3B3B),
+                    ),
                     onPressed: () => Navigator.maybePop(context),
                   ),
                   Text(
@@ -692,7 +705,7 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
                   if (items.isEmpty) {
                     return const Center(
                       child: Text(
-                        'No bookmarks yet.',
+                        '저장한 북마크가 없습니다.',
                         style: TextStyle(fontSize: 16, color: Colors.black54),
                       ),
                     );
@@ -746,7 +759,8 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         title,
@@ -802,6 +816,7 @@ class _BookWidgetState extends State<BookWidget> {
 
   final ScrollController _tocController = ScrollController();
   final ScrollController _contentController = ScrollController();
+  final PageController _readerPageController = PageController();
   final GlobalKey _listViewKey = GlobalKey();
   double _averageItemHeight = 400;
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
@@ -815,9 +830,11 @@ class _BookWidgetState extends State<BookWidget> {
   List<bool> _chapterExpanded = const [];
   bool _initialized = false;
   bool _contentListenerAttached = false;
-  final ValueNotifier<bool> _sidebarCollapsedNotifier =
-      ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _sidebarCollapsedNotifier = ValueNotifier<bool>(
+    false,
+  );
   bool _loadingFullBook = false;
+  bool _pageMode = false;
   String _currentBookId = '';
   String _currentBookTitle = '';
   BookData? _currentBook;
@@ -826,6 +843,7 @@ class _BookWidgetState extends State<BookWidget> {
 
   List<double> _sectionOffsets = <double>[];
   int _activeEntryIndex = 0;
+  int _activeReaderPageIndex = 0;
   final ValueNotifier<int> _activeEntryNotifier = ValueNotifier<int>(0);
 
   _ToolMode _toolMode = _ToolMode.none;
@@ -845,6 +863,7 @@ class _BookWidgetState extends State<BookWidget> {
     super.initState();
     _initializeIfNeeded(attachListeners: true);
     _loadBookmarks();
+    _loadReaderPreference();
   }
 
   @override
@@ -865,6 +884,7 @@ class _BookWidgetState extends State<BookWidget> {
       _initialized = false;
       _sectionOffsets = <double>[];
       _activeEntryIndex = 0;
+      _activeReaderPageIndex = 0;
       _strokes.clear();
       _currentStroke = null;
       _eraserPosition = null;
@@ -887,6 +907,7 @@ class _BookWidgetState extends State<BookWidget> {
     unawaited(_persistAnnotations());
     _tocController.dispose();
     _contentController.dispose();
+    _readerPageController.dispose();
     _paintVersion.dispose();
     _activeEntryNotifier.dispose();
     _sidebarCollapsedNotifier.dispose();
@@ -901,6 +922,35 @@ class _BookWidgetState extends State<BookWidget> {
 
   Color get _activeInkColor =>
       _toolMode == _ToolMode.highlighter ? _highlighterColor : _penColor;
+
+  List<_ParsedBookPage> get _readerPages =>
+      _paginateContentEntries(_contentEntries);
+
+  Future<void> _loadReaderPreference() async {
+    final enabled = await TextbookReaderPreferences.loadPageMode();
+    if (!mounted) return;
+    setState(() {
+      _pageMode = enabled;
+      if (enabled) _syncReaderPageToActiveEntry();
+    });
+    if (enabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _syncReaderPageToActiveEntry(jump: true);
+      });
+    }
+  }
+
+  Future<void> _setPageMode(bool value) async {
+    if (_pageMode == value) return;
+    setState(() {
+      _pageMode = value;
+      _toolMode = _ToolMode.none;
+      if (value) {
+        _syncReaderPageToActiveEntry(jump: true);
+      }
+    });
+    await TextbookReaderPreferences.savePageMode(value);
+  }
 
   void _bumpPaint() {
     if (_paintFrameScheduled) return;
@@ -944,6 +994,7 @@ class _BookWidgetState extends State<BookWidget> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _cacheSectionOffsets();
         _applyInitialScroll();
+        if (_pageMode) _syncReaderPageToActiveEntry(jump: true);
       });
     }
     if (attachListeners && !_contentListenerAttached) {
@@ -955,9 +1006,56 @@ class _BookWidgetState extends State<BookWidget> {
   void _recordBookView(BookData book) {
     final number = TextbookStore.displayNumberFor(book);
     unawaited(
-      ActivityStore.recordBookView(bookId: book.id, bookNumber: number)
-          .catchError((_) {}),
+      ActivityStore.recordBookView(
+        bookId: book.id,
+        bookNumber: number,
+      ).catchError((_) {}),
     );
+  }
+
+  void _syncReaderPageToActiveEntry({bool jump = false}) {
+    final pages = _readerPages;
+    if (pages.isEmpty) {
+      _activeReaderPageIndex = 0;
+      return;
+    }
+    final targetIndex = pages.indexWhere(
+      (page) => page.entryIndex == _activeEntryIndex,
+    );
+    final nextIndex = targetIndex < 0 ? 0 : targetIndex;
+    _activeReaderPageIndex = nextIndex;
+    if (!jump || !_readerPageController.hasClients) return;
+    _readerPageController.jumpToPage(nextIndex);
+  }
+
+  void _jumpToReaderPageForEntry(int entryIndex) {
+    final pages = _readerPages;
+    if (pages.isEmpty) return;
+    final index = pages.indexWhere((page) => page.entryIndex == entryIndex);
+    if (index < 0) return;
+    _setActiveReaderPage(index);
+    if (_readerPageController.hasClients) {
+      _readerPageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _setActiveReaderPage(int pageIndex) {
+    final pages = _readerPages;
+    if (pages.isEmpty || pageIndex < 0 || pageIndex >= pages.length) return;
+    final entryIndex = pages[pageIndex].entryIndex;
+    setState(() {
+      _activeReaderPageIndex = pageIndex;
+      _activeEntryIndex = entryIndex;
+      _activeEntryNotifier.value = entryIndex;
+      final chapterIndex = _contentEntries[entryIndex].chapterIndex;
+      if (!_chapterExpanded[chapterIndex]) {
+        _chapterExpanded[chapterIndex] = true;
+      }
+    });
   }
 
   Future<void> _ensureFullBookLoaded() async {
@@ -985,6 +1083,7 @@ class _BookWidgetState extends State<BookWidget> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _cacheSectionOffsets();
         _applyInitialScroll();
+        if (_pageMode) _syncReaderPageToActiveEntry(jump: true);
       });
     } finally {
       _loadingFullBook = false;
@@ -995,9 +1094,12 @@ class _BookWidgetState extends State<BookWidget> {
 
   void _showAnnotationBlocked() {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('웹에서는 필기 저장이 지원되지 않습니다.')),
-    );
+    final message = _pageMode
+        ? '페이지 보기에서는 필기 도구를 사용할 수 없습니다.'
+        : '웹에서는 필기 저장이 지원되지 않습니다.';
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _loadAnnotations() async {
@@ -1076,7 +1178,6 @@ class _BookWidgetState extends State<BookWidget> {
     return stroke;
   }
 
-
   void _cacheSectionOffsets() {
     if (_contentEntries.isEmpty) return;
 
@@ -1089,10 +1190,13 @@ class _BookWidgetState extends State<BookWidget> {
     var knownCount = 0;
 
     for (var i = 0; i < _sectionKeys.length; i++) {
-      final box = _sectionKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      final box =
+          _sectionKeys[i].currentContext?.findRenderObject() as RenderBox?;
       if (box != null) {
-        final viewportPosition =
-            box.localToGlobal(Offset.zero, ancestor: listBox);
+        final viewportPosition = box.localToGlobal(
+          Offset.zero,
+          ancestor: listBox,
+        );
         exact[i] = viewportPosition.dy + _contentController.offset;
         totalKnownHeight += box.size.height;
         knownCount++;
@@ -1132,8 +1236,9 @@ class _BookWidgetState extends State<BookWidget> {
         final fraction = (i - lastIndex) / (nextIndex - lastIndex);
         offsets[i] = lastOffset + (nextOffset - lastOffset) * fraction;
       } else if (nextOffset != null) {
-        final estimatedHeightPerItem =
-            nextIndex > 0 ? nextOffset / nextIndex : _averageItemHeight;
+        final estimatedHeightPerItem = nextIndex > 0
+            ? nextOffset / nextIndex
+            : _averageItemHeight;
         offsets[i] = i * estimatedHeightPerItem;
       } else if (lastIndex >= 0) {
         offsets[i] = lastOffset + (i - lastIndex) * _averageItemHeight;
@@ -1153,6 +1258,12 @@ class _BookWidgetState extends State<BookWidget> {
       return;
     }
     _pendingInitialEntryIndex = null;
+    if (_pageMode) {
+      _activeEntryIndex = target;
+      _activeEntryNotifier.value = target;
+      _jumpToReaderPageForEntry(target);
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _scrollToEntry(target);
@@ -1186,9 +1297,9 @@ class _BookWidgetState extends State<BookWidget> {
     final updated = await BookmarkStore.add(item);
     if (!mounted) return;
     setState(() => _bookmarks = updated);
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const BookmarkListPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const BookmarkListPage()));
   }
 
   void _handleContentScroll() {
@@ -1272,15 +1383,46 @@ class _BookWidgetState extends State<BookWidget> {
     if (entry.level == 0 && entry.hasChildren) {
       _toggleChapter(entry.chapterIndex);
     }
+    if (_pageMode) {
+      _jumpToReaderPageForEntry(entry.entryIndex);
+      return;
+    }
     _scrollToEntry(entry.entryIndex);
   }
 
   void _goToPreviousEntry() {
+    if (_pageMode) {
+      if (_activeReaderPageIndex <= 0) return;
+      final next = _activeReaderPageIndex - 1;
+      _setActiveReaderPage(next);
+      if (_readerPageController.hasClients) {
+        _readerPageController.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+        );
+      }
+      return;
+    }
     if (_activeEntryIndex <= 0) return;
     _scrollToEntry(_activeEntryIndex - 1);
   }
 
   void _goToNextEntry() {
+    if (_pageMode) {
+      final pages = _readerPages;
+      if (_activeReaderPageIndex >= pages.length - 1) return;
+      final next = _activeReaderPageIndex + 1;
+      _setActiveReaderPage(next);
+      if (_readerPageController.hasClients) {
+        _readerPageController.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+        );
+      }
+      return;
+    }
     if (_activeEntryIndex >= _contentEntries.length - 1) return;
     _scrollToEntry(_activeEntryIndex + 1);
   }
@@ -1368,8 +1510,14 @@ class _BookWidgetState extends State<BookWidget> {
                                     Navigator.of(context).pop();
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
-                                      _scrollToEntry(result.entryIndex);
-                                    });
+                                          if (_pageMode) {
+                                            _jumpToReaderPageForEntry(
+                                              result.entryIndex,
+                                            );
+                                            return;
+                                          }
+                                          _scrollToEntry(result.entryIndex);
+                                        });
                                   },
                                 );
                               },
@@ -1390,10 +1538,7 @@ class _BookWidgetState extends State<BookWidget> {
     final results = <_SearchResult>[];
     for (var i = 0; i < _contentEntries.length; i++) {
       final entry = _contentEntries[i];
-      final combined = [
-        entry.title,
-        ...entry.paragraphs,
-      ].join(' ');
+      final combined = [entry.title, ...entry.paragraphs].join(' ');
       if (!combined.toLowerCase().contains(keyword)) continue;
       results.add(
         _SearchResult(
@@ -1480,7 +1625,10 @@ class _BookWidgetState extends State<BookWidget> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Text('Highlighter Color', style: TextStyle(fontSize: 14)),
+                  const Text(
+                    'Highlighter Color',
+                    style: TextStyle(fontSize: 14),
+                  ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
@@ -1495,7 +1643,10 @@ class _BookWidgetState extends State<BookWidget> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text('Highlighter Width', style: TextStyle(fontSize: 14)),
+                  const Text(
+                    'Highlighter Width',
+                    style: TextStyle(fontSize: 14),
+                  ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
@@ -1709,7 +1860,28 @@ class _BookWidgetState extends State<BookWidget> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(width: 48),
+          SizedBox(
+            width: 168,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  _pageMode ? '페이지' : '스크롤',
+                  style: const TextStyle(
+                    color: kPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _pageMode,
+                  onChanged: (value) => unawaited(_setPageMode(value)),
+                  activeThumbColor: kPrimaryLight,
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1734,7 +1906,11 @@ class _BookWidgetState extends State<BookWidget> {
                           children: [
                             _buildTocHeader(),
                             Expanded(child: _buildTocList()),
-                            const Divider(height: 1, thickness: 1, color: kBorder),
+                            const Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: kBorder,
+                            ),
                             _buildSidebarTools(),
                           ],
                         ),
@@ -1781,7 +1957,8 @@ class _BookWidgetState extends State<BookWidget> {
               final entry = entries[index];
               final isChapter = entry.level == 0;
               final isExpanded = _chapterExpanded[entry.chapterIndex];
-              final hasActiveEntry = activeEntryIndex >= 0 &&
+              final hasActiveEntry =
+                  activeEntryIndex >= 0 &&
                   activeEntryIndex < _contentEntries.length;
               final activeChapterIndex = hasActiveEntry
                   ? _contentEntries[activeEntryIndex].chapterIndex
@@ -1811,8 +1988,9 @@ class _BookWidgetState extends State<BookWidget> {
                           style: TextStyle(
                             color: isActive ? Colors.white : Colors.black,
                             fontSize: isChapter ? 15 : 13,
-                            fontWeight:
-                                isChapter ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: isChapter
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         ),
                       ),
@@ -1836,13 +2014,16 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   Widget _buildSidebarTools() {
-    final total = _contentEntries.length;
+    final total = _pageMode ? _readerPages.length : _contentEntries.length;
     final hasEntries = _contentEntries.isNotEmpty;
-    final annotationsEnabled = _supportsAnnotations;
+    final annotationsEnabled = _supportsAnnotations && !_pageMode;
     return ValueListenableBuilder<int>(
       valueListenable: _activeEntryNotifier,
       builder: (context, activeEntryIndex, _) {
         final isBookmarked = hasEntries && _isBookmarked(activeEntryIndex);
+        final currentNumber = _pageMode
+            ? (_readerPages.isEmpty ? 0 : _activeReaderPageIndex + 1)
+            : (total == 0 ? 0 : activeEntryIndex + 1);
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
           child: Column(
@@ -1866,7 +2047,8 @@ class _BookWidgetState extends State<BookWidget> {
                   _toolIcon(
                     icon: Icons.brush,
                     active:
-                        annotationsEnabled && _toolMode == _ToolMode.highlighter,
+                        annotationsEnabled &&
+                        _toolMode == _ToolMode.highlighter,
                     onTap: annotationsEnabled
                         ? () => _setToolMode(_ToolMode.highlighter)
                         : _showAnnotationBlocked,
@@ -1875,8 +2057,9 @@ class _BookWidgetState extends State<BookWidget> {
                   _toolIcon(
                     icon: Icons.color_lens_sharp,
                     active: false,
-                    onTap:
-                        annotationsEnabled ? _openPenSettings : _showAnnotationBlocked,
+                    onTap: annotationsEnabled
+                        ? _openPenSettings
+                        : _showAnnotationBlocked,
                     foreground: _activeInkColor,
                   ),
                   const SizedBox(width: 8),
@@ -1892,7 +2075,11 @@ class _BookWidgetState extends State<BookWidget> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  _navIcon(Icons.search_sharp, kPrimaryLight, onTap: _openSearch),
+                  _navIcon(
+                    Icons.search_sharp,
+                    kPrimaryLight,
+                    onTap: _openSearch,
+                  ),
                   const SizedBox(width: 8),
                   _navIcon(
                     Icons.arrow_back_ios_sharp,
@@ -1910,7 +2097,7 @@ class _BookWidgetState extends State<BookWidget> {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      '${total == 0 ? 0 : activeEntryIndex + 1} / $total',
+                      '$currentNumber / $total',
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
@@ -1995,6 +2182,10 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   Widget _buildContent(BuildContext context) {
+    if (_pageMode) {
+      return _buildPagedContent(context);
+    }
+
     final showAnnotationOverlay =
         _isDrawingTool ||
         _strokes.isNotEmpty ||
@@ -2010,7 +2201,9 @@ class _BookWidgetState extends State<BookWidget> {
             child: ListView.builder(
               key: _listViewKey,
               controller: _contentController,
-              physics: _isDrawingTool ? const NeverScrollableScrollPhysics() : null,
+              physics: _isDrawingTool
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
               padding: const EdgeInsets.fromLTRB(20, 20, 24, 40),
               itemCount: _contentEntries.length,
               itemBuilder: (context, i) => _buildContentBlock(i),
@@ -2046,6 +2239,76 @@ class _BookWidgetState extends State<BookWidget> {
     );
   }
 
+  Widget _buildPagedContent(BuildContext context) {
+    final pages = _readerPages;
+    if (pages.isEmpty) {
+      return const Center(child: Text('표시할 교재 페이지가 없습니다.'));
+    }
+
+    final pageIndex = _activeReaderPageIndex.clamp(0, pages.length - 1).toInt();
+    if (_activeReaderPageIndex != pageIndex) {
+      _activeReaderPageIndex = pageIndex;
+    }
+
+    return Container(
+      color: const Color(0xFFE9EEE8),
+      child: Column(
+        children: [
+          Container(
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7F8F2),
+              border: Border(bottom: BorderSide(color: kBorder)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.picture_as_pdf_rounded, color: kPrimary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _currentBookTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: kPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${pageIndex + 1} / ${pages.length}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: PageView.builder(
+              controller: _readerPageController,
+              itemCount: pages.length,
+              onPageChanged: _setActiveReaderPage,
+              itemBuilder: (context, index) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: _BookPaperPage(
+                      page: pages[index],
+                      pageNumber: index + 1,
+                      totalPages: pages.length,
+                      resolveImage: _resolveImageProvider,
+                      buildParagraph: _buildLatexAware,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   static const double _viewportOverscan = 800.0; // ~50 lines worth of pixels
 
   Widget _buildContentBlock(int i) {
@@ -2058,7 +2321,8 @@ class _BookWidgetState extends State<BookWidget> {
     if (_contentController.hasClients && _sectionOffsets.length > i) {
       final itemTop = _sectionOffsets[i];
       final viewportTop = _contentController.offset - _viewportOverscan;
-      final viewportBottom = _contentController.offset +
+      final viewportBottom =
+          _contentController.offset +
           _contentController.position.viewportDimension +
           _viewportOverscan;
       if (itemTop + _averageItemHeight < viewportTop ||
@@ -2082,8 +2346,7 @@ class _BookWidgetState extends State<BookWidget> {
             entry.title,
             style: TextStyle(
               fontSize: entry.level == 0 ? 24 : 18,
-              fontWeight:
-                  entry.level == 0 ? FontWeight.w800 : FontWeight.w700,
+              fontWeight: entry.level == 0 ? FontWeight.w800 : FontWeight.w700,
               color: kPrimary,
             ),
           ),
@@ -2091,14 +2354,9 @@ class _BookWidgetState extends State<BookWidget> {
           for (final paragraph in entry.paragraphs)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: RepaintBoundary(
-                child: _buildLatexAware(paragraph),
-              ),
+              child: RepaintBoundary(child: _buildLatexAware(paragraph)),
             ),
-          if (graphWidget != null) ...[
-            const SizedBox(height: 16),
-            graphWidget,
-          ],
+          if (graphWidget != null) ...[const SizedBox(height: 16), graphWidget],
           for (final image in entry.images)
             if (image.trim().isNotEmpty)
               Padding(
@@ -2125,10 +2383,14 @@ class _BookWidgetState extends State<BookWidget> {
     );
   }
 
-  final Map<String, List<ContentBlock>> _latexCache = <String, List<ContentBlock>>{};
+  final Map<String, List<ContentBlock>> _latexCache =
+      <String, List<ContentBlock>>{};
 
   Widget _buildLatexAware(String text) {
-    final blocks = _latexCache.putIfAbsent(text, () => parseTextWithLatex(text));
+    final blocks = _latexCache.putIfAbsent(
+      text,
+      () => parseTextWithLatex(text),
+    );
     return ContentBlocksView(inline: true, blocks: blocks);
   }
 
@@ -2138,7 +2400,7 @@ class _BookWidgetState extends State<BookWidget> {
       return NetworkImage(trimmed);
     }
     if (trimmed.startsWith('/')) {
-      return NetworkImage('${ApiClient.baseUrl}$trimmed');
+      return NetworkImage(ApiClient.resourceUrl(trimmed));
     }
     return AssetImage(trimmed);
   }
@@ -2187,6 +2449,181 @@ class _ContentEntry {
   final String title;
   final List<String> paragraphs;
   final List<String> images;
+}
+
+class _ParsedBookPage {
+  const _ParsedBookPage({
+    required this.entryIndex,
+    required this.chapterTitle,
+    required this.title,
+    required this.paragraphs,
+    required this.images,
+    required this.partNumber,
+    required this.partTotal,
+  });
+
+  final int entryIndex;
+  final String chapterTitle;
+  final String title;
+  final List<String> paragraphs;
+  final List<String> images;
+  final int partNumber;
+  final int partTotal;
+}
+
+class _BookPaperPage extends StatelessWidget {
+  const _BookPaperPage({
+    required this.page,
+    required this.pageNumber,
+    required this.totalPages,
+    required this.resolveImage,
+    required this.buildParagraph,
+  });
+
+  final _ParsedBookPage page;
+  final int pageNumber;
+  final int totalPages;
+  final ImageProvider Function(String source) resolveImage;
+  final Widget Function(String text) buildParagraph;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth.clamp(260.0, 820.0).toDouble();
+        final maxHeight = constraints.maxHeight;
+        var width = maxWidth;
+        var height = width / 0.707;
+        if (height > maxHeight) {
+          height = maxHeight;
+          width = height * 0.707;
+        }
+
+        return SizedBox(
+          width: width,
+          height: height,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFEFA),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0x22000000)),
+              boxShadow: const [
+                BoxShadow(
+                  blurRadius: 24,
+                  color: Color(0x26000000),
+                  offset: Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                width < 420 ? 22 : 42,
+                width < 420 ? 24 : 38,
+                width < 420 ? 22 : 42,
+                24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    page.chapterTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    page.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _BookWidgetState.kPrimary,
+                      fontSize: 24,
+                      height: 1.25,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (page.partTotal > 1) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      '${page.partNumber} / ${page.partTotal}',
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final paragraph in page.paragraphs)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: RepaintBoundary(
+                                child: buildParagraph(paragraph),
+                              ),
+                            ),
+                          for (final image in page.images)
+                            if (image.trim().isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image(
+                                    image: resolveImage(image),
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, _, __) => Container(
+                                      height: 160,
+                                      color: const Color(0xFFEDEDED),
+                                      alignment: Alignment.center,
+                                      child: const Text(
+                                        '이미지를 불러올 수 없습니다.',
+                                        style: TextStyle(color: Colors.black54),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Text(
+                        'AIFlow',
+                        style: TextStyle(
+                          color: Colors.black.withValues(alpha: 0.38),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '$pageNumber / $totalPages',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _TocEntry {
@@ -2464,4 +2901,104 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
     }
   }
   return entries;
+}
+
+List<_ParsedBookPage> _paginateContentEntries(List<_ContentEntry> entries) {
+  const maxPageChars = 780;
+  final pages = <_ParsedBookPage>[];
+
+  for (var entryIndex = 0; entryIndex < entries.length; entryIndex++) {
+    final entry = entries[entryIndex];
+    final chapterTitle = entries
+        .firstWhere(
+          (candidate) =>
+              candidate.chapterIndex == entry.chapterIndex &&
+              candidate.level == 0,
+          orElse: () => entry,
+        )
+        .title;
+
+    final paragraphs = entry.paragraphs.isEmpty
+        ? <String>['내용이 비어 있습니다.']
+        : entry.paragraphs;
+    final chunks = <List<String>>[];
+    var current = <String>[];
+    var currentLength = 0;
+
+    void flush() {
+      if (current.isEmpty) return;
+      chunks.add(current);
+      current = <String>[];
+      currentLength = 0;
+    }
+
+    for (final paragraph in paragraphs) {
+      final pieces = _splitParagraphForPage(paragraph, maxPageChars);
+      for (final piece in pieces) {
+        final nextLength = currentLength + piece.length;
+        if (current.isNotEmpty && nextLength > maxPageChars) {
+          flush();
+        }
+        current.add(piece);
+        currentLength += piece.length;
+      }
+    }
+    flush();
+
+    if (chunks.isEmpty) {
+      chunks.add(const <String>['내용이 비어 있습니다.']);
+    }
+
+    final partTotal = chunks.length + entry.images.length;
+    for (var i = 0; i < chunks.length; i++) {
+      pages.add(
+        _ParsedBookPage(
+          entryIndex: entryIndex,
+          chapterTitle: chapterTitle,
+          title: entry.title,
+          paragraphs: chunks[i],
+          images: const [],
+          partNumber: i + 1,
+          partTotal: partTotal,
+        ),
+      );
+    }
+
+    for (var i = 0; i < entry.images.length; i++) {
+      pages.add(
+        _ParsedBookPage(
+          entryIndex: entryIndex,
+          chapterTitle: chapterTitle,
+          title: entry.title,
+          paragraphs: const ['이미지 자료'],
+          images: [entry.images[i]],
+          partNumber: chunks.length + i + 1,
+          partTotal: partTotal,
+        ),
+      );
+    }
+  }
+
+  return pages;
+}
+
+List<String> _splitParagraphForPage(String paragraph, int maxChars) {
+  final text = paragraph.trim();
+  if (text.isEmpty) return const <String>[];
+  if (text.length <= maxChars) return [text];
+
+  final result = <String>[];
+  var start = 0;
+  while (start < text.length) {
+    var end = (start + maxChars).clamp(0, text.length).toInt();
+    if (end < text.length) {
+      final boundary = text.lastIndexOf(RegExp(r'[\s.!?。！？]'), end);
+      if (boundary > start + maxChars * 0.55) {
+        end = boundary + 1;
+      }
+    }
+    result.add(text.substring(start, end).trim());
+    start = end;
+  }
+  return result.where((item) => item.isNotEmpty).toList(growable: false);
 }

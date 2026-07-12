@@ -78,13 +78,13 @@ String buildAiFlowGraphHtml(AiFlowGraphDocument document) {
       </div>
     </div>
     <script>
-      const payload = $payload;
-      const settings = payload.settings || {};
-      const items = Array.isArray(payload.items)
-        ? payload.items.filter((item) => item && item.enabled !== false)
-        : [];
-      const parameters = Array.isArray(settings.parameters) ? settings.parameters : [];
-      const viewport = settings.viewport || { left: -8, right: 8, top: 8, bottom: -8 };
+      const initialPayload = $payload;
+      let board = null;
+      let homeBounds = [-8, 8, 8, -8];
+      let activeScope = null;
+      let activeRenderSignature = '';
+      let pendingPayload = null;
+      let renderScheduled = false;
 
       function toRadians(value) {
         return value * Math.PI / 180;
@@ -94,8 +94,9 @@ String buildAiFlowGraphHtml(AiFlowGraphDocument document) {
         return value * 180 / Math.PI;
       }
 
-      function createScope() {
+      function createScope(settings) {
         const degreeMode = settings.degreeMode === true;
+        const parameters = Array.isArray(settings.parameters) ? settings.parameters : [];
         const scope = {
           abs: Math.abs,
           acos: degreeMode ? (value) => toDegrees(Math.acos(value)) : Math.acos,
@@ -131,10 +132,93 @@ String buildAiFlowGraphHtml(AiFlowGraphDocument document) {
       function normalizeExpression(source) {
         let expression = String(source || '').trim();
         expression = expression.replace(/^y\\s*=\\s*/i, '');
+        expression = expression
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/−/g, '-')
+          .replace(/π/g, 'pi');
         expression = expression.replace(/\\bPI\\b/gi, 'pi');
         expression = expression.replace(/\\bE\\b/gi, 'e');
+        expression = insertImplicitMultiplication(expression);
         expression = expression.replace(/\\^/g, '**');
         return expression;
+      }
+
+      function tokenizeExpression(source) {
+        const tokens = [];
+        let index = 0;
+        while (index < source.length) {
+          const char = source[index];
+          if (/\\s/.test(char)) {
+            index += 1;
+            continue;
+          }
+          if (/[0-9.]/.test(char)) {
+            const start = index;
+            index += 1;
+            while (index < source.length && /[0-9.]/.test(source[index])) {
+              index += 1;
+            }
+            tokens.push({ text: source.slice(start, index), kind: 'number' });
+            continue;
+          }
+          if (/[A-Za-z_]/.test(char)) {
+            const start = index;
+            index += 1;
+            while (index < source.length && /[A-Za-z0-9_]/.test(source[index])) {
+              index += 1;
+            }
+            tokens.push({ text: source.slice(start, index), kind: 'identifier' });
+            continue;
+          }
+          if (char === '(') {
+            tokens.push({ text: char, kind: 'open' });
+          } else if (char === ')') {
+            tokens.push({ text: char, kind: 'close' });
+          } else {
+            tokens.push({ text: char, kind: 'operator' });
+          }
+          index += 1;
+        }
+        return tokens;
+      }
+
+      const functionNames = new Set([
+        'abs', 'acos', 'asin', 'atan', 'ceil', 'cos', 'exp', 'floor',
+        'ln', 'log', 'max', 'min', 'pow', 'round', 'sin', 'sqrt', 'tan',
+      ]);
+
+      function canEndFactor(token) {
+        return token.kind === 'number' || token.kind === 'identifier' || token.kind === 'close';
+      }
+
+      function canStartFactor(token) {
+        return token.kind === 'number' || token.kind === 'identifier' || token.kind === 'open';
+      }
+
+      function needsMultiplication(left, right) {
+        if (!canEndFactor(left) || !canStartFactor(right)) return false;
+        if (
+          left.kind === 'identifier' &&
+          right.kind === 'open' &&
+          functionNames.has(left.text.toLowerCase())
+        ) {
+          return false;
+        }
+        return true;
+      }
+
+      function insertImplicitMultiplication(source) {
+        const tokens = tokenizeExpression(source);
+        if (tokens.length < 2) return source.replace(/\\s+/g, '');
+        let out = '';
+        for (let index = 0; index < tokens.length; index += 1) {
+          if (index > 0 && needsMultiplication(tokens[index - 1], tokens[index])) {
+            out += '*';
+          }
+          out += tokens[index].text;
+        }
+        return out;
       }
 
       function compileExpression(expression, scope) {
@@ -142,97 +226,193 @@ String buildAiFlowGraphHtml(AiFlowGraphDocument document) {
         return new Function('x', 'scope', 'with (scope) { return (' + normalized + '); }');
       }
 
-      const scope = createScope();
-      const homeBounds = [
-        Number(viewport.left),
-        Number(viewport.top),
-        Number(viewport.right),
-        Number(viewport.bottom),
-      ];
-
-      const board = JXG.JSXGraph.initBoard('box', {
-        axis: settings.showAxes !== false,
-        boundingbox: homeBounds,
-        grid: settings.showGrid !== false,
-        keepAspectRatio: false,
-        pan: {
-          enabled: settings.lockViewport !== true,
-          needShift: false,
-        },
-        zoom: {
-          enabled: settings.lockViewport !== true,
-          needShift: false,
-          pinch: settings.lockViewport !== true,
-          wheel: settings.lockViewport !== true,
-          factorX: 1.08,
-          factorY: 1.08,
-          min: 0.2,
-          max: 40,
-        },
-        showNavigation: false,
-        showCopyright: false,
-      });
-
-      for (const item of items) {
-        if (item.type === 'function' && String(item.expression || '').trim().length > 0) {
-          const evaluator = compileExpression(item.expression, scope);
-          board.create('functiongraph', [
-            function(x) {
-              return evaluator(x, scope);
+      function graphRenderSignature(payload) {
+        const settings = payload && payload.settings ? payload.settings : {};
+        const viewport = settings.viewport || { left: -8, right: 8, top: 8, bottom: -8 };
+        const parameters = Array.isArray(settings.parameters) ? settings.parameters : [];
+        const items = Array.isArray(payload && payload.items) ? payload.items : [];
+        return JSON.stringify({
+          settings: {
+            showAxes: settings.showAxes !== false,
+            showGrid: settings.showGrid !== false,
+            lockViewport: settings.lockViewport === true,
+            degreeMode: settings.degreeMode === true,
+            viewport: {
+              left: Number(viewport.left),
+              right: Number(viewport.right),
+              top: Number(viewport.top),
+              bottom: Number(viewport.bottom),
             },
-          ], {
-            fixed: settings.lockViewport === true,
-            highlight: true,
-            strokeColor: item.colorHex || '#1b402b',
-            strokeWidth: 3,
-          });
-          continue;
-        }
+            parameterIds: parameters.map((parameter) => String(parameter.id || '').trim()),
+          },
+          items: items.map((item) => ({
+            id: item && item.id,
+            type: item && item.type,
+            enabled: item && item.enabled !== false,
+            expression: item && item.expression,
+            colorHex: item && item.colorHex,
+            xValues: item && item.xValues,
+            yValues: item && item.yValues,
+          })),
+        });
+      }
 
-        if (
-          item.type === 'line' &&
-          Array.isArray(item.xValues) &&
-          Array.isArray(item.yValues)
-        ) {
-          board.create('curve', [item.xValues, item.yValues], {
-            fixed: settings.lockViewport === true,
-            highlight: true,
-            strokeColor: item.colorHex || '#1b402b',
-            strokeWidth: 3,
-          });
-          continue;
-        }
-
-        if (
-          item.type === 'scatter' &&
-          Array.isArray(item.xValues) &&
-          Array.isArray(item.yValues)
-        ) {
-          const length = Math.min(item.xValues.length, item.yValues.length);
-          for (let index = 0; index < length; index += 1) {
-            board.create('point', [Number(item.xValues[index]), Number(item.yValues[index])], {
-              fixed: settings.lockViewport === true,
-              face: 'o',
-              size: 3.5,
-              strokeColor: item.colorHex || '#1b402b',
-              fillColor: item.colorHex || '#1b402b',
-              name: '',
-              withLabel: false,
-            });
+      function applyParameterValues(scope, settings) {
+        const parameters = Array.isArray(settings.parameters) ? settings.parameters : [];
+        for (const parameter of parameters) {
+          const id = String(parameter.id || '').trim();
+          if (id.length > 0) {
+            scope[id] = Number(parameter.value);
           }
         }
       }
 
+      function updateGraphParameters(payload) {
+        if (board === null || activeScope === null) return false;
+        const settings = payload && payload.settings ? payload.settings : {};
+        const nextSignature = graphRenderSignature(payload);
+        if (nextSignature !== activeRenderSignature) return false;
+        applyParameterValues(activeScope, settings);
+        board.update();
+        return true;
+      }
+
+      function renderGraph(payload) {
+        if (updateGraphParameters(payload)) return;
+
+        const settings = payload && payload.settings ? payload.settings : {};
+        const items = Array.isArray(payload && payload.items)
+          ? payload.items.filter((item) => item && item.enabled !== false)
+          : [];
+        const viewport = settings.viewport || { left: -8, right: 8, top: 8, bottom: -8 };
+
+        homeBounds = [
+          Number(viewport.left),
+          Number(viewport.top),
+          Number(viewport.right),
+          Number(viewport.bottom),
+        ];
+
+        if (board !== null) {
+          JXG.JSXGraph.freeBoard(board);
+          board = null;
+        }
+
+        board = JXG.JSXGraph.initBoard('box', {
+          axis: settings.showAxes !== false,
+          boundingbox: homeBounds,
+          grid: settings.showGrid !== false ? { gridX: 1, gridY: 1 } : false,
+          keepAspectRatio: true,
+          pan: {
+            enabled: settings.lockViewport !== true,
+            needShift: false,
+          },
+          zoom: {
+            enabled: settings.lockViewport !== true,
+            needShift: false,
+            pinch: settings.lockViewport !== true,
+            wheel: settings.lockViewport !== true,
+            factorX: 1.08,
+            factorY: 1.08,
+            min: 0.2,
+            max: 40,
+          },
+          showNavigation: false,
+          showCopyright: false,
+        });
+
+        const scope = createScope(settings);
+        activeScope = scope;
+        activeRenderSignature = graphRenderSignature(payload);
+
+        for (const item of items) {
+          if (item.type === 'function' && String(item.expression || '').trim().length > 0) {
+            const evaluator = compileExpression(item.expression, scope);
+            board.create('functiongraph', [
+              function(x) {
+                return evaluator(x, scope);
+              },
+            ], {
+              fixed: settings.lockViewport === true,
+              highlight: true,
+              strokeColor: item.colorHex || '#1b402b',
+              strokeWidth: 3,
+            });
+            continue;
+          }
+
+          if (
+            item.type === 'line' &&
+            Array.isArray(item.xValues) &&
+            Array.isArray(item.yValues)
+          ) {
+            board.create('curve', [item.xValues, item.yValues], {
+              fixed: settings.lockViewport === true,
+              highlight: true,
+              strokeColor: item.colorHex || '#1b402b',
+              strokeWidth: 3,
+            });
+            continue;
+          }
+
+          if (
+            item.type === 'scatter' &&
+            Array.isArray(item.xValues) &&
+            Array.isArray(item.yValues)
+          ) {
+            const length = Math.min(item.xValues.length, item.yValues.length);
+            for (let index = 0; index < length; index += 1) {
+              board.create('point', [Number(item.xValues[index]), Number(item.yValues[index])], {
+                fixed: settings.lockViewport === true,
+                face: 'o',
+                size: 3.5,
+                strokeColor: item.colorHex || '#1b402b',
+                fillColor: item.colorHex || '#1b402b',
+                name: '',
+                withLabel: false,
+              });
+            }
+          }
+        }
+      }
+
+      window.applyGraphPayload = function(payloadJson) {
+        try {
+          const nextPayload = typeof payloadJson === 'string'
+            ? JSON.parse(payloadJson)
+            : payloadJson;
+          if (!nextPayload || typeof nextPayload !== 'object') return;
+          pendingPayload = nextPayload;
+          if (renderScheduled) return;
+          renderScheduled = true;
+          window.requestAnimationFrame(function() {
+            renderScheduled = false;
+            if (pendingPayload !== null) {
+              renderGraph(pendingPayload);
+              pendingPayload = null;
+            }
+          });
+        } catch (_) {
+          // Ignore non-graph messages from the host page.
+        }
+      };
+
+      window.addEventListener('message', function(event) {
+        window.applyGraphPayload(event.data);
+      });
+
+      renderGraph(initialPayload);
+
       document.getElementById('zoom-in').addEventListener('click', function() {
-        board.zoomIn();
+        if (board !== null) board.zoomIn();
       });
 
       document.getElementById('zoom-out').addEventListener('click', function() {
-        board.zoomOut();
+        if (board !== null) board.zoomOut();
       });
 
       document.getElementById('zoom-home').addEventListener('click', function() {
-        board.setBoundingBox(homeBounds, true);
+        if (board !== null) board.setBoundingBox(homeBounds, true);
       });
     </script>
   </body>

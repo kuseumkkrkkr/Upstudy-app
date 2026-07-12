@@ -22,6 +22,14 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   static const double _eraserRadius = 26;
   static const double _minPointDistance = 0.6;
   static const Color _kGreen = Color(0xFF1B402B);
+  static const Color _surfaceColor = Colors.white;
+  static const Color _lineColor = Color(0xFFE1E6DF);
+  static const double _problemCardMinWidth = 920;
+  static const double _problemCardMaxWidth = 1380;
+  static const double _problemCardMinHeight = 108;
+  static const double _noteLineStartY = 28;
+  static const double _noteLineSpacing = 28;
+  static const double _noteLeftMargin = 60;
   static const bool _debugEnabled = true;
   // Gemini prompt/model is handled on the server.
   static const HeatmapConfig _heatmapConfig = HeatmapConfig();
@@ -29,8 +37,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
 
   static const Color _penRed = Color(0xFFE53935);
   static const Color _penBlue = Color(0xFF1E88E5);
-  static const List<Color> _penColors = [_penRed, _penBlue, Colors.black];
-  static const List<double> _penWidths = [5, 3, 1];
+  static const List<Color> _penColors = [Colors.black, _penBlue, _penRed];
+  static const List<double> _penWidths = [1, 3, 5, 8];
   static const Map<int, _TierParams> _tierParams = {
     1: _TierParams(solvesCount: 2, strategyLevel: 1, branchConditions: 0),
     2: _TierParams(solvesCount: 3, strategyLevel: 1, branchConditions: 0),
@@ -46,6 +54,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
   final GlobalKey _problemBoundaryKey = GlobalKey();
+  Timer? _solveTimer;
 
   final List<_Stroke> _strokes = <_Stroke>[];
   final List<_Stroke> _strokeHistory = <_Stroke>[];
@@ -70,12 +79,14 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   _ToolMode _toolMode = _ToolMode.pen;
   Color _penColor = Colors.black;
   double _penWidth = 3;
-  double _genTemperature = 0.2;
-  double _genTopP = 0.95;
-  int _genTopK = 40;
-  int _genMaxTokens = 1024;
+  static const double _fixedGenTemperature = 0.1;
+  static const double _fixedGenTopP = 0.95;
+  static const int _fixedGenTopK = 40;
+  static const int _fixedGenMaxTokens = 1024;
 
   bool _scrollEnabled = false;
+  bool _noteLinesEnabled = true;
+  int _timerDisplaySeconds = 0;
 
   Offset? _eraserPosition;
   bool _eraserActive = false;
@@ -104,6 +115,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     super.initState();
     _applyConfig(widget.config ?? const ProblemSolveConfig());
     _sessionClock.start();
+    _scheduleSolveTimerTick(updateNow: true);
     if (_quests.whereType<Map<String, dynamic>>().isEmpty) {
       _loadQuestsForTags();
     } else {
@@ -116,12 +128,19 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     unawaited(_saveContinueForCurrentQuest());
     _scrollController.dispose();
     _paintVersion.dispose();
+    _solveTimer?.cancel();
     _problemClock.stop();
     _sessionClock.stop();
     super.dispose();
   }
 
   double get _logicalHeight => _scrollEnabled ? _expandedHeight : _baseHeight;
+
+  int get _generatedQuestCount =>
+      _quests.whereType<Map<String, dynamic>>().length.clamp(0, _problemCount);
+
+  bool get _hasPendingGeneration =>
+      _questError == null && _generatedQuestCount < _problemCount;
 
   void _bumpPaint() {
     _paintVersion.value = _paintVersion.value + 1;
@@ -143,8 +162,12 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     });
   }
 
+  void _toggleNoteLines(bool value) {
+    setState(() => _noteLinesEnabled = value);
+  }
+
   void _applyConfig(ProblemSolveConfig config) {
-    final clampedCount = config.questionCount.clamp(3, 40).toInt();
+    final clampedCount = config.questionCount.clamp(1, 40).toInt();
     _problemCount = config.quests.isNotEmpty
         ? config.quests.length
         : clampedCount;
@@ -473,6 +496,85 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     return _problemElapsedOffset + elapsed;
   }
 
+  void _scheduleSolveTimerTick({bool updateNow = false}) {
+    _solveTimer?.cancel();
+    if (!mounted && !updateNow) return;
+
+    final elapsed = _sessionClock.elapsed.inSeconds;
+    final displaySeconds = elapsed >= 40 * 60 ? 40 * 60 : elapsed;
+    if (displaySeconds != _timerDisplaySeconds) {
+      if (mounted && !updateNow) {
+        setState(() => _timerDisplaySeconds = displaySeconds);
+      } else {
+        _timerDisplaySeconds = displaySeconds;
+      }
+    }
+    if (elapsed >= 40 * 60) return;
+
+    final delay = elapsed < 5 * 60
+        ? const Duration(seconds: 1)
+        : Duration(seconds: 60 - (elapsed % 60));
+    _solveTimer = Timer(delay, _scheduleSolveTimerTick);
+  }
+
+  String _solveTimerLabel() {
+    final recommended = _recommendedMinutesForCurrentQuest();
+    final recommendedText = recommended == null ? '--' : '$recommended분';
+    return '권장 시간 $recommendedText / 현재 풀이 시간 ${_formatSolveElapsed(_timerDisplaySeconds)}';
+  }
+
+  String _formatSolveElapsed(int seconds) {
+    final clamped = seconds.clamp(0, 40 * 60).toInt();
+    if (clamped < 5 * 60) {
+      final minutes = clamped ~/ 60;
+      final remain = clamped % 60;
+      if (minutes <= 0) return '$remain초';
+      return '$minutes분 ${remain.toString().padLeft(2, '0')}초';
+    }
+    return '${clamped ~/ 60}분';
+  }
+
+  int? _recommendedMinutesForCurrentQuest() {
+    final quest = _currentQuest;
+    if (quest == null) return null;
+    for (final sectionName in const ['info', 'data', 'header']) {
+      final section = quest[sectionName];
+      if (section is! Map) continue;
+      final minutes = _readPositiveInt(section, const [
+        'recommended_minutes',
+        'recommend_minutes',
+        'recommended_time_minutes',
+        'recommended_solve_minutes',
+        'estimated_minutes',
+        'expected_minutes',
+        'solve_minutes',
+        'time_limit_minutes',
+        'duration_minutes',
+      ]);
+      if (minutes != null) return minutes;
+      final seconds = _readPositiveInt(section, const [
+        'recommended_seconds',
+        'recommended_time_seconds',
+        'recommended_solve_seconds',
+        'time_limit_seconds',
+        'solve_seconds',
+      ]);
+      if (seconds != null) return (seconds / 60).ceil();
+    }
+    return null;
+  }
+
+  int? _readPositiveInt(Map<dynamic, dynamic> source, List<String> keys) {
+    for (final key in keys) {
+      final raw = source[key];
+      final value = raw is num
+          ? raw.toInt()
+          : int.tryParse(raw?.toString() ?? '');
+      if (value != null && value > 0) return value;
+    }
+    return null;
+  }
+
   void _saveCurrentProblem() {
     _pauseProblemClock();
     _problemSnapshots[_currentProblemIndex] = _ProblemSnapshot(
@@ -634,80 +736,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     });
   }
 
-  Future<void> _openLlmSettings() async {
-    final tempController = TextEditingController(
-      text: _genTemperature.toStringAsFixed(2),
-    );
-    final topPController = TextEditingController(
-      text: _genTopP.toStringAsFixed(2),
-    );
-    final topKController = TextEditingController(text: _genTopK.toString());
-    final maxTokensController = TextEditingController(
-      text: _genMaxTokens.toString(),
-    );
-    final result = await showDialog<_GenConfig>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('LLM 설정'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: tempController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Temperature (T)'),
-              ),
-              TextField(
-                controller: topPController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Top-P'),
-              ),
-              TextField(
-                controller: topKController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Top-K'),
-              ),
-              TextField(
-                controller: maxTokensController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Max tokens'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('취소'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(
-                  _GenConfig(
-                    temperature:
-                        double.tryParse(tempController.text) ?? _genTemperature,
-                    topP: double.tryParse(topPController.text) ?? _genTopP,
-                    topK: int.tryParse(topKController.text) ?? _genTopK,
-                    maxTokens:
-                        int.tryParse(maxTokensController.text) ?? _genMaxTokens,
-                  ),
-                );
-              },
-              child: const Text('적용'),
-            ),
-          ],
-        );
-      },
-    );
-    if (result == null) return;
-    setState(() {
-      _genTemperature = result.temperature.clamp(0.0, 2.0).toDouble();
-      _genTopP = result.topP.clamp(0.0, 1.0).toDouble();
-      _genTopK = result.topK < 0 ? 0 : result.topK;
-      _genMaxTokens = result.maxTokens <= 0 ? _genMaxTokens : result.maxTokens;
-    });
-  }
-
   void _undo() {
     if (_undoStack.isEmpty) return;
     _ensureClockRunning();
@@ -818,13 +846,146 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     final stroke = _currentStroke;
     if (stroke != null && stroke.points.isNotEmpty) {
       stroke.endTime = stroke.points.last.timestamp;
-      _strokes.add(stroke);
-      _strokeHistory.add(stroke);
-      _undoStack.add(_AddAction(stroke));
+      final resolvedStroke = _alignStrokeToNearestNoteLine(stroke);
+      _strokes.add(resolvedStroke);
+      _strokeHistory.add(resolvedStroke);
+      _undoStack.add(_AddAction(resolvedStroke));
     }
     _currentStroke = null;
     _lastFilteredPoint = null;
     _bumpPaint();
+  }
+
+  _Stroke _alignStrokeToNearestNoteLine(_Stroke stroke) {
+    if (!_noteLinesEnabled) return stroke;
+    final bounds = stroke.resolvedBounds;
+    if (bounds == null) return stroke;
+    if (stroke.points.length < 2) return stroke;
+    if (bounds.top < _noteLineStartY - _noteLineSpacing * 0.55) return stroke;
+    if (!_looksLikeLineSnapCandidate(stroke, bounds)) return stroke;
+
+    final offsets = _lineSnapOffsetsForStroke(stroke, bounds);
+    if (offsets == null) return stroke;
+    if (offsets.every((dy) => dy == 0)) return stroke;
+    return _translatedStrokeByOffsets(stroke, offsets);
+  }
+
+  bool _looksLikeLineSnapCandidate(_Stroke stroke, Rect bounds) {
+    if (stroke.length < 4) return false;
+    if (bounds.height > _noteLineSpacing * 2.35) return false;
+    final isTallMark = bounds.height > bounds.width * 1.8 && bounds.height > 18;
+    if (isTallMark) return false;
+    final isDiagramLike =
+        bounds.width > _baseWidth * 0.18 && bounds.height > _noteLineSpacing;
+    if (isDiagramLike) return false;
+    return true;
+  }
+
+  List<double>? _lineSnapOffsetsForStroke(_Stroke stroke, Rect bounds) {
+    final groups = _lineGroupsForStroke(stroke);
+    if (groups.isEmpty) return null;
+    final totalPointCount = stroke.points.length;
+    final meaningfulGroups =
+        groups.entries
+            .where(
+              (entry) =>
+                  entry.value.length >= math.max(2, totalPointCount * 0.08),
+            )
+            .toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
+    if (meaningfulGroups.isEmpty || meaningfulGroups.length > 4) return null;
+
+    if (meaningfulGroups.length > 1) {
+      final tooVertical = bounds.width < bounds.height * 1.15;
+      if (tooVertical) return null;
+      final minGroupSize = math.max(3, totalPointCount * 0.14);
+      if (meaningfulGroups.any((entry) => entry.value.length < minGroupSize)) {
+        return null;
+      }
+    }
+
+    final offsets = List<double>.filled(totalPointCount, 0);
+    var changed = false;
+    var minY = double.infinity;
+    var maxY = -double.infinity;
+    for (final entry in meaningfulGroups) {
+      final dy = _snapOffsetForGroup(stroke, entry.key, entry.value);
+      if (dy == null) return null;
+      if (dy.abs() > 0) changed = true;
+      for (final pointIndex in entry.value) {
+        offsets[pointIndex] = dy;
+        final y = stroke.points[pointIndex].position.dy + dy;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+
+    if (!changed) return null;
+    if (minY < 0 || maxY > _logicalHeight) return null;
+    return offsets;
+  }
+
+  Map<int, List<int>> _lineGroupsForStroke(_Stroke stroke) {
+    final groups = <int, List<int>>{};
+    for (var i = 0; i < stroke.points.length; i++) {
+      final y = stroke.points[i].position.dy;
+      if (y < _noteLineStartY - _noteLineSpacing * 0.55) continue;
+      final lineIndex = _nearestNoteLineIndex(y);
+      (groups[lineIndex] ??= <int>[]).add(i);
+    }
+    return groups;
+  }
+
+  double? _snapOffsetForGroup(
+    _Stroke stroke,
+    int lineIndex,
+    List<int> pointIndexes,
+  ) {
+    final baseline = _baselineYForPointIndexes(stroke, pointIndexes);
+    final target = _noteLineYForIndex(lineIndex);
+    final dy = target - baseline;
+    if (dy.abs() < 5) return 0;
+    if (dy.abs() > _noteLineSpacing * 0.44) return null;
+    return dy;
+  }
+
+  double _baselineYForPointIndexes(_Stroke stroke, List<int> pointIndexes) {
+    final ys =
+        pointIndexes.map((index) => stroke.points[index].position.dy).toList()
+          ..sort();
+    if (ys.length == 1) return ys.first;
+    final index = ((ys.length - 1) * 0.82).round().clamp(0, ys.length - 1);
+    return ys[index];
+  }
+
+  int _nearestNoteLineIndex(double y) {
+    final index = ((y - _noteLineStartY) / _noteLineSpacing).round();
+    return index < 0 ? 0 : index;
+  }
+
+  double _noteLineYForIndex(int index) {
+    final safeIndex = index < 0 ? 0 : index;
+    return _noteLineStartY + safeIndex * _noteLineSpacing;
+  }
+
+  _Stroke _translatedStrokeByOffsets(_Stroke source, List<double> offsets) {
+    final copy = _Stroke(
+      id: source.id,
+      color: source.color,
+      baseWidth: source.baseWidth,
+      order: source.order,
+      startTime: source.startTime,
+    );
+    for (var i = 0; i < source.points.length; i++) {
+      final point = source.points[i];
+      copy.addPoint(
+        point.position + Offset(0, offsets[i]),
+        point.pressure,
+        point.timestamp,
+      );
+    }
+    copy.endTime = source.endTime;
+    return copy;
   }
 
   void _startEraser(Offset position) {
@@ -938,11 +1099,10 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       child: Stack(
         children: [
           Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: _surfaceColor,
             body: SafeArea(
               top: true,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildHeader(),
                   Expanded(child: _buildCanvasArea()),
@@ -952,6 +1112,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
             ),
           ),
           if (_questLoading) _buildGenerationOverlay(),
+          if (!_questLoading && _hasPendingGeneration)
+            _buildGenerationStatusBadge(),
         ],
       ),
     );
@@ -1025,7 +1187,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       final id = (raw['id'] ?? 'restored').toString();
       final colorValue =
           int.tryParse(raw['color']?.toString() ?? '') ?? Colors.black.value;
-      final width = (raw['width'] as num?)?.toDouble() ?? _penWidths.first;
+      final width = (raw['width'] as num?)?.toDouble() ?? 3.0;
       final order = (raw['order'] as num?)?.toInt() ?? 0;
       final start =
           (raw['start'] as num?)?.toDouble() ??
@@ -1060,45 +1222,110 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   Widget _buildGenerationOverlay() {
-    final progressValue = (_generationProgress > 0 && _generationProgress < 1)
+    final generatedCount = _generatedQuestCount;
+    final totalCount = math.max(1, _problemCount);
+    final progressValue = generatedCount > 0
+        ? (generatedCount / totalCount).clamp(0.0, 1.0)
+        : (_generationProgress > 0 && _generationProgress < 1)
         ? _generationProgress
         : null;
     return Positioned.fill(
       child: IgnorePointer(
         ignoring: false,
         child: Container(
-          color: Colors.black.withOpacity(0.35),
+          color: Colors.black.withValues(alpha: 0.28),
           child: Center(
-            child: Container(
-              width: 360,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 12,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '문제 생성중...',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  LinearProgressIndicator(value: progressValue),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '생성된 문제부터 순서대로 배치해요. 최대 6분까지 기다릴 수 있어요.',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ],
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 22),
+                padding: const EdgeInsets.fromLTRB(28, 26, 28, 24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE4EAE3)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x26000000),
+                      blurRadius: 26,
+                      offset: Offset(0, 16),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: _kGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome_rounded,
+                            color: _kGreen,
+                            size: 25,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$generatedCount/$totalCount개 생성중',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFF17251C),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.1,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              const Text(
+                                '문제를 준비하고 있습니다',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Color(0xFF667067),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: progressValue,
+                        minHeight: 10,
+                        backgroundColor: const Color(0xFFEAF0EA),
+                        color: _kGreen,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      '생성된 문제부터 순서대로 배치됩니다. 문제 수가 많으면 최대 6분까지 걸릴 수 있습니다.',
+                      style: TextStyle(
+                        color: Color(0xFF465248),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1107,40 +1334,164 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     );
   }
 
+  Widget _buildGenerationStatusBadge() {
+    final generatedCount = _generatedQuestCount;
+    final totalCount = math.max(1, _problemCount);
+    final progressValue = (generatedCount / totalCount).clamp(0.0, 1.0);
+    return Positioned(
+      top: 92,
+      right: 24,
+      child: IgnorePointer(
+        ignoring: true,
+        child: Container(
+          width: 280,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE4EAE3)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x1F000000),
+                blurRadius: 18,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: _kGreen,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$generatedCount/$totalCount개 생성중',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF17251C),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: progressValue,
+                  minHeight: 6,
+                  backgroundColor: const Color(0xFFEAF0EA),
+                  color: _kGreen,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader() {
     final scale = _uiScale(context);
-    return SizedBox(
+    return Container(
+      color: Colors.white,
       height: 72 * scale,
-      child: Row(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          SizedBox(width: 16 * scale),
-          IconButton(
-            iconSize: 28 * scale,
-            icon: const Icon(Icons.arrow_back, color: _kGreen),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          Expanded(
+          Positioned.fill(
             child: Center(
-              child: Text(
-                'AIFlow',
-                style: TextStyle(
-                  fontSize: 36 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: _kGreen,
+              child: IgnorePointer(
+                child: Text(
+                  'AIFlow',
+                  style: TextStyle(
+                    fontSize: 36 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: _kGreen,
+                  ),
                 ),
               ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
+          Positioned(
+            left: 16 * scale,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: IconButton(
                 iconSize: 28 * scale,
-                icon: const Icon(Icons.info_outline, color: _kGreen),
-                onPressed: () {},
+                icon: const Icon(Icons.arrow_back, color: _kGreen),
+                onPressed: () => Navigator.of(context).maybePop(),
               ),
-              SizedBox(width: 8 * scale),
-            ],
+            ),
+          ),
+          Positioned(
+            right: 8 * scale,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildAppBarTimer(scale),
+                  SizedBox(width: 12 * scale),
+                  IconButton(
+                    iconSize: 28 * scale,
+                    icon: const Icon(Icons.info_outline, color: _kGreen),
+                    onPressed: _showSolveInfo,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBarTimer(double scale) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: 360 * scale),
+      child: Text(
+        _solveTimerLabel(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          color: _kGreen,
+          fontSize: 13 * scale,
+          fontWeight: FontWeight.w700,
+          height: 1.1,
+        ),
+      ),
+    );
+  }
+
+  void _showSolveInfo() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('문제풀이 안내'),
+        content: const Text(
+          '문제를 읽고 노트 공간에 풀이를 작성하세요.\n'
+          '긴 풀이공간은 화면을 키우지 않고 아래로만 확장됩니다.\n'
+          '노트 줄은 하단 스위치로 켜고 끌 수 있습니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
           ),
         ],
       ),
@@ -1151,33 +1502,47 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final rightPadding = _scrollEnabled ? _scrollbarThickness + 6 : 0.0;
-        final drawableWidth = math.max(
-          0.0,
-          constraints.maxWidth - rightPadding,
-        );
-        final double scale = drawableWidth <= 0
+        final viewportWidth = math.max(0.0, constraints.maxWidth);
+        final drawableWidth = math.max(0.0, viewportWidth - rightPadding);
+        final widthScale = viewportWidth <= 0
             ? 1.0
-            : drawableWidth / _baseWidth;
-        final double scaledHeight = _logicalHeight * scale;
-        return Scrollbar(
-          controller: _scrollController,
-          thumbVisibility: _scrollEnabled,
-          interactive: _scrollEnabled,
-          thickness: _scrollbarThickness,
-          radius: const Radius.circular(6),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: _scrollEnabled
-                ? const ClampingScrollPhysics()
-                : const NeverScrollableScrollPhysics(),
-            child: SizedBox(
-              width: constraints.maxWidth,
-              height: scaledHeight,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Padding(
-                      padding: EdgeInsets.only(right: rightPadding),
+            : viewportWidth / _baseWidth;
+        // 풀이판은 화면 폭을 기준으로 채운다. 긴 풀이공간은 이 배율을
+        // 그대로 유지하고 논리 높이만 늘려서 아래로 확장한다.
+        final scale = widthScale;
+        final displayWidth = _baseWidth * scale;
+        final displayHeight = _logicalHeight * scale;
+        final viewportHeight = _scrollEnabled
+            ? displayHeight
+            : constraints.maxHeight;
+        final leftOffset = math.min(0.0, (drawableWidth - displayWidth) / 2);
+        const topOffset = 0.0;
+
+        Widget buildCanvasStack() {
+          return SizedBox(
+            width: viewportWidth,
+            height: viewportHeight,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: _noteLinesEnabled
+                      ? CustomPaint(
+                          painter: _NotebookPaperPainter(
+                            lineStartY: _noteLineStartY * scale + topOffset,
+                            lineSpacing: _noteLineSpacing * scale,
+                            leftMargin: _noteLeftMargin * scale + leftOffset,
+                          ),
+                        )
+                      : const ColoredBox(color: Colors.white),
+                ),
+                Positioned(
+                  left: leftOffset,
+                  top: topOffset,
+                  width: displayWidth,
+                  height: displayHeight,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(color: Colors.transparent),
+                    child: ClipRect(
                       child: Transform.scale(
                         alignment: Alignment.topLeft,
                         scale: scale,
@@ -1192,44 +1557,64 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                       ),
                     ),
                   ),
-                  Positioned.fill(
-                    child: Padding(
-                      padding: EdgeInsets.only(right: rightPadding),
-                      child: RepaintBoundary(
-                        child: Listener(
-                          behavior: HitTestBehavior.opaque,
-                          onPointerDown: (event) =>
-                              _handlePointerDown(event, scale),
-                          onPointerMove: (event) =>
-                              _handlePointerMove(event, scale),
-                          onPointerUp: _handlePointerUp,
-                          onPointerCancel: _handlePointerCancel,
-                          child: ValueListenableBuilder<int>(
-                            valueListenable: _paintVersion,
-                            builder: (context, _, __) {
-                              return CustomPaint(
-                                painter: _StrokePainter(
-                                  strokes: _strokes,
-                                  currentStroke: _currentStroke,
-                                  eraserPosition: _eraserActive
-                                      ? _eraserPosition
-                                      : null,
-                                  eraserRadius: _eraserRadius,
-                                  scale: scale,
-                                  logicalSize: Size(_baseWidth, _logicalHeight),
-                                  backgroundColor: Colors.transparent,
-                                  repaint: _paintVersion,
-                                ),
-                                size: Size(drawableWidth, scaledHeight),
-                              );
-                            },
-                          ),
-                        ),
+                ),
+                Positioned(
+                  left: leftOffset,
+                  top: topOffset,
+                  width: displayWidth,
+                  height: displayHeight,
+                  child: RepaintBoundary(
+                    child: Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: (event) =>
+                          _handlePointerDown(event, scale),
+                      onPointerMove: (event) =>
+                          _handlePointerMove(event, scale),
+                      onPointerUp: _handlePointerUp,
+                      onPointerCancel: _handlePointerCancel,
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: _paintVersion,
+                        builder: (context, _, __) {
+                          return CustomPaint(
+                            painter: _StrokePainter(
+                              strokes: _strokes,
+                              currentStroke: _currentStroke,
+                              eraserPosition: _eraserActive
+                                  ? _eraserPosition
+                                  : null,
+                              eraserRadius: _eraserRadius,
+                              scale: scale,
+                              logicalSize: Size(_baseWidth, _logicalHeight),
+                              backgroundColor: Colors.transparent,
+                              repaint: _paintVersion,
+                            ),
+                            size: Size(displayWidth, displayHeight),
+                          );
+                        },
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          color: Colors.white,
+          padding: EdgeInsets.only(right: rightPadding),
+          child: Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: _scrollEnabled,
+            interactive: _scrollEnabled,
+            thickness: _scrollbarThickness,
+            radius: const Radius.circular(6),
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              physics: _scrollEnabled
+                  ? const ClampingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              child: buildCanvasStack(),
             ),
           ),
         );
@@ -1242,75 +1627,144 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     final fallbackBlocks = parseContentBlocks(_problemText);
     final displayBlocks = titleBlocks.isEmpty ? fallbackBlocks : titleBlocks;
     final optionBlocks = _currentQuestOptionBlocks();
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(80, 20, 80, 0),
-      child: SizedBox(
-        width: double.infinity,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: Chip(
-                avatar: const Icon(Icons.timer_outlined, size: 16),
-                label: Text('풀이 시간 ${_sessionClock.elapsed.inSeconds}초'),
+    return Stack(
+      children: [
+        Positioned(
+          left: 150,
+          right: 150,
+          top: 42,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: _problemCardMinWidth,
+                maxWidth: _problemCardMaxWidth,
+                minHeight: _problemCardMinHeight,
               ),
-            ),
-            if (_questLoading)
-              Row(
-                children: const [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: _lineColor),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(34, 24, 34, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildProblemPrompt(displayBlocks: displayBlocks),
+                      if (optionBlocks.isNotEmpty) ...[
+                        const SizedBox(height: 18),
+                        _buildOptionPreview(
+                          optionBlocks,
+                          selectedIndex: _currentSelectedChoice(),
+                        ),
+                      ],
+                    ],
                   ),
-                  SizedBox(width: 8),
-                  Text('문제를 불러오는 중입니다...'),
-                ],
-              )
-            else if (_questError != null)
-              Text(
-                _questError!,
-                style: const TextStyle(color: Colors.redAccent),
+                ),
               ),
-            const SizedBox(height: 12),
-            ContentBlocksView(
-              blocks: displayBlocks,
-              textStyle: const TextStyle(fontSize: 22, height: 1.4),
-              latexStyle: const TextStyle(fontSize: 22, height: 1.4),
-              inline: true,
             ),
-            if (optionBlocks.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              _buildOptionPreview(optionBlocks),
-            ],
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildOptionPreview(List<List<ContentBlock>> options) {
+  Widget _buildProblemPrompt({required List<ContentBlock> displayBlocks}) {
+    if (_questLoading) {
+      return Row(
+        children: const [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 8),
+          Text('문제를 불러오는 중입니다...'),
+        ],
+      );
+    }
+    if (_questError != null) {
+      return Text(
+        _questError!,
+        style: const TextStyle(color: Colors.redAccent),
+      );
+    }
+    return ContentBlocksView(
+      blocks: displayBlocks,
+      textStyle: const TextStyle(
+        fontSize: 24,
+        height: 1.45,
+        color: Color(0xFF242924),
+      ),
+      latexStyle: const TextStyle(
+        fontSize: 24,
+        height: 1.45,
+        color: Color(0xFF242924),
+      ),
+      inline: true,
+    );
+  }
+
+  Widget _buildOptionPreview(
+    List<List<ContentBlock>> options, {
+    required int? selectedIndex,
+  }) {
+    const activeColor = Color(0xFF1B402B);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(options.length, (index) {
+        final isSelected = selectedIndex == index;
+        final textColor = isSelected ? activeColor : const Color(0xFF242924);
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(_optionLabel(index), style: const TextStyle(fontSize: 16)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ContentBlocksView(
-                  blocks: options[index],
-                  textStyle: const TextStyle(fontSize: 16, height: 1.4),
-                  latexStyle: const TextStyle(fontSize: 16, height: 1.4),
-                  inline: true,
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => _toggleChoice(index),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildOptionCircle(_optionLabel(index), isSelected),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ContentBlocksView(
+                        blocks: options[index],
+                        textStyle: TextStyle(
+                          fontSize: 16,
+                          height: 1.4,
+                          color: textColor,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                        ),
+                        latexStyle: TextStyle(
+                          fontSize: 16,
+                          height: 1.4,
+                          color: textColor,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                        ),
+                        inline: true,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         );
       }),
@@ -1331,217 +1785,271 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     final optionBlocks = _currentQuestOptionBlocks();
     final hasOptions = optionBlocks.isNotEmpty;
     final selectedIndex = _currentSelectedChoice();
-    return Container(
-      width: 800,
-      height: hasOptions ? 130 : 70,
-      decoration: const BoxDecoration(
-        color: Color(0xFFE9E9E9),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-      alignment: Alignment.center,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _ToolbarIcon(
-                  icon: Icons.edit_outlined,
-                  size: 48,
-                  color: _toolMode == _ToolMode.pen
-                      ? activeColor
-                      : inactiveColor,
-                  onTap: () => _setToolMode(_ToolMode.pen),
-                ),
-                const SizedBox(width: 20),
-                _ToolbarIcon(
-                  icon: Icons.cleaning_services_outlined,
-                  size: 40,
-                  color: _toolMode == _ToolMode.eraser
-                      ? activeColor
-                      : inactiveColor,
-                  onTap: () => _setToolMode(_ToolMode.eraser),
-                ),
-                const SizedBox(width: 20),
-                _ToolbarIcon(
-                  icon: Icons.color_lens_outlined,
-                  size: 48,
-                  color: _penColor,
-                  onTap: _openPenSettings,
-                ),
-                const SizedBox(width: 20),
-                if (_debugEnabled) ...[
-                  _ToolbarIcon(
-                    icon: Icons.tune,
-                    size: 40,
-                    color: activeColor,
-                    onTap: _openLlmSettings,
-                  ),
-                  const SizedBox(width: 20),
-                ],
-                const SizedBox(
-                  height: 40,
-                  child: VerticalDivider(
-                    thickness: 2,
-                    color: Color(0xFFE0E3E7),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                _ToolbarIcon(
-                  icon: Icons.undo_outlined,
-                  size: 40,
-                  color: _undoStack.isEmpty ? inactiveColor : activeColor,
-                  onTap: _undoStack.isEmpty ? null : _undo,
-                ),
-                const SizedBox(width: 20),
-                _ToolbarIcon(
-                  icon: Icons.delete_outline,
-                  size: 48,
-                  color: (_strokes.isEmpty && _currentStroke == null)
-                      ? inactiveColor
-                      : activeColor,
-                  onTap: (_strokes.isEmpty && _currentStroke == null)
-                      ? null
-                      : _clearAll,
-                ),
-                const SizedBox(width: 20),
-                const SizedBox(
-                  height: 40,
-                  child: VerticalDivider(
-                    thickness: 2,
-                    color: Color(0xFFE0E3E7),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                _ToolbarIcon(
-                  icon: Icons.auto_fix_high,
-                  size: 40,
-                  color: _scrollEnabled ? activeColor : inactiveColor,
-                  onTap: _toggleScroll,
-                ),
-                const SizedBox(width: 20),
-                const SizedBox(
-                  height: 40,
-                  child: VerticalDivider(
-                    thickness: 2,
-                    color: Color(0xFFE0E3E7),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                if (_gradeImmediately)
-                  _ToolbarIcon(
-                    icon: Icons.arrow_forward,
-                    size: 44,
-                    color:
-                        (_strokes.isEmpty && _currentStroke == null) ||
-                            _analysisBusy
-                        ? inactiveColor
-                        : activeColor,
-                    onTap:
-                        (_strokes.isEmpty && _currentStroke == null) ||
-                            _analysisBusy
-                        ? null
-                        : _handleGrade,
-                  )
-                else ...[
-                  _ToolbarIcon(
-                    icon: Icons.arrow_back_ios_new,
-                    size: 32,
-                    color: _currentProblemIndex == 0
-                        ? inactiveColor
-                        : activeColor,
-                    onTap: _currentProblemIndex == 0
-                        ? null
-                        : _goToPreviousProblem,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${_currentProblemIndex + 1}/$_problemCount',
-                    style: TextStyle(
-                      color: activeColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _ToolbarIcon(
-                    icon: Icons.arrow_forward_ios,
-                    size: 32,
-                    color: _currentProblemIndex >= _problemCount - 1
-                        ? inactiveColor
-                        : activeColor,
-                    onTap: _currentProblemIndex >= _problemCount - 1
-                        ? null
-                        : _goToNextProblem,
+    final hasStudentWork = _strokes.isNotEmpty || _currentStroke != null;
+    final canSubmit = hasOptions ? selectedIndex != null : hasStudentWork;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = math.min(constraints.maxWidth - 48, 1260.0);
+        return Container(
+          color: _surfaceColor,
+          padding: const EdgeInsets.fromLTRB(24, 10, 24, 16),
+          child: Center(
+            child: Container(
+              width: math.max(0.0, maxWidth),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.96),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _lineColor),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.07),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
                   ),
                 ],
-              ],
-            ),
-            if (hasOptions) ...[
-              const SizedBox(height: 12),
-              _buildOptionSelector(
-                options: optionBlocks,
-                selectedIndex: selectedIndex,
               ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Wrap(
+                    spacing: 14,
+                    runSpacing: 4,
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _ToolbarIcon(
+                        icon: Icons.edit_outlined,
+                        tooltip: '펜',
+                        size: 25,
+                        color: _toolMode == _ToolMode.pen
+                            ? activeColor
+                            : inactiveColor,
+                        onTap: () => _setToolMode(_ToolMode.pen),
+                      ),
+                      _ToolbarIcon(
+                        icon: Icons.cleaning_services_outlined,
+                        tooltip: '지우개',
+                        size: 24,
+                        color: _toolMode == _ToolMode.eraser
+                            ? activeColor
+                            : inactiveColor,
+                        onTap: () => _setToolMode(_ToolMode.eraser),
+                      ),
+                      _ToolbarIcon(
+                        icon: Icons.color_lens_outlined,
+                        tooltip: '색상',
+                        size: 25,
+                        color: _penColor,
+                        onTap: _openPenSettings,
+                      ),
+                      _buildNoteLineSwitch(activeColor),
+                      const SizedBox(
+                        height: 32,
+                        child: VerticalDivider(
+                          thickness: 2,
+                          color: Color(0xFFE0E3E7),
+                        ),
+                      ),
+                      _ToolbarIcon(
+                        icon: Icons.undo_outlined,
+                        tooltip: '되돌리기',
+                        size: 24,
+                        color: _undoStack.isEmpty ? inactiveColor : activeColor,
+                        onTap: _undoStack.isEmpty ? null : _undo,
+                      ),
+                      _ToolbarIcon(
+                        icon: Icons.delete_outline,
+                        tooltip: '전체 지우기',
+                        size: 25,
+                        color: (_strokes.isEmpty && _currentStroke == null)
+                            ? inactiveColor
+                            : activeColor,
+                        onTap: (_strokes.isEmpty && _currentStroke == null)
+                            ? null
+                            : _clearAll,
+                      ),
+                      const SizedBox(
+                        height: 32,
+                        child: VerticalDivider(
+                          thickness: 2,
+                          color: Color(0xFFE0E3E7),
+                        ),
+                      ),
+                      _ToolbarIcon(
+                        icon: Icons.expand_more_rounded,
+                        tooltip: _scrollEnabled ? '기본 풀이 공간' : '긴 풀이 공간',
+                        size: 27,
+                        color: _scrollEnabled ? activeColor : inactiveColor,
+                        onTap: _toggleScroll,
+                      ),
+                      const SizedBox(
+                        height: 32,
+                        child: VerticalDivider(
+                          thickness: 2,
+                          color: Color(0xFFE0E3E7),
+                        ),
+                      ),
+                      if (hasOptions)
+                        _buildChoiceMenuButton(
+                          optionCount: optionBlocks.length,
+                          selectedIndex: selectedIndex,
+                          activeColor: activeColor,
+                          inactiveColor: inactiveColor,
+                        ),
+                      if (_gradeImmediately)
+                        _ToolbarIcon(
+                          icon: Icons.arrow_forward,
+                          tooltip: '제출',
+                          size: 26,
+                          color: !canSubmit || _analysisBusy
+                              ? inactiveColor
+                              : activeColor,
+                          onTap: !canSubmit || _analysisBusy
+                              ? null
+                              : _handleGrade,
+                        )
+                      else ...[
+                        _ToolbarIcon(
+                          icon: Icons.arrow_back_ios_new,
+                          tooltip: '이전 문제',
+                          size: 21,
+                          color: _currentProblemIndex == 0
+                              ? inactiveColor
+                              : activeColor,
+                          onTap: _currentProblemIndex == 0
+                              ? null
+                              : _goToPreviousProblem,
+                        ),
+                        Text(
+                          '${_currentProblemIndex + 1}/$_problemCount',
+                          style: TextStyle(
+                            color: activeColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        _ToolbarIcon(
+                          icon: Icons.arrow_forward_ios,
+                          tooltip: '다음 문제',
+                          size: 21,
+                          color: _currentProblemIndex >= _problemCount - 1
+                              ? inactiveColor
+                              : activeColor,
+                          onTap: _currentProblemIndex >= _problemCount - 1
+                              ? null
+                              : _goToNextProblem,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNoteLineSwitch(Color activeColor) {
+    return Tooltip(
+      message: '노트 줄',
+      child: SizedBox(
+        height: 40,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.notes_rounded,
+              size: 23,
+              color: _noteLinesEnabled ? activeColor : const Color(0xFF6B6B6B),
+            ),
+            const SizedBox(width: 2),
+            Transform.scale(
+              scale: 0.72,
+              child: Switch(
+                value: _noteLinesEnabled,
+                onChanged: _toggleNoteLines,
+                activeThumbColor: activeColor,
+                activeTrackColor: activeColor.withValues(alpha: 0.28),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOptionSelector({
-    required List<List<ContentBlock>> options,
+  Widget _buildChoiceMenuButton({
+    required int optionCount,
     required int? selectedIndex,
+    required Color activeColor,
+    required Color inactiveColor,
   }) {
-    final activeColor = const Color(0xFF1B402B);
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      alignment: WrapAlignment.center,
-      children: List.generate(options.length, (index) {
-        final isSelected = selectedIndex == index;
-        return InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _toggleChoice(index),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: isSelected ? activeColor : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: activeColor, width: 1),
-            ),
+    final hasSelection = selectedIndex != null;
+    return Tooltip(
+      message: '객관식 선택',
+      child: PopupMenuButton<int>(
+        tooltip: '',
+        offset: const Offset(0, -56),
+        onSelected: _toggleChoice,
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: _lineColor),
+        ),
+        itemBuilder: (context) => List.generate(optionCount, (index) {
+          final isSelected = selectedIndex == index;
+          return PopupMenuItem<int>(
+            value: index,
+            height: 40,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildOptionCircle(_optionLabel(index), isSelected),
-                const SizedBox(width: 6),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 140),
-                  child: ContentBlocksView(
-                    blocks: options[index],
-                    textStyle: TextStyle(
-                      fontSize: 12,
-                      color: isSelected ? Colors.white : Colors.black87,
-                    ),
-                    latexStyle: TextStyle(
-                      fontSize: 12,
-                      color: isSelected ? Colors.white : Colors.black87,
-                    ),
-                    inline: true,
-                    spacing: 2,
+                const SizedBox(width: 8),
+                Text(
+                  '${index + 1}번',
+                  style: TextStyle(
+                    color: isSelected ? activeColor : const Color(0xFF242924),
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ],
             ),
+          );
+        }),
+        child: SizedBox(
+          width: 44,
+          height: 40,
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.format_list_numbered_rounded,
+                  size: 24,
+                  color: hasSelection ? activeColor : inactiveColor,
+                ),
+                if (hasSelection) ...[
+                  const SizedBox(width: 2),
+                  Text(
+                    '${selectedIndex + 1}',
+                    style: TextStyle(
+                      color: activeColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 
@@ -1611,6 +2119,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         quest: quest,
         isCorrect: isCorrect,
         stepCorrectness: const <Map<String, dynamic>>[],
+        selectedIndex: selectedIndex,
         elapsedSeconds: _sessionClock.elapsed.inSeconds,
       );
       try {
@@ -1753,8 +2262,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                 'status': response.status
                     .map(
                       (item) => {
-                        'flow_number': item.flowNumber,
-                        'status': item.status,
+                        'flow_number': item['flow_number'],
+                        'status': item['status'],
                       },
                     )
                     .toList(),
@@ -1782,8 +2291,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                     'status': rerun.status
                         .map(
                           (item) => {
-                            'flow_number': item.flowNumber,
-                            'status': item.status,
+                            'flow_number': item['flow_number'],
+                            'status': item['status'],
                           },
                         )
                         .toList(),
@@ -1810,6 +2319,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         quest: quest,
         isCorrect: isCorrect,
         stepCorrectness: stepCorrectness,
+        selectedIndex: null,
         elapsedSeconds: _sessionClock.elapsed.inSeconds,
       );
       if (isCorrect) {
@@ -1897,10 +2407,10 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
 
   Map<String, dynamic> _buildGenConfig() {
     return {
-      'temperature': _genTemperature,
-      'top_p': _genTopP,
-      'top_k': _genTopK,
-      'max_output_tokens': _genMaxTokens,
+      'temperature': _fixedGenTemperature,
+      'top_p': _fixedGenTopP,
+      'top_k': _fixedGenTopK,
+      'max_output_tokens': _fixedGenMaxTokens,
     };
   }
 
@@ -2060,6 +2570,46 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 }
 
+class _NotebookPaperPainter extends CustomPainter {
+  const _NotebookPaperPainter({
+    required this.lineStartY,
+    required this.lineSpacing,
+    required this.leftMargin,
+  });
+
+  final double lineStartY;
+  final double lineSpacing;
+  final double leftMargin;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white);
+
+    final linePaint = Paint()
+      ..color = const Color(0xFFE8E8ED)
+      ..strokeWidth = 0.8;
+    for (var y = lineStartY; y <= size.height; y += lineSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    final marginPaint = Paint()
+      ..color = const Color(0xFFFF6B6B)
+      ..strokeWidth = 0.6;
+    canvas.drawLine(
+      Offset(leftMargin, 0),
+      Offset(leftMargin, size.height),
+      marginPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _NotebookPaperPainter oldDelegate) {
+    return oldDelegate.lineStartY != lineStartY ||
+        oldDelegate.lineSpacing != lineSpacing ||
+        oldDelegate.leftMargin != leftMargin;
+  }
+}
+
 class _TierParams {
   final int solvesCount;
   final int strategyLevel;
@@ -2069,19 +2619,5 @@ class _TierParams {
     required this.solvesCount,
     required this.strategyLevel,
     required this.branchConditions,
-  });
-}
-
-class _GenConfig {
-  final double temperature;
-  final double topP;
-  final int topK;
-  final int maxTokens;
-
-  const _GenConfig({
-    required this.temperature,
-    required this.topP,
-    required this.topK,
-    required this.maxTokens,
   });
 }

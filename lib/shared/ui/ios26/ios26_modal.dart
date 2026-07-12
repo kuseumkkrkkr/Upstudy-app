@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -28,7 +28,10 @@ Future<T?> showIos26Modal<T>({
                 final width = math.min(maxWidth, constraints.maxWidth * 0.94);
                 final height = math.min(maxHeight, constraints.maxHeight * 0.9);
                 return ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: width, maxHeight: height),
+                  constraints: BoxConstraints(
+                    maxWidth: width,
+                    maxHeight: height,
+                  ),
                   child: child,
                 );
               },
@@ -62,7 +65,7 @@ class Ios26ModalShell extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
           ),

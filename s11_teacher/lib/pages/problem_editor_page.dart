@@ -3,11 +3,19 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 
 class ProblemEditorPage extends StatefulWidget {
-  const ProblemEditorPage({super.key});
+  const ProblemEditorPage({
+    super.key,
+    this.initialTags = const <String>[],
+    this.returnGeneratedQuestOnSave = false,
+  });
+
+  final List<String> initialTags;
+  final bool returnGeneratedQuestOnSave;
 
   @override
   State<ProblemEditorPage> createState() => _ProblemEditorPageState();
@@ -17,7 +25,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   final _promptCtrl = TextEditingController();
   final _baseQuestCtrl = TextEditingController();
   final _seedCtrl = TextEditingController();
-  final _tagCtrl = TextEditingController();
   final _dbSearchCtrl = TextEditingController();
 
   final List<String> _tags = [];
@@ -41,6 +48,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   String? _selectedNodeId;
   String? _dbError;
   List<String> _availableTags = [];
+  List<_GenerationTagGroup> _tagGroups = [];
   List<Map<String, dynamic>> _tray = [];
   List<Map<String, dynamic>> _dbResults = [];
   Map<String, dynamic>? _selectedDbQuest;
@@ -62,6 +70,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   @override
   void initState() {
     super.initState();
+    _tags.addAll(_uniqueTags(widget.initialTags));
     _loadTagSuggestions();
     _loadTray();
     _resetAdvancedNodes();
@@ -69,10 +78,24 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
 
   Future<void> _loadTagSuggestions() async {
     try {
-      final tags = await ApiClient.instance.getCourseHashTags();
+      final groupsRaw = await ApiClient.instance.getQuestGenerationTagGroups();
+      final groups = groupsRaw
+          .map(_GenerationTagGroup.fromJson)
+          .where((group) => group.tags.isNotEmpty)
+          .toList();
+      final tags = _uniqueTags(groups.expand((group) => group.tags));
       if (!mounted) return;
-      setState(() => _availableTags = tags);
-    } catch (_) {}
+      setState(() {
+        _tagGroups = groups;
+        _availableTags = tags;
+      });
+    } catch (_) {
+      try {
+        final tags = await ApiClient.instance.getCourseHashTags();
+        if (!mounted) return;
+        setState(() => _availableTags = _uniqueTags(tags));
+      } catch (_) {}
+    }
   }
 
   Future<void> _loadTray() async {
@@ -150,7 +173,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
       position: position,
       titleCtrl: TextEditingController(text: title),
       detailCtrl: TextEditingController(text: detail),
-      tagCtrl: TextEditingController(),
+      teacherInstructionCtrl: TextEditingController(),
     );
   }
 
@@ -184,13 +207,78 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     });
   }
 
-  void _addTag() {
-    final value = _tagCtrl.text.trim();
-    if (value.isEmpty) return;
-    if (!_tags.contains(value)) {
-      setState(() => _tags.add(value));
+  Future<void> _editNodeInstruction(_LogicNodeDraft node) async {
+    final ctrl = TextEditingController(text: node.teacherInstructionCtrl.text);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('세부 지시'),
+          content: SizedBox(
+            width: 420,
+            child: TextField(
+              controller: ctrl,
+              maxLength: 200,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                hintText: '이 노드에서만 반영할 지시를 입력합니다.',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(''),
+              child: const Text('지시 제거'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(ctrl.text.trim()),
+              child: const Text('저장'),
+            ),
+          ],
+        );
+      },
+    );
+    ctrl.dispose();
+    if (result == null) return;
+    setState(() {
+      node.teacherInstructionCtrl.text = result.length > 200
+          ? result.substring(0, 200)
+          : result;
+    });
+  }
+
+  List<String> get _advancedTags {
+    final tags = <String>[];
+    for (final node in _logicNodes) {
+      tags.addAll(node.tags);
     }
-    _tagCtrl.clear();
+    tags.addAll(_tags);
+    return _uniqueTags(tags);
+  }
+
+  List<String> _generationTagsForPayload(bool advanced) {
+    return advanced ? _advancedTags : _uniqueTags(_tags);
+  }
+
+  bool _ensureAdvancedNodeTags() {
+    final pool = _availableTags;
+    if (pool.isEmpty) return false;
+    final rng = math.Random();
+    var changed = false;
+    for (final node in _logicNodes) {
+      node.tags.removeWhere((tag) => !pool.contains(tag));
+      if (node.tags.isEmpty) {
+        node.tags.add(pool[rng.nextInt(pool.length)]);
+        changed = true;
+      }
+    }
+    if (changed) setState(() {});
+    return true;
   }
 
   void _selectDbQuest(Map<String, dynamic> quest) {
@@ -222,6 +310,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         text: _dbSearchMode == 'text' ? query : null,
         hashTag: _dbSearchMode == 'hashtag' ? query : null,
         dateFrom: _dbSearchMode == 'date' ? query : null,
+        ownedOnly: _editorMode == 'advanced',
         pageSize: 80,
       );
       final items = (result['items'] as List<dynamic>? ?? const [])
@@ -240,6 +329,10 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
 
   Future<void> _generateVariant() async {
     final advanced = _editorMode == 'advanced';
+    if (advanced && !_ensureAdvancedNodeTags()) {
+      setState(() => _resultText = '생성 태그 목록을 불러오지 못했습니다.');
+      return;
+    }
     final profile = advanced ? _buildAdvancedProfile() : _simpleProfile;
     final flowDraft = advanced
         ? _advancedFlowDraft()
@@ -247,6 +340,12 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     final prompt = advanced
         ? _buildAdvancedPrompt(profile)
         : _buildSimplePrompt(profile);
+    final tagsForPayload = _generationTagsForPayload(advanced);
+
+    if (tagsForPayload.isEmpty) {
+      setState(() => _resultText = '태그를 1개 이상 선택해야 합니다.');
+      return;
+    }
 
     setState(() {
       _loading = true;
@@ -258,14 +357,22 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         'base_quest_ref': _baseQuestRef(),
         'prompt': prompt,
         'seed_override': _seedOverride(),
-        'tags': _tags,
+        'tags': tagsForPayload,
         'solves_count': profile.solvesCount,
         'strategy_level': profile.strategyLevel,
         'branch_conditions': profile.branchConditions,
       };
+      if (advanced) {
+        common['advanced_metrics'] = _advancedMetricMap();
+        common['advanced_profile'] = {
+          ...profile.toMeta(),
+          'mode': 'advanced',
+          'metrics': _advancedMetricMap(),
+        };
+      }
 
       final Map<String, dynamic> result;
-      if (_variantInputMode == 'flow_draft') {
+      if (advanced || _variantInputMode == 'flow_draft') {
         result = await ApiClient.instance.generateVariantFromFlowDraft(
           payload: {
             ...common,
@@ -293,22 +400,20 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
       final header = quest?['header'] as Map<String, dynamic>?;
       final questId = header?['quest_id']?.toString();
       if (questId != null && questId.isNotEmpty) {
-        await ApiClient.instance.createQuestTrayItem(
-          payload: {
+        final data = quest?['data'] is Map<String, dynamic>
+            ? quest!['data'] as Map<String, dynamic>
+            : const <String, dynamic>{};
+        if (widget.returnGeneratedQuestOnSave && mounted) {
+          Navigator.of(context).pop(<String, dynamic>{
             'quest_id': questId,
-            'source_variant_mode': _variantInputMode,
-            'visibility_scope': 'shared',
-            'is_mcq_branch': false,
-            'payload': {
-              'mode': _editorMode,
-              'tags': _tags,
-              'base_quest': _selectedDbQuest,
-              'workflow': advanced
-                  ? _advancedWorkflowMeta(profile)
-                  : profile.toMeta(),
-            },
-          },
-        );
+            'quest_title': data['quest_title'],
+            'question_type': data['question_type'],
+            'codebase_id': data['codebase_id'],
+            'seed': data['seed'],
+            'hash_tags': tagsForPayload,
+          });
+          return;
+        }
       }
       await _loadTray();
     } catch (e) {
@@ -426,38 +531,64 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   }
 
   String _buildAdvancedPrompt(_GenerationProfile profile) {
-    final userPrompt = _promptCtrl.text.trim();
+    final parts = _buildAdvancedPromptParts(profile);
+    final buffer = StringBuffer();
+    for (final entry in parts.entries) {
+      final value = entry.value.trim();
+      if (value.isEmpty) continue;
+      buffer
+        ..writeln('[${entry.key}]')
+        ..writeln(value)
+        ..writeln();
+    }
+    return buffer.toString().trim();
+  }
+
+  Map<String, String> _buildAdvancedPromptParts(_GenerationProfile profile) {
     final buffer = StringBuffer()
-      ..writeln(_ksatMathGenerationSystemPrompt)
-      ..writeln()
       ..writeln('적용 모드: 고급 문항 제작')
       ..writeln('출력 호환성: 기존 코드베이스 문항 스키마와 저장 위치를 변경하지 않는다.')
-      ..writeln(
-        '기존 저장 종단점: /quests/variants/from-flow-draft 또는 /quests/variants/from-prompt-note',
-      )
+      ..writeln('생성 방식: 풀이 논리 캔버스의 노드 지시를 우선 반영한다.');
+    final difficulty = StringBuffer()
       ..writeln('수능 예상 번호: ${profile.expectedNumber}')
       ..writeln('난이도 벡터: ${_formatVector(profile.difficultyVector)}')
       ..writeln(
         '코드베이스 파라미터: 풀이 단계 수=$_solvesCount, '
         '전략 난이도=$_strategyLevel, 분기 수=$_branchConditions',
       )
-      ..writeln('예상 정답률: ${_formatCorrectRate(profile.expectedCorrectRate)}')
-      ..writeln('세부 평가 변수:')
-      ..writeln(_formatAdvancedMetricPayload())
-      ..writeln('교사 작성 방향성 풀이 그래프:')
-      ..writeln(_formatNodeSummary());
+      ..writeln('예상 정답률: ${_formatCorrectRate(profile.expectedCorrectRate)}');
+    final nodes = StringBuffer();
+    for (final node in _logicNodes) {
+      nodes.writeln(_nodePromptText(node));
+    }
+    final reference = StringBuffer();
     if (_selectedDbQuest != null) {
-      buffer
-        ..writeln('기반 문제:')
+      reference
+        ..writeln('저장소에서 선택한 참고문항을 변형 기준으로 사용한다.')
         ..writeln(_selectedDbQuest.toString());
     }
-    if (userPrompt.isNotEmpty) {
-      buffer
-        ..writeln()
-        ..writeln('교사 추가 지시:')
-        ..writeln(userPrompt);
-    }
-    return buffer.toString().trim();
+    return {
+      '시스템': _ksatMathGenerationSystemPrompt,
+      '호환성': buffer.toString(),
+      '난이도': difficulty.toString(),
+      '세부 평가 변수': _formatAdvancedMetricPayload(),
+      '풀이 논리 노드': nodes.toString(),
+      '참고문항': reference.toString(),
+    };
+  }
+
+  String _nodePromptText(_LogicNodeDraft node) {
+    final instruction = node.teacherInstructionCtrl.text.trim();
+    final prompt = instruction.isEmpty
+        ? _defaultNodePrompt(node.type)
+        : instruction;
+    return [
+      '- ${node.id} [${_nodeTypeLabel(node.type)}] ${node.titleCtrl.text.trim()}',
+      '  태그: ${node.tags.join(', ')}',
+      '  다음: ${node.nextIds.isEmpty ? '-' : node.nextIds.join(', ')}',
+      '  풀이 논리: ${node.detailCtrl.text.trim()}',
+      '  생성 지시: $prompt',
+    ].join('\n');
   }
 
   String _formatAdvancedMetricPayload() {
@@ -466,14 +597,10 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         .join('\n');
   }
 
-  String _formatNodeSummary() {
-    return _logicNodes
-        .map(
-          (node) =>
-              '- ${node.id} [${_nodeTypeLabel(node.type)}] ${node.titleCtrl.text.trim()} '
-              '다음=${node.nextIds.join(', ')}: ${node.detailCtrl.text.trim()}',
-        )
-        .join('\n');
+  Map<String, int> _advancedMetricMap() {
+    return {
+      for (final spec in _advancedParameterSpecs) spec.id: _metricInt(spec.id),
+    };
   }
 
   List<Map<String, dynamic>> _simpleFlowDraft(_GenerationProfile profile) {
@@ -499,22 +626,11 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
                 '${node.titleCtrl.text.trim()}\n${node.detailCtrl.text.trim()}',
             'hash_tags': node.tags.isEmpty ? _tags : node.tags.toList(),
             'branches': node.nextIds.toList(),
+            'teacher_instruction': node.teacherInstructionCtrl.text.trim(),
+            'prompt_text': _nodePromptText(node),
           },
         )
         .toList();
-  }
-
-  Map<String, dynamic> _advancedWorkflowMeta(_GenerationProfile profile) {
-    return {
-      ...profile.toMeta(),
-      'mode': 'advanced',
-      'metrics': {
-        for (final spec in _advancedParameterSpecs)
-          spec.id: _metricInt(spec.id),
-      },
-      'logic_nodes': _advancedFlowDraft(),
-      'base_quest': _selectedDbQuest,
-    };
   }
 
   String _formatVector(Map<String, int> vector) {
@@ -638,65 +754,91 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
-    return Scaffold(
-      endDrawer: const TeacherAppDrawer(currentRoute: '/problem-editor'),
-      backgroundColor: kCourseBgGrey,
-      appBar: AppBar(
-        backgroundColor: kCourseGreen,
-        foregroundColor: Colors.white,
-        title: const Text('문항 제작 스튜디오'),
-        automaticallyImplyLeading: Navigator.of(context).canPop(),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              tooltip: '메뉴',
-              icon: const Icon(Icons.menu_rounded),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.surfaceMuted,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.surfaceBorder),
           ),
-        ],
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.surfaceBorder),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: kCourseLightGreen, width: 2),
+          ),
+        ),
       ),
-      body: Column(
-        children: [
-          _buildWorkspaceHeader(scale),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 1180;
-                final left = _buildLeftPanel(scale);
-                final center = _editorMode == 'simple'
-                    ? _buildSimplePipelinePanel(scale)
-                    : _buildAdvancedCanvasPanel(scale);
-                final right = _buildRightPanel(scale);
+      child: Scaffold(
+        endDrawer: const TeacherAppDrawer(currentRoute: '/problem-editor'),
+        backgroundColor: kCourseBgGrey,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          foregroundColor: kCourseGreen,
+          elevation: 0,
+          surfaceTintColor: Colors.white,
+          shadowColor: Colors.transparent,
+          shape: const Border(
+            bottom: BorderSide(color: AppColors.surfaceBorder),
+          ),
+          title: const Text('문항 제작 스튜디오'),
+          automaticallyImplyLeading: Navigator.of(context).canPop(),
+          actions: [
+            Builder(
+              builder: (context) => IconButton(
+                tooltip: '메뉴',
+                icon: const Icon(Icons.menu_rounded),
+                onPressed: () => Scaffold.of(context).openEndDrawer(),
+              ),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            _buildWorkspaceHeader(scale),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 1180;
+                  final left = _buildLeftPanel(scale);
+                  final center = _editorMode == 'simple'
+                      ? _buildSimplePipelinePanel(scale)
+                      : _buildAdvancedCanvasPanel(scale);
+                  final right = _buildRightPanel(scale);
 
-                if (compact) {
-                  return ListView(
-                    padding: EdgeInsets.all(14 * scale),
+                  if (compact) {
+                    return ListView(
+                      padding: EdgeInsets.all(14 * scale),
+                      children: [
+                        SizedBox(height: 640 * scale, child: left),
+                        SizedBox(height: 12 * scale),
+                        SizedBox(
+                          height: _editorMode == 'simple' ? 420 : 620,
+                          child: center,
+                        ),
+                        SizedBox(height: 12 * scale),
+                        SizedBox(height: 760 * scale, child: right),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(height: 640 * scale, child: left),
-                      SizedBox(height: 12 * scale),
-                      SizedBox(
-                        height: _editorMode == 'simple' ? 420 : 620,
-                        child: center,
-                      ),
-                      SizedBox(height: 12 * scale),
-                      SizedBox(height: 760 * scale, child: right),
+                      SizedBox(width: 360 * scale, child: left),
+                      Expanded(child: center),
+                      SizedBox(width: 390 * scale, child: right),
                     ],
                   );
-                }
-
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(width: 360 * scale, child: left),
-                    Expanded(child: center),
-                    SizedBox(width: 390 * scale, child: right),
-                  ],
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -715,7 +857,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE7DD)),
+        border: Border.all(color: AppColors.surfaceBorder),
         boxShadow: const [kCourseShadow],
       ),
       child: LayoutBuilder(
@@ -784,7 +926,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
               OutlinedButton.icon(
                 onPressed: _loading ? null : _loadTray,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('보관함 새로고침'),
+                label: const Text('임시저장함 새로고침'),
               ),
             ],
           );
@@ -860,7 +1002,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         ),
         _WorkflowStepChip(
           index: 5,
-          label: '생성/보관',
+          label: '생성/임시저장',
           active: _resultText != null || _tray.isNotEmpty,
         ),
       ],
@@ -868,25 +1010,26 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   }
 
   Widget _buildLeftPanel(double scale) {
+    final advanced = _editorMode == 'advanced';
     return _StudioPanel(
-      title: '생성 입력',
+      title: advanced ? '고급 생성 설정' : '생성 입력',
       child: ListView(
         padding: EdgeInsets.all(16 * scale),
         children: [
-          DropdownButtonFormField<String>(
-            initialValue: _variantInputMode,
-            decoration: const InputDecoration(
-              labelText: '입력 방식',
-              border: OutlineInputBorder(),
+          if (!advanced) ...[
+            DropdownButtonFormField<String>(
+              initialValue: _variantInputMode,
+              decoration: const InputDecoration(
+                labelText: '입력 방식',
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'prompt_note', child: Text('지시문 + 노트')),
+                DropdownMenuItem(value: 'flow_draft', child: Text('풀이 흐름 초안')),
+              ],
+              onChanged: (value) =>
+                  setState(() => _variantInputMode = value ?? 'prompt_note'),
             ),
-            items: const [
-              DropdownMenuItem(value: 'prompt_note', child: Text('지시문 + 노트')),
-              DropdownMenuItem(value: 'flow_draft', child: Text('풀이 흐름 초안')),
-            ],
-            onChanged: (value) =>
-                setState(() => _variantInputMode = value ?? 'prompt_note'),
-          ),
-          if (_editorMode == 'simple') ...[
             SizedBox(height: 14 * scale),
             SegmentedButton<String>(
               segments: const [
@@ -900,31 +1043,48 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
             ),
             SizedBox(height: 8 * scale),
             _MutedText(_simpleProfile.description),
-          ],
-          SizedBox(height: 14 * scale),
-          TextField(
-            controller: _baseQuestCtrl,
-            decoration: const InputDecoration(
-              labelText: '기준 문항 ID',
-              border: OutlineInputBorder(),
+            SizedBox(height: 14 * scale),
+            TextField(
+              controller: _baseQuestCtrl,
+              decoration: const InputDecoration(
+                labelText: '기준 문항 ID',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => setState(() {}),
             ),
-            onChanged: (_) => setState(() {}),
-          ),
+            SizedBox(height: 10 * scale),
+            TextField(
+              controller: _promptCtrl,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: '교사 지시',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ] else ...[
+            _SelectedQuestBox(
+              quest: _selectedDbQuest ?? const {'quest_id': '참고문항 없음'},
+              onClear: _selectedDbQuest == null
+                  ? () {}
+                  : () {
+                      setState(() {
+                        _selectedDbQuest = null;
+                        _baseQuestCtrl.clear();
+                      });
+                    },
+            ),
+            SizedBox(height: 8 * scale),
+            const _MutedText(
+              '참고문항은 오른쪽 저장소에서 검색 후 클릭해 연결합니다. 선택하지 않아도 직접 생성할 수 있습니다.',
+            ),
+          ],
           SizedBox(height: 10 * scale),
           TextField(
             controller: _seedCtrl,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
-              labelText: '시드 고정값',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          SizedBox(height: 10 * scale),
-          TextField(
-            controller: _promptCtrl,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: '교사 지시',
+              labelText: '시드 체험값',
+              helperText: '비워두면 매번 랜덤 생성됩니다.',
               border: OutlineInputBorder(),
             ),
           ),
@@ -951,57 +1111,59 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   }
 
   Widget _buildTagEditor(double scale) {
+    final advanced = _editorMode == 'advanced';
+    final selectedTags = advanced ? _advancedTags : _tags;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '태그',
+        Text(
+          advanced ? '전체 태그' : '태그',
           style: TextStyle(fontWeight: FontWeight.w800, color: kCourseGreen),
         ),
         SizedBox(height: 8 * scale),
-        Autocomplete<String>(
-          optionsBuilder: (value) {
-            if (value.text.trim().isEmpty) {
-              return const Iterable<String>.empty();
-            }
-            final q = value.text.trim().toLowerCase();
-            return _availableTags
-                .where((tag) => tag.toLowerCase().contains(q))
-                .take(12);
-          },
-          onSelected: (value) {
-            _tagCtrl.text = value;
-            _addTag();
-          },
-          fieldViewBuilder: (_, ctrl, focusNode, onFieldSubmitted) {
-            return TextField(
-              controller: ctrl,
-              focusNode: focusNode,
-              decoration: const InputDecoration(
-                labelText: '해시태그 추가',
-                border: OutlineInputBorder(),
-              ),
-              onSubmitted: (_) {
-                _tagCtrl.text = ctrl.text;
-                _addTag();
-                ctrl.clear();
-              },
-            );
-          },
+        OutlinedButton.icon(
+          onPressed: _availableTags.isEmpty
+              ? null
+              : () async {
+                  final selected = await showDialog<List<String>>(
+                    context: context,
+                    builder: (_) => _GenerationTagPickerDialog(
+                      groups: _tagGroups,
+                      fallbackTags: _availableTags,
+                      initialTags: _tags,
+                    ),
+                  );
+                  if (selected == null) return;
+                  setState(() {
+                    _tags
+                      ..clear()
+                      ..addAll(selected);
+                  });
+                },
+          icon: const Icon(Icons.checklist_rounded),
+          label: const Text('해시태그 선택'),
         ),
         SizedBox(height: 8 * scale),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _tags
+          children: selectedTags
               .map(
                 (tag) => Chip(
                   label: Text(tag),
-                  onDeleted: () => setState(() => _tags.remove(tag)),
+                  onDeleted: advanced
+                      ? null
+                      : () => setState(() => _tags.remove(tag)),
                 ),
               )
               .toList(),
         ),
+        if (advanced) ...[
+          SizedBox(height: 8 * scale),
+          const _MutedText(
+            '고급 모드는 노드별 태그를 우선 사용합니다. 비어 있는 노드는 생성 시 랜덤 태그가 확정됩니다.',
+          ),
+        ],
       ],
     );
   }
@@ -1155,7 +1317,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
                 if (_editorMode == 'advanced') const Tab(text: '노드'),
                 if (_editorMode == 'advanced') const Tab(text: '설명서'),
                 const Tab(text: '저장소'),
-                const Tab(text: '보관함'),
+                const Tab(text: '임시저장함'),
               ],
             ),
             Expanded(
@@ -1299,18 +1461,33 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
           onChanged: (_) => setState(() {}),
         ),
         SizedBox(height: 10 * scale),
-        TextField(
-          controller: node.tagCtrl,
-          decoration: const InputDecoration(
-            labelText: '노드 태그 추가',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (_) {
-            final tag = node.tagCtrl.text.trim();
-            if (tag.isEmpty) return;
-            setState(() => node.tags.add(tag));
-            node.tagCtrl.clear();
-          },
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _availableTags.isEmpty
+                    ? null
+                    : () async {
+                        final selected = await showDialog<List<String>>(
+                          context: context,
+                          builder: (_) => _GenerationTagPickerDialog(
+                            groups: _tagGroups,
+                            fallbackTags: _availableTags,
+                            initialTags: node.tags.toList(),
+                          ),
+                        );
+                        if (selected == null) return;
+                        setState(() {
+                          node.tags
+                            ..clear()
+                            ..addAll(selected);
+                        });
+                      },
+                icon: const Icon(Icons.checklist_rounded),
+                label: const Text('노드 태그 선택'),
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 8 * scale),
         Wrap(
@@ -1324,6 +1501,18 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
                 ),
               )
               .toList(),
+        ),
+        SizedBox(height: 10 * scale),
+        _DocBlock(
+          title: '노드 생성 지시',
+          body: node.teacherInstructionCtrl.text.trim().isEmpty
+              ? _defaultNodePrompt(node.type)
+              : node.teacherInstructionCtrl.text.trim(),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => _editNodeInstruction(node),
+          icon: const Icon(Icons.edit_note_rounded),
+          label: const Text('세부 지시 추가'),
         ),
         const Divider(height: 28),
         const Text(
@@ -1381,6 +1570,11 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     return ListView(
       padding: EdgeInsets.all(14 * scale),
       children: [
+        const _DocBlock(
+          title: '교사 보유 자료',
+          body:
+              '문서함과 저장된 문제 자료에서 검색한 문항만 참고문항으로 연결합니다. 참고문항 없이도 바로 생성할 수 있습니다.',
+        ),
         SegmentedButton<String>(
           segments: const [
             ButtonSegment(value: 'text', label: Text('텍스트')),
@@ -1450,7 +1644,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         ),
         SizedBox(height: 12 * scale),
         if (_tray.isEmpty)
-          const _MutedText('보관함이 비어 있습니다.')
+          const _MutedText('임시저장함이 비어 있습니다.')
         else
           for (final item in _tray) _TrayItemCard(item: item),
       ],
@@ -1462,7 +1656,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     _promptCtrl.dispose();
     _baseQuestCtrl.dispose();
     _seedCtrl.dispose();
-    _tagCtrl.dispose();
     _dbSearchCtrl.dispose();
     for (final node in _logicNodes) {
       node.dispose();
@@ -1523,7 +1716,7 @@ class _LogicNodeDraft {
     required this.position,
     required this.titleCtrl,
     required this.detailCtrl,
-    required this.tagCtrl,
+    required this.teacherInstructionCtrl,
   });
 
   final String id;
@@ -1531,7 +1724,7 @@ class _LogicNodeDraft {
   Offset position;
   final TextEditingController titleCtrl;
   final TextEditingController detailCtrl;
-  final TextEditingController tagCtrl;
+  final TextEditingController teacherInstructionCtrl;
   final Set<String> tags = {};
   final Set<String> nextIds = {};
 
@@ -1540,7 +1733,7 @@ class _LogicNodeDraft {
   void dispose() {
     titleCtrl.dispose();
     detailCtrl.dispose();
-    tagCtrl.dispose();
+    teacherInstructionCtrl.dispose();
   }
 }
 
@@ -1580,6 +1773,196 @@ class _ParameterGroup {
   final List<_ParameterSpec> specs;
 }
 
+class _GenerationTagGroup {
+  const _GenerationTagGroup({required this.label, required this.tags});
+
+  factory _GenerationTagGroup.fromJson(Map<String, dynamic> json) {
+    final label = json['label']?.toString().trim();
+    final name = json['name']?.toString().trim();
+    final tags = (json['tags'] as List<dynamic>? ?? const [])
+        .map((item) => item.toString().trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+    return _GenerationTagGroup(
+      label: label == null || label.isEmpty ? name ?? '태그' : label,
+      tags: _uniqueTags(tags),
+    );
+  }
+
+  final String label;
+  final List<String> tags;
+}
+
+class _GenerationTagPickerDialog extends StatefulWidget {
+  const _GenerationTagPickerDialog({
+    required this.groups,
+    required this.fallbackTags,
+    required this.initialTags,
+  });
+
+  final List<_GenerationTagGroup> groups;
+  final List<String> fallbackTags;
+  final Iterable<String> initialTags;
+
+  @override
+  State<_GenerationTagPickerDialog> createState() =>
+      _GenerationTagPickerDialogState();
+}
+
+class _GenerationTagPickerDialogState
+    extends State<_GenerationTagPickerDialog> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  late final Set<String> _selected;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initialTags.map((tag) => tag.trim()).toSet();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<_GenerationTagGroup> get _groups {
+    if (widget.groups.isNotEmpty) return widget.groups;
+    return [_GenerationTagGroup(label: '생성 태그', tags: widget.fallbackTags)];
+  }
+
+  bool _matches(String tag) {
+    if (_query.trim().isEmpty) return true;
+    return tag.toLowerCase().contains(_query.trim().toLowerCase());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('해시태그 선택'),
+      content: SizedBox(
+        width: 620,
+        height: 560,
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchCtrl,
+              onChanged: (value) => setState(() => _query = value),
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search_rounded),
+                labelText: '태그 검색',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (_selected.isNotEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _selected
+                      .map(
+                        (tag) => Chip(
+                          label: Text(tag),
+                          onDeleted: () =>
+                              setState(() => _selected.remove(tag)),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView(
+                children: [
+                  for (final group in _groups)
+                    _TagGroupTile(
+                      group: group,
+                      selected: _selected,
+                      matches: _matches,
+                      onChanged: () => setState(() {}),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('취소'),
+        ),
+        ElevatedButton(
+          onPressed: () =>
+              Navigator.of(context).pop(_uniqueTags(_selected.toList())),
+          child: const Text('선택 완료'),
+        ),
+      ],
+    );
+  }
+}
+
+class _TagGroupTile extends StatelessWidget {
+  const _TagGroupTile({
+    required this.group,
+    required this.selected,
+    required this.matches,
+    required this.onChanged,
+  });
+
+  final _GenerationTagGroup group;
+  final Set<String> selected;
+  final bool Function(String tag) matches;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleTags = group.tags.where(matches).toList();
+    if (visibleTags.isEmpty) return const SizedBox.shrink();
+    final selectedCount = visibleTags.where(selected.contains).length;
+    final groupValue = selectedCount == 0
+        ? false
+        : selectedCount == visibleTags.length
+        ? true
+        : null;
+    return ExpansionTile(
+      initiallyExpanded: true,
+      title: Text(group.label),
+      leading: Checkbox(
+        tristate: true,
+        value: groupValue,
+        onChanged: (value) {
+          if (value == true) {
+            selected.addAll(visibleTags);
+          } else {
+            selected.removeAll(visibleTags);
+          }
+          onChanged();
+        },
+      ),
+      children: [
+        for (final tag in visibleTags)
+          CheckboxListTile(
+            dense: true,
+            value: selected.contains(tag),
+            title: Text(tag),
+            onChanged: (value) {
+              if (value == true) {
+                selected.add(tag);
+              } else {
+                selected.remove(tag);
+              }
+              onChanged();
+            },
+          ),
+      ],
+    );
+  }
+}
+
 class _AdvancedPreset {
   const _AdvancedPreset({
     required this.label,
@@ -1616,9 +1999,9 @@ class _SummaryPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBF8),
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE7DD)),
+        border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1710,7 +2093,7 @@ class _StudioPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE7DD)),
+        border: Border.all(color: AppColors.surfaceBorder),
         boxShadow: const [kCourseShadow],
       ),
       child: Column(
@@ -1776,7 +2159,7 @@ class _SimpleLevelTile extends StatelessWidget {
           color: selected ? const Color(0xFFEAF5ED) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? kCourseGreen : const Color(0xFFDDE7DD),
+            color: selected ? kCourseGreen : AppColors.surfaceBorder,
           ),
         ),
         child: Column(
@@ -1813,9 +2196,9 @@ class _PipelineSummary extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBF8),
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE7DD)),
+        border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Text(
         '전달값: 풀이 단계 수=${profile.solvesCount}, '
@@ -2154,7 +2537,11 @@ class _SelectedQuestBox extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(onPressed: onClear, icon: const Icon(Icons.close_rounded)),
+          if ((quest['quest_id']?.toString() ?? '') != '참고문항 없음')
+            IconButton(
+              onPressed: onClear,
+              icon: const Icon(Icons.close_rounded),
+            ),
         ],
       ),
     );
@@ -2276,7 +2663,7 @@ class _DbQuestRow extends StatelessWidget {
           color: selected ? const Color(0xFFEAF5ED) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? kCourseGreen : const Color(0xFFDDE7DD),
+            color: selected ? kCourseGreen : AppColors.surfaceBorder,
           ),
         ),
         child: Column(
@@ -3048,6 +3435,39 @@ String _defaultNodeDetail(String type) {
     default:
       return '';
   }
+}
+
+String _defaultNodePrompt(String type) {
+  switch (type) {
+    case 'condition':
+      return '문제 조건을 명시 조건과 암묵 제약으로 나누고, 풀이에 필요한 형태로 정리한다.';
+    case 'concept':
+      return '선택 태그에 맞는 교과 개념을 정확히 사용하고 교육과정 밖 도구는 쓰지 않는다.';
+    case 'insight':
+      return '풀이를 여는 핵심 발상을 하나 이상 만들고, 우연한 계산보다 구조 인식이 드러나게 한다.';
+    case 'reasoning':
+      return '이전 조건에서 다음 결론으로 이어지는 논리 경로를 끊기지 않게 구성한다.';
+    case 'computation':
+      return '계산은 검산 가능한 수준으로 유지하고 불필요한 전개를 줄인다.';
+    case 'trap':
+      return '정의역, 부호, 필요충분 조건 중 하나의 자연스러운 오답 유발 요소를 포함한다.';
+    case 'verification':
+      return '정답 유일성, 조건 모순 여부, 풀이 가능성을 마지막 단계에서 확인한다.';
+    default:
+      return '문제 생성 논리에 맞는 보편적인 풀이 단계를 구성한다.';
+  }
+}
+
+List<String> _uniqueTags(Iterable<String> tags) {
+  final seen = <String>{};
+  final results = <String>[];
+  for (final tag in tags) {
+    final value = tag.trim();
+    if (value.isEmpty || seen.contains(value)) continue;
+    seen.add(value);
+    results.add(value);
+  }
+  return results;
 }
 
 IconData _nodeTypeIcon(String type) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/textbook.dart';
 import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 
@@ -173,8 +174,9 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
     void flushSection() {
       if (currentSectionTitle == null &&
           currentParagraphs.isEmpty &&
-          currentImages.isEmpty)
+          currentImages.isEmpty) {
         return;
+      }
       currentSections.add(
         BookSection(
           title: currentSectionTitle ?? '',
@@ -214,8 +216,9 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
         case 'paragraph':
           if (content.isNotEmpty) currentParagraphs.add(content);
         case 'latex':
-          if (content.isNotEmpty)
+          if (content.isNotEmpty) {
             currentParagraphs.add(r'$$' + content + r'$$');
+          }
         case 'image':
           if (content.isNotEmpty) currentImages.add(content);
         case 'problem':
@@ -314,8 +317,9 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
   }
 
   void _moveBlock(int from, int to) {
-    if (from < 0 || to < 0 || from >= _blocks.length || to >= _blocks.length)
+    if (from < 0 || to < 0 || from >= _blocks.length || to >= _blocks.length) {
       return;
+    }
     setState(() {
       final b = _blocks.removeAt(from);
       _blocks.insert(to, b);
@@ -612,36 +616,42 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
       endDrawer: const TeacherAppDrawer(currentRoute: '/textbook-builder'),
       backgroundColor: kCourseBgGrey,
       appBar: AppBar(
-        backgroundColor: kCourseGreen,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: kCourseGreen,
+        elevation: 0,
+        surfaceTintColor: Colors.white,
+        shadowColor: Colors.transparent,
+        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
         automaticallyImplyLeading: Navigator.of(context).canPop(),
         title: Text(widget.initialBook != null ? '교재 편집' : '교재 작성'),
         actions: [
           Builder(
             builder: (context) => IconButton(
               tooltip: '메뉴',
-              icon: const Icon(Icons.menu_rounded, color: Colors.white),
+              icon: const Icon(Icons.menu_rounded, color: kCourseGreen),
               onPressed: () => Scaffold.of(context).openEndDrawer(),
             ),
           ),
           TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: kCourseGreen),
             onPressed: () => setState(() => _isPreview = !_isPreview),
             icon: Icon(
               _isPreview ? Icons.edit : Icons.preview,
-              color: Colors.white,
+              color: kCourseGreen,
             ),
             label: Text(
               _isPreview ? '편집' : '미리보기',
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: kCourseGreen),
             ),
           ),
           TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: kCourseGreen),
             onPressed: () {
               final book = _buildBookData();
               Navigator.of(context).pop(book);
             },
-            icon: const Icon(Icons.check, color: Colors.white),
-            label: const Text('완료', style: TextStyle(color: Colors.white)),
+            icon: const Icon(Icons.check, color: kCourseGreen),
+            label: const Text('완료', style: TextStyle(color: kCourseGreen)),
           ),
           const SizedBox(width: 8),
         ],
@@ -660,7 +670,7 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     border: Border(
-                      bottom: BorderSide(color: Color(0xFFE0E0E0)),
+                      bottom: BorderSide(color: AppColors.surfaceBorder),
                     ),
                   ),
                   child: Column(
@@ -735,7 +745,9 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                   padding: EdgeInsets.all(12 * scale),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    border: Border(top: BorderSide(color: Color(0xFFE0E0E0))),
+                    border: Border(
+                      top: BorderSide(color: AppColors.surfaceBorder),
+                    ),
                   ),
                   child: SafeArea(
                     child: Row(
@@ -762,7 +774,7 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                               : const Icon(Icons.save),
                           label: Text(_saving ? '저장 중...' : '저장'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: kCourseLightGreen,
+                            backgroundColor: kCourseGreen,
                             foregroundColor: Colors.white,
                           ),
                         ),

@@ -546,52 +546,24 @@ class _Ios26TeacherShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       endDrawer: const TeacherAppDrawer(currentRoute: GroupListPage.routeName),
-      backgroundColor: const Color(0xFFF2F7F3),
+      backgroundColor: Colors.white,
       body: Builder(
-        builder: (scaffoldContext) => Stack(
-          children: [
-            Positioned(
-              top: -120,
-              right: -80,
-              child: Container(
-                width: 260,
-                height: 260,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0x3345BF63),
-                ),
+        builder: (scaffoldContext) => SafeArea(
+          child: Column(
+            children: [
+              Ios26TopBar(
+                brandColor: AppColors.primary,
+                title: 'AIFlow 선생님',
+                onBack: Navigator.of(context).canPop()
+                    ? () => Navigator.of(context).maybePop()
+                    : null,
+                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                items: const [Ios26NavItem(label: '그룹스터디', active: true)],
+                trailingIcons: trailingIcons,
               ),
-            ),
-            Positioned(
-              left: -60,
-              bottom: -40,
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0x221B402B),
-                ),
-              ),
-            ),
-            SafeArea(
-              child: Column(
-                children: [
-                  Ios26TopBar(
-                    brandColor: AppColors.primary,
-                    title: 'AIFlow Teacher',
-                    onBack: Navigator.of(context).canPop()
-                        ? () => Navigator.of(context).maybePop()
-                        : null,
-                    onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                    items: const [Ios26NavItem(label: '그룹스터디', active: true)],
-                    trailingIcons: trailingIcons,
-                  ),
-                  Expanded(child: child),
-                ],
-              ),
-            ),
-          ],
+              Expanded(child: child),
+            ],
+          ),
         ),
       ),
     );
@@ -615,7 +587,7 @@ class _GlassActionButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
-        backgroundColor: Colors.white.withValues(alpha: 0.58),
+        backgroundColor: AppColors.surfaceMuted,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       ),

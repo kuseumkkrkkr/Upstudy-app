@@ -59,9 +59,7 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     final maxX = math.max(rawMinX, rawMaxX);
     final allowHorizontal = contentWidth > viewport.width + 1.0;
     final centerX = (viewport.width - contentWidth) / 2;
-    final nextX = allowHorizontal
-        ? _panOffset.dx.clamp(minX, maxX)
-        : centerX;
+    final nextX = allowHorizontal ? _panOffset.dx.clamp(minX, maxX) : centerX;
     final nextY = _panOffset.dy.clamp(minY, maxY);
     if (bounce && (nextX != _panOffset.dx || nextY != _panOffset.dy)) {
       _panOffset = Offset(
@@ -320,7 +318,10 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     }
 
     try {
-      final status = await ApiClient.instance.getExamStatus(examId);
+      final status = await ApiClient.instance.getExamStatus(
+        examId,
+        courseId: widget.courseId,
+      );
 
       if (!mounted) {
         return;
@@ -361,6 +362,9 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
       if (status.status == 'done' || status.status == 'failed') {
         _pollTimer?.cancel();
       }
+      if (status.status == 'done' && status.items.isNotEmpty) {
+        unawaited(_indexExamForArchiveSearch(status));
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -376,6 +380,55 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
         _hasCentered = false;
       });
     }
+  }
+
+  Future<void> _indexExamForArchiveSearch(ExamStatus status) async {
+    final index = _examStatusSearchText(status);
+    if (index.trim().isEmpty) return;
+    await ExamPaperStore.updateSearchIndex(
+      examId: status.examId,
+      searchIndex: index,
+    );
+  }
+
+  String _examStatusSearchText(ExamStatus status) {
+    final buffer = StringBuffer(status.examId);
+    for (final item in status.items) {
+      buffer
+        ..write(' ')
+        ..write(item.title ?? '')
+        ..write(' ')
+        ..write(item.subjectKey ?? '')
+        ..write(' ')
+        ..write(item.questionType ?? '')
+        ..write(' ')
+        ..write(item.questId ?? '')
+        ..write(' ')
+        ..write(item.hashTags?.join(' ') ?? '')
+        ..write(' ')
+        ..write(_plainSearchText(item.questTitle))
+        ..write(' ')
+        ..write(_plainSearchText(item.questOptions));
+    }
+    return buffer.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  String _plainSearchText(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    if (value is Iterable) {
+      return value
+          .map(_plainSearchText)
+          .where((text) => text.isNotEmpty)
+          .join(' ');
+    }
+    if (value is Map) {
+      return value.values
+          .map(_plainSearchText)
+          .where((text) => text.isNotEmpty)
+          .join(' ');
+    }
+    return value.toString();
   }
 
   Future<void> _openPenSettings() async {
@@ -907,5 +960,4 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
 
     return normalized.clamp(0.0, 1.0);
   }
-
 }

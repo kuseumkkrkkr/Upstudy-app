@@ -317,13 +317,22 @@ def enroll_course(user_id: str, course_id: str) -> Dict[str, Any]:
     init_course_db()
     conn = _conn()
     cur = conn.cursor()
+    cur.execute("SELECT 1 FROM course WHERE id = ?", (course_id,))
+    if cur.fetchone() is None:
+        conn.close()
+        raise ValueError("course_not_found")
+    cur.execute(
+        "SELECT 1 FROM user_course WHERE user_id = ? AND course_id = ?",
+        (user_id, course_id),
+    )
+    already_enrolled = cur.fetchone() is not None
     cur.execute(
         "SELECT COUNT(*) FROM user_course WHERE user_id = ?",
         (user_id,),
     )
     row = cur.fetchone()
     current_count = int(row[0] if row and row[0] is not None else 0)
-    if current_count >= 4:
+    if not already_enrolled and current_count >= 4:
         conn.close()
         raise ValueError("course_limit_exceeded")
 

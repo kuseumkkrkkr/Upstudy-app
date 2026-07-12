@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import sqlite3
+import threading
 from datetime import date, datetime
 from typing import Any, Dict, Optional
 
@@ -11,6 +12,9 @@ from storage.storage import DB_PATH
 DAILY_POINT_LIMIT = 100
 DAILY_QUEST_REWARD_POINTS = 20
 ACTIVITY_DISPLAY_DAILY_CAP = 2000
+_SQLITE_TIMEOUT_SECONDS = 30.0
+_ACCOUNT_TABLES_READY: set[str] = set()
+_ACCOUNT_TABLES_LOCK = threading.Lock()
 
 
 def _now_iso() -> str:
@@ -19,6 +23,16 @@ def _now_iso() -> str:
 
 def today_key() -> str:
     return date.today().isoformat()
+
+
+def _connect(*, isolation_level: str | None = "") -> sqlite3.Connection:
+    conn = sqlite3.connect(
+        DB_PATH,
+        timeout=_SQLITE_TIMEOUT_SECONDS,
+        isolation_level=isolation_level,
+    )
+    conn.execute("PRAGMA busy_timeout = 30000")
+    return conn
 
 
 def level_for_activity_score(activity_score: int) -> int:
@@ -32,57 +46,90 @@ def required_activity_score_for_level(level: int) -> int:
 
 
 def init_student_account_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS student_account_stats (
-            user_id TEXT PRIMARY KEY,
-            total_points INTEGER NOT NULL DEFAULT 0,
-            activity_score INTEGER NOT NULL DEFAULT 0,
-            updated_at TEXT NOT NULL
+    if DB_PATH in _ACCOUNT_TABLES_READY:
+        return
+    with _ACCOUNT_TABLES_LOCK:
+        if DB_PATH in _ACCOUNT_TABLES_READY:
+            return
+        conn = _connect()
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS student_account_stats (
+                user_id TEXT PRIMARY KEY,
+                total_points INTEGER NOT NULL DEFAULT 0,
+                activity_score INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT NOT NULL
+            )
+            """
         )
-        """
-    )
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS student_daily_point_usage (
-            user_id TEXT NOT NULL,
-            date_key TEXT NOT NULL,
-            earned_points INTEGER NOT NULL DEFAULT 0,
-            updated_at TEXT NOT NULL,
-            PRIMARY KEY (user_id, date_key)
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS student_daily_point_usage (
+                user_id TEXT NOT NULL,
+                date_key TEXT NOT NULL,
+                earned_points INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (user_id, date_key)
+            )
+            """
         )
-        """
-    )
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS student_point_ledger (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT NOT NULL,
-            delta_points INTEGER NOT NULL,
-            reason TEXT NOT NULL,
-            ref_type TEXT NOT NULL,
-            ref_id TEXT NOT NULL,
-            source_date TEXT NOT NULL,
-            created_at TEXT NOT NULL
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS student_point_ledger (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                delta_points INTEGER NOT NULL,
+                reason TEXT NOT NULL,
+                ref_type TEXT NOT NULL,
+                ref_id TEXT NOT NULL,
+                source_date TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
         )
-        """
-    )
-    cur.execute(
-        """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_student_point_ledger_unique_ref
-        ON student_point_ledger(user_id, reason, ref_type, ref_id)
-        """
-    )
-    cur.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_student_point_ledger_user_time
-        ON student_point_ledger(user_id, created_at DESC)
-        """
-    )
-    conn.commit()
-    conn.close()
+        cur.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_student_point_ledger_unique_ref
+            ON student_point_ledger(user_id, reason, ref_type, ref_id)
+            """
+        )
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_student_point_ledger_user_time
+            ON student_point_ledger(user_id, created_at DESC)
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS student_activity_score_ledger (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                delta_score INTEGER NOT NULL,
+                reason TEXT NOT NULL,
+                ref_id TEXT NOT NULL,
+                source_date TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_student_activity_score_unique_ref
+            ON student_activity_score_ledger(user_id, reason, ref_id)
+            """
+        )
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_student_activity_score_user_time
+            ON student_activity_score_ledger(user_id, created_at DESC)
+            """
+        )
+        conn.commit()
+        conn.close()
+        _ACCOUNT_TABLES_READY.add(DB_PATH)
 
 
 def _ensure_stats(cur: sqlite3.Cursor, user_id: str, now: str) -> None:
@@ -158,7 +205,7 @@ def _summary_from_cursor(
 
 def get_account_summary(user_id: str, *, date_key: Optional[str] = None) -> Dict[str, Any]:
     init_student_account_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     summary = _summary_from_cursor(cur, user_id, date_key=date_key)
     conn.commit()
@@ -180,7 +227,7 @@ def award_daily_quest_points(
     ref_id = f"{course_id}:{day}:{quest_id}"
     now = _now_iso()
 
-    conn = sqlite3.connect(DB_PATH, isolation_level=None)
+    conn = _connect(isolation_level=None)
     cur = conn.cursor()
     try:
         cur.execute("BEGIN IMMEDIATE")
@@ -264,6 +311,69 @@ def award_daily_quest_points(
             "requested_points": safe_reward,
             "duplicate": True,
             "daily_cap_reached": summary["daily_points_remaining"] <= 0,
+        }
+        return summary
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def add_activity_score(
+    *,
+    user_id: str,
+    delta_score: int,
+    ref_id: str,
+    reason: str = "activity_log",
+    date_key: Optional[str] = None,
+) -> Dict[str, Any]:
+    init_student_account_db()
+    safe_delta = max(0, int(delta_score or 0))
+    safe_ref_id = str(ref_id or "").strip()
+    safe_reason = str(reason or "activity_log").strip() or "activity_log"
+    if safe_delta <= 0 or not safe_ref_id:
+        summary = get_account_summary(user_id, date_key=date_key)
+        summary["activity_score_reward"] = {
+            "granted_score": 0,
+            "requested_score": safe_delta,
+            "duplicate": False,
+        }
+        return summary
+
+    day = date_key or today_key()
+    now = _now_iso()
+    conn = _connect(isolation_level=None)
+    cur = conn.cursor()
+    try:
+        cur.execute("BEGIN IMMEDIATE")
+        _ensure_stats(cur, user_id, now)
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO student_activity_score_ledger (
+                user_id, delta_score, reason, ref_id, source_date, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (user_id, safe_delta, safe_reason, safe_ref_id, day, now),
+        )
+        granted = safe_delta if cur.rowcount == 1 else 0
+        if granted > 0:
+            cur.execute(
+                """
+                UPDATE student_account_stats
+                SET activity_score = activity_score + ?,
+                    updated_at = ?
+                WHERE user_id = ?
+                """,
+                (granted, now, user_id),
+            )
+
+        summary = _summary_from_cursor(cur, user_id, date_key=day)
+        conn.commit()
+        summary["activity_score_reward"] = {
+            "granted_score": granted,
+            "requested_score": safe_delta,
+            "duplicate": granted == 0,
         }
         return summary
     except Exception:

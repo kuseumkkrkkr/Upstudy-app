@@ -461,6 +461,35 @@ def get_runtime_state(user_id: str, course_id: str) -> dict[str, Any]:
         return {}
 
 
+def list_runtime_states(user_id: str, course_ids: list[str]) -> dict[str, dict[str, Any]]:
+    _ensure_course_v2_tables()
+    ids = [str(course_id).strip() for course_id in course_ids if str(course_id).strip()]
+    if not user_id or not ids:
+        return {}
+    placeholders = ",".join("?" for _ in ids)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            f"""
+            SELECT course_id, state_json
+            FROM course_v2_runtime
+            WHERE user_id = ? AND course_id IN ({placeholders})
+            """,
+            [user_id, *ids],
+        ).fetchall()
+
+    states: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        raw = row["state_json"] or "{}"
+        try:
+            state = json.loads(raw)
+        except json.JSONDecodeError:
+            state = {}
+        if isinstance(state, dict):
+            states[str(row["course_id"])] = state
+    return states
+
+
 def upsert_runtime_state(user_id: str, course_id: str, state: dict[str, Any]) -> None:
     _ensure_course_v2_tables()
     payload = json.dumps(state, ensure_ascii=False)

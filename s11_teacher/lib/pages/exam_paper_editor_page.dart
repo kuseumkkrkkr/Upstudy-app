@@ -1,80 +1,220 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../models/exam_editor_models.dart';
-import '../models/exam_editor_layout.dart';
-import '../services/api_client.dart';
-import '../widgets/design_tokens.dart';
-import '../widgets/content_blocks_view.dart';
-import '../models/content_block.dart';
 
-/// Detailed exam paper editor page.
-///
-/// Features:
-/// - Left panel: problem search & "My Problem Set"
-/// - Center: 2×2 grid preview with drag-and-drop
-/// - Right panel: toolbar (font size, AI arrange, deploy, PDF)
+import '../models/content_block.dart';
+import '../models/exam_editor_layout.dart';
+import '../models/exam_editor_models.dart';
+import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
+import '../widgets/content_blocks_view.dart';
+import '../widgets/design_tokens.dart';
+
+enum _EditorLayoutMode { vertical, grid4, grid2, slider }
+
+extension on _EditorLayoutMode {
+  String get label {
+    switch (this) {
+      case _EditorLayoutMode.vertical:
+        return '세로형';
+      case _EditorLayoutMode.grid4:
+        return '4개';
+      case _EditorLayoutMode.grid2:
+        return '2개';
+      case _EditorLayoutMode.slider:
+        return '슬라이더형';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case _EditorLayoutMode.vertical:
+        return Icons.view_stream_rounded;
+      case _EditorLayoutMode.grid4:
+        return Icons.grid_view_rounded;
+      case _EditorLayoutMode.grid2:
+        return Icons.view_week_rounded;
+      case _EditorLayoutMode.slider:
+        return Icons.slideshow_rounded;
+    }
+  }
+}
+
 class ExamPaperEditorPage extends StatefulWidget {
   final String? initialExamId;
   final List<ExamEditorItem>? initialItems;
 
-  const ExamPaperEditorPage({
-    super.key,
-    this.initialExamId,
-    this.initialItems,
-  });
+  const ExamPaperEditorPage({super.key, this.initialExamId, this.initialItems});
 
   @override
   State<ExamPaperEditorPage> createState() => _ExamPaperEditorPageState();
 }
 
 class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
+  final _searchCtrl = TextEditingController();
+  final _titleCtrl = TextEditingController();
+  final _rng = math.Random();
+  final Map<String, List<ContentBlock>> _contentCache = {};
+  final Map<String, Map<String, dynamic>> _rawQuestCache = {};
+  final Map<String, int> _sessionSeedCache = {};
+  final Map<String, List<String>> _localMcqCache = {};
+  final Map<String, double> _itemFontScale = {};
+  final PageController _sliderController = PageController(
+    viewportFraction: 0.92,
+  );
+
   late ExamEditorState _state;
+  _EditorLayoutMode _layoutMode = _EditorLayoutMode.grid4;
   String? _paperId;
   String? _paperUpdatedAt;
 
-  // Search panel state
-  final _searchCtrl = TextEditingController();
-  String _searchMode = 'text'; // 'text', 'hashtag', 'date'
+  String _searchMode = 'text';
   List<Map<String, dynamic>> _searchResults = [];
   bool _searching = false;
   String? _searchError;
 
-  // Managed by ReorderableListView drag target
-
-  // AI arrangement state
   bool _aiArranging = false;
   String? _aiStatus;
-
-  // Deploy / PDF state
+  bool _saving = false;
   bool _deploying = false;
   String? _deployExamId;
   Timer? _pollTimer;
 
-  // Two-per-page mode
-  bool _twoPerPage = false;
-
   @override
   void initState() {
     super.initState();
-    final initialItems = widget.initialItems ?? [];
+    final initialItems = widget.initialItems ?? const <ExamEditorItem>[];
     _state = ExamEditorState(
       items: initialItems,
       pages: ExamEditorLayoutEngine.computeLayout(initialItems),
       examId: widget.initialExamId,
     );
-    _paperId = null;
+    _titleCtrl.text = _state.title;
+    _titleCtrl.addListener(_syncTitle);
+    for (final item in initialItems) {
+      _ensureSessionSeed(item);
+    }
+    _rebuildPages(notify: false);
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _titleCtrl
+      ..removeListener(_syncTitle)
+      ..dispose();
+    _sliderController.dispose();
     _pollTimer?.cancel();
     super.dispose();
   }
 
-  // ────────────────────────── Search ──────────────────────────
+  void _syncTitle() {
+    final next = _titleCtrl.text.trim();
+    final safeTitle = next.isEmpty ? '시험지' : next;
+    if (safeTitle == _state.title) return;
+    setState(() => _state = _state.copyWith(title: safeTitle));
+  }
+
+  void _rebuildPages({bool notify = true}) {
+    final pages = _layoutMode == _EditorLayoutMode.grid2
+        ? ExamEditorLayoutEngine.computeTwoPerPageLayout(_state.items)
+        : ExamEditorLayoutEngine.computeLayout(_state.items);
+    if (!notify) {
+      _state = _state.copyWith(pages: pages);
+      return;
+    }
+    setState(() => _state = _state.copyWith(pages: pages));
+  }
+
+  dynamic _decodeStructuredValue(dynamic value) {
+    if (value is String) {
+      final trimmed = value.trim();
+      if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+          (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+        try {
+          return jsonDecode(trimmed);
+        } catch (_) {
+          return value;
+        }
+      }
+    }
+    return value;
+  }
+
+  String _contentCacheKey(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    try {
+      return jsonEncode(value);
+    } catch (_) {
+      return value.toString();
+    }
+  }
+
+  List<ContentBlock> _blocksOf(dynamic value) {
+    final decoded = _decodeStructuredValue(value);
+    final key = _contentCacheKey(decoded);
+    if (key.isEmpty) {
+      return const <ContentBlock>[];
+    }
+    return _contentCache.putIfAbsent(key, () => parseContentBlocks(decoded));
+  }
+
+  String _plainTextOf(dynamic value) {
+    final blocks = _blocksOf(value);
+    final plain = contentBlocksToPlainText(blocks);
+    if (plain.isNotEmpty) return plain;
+    final decoded = _decodeStructuredValue(value);
+    if (decoded == null) return '';
+    if (decoded is List) {
+      return decoded.map((entry) => _plainTextOf(entry)).join(' ').trim();
+    }
+    if (decoded is Map) {
+      return _plainTextOf(
+        decoded['content'] ?? decoded['text'] ?? decoded['blocks'],
+      );
+    }
+    return decoded.toString().trim();
+  }
+
+  List<ContentBlock> _searchBlocksOf(Map<String, dynamic> quest) {
+    return _blocksOf(
+      quest['quest_title_text'] ??
+          quest['title'] ??
+          quest['quest_title'] ??
+          quest['content'],
+    );
+  }
+
+  List<String> _normalizedTagsOf(dynamic raw) {
+    final source = raw is List ? raw : const <dynamic>[];
+    return source
+        .map((entry) => entry.toString().trim())
+        .where((entry) => entry.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  int _ensureSessionSeed(ExamEditorItem item) {
+    return _sessionSeedCache.putIfAbsent(
+      item.editorId,
+      () => item.item.seed ?? 100000 + _rng.nextInt(900000),
+    );
+  }
+
+  double _fontScaleFor(ExamEditorItem item) =>
+      _itemFontScale[item.editorId] ?? 1.0;
+
+  String _difficultyLabel(int tier) {
+    if (tier >= 5) return '상';
+    if (tier == 4) return '중상';
+    if (tier == 3) return '중';
+    if (tier == 2) return '중하';
+    return '하';
+  }
 
   Future<void> _performSearch() async {
     final query = _searchCtrl.text.trim();
@@ -86,56 +226,71 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
     });
 
     try {
-      List<Map<String, dynamic>> results;
+      late final List<Map<String, dynamic>> results;
       switch (_searchMode) {
         case 'hashtag':
-          final payload = await ApiClient.instance.searchExamEditorProblems(hashTag: query, pageSize: 200);
-          results = ((payload['items'] as List<dynamic>? ?? const [])
-              .map((e) => Map<String, dynamic>.from(e as Map))
-              .toList());
-          break;
-        case 'date':
-          final dateParts = query.split('~').map((e) => e.trim()).toList();
           final payload = await ApiClient.instance.searchExamEditorProblems(
-            dateFrom: dateParts.isNotEmpty ? dateParts.first : query,
-            dateTo: dateParts.length > 1 ? dateParts[1] : null,
+            hashTag: query,
+            ownedOnly: true,
             pageSize: 200,
           );
           results = ((payload['items'] as List<dynamic>? ?? const [])
-              .map((e) => Map<String, dynamic>.from(e as Map))
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .toList());
+          break;
+        case 'date':
+          final parts = query.split('~').map((entry) => entry.trim()).toList();
+          final payload = await ApiClient.instance.searchExamEditorProblems(
+            dateFrom: parts.isNotEmpty ? parts.first : query,
+            dateTo: parts.length > 1 ? parts[1] : null,
+            ownedOnly: true,
+            pageSize: 200,
+          );
+          results = ((payload['items'] as List<dynamic>? ?? const [])
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
               .toList());
           break;
         case 'text':
         default:
-          final payload = await ApiClient.instance.searchExamEditorProblems(text: query, pageSize: 200);
+          final payload = await ApiClient.instance.searchExamEditorProblems(
+            text: query,
+            ownedOnly: true,
+            pageSize: 200,
+          );
           results = ((payload['items'] as List<dynamic>? ?? const [])
-              .map((e) => Map<String, dynamic>.from(e as Map))
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
               .toList());
-          break;
       }
+      if (!mounted) return;
       setState(() => _searchResults = results);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _searchError = e.toString());
     } finally {
-      setState(() => _searching = false);
+      if (mounted) {
+        setState(() => _searching = false);
+      }
     }
   }
 
-  // ────────────────────────── Item management ──────────────────────────
-
   void _addItemFromSearch(Map<String, dynamic> quest) {
     if (!_state.canAddMore) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('최대 100문제까지 추가 가능합니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('문제는 최대 100개까지 담을 수 있습니다.')));
       return;
     }
 
+    final seed =
+        (quest['seed'] as num?)?.toInt() ?? 100000 + _rng.nextInt(900000);
     final item = ExamItem.fromJson({
       'item_index': _state.items.length,
       'status': 'done',
       'subject_key': 'custom',
-      'hash_tags': (quest['hash_tags'] as List<dynamic>? ?? const []),
+      'hash_tags': quest['hash_tags'] as List<dynamic>? ?? const <dynamic>[],
       'difficulty_tier': (quest['difficulty_tier'] as num?)?.toInt() ?? 3,
       'solves_count': (quest['solves_count'] as num?)?.toInt() ?? 5,
       'strategy_level': (quest['strategy_level'] as num?)?.toInt() ?? 3,
@@ -144,159 +299,184 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
       'quest_id': quest['quest_id']?.toString(),
       'flow_count': (quest['flow_count'] as num?)?.toInt() ?? 3,
       'codebase_id': (quest['codebase_id'] as num?)?.toInt(),
-      'seed': (quest['seed'] as num?)?.toInt(),
-      'quest_title': quest['quest_title'],
+      'seed': seed,
+      'quest_title':
+          quest['quest_title'] ?? quest['quest_title_text'] ?? quest['content'],
       'quest_options': quest['quest_options'] as List<dynamic>?,
       'error': null,
     });
     final editorItem = ExamEditorItem.fromExamItem(item, _state.items.length);
-    final newItems = ExamEditorLayoutEngine.insertAt(_state.items, _state.items.length, editorItem);
-    final newPages = _twoPerPage
-        ? ExamEditorLayoutEngine.computeTwoPerPageLayout(newItems)
-        : ExamEditorLayoutEngine.computeLayout(newItems);
-
+    _rawQuestCache[editorItem.editorId] = quest;
+    _ensureSessionSeed(editorItem);
+    final newItems = ExamEditorLayoutEngine.insertAt(
+      _state.items,
+      _state.items.length,
+      editorItem,
+    );
     setState(() {
-      _state = _state.copyWith(items: newItems, pages: newPages);
+      _state = _state.copyWith(items: newItems);
     });
+    _rebuildPages();
   }
 
   void _removeItem(int index) {
+    final removed = _state.items[index];
     final newItems = ExamEditorLayoutEngine.removeAt(_state.items, index);
-    final newPages = _twoPerPage
-        ? ExamEditorLayoutEngine.computeTwoPerPageLayout(newItems)
-        : ExamEditorLayoutEngine.computeLayout(newItems);
-    setState(() => _state = _state.copyWith(items: newItems, pages: newPages));
+    setState(() {
+      _rawQuestCache.remove(removed.editorId);
+      _sessionSeedCache.remove(removed.editorId);
+      _localMcqCache.remove(removed.editorId);
+      _itemFontScale.remove(removed.editorId);
+      _state = _state.copyWith(items: newItems);
+    });
+    _rebuildPages();
   }
 
   void _reorderItems(int oldIndex, int newIndex) {
-    final newItems = ExamEditorLayoutEngine.reorder(_state.items, oldIndex, newIndex);
-    final newPages = _twoPerPage
-        ? ExamEditorLayoutEngine.computeTwoPerPageLayout(newItems)
-        : ExamEditorLayoutEngine.computeLayout(newItems);
-    setState(() => _state = _state.copyWith(items: newItems, pages: newPages));
+    final newItems = ExamEditorLayoutEngine.reorder(
+      _state.items,
+      oldIndex,
+      newIndex,
+    );
+    setState(() => _state = _state.copyWith(items: newItems));
+    _rebuildPages();
   }
 
-  // ────────────────────────── Font scale ──────────────────────────
-
-  void _setFontScale(double scale) {
-    setState(() => _state = _state.copyWith(fontScale: scale));
-  }
-
-  // ────────────────────────── AI Arrange ──────────────────────────
-
-  Future<void> _aiArrange() async {
-    if (_state.items.isEmpty) return;
-
-    setState(() {
-      _aiArranging = true;
-      _aiStatus = 'AI가 문제를 배치하는 중...';
-    });
-
-    try {
-      final response = await ApiClient.instance.arrangeExamEditorAi(
-        paperId: _paperId,
-        instruction: _buildArrangePrompt(),
-        items: _state.items.asMap().entries.map((entry) {
-          final idx = entry.key;
-          final editorItem = entry.value;
-          return {
-            'order_no': idx,
-            'page_no': (idx ~/ (_twoPerPage ? 2 : 4)) + 1,
-            'layout_slot': 'auto',
-            'codebase_id': editorItem.item.codebaseId,
-            'seed': editorItem.item.seed,
-            'quest_id': editorItem.item.questId,
-            'question_type': editorItem.item.questionType,
-            'is_geometry': editorItem.isGeometry,
-          };
-        }).toList(),
-      );
-      if (response['accepted'] != true) {
-        setState(() => _aiStatus = '諛곗튂 嫄곕?: ${response['reason'] ?? 'rejected'}');
-        return;
-      }
-      final arranged = (response['items'] as List<dynamic>? ?? const [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-      final byQuestId = {
-        for (final item in _state.items)
-          if ((item.item.questId ?? '').isNotEmpty) item.item.questId!: item,
-      };
-      final sorted = <ExamEditorItem>[];
-      for (final row in arranged) {
-        final qid = row['quest_id']?.toString() ?? '';
-        final found = byQuestId[qid];
-        if (found != null) {
-          sorted.add(found);
-        }
-      }
-      if (sorted.length != _state.items.length) {
-        sorted
-          ..clear()
-          ..addAll(List<ExamEditorItem>.from(_state.items)
-            ..sort((a, b) => a.item.difficultyTier.compareTo(b.item.difficultyTier)));
-      }
-      for (var i = 0; i < sorted.length; i++) {
-        sorted[i] = sorted[i].copyWith(displayIndex: i);
-      }
-
-      final newPages = _twoPerPage
-          ? ExamEditorLayoutEngine.computeTwoPerPageLayout(sorted)
-          : ExamEditorLayoutEngine.computeLayout(sorted);
-
-      setState(() {
-        _state = _state.copyWith(items: sorted, pages: newPages);
-        _aiStatus = '배치 완료!';
-      });
-    } catch (e) {
-      setState(() => _aiStatus = '배치 실패: $e');
-    } finally {
-      setState(() => _aiArranging = false);
+  void _swapItems(String sourceEditorId, String targetEditorId) {
+    final items = List<ExamEditorItem>.from(_state.items);
+    final from = items.indexWhere((item) => item.editorId == sourceEditorId);
+    final to = items.indexWhere((item) => item.editorId == targetEditorId);
+    if (from < 0 || to < 0 || from == to) return;
+    final source = items[from];
+    items[from] = items[to].copyWith(displayIndex: from);
+    items[to] = source.copyWith(displayIndex: to);
+    for (var i = 0; i < items.length; i++) {
+      items[i] = items[i].copyWith(displayIndex: i);
     }
+    setState(() => _state = _state.copyWith(items: items));
+    _rebuildPages();
   }
 
-  String _buildArrangePrompt() {
-    final buffer = StringBuffer();
-    buffer.writeln('시험지 문제 배치 요청:');
-    buffer.writeln('총 ${_state.items.length}문제');
-    buffer.writeln('2×2 그리드, 기하/그래프 문제는 행당 1개, 페이지당 2개 제한');
-    buffer.writeln('문제 목록:');
-    for (final item in _state.items) {
-      buffer.writeln(
-        '- [${item.isGeometry ? "기하" : "일반"}] ${item.item.difficultyTier}티어: ${item.titleText.substring(0, item.titleText.length.clamp(0, 50))}',
-      );
+  void _adjustGlobalFont(bool increase) {
+    final next = (_state.fontScale + (increase ? 0.05 : -0.05)).clamp(0.7, 1.6);
+    setState(() => _state = _state.copyWith(fontScale: next));
+  }
+
+  void _adjustItemFont(ExamEditorItem item, bool increase) {
+    final current = _fontScaleFor(item);
+    final next = (current + (increase ? 0.05 : -0.05)).clamp(0.8, 1.5);
+    setState(() => _itemFontScale[item.editorId] = next);
+  }
+
+  List<String> _generateNumericChoices(num target, int seed) {
+    final rng = math.Random(seed);
+    final values = <num>{target};
+    final steps = <num>[1, 2, 3, 5, 10];
+    while (values.length < 5) {
+      final step = steps[rng.nextInt(steps.length)];
+      final op = rng.nextInt(3);
+      num candidate;
+      if (op == 0) {
+        candidate = target + step;
+      } else if (op == 1) {
+        candidate = target - step;
+      } else {
+        final factor = rng.nextBool() ? 2 : 3;
+        candidate = target * factor;
+      }
+      values.add(candidate);
     }
-    return buffer.toString();
+    final choices = values.toList()..shuffle(rng);
+    return choices
+        .map((value) {
+          if (value is int || value == value.roundToDouble()) {
+            return value.round().toString();
+          }
+          return value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+        })
+        .toList(growable: false);
   }
 
-  // ────────────────────────── Deploy / PDF ──────────────────────────
+  List<String> _generateTextChoices(String content, int seed) {
+    final rng = math.Random(seed);
+    final tokens = content
+        .split(RegExp(r'[\s,.;:()\[\]{}]+'))
+        .map((token) => token.trim())
+        .where((token) => token.length >= 2)
+        .toSet()
+        .toList();
+    tokens.shuffle(rng);
+    final basis = tokens.take(2).join(' ');
+    final stem = basis.isEmpty ? '조건' : basis;
+    final choices = <String>[
+      '$stem 이(가) 항상 성립한다',
+      '$stem 에 1을 더한 경우',
+      '$stem 에 2를 더한 경우',
+      '$stem 을(를) 2배 한 경우',
+      '$stem 과 무관한 경우',
+    ];
+    choices.shuffle(rng);
+    return choices;
+  }
 
-  Future<void> _deployExam() async {
+  void _makeLocalMultipleChoice(ExamEditorItem item) {
+    if (_localMcqCache.containsKey(item.editorId)) return;
+    final raw = _rawQuestCache[item.editorId] ?? const <String, dynamic>{};
+    final sourceAnswer = _plainTextOf(
+      raw['quest_answer'] ??
+          raw['answer'] ??
+          raw['answer_text'] ??
+          raw['solution'],
+    );
+    final sourceBody = _plainTextOf(
+      raw['quest_title'] ??
+          raw['quest_title_text'] ??
+          raw['title'] ??
+          item.item.questTitle,
+    );
+    final numbers = RegExp(r'-?\d+(?:\.\d+)?')
+        .allMatches(sourceAnswer.isNotEmpty ? sourceAnswer : sourceBody)
+        .map((match) => num.tryParse(match.group(0)!))
+        .whereType<num>()
+        .toList();
+    final seed = _ensureSessionSeed(item);
+    final choices = numbers.isNotEmpty
+        ? _generateNumericChoices(numbers.last, seed)
+        : _generateTextChoices(sourceBody, seed);
+    setState(() => _localMcqCache[item.editorId] = choices);
+  }
+
+  List<String> _optionsFor(ExamEditorItem item) {
+    final local = _localMcqCache[item.editorId];
+    if (local != null && local.isNotEmpty) return local;
+    return item.options;
+  }
+
+  Future<void> _saveToDocumentBox() async {
     if (_state.items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('문제를 1개 이상 추가하세요.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('문제를 1개 이상 추가해 주세요.')));
       return;
     }
 
-    setState(() => _deploying = true);
-
+    setState(() => _saving = true);
     try {
       final saved = await ApiClient.instance.saveExamEditorPaper(
         paperId: _paperId,
         title: _state.title,
-        twoPerPage: _twoPerPage,
+        twoPerPage: _layoutMode == _EditorLayoutMode.grid2,
         gradingAreaDirection: 'bottom',
         expectedUpdatedAt: _paperUpdatedAt,
         items: _state.items.asMap().entries.map((entry) {
-          final idx = entry.key;
+          final index = entry.key;
           final editorItem = entry.value;
           return {
-            'order_no': idx,
-            'page_no': (idx ~/ (_twoPerPage ? 2 : 4)) + 1,
-            'layout_slot': 'auto',
+            'order_no': index,
+            'page_no': index + 1,
+            'layout_slot': _layoutMode.label,
             'codebase_id': editorItem.item.codebaseId,
-            'seed': editorItem.item.seed,
+            'seed': _ensureSessionSeed(editorItem),
             'quest_id': editorItem.item.questId,
             'question_type': editorItem.item.questionType,
             'is_geometry': editorItem.isGeometry,
@@ -305,54 +485,54 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
       );
       _paperId = saved['paper_id']?.toString();
       _paperUpdatedAt = saved['updated_at']?.toString();
-      if (_paperId == null || _paperId!.isEmpty) {
-        throw Exception('missing paper_id');
-      }
-      final deploy = await ApiClient.instance.deployExamEditorPaper(_paperId!);
-      final examId = deploy['exam_id']?.toString() ?? '';
-      if (examId.isEmpty) {
-        throw Exception('missing exam_id');
-      }
-
-      setState(() {
-        _deployExamId = examId;
-        _state = _state.copyWith(examId: examId);
-      });
-
-      _startPolling();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('시험지 배포 시작: $examId')),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('시험지를 교사 문서함 저장 대상으로 보관했습니다.')),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('배포 오류: $e')),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('문서함 저장 실패: $e')));
     } finally {
-      setState(() => _deploying = false);
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
+  }
+
+  Future<void> _deployForPdfIfNeeded() async {
+    await _saveToDocumentBox();
+    if (_paperId == null || _paperId!.isEmpty) {
+      throw Exception('paper_id missing');
+    }
+    if (_state.examId != null || _deployExamId != null) return;
+    final deploy = await ApiClient.instance.deployExamEditorPaper(_paperId!);
+    final examId = deploy['exam_id']?.toString() ?? '';
+    if (examId.isEmpty) {
+      throw Exception('exam_id missing');
+    }
+    _deployExamId = examId;
+    _state = _state.copyWith(examId: examId);
+    _startPolling();
   }
 
   void _startPolling() {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
-      if (_deployExamId == null) {
+      final examId = _deployExamId;
+      if (examId == null) {
         timer.cancel();
         return;
       }
       try {
-        final status = await ApiClient.instance.getExamStatus(_deployExamId!);
+        final status = await ApiClient.instance.getExamStatus(examId);
         if (status.status == 'completed' || status.status == 'failed') {
           timer.cancel();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('시험지 상태: ${status.status}')),
-            );
-          }
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('PDF 상태: ${status.status}')));
         }
       } catch (_) {
         timer.cancel();
@@ -361,26 +541,30 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
   }
 
   Future<void> _downloadPdf() async {
-    final examId = _state.examId ?? _deployExamId;
-    if (examId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('먼저 시험지를 배포하세요.')),
-      );
+    if (_state.items.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('PDF를 만들 문제를 먼저 담아 주세요.')));
       return;
     }
 
-    final urlStr = await ApiClient.instance.examPdfUrl(examId);
-    final uri = Uri.parse(urlStr);
-
-    if (Platform.isAndroid || Platform.isIOS) {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    setState(() => _deploying = true);
+    try {
+      await _deployForPdfIfNeeded();
+      final examId = _state.examId ?? _deployExamId;
+      if (examId == null || examId.isEmpty) {
+        throw Exception('exam_id missing');
       }
-    } else {
-      if (mounted) {
+      final url = await ApiClient.instance.examPdfUrl(examId);
+      final uri = Uri.parse(url);
+      if (Platform.isAndroid || Platform.isIOS) {
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('PDF URL: $urlStr'),
+            content: Text('PDF URL: $url'),
             action: SnackBarAction(
               label: '열기',
               onPressed: () async {
@@ -392,112 +576,481 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
           ),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('PDF 생성 실패: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _deploying = false);
+      }
     }
   }
 
-  // ────────────────────────── Build ──────────────────────────
+  Future<void> _aiArrange() async {
+    if (_state.items.isEmpty) return;
+    setState(() {
+      _aiArranging = true;
+      _aiStatus = '문제 배치를 정리하는 중입니다.';
+    });
+    try {
+      final response = await ApiClient.instance.arrangeExamEditorAi(
+        paperId: _paperId,
+        instruction: _buildArrangePrompt(),
+        items: _state.items.asMap().entries.map((entry) {
+          final index = entry.key;
+          final editorItem = entry.value;
+          return {
+            'order_no': index,
+            'page_no': index + 1,
+            'layout_slot': _layoutMode.label,
+            'codebase_id': editorItem.item.codebaseId,
+            'seed': _ensureSessionSeed(editorItem),
+            'quest_id': editorItem.item.questId,
+            'question_type': editorItem.item.questionType,
+            'is_geometry': editorItem.isGeometry,
+          };
+        }).toList(),
+      );
+      if (response['accepted'] != true) {
+        setState(() => _aiStatus = '배치 요청이 거절되었습니다.');
+        return;
+      }
+      final orderedIds = (response['items'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map((entry) => entry['quest_id']?.toString() ?? '')
+          .where((entry) => entry.isNotEmpty)
+          .toList(growable: false);
+      final byQuestId = <String, ExamEditorItem>{
+        for (final item in _state.items)
+          if ((item.item.questId ?? '').isNotEmpty) item.item.questId!: item,
+      };
+      final reordered = <ExamEditorItem>[
+        for (final questId in orderedIds)
+          if (byQuestId.containsKey(questId)) byQuestId[questId]!,
+      ];
+      if (reordered.length != _state.items.length) {
+        reordered
+          ..clear()
+          ..addAll(
+            List<ExamEditorItem>.from(_state.items)..sort(
+              (a, b) => a.item.difficultyTier.compareTo(b.item.difficultyTier),
+            ),
+          );
+      }
+      for (var i = 0; i < reordered.length; i++) {
+        reordered[i] = reordered[i].copyWith(displayIndex: i);
+      }
+      setState(() {
+        _state = _state.copyWith(items: reordered);
+        _aiStatus = '배치를 정리했습니다.';
+      });
+      _rebuildPages();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _aiStatus = '배치 실패: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _aiArranging = false);
+      }
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final scale = courseUiScale(context);
-    return Scaffold(
-      backgroundColor: kCourseBgGrey,
-      appBar: AppBar(
-        backgroundColor: kCourseGreen,
-        foregroundColor: Colors.white,
-        title: TextField(
-          controller: TextEditingController(text: _state.title),
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-          decoration: const InputDecoration(
-            border: InputBorder.none,
-            hintText: '시험지 제목',
-            hintStyle: TextStyle(color: Colors.white54),
+  String _buildArrangePrompt() {
+    final buffer = StringBuffer()
+      ..writeln('시험지 배치 요청')
+      ..writeln('레이아웃: ${_layoutMode.label}')
+      ..writeln('총 문제 수: ${_state.items.length}');
+    for (final item in _state.items) {
+      buffer.writeln(
+        '- 난이도 ${_difficultyLabel(item.item.difficultyTier)} / ${_plainTextOf(item.item.questTitle)}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  Map<String, int> get _tagStats {
+    final stats = <String, int>{};
+    for (final item in _state.items) {
+      for (final tag in item.item.hashTags) {
+        stats[tag] = (stats[tag] ?? 0) + 1;
+      }
+    }
+    final entries = stats.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return {for (final entry in entries) entry.key: entry.value};
+  }
+
+  Map<String, int> get _difficultyStats {
+    final buckets = <String, int>{'상': 0, '중상': 0, '중': 0, '중하': 0, '하': 0};
+    for (final item in _state.items) {
+      final label = _difficultyLabel(item.item.difficultyTier);
+      buckets[label] = (buckets[label] ?? 0) + 1;
+    }
+    return buckets;
+  }
+
+  Future<void> _showLayoutSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '레이아웃 조절',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 14),
+              for (final mode in _EditorLayoutMode.values)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() => _layoutMode = mode);
+                      _rebuildPages();
+                    },
+                    child: Ink(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: mode == _layoutMode
+                              ? kCourseLightGreen
+                              : AppColors.surfaceBorder,
+                          width: mode == _layoutMode ? 2 : 1,
+                        ),
+                        color: mode == _layoutMode
+                            ? kCourseLightGreen.withValues(alpha: 0.08)
+                            : Colors.white,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(mode.icon, color: kCourseGreen),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              mode.label,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (mode == _layoutMode)
+                            const Icon(
+                              Icons.check_circle,
+                              color: kCourseLightGreen,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              setState(() => _state = _state.copyWith(title: value.trim()));
-            }
-          },
-        ),
-        actions: [
-          // Two-per-page toggle
-          Tooltip(
-            message: '2문제/페이지 확장 모드',
-            child: IconButton(
-              icon: Icon(_twoPerPage ? Icons.view_agenda : Icons.grid_view),
-              onPressed: () {
-                setState(() {
-                  _twoPerPage = !_twoPerPage;
-                  final newPages = _twoPerPage
-                      ? ExamEditorLayoutEngine.computeTwoPerPageLayout(_state.items)
-                      : ExamEditorLayoutEngine.computeLayout(_state.items);
-                  _state = _state.copyWith(pages: newPages);
-                });
-              },
+        );
+      },
+    );
+  }
+
+  Future<void> _showStatsSheet() async {
+    final tags = _tagStats.entries.take(12).toList();
+    final difficulties = _difficultyStats.entries.toList();
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      builder: (context) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.72,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: ListView(
+              children: [
+                const Text(
+                  '통계',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 14),
+                _buildStatTile('총 문제 수', '${_state.items.length}개'),
+                _buildStatTile('레이아웃', _layoutMode.label),
+                _buildStatTile(
+                  '객관식 문제',
+                  '${_state.items.where((item) => _optionsFor(item).isNotEmpty).length}개',
+                ),
+                _buildStatTile(
+                  '기하 문제',
+                  '${_state.items.where((item) => item.isGeometry).length}개',
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  '난이도 분포',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 10),
+                for (final entry in difficulties)
+                  _buildStatTile(entry.key, '${entry.value}개'),
+                const SizedBox(height: 18),
+                const Text(
+                  '태그 사용량',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 10),
+                if (tags.isEmpty)
+                  const Text('아직 태그 통계가 없습니다.')
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: tags
+                        .map(
+                          (entry) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              color: const Color(0xFFF3F7EE),
+                              border: Border.all(
+                                color: const Color(0xFFCCD7C2),
+                              ),
+                            ),
+                            child: Text('#${entry.key} ${entry.value}'),
+                          ),
+                        )
+                        .toList(),
+                  ),
+              ],
             ),
           ),
-          // AI Arrange
-          Tooltip(
-            message: 'AI 자동 배치',
-            child: IconButton(
-              icon: _aiArranging
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.auto_awesome),
-              onPressed: _aiArranging ? null : _aiArrange,
-            ),
-          ),
-          // Deploy
-          Tooltip(
-            message: '시험지 배포',
-            child: IconButton(
-              icon: _deploying
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.cloud_upload),
-              onPressed: _deploying ? null : _deployExam,
-            ),
-          ),
-          // PDF
-          Tooltip(
-            message: 'PDF 다운로드',
-            child: IconButton(
-              icon: const Icon(Icons.picture_as_pdf),
-              onPressed: _downloadPdf,
-            ),
-          ),
-          SizedBox(width: 8 * scale),
-        ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStatTile(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF8FAF5),
+        border: Border.all(color: AppColors.surfaceBorder),
       ),
-      body: Row(
+      child: Row(
         children: [
-          // Left panel: search + problem set
-          SizedBox(
-            width: 320 * scale,
-            child: _buildLeftPanel(scale),
-          ),
-          // Center: preview canvas
-          Expanded(child: _buildPreviewCanvas(scale)),
-          // Right panel: toolbar
-          SizedBox(
-            width: 240 * scale,
-            child: _buildRightPanel(scale),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
           ),
         ],
       ),
     );
   }
 
-  // ────────────────────────── Left Panel ──────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    final scale = courseUiScale(context);
+    return Scaffold(
+      backgroundColor: kCourseBgGrey,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildTopBar(scale),
+            Expanded(
+              child: Row(
+                children: [
+                  SizedBox(width: 360 * scale, child: _buildLeftPanel(scale)),
+                  Expanded(child: _buildPreviewArea(scale)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar(double scale) {
+    final fontPt = (14 * _state.fontScale).toStringAsFixed(1);
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        18 * scale,
+        14 * scale,
+        18 * scale,
+        12 * scale,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _titleCtrl,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: '시험지 제목',
+                  ),
+                  style: TextStyle(
+                    fontSize: 22 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: kCourseGreen,
+                  ),
+                ),
+              ),
+              Wrap(
+                spacing: 10 * scale,
+                runSpacing: 10 * scale,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  _buildToolbarChip(
+                    icon: Icons.remove_rounded,
+                    label: 'pt',
+                    onTap: () => _adjustGlobalFont(false),
+                    trailing: Text(fontPt),
+                  ),
+                  _buildToolbarChip(
+                    icon: Icons.add_rounded,
+                    label: 'pt',
+                    onTap: () => _adjustGlobalFont(true),
+                  ),
+                  _buildToolbarChip(
+                    icon: _layoutMode.icon,
+                    label: _layoutMode.label,
+                    onTap: _showLayoutSheet,
+                  ),
+                  _buildToolbarChip(
+                    icon: Icons.query_stats_rounded,
+                    label: '통계',
+                    onTap: _showStatsSheet,
+                  ),
+                  _buildToolbarChip(
+                    icon: Icons.auto_awesome_rounded,
+                    label: _aiArranging ? '배치중' : 'AI 배치',
+                    onTap: _aiArranging ? null : _aiArrange,
+                  ),
+                  _buildToolbarChip(
+                    icon: Icons.folder_copy_rounded,
+                    label: _saving ? '저장중' : '문서함 저장',
+                    onTap: _saving ? null : _saveToDocumentBox,
+                  ),
+                  _buildToolbarChip(
+                    icon: Icons.picture_as_pdf_rounded,
+                    label: _deploying ? 'PDF 준비중' : 'PDF',
+                    onTap: _deploying ? null : _downloadPdf,
+                    filled: true,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (_aiStatus != null || _paperId != null) ...[
+            SizedBox(height: 10 * scale),
+            Row(
+              children: [
+                if (_aiStatus != null)
+                  Expanded(
+                    child: Text(
+                      _aiStatus!,
+                      style: TextStyle(
+                        fontSize: 12 * scale,
+                        color: kCourseGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                if (_paperId != null)
+                  Text(
+                    '저장 ID ${_paperId!.substring(0, _paperId!.length.clamp(0, 12))}',
+                    style: TextStyle(
+                      fontSize: 11 * scale,
+                      color: Colors.black54,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolbarChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+    Widget? trailing,
+    bool filled = false,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: filled ? kCourseGreen : const Color(0xFFF6F8F3),
+          border: Border.all(
+            color: filled ? kCourseGreen : const Color(0xFFD5DDCB),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: filled ? Colors.white : kCourseGreen),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: filled ? Colors.white : Colors.black87,
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: 6),
+              DefaultTextStyle(
+                style: TextStyle(
+                  fontSize: 12,
+                  color: filled ? Colors.white : Colors.black54,
+                ),
+                child: trailing,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildLeftPanel(double scale) {
     return Container(
       color: Colors.white,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Search section
           Container(
-            padding: EdgeInsets.all(16 * scale),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            padding: EdgeInsets.fromLTRB(
+              18 * scale,
+              22 * scale,
+              18 * scale,
+              18 * scale,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,254 +1058,430 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                 Text(
                   '문제 검색',
                   style: TextStyle(
-                    fontSize: 16 * scale,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 26 * scale,
+                    fontWeight: FontWeight.w900,
                     color: kCourseGreen,
                   ),
                 ),
-                SizedBox(height: 8 * scale),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'text', label: Text('텍스트')),
-                    ButtonSegment(value: 'hashtag', label: Text('해시태그')),
-                    ButtonSegment(value: 'date', label: Text('날짜')),
-                  ],
-                  selected: {_searchMode},
-                  onSelectionChanged: (set) => setState(() => _searchMode = set.first),
-                ),
-                SizedBox(height: 8 * scale),
-                TextField(
-                  controller: _searchCtrl,
-                  decoration: InputDecoration(
-                    hintText: _searchMode == 'hashtag'
-                        ? '예: common-math-1'
-                        : _searchMode == 'date'
-                            ? '예: 2024-01'
-                            : '검색어 입력',
-                    filled: true,
-                    fillColor: kCourseBgGrey,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12 * scale),
-                      borderSide: BorderSide.none,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: _performSearch,
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12 * scale,
-                      vertical: 10 * scale,
-                    ),
-                  ),
-                  onSubmitted: (_) => _performSearch(),
-                ),
+                SizedBox(height: 18 * scale),
+                _buildSearchModeControl(scale),
+                SizedBox(height: 14 * scale),
+                _buildSearchField(scale),
               ],
             ),
           ),
-          // Search results
-          if (_searching)
-            const Expanded(child: Center(child: CircularProgressIndicator())),
-          if (_searchError != null)
-            Expanded(
-              child: Center(
-                child: Text(
-                  '오류: $_searchError',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            ),
-          if (!_searching && _searchError == null)
-            Expanded(
-              child: _searchResults.isEmpty
-                  ? Center(
-                      child: Text(
-                        '검색 결과가 없습니다.',
-                        style: TextStyle(
-                          fontSize: 14 * scale,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: _searchResults.length,
-                      itemBuilder: (context, index) {
-                        final quest = _searchResults[index];
-                        final title = quest['quest_title']?.toString() ?? '문제 ${index + 1}';
-                        final tags = (quest['hash_tags'] as List<dynamic>? ?? [])
-                            .map((t) => t.toString())
-                            .toList();
-                        return ListTile(
-                          dense: true,
-                          title: Text(
-                            title.substring(0, title.length.clamp(0, 60)),
-                            style: TextStyle(fontSize: 13 * scale),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Wrap(
-                            spacing: 4,
-                            children: tags
-                                .take(3)
-                                .map((t) => Chip(
-                                      label: Text(t, style: TextStyle(fontSize: 10 * scale)),
-                                      padding: EdgeInsets.zero,
-                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    ))
-                                .toList(),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.add_circle, color: kCourseLightGreen),
-                            onPressed: () => _addItemFromSearch(quest),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          // My Problem Set header
-          Container(
-            padding: EdgeInsets.all(12 * scale),
-            decoration: BoxDecoration(
-              color: kCourseGreen.withValues(alpha: 0.05),
-              border: Border(top: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.folder_open, size: 18 * scale, color: kCourseGreen),
-                SizedBox(width: 8 * scale),
-                Text(
-                  'My Problem Set',
-                  style: TextStyle(
-                    fontSize: 14 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: kCourseGreen,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${_state.items.length}/100',
-                  style: TextStyle(
-                    fontSize: 12 * scale,
-                    color: _state.items.length >= 100 ? Colors.red : Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // My Problem Set list
-          SizedBox(
-            height: 200 * scale,
-            child: _state.items.isEmpty
+          const Divider(height: 1, color: AppColors.surfaceBorder),
+          Expanded(
+            child: _searching
+                ? const Center(child: CircularProgressIndicator())
+                : _searchError != null
                 ? Center(
-                    child: Text(
-                      '문제를 추가하세요',
-                      style: TextStyle(
-                        fontSize: 13 * scale,
-                        color: Colors.black38,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        '검색 실패: $_searchError',
+                        style: const TextStyle(color: Colors.red),
                       ),
                     ),
                   )
-                : ReorderableListView.builder(
-                    itemCount: _state.items.length,
-                    onReorder: _reorderItems,
-                    itemBuilder: (context, index) {
-                      final editorItem = _state.items[index];
-                      return _buildDraggableListTile(editorItem, index, scale);
-                    },
-                  ),
+                : _buildSearchResults(scale),
+          ),
+          _buildProblemSetHeader(scale),
+          SizedBox(height: 260 * scale, child: _buildProblemSet(scale)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchModeControl(double scale) {
+    const modes = [
+      ('text', Icons.check_rounded, '텍스트'),
+      ('hashtag', Icons.sell_rounded, '태그'),
+      ('date', Icons.calendar_month_rounded, '날짜'),
+    ];
+
+    return Container(
+      height: 48 * scale,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24 * scale),
+        border: Border.all(color: Colors.black54, width: 1.2),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: [
+          for (final mode in modes)
+            Expanded(
+              child: _buildSearchModeButton(
+                value: mode.$1,
+                icon: mode.$2,
+                label: mode.$3,
+                scale: scale,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchModeButton({
+    required String value,
+    required IconData icon,
+    required String label,
+    required double scale,
+  }) {
+    final selected = _searchMode == value;
+    return InkWell(
+      onTap: () => setState(() => _searchMode = value),
+      child: Container(
+        height: double.infinity,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected
+              ? kCourseGreen.withValues(alpha: 0.16)
+              : Colors.transparent,
+          border: Border(
+            right: value == 'date'
+                ? BorderSide.none
+                : const BorderSide(color: Colors.black45),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              Icon(icon, size: 18 * scale, color: kCourseGreen),
+              SizedBox(width: 8 * scale),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16 * scale,
+                  color: Colors.black87,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField(double scale) {
+    return SizedBox(
+      height: 62 * scale,
+      child: TextField(
+        controller: _searchCtrl,
+        onSubmitted: (_) => _performSearch(),
+        style: TextStyle(fontSize: 18 * scale, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          hintText: _searchHintText,
+          hintStyle: TextStyle(
+            color: Colors.black54,
+            fontSize: 18 * scale,
+            fontWeight: FontWeight.w500,
+          ),
+          filled: true,
+          fillColor: AppColors.surfaceMuted,
+          contentPadding: EdgeInsets.symmetric(horizontal: 20 * scale),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18 * scale),
+            borderSide: const BorderSide(color: AppColors.surfaceBorder),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18 * scale),
+            borderSide: const BorderSide(color: AppColors.surfaceBorder),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18 * scale),
+            borderSide: const BorderSide(color: kCourseLightGreen, width: 2),
+          ),
+          suffixIcon: IconButton(
+            tooltip: '검색',
+            onPressed: _performSearch,
+            icon: Icon(
+              Icons.search_rounded,
+              size: 28 * scale,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String get _searchHintText {
+    return switch (_searchMode) {
+      'hashtag' => '태그 검색',
+      'date' => '날짜 검색',
+      _ => '문제 내용 검색',
+    };
+  }
+
+  Widget _buildProblemSetHeader(double scale) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        18 * scale,
+        16 * scale,
+        18 * scale,
+        16 * scale,
+      ),
+      color: const Color(0xFFF1F3F2),
+      child: Row(
+        children: [
+          Icon(Icons.folder_outlined, size: 22 * scale, color: kCourseGreen),
+          SizedBox(width: 10 * scale),
+          Text(
+            'My Problem Set',
+            style: TextStyle(
+              fontSize: 18 * scale,
+              fontWeight: FontWeight.w900,
+              color: kCourseGreen,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            '${_state.items.length}/100',
+            style: TextStyle(
+              fontSize: 14 * scale,
+              color: Colors.black54,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDraggableListTile(ExamEditorItem editorItem, int index, double scale) {
-    final key = ValueKey(editorItem.editorId);
-    final title = editorItem.titleText;
-    final isGeometry = editorItem.isGeometry;
-    final isMC = editorItem.isMultipleChoice;
-
-    return ReorderableDragStartListener(
-      index: index,
-      key: key,
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 2 * scale),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8 * scale),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: ListTile(
-          dense: true,
-          leading: Container(
-            width: 24 * scale,
-            height: 24 * scale,
-            decoration: BoxDecoration(
-              color: isGeometry
-                  ? Colors.orange.withValues(alpha: 0.1)
-                  : kCourseLightGreen.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(4 * scale),
-            ),
-            child: Center(
-              child: Text(
-                '${index + 1}',
-                style: TextStyle(
-                  fontSize: 11 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: isGeometry ? Colors.orange : kCourseGreen,
-                ),
-              ),
-            ),
+  Widget _buildSearchResults(double scale) {
+    if (_searchResults.isEmpty) {
+      return _buildEmptyMessage('검색 결과가 없습니다.', scale);
+    }
+    return ListView.separated(
+      padding: EdgeInsets.all(14 * scale),
+      itemBuilder: (context, index) {
+        final quest = _searchResults[index];
+        final titleBlocks = _searchBlocksOf(quest);
+        final tags = _normalizedTagsOf(quest['hash_tags']).take(4).toList();
+        return Container(
+          padding: EdgeInsets.all(14 * scale),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFDFDFC),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFDCE4D4)),
           ),
-          title: Text(
-            title.substring(0, title.length.clamp(0, 50)),
-            style: TextStyle(fontSize: 12 * scale),
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (isGeometry)
-                _buildMiniBadge('기하', Colors.orange, scale),
-              if (isMC)
-                _buildMiniBadge('객관식', Colors.blue, scale),
-              _buildMiniBadge('${editorItem.item.difficultyTier}티어', Colors.grey, scale),
+              ContentBlocksView(
+                blocks: titleBlocks,
+                textStyle: TextStyle(
+                  fontSize: 14 * scale,
+                  height: 1.55,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+                latexStyle: TextStyle(fontSize: 14 * scale, height: 1.55),
+              ),
+              SizedBox(height: 10 * scale),
+              Wrap(
+                spacing: 6 * scale,
+                runSpacing: 6 * scale,
+                children: [
+                  for (final tag in tags) _buildTagPill('#$tag', scale),
+                ],
+              ),
+              SizedBox(height: 10 * scale),
+              Row(
+                children: [
+                  Text(
+                    '난이도 ${_difficultyLabel((quest['difficulty_tier'] as num?)?.toInt() ?? 3)}',
+                    style: TextStyle(
+                      fontSize: 11 * scale,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const Spacer(),
+                  FilledButton.tonalIcon(
+                    onPressed: () => _addItemFromSearch(quest),
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('담기'),
+                  ),
+                ],
+              ),
             ],
           ),
-          trailing: IconButton(
-            icon: Icon(Icons.close, size: 16 * scale, color: Colors.red.shade300),
-            onPressed: () => _removeItem(index),
+        );
+      },
+      separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
+      itemCount: _searchResults.length,
+    );
+  }
+
+  Widget _buildProblemSet(double scale) {
+    if (_state.items.isEmpty) {
+      return _buildEmptyMessage('문제를 담으면 여기에서 순서를 정리합니다.', scale);
+    }
+    return ReorderableListView.builder(
+      padding: EdgeInsets.symmetric(vertical: 8 * scale),
+      itemCount: _state.items.length,
+      onReorder: _reorderItems,
+      itemBuilder: (context, index) {
+        final item = _state.items[index];
+        final tags = item.item.hashTags.take(3);
+        final hasMcq = _optionsFor(item).isNotEmpty;
+        return ReorderableDragStartListener(
+          key: ValueKey(item.editorId),
+          index: index,
+          child: Container(
+            margin: EdgeInsets.symmetric(
+              horizontal: 10 * scale,
+              vertical: 4 * scale,
+            ),
+            padding: EdgeInsets.all(12 * scale),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFDDE5D4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 28 * scale,
+                      height: 28 * scale,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: kCourseGreen.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: kCourseGreen,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Expanded(
+                      child: Text(
+                        _plainTextOf(item.item.questTitle),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13 * scale,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _removeItem(index),
+                      icon: Icon(Icons.close_rounded, size: 18 * scale),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8 * scale),
+                Wrap(
+                  spacing: 6 * scale,
+                  runSpacing: 6 * scale,
+                  children: [
+                    _buildTagPill(
+                      _difficultyLabel(item.item.difficultyTier),
+                      scale,
+                    ),
+                    if (item.isGeometry) _buildTagPill('기하', scale),
+                    if (hasMcq) _buildTagPill('객관식', scale),
+                    for (final tag in tags) _buildTagPill('#$tag', scale),
+                  ],
+                ),
+                SizedBox(height: 8 * scale),
+                Wrap(
+                  spacing: 8 * scale,
+                  runSpacing: 6 * scale,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: hasMcq
+                          ? null
+                          : () => _makeLocalMultipleChoice(item),
+                      icon: const Icon(Icons.auto_fix_high_rounded),
+                      label: const Text('객관식으로 변경'),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(top: 10 * scale),
+                      child: Text(
+                        'seed ${_ensureSessionSeed(item)}',
+                        style: TextStyle(
+                          fontSize: 11 * scale,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyMessage(String message, double scale) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 17 * scale,
+            color: Colors.black45,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMiniBadge(String label, Color color, double scale) {
+  Widget _buildTagPill(String label, double scale) {
     return Container(
-      margin: EdgeInsets.only(right: 4 * scale),
-      padding: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 1 * scale),
+      padding: EdgeInsets.symmetric(
+        horizontal: 10 * scale,
+        vertical: 6 * scale,
+      ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4 * scale),
+        color: const Color(0xFFF3F7EE),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFCAD5C2)),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 9 * scale, color: color),
+        style: TextStyle(fontSize: 11 * scale, color: const Color(0xFF5F6B59)),
       ),
     );
   }
 
-  // ────────────────────────── Preview Canvas ──────────────────────────
-
-  Widget _buildPreviewCanvas(double scale) {
-    if (_state.pages.isEmpty) {
+  Widget _buildPreviewArea(double scale) {
+    if (_state.items.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.assignment_outlined, size: 64 * scale, color: Colors.grey.shade300),
-            SizedBox(height: 16 * scale),
+            Icon(
+              Icons.note_alt_outlined,
+              size: 60 * scale,
+              color: Colors.grey.shade400,
+            ),
+            SizedBox(height: 12 * scale),
             Text(
-              '문제를 추가하여 시험지를 구성하세요',
+              '왼쪽에서 문제를 담아 시험지를 구성하세요.',
               style: TextStyle(fontSize: 16 * scale, color: Colors.black54),
             ),
           ],
@@ -760,14 +1489,60 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
       );
     }
 
+    switch (_layoutMode) {
+      case _EditorLayoutMode.vertical:
+        return _buildVerticalPreview(scale);
+      case _EditorLayoutMode.slider:
+        return _buildSliderPreview(scale);
+      case _EditorLayoutMode.grid4:
+      case _EditorLayoutMode.grid2:
+        return _buildGridPreview(scale);
+    }
+  }
+
+  Widget _buildVerticalPreview(double scale) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(24 * scale),
+      child: Column(
+        children: [
+          for (var i = 0; i < _state.items.length; i++) ...[
+            _buildSingleProblemPage(_state.items[i], i, scale),
+            SizedBox(height: 22 * scale),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliderPreview(double scale) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 26 * scale),
+      child: PageView.builder(
+        controller: _sliderController,
+        itemCount: _state.items.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8 * scale),
+            child: _buildSingleProblemPage(_state.items[index], index, scale),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGridPreview(double scale) {
     return Container(
-      color: Colors.grey.shade100,
+      color: const Color(0xFFF2F4EF),
       child: SingleChildScrollView(
         padding: EdgeInsets.all(24 * scale),
         child: Column(
           children: [
-            for (var pageIndex = 0; pageIndex < _state.pages.length; pageIndex++) ...[
-              _buildPagePreview(pageIndex, scale),
+            for (
+              var pageIndex = 0;
+              pageIndex < _state.pages.length;
+              pageIndex++
+            ) ...[
+              _buildGridPage(pageIndex, scale),
               if (pageIndex < _state.pages.length - 1)
                 SizedBox(height: 24 * scale),
             ],
@@ -777,54 +1552,75 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
     );
   }
 
-  Widget _buildPagePreview(int pageIndex, double scale) {
-    final page = _state.pages[pageIndex];
-    const double paperWidth = 794;
-    const double paperHeight = paperWidth * 297 / 210; // A4
-
+  Widget _buildSingleProblemPage(ExamEditorItem item, int index, double scale) {
+    const paperWidth = 794.0;
+    const paperHeight = paperWidth * 297 / 210;
     return Container(
       width: paperWidth * scale,
       height: paperHeight * scale,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(4 * scale),
+        borderRadius: BorderRadius.circular(6 * scale),
         boxShadow: [
           BoxShadow(
-            blurRadius: 8,
-            color: Colors.black.withValues(alpha: 0.1),
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(20 * scale),
+        child: _buildProblemCard(
+          item,
+          scale,
+          dragTargetId: item.editorId,
+          pageLabel: '${index + 1}/${_state.items.length}',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGridPage(int pageIndex, double scale) {
+    final page = _state.pages[pageIndex];
+    const paperWidth = 794.0;
+    const paperHeight = paperWidth * 297 / 210;
+    return Container(
+      width: paperWidth * scale,
+      height: paperHeight * scale,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Stack(
         children: [
-          // Header
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: 40 * scale,
-              padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+              height: 44 * scale,
+              padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: AppColors.surfaceBorder),
+                ),
               ),
               child: Row(
                 children: [
                   Text(
-                    '제 ${pageIndex + 1} 교시',
-                    style: TextStyle(
-                      fontSize: 12 * scale,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
                     _state.title,
                     style: TextStyle(
-                      fontSize: 12 * scale,
-                      color: Colors.black54,
+                      fontSize: 13 * scale,
+                      fontWeight: FontWeight.w700,
+                      color: kCourseGreen,
                     ),
                   ),
                   const Spacer(),
@@ -839,73 +1635,71 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
               ),
             ),
           ),
-          // Grid content
           Positioned.fill(
-            top: 40 * scale,
-            bottom: 24 * scale,
+            top: 44 * scale,
+            bottom: 26 * scale,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final columnWidth = constraints.maxWidth / 2;
                 final rowHeight = constraints.maxHeight / 2;
-
                 return Stack(
                   children: [
-                    // Items
-                    ...page.entries.map((entry) {
-                      final left = entry.column * columnWidth;
-                      final top = entry.row * rowHeight;
-                      final height = rowHeight * entry.rowSpan;
-                      return Positioned(
-                        left: left,
-                        top: top,
+                    for (final entry in page.entries)
+                      Positioned(
+                        left: entry.column * columnWidth,
+                        top: entry.row * rowHeight,
                         width: columnWidth,
-                        height: height,
-                        child: _buildProblemCell(entry, scale),
-                      );
-                    }),
-                    // Vertical divider
+                        height: rowHeight * entry.rowSpan,
+                        child: Padding(
+                          padding: EdgeInsets.all(8 * scale),
+                          child: _buildProblemCard(
+                            entry.editorItem,
+                            scale,
+                            dragTargetId: entry.editorItem.editorId,
+                            pageLabel: 'p${pageIndex + 1}',
+                          ),
+                        ),
+                      ),
                     Positioned(
                       left: constraints.maxWidth / 2 - 0.5,
                       top: 0,
                       bottom: 0,
-                      child: Container(width: 1, color: Colors.black12),
+                      child: Container(
+                        width: 1,
+                        color: const Color(0xFFE6EAE1),
+                      ),
                     ),
-                    // Horizontal divider (if not all items span full height)
-                    if (page.entries.any((e) => e.rowSpan == 1))
+                    if (page.entries.any((entry) => entry.rowSpan == 1))
                       Positioned(
                         left: 0,
                         right: 0,
                         top: constraints.maxHeight / 2 - 0.5,
-                        child: Container(height: 1, color: Colors.black12),
+                        child: Container(
+                          height: 1,
+                          color: const Color(0xFFE6EAE1),
+                        ),
                       ),
                   ],
                 );
               },
             ),
           ),
-          // Footer
           Positioned(
-            bottom: 0,
             left: 0,
             right: 0,
+            bottom: 0,
             child: Container(
-              height: 24 * scale,
-              padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.grey.shade300)),
+              height: 26 * scale,
+              padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.surfaceBorder)),
               ),
-              child: Row(
-                children: [
-                  Text(
-                    'AIFlow',
-                    style: TextStyle(fontSize: 9 * scale, color: Colors.black38),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${pageIndex + 1} / ${_state.pages.length}',
-                    style: TextStyle(fontSize: 9 * scale, color: Colors.black38),
-                  ),
-                ],
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  _layoutMode.label,
+                  style: TextStyle(fontSize: 10 * scale, color: Colors.black45),
+                ),
               ),
             ),
           ),
@@ -914,116 +1708,235 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
     );
   }
 
-  Widget _buildProblemCell(EditorLayoutEntry entry, double scale) {
-    final editorItem = entry.editorItem;
-    final item = editorItem.item;
-    final blocks = parseContentBlocks(item.questTitle);
-    final options = editorItem.options;
-    final fontSize = 14.0 * _state.fontScale * scale;
+  Widget _buildProblemCard(
+    ExamEditorItem item,
+    double scale, {
+    required String dragTargetId,
+    required String pageLabel,
+  }) {
+    final fontSize = 14.0 * _state.fontScale * _fontScaleFor(item) * scale;
+    final contentBlocks = _blocksOf(item.item.questTitle);
+    final options = _optionsFor(item);
+    final title = _plainTextOf(item.item.questTitle);
+    final tags = item.item.hashTags.take(4).toList();
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (details) => details.data != dragTargetId,
+      onAcceptWithDetails: (details) => _swapItems(details.data, dragTargetId),
+      builder: (context, candidateData, rejectedData) {
+        final highlighted = candidateData.isNotEmpty;
+        return LongPressDraggable<String>(
+          data: item.editorId,
+          feedback: Material(
+            color: Colors.transparent,
+            child: SizedBox(
+              width: 260 * scale,
+              child: _buildDragGhost(title, scale),
+            ),
+          ),
+          childWhenDragging: Opacity(
+            opacity: 0.55,
+            child: _buildProblemCardBody(
+              item,
+              contentBlocks,
+              options,
+              tags,
+              fontSize,
+              scale,
+              highlighted,
+              pageLabel,
+            ),
+          ),
+          child: _buildProblemCardBody(
+            item,
+            contentBlocks,
+            options,
+            tags,
+            fontSize,
+            scale,
+            highlighted,
+            pageLabel,
+          ),
+        );
+      },
+    );
+  }
 
+  Widget _buildDragGhost(String title, double scale) {
     return Container(
       padding: EdgeInsets.all(12 * scale),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade100),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: kCourseLightGreen, width: 2),
+      ),
+      child: Text(
+        title,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 13 * scale, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _buildProblemCardBody(
+    ExamEditorItem item,
+    List<ContentBlock> contentBlocks,
+    List<String> options,
+    List<String> tags,
+    double fontSize,
+    double scale,
+    bool highlighted,
+    String pageLabel,
+  ) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      padding: EdgeInsets.all(14 * scale),
+      decoration: BoxDecoration(
+        color: highlighted ? const Color(0xFFF4FAEE) : const Color(0xFFFFFEFC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: highlighted ? kCourseLightGreen : const Color(0xFFDCE4D4),
+          width: highlighted ? 2 : 1,
+        ),
       ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Problem number + badges
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 2 * scale),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 9 * scale,
+                    vertical: 4 * scale,
+                  ),
                   decoration: BoxDecoration(
                     color: kCourseGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4 * scale),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '${editorItem.displayIndex + 1}',
+                    '${item.displayIndex + 1}',
                     style: TextStyle(
                       fontSize: 12 * scale,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: kCourseGreen,
                     ),
                   ),
                 ),
-                if (editorItem.isGeometry) ...[
-                  SizedBox(width: 4 * scale),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 1 * scale),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4 * scale),
-                    ),
-                    child: Text(
-                      '기하',
-                      style: TextStyle(fontSize: 9 * scale, color: Colors.orange),
-                    ),
+                SizedBox(width: 8 * scale),
+                Expanded(
+                  child: Wrap(
+                    spacing: 6 * scale,
+                    runSpacing: 6 * scale,
+                    children: [
+                      _buildTagPill(
+                        _difficultyLabel(item.item.difficultyTier),
+                        scale,
+                      ),
+                      if (item.isGeometry) _buildTagPill('기하', scale),
+                      if (options.isNotEmpty) _buildTagPill('객관식', scale),
+                      for (final tag in tags) _buildTagPill('#$tag', scale),
+                    ],
                   ),
-                ],
-                if (editorItem.isMultipleChoice) ...[
-                  SizedBox(width: 4 * scale),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 1 * scale),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4 * scale),
-                    ),
-                    child: Text(
-                      '객관식',
-                      style: TextStyle(fontSize: 9 * scale, color: Colors.blue),
-                    ),
-                  ),
-                ],
+                ),
               ],
             ),
-            SizedBox(height: 6 * scale),
-            // Problem content
-            ContentBlocksView(
-              blocks: blocks,
-              textStyle: TextStyle(fontSize: fontSize, height: 1.4),
-              latexStyle: TextStyle(fontSize: fontSize, height: 1.4),
-              inline: true,
+            SizedBox(height: 10 * scale),
+            Row(
+              children: [
+                Text(
+                  'seed ${_ensureSessionSeed(item)}',
+                  style: TextStyle(fontSize: 10 * scale, color: Colors.black45),
+                ),
+                const Spacer(),
+                Text(
+                  pageLabel,
+                  style: TextStyle(fontSize: 10 * scale, color: Colors.black45),
+                ),
+                SizedBox(width: 8 * scale),
+                _fontButton(
+                  Icons.remove_rounded,
+                  () => _adjustItemFont(item, false),
+                ),
+                SizedBox(width: 4 * scale),
+                _fontButton(
+                  Icons.add_rounded,
+                  () => _adjustItemFont(item, true),
+                ),
+              ],
             ),
-            // Options
+            SizedBox(height: 12 * scale),
+            ContentBlocksView(
+              blocks: contentBlocks,
+              textStyle: TextStyle(
+                fontSize: fontSize,
+                height: 1.7,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+              latexStyle: TextStyle(
+                fontSize: fontSize,
+                height: 1.7,
+                color: Colors.black87,
+              ),
+            ),
             if (options.isNotEmpty) ...[
-              SizedBox(height: 8 * scale),
-              ...options.asMap().entries.map((optEntry) {
-                final optIndex = optEntry.key;
-                final optText = optEntry.value;
-                final optBlocks = parseContentBlocks(optText);
-                return Padding(
-                  padding: EdgeInsets.only(bottom: 2 * scale),
+              SizedBox(height: 12 * scale),
+              for (final entry in options.asMap().entries)
+                Padding(
+                  padding: EdgeInsets.only(bottom: 8 * scale),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 18 * scale,
-                        height: 18 * scale,
-                        margin: EdgeInsets.only(right: 6 * scale, top: 1 * scale),
+                        width: 24 * scale,
+                        height: 24 * scale,
+                        alignment: Alignment.center,
+                        margin: EdgeInsets.only(
+                          right: 8 * scale,
+                          top: 2 * scale,
+                        ),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.shade400),
+                          color: const Color(0xFFF5F7F3),
+                          border: Border.all(color: const Color(0xFFD6DED0)),
                         ),
-                        child: Center(
-                          child: Text(
-                            String.fromCharCode(0x2460 + optIndex), // ①, ②, ③...
-                            style: TextStyle(fontSize: 10 * scale, color: Colors.black54),
+                        child: Text(
+                          String.fromCharCode(0x2460 + entry.key),
+                          style: TextStyle(
+                            fontSize: 11 * scale,
+                            color: Colors.black54,
                           ),
                         ),
                       ),
                       Expanded(
                         child: ContentBlocksView(
-                          blocks: optBlocks,
-                          textStyle: TextStyle(fontSize: fontSize * 0.9, height: 1.3),
-                          inline: true,
+                          blocks: _blocksOf(entry.value),
+                          textStyle: TextStyle(
+                            fontSize: fontSize * 0.92,
+                            height: 1.55,
+                            color: Colors.black87,
+                          ),
+                          latexStyle: TextStyle(
+                            fontSize: fontSize * 0.92,
+                            height: 1.55,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                );
-              }),
+                ),
+            ] else ...[
+              SizedBox(height: 12 * scale),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () => _makeLocalMultipleChoice(item),
+                  icon: const Icon(Icons.auto_fix_high_rounded),
+                  label: const Text('객관식으로 변경'),
+                ),
+              ),
             ],
           ],
         ),
@@ -1031,141 +1944,19 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
     );
   }
 
-  // ────────────────────────── Right Panel ──────────────────────────
-
-  Widget _buildRightPanel(double scale) {
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.all(16 * scale),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '설정',
-            style: TextStyle(
-              fontSize: 16 * scale,
-              fontWeight: FontWeight.bold,
-              color: kCourseGreen,
-            ),
-          ),
-          SizedBox(height: 16 * scale),
-          // Font size
-          Text(
-            '글자 크기',
-            style: TextStyle(fontSize: 13 * scale, fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 8 * scale),
-          Slider(
-            value: _state.fontScale,
-            min: 0.7,
-            max: 1.5,
-            divisions: 16,
-            label: '${(_state.fontScale * 100).round()}%',
-            onChanged: _setFontScale,
-            activeColor: kCourseLightGreen,
-          ),
-          Center(
-            child: Text(
-              '${(_state.fontScale * 100).round()}%',
-              style: TextStyle(fontSize: 12 * scale, color: Colors.black54),
-            ),
-          ),
-          SizedBox(height: 24 * scale),
-          // Layout mode
-          Text(
-            '레이아웃',
-            style: TextStyle(fontSize: 13 * scale, fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 8 * scale),
-          SwitchListTile(
-            title: Text('2문제/페이지 확장', style: TextStyle(fontSize: 12 * scale)),
-            subtitle: Text('채점 영역 확보', style: TextStyle(fontSize: 10 * scale, color: Colors.black54)),
-            value: _twoPerPage,
-            onChanged: (v) {
-              setState(() {
-                _twoPerPage = v;
-                final newPages = _twoPerPage
-                    ? ExamEditorLayoutEngine.computeTwoPerPageLayout(_state.items)
-                    : ExamEditorLayoutEngine.computeLayout(_state.items);
-                _state = _state.copyWith(pages: newPages);
-              });
-            },
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-          const Divider(),
-          SizedBox(height: 16 * scale),
-          // Stats
-          Text(
-            '통계',
-            style: TextStyle(fontSize: 13 * scale, fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 8 * scale),
-          _buildStatRow('총 문제', '${_state.items.length}', scale),
-          _buildStatRow('페이지 수', '${_state.pages.length}', scale),
-          _buildStatRow('기하 문제', '${_state.items.where((i) => i.isGeometry).length}', scale),
-          _buildStatRow('객관식', '${_state.items.where((i) => i.isMultipleChoice).length}', scale),
-          const Spacer(),
-          // AI status
-          if (_aiStatus != null) ...[
-            Container(
-              padding: EdgeInsets.all(8 * scale),
-              decoration: BoxDecoration(
-                color: kCourseLightGreen.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8 * scale),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.auto_awesome, size: 14 * scale, color: kCourseLightGreen),
-                  SizedBox(width: 6 * scale),
-                  Expanded(
-                    child: Text(
-                      _aiStatus!,
-                      style: TextStyle(fontSize: 11 * scale, color: kCourseGreen),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 8 * scale),
-          ],
-          // Deploy status
-          if (_deployExamId != null) ...[
-            Container(
-              padding: EdgeInsets.all(8 * scale),
-              decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8 * scale),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.cloud, size: 14 * scale, color: Colors.blue),
-                  SizedBox(width: 6 * scale),
-                  Expanded(
-                    child: Text(
-                      '배포 ID: ${_deployExamId!.substring(0, _deployExamId!.length.clamp(0, 16))}...',
-                      style: TextStyle(fontSize: 11 * scale, color: Colors.blue),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 8 * scale),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatRow(String label, String value, double scale) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 3 * scale),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 12 * scale, color: Colors.black54)),
-          Text(value, style: TextStyle(fontSize: 12 * scale, fontWeight: FontWeight.w600)),
-        ],
+  Widget _fontButton(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Ink(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F7F0),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: const Color(0xFFD6DED0)),
+        ),
+        child: Icon(icon, size: 14, color: Colors.black54),
       ),
     );
   }

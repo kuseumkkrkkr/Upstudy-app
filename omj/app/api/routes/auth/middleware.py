@@ -5,11 +5,11 @@ Provides:
   checks role against allowed set, and injects user metadata into
   request.state.
 """
-from typing import Optional, Sequence
+from typing import Optional
 
 from fastapi import Request, HTTPException, status
 
-from auth import decode_token
+from auth import decode_token, resolve_token_payload_user
 
 
 def require_role(*roles: str):
@@ -23,12 +23,12 @@ def require_role(*roles: str):
     Validates:
       - Authorization: Bearer <token> header present and well-formed.
       - JWT signature / expiry (via omj.auth.decode_token).
-      - payload["role"] is one of the allowed *roles.
+      - persisted DB role is one of the allowed *roles.
 
     Injects into request.state:
       - user_id   (from payload["sub"])
       - username  (from payload.get("username") or payload["sub"])
-      - role      (from payload["role"])
+      - role      (resolved from DB, token role only for non-elevated anonymous users)
 
     Raises:
       - 401 if token missing, malformed, expired, or invalid.
@@ -57,7 +57,8 @@ def require_role(*roles: str):
                 detail="Invalid token",
             )
 
-        user_role = payload.get("role")
+        user = resolve_token_payload_user(payload)
+        user_role = user["role"]
         allowed = set(roles)
         if user_role not in allowed:
             raise HTTPException(
@@ -65,17 +66,10 @@ def require_role(*roles: str):
                 detail="Insufficient role",
             )
 
-        user_id = payload.get("sub")
-        username = payload.get("username") or user_id
-
-        request.state.user_id = user_id
-        request.state.username = username
+        request.state.user_id = user["user_id"]
+        request.state.username = user["username"]
         request.state.role = user_role
 
-        return {
-            "user_id": user_id,
-            "username": username,
-            "role": user_role,
-        }
+        return user
 
     return _dependency

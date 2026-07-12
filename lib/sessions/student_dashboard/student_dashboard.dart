@@ -19,6 +19,8 @@ export 'package:s11/sessions/student_dashboard/ui/pages/student_dashboard_page.d
 
 // UI - Widgets
 export 'package:s11/sessions/student_dashboard/ui/widgets/learning_tools_strip.dart';
+export 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
 
 // Business
 export 'package:s11/sessions/student_dashboard/business/student_dashboard_data.dart';
+export 'package:s11/sessions/student_dashboard/business/activity_badge_catalog.dart';

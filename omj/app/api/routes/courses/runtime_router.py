@@ -54,6 +54,54 @@ def _ensure_runtime_state(course, user_id: str, state: dict[str, Any]) -> dict[s
     return out
 
 
+def _auto_complete_empty_wrong_answer_reviews(
+    course,
+    module_id: str,
+    state: dict[str, Any],
+    completed_modules: list[str],
+    *,
+    correct_count: int,
+    total_count: int,
+) -> list[str]:
+    if total_count <= 0 or correct_count < total_count:
+        return completed_modules
+
+    review_prefix = f"{module_id}_wa_"
+    review_ids = [
+        module.id
+        for module in course.modules
+        if module.type == CourseModuleType.wrong_answer_review
+        and str(module.id or "").startswith(review_prefix)
+    ]
+    if not review_ids:
+        return completed_modules
+
+    module_results = dict(state.get("module_results") or {})
+    completed_day = dict(state.get("module_completed_day") or {})
+    current_day = _current_day_offset(state)
+    changed = False
+    for review_id in review_ids:
+        if review_id in completed_modules:
+            continue
+        completed_modules.append(review_id)
+        module_results[review_id] = {
+            "passed": True,
+            "accuracy": 100,
+            "correct_count": 0,
+            "total_count": 0,
+            "auto_completed": True,
+            "reason": "no_wrong_answers",
+        }
+        completed_day[review_id] = current_day
+        changed = True
+
+    if changed:
+        state["completed_modules"] = completed_modules
+        state["module_results"] = module_results
+        state["module_completed_day"] = completed_day
+    return completed_modules
+
+
 def _default_deadline_days(course) -> list[int]:
     settings = course.curriculum_settings or {}
     deadlines = settings.get("module_deadline_days")
@@ -333,6 +381,10 @@ def _can_access_course(request: Request, course) -> bool:
         return True
     if role == "teacher" and course.owner_user_id == user_id:
         return True
+    if role == "student":
+        state = repo.get_runtime_state(user_id, course.id)
+        if state.get("assigned_by_teacher") is True:
+            return True
     group_id = str(course.access_group_id or "").strip()
     if group_id and academy_repo.is_active_group_member(group_id=group_id, user_id=user_id):
         if course.access_academy_id:
@@ -340,6 +392,35 @@ def _can_access_course(request: Request, course) -> bool:
             return bool(group and str(group.get("academy_id") or "") == str(course.access_academy_id))
         return True
     return False
+
+
+def _can_access_runtime_target(request: Request, course, target_user_id: str) -> bool:
+    role: str = getattr(request.state, "role", "student")
+    caller_id: str = getattr(request.state, "user_id", "")
+    if not target_user_id:
+        return False
+    if target_user_id == caller_id:
+        return True
+    if role == "admin":
+        return True
+    if role != "teacher" or course.owner_user_id != caller_id:
+        return False
+
+    target_state = repo.get_runtime_state(target_user_id, course.id)
+    if target_state.get("assigned_by_teacher") is True:
+        return True
+    if target_state and bool(course.is_public):
+        return True
+
+    group_id = str(course.access_group_id or "").strip()
+    if not group_id:
+        return False
+    if not academy_repo.is_active_group_member(group_id=group_id, user_id=target_user_id):
+        return False
+    if course.access_academy_id:
+        group = academy_repo.get_group(group_id)
+        return bool(group and str(group.get("academy_id") or "") == str(course.access_academy_id))
+    return True
 
 
 def _blocks_to_text(value: Any) -> str:
@@ -523,6 +604,8 @@ async def runtime_next(
     target_user_id = _target_user(request, body.get("user_id"))
     if not target_user_id:
         return _wrap(None, "user_id is required")
+    if not _can_access_runtime_target(request, course, target_user_id):
+        return _wrap(None, "Course not found")
 
     current_module_id = body.get("current_module_id")
     resume = body.get("resume") is True
@@ -599,6 +682,8 @@ async def runtime_state(
     target_user_id = _target_user(request, user_id)
     if not target_user_id:
         return _wrap(None, "user_id is required")
+    if not _can_access_runtime_target(request, course, target_user_id):
+        return _wrap(None, "Course not found")
 
     persisted = repo.get_runtime_state(target_user_id, course_id)
     state = _ensure_runtime_state(course, target_user_id, persisted)
@@ -658,6 +743,8 @@ async def runtime_submit(
     target_user_id = _target_user(request, body.get("user_id"))
     if not target_user_id:
         return _wrap(None, "user_id is required")
+    if not _can_access_runtime_target(request, course, target_user_id):
+        return _wrap(None, "Course not found")
 
     persisted = repo.get_runtime_state(target_user_id, course_id)
     incoming = body.get("student_state") or {}
@@ -718,6 +805,16 @@ async def runtime_submit(
         state["module_completed_day"] = completed_day
 
         state = _enforce_deadline_and_pause(course, module_id, state)
+
+    if pass_result["passed"]:
+        completed_modules = _auto_complete_empty_wrong_answer_reviews(
+            course,
+            module_id,
+            state,
+            completed_modules,
+            correct_count=correct_count,
+            total_count=total_count,
+        )
 
     repo.upsert_runtime_state(target_user_id, course_id, state)
 
@@ -781,6 +878,8 @@ async def textbook_view_start(
     target_user_id = _target_user(request, body.get("user_id"))
     if not target_user_id:
         return _wrap(None, "user_id is required")
+    if not _can_access_runtime_target(request, course, target_user_id):
+        return _wrap(None, "Course not found")
 
     requested_from = _safe_int(body.get("page_from"), default=None)
     requested_to = _safe_int(body.get("page_to"), default=None)
@@ -900,6 +999,8 @@ async def textbook_view_heartbeat(
     target_user_id = _target_user(request, body.get("user_id"))
     if not target_user_id:
         return _wrap(None, "user_id is required")
+    if not _can_access_runtime_target(request, course, target_user_id):
+        return _wrap(None, "Course not found")
 
     module_from, module_to = _normalize_page_range(
         textbook,
@@ -1001,6 +1102,8 @@ async def textbook_view_complete(
     target_user_id = _target_user(request, body.get("user_id"))
     if not target_user_id:
         return _wrap(None, "user_id is required")
+    if not _can_access_runtime_target(request, course, target_user_id):
+        return _wrap(None, "Course not found")
 
     module_from, module_to = _normalize_page_range(
         textbook,

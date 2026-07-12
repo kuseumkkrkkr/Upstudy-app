@@ -1,10 +1,11 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
+import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 
 Future<Course?> showCurriculumModal({required BuildContext context}) {
   return showDialog<Course>(
@@ -18,7 +19,7 @@ Future<Course?> showCurriculumModal({required BuildContext context}) {
           children: [
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
             const Center(child: CourseSelectModal()),
           ],
@@ -57,9 +58,9 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
     } catch (_) {
       setState(() => _loading = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('코스를 불러오지 못했습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('코스를 불러오지 못했습니다.')));
     }
   }
 
@@ -70,19 +71,18 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
     items.insert(newIndex, item);
     setState(() => _courses = items);
     try {
-      await CourseService.reorderEnrollments(
-        items.map((c) => c.id).toList(),
-      );
+      await CourseService.reorderEnrollments(items.map((c) => c.id).toList());
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('순서 저장 실패: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('순서 저장 실패: $e')));
     }
   }
 
   Future<void> _handleDelete(Course course) async {
-    final confirm = await showDialog<bool>(
+    final confirm =
+        await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('코스 삭제'),
@@ -112,14 +112,14 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('코스가 삭제되었습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('코스가 삭제되었습니다.')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('삭제 실패: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
     }
   }
 
@@ -127,8 +127,12 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 980.0;
-        final maxH = constraints.maxHeight.isFinite ? constraints.maxHeight : 600.0;
+        final maxW = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 980.0;
+        final maxH = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 600.0;
         final width = math.min(980.0, maxW * 0.95);
         final height = math.min(560.0, maxH * 0.9);
         final scale = (width / 980.0).clamp(0.7, 1.0);
@@ -176,49 +180,50 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
                     : _courses.isEmpty
-                        ? _EmptyCourses(scale: scale)
-                        : _editMode
-                            ? Padding(
-                                padding: EdgeInsets.all(12 * scale),
-                                child: ReorderableListView.builder(
-                                  itemCount: _courses.length,
-                                  onReorder: _handleReorder,
-                                  buildDefaultDragHandles: false,
-                                  itemBuilder: (context, index) {
-                                    final course = _courses[index];
-                                    return _EditableCourseTile(
-                                      key: ValueKey(course.id),
-                                      course: course,
-                                      scale: scale,
-                                      onDelete: () => _handleDelete(course),
-                                      index: index,
-                                    );
-                                  },
-                                ),
-                              )
-                            : ListView.separated(
-                                padding: EdgeInsets.all(20 * scale),
-                                itemCount: _courses.length,
-                                separatorBuilder: (_, __) =>
-                                    SizedBox(height: 14 * scale),
-                                itemBuilder: (context, index) {
-                                  final course = _courses[index];
-                                  return _CourseSelectCard(
-                                    course: course,
-                                    scale: scale,
-                                    onTap: () =>
-                                        Navigator.of(context).pop(course),
-                                  );
-                                },
-                              ),
+                    ? _EmptyCourses(scale: scale)
+                    : _editMode
+                    ? Padding(
+                        padding: EdgeInsets.all(12 * scale),
+                        child: ReorderableListView.builder(
+                          itemCount: _courses.length,
+                          onReorder: _handleReorder,
+                          buildDefaultDragHandles: false,
+                          itemBuilder: (context, index) {
+                            final course = _courses[index];
+                            return _EditableCourseTile(
+                              key: ValueKey(course.id),
+                              course: course,
+                              scale: scale,
+                              onDelete: () => _handleDelete(course),
+                              index: index,
+                            );
+                          },
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: EdgeInsets.all(20 * scale),
+                        itemCount: _courses.length,
+                        separatorBuilder: (_, __) =>
+                            SizedBox(height: 14 * scale),
+                        itemBuilder: (context, index) {
+                          final course = _courses[index];
+                          return _CourseSelectCard(
+                            course: course,
+                            scale: scale,
+                            onTap: () => Navigator.of(context).pop(course),
+                          );
+                        },
+                      ),
               ),
               if (!_loading)
                 Padding(
                   padding: EdgeInsets.only(bottom: 18 * scale),
                   child: Text(
                     '최대 4개의 코스를 수강할 수 있습니다.',
-                    style:
-                        TextStyle(fontSize: 12 * scale, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 12 * scale,
+                      color: Colors.black54,
+                    ),
                   ),
                 ),
             ],
@@ -245,7 +250,15 @@ class _EmptyCourses extends StatelessWidget {
           ),
           SizedBox(height: 12 * scale),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              final navigator = Navigator.of(context, rootNavigator: true);
+              navigator.pop();
+              Future.microtask(
+                () => navigator.push(
+                  MaterialPageRoute(builder: (_) => const CourseCatalogPage()),
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1B402B),
               foregroundColor: Colors.white,
@@ -376,8 +389,10 @@ class _EditableCourseTile extends StatelessWidget {
       key: key,
       margin: EdgeInsets.symmetric(vertical: 6 * scale),
       child: ListTile(
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 6 * scale),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 12 * scale,
+          vertical: 6 * scale,
+        ),
         leading: ReorderableDragStartListener(
           index: index,
           child: const Icon(Icons.drag_handle),

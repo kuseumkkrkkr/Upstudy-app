@@ -11,7 +11,6 @@ const Color _bgGreyFriend = Color(0xFFF4F6F2);
 
 // ── 추가 디자인 토큰 ──────────────────────────────────────────
 const Color _green50 = Color(0xFFEAF3DE);
-const Color _green100 = Color(0xFFC0DD97);
 const Color _green600 = Color(0xFF3B6D11);
 const Color _green800 = Color(0xFF27500A);
 const Color _surfaceWhite = Color(0xFFFFFFFF);
@@ -97,6 +96,7 @@ class _SoWidgetState extends State<SoWidget> {
   final List<_GroupInfo> _groups = [];
   bool _loadingRanks = false;
   bool _loadingGroups = false;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // ── 원본과 동일한 lifecycle ──────────────────────────────────
   @override
@@ -371,18 +371,27 @@ class _SoWidgetState extends State<SoWidget> {
         before: loadMore ? _threadsBefore : null,
       );
       if (!mounted) return;
-      final mapped = fetched.map((dm) {
-        final name = dm.from.isNotEmpty ? dm.from : dm.to;
-        return _MessageInfo(
-          name: name,
-          lastMessage: dm.text,
-          timeAgo: _formatTimeLabel(dm.createdAt),
+      final mapped = <_MessageInfo>[];
+      final seen = <String>{};
+      for (final dm in fetched) {
+        final name = _peerNameForDirectMessage(dm);
+        if (name.isEmpty || !seen.add(name)) continue;
+        mapped.add(
+          _MessageInfo(
+            name: name,
+            lastMessage: dm.text,
+            timeAgo: _formatTimeLabel(dm.createdAt),
+          ),
         );
-      }).toList();
-      final combined = loadMore ? [..._messages, ...mapped] : mapped;
-      combined.sort((a, b) => b.timeAgo.compareTo(a.timeAgo));
+      }
+      final combined = <_MessageInfo>[if (loadMore) ..._messages, ...mapped];
+      final deduped = <_MessageInfo>[];
+      final dedupeNames = <String>{};
+      for (final thread in combined) {
+        if (dedupeNames.add(thread.name)) deduped.add(thread);
+      }
       setState(() {
-        _messages = combined;
+        _messages = deduped;
         _threadsHasMore = fetched.length >= 15;
         _threadsBefore = fetched.isNotEmpty
             ? fetched.last.createdAt.toIso8601String()
@@ -394,12 +403,19 @@ class _SoWidgetState extends State<SoWidget> {
     }
   }
 
+  String _peerNameForDirectMessage(DirectMessage message) {
+    final mineTarget = message.isMine ? message.to : message.from;
+    if (mineTarget.trim().isNotEmpty) return mineTarget.trim();
+    final fallback = message.isMine ? message.from : message.to;
+    return fallback.trim();
+  }
+
   void _handleSocketEvent(Map<String, dynamic> event) {
     final type = event['type']?.toString() ?? '';
     final payload = event['payload'];
     if (type.isEmpty || payload == null) return;
     Map<String, dynamic>? data;
-    if (payload is Map) data = Map<String, dynamic>.from(payload as Map);
+    if (payload is Map) data = Map<String, dynamic>.from(payload);
     switch (type) {
       case 'direct_message':
         if (data != null) _handleDirectMessageEvent(data);
@@ -511,10 +527,11 @@ class _SoWidgetState extends State<SoWidget> {
         _friendRequests.removeWhere((req) => req.id == request.id);
       });
       _syncNotificationCounts();
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${request.username}님의 요청을 거절했어요.')),
         );
+      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -532,10 +549,11 @@ class _SoWidgetState extends State<SoWidget> {
         _friendRequests.removeWhere((req) => req.id == request.id);
       });
       _syncNotificationCounts();
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('친구 요청을 취소했어요.')));
+      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -583,10 +601,11 @@ class _SoWidgetState extends State<SoWidget> {
   }
 
   void _markMessagesRead({String? thread}) {
-    if (thread != null)
+    if (thread != null) {
       _unreadThreads.remove(thread);
-    else
+    } else {
       _unreadThreads.clear();
+    }
     setState(() => _unreadMessages = _unreadThreads.length);
     _syncNotificationCounts();
   }
@@ -634,6 +653,9 @@ class _SoWidgetState extends State<SoWidget> {
           .toDouble();
   double _tagOvrValue(double rating) =>
       _tagDisplayValue(rating) / _tagOvrDivider;
+  String _tagOvrLabel(double rating) => rating.isNaN || rating <= 0
+      ? '--'
+      : _tagOvrValue(rating).toStringAsFixed(1);
   double _visibleDelta(double rating, double delta) =>
       _tagOvrValue(rating) - _tagOvrValue(rating - delta);
 
@@ -661,7 +683,7 @@ class _SoWidgetState extends State<SoWidget> {
   // UI 헬퍼
   // ══════════════════════════════════════════════════════════════
 
-  /// 문서함 섹션 카드와 동일한 컨테이너 스펙
+  /// 책가방 섹션 카드와 동일한 컨테이너 스펙
   BoxDecoration _cardDeco({double radius = 14}) => BoxDecoration(
     color: _surfaceWhite,
     borderRadius: BorderRadius.circular(radius),
@@ -859,7 +881,7 @@ class _SoWidgetState extends State<SoWidget> {
                       chipBg: _green50,
                       textColor: _green800,
                       metricBuilder: (item) =>
-                          'OVR ${_tagOvrValue(item.rating).toStringAsFixed(1)}',
+                          'OVR ${_tagOvrLabel(item.rating)}',
                     ),
                   ],
                 ),
@@ -890,7 +912,7 @@ class _SoWidgetState extends State<SoWidget> {
                       chipBg: const Color(0xFFF1EFE8),
                       textColor: const Color(0xFF5F5E5A),
                       metricBuilder: (item) =>
-                          'OVR ${_tagOvrValue(item.rating).toStringAsFixed(1)}',
+                          'OVR ${_tagOvrLabel(item.rating)}',
                     ),
                   ],
                 ),
@@ -1459,7 +1481,6 @@ class _SoWidgetState extends State<SoWidget> {
         ),
       ),
     );
-    _markMessagesRead();
   }
 
   void _openMessageThread(_MessageInfo info) {
@@ -1637,8 +1658,9 @@ class _SoWidgetState extends State<SoWidget> {
                 await ApiClient.instance.joinStudyGroup(groupId: group.id);
                 if (!mounted) return;
                 setState(() {
-                  if (_groups.every((g) => g.id != group.id))
+                  if (_groups.every((g) => g.id != group.id)) {
                     _groups.add(group);
+                  }
                 });
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(
@@ -2016,6 +2038,7 @@ class _SoWidgetState extends State<SoWidget> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        key: _scaffoldKey,
         // ── 배경: 흰색 ────────────────────────────────────────
         backgroundColor: _surfaceWhite,
         drawer: const AppDrawer(),
@@ -2030,7 +2053,13 @@ class _SoWidgetState extends State<SoWidget> {
                 // ────────────────────────────────────────────────────
                 Ios26TopBar(
                   brandColor: primaryColor,
-                  onMenu: () => toggleAppDrawer(context),
+                  onMenu: () {
+                    final state = _scaffoldKey.currentState;
+                    if (state == null) return;
+                    state.isDrawerOpen
+                        ? Navigator.of(context).pop()
+                        : state.openDrawer();
+                  },
                   onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => const MainStudentPage()),
                     (route) => false,
@@ -2045,7 +2074,7 @@ class _SoWidgetState extends State<SoWidget> {
                       ),
                     ),
                     Ios26NavItem(
-                      label: '문서함',
+                      label: '책가방',
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const docx.BookWidget(),

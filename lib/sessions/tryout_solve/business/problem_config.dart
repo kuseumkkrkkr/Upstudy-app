@@ -41,6 +41,7 @@ class ProblemSolveConfig {
     required Map<String, dynamic>? quest,
     required bool isCorrect,
     required List<Map<String, dynamic>> stepCorrectness,
+    int? selectedIndex,
     int? elapsedSeconds,
   })?
   onProblemGraded;
@@ -68,6 +69,7 @@ class ProblemSolveConfig {
       required Map<String, dynamic>? quest,
       required bool isCorrect,
       required List<Map<String, dynamic>> stepCorrectness,
+      int? selectedIndex,
       int? elapsedSeconds,
     })?
     onProblemGraded,
@@ -95,7 +97,7 @@ class ProblemSolveConfig {
     }
 
     final parsedCount = (json['question_count'] as num?)?.toInt() ?? 3;
-    final clampedCount = parsedCount.clamp(3, 40);
+    final clampedCount = parsedCount.clamp(1, 40);
 
     return ProblemSolveConfig(
       questionCount: clampedCount.toInt(),

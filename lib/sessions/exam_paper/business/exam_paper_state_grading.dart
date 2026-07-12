@@ -1,6 +1,7 @@
 part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
-mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin {
+mixin _ExamPaperGradingMixin
+    on _ExamPaperStateBase, _ExamPaperInteractionMixin {
   // Gemini prompt/model is handled on the server.
   static const HeatmapConfig _heatmapConfig = HeatmapConfig();
   int _resolveExamQuestionCount() {
@@ -31,69 +32,47 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
   }
 
   void _showMessage(String message) {
-
-    ScaffoldMessenger.of(context).showSnackBar(
-
-      SnackBar(content: Text(message)),
-
-    );
-
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-
-
   Future<void> _confirmFinishExam() async {
-
     if (_examFinished) return;
 
     final confirmed = await showDialog<bool>(
-
       context: context,
 
       builder: (context) {
-
         return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
 
           title: const Text('시험 종료'),
 
-          content: const Text(
-
-            '시험을 종료하면\n더 이상 답안을 수정할 수 없습니다.',
-
-          ),
+          content: const Text('시험을 종료하면\n더 이상 답안을 수정할 수 없습니다.'),
 
           actions: [
-
             TextButton(
-
               onPressed: () => Navigator.of(context).pop(false),
 
-              child: const Text('ì·¨ì'),
-
+              child: const Text('취소'),
             ),
 
             ElevatedButton(
-
               onPressed: () => Navigator.of(context).pop(true),
 
               style: ElevatedButton.styleFrom(
-
                 backgroundColor: const Color(0xFF1B402B),
 
                 foregroundColor: Colors.white,
-
               ),
 
               child: const Text('종료'),
-
             ),
-
           ],
-
         );
-
       },
-
     );
 
     if (confirmed == true && mounted) {
@@ -109,69 +88,51 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
         ).catchError((_) {}),
       );
       await _startBatchGrading();
-
     }
   }
 
-
   Future<void> _startBatchGrading() async {
-
     if (_grading) return;
 
     if (!_examFinished) {
-
       _showMessage('시험을 먼저 종료해 주세요.');
 
       return;
-
     }
 
     final status = _examStatus;
 
     if (status == null || status.status != 'done') {
-
       _showMessage('시험지 생성이 완료된 후에 채점할 수 있습니다.');
 
       return;
-
     }
 
     if (_pageLayouts.isEmpty) {
-
       _showMessage('채점할 문제가 없습니다.');
 
       return;
-
     }
 
     if (_toolMode == _ToolMode.pen && _currentStroke != null) {
-
       _finishStroke();
-
     } else if (_toolMode == _ToolMode.eraser && _eraserActive) {
-
       _finishEraser();
-
     }
 
     final totalQuestions = _pageLayouts.fold<int>(
-
       0,
 
       (sum, page) => sum + page.entries.length,
-
     );
 
     if (totalQuestions == 0) {
-
       _showMessage('채점할 문제가 없습니다.');
 
       return;
-
     }
 
     setState(() {
-
       _grading = true;
 
       _gradingCancelled = false;
@@ -185,13 +146,9 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
       _gradingPreviewRegion = null;
       _gradingPreviewPageIndex = null;
       _gradingPreviewItemIndex = null;
-
     });
 
-
-
     for (var pageIndex = 0; pageIndex < _pageLayouts.length; pageIndex++) {
-
       if (!mounted || _gradingCancelled) break;
 
       final layout = _pageLayouts[pageIndex];
@@ -201,19 +158,14 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
         isFirstPage: pageIndex == 0,
       );
       for (final region in regions) {
-
         if (!mounted || _gradingCancelled) break;
 
         try {
-
           final strokes = _pageStrokes.length > pageIndex
-
               ? _pageStrokes[pageIndex]
-
               : const <_Stroke>[];
 
           final result = await _gradeQuestion(
-
             item: region.item,
             pageIndex: pageIndex,
 
@@ -222,19 +174,15 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
             strokes: strokes,
 
             totalQuestions: totalQuestions,
-
           );
 
           if (!mounted) return;
 
           setState(() {
-
             _gradeResults[region.item.itemIndex!] = result;
 
             _gradingCompleted += 1;
-
           });
-
         } catch (error) {
           if (!mounted) return;
           final quest = await _loadQuest(region.item.questId);
@@ -249,10 +197,7 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
           });
         }
       }
-
     }
-
-
 
     if (!mounted) return;
 
@@ -267,19 +212,14 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     });
 
     if (wasCancelled) {
-
       _showMessage('채점이 취소되었습니다.');
 
       return;
-
     }
 
     unawaited(_submitExamRatings());
     _openGradingReport();
-
   }
-
-
 
   Future<_GradeResult> _gradeQuestion({
     required ExamItem item,
@@ -294,8 +234,10 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     if (relevant.length <= 2) {
       return _GradeResult.empty(item.itemIndex!, quest: quest);
     }
-    final imageBytes =
-        await _renderStrokesToPngForRegion(relevant, targetRegion);
+    final imageBytes = await _renderStrokesToPngForRegion(
+      relevant,
+      targetRegion,
+    );
     if (mounted) {
       setState(() {
         _gradingPreviewBytes = imageBytes;
@@ -344,12 +286,8 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
       heatmapImage: heatmapImage,
     );
     final analysis = '';
-    final stepCorrectness = _resolveStepCorrectness(
-      response: response,
-    );
-    final isCorrect = _resolveIsCorrect(
-      response: response,
-    );
+    final stepCorrectness = _resolveStepCorrectness(response: response);
+    final isCorrect = _resolveIsCorrect(response: response);
     return _GradeResult.success(
       item.itemIndex!,
       analysis: analysis,
@@ -359,7 +297,6 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
       quest: quest,
     );
   }
-
 
   Future<Uint8List> _renderStrokesToPngForRegion(
     List<_Stroke> strokes,
@@ -418,10 +355,7 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     }
   }
 
-  List<_Stroke> _extractStrokesInRegion(
-    List<_Stroke> strokes,
-    Rect region,
-  ) {
+  List<_Stroke> _extractStrokesInRegion(List<_Stroke> strokes, Rect region) {
     final filtered = <_Stroke>[];
     for (final stroke in strokes) {
       final bounds = stroke.bounds;
@@ -458,9 +392,7 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     return const [];
   }
 
-  bool? _resolveIsCorrect({
-    required SolveAnalysisResponse response,
-  }) {
+  bool? _resolveIsCorrect({required SolveAnalysisResponse response}) {
     return response.isCorrect;
   }
 
@@ -474,6 +406,7 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
         visit(branch);
       }
     }
+
     for (final step in steps) {
       visit(step);
     }
@@ -547,10 +480,7 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
           if (points.isEmpty) break;
           filtered.add(
             HeatmapEvent.eraser(
-              HeatmapEraserStroke(
-                points: points,
-                order: event.order,
-              ),
+              HeatmapEraserStroke(points: points, order: event.order),
             ),
           );
           break;
@@ -571,10 +501,7 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
         'reasons': reasons.toList(),
       });
     });
-    return _HeatmapPayload(
-      result: result,
-      highlightBounds: highlightBounds,
-    );
+    return _HeatmapPayload(result: result, highlightBounds: highlightBounds);
   }
 
   List<Offset> _filterPointsToRegion(List<Offset> points, Rect region) {
@@ -613,10 +540,7 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
         .clamp(0, _pageLayouts.length - 1)
         .toInt();
     final layout = _pageLayouts[pageIndex];
-    return _questionRegionsForPage(
-      layout,
-      isFirstPage: pageIndex == 0,
-    );
+    return _questionRegionsForPage(layout, isFirstPage: pageIndex == 0);
   }
 
   List<_QuestionRegion> _questionRegionsForPage(
@@ -624,8 +548,9 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     required bool isFirstPage,
   }) {
     _ensureHeaderFooterMetrics();
-    final headerHeight =
-        isFirstPage ? (_estimatedHeaderHeight ?? 0) : _secondaryHeaderHeight;
+    final headerHeight = isFirstPage
+        ? (_estimatedHeaderHeight ?? 0)
+        : _secondaryHeaderHeight;
     final footerHeight = _estimatedFooterHeight ?? 0;
 
     const headerGap = 18.0;
@@ -636,24 +561,17 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
 
     final contentWidth = _paperWidth - padding.left - padding.right;
 
-    final contentHeight = _paperHeight -
-
+    final contentHeight =
+        _paperHeight -
         padding.top -
-
         padding.bottom -
-
         headerHeight -
-
         footerHeight -
-
         headerGap -
-
         footerGap;
 
     if (contentHeight <= 0 || contentWidth <= 0) {
-
       return const [];
-
     }
 
     final contentTop = padding.top + headerHeight + headerGap;
@@ -665,15 +583,11 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
     final rowHeight = contentHeight / 2;
 
     return layout.entries
-
         .map(
-
           (entry) => _QuestionRegion(
-
             item: entry.item,
 
             rect: Rect.fromLTWH(
-
               contentLeft + entry.column * columnWidth,
 
               contentTop + entry.row * rowHeight,
@@ -681,173 +595,111 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
               columnWidth,
 
               rowHeight * entry.rowSpan,
-
             ),
-
           ),
-
         )
-
         .toList();
-
   }
 
-
-
   void _ensureHeaderFooterMetrics() {
-
     if (_estimatedHeaderHeight != null && _estimatedFooterHeight != null) {
-
       return;
-
     }
 
     final textScaler = MediaQuery.textScalerOf(context);
 
     const baseStyle = TextStyle(
-
       fontSize: 13.5,
 
       height: 1.5,
 
       fontFamily: 'Batang',
-
     );
 
     final pillStyle = baseStyle.copyWith(
-
       fontSize: 22,
 
       fontWeight: FontWeight.bold,
-
     );
 
     final titleStyle = baseStyle.copyWith(fontSize: 21);
 
     final headerTitleStyle = baseStyle.copyWith(
-
       fontSize: 41,
 
       fontWeight: FontWeight.bold,
 
       letterSpacing: 14,
-
     );
 
-    final pillTextHeight = _measureTextHeight(
+    final pillTextHeight = _measureTextHeight('제 2 교시', pillStyle, textScaler);
 
-      '제 2 교시',
-
-      pillStyle,
-
-      textScaler,
-
-    );
-
-    final boxTextHeight = _measureTextHeight(
-
-      '가형',
-
-      pillStyle,
-
-      textScaler,
-
-    );
+    final boxTextHeight = _measureTextHeight('가형', pillStyle, textScaler);
 
     final titleHeight = _measureTextHeight(
-
       '2025학년도 대학수학능력시험 문제지',
 
       titleStyle,
 
       textScaler,
-
     );
 
     final rowHeight = math.max(
-
       pillTextHeight + 10,
 
       math.max(boxTextHeight + 12, titleHeight),
-
     );
 
     final subjectHeight = _measureTextHeight(
-
       '수학 영역',
 
       headerTitleStyle,
 
       textScaler,
-
     );
 
     _estimatedHeaderHeight = rowHeight + 10 + subjectHeight + 12;
 
-    final footerTextHeight =
-
-        _measureTextHeight('1', baseStyle, textScaler);
+    final footerTextHeight = _measureTextHeight('1', baseStyle, textScaler);
 
     _estimatedFooterHeight = footerTextHeight + 4;
-
   }
 
-
-
   double _measureTextHeight(
-
     String text,
 
     TextStyle style,
 
     TextScaler textScaler,
-
   ) {
-
     final painter = TextPainter(
-
       text: TextSpan(text: text, style: style),
 
       textDirection: TextDirection.ltr,
 
       textScaler: textScaler,
-
     )..layout();
 
     return painter.height;
-
   }
 
-
-
-
-
   void _openGradingReport() {
-
     if (_gradeResults.isEmpty) return;
 
     final results = _gradeResults.values.toList()
-
       ..sort((a, b) => a.itemIndex.compareTo(b.itemIndex));
 
     Navigator.of(context).push(
-
       MaterialPageRoute(
-
         builder: (_) => _ExamGradingReportPage(
-
           results: results,
 
           totalQuestions: _gradingTotal,
 
           examId: widget.examId,
-
         ),
-
       ),
-
     );
-
   }
 
   Future<void> _submitExamRatings() async {
@@ -881,16 +733,10 @@ mixin _ExamPaperGradingMixin on _ExamPaperStateBase, _ExamPaperInteractionMixin 
       await Future.wait(futures);
     } catch (_) {}
   }
-
-
-
 }
 
 class _HeatmapPayload {
-  const _HeatmapPayload({
-    required this.result,
-    required this.highlightBounds,
-  });
+  const _HeatmapPayload({required this.result, required this.highlightBounds});
 
   final HeatmapResult result;
   final List<Map<String, dynamic>> highlightBounds;

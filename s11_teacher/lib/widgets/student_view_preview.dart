@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/textbook.dart';
 import '../models/content_block.dart';
@@ -86,12 +86,15 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
 
   // ??? State ???
   final ValueNotifier<int> _activeEntryNotifier = ValueNotifier<int>(0);
-  final ValueNotifier<bool> _sidebarCollapsedNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _sidebarCollapsedNotifier = ValueNotifier<bool>(
+    false,
+  );
   int _activeEntryIndex = 0;
   Timer? _scrollThrottleTimer;
 
   // ??? Caching ???
-  final Map<String, List<ContentBlock>> _latexCache = <String, List<ContentBlock>>{};
+  final Map<String, List<ContentBlock>> _latexCache =
+      <String, List<ContentBlock>>{};
 
   // ??? Viewport culling ???
   static const double _viewportOverscan = 800.0;
@@ -102,10 +105,7 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
     super.initState();
     _contentEntries = _buildContentEntries(widget.book.chapters);
     _tocEntries = _buildTocEntries(_contentEntries);
-    _chapterExpanded = List.generate(
-      widget.book.chapters.length,
-      (i) => true,
-    );
+    _chapterExpanded = List.generate(widget.book.chapters.length, (i) => true);
     for (var i = 0; i < _contentEntries.length; i++) {
       _sectionKeys.add(GlobalKey());
       _sectionOffsets.add(0.0);
@@ -119,20 +119,24 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
     final entries = <_PreviewEntry>[];
     for (var i = 0; i < chapters.length; i++) {
       final chapter = chapters[i];
-      entries.add(_PreviewEntry(
-        chapterIndex: i,
-        level: 0,
-        title: chapter.title,
-        paragraphs: chapter.intro,
-      ));
-      for (final section in chapter.sections) {
-        entries.add(_PreviewEntry(
+      entries.add(
+        _PreviewEntry(
           chapterIndex: i,
-          level: 1,
-          title: section.title,
-          paragraphs: section.paragraphs,
-          images: section.images,
-        ));
+          level: 0,
+          title: chapter.title,
+          paragraphs: chapter.intro,
+        ),
+      );
+      for (final section in chapter.sections) {
+        entries.add(
+          _PreviewEntry(
+            chapterIndex: i,
+            level: 1,
+            title: section.title,
+            paragraphs: section.paragraphs,
+            images: section.images,
+          ),
+        );
       }
     }
     return entries;
@@ -142,15 +146,17 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
     final toc = <_TocEntry>[];
     for (var i = 0; i < entries.length; i++) {
       final e = entries[i];
-      final hasChildren = e.level == 0 &&
-          (i + 1 < entries.length && entries[i + 1].level == 1);
-      toc.add(_TocEntry(
-        entryIndex: i,
-        chapterIndex: e.chapterIndex,
-        level: e.level,
-        title: e.title,
-        hasChildren: hasChildren,
-      ));
+      final hasChildren =
+          e.level == 0 && (i + 1 < entries.length && entries[i + 1].level == 1);
+      toc.add(
+        _TocEntry(
+          entryIndex: i,
+          chapterIndex: e.chapterIndex,
+          level: e.level,
+          title: e.title,
+          hasChildren: hasChildren,
+        ),
+      );
     }
     return toc;
   }
@@ -175,9 +181,11 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
     if (listBox == null) return;
     final exact = <int, double>{};
     for (var i = 0; i < _sectionKeys.length; i++) {
-      final box = _sectionKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      final box =
+          _sectionKeys[i].currentContext?.findRenderObject() as RenderBox?;
       if (box != null) {
-        exact[i] = box.localToGlobal(Offset.zero, ancestor: listBox).dy +
+        exact[i] =
+            box.localToGlobal(Offset.zero, ancestor: listBox).dy +
             _contentController.offset;
       }
     }
@@ -204,7 +212,10 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
             break;
           }
         }
-        if (beforeOffset != null && afterOffset != null && beforeIdx != null && afterIdx != null) {
+        if (beforeOffset != null &&
+            afterOffset != null &&
+            beforeIdx != null &&
+            afterIdx != null) {
           final t = (i - beforeIdx) / (afterIdx - beforeIdx);
           _sectionOffsets[i] = beforeOffset + (afterOffset - beforeOffset) * t;
         } else if (beforeOffset != null && beforeIdx != null) {
@@ -278,7 +289,9 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
   }
 
   void _toggleChapter(int chapterIndex) {
-    setState(() => _chapterExpanded[chapterIndex] = !_chapterExpanded[chapterIndex]);
+    setState(
+      () => _chapterExpanded[chapterIndex] = !_chapterExpanded[chapterIndex],
+    );
   }
 
   Future<void> _openProfileMenu(BuildContext context) async {
@@ -321,7 +334,10 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                   ? const SizedBox.shrink()
                   : Padding(
                       padding: const EdgeInsets.only(top: 10),
-                      child: Text(error, style: const TextStyle(color: Colors.red)),
+                      child: Text(
+                        error,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
             ),
           ],
@@ -344,15 +360,16 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                       }
                       isBusy.value = true;
                       try {
-                        await ApiClient.instance.deleteMyProfile(password: password);
+                        await ApiClient.instance.deleteMyProfile(
+                          password: password,
+                        );
                         await ApiClient.instance.clearToken();
                         if (!mounted) return;
                         Navigator.of(dialogContext).pop();
                         if (!mounted) return;
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/login',
-                          (route) => false,
-                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/login', (route) => false);
                       } catch (e) {
                         errorText.value = e.toString();
                       } finally {
@@ -482,7 +499,9 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                 Navigator.pop(context);
                 await ApiClient.instance.clearToken();
                 if (!mounted) return;
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/login', (route) => false);
               },
             ),
           ],
@@ -514,7 +533,8 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
             final found = <_SearchResult>[];
             for (var i = 0; i < _contentEntries.length; i++) {
               final entry = _contentEntries[i];
-              final text = '${entry.title} ${entry.paragraphs.join(' ')}'.toLowerCase();
+              final text = '${entry.title} ${entry.paragraphs.join(' ')}'
+                  .toLowerCase();
               if (text.contains(q)) {
                 var preview = entry.paragraphs.firstWhere(
                   (p) => p.toLowerCase().contains(q),
@@ -523,11 +543,13 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                 if (preview.length > 80) {
                   preview = '${preview.substring(0, 80)}...';
                 }
-                found.add(_SearchResult(
-                  entryIndex: i,
-                  title: entry.title,
-                  preview: preview,
-                ));
+                found.add(
+                  _SearchResult(
+                    entryIndex: i,
+                    title: entry.title,
+                    preview: preview,
+                  ),
+                );
               }
             }
             setModalState(() => results = found);
@@ -599,7 +621,10 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                             itemBuilder: (_, i) {
                               final r = results[i];
                               return ListTile(
-                                leading: const Icon(Icons.article_outlined, color: _kPrimary),
+                                leading: const Icon(
+                                  Icons.article_outlined,
+                                  color: _kPrimary,
+                                ),
                                 title: Text(
                                   r.title,
                                   style: const TextStyle(
@@ -642,7 +667,7 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
       return NetworkImage(trimmed);
     }
     if (trimmed.startsWith('/')) {
-      return NetworkImage('${ApiClient.baseUrl}$trimmed');
+      return NetworkImage(ApiClient.resourceUrl(trimmed));
     }
     return AssetImage(trimmed);
   }
@@ -650,12 +675,11 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
   // ??? LaTeX Cache ???
 
   Widget _buildLatexAware(String text, TextStyle style) {
-    final blocks = _latexCache.putIfAbsent(text, () => parseTextWithLatex(text));
-    return ContentBlocksView(
-      inline: true,
-      blocks: blocks,
-      textStyle: style,
+    final blocks = _latexCache.putIfAbsent(
+      text,
+      () => parseTextWithLatex(text),
     );
+    return ContentBlocksView(inline: true, blocks: blocks, textStyle: style);
   }
 
   // ??? Graph Widget Selection (minimal stub, appended to last section) ???
@@ -759,9 +783,7 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                   width: collapsed ? 0 : 260 * scale,
                   child: collapsed
                       ? null
-                      : ClipRect(
-                          child: _buildSidebar(scale),
-                        ),
+                      : ClipRect(child: _buildSidebar(scale)),
                 );
               },
             ),
@@ -776,9 +798,7 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
               },
             ),
             // Content
-            Expanded(
-              child: _buildContent(scale),
-            ),
+            Expanded(child: _buildContent(scale)),
           ],
         ),
       ),
@@ -829,9 +849,7 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
       width: 260 * scale,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          right: BorderSide(color: _kBorder),
-        ),
+        border: Border(right: BorderSide(color: _kBorder)),
       ),
       child: Column(
         children: [
@@ -862,7 +880,10 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                   ),
                   onPressed: () => _sidebarCollapsedNotifier.value = true,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
                 ),
               ],
             ),
@@ -879,7 +900,9 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                     final toc = _tocEntries[i];
                     final isActive = activeIndex == toc.entryIndex;
                     final isChapter = toc.level == 0;
-                    final isExpanded = isChapter ? _chapterExpanded[toc.chapterIndex] : true;
+                    final isExpanded = isChapter
+                        ? _chapterExpanded[toc.chapterIndex]
+                        : true;
 
                     // Hide section entries if chapter collapsed
                     if (!isChapter && !_chapterExpanded[toc.chapterIndex]) {
@@ -902,7 +925,9 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                           color: isActive ? _kPrimary : Colors.transparent,
                           borderRadius: BorderRadius.circular(6 * scale),
                           border: isActive
-                              ? const Border(bottom: BorderSide(color: _kBorder))
+                              ? const Border(
+                                  bottom: BorderSide(color: _kBorder),
+                                )
                               : null,
                         ),
                         margin: EdgeInsets.symmetric(
@@ -913,9 +938,13 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                           children: [
                             if (isChapter && toc.hasChildren)
                               Icon(
-                                isExpanded ? Icons.expand_more : Icons.chevron_right,
+                                isExpanded
+                                    ? Icons.expand_more
+                                    : Icons.chevron_right,
                                 size: 16 * scale,
-                                color: isActive ? Colors.white70 : Colors.grey.shade500,
+                                color: isActive
+                                    ? Colors.white70
+                                    : Colors.grey.shade500,
                               )
                             else
                               SizedBox(width: 16 * scale),
@@ -927,10 +956,14 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                                     : toc.title,
                                 style: TextStyle(
                                   fontSize: isChapter ? 13 * scale : 12 * scale,
-                                  fontWeight: isChapter ? FontWeight.w700 : FontWeight.w500,
+                                  fontWeight: isChapter
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
                                   color: isActive
                                       ? Colors.white
-                                      : (isChapter ? Colors.black87 : Colors.black54),
+                                      : (isChapter
+                                            ? Colors.black87
+                                            : Colors.black54),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -947,14 +980,22 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
           ),
           // Bottom tools ??exact student layout
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+            padding: EdgeInsets.symmetric(
+              horizontal: 12 * scale,
+              vertical: 8 * scale,
+            ),
             decoration: const BoxDecoration(
               border: Border(top: BorderSide(color: _kBorder)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildToolButton(Icons.search, '검색', scale, () => _openSearch()),
+                _buildToolButton(
+                  Icons.search,
+                  '검색',
+                  scale,
+                  () => _openSearch(),
+                ),
                 _buildToolButton(Icons.chevron_left, '?댁쟾', scale, () {
                   if (_activeEntryIndex > 0) {
                     _scrollToEntry(_activeEntryIndex - 1);
@@ -973,7 +1014,12 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
     );
   }
 
-  Widget _buildToolButton(IconData icon, String tooltip, double scale, VoidCallback onPressed) {
+  Widget _buildToolButton(
+    IconData icon,
+    String tooltip,
+    double scale,
+    VoidCallback onPressed,
+  ) {
     return IconButton(
       icon: Icon(icon, size: 18 * scale, color: Colors.grey.shade600),
       onPressed: onPressed,
@@ -1050,7 +1096,12 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                   ),
                   itemCount: _contentEntries.length,
                   itemBuilder: (_, i) {
-                    return _buildContentEntry(_contentEntries[i], i, scale, constraints);
+                    return _buildContentEntry(
+                      _contentEntries[i],
+                      i,
+                      scale,
+                      constraints,
+                    );
                   },
                 );
               },
@@ -1070,13 +1121,15 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
     BoxConstraints constraints,
   ) {
     // Viewport culling: skip rendering if far offscreen
-    final itemTop = index < _sectionOffsets.length ? _sectionOffsets[index] : 0.0;
+    final itemTop = index < _sectionOffsets.length
+        ? _sectionOffsets[index]
+        : 0.0;
     final viewportTop = _contentController.offset - _viewportOverscan;
-    final viewportBottom = _contentController.offset +
-        constraints.maxHeight +
-        _viewportOverscan;
+    final viewportBottom =
+        _contentController.offset + constraints.maxHeight + _viewportOverscan;
 
-    final isFarOffscreen = itemTop + _averageItemHeight * widget.scale < viewportTop ||
+    final isFarOffscreen =
+        itemTop + _averageItemHeight * widget.scale < viewportTop ||
         itemTop > viewportBottom;
 
     if (isFarOffscreen && _sectionOffsets[index] > 0) {
@@ -1185,9 +1238,7 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
 // ??? Minimal Graph Placeholder Card ???
 
 class _ProfileDialog extends StatefulWidget {
-  const _ProfileDialog({
-    required this.onProfileUpdated,
-  });
+  const _ProfileDialog({required this.onProfileUpdated});
 
   final VoidCallback onProfileUpdated;
 
@@ -1291,7 +1342,9 @@ class _ProfileDialogState extends State<_ProfileDialog> {
                 children: [
                   TextField(
                     controller: _idController,
-                    decoration: const InputDecoration(labelText: 'ID / Login ID'),
+                    decoration: const InputDecoration(
+                      labelText: 'ID / Login ID',
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -1317,13 +1370,17 @@ class _ProfileDialogState extends State<_ProfileDialog> {
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'New Password (optional)'),
+                    decoration: const InputDecoration(
+                      labelText: 'New Password (optional)',
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _passwordConfirmController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'New Password confirm'),
+                    decoration: const InputDecoration(
+                      labelText: 'New Password confirm',
+                    ),
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 10),

@@ -14,11 +14,10 @@ import 'package:s11/shared/services/storage/local_db.dart';
 import 'package:s11/shared/business/repositories/textbook_store.dart';
 import 'package:s11/shared/ui/graphs/graph_selector.dart';
 
-
 Future<T?> showBookLibraryModal<T>({
   required BuildContext context,
   String headerTitle = '교재보기',
-  String libraryTitle = 'Owned Books',
+  String libraryTitle = '교재함',
   List<BookData>? books,
   List<String> selectedTags = const [],
   String? notice,
@@ -84,7 +83,7 @@ class BookWidget extends StatefulWidget {
 class BookLibraryPage extends StatelessWidget {
   const BookLibraryPage({
     super.key,
-    this.libraryTitle = 'Owned Books',
+    this.libraryTitle = '교재함',
     this.books,
     this.selectedTags = const [],
     this.notice,
@@ -101,9 +100,9 @@ class BookLibraryPage extends StatelessWidget {
 
   Future<void> _downloadBook(BuildContext context, BookData book) async {
     if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('웹에서는 교재를 기기에 저장할 수 없습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('웹에서는 교재를 기기에 저장할 수 없습니다.')));
       return;
     }
     try {
@@ -113,14 +112,14 @@ class BookLibraryPage extends StatelessWidget {
       }
       await TextbookStore.download(full);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('교재를 저장했습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('교재를 저장했습니다.')));
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('교재 저장에 실패했습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('교재 저장에 실패했습니다.')));
     }
   }
 
@@ -142,7 +141,10 @@ class BookLibraryPage extends StatelessWidget {
                 children: [
                   IconButton(
                     iconSize: 36,
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF3B3B3B)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF3B3B3B),
+                    ),
                     onPressed: () => Navigator.maybePop(context),
                   ),
                   Text(
@@ -183,12 +185,11 @@ class BookLibraryPage extends StatelessWidget {
   }
 }
 
-
 class BookLibraryModal extends StatelessWidget {
   const BookLibraryModal({
     super.key,
     this.headerTitle = '교재보기',
-    this.libraryTitle = 'Owned Books',
+    this.libraryTitle = '교재함',
     this.books,
     this.selectedTags = const [],
     this.notice,
@@ -232,22 +233,22 @@ class BookLibraryModal extends StatelessWidget {
             ],
           ),
           const Divider(height: 1),
-            Expanded(
-              child: _BookLibraryLoader(
-                onSelect: (book) {
-                  final navigator = Navigator.of(context, rootNavigator: true);
-                  navigator.pop();
-                  navigator.push(
-                    MaterialPageRoute(builder: (_) => BookWidget(book: book)),
-                  );
-                },
-                books: books,
-                title: libraryTitle,
-                selectedTags: selectedTags,
-                notice: notice,
-                category: category,
-              ),
+          Expanded(
+            child: _BookLibraryLoader(
+              onSelect: (book) {
+                final navigator = Navigator.of(context, rootNavigator: true);
+                navigator.pop();
+                navigator.push(
+                  MaterialPageRoute(builder: (_) => BookWidget(book: book)),
+                );
+              },
+              books: books,
+              title: libraryTitle,
+              selectedTags: selectedTags,
+              notice: notice,
+              category: category,
             ),
+          ),
         ],
       ),
     );
@@ -335,7 +336,7 @@ class _BookLibraryBody extends StatelessWidget {
   const _BookLibraryBody({
     required this.onSelect,
     required this.books,
-    this.title = 'Owned Books',
+    this.title = '교재함',
     this.selectedTags = const [],
     this.notice,
     this.enableDownload = false,
@@ -370,71 +371,68 @@ class _BookLibraryBody extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               Text(
-                '${books.length} items',
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '총 ${books.length}권',
                 style: const TextStyle(color: Colors.black54, fontSize: 13),
               ),
             ],
           ),
         ),
-          if (hasTags || showNotice)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hasTags) ...[
-                    const Text(
-                      '선택한 개념',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black54,
-                      ),
+        if (hasTags || showNotice)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasTags) ...[
+                  const Text(
+                    '선택한 개념',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
                     ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: selectedTags
-                          .map(
-                            (tag) => Chip(
-                              label: Text(
-                                tag,
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              visualDensity: VisualDensity.compact,
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: selectedTags
+                        .map(
+                          (tag) => Chip(
+                            label: Text(
+                              tag,
+                              style: const TextStyle(fontSize: 11),
                             ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                  if (hasTags && showNotice) const SizedBox(height: 6),
-                  if (showNotice)
-                    Text(
-                      notice!,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.black54,
-                      ),
-                    ),
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        )
+                        .toList(),
+                  ),
                 ],
-              ),
+                if (hasTags && showNotice) const SizedBox(height: 6),
+                if (showNotice)
+                  Text(
+                    notice!,
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  ),
+              ],
             ),
-          Expanded(
+          ),
+        Expanded(
           child: books.isEmpty
               ? const Center(
                   child: Text(
-                    'No books available.',
+                    '표시할 교재가 없습니다.',
                     style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
                 )
@@ -446,7 +444,7 @@ class _BookLibraryBody extends StatelessWidget {
                     final progress = book.progress.clamp(0.0, 1.0);
                     final label = book.progressLabel.isNotEmpty
                         ? book.progressLabel
-                        : '${(progress * 100).round()}% complete';
+                        : '${(progress * 100).round()}% 완료';
                     final showDownload = enableDownload && onDownload != null;
                     return InkWell(
                       onTap: () => onSelect(book),
@@ -621,7 +619,10 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
                 children: [
                   IconButton(
                     iconSize: 36,
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF3B3B3B)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF3B3B3B),
+                    ),
                     onPressed: () => Navigator.maybePop(context),
                   ),
                   Text(
@@ -648,7 +649,7 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
                   if (items.isEmpty) {
                     return const Center(
                       child: Text(
-                        'No bookmarks yet.',
+                        '저장한 북마크가 없습니다.',
                         style: TextStyle(fontSize: 16, color: Colors.black54),
                       ),
                     );
@@ -702,7 +703,8 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         title,
@@ -771,8 +773,9 @@ class _BookWidgetState extends State<BookWidget> {
   List<bool> _chapterExpanded = const [];
   bool _initialized = false;
   bool _contentListenerAttached = false;
-  final ValueNotifier<bool> _sidebarCollapsedNotifier =
-      ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _sidebarCollapsedNotifier = ValueNotifier<bool>(
+    false,
+  );
   bool _loadingFullBook = false;
   String _currentBookId = '';
   String _currentBookTitle = '';
@@ -911,8 +914,10 @@ class _BookWidgetState extends State<BookWidget> {
   void _recordBookView(BookData book) {
     final number = TextbookStore.displayNumberFor(book);
     unawaited(
-      ActivityStore.recordBookView(bookId: book.id, bookNumber: number)
-          .catchError((_) {}),
+      ActivityStore.recordBookView(
+        bookId: book.id,
+        bookNumber: number,
+      ).catchError((_) {}),
     );
   }
 
@@ -951,9 +956,9 @@ class _BookWidgetState extends State<BookWidget> {
 
   void _showAnnotationBlocked() {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('웹에서는 필기 저장이 지원되지 않습니다.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('웹에서는 필기 저장이 지원되지 않습니다.')));
   }
 
   Future<void> _loadAnnotations() async {
@@ -1032,7 +1037,6 @@ class _BookWidgetState extends State<BookWidget> {
     return stroke;
   }
 
-
   void _cacheSectionOffsets() {
     if (_contentEntries.isEmpty) return;
 
@@ -1045,10 +1049,13 @@ class _BookWidgetState extends State<BookWidget> {
     var knownCount = 0;
 
     for (var i = 0; i < _sectionKeys.length; i++) {
-      final box = _sectionKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      final box =
+          _sectionKeys[i].currentContext?.findRenderObject() as RenderBox?;
       if (box != null) {
-        final viewportPosition =
-            box.localToGlobal(Offset.zero, ancestor: listBox);
+        final viewportPosition = box.localToGlobal(
+          Offset.zero,
+          ancestor: listBox,
+        );
         exact[i] = viewportPosition.dy + _contentController.offset;
         totalKnownHeight += box.size.height;
         knownCount++;
@@ -1088,8 +1095,9 @@ class _BookWidgetState extends State<BookWidget> {
         final fraction = (i - lastIndex) / (nextIndex - lastIndex);
         offsets[i] = lastOffset + (nextOffset - lastOffset) * fraction;
       } else if (nextOffset != null) {
-        final estimatedHeightPerItem =
-            nextIndex > 0 ? nextOffset / nextIndex : _averageItemHeight;
+        final estimatedHeightPerItem = nextIndex > 0
+            ? nextOffset / nextIndex
+            : _averageItemHeight;
         offsets[i] = i * estimatedHeightPerItem;
       } else if (lastIndex >= 0) {
         offsets[i] = lastOffset + (i - lastIndex) * _averageItemHeight;
@@ -1142,9 +1150,9 @@ class _BookWidgetState extends State<BookWidget> {
     final updated = await BookmarkStore.add(item);
     if (!mounted) return;
     setState(() => _bookmarks = updated);
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const BookmarkListPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const BookmarkListPage()));
   }
 
   void _handleContentScroll() {
@@ -1324,8 +1332,8 @@ class _BookWidgetState extends State<BookWidget> {
                                     Navigator.of(context).pop();
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
-                                      _scrollToEntry(result.entryIndex);
-                                    });
+                                          _scrollToEntry(result.entryIndex);
+                                        });
                                   },
                                 );
                               },
@@ -1346,10 +1354,7 @@ class _BookWidgetState extends State<BookWidget> {
     final results = <_SearchResult>[];
     for (var i = 0; i < _contentEntries.length; i++) {
       final entry = _contentEntries[i];
-      final combined = [
-        entry.title,
-        ...entry.paragraphs,
-      ].join(' ');
+      final combined = [entry.title, ...entry.paragraphs].join(' ');
       if (!combined.toLowerCase().contains(keyword)) continue;
       results.add(
         _SearchResult(
@@ -1436,7 +1441,10 @@ class _BookWidgetState extends State<BookWidget> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Text('Highlighter Color', style: TextStyle(fontSize: 14)),
+                  const Text(
+                    'Highlighter Color',
+                    style: TextStyle(fontSize: 14),
+                  ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
@@ -1451,7 +1459,10 @@ class _BookWidgetState extends State<BookWidget> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text('Highlighter Width', style: TextStyle(fontSize: 14)),
+                  const Text(
+                    'Highlighter Width',
+                    style: TextStyle(fontSize: 14),
+                  ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
@@ -1690,7 +1701,11 @@ class _BookWidgetState extends State<BookWidget> {
                           children: [
                             _buildTocHeader(),
                             Expanded(child: _buildTocList()),
-                            const Divider(height: 1, thickness: 1, color: kBorder),
+                            const Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: kBorder,
+                            ),
                             _buildSidebarTools(),
                           ],
                         ),
@@ -1737,7 +1752,8 @@ class _BookWidgetState extends State<BookWidget> {
               final entry = entries[index];
               final isChapter = entry.level == 0;
               final isExpanded = _chapterExpanded[entry.chapterIndex];
-              final hasActiveEntry = activeEntryIndex >= 0 &&
+              final hasActiveEntry =
+                  activeEntryIndex >= 0 &&
                   activeEntryIndex < _contentEntries.length;
               final activeChapterIndex = hasActiveEntry
                   ? _contentEntries[activeEntryIndex].chapterIndex
@@ -1767,8 +1783,9 @@ class _BookWidgetState extends State<BookWidget> {
                           style: TextStyle(
                             color: isActive ? Colors.white : Colors.black,
                             fontSize: isChapter ? 15 : 13,
-                            fontWeight:
-                                isChapter ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: isChapter
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         ),
                       ),
@@ -1822,7 +1839,8 @@ class _BookWidgetState extends State<BookWidget> {
                   _toolIcon(
                     icon: Icons.brush,
                     active:
-                        annotationsEnabled && _toolMode == _ToolMode.highlighter,
+                        annotationsEnabled &&
+                        _toolMode == _ToolMode.highlighter,
                     onTap: annotationsEnabled
                         ? () => _setToolMode(_ToolMode.highlighter)
                         : _showAnnotationBlocked,
@@ -1831,8 +1849,9 @@ class _BookWidgetState extends State<BookWidget> {
                   _toolIcon(
                     icon: Icons.color_lens_sharp,
                     active: false,
-                    onTap:
-                        annotationsEnabled ? _openPenSettings : _showAnnotationBlocked,
+                    onTap: annotationsEnabled
+                        ? _openPenSettings
+                        : _showAnnotationBlocked,
                     foreground: _activeInkColor,
                   ),
                   const SizedBox(width: 8),
@@ -1848,7 +1867,11 @@ class _BookWidgetState extends State<BookWidget> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  _navIcon(Icons.search_sharp, kPrimaryLight, onTap: _openSearch),
+                  _navIcon(
+                    Icons.search_sharp,
+                    kPrimaryLight,
+                    onTap: _openSearch,
+                  ),
                   const SizedBox(width: 8),
                   _navIcon(
                     Icons.arrow_back_ios_sharp,
@@ -1966,7 +1989,9 @@ class _BookWidgetState extends State<BookWidget> {
             child: ListView.builder(
               key: _listViewKey,
               controller: _contentController,
-              physics: _isDrawingTool ? const NeverScrollableScrollPhysics() : null,
+              physics: _isDrawingTool
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
               padding: const EdgeInsets.fromLTRB(20, 20, 24, 40),
               itemCount: _contentEntries.length,
               itemBuilder: (context, i) => _buildContentBlock(i),
@@ -2014,7 +2039,8 @@ class _BookWidgetState extends State<BookWidget> {
     if (_contentController.hasClients && _sectionOffsets.length > i) {
       final itemTop = _sectionOffsets[i];
       final viewportTop = _contentController.offset - _viewportOverscan;
-      final viewportBottom = _contentController.offset +
+      final viewportBottom =
+          _contentController.offset +
           _contentController.position.viewportDimension +
           _viewportOverscan;
       if (itemTop + _averageItemHeight < viewportTop ||
@@ -2038,8 +2064,7 @@ class _BookWidgetState extends State<BookWidget> {
             entry.title,
             style: TextStyle(
               fontSize: entry.level == 0 ? 24 : 18,
-              fontWeight:
-                  entry.level == 0 ? FontWeight.w800 : FontWeight.w700,
+              fontWeight: entry.level == 0 ? FontWeight.w800 : FontWeight.w700,
               color: kPrimary,
             ),
           ),
@@ -2047,14 +2072,9 @@ class _BookWidgetState extends State<BookWidget> {
           for (final paragraph in entry.paragraphs)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: RepaintBoundary(
-                child: _buildLatexAware(paragraph),
-              ),
+              child: RepaintBoundary(child: _buildLatexAware(paragraph)),
             ),
-          if (graphWidget != null) ...[
-            const SizedBox(height: 16),
-            graphWidget,
-          ],
+          if (graphWidget != null) ...[const SizedBox(height: 16), graphWidget],
           for (final image in entry.images)
             if (image.trim().isNotEmpty)
               Padding(
@@ -2081,10 +2101,14 @@ class _BookWidgetState extends State<BookWidget> {
     );
   }
 
-  final Map<String, List<ContentBlock>> _latexCache = <String, List<ContentBlock>>{};
+  final Map<String, List<ContentBlock>> _latexCache =
+      <String, List<ContentBlock>>{};
 
   Widget _buildLatexAware(String text) {
-    final blocks = _latexCache.putIfAbsent(text, () => parseTextWithLatex(text));
+    final blocks = _latexCache.putIfAbsent(
+      text,
+      () => parseTextWithLatex(text),
+    );
     return ContentBlocksView(inline: true, blocks: blocks);
   }
 
@@ -2094,7 +2118,7 @@ class _BookWidgetState extends State<BookWidget> {
       return NetworkImage(trimmed);
     }
     if (trimmed.startsWith('/')) {
-      return NetworkImage('${ApiClient.baseUrl}$trimmed');
+      return NetworkImage(ApiClient.resourceUrl(trimmed));
     }
     return AssetImage(trimmed);
   }
@@ -2421,5 +2445,3 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
   }
   return entries;
 }
-
-

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
 import '../widgets/design_tokens.dart';
 
@@ -121,7 +122,7 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F4),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -180,10 +181,25 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
                         hintText: '교재명, 태그, 폴더 검색',
                         prefixIcon: const Icon(Icons.search_rounded),
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.86),
+                        fillColor: AppColors.surfaceMuted,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
-                          borderSide: BorderSide.none,
+                          borderSide: const BorderSide(
+                            color: AppColors.surfaceBorder,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(
+                            color: AppColors.surfaceBorder,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(
+                            color: kCourseLightGreen,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -240,10 +256,8 @@ class _FolderRail extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 16, 10, 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.62),
-        border: Border(
-          right: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
-        ),
+        color: AppColors.surfaceMuted,
+        border: const Border(right: BorderSide(color: AppColors.surfaceBorder)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,8 +290,13 @@ class _FolderRail extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: active
                           ? kCourseGreen.withValues(alpha: 0.10)
-                          : Colors.transparent,
+                          : Colors.white,
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: active
+                            ? kCourseGreen.withValues(alpha: 0.14)
+                            : AppColors.surfaceBorder,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -446,6 +465,7 @@ class _MiniChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF4F8F4),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

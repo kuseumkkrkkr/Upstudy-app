@@ -8,17 +8,6 @@ const _shadow = BoxShadow(
   offset: Offset(0, 2),
 );
 
-TextStyle _ts({
-  double size = 16,
-  FontWeight weight = FontWeight.normal,
-  Color color = Colors.black,
-  bool scaleUp = true,
-}) => TextStyle(
-  fontSize: size * (scaleUp ? 1.1 : 1.0),
-  fontWeight: weight,
-  color: color,
-);
-
 BoxDecoration _cardDeco({double radius = 16, Color color = Colors.white}) =>
     BoxDecoration(
       color: color,
@@ -36,14 +25,6 @@ BoxDecoration _listCardDeco({
   borderRadius: BorderRadius.circular(radius),
   border: Border.all(color: borderColor, width: borderWidth),
 );
-
-double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
-  final width = MediaQuery.of(context).size.width;
-  final scale = width / 1100;
-  if (scale < min) return min;
-  if (scale > max) return max;
-  return scale;
-}
 
 String _formatTimeLabel(DateTime value) {
   final now = DateTime.now();
@@ -77,27 +58,15 @@ List<ContentBlock> _parseQuestBlocks(String? raw) {
   }
 }
 
-/// JSON blocks 형식에서 텍스트 파트만 추출해 평문 반환.
-String _extractPlainText(String? raw) {
-  if (raw == null || raw.isEmpty) return '풀이 내역';
-  try {
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    final blocks = decoded['blocks'] as List<dynamic>? ?? [];
-    final text = blocks
-        .whereType<Map>()
-        .map((b) => b['content']?.toString() ?? '')
-        .where((s) => s.isNotEmpty)
-        .join(' ')
-        .trim();
-    return text.isEmpty ? '풀이 내역' : text;
-  } catch (_) {
-    return raw.length > 60 ? '${raw.substring(0, 60)}...' : raw;
-  }
-}
+const double _visibleOvrFloor = 1200;
+const double _visibleOvrMax = 32767;
+const double _visibleOvrDivider = 128;
 
-/// Formats a visible OVR score from the server.
-/// Returns 'NaN' when the server intentionally hides the score.
+/// Formats a raw rating into the same visible OVR scale used on the dashboard.
 String _formatOvrLabel(double value) {
-  if (value.isNaN) return 'NaN';
-  return value.toStringAsFixed(1);
+  if (value.isNaN || value <= 0) return '--';
+  if (value < _visibleOvrFloor) return value.toStringAsFixed(1);
+  final visible = value - _visibleOvrFloor;
+  final ovr = visible.clamp(0, _visibleOvrMax) / _visibleOvrDivider;
+  return ovr.toStringAsFixed(1);
 }

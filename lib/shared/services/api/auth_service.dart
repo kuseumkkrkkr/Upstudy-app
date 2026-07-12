@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'api_client.dart';
+import 'api_contract.dart';
 
 class AuthService {
   AuthService({http.Client? client}) : _client = client ?? http.Client();
@@ -33,11 +33,13 @@ class AuthService {
   );
 
   Uri _resolve(String path) {
-    // baseUrl을 기준으로 상대 경로를 resolve합니다.
-    return Uri.parse(ApiClient.baseUrl).resolve(path);
+    return ApiContract.uri(path);
   }
 
-  Future<String> login({required String username, required String password}) async {
+  Future<String> login({
+    required String username,
+    required String password,
+  }) async {
     final uri = _resolve(_loginPath);
     final response = await _client.post(
       uri,
@@ -104,7 +106,8 @@ class AuthService {
         if (profileImageUrl != null && profileImageUrl.trim().isNotEmpty)
           'profile_image': profileImageUrl.trim(),
         if (track != null && track.trim().isNotEmpty) 'track': track.trim(),
-        if (subject != null && subject.trim().isNotEmpty) 'subject': subject.trim(),
+        if (subject != null && subject.trim().isNotEmpty)
+          'subject': subject.trim(),
         if (school != null && school.trim().isNotEmpty) 'school': school.trim(),
       }),
     );

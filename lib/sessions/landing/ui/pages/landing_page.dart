@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
+import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
 
 class LandingPage extends StatelessWidget {
   static const routeName = '/';
+  static const _logoAsset = 'assets/54bba925b2ad92c9.png';
+  static const _contactEmail = 'aiflow683@gmail.com';
+
   const LandingPage({super.key});
+
   void _goToLogin(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -20,13 +26,32 @@ class LandingPage extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return _buildMobileLayout(context);
+  void _goToAbout(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const LandingAboutPage()));
   }
 
-  // 모바일 레이아웃
-  Widget _buildMobileLayout(BuildContext context) {
+  Future<void> _contactByEmail(BuildContext context) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: _contactEmail,
+      queryParameters: const {
+        'subject': 'AIFlow 문의',
+        'body': '안녕하세요. AIFlow 도입 문의드립니다.',
+      },
+    );
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (opened || !context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('메일 앱을 열 수 없습니다. aiflow683@gmail.com 으로 문의해주세요.'),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -34,22 +59,20 @@ class LandingPage extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 배경 이미지
           Image.network(
             'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
             width: screenWidth,
             height: screenHeight,
             fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const DecoratedBox(
+              decoration: BoxDecoration(color: Colors.black),
+            ),
           ),
-
-          // 오버레이
           Container(
             width: screenWidth,
             height: screenHeight,
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
           ),
-
-          // 상단 헤더
           Positioned(
             top: 0,
             left: 0,
@@ -59,11 +82,11 @@ class LandingPage extends StatelessWidget {
                 Container(
                   width: 70,
                   height: 70,
-                  color: const Color(0xFF1B402B),
-                  child: const Icon(
-                    Icons.search_outlined,
-                    color: Colors.white,
-                    size: 50,
+                  color: Colors.black,
+                  child: Image.asset(
+                    _logoAsset,
+                    fit: BoxFit.cover,
+                    semanticLabel: 'AIFlow 로고',
                   ),
                 ),
                 Expanded(
@@ -85,22 +108,22 @@ class LandingPage extends StatelessWidget {
                         ),
                         const SizedBox(width: 20),
                         TextButton(
-                          onPressed: null,
+                          onPressed: () => _goToAbout(context),
                           child: Text(
                             '알아보기',
                             style: GoogleFonts.interTight(
-                              color: Colors.white54,
+                              color: Colors.white,
                               fontSize: 16,
                             ),
                           ),
                         ),
                         const SizedBox(width: 20),
                         TextButton(
-                          onPressed: null,
+                          onPressed: () => _contactByEmail(context),
                           child: Text(
-                            '체험하기',
+                            '문의하기',
                             style: GoogleFonts.interTight(
-                              color: Colors.white54,
+                              color: Colors.white,
                               fontSize: 16,
                             ),
                           ),
@@ -113,8 +136,6 @@ class LandingPage extends StatelessWidget {
               ],
             ),
           ),
-
-          // 메인 콘텐츠
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -139,8 +160,6 @@ class LandingPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 60),
-
-                  // ✅ 시작하기 → 로그인
                   ElevatedButton(
                     onPressed: () => _goToLogin(context),
                     style: ElevatedButton.styleFrom(

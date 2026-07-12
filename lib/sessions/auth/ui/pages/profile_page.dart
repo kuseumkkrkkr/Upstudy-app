@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
+import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
@@ -31,6 +32,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _loading = true;
   bool _saving = false;
   bool _deleting = false;
+  bool _textbookPageMode = false;
   String? _errorText;
   UserProfile? _profile;
   String? _originalUsername;
@@ -58,10 +60,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadProfile() async {
     try {
-      final profile = await ApiClient.instance.getMyProfile();
+      final results = await Future.wait<Object>([
+        ApiClient.instance.getMyProfile(),
+        TextbookReaderPreferences.loadPageMode(),
+      ]);
+      final profile = results[0] as UserProfile;
+      final textbookPageMode = results[1] as bool;
       if (!mounted) return;
       setState(() {
         _profile = profile;
+        _textbookPageMode = textbookPageMode;
         _originalUsername = profile.username;
         _usernameController.text = profile.username;
         _nameController.text = profile.name;
@@ -183,9 +191,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _openSettings() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SettingsPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const SettingsPage()));
+  }
+
+  Future<void> _setTextbookPageMode(bool value) async {
+    setState(() => _textbookPageMode = value);
+    await TextbookReaderPreferences.savePageMode(value);
   }
 
   String _avatarLetter() {
@@ -453,6 +466,71 @@ class _ProfilePageState extends State<ProfilePage> {
                   _field(controller: _trackController, label: '계열'),
                   const SizedBox(height: 14),
                   _field(controller: _subjectController, label: '과목'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _section(
+                title: '교재 보기 설정',
+                subtitle: '교재 본문을 읽는 기본 방식을 선택합니다.',
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7F7F4),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE3E5DF)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.auto_stories_rounded,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'PDF형 페이지 보기',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _textbookPageMode
+                                    ? '교재가 페이지 단위로 열립니다.'
+                                    : '교재가 아래로 스크롤되는 형태로 열립니다.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black.withValues(alpha: 0.58),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: _textbookPageMode,
+                          onChanged: _setTextbookPageMode,
+                          activeThumbColor: AppColors.primaryLight,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),

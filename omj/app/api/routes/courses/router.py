@@ -37,7 +37,7 @@ async def get_course_v2(
     user=Depends(get_current_user),
 ):
     course = service.get_course_v2(course_id, user)
-    return _wrap(course)
+    return _wrap(service.course_v2_payload(course, user))
 
 
 @router.put("/{course_id}", response_model=ApiResponse)
@@ -91,8 +91,9 @@ async def list_courses_v2(
         sort=sort,
         order=order,
     )
+    items = service.course_v2_payloads(courses, user)
     if not include_total:
-        return _wrap(courses)
+        return _wrap(items)
 
     role = str(user.get("role") or "")
     owner_filter: Optional[str] = None
@@ -114,7 +115,7 @@ async def list_courses_v2(
     )
     return _wrap(
         {
-            "items": courses,
+            "items": items,
             "total": total,
             "limit": limit,
             "offset": offset,

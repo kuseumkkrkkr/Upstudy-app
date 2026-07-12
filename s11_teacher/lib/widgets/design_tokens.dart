@@ -3,15 +3,19 @@ import 'package:flutter/material.dart';
 /// 공용 색상/레이아웃 유틸: 코스 페이지 전반에서 함께 쓰는 상수 모음.
 const Color kCourseGreen = Color(0xFF1B402B);
 const Color kCourseLightGreen = Color(0xFF45BF63);
-const Color kCourseBgGrey = Color(0xFFF7F7F7);
+const Color kCourseBgGrey = Colors.white;
 const BoxShadow kCourseShadow = BoxShadow(
-  blurRadius: 6,
-  color: Color(0x1A000000),
-  offset: Offset(0, 3),
+  blurRadius: 16,
+  color: Color(0x12000000),
+  offset: Offset(0, 8),
 );
 
 /// 화면 폭에 따라 카드/타이포 크기를 조정하는 헬퍼.
-double courseUiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
+double courseUiScale(
+  BuildContext context, {
+  double min = 0.6,
+  double max = 1.0,
+}) {
   final width = MediaQuery.of(context).size.width;
   final scale = width / 1100;
   if (scale < min) return min;
@@ -40,8 +44,9 @@ class MetaPill extends StatelessWidget {
         vertical: 6 * scale,
       ),
       decoration: BoxDecoration(
-        color: kCourseBgGrey,
+        color: const Color(0xFFF5F7F4),
         borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(color: const Color(0xFFE4E9E3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

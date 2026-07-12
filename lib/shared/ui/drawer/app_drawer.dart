@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import 'package:s11/shared/theme/app_colors.dart';
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
+  static const String _logoAsset = 'assets/54bba925b2ad92c9.png';
   static const Color _drawerBg = Colors.white;
   static const Color _surface = Color(0xFFF5F7F1);
 
@@ -35,14 +37,15 @@ class AppDrawer extends StatelessWidget {
                   Container(
                     width: 60,
                     height: 60,
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.08),
+                      color: Colors.black,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Icon(
-                      Icons.school_outlined,
-                      color: AppColors.primary,
-                      size: 30,
+                    child: Image.asset(
+                      _logoAsset,
+                      fit: BoxFit.cover,
+                      semanticLabel: 'AIFlow 로고',
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -71,6 +74,27 @@ class AppDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
             const SizedBox(height: 14),
+            _DrawerItem(
+              icon: Icons.smart_toy_outlined,
+              title: 'AI 챗봇',
+              subtitle: '짧게 묻고 바로 답을 받습니다',
+              onTap: () {
+                final navigator = Navigator.of(context, rootNavigator: true);
+                Navigator.of(context).pop();
+                navigator.push(
+                  PageRouteBuilder(
+                    opaque: false,
+                    barrierDismissible: true,
+                    barrierLabel: '닫기',
+                    barrierColor: Colors.transparent,
+                    pageBuilder: (_, __, ___) => const ServerChatPage(),
+                    transitionsBuilder: (_, animation, __, child) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                  ),
+                );
+              },
+            ),
             _DrawerItem(
               icon: Icons.person_outline_rounded,
               title: '프로필',

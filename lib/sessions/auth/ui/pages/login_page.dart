@@ -216,9 +216,9 @@ class _LoginPageState extends State<LoginPage> {
           onPressed: _loading
               ? null
               : () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => const BuildpageWidget()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const BuildpageWidget()),
+                  );
                 },
           style: TextButton.styleFrom(
             backgroundColor: Colors.white, // 버튼 배경
@@ -243,10 +243,13 @@ class _LoginPageState extends State<LoginPage> {
       return Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 520,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,

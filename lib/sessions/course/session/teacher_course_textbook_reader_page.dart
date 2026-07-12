@@ -52,7 +52,9 @@ class _TeacherCourseTextbookReaderPageState
   int _serverElapsedSeconds = 0;
   double? _serverCompletion;
   DateTime? _startedAt;
-  String? _selectedWord;
+  bool _showTableOfContents = true;
+  bool _runtimeCompleted = false;
+  bool _allowPop = false;
 
   int get _pageFrom => max(1, widget.pageFrom);
 
@@ -75,8 +77,10 @@ class _TeacherCourseTextbookReaderPageState
     );
   }
 
-  double get _completion =>
-      (_serverCompletion ?? min(_pageProgress, _timeProgress)).clamp(0, 1);
+  double get _completion => max(
+    _serverCompletion ?? 0,
+    min(_pageProgress, _timeProgress),
+  ).clamp(0, 1);
 
   @override
   void initState() {
@@ -89,7 +93,9 @@ class _TeacherCourseTextbookReaderPageState
   @override
   void dispose() {
     _heartbeatTimer?.cancel();
-    _completeRuntime();
+    if (!_runtimeCompleted) {
+      unawaited(_completeRuntime());
+    }
     _pageController.dispose();
     super.dispose();
   }
@@ -194,10 +200,13 @@ class _TeacherCourseTextbookReaderPageState
           runtime['total_seconds'] ??
           runtime['view_seconds'],
     );
+    final progress = runtime['progress'];
     final completion = _readDouble(
       runtime['completion_rate'] ??
           runtime['completion'] ??
-          runtime['progress'],
+          (progress is Map
+              ? progress['completion_ratio'] ?? progress['completion_rate']
+              : progress),
     );
     _serverElapsedSeconds = elapsed;
     _serverCompletion = completion == null
@@ -223,8 +232,9 @@ class _TeacherCourseTextbookReaderPageState
   }
 
   Future<void> _completeRuntime() async {
+    if (_runtimeCompleted) return;
     try {
-      await ApiClient.instance.completeCourseTextbookRuntime(
+      final runtime = await ApiClient.instance.completeCourseTextbookRuntime(
         courseId: widget.courseId,
         moduleId: widget.moduleId,
         textbookId: widget.textbookId,
@@ -232,7 +242,16 @@ class _TeacherCourseTextbookReaderPageState
         pageFrom: _pageFrom,
         pageTo: _pageTo,
       );
+      _runtimeCompleted = true;
+      _applyRuntime(runtime);
     } catch (_) {}
+  }
+
+  Future<void> _closeReader() async {
+    await _completeRuntime();
+    if (!mounted) return;
+    setState(() => _allowPop = true);
+    Navigator.of(context).pop();
   }
 
   int _localElapsedSeconds() {
@@ -274,40 +293,47 @@ class _TeacherCourseTextbookReaderPageState
   @override
   Widget build(BuildContext context) {
     final book = _book;
-    return Scaffold(
-      backgroundColor: _green,
-      body: SafeArea(
-        child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              )
-            : _error != null
-            ? _ErrorView(message: _error!)
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= 980;
-                  return Column(
-                    children: [
-                      _buildTopBar(book),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            if (wide) _buildTableOfContents(),
-                            Expanded(child: _buildReaderSurface()),
-                            if (wide) _buildInsightPanel(),
-                          ],
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _closeReader();
+      },
+      child: Scaffold(
+        backgroundColor: _green,
+        body: SafeArea(
+          child: _loading
+              ? const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
+              : _error != null
+              ? _ErrorView(message: _error!)
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= 980;
+                    return Column(
+                      children: [
+                        _buildTopBar(book, showTocToggle: wide),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              if (wide && _showTableOfContents)
+                                _buildTableOfContents(),
+                              Expanded(child: _buildReaderSurface()),
+                            ],
+                          ),
                         ),
-                      ),
-                      if (!wide) _buildMobileRail(),
-                    ],
-                  );
-                },
-              ),
+                        if (!wide) _buildMobileRail(),
+                      ],
+                    );
+                  },
+                ),
+        ),
       ),
     );
   }
 
-  Widget _buildTopBar(BookData? book) {
+  Widget _buildTopBar(BookData? book, {required bool showTocToggle}) {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       decoration: BoxDecoration(
@@ -320,7 +346,7 @@ class _TeacherCourseTextbookReaderPageState
         children: [
           IconButton(
             tooltip: '닫기',
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: _closeReader,
             icon: const Icon(Icons.arrow_back_rounded),
           ),
           const SizedBox(width: 6),
@@ -347,6 +373,17 @@ class _TeacherCourseTextbookReaderPageState
           ),
           _ProgressBadge(label: '이수율', value: _completion),
           const SizedBox(width: 8),
+          if (showTocToggle) ...[
+            IconButton(
+              tooltip: _showTableOfContents ? '목차 닫기' : '목차 열기',
+              onPressed: () =>
+                  setState(() => _showTableOfContents = !_showTableOfContents),
+              icon: Icon(
+                _showTableOfContents ? Icons.toc_rounded : Icons.toc_outlined,
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
           SegmentedButton<bool>(
             segments: const [
               ButtonSegment(
@@ -391,10 +428,7 @@ class _TeacherCourseTextbookReaderPageState
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
-            child: _PaperPage(
-              page: _pages[index],
-              onWordTap: (word) => setState(() => _selectedWord = word),
-            ),
+            child: _PaperPage(page: _pages[index]),
           ),
         );
       },
@@ -414,7 +448,6 @@ class _TeacherCourseTextbookReaderPageState
             child: _PaperPage(
               page: page,
               onVisible: () => _currentPage = page.number,
-              onWordTap: (word) => setState(() => _selectedWord = word),
             ),
           ),
         );
@@ -457,40 +490,6 @@ class _TeacherCourseTextbookReaderPageState
     );
   }
 
-  Widget _buildInsightPanel() {
-    return Container(
-      width: 300,
-      color: Colors.white,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const _PanelTitle(icon: Icons.auto_stories_rounded, title: '교재 도구'),
-          const SizedBox(height: 12),
-          _InfoBlock(
-            title: '진행 조건',
-            lines: [
-              '페이지 범위: $_pageFrom-$_pageTo',
-              '최소 시간: ${widget.minMinutes <= 0 ? '없음' : '${widget.minMinutes}분'}',
-              '시간 반영: ${(100 * _timeProgress).round()}%',
-            ],
-          ),
-          const SizedBox(height: 12),
-          _InfoBlock(
-            title: '단어 설명',
-            lines: [
-              _selectedWord == null
-                  ? '본문의 단어를 누르면 이 영역에 설명을 표시합니다.'
-                  : '선택한 단어: $_selectedWord',
-              '서버 사전 API가 붙으면 이 영역만 교체하면 됩니다.',
-            ],
-          ),
-          const SizedBox(height: 12),
-          _LinkBlock(book: _book),
-        ],
-      ),
-    );
-  }
-
   Widget _buildMobileRail() {
     return Container(
       color: Colors.white,
@@ -512,16 +511,6 @@ class _TeacherCourseTextbookReaderPageState
               showDragHandle: true,
               builder: (_) =>
                   SizedBox(height: 420, child: _buildTableOfContents()),
-            ),
-          ),
-          IconButton(
-            tooltip: '도구',
-            icon: const Icon(Icons.info_outline_rounded),
-            onPressed: () => showModalBottomSheet<void>(
-              context: context,
-              showDragHandle: true,
-              builder: (_) =>
-                  SizedBox(height: 420, child: _buildInsightPanel()),
             ),
           ),
         ],
@@ -547,14 +536,9 @@ class _ReaderPage {
 }
 
 class _PaperPage extends StatelessWidget {
-  const _PaperPage({
-    required this.page,
-    required this.onWordTap,
-    this.onVisible,
-  });
+  const _PaperPage({required this.page, this.onVisible});
 
   final _ReaderPage page;
-  final ValueChanged<String> onWordTap;
   final VoidCallback? onVisible;
 
   @override
@@ -606,10 +590,7 @@ class _PaperPage extends StatelessWidget {
                       for (final paragraph in page.paragraphs)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 14),
-                          child: _TappableParagraph(
-                            text: paragraph,
-                            onWordTap: onWordTap,
-                          ),
+                          child: _ReaderParagraph(text: paragraph),
                         ),
                       for (final image in page.images)
                         Padding(
@@ -643,11 +624,10 @@ class _PaperPage extends StatelessWidget {
   }
 }
 
-class _TappableParagraph extends StatelessWidget {
-  const _TappableParagraph({required this.text, required this.onWordTap});
+class _ReaderParagraph extends StatelessWidget {
+  const _ReaderParagraph({required this.text});
 
   final String text;
-  final ValueChanged<String> onWordTap;
 
   @override
   Widget build(BuildContext context) {
@@ -657,15 +637,12 @@ class _TappableParagraph extends StatelessWidget {
       runSpacing: 6,
       children: [
         for (final word in words)
-          GestureDetector(
-            onTap: () => onWordTap(word.replaceAll(RegExp(r'[^\w가-힣]'), '')),
-            child: Text(
-              word,
-              style: GoogleFonts.notoSansKr(
-                fontSize: 16,
-                height: 1.55,
-                color: Colors.black.withValues(alpha: 0.82),
-              ),
+          Text(
+            word,
+            style: GoogleFonts.notoSansKr(
+              fontSize: 16,
+              height: 1.55,
+              color: Colors.black.withValues(alpha: 0.82),
             ),
           ),
       ],
@@ -725,57 +702,6 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 8),
         Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
       ],
-    );
-  }
-}
-
-class _InfoBlock extends StatelessWidget {
-  const _InfoBlock({required this.title, required this.lines});
-
-  final String title;
-  final List<String> lines;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F8F4),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          for (final line in lines)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                line,
-                style: const TextStyle(fontSize: 12, height: 1.35),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LinkBlock extends StatelessWidget {
-  const _LinkBlock({required this.book});
-
-  final BookData? book;
-
-  @override
-  Widget build(BuildContext context) {
-    final tags = book?.tags ?? const <String>[];
-    return _InfoBlock(
-      title: '교재 링크',
-      lines: tags.isEmpty
-          ? const ['연결된 링크나 태그가 없습니다.']
-          : tags.map((tag) => '#$tag').toList(growable: false),
     );
   }
 }

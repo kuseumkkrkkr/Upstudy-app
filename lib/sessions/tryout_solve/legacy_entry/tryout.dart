@@ -1,5 +1,3 @@
-﻿library s11.tryout;
-
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -7,7 +5,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:s11/shared/utils/ui_scale.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solve_analysis_page.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solve_debug_page.dart';

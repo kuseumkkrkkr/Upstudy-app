@@ -1,7 +1,10 @@
-﻿// UTF-8 only: This file must be read/written as UTF-8.
+// UTF-8 only: This file must be read/written as UTF-8.
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
+import '../shared/ui/ios26/ios26_chrome.dart';
+import '../widgets/design_tokens.dart';
 
 class TeacherChatPage extends StatefulWidget {
   const TeacherChatPage({super.key, required this.peerUsername});
@@ -60,9 +63,9 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
       _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('전송 실패: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('전송 실패: $e')));
     }
   }
 
@@ -79,7 +82,9 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
               .map(
                 (c) => SimpleDialogOption(
                   onPressed: () => Navigator.of(ctx).pop(c),
-                  child: Text(c['title']?.toString() ?? c['id']?.toString() ?? '코스'),
+                  child: Text(
+                    c['title']?.toString() ?? c['id']?.toString() ?? '코스',
+                  ),
                 ),
               )
               .toList(),
@@ -89,50 +94,79 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
       final id = picked['id']?.toString() ?? '';
       if (id.isEmpty) return;
       final text = '코스 초대 링크\n/sessions/course?id=$id';
-      await ApiClient.instance.sendDirectMessage(peerUsername: widget.peerUsername, text: text);
+      await ApiClient.instance.sendDirectMessage(
+        peerUsername: widget.peerUsername,
+        text: text,
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('코스 링크를 전송했습니다.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('코스 링크를 전송했습니다.')));
       _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('코스 링크 전송 실패: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('코스 링크 전송 실패: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.peerUsername),
-        actions: [
-          IconButton(
-            tooltip: '코스 링크 보내기',
-            icon: const Icon(Icons.send_to_mobile),
-            onPressed: _sendCourseLink,
-          ),
-        ],
-      ),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
+          Ios26TopBar(
+            brandColor: kCourseGreen,
+            title: widget.peerUsername,
+            onBack: () => Navigator.of(context).maybePop(),
+            items: const [Ios26NavItem(label: '1:1 채팅', active: true)],
+            trailingIcons: [
+              Ios26ActionIcon(
+                icon: Icons.send_to_mobile_rounded,
+                label: '코스 링크 보내기',
+                onTap: _sendCourseLink,
+              ),
+            ],
+          ),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final m = _messages[index];
                       return Align(
-                        alignment: m.isMine ? Alignment.centerRight : Alignment.centerLeft,
+                        alignment: m.isMine
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
                         child: Container(
                           margin: const EdgeInsets.symmetric(vertical: 4),
-                          padding: const EdgeInsets.all(10),
-                          constraints: const BoxConstraints(maxWidth: 280),
-                          decoration: BoxDecoration(
-                            color: m.isMine ? Colors.green.shade100 : Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
                           ),
-                          child: Text(m.text),
+                          constraints: const BoxConstraints(maxWidth: 320),
+                          decoration: BoxDecoration(
+                            color: m.isMine
+                                ? kCourseGreen
+                                : AppColors.surfaceMuted,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: m.isMine
+                                  ? kCourseGreen
+                                  : AppColors.surfaceBorder,
+                            ),
+                          ),
+                          child: Text(
+                            m.text,
+                            style: TextStyle(
+                              color: m.isMine ? Colors.white : Colors.black87,
+                              height: 1.4,
+                            ),
+                          ),
                         ),
                       );
                     },
@@ -147,15 +181,47 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
                   Expanded(
                     child: TextField(
                       controller: _textCtrl,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: '메시지 입력',
-                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: AppColors.surfaceMuted,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(
+                            color: AppColors.surfaceBorder,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(
+                            color: AppColors.surfaceBorder,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(
+                            color: kCourseLightGreen,
+                            width: 2,
+                          ),
+                        ),
                       ),
                       onSubmitted: (_) => _send(),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton(onPressed: _send, child: const Text('전송')),
+                  const SizedBox(width: 10),
+                  FilledButton.icon(
+                    onPressed: _send,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: kCourseGreen,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(96, 54),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text('전송'),
+                  ),
                 ],
               ),
             ),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../models/course.dart';
+import 'api_contract.dart';
 import 'api_client.dart';
 
 class CourseService {
@@ -13,13 +14,15 @@ class CourseService {
   }) async {
     final token = await ApiClient.instance.requireToken();
     final params = <String, String>{};
-    if (keyword != null && keyword.trim().isNotEmpty)
+    if (keyword != null && keyword.trim().isNotEmpty) {
       params['q'] = keyword.trim();
+    }
     if (tag != null && tag.trim().isNotEmpty) params['tag'] = tag.trim();
     if (recommendOvr != null) params['recommend_ovr'] = recommendOvr.toString();
-    final uri = Uri.parse(
-      '${ApiClient.baseUrl}/courses',
-    ).replace(queryParameters: params.isEmpty ? null : params);
+    final uri = ApiContract.uri(
+      ApiPaths.courses,
+      query: params.isEmpty ? null : params,
+    );
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) {
       throw Exception('Failed to load courses: ${resp.statusCode}');
@@ -33,7 +36,7 @@ class CourseService {
 
   static Future<List<Course>> fetchMyCourses() async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/my');
+    final uri = ApiContract.uri(ApiPaths.coursesMy);
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode == 200) {
       final payload = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -60,7 +63,7 @@ class CourseService {
 
   static Future<Course> enroll(String courseId) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/$courseId/enroll');
+    final uri = ApiContract.uri(ApiPaths.courseEnroll(courseId));
     final resp = await ApiClient.instance.authedPost(uri, token: token);
     if (resp.statusCode != 200) {
       throw Exception('Failed to enroll: ${resp.statusCode}');
@@ -82,7 +85,7 @@ class CourseService {
 
   static Future<void> unenroll(String courseId) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/$courseId/unenroll');
+    final uri = ApiContract.uri(ApiPaths.courseUnenroll(courseId));
     final resp = await ApiClient.instance.authedPost(uri, token: token);
     if (resp.statusCode != 200) {
       throw Exception('Failed to unenroll: ${resp.statusCode}');
@@ -91,7 +94,7 @@ class CourseService {
 
   static Future<void> reorderEnrollments(List<String> courseIds) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/enrolled/reorder');
+    final uri = ApiContract.uri(ApiPaths.coursesEnrollmentReorder);
     final body = jsonEncode({'course_ids': courseIds});
     final resp = await ApiClient.instance.authedPost(
       uri,
@@ -105,7 +108,7 @@ class CourseService {
 
   static Future<Course> fetchCourse(String courseId) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/$courseId');
+    final uri = ApiContract.uri(ApiPaths.course(courseId));
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) {
       throw Exception('Failed to load course: ${resp.statusCode}');
@@ -121,7 +124,7 @@ class CourseService {
     String? lastAction,
   }) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/$courseId/progress');
+    final uri = ApiContract.uri(ApiPaths.courseProgress(courseId));
     final body = jsonEncode({
       'progress': progress,
       'percent': percent,
@@ -140,7 +143,7 @@ class CourseService {
   static Future<List<Course>> _fallbackMyCoursesFromEnrollments(
     String token,
   ) async {
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/enrolled');
+    final uri = ApiContract.uri(ApiPaths.coursesEnrolled);
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) {
       return const <Course>[];
@@ -152,7 +155,7 @@ class CourseService {
     final courses = <Course>[];
     for (final entry in enrollments) {
       if (entry is! Map) continue;
-      final map = Map<String, dynamic>.from(entry as Map);
+      final map = Map<String, dynamic>.from(entry);
       final courseId = map['course_id']?.toString() ?? '';
       if (courseId.isEmpty) continue;
       try {
@@ -178,7 +181,7 @@ class CourseService {
   static Future<List<Course>> _fallbackMyCoursesFromCourses(
     String token,
   ) async {
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses');
+    final uri = ApiContract.uri(ApiPaths.courses);
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) {
       return const <Course>[];
@@ -186,7 +189,10 @@ class CourseService {
     final payload = jsonDecode(resp.body) as Map<String, dynamic>;
     final courses = (payload['courses'] as List<dynamic>? ?? [])
         .map((item) => _courseFromJson(Map<String, dynamic>.from(item as Map)))
-        .where((c) => c.progress > 0 || c.status != null || c.progressDetail.isNotEmpty)
+        .where(
+          (c) =>
+              c.progress > 0 || c.status != null || c.progressDetail.isNotEmpty,
+        )
         .toList();
     return courses;
   }

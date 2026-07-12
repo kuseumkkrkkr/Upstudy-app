@@ -2,21 +2,38 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
-import 'package:s11/shared/business/repositories/rating_store.dart';
-import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
+import 'package:s11/sessions/course/ui/course_detail_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
     as study_center;
-import 'package:s11/sessions/course/ui/course_detail_page.dart';
+import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'shared.dart';
 
-/// 코스 목록/추천 화면. 검색과 추천 OVR을 한 곳에서 처리.
+typedef CourseFeedLoader =
+    Future<List<Course>> Function({required String keyword, double? recommend});
+
+const double _ratingOvrFloor = 1200;
+const double _ratingOvrDivider = 128;
+const Color _ink = Color(0xFF17211B);
+const Color _accentBlue = Color(0xFF2D6CDF);
+const Color _accentOrange = Color(0xFFE8862F);
+
+String _formatVisibleOvr(num value) {
+  final raw = value.toDouble();
+  if (raw.isNaN || raw <= 0) return '--';
+  if (raw < _ratingOvrFloor) return raw.toStringAsFixed(1);
+  return ((raw - _ratingOvrFloor) / _ratingOvrDivider).toStringAsFixed(1);
+}
+
 class CourseCatalogPage extends StatefulWidget {
-  const CourseCatalogPage({super.key});
+  const CourseCatalogPage({super.key, this.courseFeedLoader});
+
+  final CourseFeedLoader? courseFeedLoader;
 
   @override
   State<CourseCatalogPage> createState() => _CourseCatalogPageState();
@@ -26,7 +43,6 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
   final TextEditingController _searchCtrl = TextEditingController();
   Future<List<Course>>? _future;
   double? _lastRecommend;
-  static const double _ratingOvrDivider = 128;
 
   @override
   void initState() {
@@ -58,256 +74,149 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     final recommend = _currentRecommendOvr();
     _lastRecommend = recommend;
     setState(() {
-      _future = CourseService.fetchCourses(
-        keyword: keyword.isEmpty ? null : keyword,
-        recommendOvr: recommend,
+      _future = (widget.courseFeedLoader ?? _loadCourseFeed)(
+        keyword: keyword,
+        recommend: recommend,
       );
     });
+  }
+
+  Future<List<Course>> _loadCourseFeed({
+    required String keyword,
+    required double? recommend,
+  }) async {
+    final publicCourses = await CourseService.fetchCourses(
+      keyword: keyword.isEmpty ? null : keyword,
+      recommendOvr: recommend,
+    );
+    final mine = await CourseService.fetchMyCourses().catchError(
+      (_) => const <Course>[],
+    );
+    final byId = <String, Course>{};
+    for (final course in [...publicCourses, ...mine]) {
+      if (course.id.trim().isEmpty) continue;
+      if (keyword.isNotEmpty && !_matchesKeyword(course, keyword)) continue;
+      byId[course.id] = course;
+    }
+    return byId.values.toList(growable: false);
+  }
+
+  bool _matchesKeyword(Course course, String keyword) {
+    final q = keyword.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return course.title.toLowerCase().contains(q) ||
+        course.description.toLowerCase().contains(q) ||
+        course.focusTags.any((tag) => tag.toLowerCase().contains(q));
+  }
+
+  void _openCourse(Course course) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => CourseDetailPage(course: course)));
   }
 
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
-    final recommend = _lastRecommend;
+    final rating = RatingStore.notifier.value.ovr;
 
     return Scaffold(
-      backgroundColor: kCourseBgGrey,
+      backgroundColor: const Color(0xFFF6F7F5),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Ios26TopBar(
-                brandColor: kCourseGreen,
-                onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const MainStudentPage()),
-                  (route) => false,
-                ),
-                items: [
-                  Ios26NavItem(
-                    label: '학습터',
-                    onTap: () => Navigator.of(context).push(
+        child: FutureBuilder<List<Course>>(
+          future: _future,
+          builder: (context, snapshot) {
+            final courses = snapshot.data ?? const <Course>[];
+            final featured = courses.take(2).toList(growable: false);
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Ios26TopBar(
+                    brandColor: kCourseGreen,
+                    onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
-                        builder: (_) => const study_center.SoWidget(),
+                        builder: (_) => const MainStudentPage(),
                       ),
+                      (route) => false,
                     ),
-                  ),
-                  Ios26NavItem(
-                    label: '문서함',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const docx.BookWidget()),
-                    ),
-                  ),
-                  Ios26NavItem(
-                    label: '친구/소셜',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SoWidget()),
-                    ),
-                  ),
-                  const Ios26NavItem(label: '코스', active: true),
-                ],
-              ),
-              _CatalogHero(scale: scale),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  30 * scale,
-                  30 * scale,
-                  30 * scale,
-                  40 * scale,
-                ),
-                child: Container(
-                  padding: EdgeInsets.all(20 * scale),
-                  decoration: BoxDecoration(
-                    color: kCourseSurface,
-                    borderRadius: BorderRadius.circular(20 * scale),
-                    border: Border.all(color: kCourseBorder),
-                    boxShadow: const [kCourseShadow],
-                  ),
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '코스 목록',
-                      style: GoogleFonts.inter(
-                        fontSize: 36 * scale,
-                        fontWeight: FontWeight.w700,
-                        color: kCourseGreen,
+                    items: [
+                      Ios26NavItem(
+                        label: '학습터',
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const study_center.SoWidget(),
+                          ),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8 * scale),
-                    Text(
-                      '수강 신청 후 진행도와 현황이 계정별로 반영됩니다. 데모 코스는 관람만 가능합니다.',
-                      style: GoogleFonts.inter(
-                        fontSize: 16 * scale,
-                        color: Colors.black54,
+                      Ios26NavItem(
+                        label: '책가방',
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const docx.BookWidget(),
+                          ),
+                        ),
                       ),
+                      Ios26NavItem(
+                        label: '친구/소셜',
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SoWidget()),
+                        ),
+                      ),
+                      const Ios26NavItem(label: '코스', active: true),
+                    ],
+                  ),
+                  _CatalogHero(
+                    scale: scale,
+                    featured: featured,
+                    onOpenCourse: _openCourse,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      28 * scale,
+                      22 * scale,
+                      28 * scale,
+                      42 * scale,
                     ),
-                    SizedBox(height: 16 * scale),
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchCtrl,
-                            decoration: InputDecoration(
-                              hintText: '코스 검색 (제목/설명/태그)',
-                              filled: true,
-                              fillColor: kCourseBgGrey,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 14 * scale,
-                                vertical: 12 * scale,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14 * scale),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            onSubmitted: (_) => _load(),
-                          ),
+                        _SearchBar(
+                          scale: scale,
+                          controller: _searchCtrl,
+                          ratingLabel: _formatVisibleOvr(rating),
+                          onSearch: _load,
                         ),
-                        SizedBox(width: 10 * scale),
-                        ElevatedButton(
-                          onPressed: _load,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kCourseGreen,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 14 * scale,
-                              vertical: 12 * scale,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12 * scale),
-                            ),
-                          ),
-                          child: Text(
-                            '검색',
-                            style: GoogleFonts.inter(
-                              fontSize: 13 * scale,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8 * scale),
-                        OutlinedButton(
-                          onPressed: _load,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: kCourseGreen,
-                            side: const BorderSide(color: kCourseGreen),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12 * scale,
-                              vertical: 12 * scale,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12 * scale),
-                            ),
-                          ),
-                          child: Text(
-                            recommend == null
-                                ? '추천 새로고침'
-                                : '추천 OVR ${recommend.toStringAsFixed(1)}',
-                            style: GoogleFonts.inter(
-                              fontSize: 12 * scale,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20 * scale),
-                    FutureBuilder<List<Course>>(
-                      future: _future,
-                      builder: (context, snapshot) {
-                        final courses = snapshot.data ?? const <Course>[];
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20 * scale),
+                        SizedBox(height: 22 * scale),
+                        if (snapshot.connectionState == ConnectionState.waiting)
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 42 * scale),
                             child: const Center(
                               child: CircularProgressIndicator(),
                             ),
-                          );
-                        }
-                        if (courses.isEmpty) {
-                          return Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12 * scale),
-                            child: Text(
-                              '등록된 코스가 없습니다.',
-                              style: GoogleFonts.inter(
-                                fontSize: 14 * scale,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          );
-                        }
-                        final recommendCount = recommend != null
-                            ? (courses.length >= 3 ? 3 : courses.length)
-                            : 0;
-                        final recommended = recommendCount > 0
-                            ? courses.take(recommendCount).toList()
-                            : const <Course>[];
-                        final rest = recommendCount > 0
-                            ? courses.skip(recommendCount).toList()
-                            : courses;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (recommended.isNotEmpty) ...[
-                              Text(
-                                '추천 코스',
-                                style: GoogleFonts.inter(
-                                  fontSize: 22 * scale,
-                                  fontWeight: FontWeight.w700,
-                                  color: kCourseGreen,
-                                ),
-                              ),
-                              SizedBox(height: 12 * scale),
-                              for (final course in recommended)
-                                CourseCard(
-                                  course: course,
-                                  scale: scale,
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            CourseDetailPage(course: course),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              SizedBox(height: 16 * scale),
-                              if (rest.isNotEmpty)
-                                Text(
-                                  '전체 코스',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 18 * scale,
-                                    fontWeight: FontWeight.w700,
-                                    color: kCourseGreen,
-                                  ),
-                                ),
-                              SizedBox(height: 8 * scale),
-                            ],
-                            for (final course in rest)
-                              CourseCard(
-                                course: course,
-                                scale: scale,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          CourseDetailPage(course: course),
-                                    ),
-                                  );
-                                },
-                              ),
-                          ],
-                        );
-                      },
+                          )
+                        else if (courses.isEmpty)
+                          _EmptyCourses(scale: scale)
+                        else ...[
+                          _CompareCourses(
+                            scale: scale,
+                            courses: featured,
+                            onOpenCourse: _openCourse,
+                          ),
+                          SizedBox(height: 24 * scale),
+                          _CourseGrid(
+                            scale: scale,
+                            courses: courses,
+                            onOpenCourse: _openCourse,
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -315,117 +224,513 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
 }
 
 class _CatalogHero extends StatelessWidget {
-  const _CatalogHero({required this.scale});
+  const _CatalogHero({
+    required this.scale,
+    required this.featured,
+    required this.onOpenCourse,
+  });
+
   final double scale;
+  final List<Course> featured;
+  final ValueChanged<Course> onOpenCourse;
 
   @override
   Widget build(BuildContext context) {
+    final first = featured.isNotEmpty ? featured.first : null;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 900;
-        final heroHeight = isNarrow ? 420 * scale : 340 * scale;
-        final infoCard = Container(
-          width: isNarrow ? double.infinity : 220 * scale,
-          padding: EdgeInsets.all(16 * scale),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(16 * scale),
-            border: Border.all(color: Colors.white24),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              _HeroBullet(text: '매일 학습 루틴'),
-              _HeroBullet(text: '문제·시험·교재 한곳에'),
-              _HeroBullet(text: '진행도/추천 자동 반영'),
-            ],
-          ),
-        );
-        final textBlock = Column(
+        final isNarrow = constraints.maxWidth < 920;
+        final textPane = Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _Label(
+              icon: Icons.school_rounded,
+              text: 'S11 온라인 클래스',
+              color: _accentBlue,
+              scale: scale,
+            ),
+            SizedBox(height: 16 * scale),
             Text(
-              '맞춤형 코스 탐색',
+              '지금 필요한 강좌를 고르고 바로 수강하세요',
               style: GoogleFonts.inter(
-                color: Colors.white,
                 fontSize: 42 * scale,
-                fontWeight: FontWeight.w700,
+                height: 1.08,
+                fontWeight: FontWeight.w800,
+                color: _ink,
               ),
             ),
-            SizedBox(height: 12 * scale),
+            SizedBox(height: 14 * scale),
             Text(
-              '문제풀기·시험지·교재를 일정에 따라 이어서 학습하고, OVR에 맞춰 자동 추천을 받으세요.',
+              '교사가 만든 코스, 문제 풀이, 시험지, 교재 강의를 한 흐름으로 이어서 학습합니다.',
               style: GoogleFonts.inter(
-                color: Colors.white70,
-                fontSize: 18 * scale,
+                fontSize: 16 * scale,
+                height: 1.55,
+                color: Colors.black54,
               ),
+            ),
+            SizedBox(height: 22 * scale),
+            Wrap(
+              spacing: 10 * scale,
+              runSpacing: 10 * scale,
+              children: [
+                _HeroFact(
+                  icon: Icons.play_circle_outline_rounded,
+                  text: '강의형 모듈',
+                  scale: scale,
+                ),
+                _HeroFact(
+                  icon: Icons.compare_arrows_rounded,
+                  text: '코스 비교',
+                  scale: scale,
+                ),
+                _HeroFact(
+                  icon: Icons.insights_rounded,
+                  text: '교사 리포트 연동',
+                  scale: scale,
+                ),
+              ],
             ),
           ],
         );
+        final previewPane = _HeroPreview(
+          scale: scale,
+          course: first,
+          onOpen: first == null ? null : () => onOpenCourse(first),
+        );
 
-        return SizedBox(
-          height: heroHeight,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF183D2B), Color(0xFF2A6B4B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30 * scale),
-                child: isNarrow
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          textBlock,
-                          SizedBox(height: 20 * scale),
-                          infoCard,
-                        ],
-                      )
-                    : Row(
-                        children: [
-                          Expanded(child: textBlock),
-                          SizedBox(width: 20 * scale),
-                          infoCard,
-                        ],
-                      ),
-              ),
-            ],
+        return Container(
+          constraints: BoxConstraints(minHeight: isNarrow ? 520 : 360),
+          color: const Color(0xFFFAFBF8),
+          padding: EdgeInsets.fromLTRB(
+            28 * scale,
+            28 * scale,
+            28 * scale,
+            18 * scale,
           ),
+          child: isNarrow
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    textPane,
+                    SizedBox(height: 18 * scale),
+                    previewPane,
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(flex: 5, child: textPane),
+                    SizedBox(width: 24 * scale),
+                    Expanded(flex: 4, child: previewPane),
+                  ],
+                ),
         );
       },
     );
   }
 }
 
-class _HeroBullet extends StatelessWidget {
-  const _HeroBullet({required this.text});
-  final String text;
+class _HeroPreview extends StatelessWidget {
+  const _HeroPreview({
+    required this.scale,
+    required this.course,
+    required this.onOpen,
+  });
+
+  final double scale;
+  final Course? course;
+  final VoidCallback? onOpen;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
+    final title = course?.title ?? '코스를 불러오는 중';
+    final description =
+        course?.description ?? '교사 코스가 등록되면 이 영역에 대표 강좌가 표시됩니다.';
+    final progress = ((course?.progress ?? 0) * 100).round();
+    return Container(
+      padding: EdgeInsets.all(18 * scale),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10271D),
+        borderRadius: BorderRadius.circular(8 * scale),
+        boxShadow: const [kCourseShadow],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle, color: kCourseLightGreen, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF7F1),
+                borderRadius: BorderRadius.circular(8 * scale),
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(painter: _LectureBackdropPainter()),
+                  ),
+                  Center(
+                    child: Container(
+                      width: 68 * scale,
+                      height: 68 * scale,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      child: Icon(
+                        Icons.play_arrow_rounded,
+                        color: kCourseGreen,
+                        size: 42 * scale,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+          SizedBox(height: 16 * scale),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 22 * scale,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: Colors.white70,
+              fontSize: 13 * scale,
+              height: 1.45,
+            ),
+          ),
+          SizedBox(height: 14 * scale),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: course?.progress ?? 0,
+                    minHeight: 8 * scale,
+                    backgroundColor: Colors.white24,
+                    color: _accentOrange,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12 * scale),
+              Text(
+                '$progress%',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 12 * scale,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16 * scale),
+          FilledButton.icon(
+            onPressed: onOpen,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: kCourseGreen,
+              minimumSize: Size(double.infinity, 46 * scale),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8 * scale),
+              ),
+            ),
+            icon: const Icon(Icons.arrow_forward_rounded),
+            label: const Text('대표 강좌 보기'),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({
+    required this.scale,
+    required this.controller,
+    required this.ratingLabel,
+    required this.onSearch,
+  });
+
+  final double scale;
+  final TextEditingController controller;
+  final String ratingLabel;
+  final VoidCallback onSearch;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(14 * scale),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8 * scale),
+        border: Border.all(color: const Color(0xFFE1E6DF)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 720;
+          final searchField = TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search_rounded),
+              hintText: '코스명, 설명, 태그로 검색',
+              filled: true,
+              fillColor: const Color(0xFFF6F7F5),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14 * scale,
+                vertical: 14 * scale,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8 * scale),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onSubmitted: (_) => onSearch(),
+          );
+          final actions = Wrap(
+            spacing: 8 * scale,
+            runSpacing: 8 * scale,
+            children: [
+              FilledButton.icon(
+                onPressed: onSearch,
+                icon: const Icon(Icons.tune_rounded),
+                label: const Text('검색'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onSearch,
+                icon: const Icon(Icons.auto_awesome_rounded),
+                label: Text('내 OVR $ratingLabel'),
+              ),
+            ],
+          );
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                searchField,
+                SizedBox(height: 10 * scale),
+                actions,
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: searchField),
+              SizedBox(width: 12 * scale),
+              actions,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CompareCourses extends StatelessWidget {
+  const _CompareCourses({
+    required this.scale,
+    required this.courses,
+    required this.onOpenCourse,
+  });
+
+  final double scale;
+  final List<Course> courses;
+  final ValueChanged<Course> onOpenCourse;
+
+  @override
+  Widget build(BuildContext context) {
+    if (courses.length < 2) return const SizedBox.shrink();
+    final a = courses[0];
+    final b = courses[1];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          title: '추천 코스 비교',
+          subtitle: '가장 먼저 볼 만한 두 강좌를 한눈에 비교합니다.',
+          scale: scale,
+        ),
+        SizedBox(height: 12 * scale),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final narrow = constraints.maxWidth < 780;
+            final firstCard = _CompareCard(
+              course: a,
+              accent: _accentBlue,
+              scale: scale,
+              onOpen: () => onOpenCourse(a),
+            );
+            final secondCard = _CompareCard(
+              course: b,
+              accent: _accentOrange,
+              scale: scale,
+              onOpen: () => onOpenCourse(b),
+            );
+            if (narrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  firstCard,
+                  SizedBox(height: 12 * scale),
+                  secondCard,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: firstCard),
+                SizedBox(width: 12 * scale),
+                Expanded(child: secondCard),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _CompareCard extends StatelessWidget {
+  const _CompareCard({
+    required this.course,
+    required this.accent,
+    required this.scale,
+    required this.onOpen,
+  });
+
+  final Course course;
+  final Color accent;
+  final double scale;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (course.progress * 100).round();
+    final lessons = course.lessons > 0 ? course.lessons : course.units.length;
+    return Container(
+      padding: EdgeInsets.all(18 * scale),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8 * scale),
+        border: Border.all(color: const Color(0xFFE1E6DF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Label(
+            icon: Icons.local_fire_department_rounded,
+            text: course.targetOvr > 0
+                ? '목표 OVR ${_formatVisibleOvr(course.targetOvr)}'
+                : '추천 강좌',
+            color: accent,
+            scale: scale,
+          ),
+          SizedBox(height: 12 * scale),
+          Text(
+            course.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 21 * scale,
+              fontWeight: FontWeight.w800,
+              color: _ink,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            course.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 13 * scale,
+              height: 1.45,
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(height: 16 * scale),
+          Row(
+            children: [
+              _Metric(label: '강의', value: '$lessons개', scale: scale),
+              SizedBox(width: 12 * scale),
+              _Metric(label: '난이도', value: course.level, scale: scale),
+              SizedBox(width: 12 * scale),
+              _Metric(label: '진행', value: '$progress%', scale: scale),
+            ],
+          ),
+          SizedBox(height: 16 * scale),
+          FilledButton.icon(
+            onPressed: onOpen,
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: Text(course.progress > 0 ? '이어 듣기' : '강좌 보기'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CourseGrid extends StatelessWidget {
+  const _CourseGrid({
+    required this.scale,
+    required this.courses,
+    required this.onOpenCourse,
+  });
+
+  final double scale;
+  final List<Course> courses;
+  final ValueChanged<Course> onOpenCourse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          title: '전체 강좌',
+          subtitle: '공개 코스와 배정된 코스를 골라 수강할 수 있습니다.',
+          scale: scale,
+        ),
+        SizedBox(height: 12 * scale),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 1080
+                ? 3
+                : (constraints.maxWidth >= 720 ? 2 : 1);
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: courses.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                mainAxisSpacing: 12 * scale,
+                crossAxisSpacing: 12 * scale,
+                mainAxisExtent: columns == 1 ? 248 : 310,
+              ),
+              itemBuilder: (context, index) {
+                final course = courses[index];
+                return CourseCard(
+                  course: course,
+                  scale: scale,
+                  onTap: () => onOpenCourse(course),
+                );
+              },
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -437,6 +742,7 @@ class CourseCard extends StatelessWidget {
     required this.scale,
     required this.onTap,
   });
+
   final Course course;
   final double scale;
   final VoidCallback onTap;
@@ -444,158 +750,359 @@ class CourseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progressPercent = (course.progress * 100).round();
-    final lessonsLabel =
-        course.lessons > 0 ? '${course.lessons}강' : '${course.units.length}유닛';
-    final isDemo = course.isDemo;
-
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 220),
-      tween: Tween(begin: 0, end: 1),
-      curve: Curves.easeOutCubic,
-      builder: (context, t, child) => Transform.translate(
-        offset: Offset(0, (1 - t) * 8),
-        child: Opacity(opacity: t, child: child),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18 * scale),
-        child: Container(
-        margin: EdgeInsets.only(bottom: 20 * scale),
-        padding: EdgeInsets.all(20 * scale),
+    final lessons = course.lessons > 0 ? course.lessons : course.units.length;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8 * scale),
+      child: Container(
+        padding: EdgeInsets.all(16 * scale),
         decoration: BoxDecoration(
-          color: kCourseSurface,
-          borderRadius: BorderRadius.circular(18 * scale),
-          border: Border.all(color: kCourseBorder),
-          boxShadow: const [kCourseShadow],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8 * scale),
+          border: Border.all(color: const Color(0xFFE1E6DF)),
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 6 * scale,
-              height: 140 * scale,
-              decoration: BoxDecoration(
-                color: kCourseGreen,
-                borderRadius: BorderRadius.circular(6 * scale),
+            Row(
+              children: [
+                Container(
+                  width: 34 * scale,
+                  height: 34 * scale,
+                  decoration: BoxDecoration(
+                    color: kCourseGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8 * scale),
+                  ),
+                  child: Icon(
+                    Icons.ondemand_video_rounded,
+                    color: kCourseGreen,
+                    size: 19 * scale,
+                  ),
+                ),
+                SizedBox(width: 10 * scale),
+                Expanded(
+                  child: Text(
+                    course.level.isEmpty ? '강좌' : course.level,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 12 * scale,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Icon(Icons.arrow_forward_rounded, size: 18 * scale),
+              ],
+            ),
+            SizedBox(height: 12 * scale),
+            Text(
+              course.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 18 * scale,
+                height: 1.2,
+                fontWeight: FontWeight.w800,
+                color: _ink,
               ),
             ),
-            SizedBox(width: 16 * scale),
+            SizedBox(height: 8 * scale),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              course.title,
-                              style: GoogleFonts.inter(
-                                fontSize: 26 * scale,
-                                fontWeight: FontWeight.w600,
-                                color: kCourseGreen,
-                              ),
-                            ),
-                            SizedBox(height: 4 * scale),
-                            Text(
-                              lessonsLabel,
-                              style: GoogleFonts.inter(
-                                fontSize: 12 * scale,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        children: [
-                          ElevatedButton(
-                            onPressed: onTap,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  isDemo ? Colors.grey.shade500 : kCourseGreen,
-                              foregroundColor: Colors.white,
-                              minimumSize: Size(130 * scale, 48 * scale),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14 * scale),
-                              ),
-                            ),
-                            child: Text(
-                              isDemo
-                                  ? '코스 보기'
-                                  : (course.progress > 0 ? '이어하기' : '코스 보기'),
-                              style: GoogleFonts.inter(
-                                fontSize: 14 * scale,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 10 * scale),
-                          Text(
-                            course.targetOvr > 0
-                                ? '목표 OVR ${course.targetOvr}'
-                                : '추천 코스',
-                            style: GoogleFonts.inter(
-                              fontSize: 12 * scale,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8 * scale),
-                  if (isDemo)
-                    Text(
-                      '데모 코스입니다. 진행도는 기록되지 않습니다.',
-                      style: GoogleFonts.inter(
-                        fontSize: 12 * scale,
-                        color: Colors.black54,
-                      ),
-                    )
-                  else if (course.status != null)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6 * scale),
-                            child: LinearProgressIndicator(
-                              value: course.progress,
-                              minHeight: 8 * scale,
-                              backgroundColor: const Color(0xFFE2E2E2),
-                              color: kCourseLightGreen,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12 * scale),
-                        Text(
-                          '$progressPercent%',
-                          style: GoogleFonts.inter(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    Text(
-                      '수강 신청 후 진행률이 표시됩니다.',
-                      style: GoogleFonts.inter(
-                        fontSize: 12 * scale,
-                        color: Colors.black54,
-                      ),
-                    ),
-                ],
+              child: Text(
+                course.description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 12 * scale,
+                  height: 1.4,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+            SizedBox(height: 12 * scale),
+            Wrap(
+              spacing: 6 * scale,
+              runSpacing: 6 * scale,
+              children: [
+                MetaPill(
+                  label: '$lessons강',
+                  icon: Icons.video_library_rounded,
+                  scale: scale,
+                ),
+                MetaPill(
+                  label: course.duration.isEmpty ? '자율 수강' : course.duration,
+                  icon: Icons.schedule_rounded,
+                  scale: scale,
+                ),
+              ],
+            ),
+            SizedBox(height: 12 * scale),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: course.progress,
+                minHeight: 7 * scale,
+                backgroundColor: const Color(0xFFE6EAE4),
+                color: _accentBlue,
+              ),
+            ),
+            SizedBox(height: 6 * scale),
+            Text(
+              course.status == null ? '수강 전' : '$progressPercent% 완료',
+              style: GoogleFonts.inter(
+                fontSize: 11 * scale,
+                color: Colors.black54,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
-        ),
       ),
     );
   }
+}
+
+class _EmptyCourses extends StatelessWidget {
+  const _EmptyCourses({required this.scale});
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(28 * scale),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8 * scale),
+        border: Border.all(color: const Color(0xFFE1E6DF)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.video_library_outlined, size: 46 * scale, color: _ink),
+          SizedBox(height: 12 * scale),
+          Text(
+            '표시할 코스가 없습니다.',
+            style: GoogleFonts.inter(
+              fontSize: 20 * scale,
+              fontWeight: FontWeight.w800,
+              color: _ink,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Text(
+            '교사가 코스를 공개하거나 그룹스터디에 배정하면 이곳에서 수강할 수 있습니다.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 13 * scale,
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.subtitle,
+    required this.scale,
+  });
+
+  final String title;
+  final String subtitle;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 24 * scale,
+                  fontWeight: FontWeight.w800,
+                  color: _ink,
+                ),
+              ),
+              SizedBox(height: 4 * scale),
+              Text(
+                subtitle,
+                style: GoogleFonts.inter(
+                  fontSize: 13 * scale,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Label extends StatelessWidget {
+  const _Label({
+    required this.icon,
+    required this.text,
+    required this.color,
+    required this.scale,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color color;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 10 * scale,
+        vertical: 6 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15 * scale, color: color),
+          SizedBox(width: 6 * scale),
+          Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroFact extends StatelessWidget {
+  const _HeroFact({
+    required this.icon,
+    required this.text,
+    required this.scale,
+  });
+
+  final IconData icon;
+  final String text;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18 * scale, color: kCourseGreen),
+        SizedBox(width: 6 * scale),
+        Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 13 * scale,
+            color: _ink,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric({
+    required this.label,
+    required this.value,
+    required this.scale,
+  });
+
+  final String label;
+  final String value;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11 * scale,
+              color: Colors.black45,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 3 * scale),
+          Text(
+            value.isEmpty ? '-' : value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 15 * scale,
+              color: _ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LectureBackdropPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    paint.color = const Color(0xFFD7EBDD);
+    canvas.drawRect(Rect.fromLTWH(0, size.height * 0.62, size.width, 6), paint);
+    paint.color = const Color(0xFFB9D8C3);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * 0.1,
+          size.height * 0.18,
+          size.width * 0.34,
+          size.height * 0.28,
+        ),
+        const Radius.circular(8),
+      ),
+      paint,
+    );
+    paint.color = const Color(0xFF2D6CDF);
+    canvas.drawCircle(
+      Offset(size.width * 0.72, size.height * 0.34),
+      size.shortestSide * 0.14,
+      paint,
+    );
+    paint.color = const Color(0xFFE8862F);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * 0.58,
+          size.height * 0.68,
+          size.width * 0.3,
+          size.height * 0.08,
+        ),
+        const Radius.circular(20),
+      ),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

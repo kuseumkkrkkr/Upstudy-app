@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 
 class TeacherStorePage extends StatefulWidget {
@@ -78,26 +80,34 @@ class _TeacherStorePageState extends State<TeacherStorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       endDrawer: const TeacherAppDrawer(
         currentRoute: TeacherStorePage.routeName,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF101828), Color(0xFF155E75), Color(0xFFE0F2FE)],
-          ),
-        ),
-        child: SafeArea(
+      body: Builder(
+        builder: (scaffoldContext) => SafeArea(
           child: Column(
             children: [
-              _TopBar(onRefresh: _busy ? null : _load),
+              Ios26TopBar(
+                brandColor: kCourseGreen,
+                title: '스토어',
+                onBack: () => Navigator.maybePop(context),
+                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                items: const [
+                  Ios26NavItem(label: '상품', active: true),
+                  Ios26NavItem(label: '포인트'),
+                ],
+                trailingIcons: [
+                  Ios26ActionIcon(
+                    icon: Icons.refresh_rounded,
+                    label: '새로고침',
+                    onTap: _busy ? null : _load,
+                  ),
+                ],
+              ),
               Expanded(
                 child: _loading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      )
+                    ? const Center(child: CircularProgressIndicator())
                     : RefreshIndicator(
                         onRefresh: _load,
                         child: ListView(
@@ -144,52 +154,6 @@ class _TeacherStorePageState extends State<TeacherStorePage> {
   }
 }
 
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.onRefresh});
-
-  final VoidCallback? onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
-      child: Row(
-        children: [
-          IconButton.filledTonal(
-            tooltip: '뒤로',
-            onPressed: () => Navigator.maybePop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              '스토어',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          IconButton.filledTonal(
-            tooltip: '새로고침',
-            onPressed: onRefresh,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-          const SizedBox(width: 8),
-          Builder(
-            builder: (context) => IconButton.filledTonal(
-              tooltip: '메뉴',
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-              icon: const Icon(Icons.menu_rounded),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _BalancePanel extends StatelessWidget {
   const _BalancePanel({
     required this.balance,
@@ -213,14 +177,14 @@ class _BalancePanel extends StatelessWidget {
           Text(
             '$balance P',
             style: const TextStyle(
-              color: Color(0xFF0F172A),
+              color: kCourseGreen,
               fontSize: 42,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            '테스트 충전 배너',
+            '테스트 포인트 충전',
             style: TextStyle(color: Colors.black.withValues(alpha: 0.62)),
           ),
           const SizedBox(height: 16),
@@ -231,6 +195,10 @@ class _BalancePanel extends StatelessWidget {
                 .map(
                   (amount) => FilledButton.tonalIcon(
                     onPressed: busy ? null : () => onTopUp(amount),
+                    style: FilledButton.styleFrom(
+                      foregroundColor: kCourseGreen,
+                      backgroundColor: AppColors.surfaceMuted,
+                    ),
                     icon: const Icon(Icons.add_card_rounded),
                     label: Text('+$amount'),
                   ),
@@ -265,12 +233,20 @@ class _StoreItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(_iconFor(itemId), color: const Color(0xFF155E75), size: 34),
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(_iconFor(itemId), color: kCourseGreen, size: 30),
+          ),
           const SizedBox(height: 14),
           Text(
             item['title']?.toString() ?? itemId,
             style: const TextStyle(
-              color: Color(0xFF0F172A),
+              color: kCourseGreen,
               fontSize: 21,
               fontWeight: FontWeight.w800,
             ),
@@ -289,7 +265,7 @@ class _StoreItemCard extends StatelessWidget {
               Text(
                 '$price P',
                 style: const TextStyle(
-                  color: Color(0xFF0F172A),
+                  color: kCourseGreen,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
@@ -299,6 +275,12 @@ class _StoreItemCard extends StatelessWidget {
                 onPressed: owned || busy || itemId.isEmpty
                     ? null
                     : () => onPurchase(itemId),
+                style: FilledButton.styleFrom(
+                  backgroundColor: owned
+                      ? AppColors.surfaceMuted
+                      : kCourseGreen,
+                  foregroundColor: owned ? kCourseGreen : Colors.white,
+                ),
                 icon: Icon(
                   owned ? Icons.verified_rounded : Icons.shopping_bag_rounded,
                 ),

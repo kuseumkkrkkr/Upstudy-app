@@ -6,7 +6,7 @@ from fastapi import Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
-from auth import decode_token
+from auth import decode_token, resolve_token_payload_user
 from fastapi import Response
 from storage.study_group_storage import (
     add_group_exam,
@@ -50,15 +50,12 @@ def _get_auth_payload(
         raise HTTPException(status_code=401, detail="Missing token")
     token = credentials.credentials
     payload = decode_token(token)
-    if isinstance(payload, dict):
-        user_id = payload.get("user_id") or payload.get("sub")
-        role = str(payload.get("role") or "student").strip().lower()
-    else:
-        user_id = payload
-        role = "student"
-    if not user_id:
+    if not isinstance(payload, dict):
         raise HTTPException(status_code=401, detail="Invalid token")
-    return {"user_id": str(user_id), "role": role}
+    user = resolve_token_payload_user(payload)
+    if not user["user_id"]:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return {"user_id": user["user_id"], "role": user["role"]}
 
 
 def _get_user_id(auth_payload: dict = Depends(_get_auth_payload)) -> str:

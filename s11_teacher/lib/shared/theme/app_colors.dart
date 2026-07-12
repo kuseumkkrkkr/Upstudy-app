@@ -17,7 +17,13 @@ class AppColors {
   static const Color border = Color(0xFFE0E3E7);
 
   /// 배경 색상 - 거의 흰색 회색 (기존 Color(0xFFF8F8F8))
-  static const Color background = Color(0xFFF8F8F8);
+  static const Color background = Color(0xFFFFFFFF);
+
+  /// 부드러운 구획 배경
+  static const Color surfaceMuted = Color(0xFFF5F7F4);
+
+  /// 기본 카드 경계
+  static const Color surfaceBorder = Color(0xFFE4E9E3);
 
   /// 헤더용 짙은 녹색 (기존 Color(0xFF22593A))
   static const Color headerGreen = Color(0xFF22593A);

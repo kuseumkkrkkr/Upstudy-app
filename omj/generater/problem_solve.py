@@ -23,6 +23,7 @@ from generater.codebase_store import (
 from generater.question_format import apply_question_format
 from generater.fix_gen import fix_gen
 from resampling import resample_storage_data
+from services.jobs.cancellation import check_cancelled
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,10 @@ TIER_PARAMS: Dict[int, TierParams] = {
     4: TierParams(solves_count=5, strategy_level=2, branch_conditions=1),
     5: TierParams(solves_count=6, strategy_level=3, branch_conditions=2),
 }
+_PROBLEM_SET_BATCH_TIMEOUT_SEC = max(
+    1.0,
+    float(os.getenv("PROBLEM_SET_BATCH_TIMEOUT_SEC", "6")),
+)
 
 
 def min_tag_count_for_tier(tier: int) -> int:
@@ -305,12 +310,14 @@ def generate_problem_set(
     seed: int | None = None,
     recent_codebase_seeds: dict[int, list[int]] | None = None,
     on_quest: Callable[[dict[str, Any]], None] | None = None,
+    cancel_event: threading.Event | None = None,
 ) -> list[dict[str, Any]]:
+    check_cancelled(cancel_event)
     clean_tags = normalize_tags(hash_tags)
     if not clean_tags:
         raise ValueError('hash_tags must not be empty')
-    if question_count < 3 or question_count > 500:
-        raise ValueError('question_count must be between 3 and 500')
+    if question_count < 1 or question_count > 500:
+        raise ValueError('question_count must be between 1 and 500')
 
     min_tier = int(max(1, min(5, min_difficulty_tier)))
     max_tier = int(max(1, min(5, max_difficulty_tier)))
@@ -371,6 +378,7 @@ def generate_problem_set(
     quests: list[dict[str, Any] | None] = [None] * question_count
 
     def _generate_single(task: dict[str, Any], seed_base: int) -> dict[str, Any]:
+        check_cancelled(cancel_event)
         entry = task['entry']
         tier = task['tier']
         tags_for_problem = task['tags']
@@ -378,6 +386,7 @@ def generate_problem_set(
         local_rng = random.Random(seed_base)
 
         def _build(entry_obj: dict[str, Any], allow_fallback: bool) -> dict[str, Any]:
+            check_cancelled(cancel_event)
             code_hash = compute_code_hash(entry_obj.get('code') or '')
             entry_id = entry_obj.get('id')
             if entry_id is not None:
@@ -398,8 +407,14 @@ def generate_problem_set(
                 if not batch:
                     continue
                 seen.update(batch)
-                batch_results = run_codebase_batch(entry_obj, batch, timeout_seconds=12.0)
+                batch_results = run_codebase_batch(
+                    entry_obj,
+                    batch,
+                    timeout_seconds=_PROBLEM_SET_BATCH_TIMEOUT_SEC,
+                    cancel_event=cancel_event,
+                )
                 for idx, raw_result in enumerate(batch_results):
+                    check_cancelled(cancel_event)
                     s = batch[idx]
                     if isinstance(raw_result, dict) and "_error" in raw_result:
                         continue
@@ -422,6 +437,7 @@ def generate_problem_set(
             attempts = 0
             last_error: Exception | None = None
             while attempts < 300:
+                check_cancelled(cancel_event)
                 batch_seeds = []
                 while len(batch_seeds) < 8 and attempts < 300:
                     seed_value = local_rng.randint(1, 1_000_000_000)
@@ -432,8 +448,14 @@ def generate_problem_set(
                     batch_seeds.append(seed_value)
                 if not batch_seeds:
                     break
-                batch_results = run_codebase_batch(entry_obj, batch_seeds, timeout_seconds=12.0)
+                batch_results = run_codebase_batch(
+                    entry_obj,
+                    batch_seeds,
+                    timeout_seconds=_PROBLEM_SET_BATCH_TIMEOUT_SEC,
+                    cancel_event=cancel_event,
+                )
                 for idx, raw_result in enumerate(batch_results):
+                    check_cancelled(cancel_event)
                     seed_value = batch_seeds[idx]
                     if isinstance(raw_result, dict) and "_error" in raw_result:
                         continue
@@ -475,12 +497,19 @@ def generate_problem_set(
             executor.submit(_generate_single, task, rng.randint(1, 1_000_000_000)): task
             for task in plan
         }
-        for future in as_completed(future_map):
-            task = future_map[future]
-            idx = task['index']
-            quest = future.result()
-            quests[idx] = quest
-            if on_quest is not None:
-                on_quest(quest)
+        try:
+            for future in as_completed(future_map):
+                check_cancelled(cancel_event)
+                task = future_map[future]
+                idx = task['index']
+                quest = future.result()
+                check_cancelled(cancel_event)
+                quests[idx] = quest
+                if on_quest is not None:
+                    on_quest(quest)
+        except Exception:
+            for pending in future_map:
+                pending.cancel()
+            raise
 
     return [quest for quest in quests if quest is not None]

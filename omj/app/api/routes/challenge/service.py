@@ -16,6 +16,7 @@ from domain.challenge.engine import (
 )
 from domain.challenge.models import StudentChallengeProgress
 from domain.challenge import repository as repo
+from domain.challenge.daily_templates import DAILY_DIFFICULTY_QUOTA, POINTS_BY_DIFFICULTY
 from domain.course import v2_repository as course_repo
 from storage import student_account_store
 from storage.user_kv_storage import get_user_kv, set_user_kv
@@ -32,6 +33,31 @@ _ALLOWED_DAILY_TYPES = {
     "ask_friend_problem",
     "open_documents_box",
     "weakness_review_n_problems",
+    "exam_attempt",
+    "hint_retry",
+    "wrong_answer_open",
+    "formula_check",
+    "focus_minutes",
+    "tag_review",
+    "graph_tool_open",
+    "solution_read",
+    "daily_plan_check",
+    "level_status_view",
+    "micro_goal_complete",
+    "wrong_answer_correct",
+    "graph_problem_analyze",
+    "friend_help_answer",
+    "solution_compare",
+    "formula_apply",
+    "level_checkpoint",
+    "retry_correct",
+    "bundle_complete",
+    "exam_perfect_score",
+    "no_hint_correct",
+    "timed_solve",
+    "solution_explain",
+    "exam_average_accuracy",
+    "final_check_complete",
 }
 
 
@@ -79,6 +105,14 @@ def _quest_reward_points(quest_type: str) -> int:
     return student_account_store.DAILY_QUEST_REWARD_POINTS
 
 
+def _difficulty_reward_points(difficulty: str) -> int:
+    return POINTS_BY_DIFFICULTY.get(difficulty, student_account_store.DAILY_QUEST_REWARD_POINTS)
+
+
+def _difficulty_label(difficulty: str) -> str:
+    return {"easy": "하", "medium": "중", "hard": "상"}.get(difficulty, "하")
+
+
 def _normalize_daily_items(data: dict[str, Any]) -> dict[str, Any]:
     items = data.get("items")
     if not isinstance(items, list):
@@ -88,11 +122,23 @@ def _normalize_daily_items(data: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(item, dict):
             continue
         quest_type = str(item.get("quest_type") or "")
+        difficulty = str(item.get("difficulty") or "easy")
         item["target"] = max(1, int(item.get("target") or _quest_target(quest_type)))
         item["progress"] = max(0, int(item.get("progress") or 0))
-        item["reward_points"] = _quest_reward_points(quest_type)
+        item["difficulty"] = difficulty
+        item["difficulty_label"] = str(item.get("difficulty_label") or _difficulty_label(difficulty))
+        item["description"] = str(item.get("description") or "")
+        item["reward_points"] = max(
+            0,
+            int(item.get("reward_points") or _difficulty_reward_points(difficulty)),
+        )
         item.setdefault("reward_claimed", False)
         item.setdefault("claimed_points", 0)
+        item["claimable"] = (
+            item.get("status") == "completed"
+            and int(item.get("progress") or 0) >= int(item.get("target") or 1)
+            and not bool(item.get("reward_claimed"))
+        )
     return data
 
 
@@ -110,7 +156,7 @@ def _build_daily_items(
 ) -> list[dict[str, Any]]:
     if not available_types:
         return []
-    picked_count = random.randint(min_count, max_count)
+    picked_count = sum(DAILY_DIFFICULTY_QUOTA.values())
     if len(available_types) >= picked_count:
         picked = random.sample(available_types, k=picked_count)
     else:
@@ -129,8 +175,120 @@ def _build_daily_items(
                 "progress": 0,
                 "status": "pending",
                 "reward_points": _quest_reward_points(quest_type),
+                "difficulty": "medium",
+                "difficulty_label": "중",
+                "description": "",
                 "reward_claimed": False,
                 "claimed_points": 0,
+                "claimable": False,
+            }
+        )
+    return out
+
+
+def _course_module_weights(course: Any) -> dict[str, float]:
+    modules = getattr(course, "modules", []) or []
+    counts: dict[str, int] = {}
+    for module in modules:
+        raw_type = getattr(module, "type", "")
+        module_type = str(getattr(raw_type, "value", raw_type) or "")
+        if "." in module_type:
+            module_type = module_type.rsplit(".", 1)[-1]
+        if module_type:
+            counts[module_type] = counts.get(module_type, 0) + 1
+    total = sum(counts.values())
+    if total <= 0:
+        return {}
+    return {key: value / total for key, value in counts.items()}
+
+
+def _template_weight(template: dict[str, Any], module_weights: dict[str, float]) -> float:
+    module_types = template.get("module_types")
+    if not isinstance(module_types, list) or not module_types:
+        return 0.1
+    weight = sum(module_weights.get(str(module_type), 0.0) for module_type in module_types)
+    return weight if weight > 0 else 0.05
+
+
+def _pick_templates_for_difficulty(
+    *,
+    templates: list[dict[str, Any]],
+    difficulty: str,
+    count: int,
+    rng: random.Random,
+    module_weights: dict[str, float],
+    used_keys: set[str],
+) -> list[dict[str, Any]]:
+    candidates = [
+        template
+        for template in templates
+        if template.get("difficulty") == difficulty and template.get("template_key") not in used_keys
+    ]
+    if not candidates:
+        candidates = [template for template in templates if template.get("difficulty") == difficulty]
+    picked: list[dict[str, Any]] = []
+    while candidates and len(picked) < count:
+        weights = [_template_weight(template, module_weights) for template in candidates]
+        selected = rng.choices(candidates, weights=weights, k=1)[0]
+        picked.append(selected)
+        used_keys.add(str(selected.get("template_key") or ""))
+        candidates = [
+            template
+            for template in candidates
+            if template.get("template_key") != selected.get("template_key")
+        ]
+    return picked
+
+
+def _build_daily_items_from_templates(
+    *,
+    templates: list[dict[str, Any]],
+    course: Any,
+    user_id: str,
+    course_id: str,
+    day: str,
+) -> list[dict[str, Any]]:
+    rng = random.Random(f"{user_id}:{course_id}:{day}")
+    module_weights = _course_module_weights(course)
+    used_keys: set[str] = set()
+    selected: list[dict[str, Any]] = []
+    for difficulty, count in DAILY_DIFFICULTY_QUOTA.items():
+        selected.extend(
+            _pick_templates_for_difficulty(
+                templates=templates,
+                difficulty=difficulty,
+                count=count,
+                rng=rng,
+                module_weights=module_weights,
+                used_keys=used_keys,
+            )
+        )
+    rng.shuffle(selected)
+
+    out: list[dict[str, Any]] = []
+    for index, template in enumerate(selected):
+        difficulty = str(template.get("difficulty") or "easy")
+        target = max(1, int(template.get("target") or 1))
+        reward_points = max(
+            0,
+            int(template.get("reward_points") or _difficulty_reward_points(difficulty)),
+        )
+        out.append(
+            {
+                "id": f"{day}-{index + 1}-{template.get('template_key')}",
+                "template_key": str(template.get("template_key") or ""),
+                "quest_type": str(template.get("quest_type") or ""),
+                "title": str(template.get("title") or ""),
+                "description": str(template.get("description") or ""),
+                "difficulty": difficulty,
+                "difficulty_label": _difficulty_label(difficulty),
+                "target": target,
+                "progress": 0,
+                "status": "pending",
+                "reward_points": reward_points,
+                "reward_claimed": False,
+                "claimed_points": 0,
+                "claimable": False,
             }
         )
     return out
@@ -142,22 +300,6 @@ def _load_or_create_daily_quests(user_id: str, course_id: str) -> dict[str, Any]
         raise HTTPException(status_code=404, detail="Course not found")
 
     challenge_settings = course.challenge_settings or {}
-    configured_types = challenge_settings.get("available_types") or []
-    safe_types = [
-        str(t)
-        for t in configured_types
-        if isinstance(t, str) and t in _ALLOWED_DAILY_TYPES
-    ]
-    if not safe_types:
-        safe_types = sorted(_ALLOWED_DAILY_TYPES)
-
-    min_count = int(challenge_settings.get("daily_random_count_min") or 3)
-    max_count = int(challenge_settings.get("daily_random_count_max") or 5)
-    min_count = max(3, min(5, min_count))
-    max_count = max(3, min(5, max_count))
-    if min_count > max_count:
-        min_count, max_count = max_count, min_count
-
     day = _daily_today()
     key = _daily_kv_key(course_id, day)
     raw = get_user_kv(user_id, key)
@@ -172,10 +314,39 @@ def _load_or_create_daily_quests(user_id: str, course_id: str) -> dict[str, Any]
         except json.JSONDecodeError:
             pass
 
+    all_templates = repo.list_daily_challenge_templates(enabled=True)
+    templates = list(all_templates)
+    configured_types = challenge_settings.get("available_types") or []
+    if isinstance(configured_types, list) and configured_types:
+        safe_types = {
+            str(t)
+            for t in configured_types
+            if isinstance(t, str) and t in _ALLOWED_DAILY_TYPES
+        }
+        if safe_types:
+            templates = [
+                template
+                for template in templates
+                if str(template.get("quest_type") or "") in safe_types
+            ]
+            for difficulty in DAILY_DIFFICULTY_QUOTA:
+                if not any(template.get("difficulty") == difficulty for template in templates):
+                    templates.extend(
+                        template
+                        for template in all_templates
+                        if template.get("difficulty") == difficulty
+                    )
+
     created = {
         "course_id": course_id,
         "date": day,
-        "items": _build_daily_items(safe_types, min_count, max_count, day),
+        "items": _build_daily_items_from_templates(
+            templates=templates,
+            course=course,
+            user_id=user_id,
+            course_id=course_id,
+            day=day,
+        ),
     }
     set_user_kv(user_id, key, json.dumps(created, ensure_ascii=False))
     return created
@@ -194,7 +365,6 @@ def apply_daily_quest_event(user_id: str, body: Dict[str, Any]) -> tuple[dict[st
 
     data = _load_or_create_daily_quests(user_id, course_id)
     updated = False
-    awarded_account: dict[str, Any] | None = None
     for item in data.get("items", []):
         if item.get("quest_type") != event_type:
             continue
@@ -204,26 +374,14 @@ def apply_daily_quest_event(user_id: str, body: Dict[str, Any]) -> tuple[dict[st
         item["progress"] = min(target, int(item.get("progress") or 0) + max(1, min(value, target)))
         if int(item["progress"]) >= target:
             item["status"] = "completed"
-            awarded_account = student_account_store.award_daily_quest_points(
-                user_id=user_id,
-                course_id=course_id,
-                quest_id=str(item.get("id") or ""),
-                reward_points=int(item.get("reward_points") or _quest_reward_points(str(item.get("quest_type") or ""))),
-                date_key=str(data.get("date") or _daily_today()),
-            )
-            item["reward_claimed"] = True
-            item["claimed_points"] = int(item.get("claimed_points") or 0) + int(
-                (awarded_account.get("reward") or {}).get("granted_points") or 0
-            )
-            item["claim_status"] = "claimed"
+            item["claim_status"] = "ready"
+            item["claimable"] = not bool(item.get("reward_claimed"))
         updated = True
 
     if updated:
         key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
         set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
     response = _with_account_summary(data, user_id)
-    if awarded_account is not None:
-        response["account"] = awarded_account
     return response, updated
 
 
@@ -240,6 +398,7 @@ def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
             is_completed = item.get("status") == "completed" and int(item.get("progress") or 0) >= target
             if not is_completed:
                 item["claim_status"] = "verification_required"
+                item["claimable"] = False
                 key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
                 set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
                 return _with_account_summary(data, user_id)
@@ -248,7 +407,10 @@ def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
                 user_id=user_id,
                 course_id=course_id,
                 quest_id=quest_id,
-                reward_points=int(item.get("reward_points") or _quest_reward_points(str(item.get("quest_type") or ""))),
+                reward_points=int(
+                    item.get("reward_points")
+                    or _difficulty_reward_points(str(item.get("difficulty") or "easy"))
+                ),
                 date_key=str(data.get("date") or _daily_today()),
             )
             item["reward_claimed"] = True
@@ -256,6 +418,7 @@ def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
                 (reward.get("reward") or {}).get("granted_points") or 0
             )
             item["claim_status"] = "claimed"
+            item["claimable"] = False
             key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
             set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
             response = _with_account_summary(data, user_id)
@@ -267,6 +430,33 @@ def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
 def list_challenges(course_id: int | None):
     challenges = repo.list_active_challenges(course_id=course_id)
     return [c.model_dump() for c in challenges]
+
+
+def list_daily_challenge_templates(
+    *,
+    enabled: bool | None = None,
+    difficulty: str | None = None,
+) -> dict[str, Any]:
+    templates = repo.list_daily_challenge_templates(enabled=enabled, difficulty=difficulty)
+    return {
+        "items": templates,
+        "total": len(templates),
+        "quota": DAILY_DIFFICULTY_QUOTA,
+        "points_by_difficulty": POINTS_BY_DIFFICULTY,
+    }
+
+
+def upsert_daily_challenge_template(body: dict[str, Any]) -> dict[str, Any]:
+    try:
+        template = repo.upsert_daily_challenge_template(body)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"item": template}
+
+
+def reset_daily_challenge_templates() -> dict[str, Any]:
+    count = repo.reset_default_daily_challenge_templates()
+    return {"reset_count": count}
 
 
 def submit_attempt(user_id: str, challenge_id: int, body: Dict[str, Any]) -> dict[str, Any]:

@@ -16,7 +16,15 @@ class AiFlowExpressionValidationResult {
 
 String normalizeAiFlowExpression(String source) {
   var expression = source.trim();
-  expression = expression.replaceFirst(RegExp(r'^y\s*=\s*', caseSensitive: false), '');
+  expression = expression.replaceFirst(
+    RegExp(r'^y\s*=\s*', caseSensitive: false),
+    '',
+  );
+  expression = expression
+      .replaceAll('×', '*')
+      .replaceAll('÷', '/')
+      .replaceAll('−', '-')
+      .replaceAll('π', 'pi');
   expression = expression.replaceAllMapped(
     RegExp(r'\bPI\b', caseSensitive: false),
     (_) => 'pi',
@@ -25,7 +33,7 @@ String normalizeAiFlowExpression(String source) {
     RegExp(r'\bE\b', caseSensitive: false),
     (_) => 'e',
   );
-  return expression;
+  return _insertImplicitMultiplication(expression);
 }
 
 AiFlowExpressionValidationResult validateAiFlowExpression(
@@ -44,7 +52,9 @@ AiFlowExpressionValidationResult validateAiFlowExpression(
 
   final parser = GrammarParser();
   try {
-    final expression = parser.parse(_toValidationSyntax(normalized, degreeMode: degreeMode));
+    final expression = parser.parse(
+      _toValidationSyntax(normalized, degreeMode: degreeMode),
+    );
     final context = ContextModel()..bindVariableName('e', Number(math.e));
     for (final entry in parameters.entries) {
       context.bindVariableName(entry.key, Number(entry.value));
@@ -161,4 +171,131 @@ int _findClosingParenthesis(String expression, int openIndex) {
     }
   }
   return -1;
+}
+
+String _insertImplicitMultiplication(String source) {
+  final tokens = _tokenizeExpression(source);
+  if (tokens.length < 2) {
+    return source.replaceAll(RegExp(r'\s+'), '');
+  }
+
+  final buffer = StringBuffer();
+  for (var i = 0; i < tokens.length; i += 1) {
+    final token = tokens[i];
+    if (i > 0 && _needsMultiplication(tokens[i - 1], token)) {
+      buffer.write('*');
+    }
+    buffer.write(token.text);
+  }
+  return buffer.toString();
+}
+
+List<_ExpressionToken> _tokenizeExpression(String source) {
+  final tokens = <_ExpressionToken>[];
+  var index = 0;
+  while (index < source.length) {
+    final char = source[index];
+    if (char.trim().isEmpty) {
+      index += 1;
+      continue;
+    }
+    if (_isDigit(char) || char == '.') {
+      final start = index;
+      index += 1;
+      while (index < source.length &&
+          (_isDigit(source[index]) || source[index] == '.')) {
+        index += 1;
+      }
+      tokens.add(
+        _ExpressionToken(source.substring(start, index), _TokenKind.number),
+      );
+      continue;
+    }
+    if (_isIdentifierStart(char)) {
+      final start = index;
+      index += 1;
+      while (index < source.length && _isIdentifierPart(source[index])) {
+        index += 1;
+      }
+      tokens.add(
+        _ExpressionToken(source.substring(start, index), _TokenKind.identifier),
+      );
+      continue;
+    }
+    if (char == '(') {
+      tokens.add(const _ExpressionToken('(', _TokenKind.openParen));
+    } else if (char == ')') {
+      tokens.add(const _ExpressionToken(')', _TokenKind.closeParen));
+    } else {
+      tokens.add(_ExpressionToken(char, _TokenKind.operator));
+    }
+    index += 1;
+  }
+  return tokens;
+}
+
+bool _needsMultiplication(_ExpressionToken left, _ExpressionToken right) {
+  if (!_canEndFactor(left) || !_canStartFactor(right)) {
+    return false;
+  }
+  if (left.kind == _TokenKind.identifier &&
+      right.kind == _TokenKind.openParen &&
+      _functionNames.contains(left.text.toLowerCase())) {
+    return false;
+  }
+  return true;
+}
+
+bool _canEndFactor(_ExpressionToken token) =>
+    token.kind == _TokenKind.number ||
+    token.kind == _TokenKind.identifier ||
+    token.kind == _TokenKind.closeParen;
+
+bool _canStartFactor(_ExpressionToken token) =>
+    token.kind == _TokenKind.number ||
+    token.kind == _TokenKind.identifier ||
+    token.kind == _TokenKind.openParen;
+
+bool _isDigit(String char) {
+  final code = char.codeUnitAt(0);
+  return code >= 48 && code <= 57;
+}
+
+bool _isIdentifierStart(String char) {
+  final code = char.codeUnitAt(0);
+  return (code >= 65 && code <= 90) ||
+      (code >= 97 && code <= 122) ||
+      char == '_';
+}
+
+bool _isIdentifierPart(String char) =>
+    _isIdentifierStart(char) || _isDigit(char);
+
+const _functionNames = <String>{
+  'abs',
+  'acos',
+  'asin',
+  'atan',
+  'ceil',
+  'cos',
+  'exp',
+  'floor',
+  'ln',
+  'log',
+  'max',
+  'min',
+  'pow',
+  'round',
+  'sin',
+  'sqrt',
+  'tan',
+};
+
+enum _TokenKind { number, identifier, openParen, closeParen, operator }
+
+class _ExpressionToken {
+  const _ExpressionToken(this.text, this.kind);
+
+  final String text;
+  final _TokenKind kind;
 }

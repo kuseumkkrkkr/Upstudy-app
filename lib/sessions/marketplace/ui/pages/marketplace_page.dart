@@ -17,7 +17,7 @@ class MarketplacePage extends StatelessWidget {
       price: '9,900',
       caption: 'Entry Access',
       summary: '가벼운 학습 루틴과 기본 AI 학습 흐름용.',
-      features: <String>['일일 학습 루틴', '기본 문제 흐름', '문서함 동기화'],
+      features: <String>['일일 학습 루틴', '기본 문제 흐름', '책가방 동기화'],
     ),
     _PlanTier(
       name: 'Basic',
@@ -146,7 +146,7 @@ class MarketplacePage extends StatelessWidget {
           ),
         ),
         Ios26NavItem(
-          label: '문서함',
+          label: '책가방',
           onTap: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();

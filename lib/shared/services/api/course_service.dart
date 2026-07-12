@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../data/models/course.dart';
+import 'api_contract.dart';
 import 'api_client.dart';
 
 class CourseService {
@@ -36,13 +37,38 @@ class CourseService {
     final token = await ApiClient.instance.requireToken();
     final params = <String, String>{};
     if (keyword != null && keyword.trim().isNotEmpty) {
-      params['q'] = keyword.trim();
+      params['query'] = keyword.trim();
     }
     if (tag != null && tag.trim().isNotEmpty) params['tag'] = tag.trim();
-    if (recommendOvr != null) params['recommend_ovr'] = recommendOvr.toString();
-    final uri = Uri.parse(
-      '${ApiClient.baseUrl}/courses',
-    ).replace(queryParameters: params.isEmpty ? null : params);
+    if (recommendOvr != null) {
+      params['recommend_for_ovr'] = recommendOvr.round().toString();
+    }
+
+    final v2Uri = ApiContract.uri(
+      ApiPaths.coursesV2,
+      query: params.isEmpty ? null : params,
+    );
+    final v2Resp = await ApiClient.instance.authedGet(v2Uri, token: token);
+    if (v2Resp.statusCode == 200) {
+      final payload = jsonDecode(v2Resp.body) as Map<String, dynamic>;
+      final items = _extractCourseItems(payload);
+      return items.map((item) => _courseFromJson(item)).toList();
+    }
+
+    final legacyParams = <String, String>{};
+    if (keyword != null && keyword.trim().isNotEmpty) {
+      legacyParams['query'] = keyword.trim();
+    }
+    if (tag != null && tag.trim().isNotEmpty) {
+      legacyParams['tag'] = tag.trim();
+    }
+    if (recommendOvr != null) {
+      legacyParams['recommend_for_ovr'] = recommendOvr.toString();
+    }
+    final uri = ApiContract.uri(
+      ApiPaths.courses,
+      query: legacyParams.isEmpty ? null : legacyParams,
+    );
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) {
       throw Exception('Failed to load courses: ${resp.statusCode}');
@@ -56,7 +82,7 @@ class CourseService {
 
   static Future<List<Course>> fetchMyCourses() async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/my');
+    final uri = ApiContract.uri(ApiPaths.coursesMy);
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode == 200) {
       final payload = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -66,6 +92,10 @@ class CourseService {
           )
           .toList();
       if (courses.isEmpty) {
+        final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
+        if (fromEnrollments.isNotEmpty) return fromEnrollments;
+        final fromV2Runtime = await _fallbackMyCoursesFromV2Runtime(token);
+        if (fromV2Runtime.isNotEmpty) return fromV2Runtime;
         final assigned = await _fallbackMyCoursesFromAcademyAssignments(token);
         if (assigned.isNotEmpty) return assigned;
       }
@@ -78,6 +108,8 @@ class CourseService {
       // enrollment data in its response).
       final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
       if (fromEnrollments.isNotEmpty) return fromEnrollments;
+      final fromV2Runtime = await _fallbackMyCoursesFromV2Runtime(token);
+      if (fromV2Runtime.isNotEmpty) return fromV2Runtime;
       final fromAssignments = await _fallbackMyCoursesFromAcademyAssignments(
         token,
       );
@@ -92,9 +124,10 @@ class CourseService {
   static Future<List<Course>> _fallbackMyCoursesFromAcademyAssignments(
     String token,
   ) async {
-    final uri = Uri.parse(
-      '${ApiClient.baseUrl}/academy/assignments/my',
-    ).replace(queryParameters: {'kind': 'course'});
+    final uri = ApiContract.uri(
+      '/academy/assignments/my',
+      query: {'kind': 'course'},
+    );
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) return const <Course>[];
     final payload = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -113,7 +146,7 @@ class CourseService {
     final courses = <Course>[];
     for (final courseId in courseIds) {
       try {
-        final courseUri = Uri.parse('${ApiClient.baseUrl}/courses/v2/$courseId');
+        final courseUri = ApiContract.uri(ApiPaths.courseV2(courseId));
         final courseResp = await ApiClient.instance.authedGet(
           courseUri,
           token: token,
@@ -133,7 +166,10 @@ class CourseService {
 
   static Future<Course> enroll(String courseId) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/$courseId/enroll');
+    final v2 = await _startV2Runtime(courseId, token);
+    if (v2 != null) return v2;
+
+    final uri = ApiContract.uri(ApiPaths.courseEnroll(courseId));
     final resp = await ApiClient.instance.authedPost(uri, token: token);
     if (resp.statusCode != 200) {
       throw Exception('Failed to enroll: ${resp.statusCode}');
@@ -155,7 +191,7 @@ class CourseService {
 
   static Future<void> unenroll(String courseId) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/$courseId/unenroll');
+    final uri = ApiContract.uri(ApiPaths.courseUnenroll(courseId));
     final resp = await ApiClient.instance.authedPost(uri, token: token);
     if (resp.statusCode != 200) {
       throw Exception('Failed to unenroll: ${resp.statusCode}');
@@ -164,7 +200,7 @@ class CourseService {
 
   static Future<void> reorderEnrollments(List<String> courseIds) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/enrollments/reorder');
+    final uri = ApiContract.uri(ApiPaths.coursesEnrollmentReorder);
     final body = jsonEncode({'course_ids': courseIds});
     final resp = await ApiClient.instance.authedPost(
       uri,
@@ -178,7 +214,10 @@ class CourseService {
 
   static Future<Course> fetchCourse(String courseId) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/$courseId');
+    final v2 = await _fetchV2Course(courseId, token);
+    if (v2 != null) return v2;
+
+    final uri = ApiContract.uri(ApiPaths.course(courseId));
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) {
       throw Exception('Failed to load course: ${resp.statusCode}');
@@ -202,9 +241,10 @@ class CourseService {
     }
 
     final candidates = <Uri>[
-      Uri.parse('${ApiClient.baseUrl}/courses/$normalizedId/runtime-state'),
-      Uri.parse('${ApiClient.baseUrl}/courses/$normalizedId/runtime/state'),
-      Uri.parse('${ApiClient.baseUrl}/courses/$normalizedId/state'),
+      ApiContract.uri('/courses/v2/runtime/state/$normalizedId'),
+      ApiContract.uri('/courses/$normalizedId/runtime-state'),
+      ApiContract.uri('/courses/$normalizedId/runtime/state'),
+      ApiContract.uri('/courses/$normalizedId/state'),
     ];
 
     for (final uri in candidates) {
@@ -216,12 +256,21 @@ class CourseService {
       final payload = decoded is Map<String, dynamic>
           ? decoded
           : const <String, dynamic>{};
-      final curriculum = payload['curriculum'] is Map<String, dynamic>
-          ? Map<String, dynamic>.from(payload['curriculum'])
+      final data = payload['data'] is Map<String, dynamic>
+          ? Map<String, dynamic>.from(payload['data'] as Map)
+          : payload;
+      final curriculum = data['curriculum'] is Map<String, dynamic>
+          ? Map<String, dynamic>.from(data['curriculum'])
           : const <String, dynamic>{};
       return <String, dynamic>{
-        'status': (payload['status'] ?? 'in_progress').toString(),
-        'pause_reason': (payload['pause_reason'] ?? '').toString(),
+        'status': (data['status'] ?? 'in_progress').toString(),
+        'pause_reason': (data['pause_reason'] ?? '').toString(),
+        'overall_progress':
+            (data['overall_progress'] as num?)?.toDouble() ?? 0.0,
+        'completed_modules': data['completed_modules'] is List
+            ? List<dynamic>.from(data['completed_modules'] as List)
+            : const <dynamic>[],
+        'module_count': (data['module_count'] as num?)?.toInt() ?? 0,
         'curriculum': <String, dynamic>{
           'enabled': curriculum['enabled'] == true,
           'schedule': curriculum['schedule'] is List
@@ -248,7 +297,7 @@ class CourseService {
     String? lastAction,
   }) async {
     final token = await ApiClient.instance.requireToken();
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/$courseId/progress');
+    final uri = ApiContract.uri(ApiPaths.courseProgress(courseId));
     final body = jsonEncode({
       'progress': progress,
       'percent': percent,
@@ -264,17 +313,67 @@ class CourseService {
     }
   }
 
+  static Future<Course?> _startV2Runtime(String courseId, String token) async {
+    final course = await _fetchV2Course(courseId, token);
+    if (course == null) return null;
+
+    final uri = ApiContract.uri(ApiPaths.courseRuntimeNext);
+    final resp = await ApiClient.instance.authedPost(
+      uri,
+      token: token,
+      body: jsonEncode({'course_id': courseId}),
+    );
+    if (resp.statusCode != 200) return null;
+
+    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
+    final data = payload['data'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(payload['data'] as Map)
+        : payload;
+    if (data.isEmpty || data['student_state'] is! Map<String, dynamic>) {
+      return null;
+    }
+    final state = data['student_state'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(data['student_state'] as Map)
+        : const <String, dynamic>{};
+    final completed = state['completed_modules'] is List
+        ? (state['completed_modules'] as List).length
+        : 0;
+    final progress = course.units.isEmpty
+        ? 0.0
+        : completed / course.units.length;
+    return course.copyWith(
+      progress: progress.clamp(0.0, 1.0),
+      progressDetail: state,
+      status: (data['status'] ?? state['status'] ?? 'in_progress').toString(),
+      lastAction: data['next_module_id']?.toString(),
+    );
+  }
+
+  static Future<Course?> _fetchV2Course(String courseId, String token) async {
+    final v2Uri = ApiContract.uri(ApiPaths.courseV2(courseId));
+    final v2Resp = await ApiClient.instance.authedGet(v2Uri, token: token);
+    if (v2Resp.statusCode != 200) return null;
+    final payload = jsonDecode(v2Resp.body) as Map<String, dynamic>;
+    final raw = payload['data'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(payload['data'] as Map)
+        : payload;
+    if (raw.isEmpty || raw['id'] == null) return null;
+    return _courseFromJson(raw);
+  }
+
   static Future<List<Course>> _fallbackMyCoursesFromEnrollments(
     String token,
   ) async {
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses/enrollments');
+    final uri = ApiContract.uri(ApiPaths.coursesEnrolled);
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) {
       return const <Course>[];
     }
 
     final payload = jsonDecode(resp.body) as Map<String, dynamic>;
-    final enrollments = payload['items'] as List<dynamic>? ?? const [];
+    final enrollments =
+        (payload['items'] ?? payload['enrollments']) as List<dynamic>? ??
+        const [];
 
     final courses = <Course>[];
     for (final entry in enrollments) {
@@ -302,10 +401,33 @@ class CourseService {
     return courses;
   }
 
+  static Future<List<Course>> _fallbackMyCoursesFromV2Runtime(
+    String token,
+  ) async {
+    final uri = ApiContract.uri(
+      ApiPaths.coursesV2,
+      query: const {'limit': '200'},
+    );
+    final resp = await ApiClient.instance.authedGet(uri, token: token);
+    if (resp.statusCode != 200) {
+      return const <Course>[];
+    }
+    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
+    return _extractCourseItems(payload)
+        .map(_courseFromJson)
+        .where(
+          (course) =>
+              course.status != null ||
+              course.progress > 0 ||
+              course.progressDetail.isNotEmpty,
+        )
+        .toList(growable: false);
+  }
+
   static Future<List<Course>> _fallbackMyCoursesFromCourses(
     String token,
   ) async {
-    final uri = Uri.parse('${ApiClient.baseUrl}/courses');
+    final uri = ApiContract.uri(ApiPaths.courses);
     final resp = await ApiClient.instance.authedGet(uri, token: token);
     if (resp.statusCode != 200) {
       return const <Course>[];
@@ -313,17 +435,32 @@ class CourseService {
     final payload = jsonDecode(resp.body) as Map<String, dynamic>;
     final courses = (payload['courses'] as List<dynamic>? ?? [])
         .map((item) => _courseFromJson(Map<String, dynamic>.from(item as Map)))
-        .where((c) => c.progress > 0 || c.status != null || c.progressDetail.isNotEmpty)
+        .where(
+          (c) =>
+              c.progress > 0 || c.status != null || c.progressDetail.isNotEmpty,
+        )
         .toList();
     return courses;
   }
 
   static Course _courseFromJson(Map<String, dynamic> json) {
-    final progressRaw = json['percent'] ?? json['progress'];
+    final progressRaw =
+        json['percent'] ?? json['overall_progress'] ?? json['progress'];
     final progressValue = progressRaw is num ? progressRaw.toDouble() : 0.0;
     final progressDetail = json['progress'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(json['progress'] as Map)
+        : json['student_state'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['student_state'] as Map)
         : const <String, dynamic>{};
+    final completedModuleIds =
+        (progressDetail['completed_modules'] is List
+                ? progressDetail['completed_modules'] as List
+                : json['completed_modules'] is List
+                ? json['completed_modules'] as List
+                : const [])
+            .map((item) => item.toString())
+            .where((item) => item.isNotEmpty)
+            .toSet();
 
     final unitsRaw = _normalizedUnits(json);
     final units = <CourseUnit>[];
@@ -334,11 +471,18 @@ class CourseService {
     for (var i = 0; i < unitsRaw.length; i++) {
       final u = Map<String, dynamic>.from(unitsRaw[i] as Map);
       final missionsRaw = u['missions'] as List<dynamic>? ?? [];
-      final status = i < completedUnits
-          ? CourseUnitStatus.completed
-          : (i == completedUnits
-                ? CourseUnitStatus.active
-                : CourseUnitStatus.locked);
+      final moduleId = _unitModuleId(u);
+      final status = completedModuleIds.isNotEmpty && moduleId.isNotEmpty
+          ? (completedModuleIds.contains(moduleId)
+                ? CourseUnitStatus.completed
+                : (i == completedModuleIds.length
+                      ? CourseUnitStatus.active
+                      : CourseUnitStatus.locked))
+          : (i < completedUnits
+                ? CourseUnitStatus.completed
+                : (i == completedUnits
+                      ? CourseUnitStatus.active
+                      : CourseUnitStatus.locked));
       final unitProgress = status == CourseUnitStatus.completed
           ? 1.0
           : (status == CourseUnitStatus.active
@@ -368,7 +512,7 @@ class CourseService {
                       ? (jsonDecode(m['detail'] as String) as Object? ??
                             m['detail'])
                       : m['detail'] ?? '',
-                  actionLabel: m['action_label']?.toString() ?? 'Start',
+                  actionLabel: _missionActionLabel(m),
                 ),
               )
               .toList(),
@@ -410,19 +554,104 @@ class CourseService {
     }
 
     final modulesRaw = json['modules'] as List<dynamic>? ?? const [];
-    return modulesRaw.whereType<Map>().map((raw) {
-      final module = Map<String, dynamic>.from(raw);
-      return <String, dynamic>{
-        'title': module['title']?.toString() ?? '',
-        'type': module['type']?.toString() ?? '',
-        'detail': module,
-        'estimated_minutes':
-            (module['estimated_minutes'] as num?)?.toInt() ??
-            (module['exam_duration'] as num?)?.toInt() ??
-            (module['min_minutes'] as num?)?.toInt() ??
-            0,
-        'missions': const <dynamic>[],
-      };
-    }).toList(growable: false);
+    return modulesRaw
+        .whereType<Map>()
+        .map((raw) {
+          final module = Map<String, dynamic>.from(raw);
+          final type = module['type']?.toString() ?? '';
+          module['module_id'] = module['id']?.toString() ?? '';
+          final title = _moduleTitle(module);
+          return <String, dynamic>{
+            'title': title,
+            'type': type,
+            'detail': module,
+            'estimated_minutes':
+                (module['estimated_minutes'] as num?)?.toInt() ??
+                (module['exam_duration'] as num?)?.toInt() ??
+                (module['min_minutes'] as num?)?.toInt() ??
+                0,
+            'missions': [
+              {
+                'title': title,
+                'detail': module,
+                'action_label': _moduleActionLabel(type),
+              },
+            ],
+          };
+        })
+        .toList(growable: false);
+  }
+
+  static List<Map<String, dynamic>> _extractCourseItems(
+    Map<String, dynamic> payload,
+  ) {
+    final data = payload['data'];
+    final raw = data is Map
+        ? (data['items'] ?? data['courses'] ?? const [])
+        : (data is List ? data : payload['courses'] ?? const []);
+    return (raw as List<dynamic>? ?? const [])
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
+  }
+
+  static String _moduleTitle(Map<String, dynamic> module) {
+    final title = module['title']?.toString().trim() ?? '';
+    if (title.isNotEmpty) return title;
+    switch (module['type']?.toString()) {
+      case 'textbook_view':
+        return '교재 핵심 강의';
+      case 'problem_solve':
+        return '개념 적용 문제 풀이';
+      case 'exam_solve':
+        return '실전 시험지 풀이';
+      case 'level_test':
+        return '레벨 테스트';
+      case 'wrong_answer_review':
+        return '오답 복습';
+      default:
+        return '학습 모듈';
+    }
+  }
+
+  static String _moduleActionLabel(String type) {
+    switch (type) {
+      case 'textbook_view':
+        return '강의 보기';
+      case 'problem_solve':
+        return '문제 풀기';
+      case 'exam_solve':
+        return '시험 시작';
+      case 'level_test':
+        return '테스트 시작';
+      case 'wrong_answer_review':
+        return '오답 복습';
+      default:
+        return '시작';
+    }
+  }
+
+  static String _missionActionLabel(Map<String, dynamic> mission) {
+    final raw = mission['action_label']?.toString().trim() ?? '';
+    if (raw.isNotEmpty && raw.toLowerCase() != 'start') return raw;
+    final detail = mission['detail'];
+    if (detail is Map) {
+      return _moduleActionLabel(detail['type']?.toString() ?? '');
+    }
+    return '시작';
+  }
+
+  static String _unitModuleId(Map<String, dynamic> unit) {
+    final direct = unit['module_id']?.toString().trim() ?? '';
+    if (direct.isNotEmpty) return direct;
+    final detail = unit['detail'];
+    if (detail is Map) {
+      final map = Map<String, dynamic>.from(detail);
+      for (final key in const ['module_id', 'id', 'moduleId']) {
+        final value = map[key]?.toString().trim() ?? '';
+        if (value.isNotEmpty) return value;
+      }
+    }
+    return '';
   }
 }

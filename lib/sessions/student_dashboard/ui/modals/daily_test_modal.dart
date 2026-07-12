@@ -43,6 +43,7 @@ class _DailyTestModalState extends State<DailyTestModal> {
   String? _error;
   bool _loading = true;
   String? _claimingQuestId;
+  int? _rewardBurstPoints;
 
   @override
   void initState() {
@@ -94,7 +95,15 @@ class _DailyTestModalState extends State<DailyTestModal> {
       setState(() {
         _bundle = bundle;
         _claimingQuestId = null;
+        _rewardBurstPoints = bundle.account.grantedPoints > 0
+            ? bundle.account.grantedPoints
+            : null;
       });
+      if (bundle.account.grantedPoints > 0) {
+        Future.delayed(const Duration(milliseconds: 900), () {
+          if (mounted) setState(() => _rewardBurstPoints = null);
+        });
+      }
       final granted = bundle.account.grantedPoints;
       final message = granted > 0
           ? '$granted P 획득'
@@ -124,81 +133,142 @@ class _DailyTestModalState extends State<DailyTestModal> {
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Container(
+      child: SizedBox(
         width: 1040,
         height: 560,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
+          alignment: Alignment.center,
           children: [
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.close, size: 28),
-                  ),
-                ),
-                const Expanded(
-                  child: Padding(
-                    padding: EdgeInsetsDirectional.only(bottom: 4),
-                    child: Text('일일 퀘스트', style: TextStyle(fontSize: 24)),
-                  ),
-                ),
-              ],
-            ),
-            if (_loading)
-              const Expanded(child: Center(child: CircularProgressIndicator()))
-            else if (_error != null)
-              Expanded(child: Center(child: Text(_error!)))
-            else ...[
+            Positioned.fill(child: _buildPanel(items, percentLabel, progress)),
+            if (_rewardBurstPoints != null)
+              _RewardBurst(points: _rewardBurstPoints!),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPanel(
+    List<DailyQuestItem> items,
+    String percentLabel,
+    double progress,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(34, 0, 34, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '완료율 $percentLabel',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 6,
-                        backgroundColor: const Color(0xCCE6E6E6),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF45BF63),
-                        ),
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.all(18),
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const Icon(Icons.close, size: 28),
                 ),
               ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: items.isEmpty
-                    ? const Center(child: Text('오늘의 퀘스트가 없습니다.'))
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(34, 0, 34, 28),
-                        itemCount: items.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          return _DailyQuestRow(
-                            item: items[index],
-                            claiming: _claimingQuestId == items[index].id,
-                            onClaim: () => _claim(items[index]),
-                          );
-                        },
-                      ),
+              const Expanded(
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(bottom: 4),
+                  child: Text('일일 퀘스트', style: TextStyle(fontSize: 24)),
+                ),
               ),
             ],
+          ),
+          if (_loading)
+            const Expanded(child: Center(child: CircularProgressIndicator()))
+          else if (_error != null)
+            Expanded(child: Center(child: Text(_error!)))
+          else ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(34, 0, 34, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '완료율 $percentLabel',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: const Color(0xCCE6E6E6),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF45BF63),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: items.isEmpty
+                  ? const Center(child: Text('오늘의 퀘스트가 없습니다.'))
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(34, 0, 34, 28),
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        return _DailyQuestRow(
+                          item: items[index],
+                          claiming: _claimingQuestId == items[index].id,
+                          onClaim: () => _claim(items[index]),
+                        );
+                      },
+                    ),
+            ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardBurst extends StatelessWidget {
+  const _RewardBurst({required this.points});
+
+  final int points;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 850),
+      builder: (context, value, child) {
+        final dy = -28 * value;
+        final opacity = value < 0.75 ? 1.0 : (1.0 - value) * 4;
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Opacity(opacity: opacity.clamp(0.0, 1.0), child: child),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B402B),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Text(
+          '+${points}P',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
@@ -217,7 +287,7 @@ class _DailyQuestRow extends StatelessWidget {
   final VoidCallback onClaim;
 
   bool get _completed => item.status == 'completed';
-  bool get _claimable => _completed && !item.rewardClaimed;
+  bool get _claimable => item.claimable || (_completed && !item.rewardClaimed);
 
   @override
   Widget build(BuildContext context) {
@@ -262,12 +332,23 @@ class _DailyQuestRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '$progressText · $statusLabel',
+                  '${item.difficultyLabel} · $progressText · $statusLabel',
                   style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ],
             ),
           ),
+          if (_claimable) ...[
+            const SizedBox(width: 6),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE53935),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
           const SizedBox(width: 12),
           SizedBox(
             width: 70,

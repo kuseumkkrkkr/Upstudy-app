@@ -5,11 +5,13 @@ import json
 import os
 import re
 import sqlite3
+import threading
 import time
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
+from infra.db.connection import connect_sqlite
 from storage.storage import DB_PATH
 from env_loader import load_env
 
@@ -28,6 +30,12 @@ _HAS_PYJWT = bool(
 
 ALGORITHM = "HS256"
 TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7
+ELEVATED_ROLES = {"teacher", "admin"}
+_DEFAULT_DEV_JWT_SECRET = "omj-local-dev-jwt-secret-change-me"
+_DEV_JWT_SECRET = os.environ.get("OMJ_JWT_DEV_SECRET") or _DEFAULT_DEV_JWT_SECRET
+_SQLITE_TIMEOUT_SECONDS = float(os.environ.get("OMJ_SQLITE_TIMEOUT_SECONDS", "30"))
+_USER_TABLE_READY: set[str] = set()
+_USER_TABLE_LOCK = threading.Lock()
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9]{4,16}$")
 PASSWORD_RE = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$")
@@ -86,7 +94,7 @@ def _get_secret() -> str:
     secret = os.environ.get("OMJ_JWT_SECRET")
     if secret:
         return secret
-    return "dev-secret-change-me-use-omj-jwt-secret-in-production"
+    return _DEV_JWT_SECRET
 
 
 def create_token(user_id: str, role: Optional[str] = None) -> str:
@@ -115,6 +123,17 @@ def decode_token(token: str) -> Optional[dict]:
     except Exception:
         return None
     return payload
+
+
+def resolve_token_payload_user(payload: dict) -> Dict[str, str]:
+    user_id = str(payload.get("sub") or "").strip()
+    db_role = str(get_user_role(user_id) or "").strip().lower()
+    role = db_role if db_role in ELEVATED_ROLES else "student"
+    return {
+        "user_id": user_id,
+        "username": str(payload.get("username") or user_id),
+        "role": role,
+    }
 
 
 def _encode_fallback(payload: dict, secret: str) -> str:
@@ -158,54 +177,66 @@ def _b64url_decode(data: str) -> bytes:
 # ============
 
 
-def _ensure_user_table() -> None:
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            user_id TEXT PRIMARY KEY,
-            username TEXT NOT NULL UNIQUE,
-            name TEXT NOT NULL,
-            grade TEXT NOT NULL,
-            track TEXT,
-            subject TEXT,
-            school TEXT,
-            profile_image TEXT,
-            email TEXT,
-            ovr INTEGER DEFAULT 0,
-            status TEXT DEFAULT '',
-            role TEXT DEFAULT 'student',
-            password_hash TEXT NOT NULL,
-            salt TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
+def _connect() -> sqlite3.Connection:
+    return connect_sqlite(DB_PATH)
 
-    # Add missing columns for existing DBs
-    cur.execute("PRAGMA table_info(users)")
-    cols = {row[1] for row in cur.fetchall()}
-    if "name" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN name TEXT")
-    if "grade" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN grade TEXT")
-    if "track" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN track TEXT")
-    if "subject" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN subject TEXT")
-    if "school" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN school TEXT")
-    if "profile_image" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN profile_image TEXT")
-    if "ovr" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN ovr INTEGER DEFAULT 0")
-    if "status" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN status TEXT DEFAULT ''")
-    if "role" not in cols:
-        cur.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'student'")
-    conn.commit()
-    conn.close()
+
+def _ensure_user_table() -> None:
+    if DB_PATH in _USER_TABLE_READY:
+        return
+    with _USER_TABLE_LOCK:
+        if DB_PATH in _USER_TABLE_READY:
+            return
+        conn = _connect()
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                user_id TEXT PRIMARY KEY,
+                username TEXT NOT NULL UNIQUE,
+                name TEXT NOT NULL,
+                grade TEXT NOT NULL,
+                track TEXT,
+                subject TEXT,
+                school TEXT,
+                profile_image TEXT,
+                email TEXT,
+                ovr INTEGER DEFAULT 0,
+                status TEXT DEFAULT '',
+                role TEXT DEFAULT 'student',
+                password_hash TEXT NOT NULL,
+                salt TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # Add missing columns for existing DBs.
+        cur.execute("PRAGMA table_info(users)")
+        cols = {row[1] for row in cur.fetchall()}
+        if "name" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN name TEXT")
+        if "grade" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN grade TEXT")
+        if "track" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN track TEXT")
+        if "subject" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN subject TEXT")
+        if "school" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN school TEXT")
+        if "profile_image" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN profile_image TEXT")
+        if "ovr" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN ovr INTEGER DEFAULT 0")
+        if "status" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN status TEXT DEFAULT ''")
+        if "role" not in cols:
+            cur.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'student'")
+        conn.commit()
+        conn.close()
+        _USER_TABLE_READY.add(DB_PATH)
 
 
 def get_user_id_by_username(username: str) -> Optional[str]:
@@ -214,7 +245,7 @@ def get_user_id_by_username(username: str) -> Optional[str]:
     if not username:
         return None
     _ensure_user_table()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
     row = cur.fetchone()
@@ -283,7 +314,7 @@ def register_user(
     password_hash = _hash_password(password, salt)
     created_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     try:
         cur.execute(
@@ -336,7 +367,7 @@ def authenticate_user(*, username: str, password: str) -> Optional[str]:
         return None
 
     _ensure_user_table()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute(
         "SELECT user_id, password_hash, salt FROM users WHERE username = ?",
@@ -386,7 +417,7 @@ def register_teacher(
     password_hash = _hash_password(password, salt)
     created_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     try:
         cur.execute(
@@ -454,7 +485,7 @@ def _promote_existing_teacher_account(
         return None
 
     _ensure_user_table()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -517,7 +548,7 @@ def authenticate_teacher(*, email: str, password: str) -> Optional[dict]:
         return None
 
     _ensure_user_table()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -568,7 +599,7 @@ def get_user_by_id(user_id: str) -> Optional[dict]:
     if not user_id:
         return None
     _ensure_user_table()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -642,7 +673,7 @@ def update_user_profile(
             if error:
                 raise ValueError(error)
         _ensure_user_table()
-        cur = sqlite3.connect(DB_PATH).cursor()
+        cur = _connect().cursor()
         cur.execute("SELECT user_id FROM users WHERE username = ?", (value,))
         row = cur.fetchone()
         cur.connection.close()
@@ -707,7 +738,7 @@ def update_user_profile(
     sets = ", ".join([f"{column} = ?" for column, _ in updates])
     params = [value for _, value in updates]
     params.append(user_id)
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     try:
         cur.execute(f"UPDATE users SET {sets} WHERE user_id = ?", params)
@@ -735,7 +766,7 @@ def delete_user_account(user_id: str, *, password: str) -> None:
         raise ValueError("password is required")
 
     _ensure_user_table()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute(
         "SELECT password_hash, salt FROM users WHERE user_id = ?",
@@ -763,7 +794,7 @@ def get_user_role(user_id: str) -> Optional[str]:
     if not user_id:
         return None
     _ensure_user_table()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute("SELECT role FROM users WHERE user_id = ?", (user_id,))
     row = cur.fetchone()
@@ -777,7 +808,7 @@ def get_user_by_email(email: str) -> Optional[dict]:
     if not email:
         return None
     _ensure_user_table()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute(
         "SELECT user_id, username, name, grade, role FROM users WHERE username = ?",

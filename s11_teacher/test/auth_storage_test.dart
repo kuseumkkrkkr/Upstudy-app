@@ -12,6 +12,13 @@ void main() {
     return 'header.$payload.signature';
   }
 
+  String tokenWithoutRole() {
+    final payload = base64Url
+        .encode(utf8.encode(jsonEncode({'sub': 'user-1'})))
+        .replaceAll('=', '');
+    return 'header.$payload.signature';
+  }
+
   test('does not trust legacy teacher role when jwt role is student', () async {
     final studentToken = tokenWithRole('student');
     SharedPreferences.setMockInitialValues({
@@ -50,6 +57,41 @@ void main() {
     expect(prefs.getString('auth.jwt'), isNull);
     expect(prefs.getString('auth.role'), isNull);
   });
+
+  test('keeps teacher token when server supplied role outside jwt', () async {
+    final teacherToken = tokenWithoutRole();
+    SharedPreferences.setMockInitialValues({});
+
+    await AuthStorage.instance.saveToken(
+      teacherToken,
+      username: 'teacher@example.com',
+      role: 'teacher',
+    );
+    final token = await AuthStorage.instance.readToken();
+    final role = await AuthStorage.instance.readRole();
+
+    expect(token, teacherToken);
+    expect(role, 'teacher');
+  });
+
+  test(
+    'rejects malformed teacher token even when stored role is teacher',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'teacher.auth.jwt': 'not-a-jwt',
+        'teacher.auth.role': 'teacher',
+      });
+
+      final token = await AuthStorage.instance.readToken();
+      final role = await AuthStorage.instance.readRole();
+      final prefs = await SharedPreferences.getInstance();
+
+      expect(token, isNull);
+      expect(role, isNull);
+      expect(prefs.getString('teacher.auth.jwt'), isNull);
+      expect(prefs.getString('teacher.auth.role'), isNull);
+    },
+  );
 
   test('clears invalid token from teacher namespace', () async {
     final studentToken = tokenWithRole('student');

@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:s11/shared/business/repositories/activity_store.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 
 class Ios26NavItem {
   const Ios26NavItem({required this.label, this.onTap, this.active = false});
@@ -36,6 +38,7 @@ class Ios26TopBar extends StatelessWidget {
     this.actionIcons = const <Ios26ActionIcon>[],
     this.trailingIcons = const <Ios26ActionIcon>[],
     this.trailing,
+    this.showLevelIndicator = true,
     this.leftInset,
   });
 
@@ -48,6 +51,7 @@ class Ios26TopBar extends StatelessWidget {
   final List<Ios26ActionIcon> actionIcons;
   final List<Ios26ActionIcon> trailingIcons;
   final Widget? trailing;
+  final bool showLevelIndicator;
   final double? leftInset;
 
   @override
@@ -98,7 +102,7 @@ class Ios26TopBar extends StatelessWidget {
                     color: brandColor,
                     fontSize: compact ? 28 : 34,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.6,
+                    letterSpacing: 0,
                   ),
                 ),
               ),
@@ -130,6 +134,11 @@ class Ios26TopBar extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 10),
                   child: trailing!,
                 ),
+              if (showLevelIndicator)
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: _Ios26LevelIndicator(brandColor: brandColor),
+                ),
               if ((trailingIcons.isNotEmpty || actionIcons.isNotEmpty))
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -148,6 +157,91 @@ class Ios26TopBar extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _Ios26LevelIndicator extends StatefulWidget {
+  const _Ios26LevelIndicator({required this.brandColor});
+
+  final Color brandColor;
+
+  @override
+  State<_Ios26LevelIndicator> createState() => _Ios26LevelIndicatorState();
+}
+
+class _Ios26LevelIndicatorState extends State<_Ios26LevelIndicator> {
+  late final Future<AccountSummary> _summary = ApiClient.instance
+      .fetchAccountSummary();
+  AccountSummary? _latestSummary;
+
+  @override
+  void initState() {
+    super.initState();
+    ActivityStore.accountSummaryNotifier.addListener(_handleAccountSummary);
+  }
+
+  @override
+  void dispose() {
+    ActivityStore.accountSummaryNotifier.removeListener(_handleAccountSummary);
+    super.dispose();
+  }
+
+  void _handleAccountSummary() {
+    if (!mounted) return;
+    setState(() {
+      _latestSummary = ActivityStore.accountSummaryNotifier.value;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<AccountSummary>(
+      future: _summary,
+      builder: (context, snapshot) {
+        final account = _latestSummary ?? snapshot.data;
+        if (account == null) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          width: 132,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: widget.brandColor.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: widget.brandColor.withValues(alpha: 0.16),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: account.levelProgress,
+                    minHeight: 6,
+                    backgroundColor: Colors.white.withValues(alpha: 0.9),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      widget.brandColor,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'lv. ${account.level}',
+                style: TextStyle(
+                  color: widget.brandColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
 
 class TeacherRegisterPage extends StatefulWidget {
   const TeacherRegisterPage({super.key});
@@ -21,6 +22,7 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
   String? _errorMessage;
 
   static const Color _themeColor = Color(0xFF45BF63);
+  static const Color _primary = AppColors.primary;
 
   @override
   void dispose() {
@@ -115,13 +117,13 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _themeColor),
+        surfaceTintColor: Colors.white,
+        shadowColor: Colors.transparent,
+        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
+        iconTheme: const IconThemeData(color: _primary),
         title: const Text(
           '선생님 회원가입',
-          style: TextStyle(
-            color: _themeColor,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: _primary, fontWeight: FontWeight.w600),
         ),
       ),
       body: SafeArea(
@@ -138,13 +140,14 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: _themeColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
+                      color: AppColors.surfaceMuted,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: AppColors.surfaceBorder),
                     ),
                     child: const Icon(
                       Icons.person_add_outlined,
                       size: 40,
-                      color: _themeColor,
+                      color: _primary,
                     ),
                   ),
                 ),
@@ -154,18 +157,28 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                   validator: _validateName,
                   decoration: InputDecoration(
                     labelText: '이름',
-                    prefixIcon: const Icon(Icons.person_outline, color: _themeColor),
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                      color: _primary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: const BorderSide(
+                        color: AppColors.surfaceBorder,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _themeColor, width: 2),
+                      borderSide: const BorderSide(
+                        color: _themeColor,
+                        width: 2,
+                      ),
                     ),
+                    filled: true,
+                    fillColor: AppColors.surfaceMuted,
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.red.shade300),
@@ -179,18 +192,28 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: '이메일',
-                    prefixIcon: const Icon(Icons.email_outlined, color: _themeColor),
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: _primary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: const BorderSide(
+                        color: AppColors.surfaceBorder,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _themeColor, width: 2),
+                      borderSide: const BorderSide(
+                        color: _themeColor,
+                        width: 2,
+                      ),
                     ),
+                    filled: true,
+                    fillColor: AppColors.surfaceMuted,
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.red.shade300),
@@ -204,10 +227,12 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: '비밀번호',
-                    prefixIcon: const Icon(Icons.lock_outline, color: _themeColor),
+                    prefixIcon: const Icon(Icons.lock_outline, color: _primary),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -221,12 +246,19 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: const BorderSide(
+                        color: AppColors.surfaceBorder,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _themeColor, width: 2),
+                      borderSide: const BorderSide(
+                        color: _themeColor,
+                        width: 2,
+                      ),
                     ),
+                    filled: true,
+                    fillColor: AppColors.surfaceMuted,
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.red.shade300),
@@ -240,10 +272,12 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
                     labelText: '비밀번호 확인',
-                    prefixIcon: const Icon(Icons.lock_outline, color: _themeColor),
+                    prefixIcon: const Icon(Icons.lock_outline, color: _primary),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -257,12 +291,19 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: const BorderSide(
+                        color: AppColors.surfaceBorder,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _themeColor, width: 2),
+                      borderSide: const BorderSide(
+                        color: _themeColor,
+                        width: 2,
+                      ),
                     ),
+                    filled: true,
+                    fillColor: AppColors.surfaceMuted,
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.red.shade300),
@@ -280,12 +321,19 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red.shade600,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ],
@@ -309,12 +357,17 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Text(
                           '회원가입',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                 ),
                 const SizedBox(height: 16),
@@ -329,9 +382,7 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
                       onPressed: () {
                         Navigator.pop(context);
                       },
-                      style: TextButton.styleFrom(
-                        foregroundColor: _themeColor,
-                      ),
+                      style: TextButton.styleFrom(foregroundColor: _themeColor),
                       child: const Text(
                         '로그인',
                         style: TextStyle(fontWeight: FontWeight.w600),

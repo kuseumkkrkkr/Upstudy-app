@@ -234,10 +234,8 @@ class TextbookStore {
     try {
       final raw = await ApiClient.instance.listTextbooks();
       final books = raw.map(BookData.fromJson).toList();
-      if (books.isNotEmpty) {
-        _cache = books;
-        return _cache;
-      }
+      _cache = books;
+      return _cache;
     } catch (_) {}
     final local = await _loadStoredBooks();
     if (local.isNotEmpty) {
@@ -298,10 +296,8 @@ class TextbookStore {
       final raw = await ApiClient.instance.listTextbooks();
       final books = raw.map(BookData.fromJson).toList();
       final meta = books.map(_stripToLibraryMeta).toList();
-      if (meta.isNotEmpty) {
-        await saveLibraryMeta(meta);
-        return meta;
-      }
+      await saveLibraryMeta(meta);
+      return meta;
     } catch (_) {}
 
     if (!forceRefresh) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 import 'course_builder_page.dart';
@@ -27,7 +28,7 @@ class _CourseListPageState extends State<CourseListPage> {
 
   int _total = 0;
   int _page = 0;
-  int _pageSize = 12;
+  final int _pageSize = 12;
   String _visibility = 'all';
   String _sort = 'updated_at';
   bool _descending = true;
@@ -135,15 +136,15 @@ class _CourseListPageState extends State<CourseListPage> {
       await ApiClient.instance.deleteCourseV2(courseId);
       if (!mounted) return;
       _selectedIds.remove(courseId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('코스가 삭제되었습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('코스가 삭제되었습니다.')));
       await _load(resetPage: false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('삭제 실패: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
     }
   }
 
@@ -177,15 +178,15 @@ class _CourseListPageState extends State<CourseListPage> {
       }
       if (!mounted) return;
       _selectedIds.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$count개 코스를 삭제했습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$count개 코스를 삭제했습니다.')));
       await _load(resetPage: false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('선택 삭제 실패: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('선택 삭제 실패: $e')));
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -208,9 +209,9 @@ class _CourseListPageState extends State<CourseListPage> {
       await _load(resetPage: false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('노출 설정 변경 실패: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('노출 설정 변경 실패: $e')));
     }
   }
 
@@ -257,14 +258,17 @@ class _CourseListPageState extends State<CourseListPage> {
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
     final totalPages = _total == 0 ? 1 : (_total / _pageSize).ceil();
-    final start = _total == 0 ? 0 : (_page * _pageSize) + 1;
     final end = (_page * _pageSize) + _courses.length;
     return Scaffold(
       endDrawer: const TeacherAppDrawer(currentRoute: CourseListPage.routeName),
       backgroundColor: kCourseBgGrey,
       appBar: AppBar(
-        backgroundColor: kCourseGreen,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: kCourseGreen,
+        elevation: 0,
+        surfaceTintColor: Colors.white,
+        shadowColor: Colors.transparent,
+        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
         automaticallyImplyLeading: Navigator.of(context).canPop(),
         title: const Text('코스 관리'),
         actions: [
@@ -284,14 +288,20 @@ class _CourseListPageState extends State<CourseListPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saving ? null : () => _openBuilder(),
-        backgroundColor: kCourseLightGreen,
-        icon: const Icon(Icons.add),
+        backgroundColor: kCourseGreen,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
         label: const Text('새 코스'),
       ),
       body: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(16 * scale, 16 * scale, 16 * scale, 12 * scale),
+            padding: EdgeInsets.fromLTRB(
+              16 * scale,
+              16 * scale,
+              16 * scale,
+              12 * scale,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -326,7 +336,9 @@ class _CourseListPageState extends State<CourseListPage> {
                           suffixIcon: IconButton(
                             tooltip: '검색',
                             icon: const Icon(Icons.search_rounded),
-                            onPressed: _loading ? null : () => _load(resetPage: true),
+                            onPressed: _loading
+                                ? null
+                                : () => _load(resetPage: true),
                           ),
                         ),
                         onSubmitted: (_) {
@@ -338,12 +350,16 @@ class _CourseListPageState extends State<CourseListPage> {
                     SizedBox(
                       width: 160,
                       child: DropdownButtonFormField<String>(
-                        value: _visibility,
+                        key: ValueKey(_visibility),
+                        initialValue: _visibility,
                         decoration: _fieldDecoration('노출'),
                         items: const [
                           DropdownMenuItem(value: 'all', child: Text('전체')),
                           DropdownMenuItem(value: 'public', child: Text('공개')),
-                          DropdownMenuItem(value: 'private', child: Text('비공개')),
+                          DropdownMenuItem(
+                            value: 'private',
+                            child: Text('비공개'),
+                          ),
                         ],
                         onChanged: (value) {
                           if (value == null) return;
@@ -355,14 +371,27 @@ class _CourseListPageState extends State<CourseListPage> {
                     SizedBox(
                       width: 180,
                       child: DropdownButtonFormField<String>(
-                        value: _sort,
+                        key: ValueKey(_sort),
+                        initialValue: _sort,
                         decoration: _fieldDecoration('정렬'),
                         items: const [
-                          DropdownMenuItem(value: 'updated_at', child: Text('최근 수정')),
-                          DropdownMenuItem(value: 'created_at', child: Text('최근 생성')),
+                          DropdownMenuItem(
+                            value: 'updated_at',
+                            child: Text('최근 수정'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'created_at',
+                            child: Text('최근 생성'),
+                          ),
                           DropdownMenuItem(value: 'title', child: Text('제목')),
-                          DropdownMenuItem(value: 'target_ovr', child: Text('목표 OVR')),
-                          DropdownMenuItem(value: 'difficulty', child: Text('난이도')),
+                          DropdownMenuItem(
+                            value: 'target_ovr',
+                            child: Text('목표 OVR'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'difficulty',
+                            child: Text('난이도'),
+                          ),
                         ],
                         onChanged: (value) {
                           if (value == null) return;
@@ -384,7 +413,8 @@ class _CourseListPageState extends State<CourseListPage> {
                     SizedBox(
                       width: 180,
                       child: DropdownButtonFormField<String?>(
-                        value: _selectedTag,
+                        key: ValueKey(_selectedTag),
+                        initialValue: _selectedTag,
                         decoration: _fieldDecoration('태그'),
                         items: [
                           const DropdownMenuItem<String?>(
@@ -432,11 +462,9 @@ class _CourseListPageState extends State<CourseListPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: kCourseLightGreen.withValues(alpha: 0.12),
+                  color: AppColors.surfaceMuted,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: kCourseLightGreen.withValues(alpha: 0.35),
-                  ),
+                  border: Border.all(color: AppColors.surfaceBorder),
                 ),
                 child: Row(
                   children: [
@@ -465,7 +493,7 @@ class _CourseListPageState extends State<CourseListPage> {
               ),
             ),
           Expanded(child: _buildTable(scale)),
-                Padding(
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Row(
               children: [
@@ -617,12 +645,7 @@ class _CourseListPageState extends State<CourseListPage> {
                         ),
                       ),
                       DataCell(Text(_moduleCountLabel(course))),
-                      DataCell(
-                        _Badge(
-                          label: public ? '공개' : '비공개',
-                          scale: 1,
-                        ),
-                      ),
+                      DataCell(_Badge(label: public ? '공개' : '비공개', scale: 1)),
                       DataCell(Text(_textbookLabel(course))),
                       DataCell(
                         SizedBox(
@@ -633,11 +656,11 @@ class _CourseListPageState extends State<CourseListPage> {
                             children: tags.isEmpty
                                 ? [const Text('-')]
                                 : tags
-                                    .take(3)
-                                    .map(
-                                      (tag) => _Badge(label: tag, scale: 1),
-                                    )
-                                    .toList(),
+                                      .take(3)
+                                      .map(
+                                        (tag) => _Badge(label: tag, scale: 1),
+                                      )
+                                      .toList(),
                           ),
                         ),
                       ),
@@ -691,7 +714,18 @@ class _CourseListPageState extends State<CourseListPage> {
       labelText: label,
       filled: true,
       fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.surfaceBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.surfaceBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: kCourseLightGreen, width: 2),
+      ),
     );
   }
 }
@@ -707,9 +741,9 @@ class _StatPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -719,10 +753,7 @@ class _StatPill extends StatelessWidget {
             style: const TextStyle(color: Colors.black54, fontSize: 12),
           ),
           const SizedBox(width: 8),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
         ],
       ),
     );

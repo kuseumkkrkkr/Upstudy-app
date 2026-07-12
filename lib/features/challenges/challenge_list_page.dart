@@ -50,7 +50,7 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
     } catch (e) {
       setState(() {
         _loading = false;
-        _error = '도전과제를 불러오지 못했습니다: $e';
+        _error = '일일 퀘스트를 불러오지 못했습니다: $e';
       });
     }
   }
@@ -93,6 +93,7 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
         itemBuilder: (context, index) {
           final item = _dailyItems[index];
           final done = item.status == 'completed';
+          final claimable = item.claimable || (done && !item.rewardClaimed);
           final progressText = '${item.progress}/${item.target}';
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -132,6 +133,25 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          item.difficultyLabel,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
                           color: _statusColor(
                             item.status,
                           ).withValues(alpha: 0.12),
@@ -157,6 +177,16 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                     ),
                   ),
                   const SizedBox(height: 6),
+                  if (item.description.isNotEmpty) ...[
+                    Text(
+                      item.description,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
                   Text(
                     '타입: ${item.questType}',
                     style: const TextStyle(fontSize: 13, color: Colors.black54),
@@ -174,17 +204,35 @@ class _ChallengeListPageState extends State<ChallengeListPage> {
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: FilledButton.tonal(
-                      onPressed: done && !item.rewardClaimed
-                          ? () => _completeQuest(item.id)
-                          : null,
-                      child: Text(
-                        item.rewardClaimed
-                            ? '수령 완료'
-                            : done
-                            ? '보상 수령'
-                            : '진행 중',
-                      ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        FilledButton.tonal(
+                          onPressed: claimable
+                              ? () => _completeQuest(item.id)
+                              : null,
+                          child: Text(
+                            item.rewardClaimed
+                                ? '수령 완료'
+                                : done
+                                ? '보상 수령'
+                                : '진행 중',
+                          ),
+                        ),
+                        if (claimable)
+                          Positioned(
+                            top: -2,
+                            right: -2,
+                            child: Container(
+                              width: 9,
+                              height: 9,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFE53935),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import os
 import time
 from typing import Any, Dict
 
@@ -13,6 +14,12 @@ from generater.codebase_store import (
     save_cached_seed,
     save_seed_log,
     save_seed_logs_batch,
+)
+from services.jobs.cancellation import check_cancelled
+
+_SEED_VALIDATOR_BATCH_TIMEOUT_SEC = max(
+    1.0,
+    float(os.getenv("SEED_VALIDATOR_BATCH_TIMEOUT_SEC", "6")),
 )
 
 
@@ -78,7 +85,9 @@ def validate_codebase(
     attempts_per_codebase: int,
     max_successes_per_codebase: int,
     source: str,
+    cancel_event: Any = None,
 ) -> Dict[str, Any]:
+    check_cancelled(cancel_event)
     entry_id = entry.get("id")
     if entry_id is None:
         return {"attempts": 0, "successes": 0, "deleted": False}
@@ -104,14 +113,21 @@ def validate_codebase(
 
     batch_size = 4
     for batch_start in range(0, attempts_per_codebase, batch_size):
+        check_cancelled(cancel_event)
         batch_count = min(batch_size, attempts_per_codebase - batch_start)
         seeds = [rng.randint(1, 1_000_000_000) for _ in range(batch_count)]
         for s in seeds:
             record_seed_attempt(entry_id, code_hash, success=False)
         attempts_here += len(seeds)
-        batch_results = run_codebase_batch(entry, seeds, timeout_seconds=12.0)
+        batch_results = run_codebase_batch(
+            entry,
+            seeds,
+            timeout_seconds=_SEED_VALIDATOR_BATCH_TIMEOUT_SEC,
+            cancel_event=cancel_event,
+        )
         batch_logs: list[dict[str, Any]] = []
         for idx, raw in enumerate(batch_results):
+            check_cancelled(cancel_event)
             seed_value = seeds[idx]
             started_at = time.monotonic()
             if isinstance(raw, dict) and "_error" in raw:

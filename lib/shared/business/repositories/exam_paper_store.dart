@@ -11,12 +11,14 @@ class ExamPaperEntry {
     required this.questionCount,
     required this.createdAt,
     required this.paperType,
+    this.searchIndex = '',
   });
 
   final String examId;
   final int questionCount;
   final int createdAt;
   final String paperType;
+  final String searchIndex;
 
   factory ExamPaperEntry.fromJson(Map<String, dynamic> json) {
     return ExamPaperEntry(
@@ -24,6 +26,7 @@ class ExamPaperEntry {
       questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
       createdAt: (json['created_at'] as num?)?.toInt() ?? 0,
       paperType: json['paper_type']?.toString() ?? 'csat',
+      searchIndex: json['search_index']?.toString() ?? '',
     );
   }
 
@@ -33,7 +36,24 @@ class ExamPaperEntry {
       'question_count': questionCount,
       'created_at': createdAt,
       'paper_type': paperType,
+      'search_index': searchIndex,
     };
+  }
+
+  ExamPaperEntry copyWith({
+    String? examId,
+    int? questionCount,
+    int? createdAt,
+    String? paperType,
+    String? searchIndex,
+  }) {
+    return ExamPaperEntry(
+      examId: examId ?? this.examId,
+      questionCount: questionCount ?? this.questionCount,
+      createdAt: createdAt ?? this.createdAt,
+      paperType: paperType ?? this.paperType,
+      searchIndex: searchIndex ?? this.searchIndex,
+    );
   }
 }
 
@@ -56,9 +76,10 @@ class ExamPaperStore {
       if (decoded is List) {
         final items = decoded
             .whereType<Map>()
-            .map((item) => ExamPaperEntry.fromJson(
-                  Map<String, dynamic>.from(item),
-                ))
+            .map(
+              (item) =>
+                  ExamPaperEntry.fromJson(Map<String, dynamic>.from(item)),
+            )
             .toList();
         notifier.value = items;
       }
@@ -82,10 +103,34 @@ class ExamPaperStore {
 
   static Future<List<ExamPaperEntry>> remove(String examId) async {
     final items = await load();
-    final updated =
-        items.where((item) => item.examId != examId).toList(growable: false);
+    final updated = items
+        .where((item) => item.examId != examId)
+        .toList(growable: false);
     await _persist(updated);
     return updated;
+  }
+
+  static Future<List<ExamPaperEntry>> updateSearchIndex({
+    required String examId,
+    required String searchIndex,
+  }) async {
+    final id = examId.trim();
+    if (id.isEmpty || searchIndex.trim().isEmpty) return load();
+    final items = await load();
+    var changed = false;
+    final updated = items
+        .map((item) {
+          if (item.examId != id) return item;
+          if (item.searchIndex == searchIndex) return item;
+          changed = true;
+          return item.copyWith(searchIndex: searchIndex);
+        })
+        .toList(growable: false);
+    if (changed) {
+      await _persist(updated);
+      return updated;
+    }
+    return items;
   }
 
   static Future<void> _persist(List<ExamPaperEntry> items) async {

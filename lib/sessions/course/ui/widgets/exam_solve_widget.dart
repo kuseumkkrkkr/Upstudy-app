@@ -12,7 +12,13 @@ class ExamSolveWidget extends StatefulWidget {
   const ExamSolveWidget({super.key, required this.config, this.onComplete});
 
   final ExamSolveConfig config;
-  final void Function({required int correctCount, required int totalCount, required bool passed, int? elapsedSeconds})? onComplete;
+  final void Function({
+    required int correctCount,
+    required int totalCount,
+    required bool passed,
+    int? elapsedSeconds,
+  })?
+  onComplete;
 
   @override
   State<ExamSolveWidget> createState() => _ExamSolveWidgetState();
@@ -46,7 +52,10 @@ class _ExamSolveWidgetState extends State<ExamSolveWidget> {
         );
       }
 
-      final status = await ApiClient.instance.getExamStatus(examId);
+      final status = await ApiClient.instance.getExamStatus(
+        examId,
+        courseId: config.courseId,
+      );
       final items = status.items;
 
       if (items.isEmpty) {
@@ -104,9 +113,7 @@ class _ExamSolveWidgetState extends State<ExamSolveWidget> {
         _loading = false;
         _error = e.toString().replaceFirst('Exception: ', '');
       });
-      scaffold.showSnackBar(
-        SnackBar(content: Text('시험 생성 실패: $_error')),
-      );
+      scaffold.showSnackBar(SnackBar(content: Text('시험 생성 실패: $_error')));
     }
   }
 
@@ -119,9 +126,7 @@ class _ExamSolveWidgetState extends State<ExamSolveWidget> {
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator(
-                    color: Color(0xFF1B402B),
-                  ),
+                  const CircularProgressIndicator(color: Color(0xFF1B402B)),
                   const SizedBox(height: 20),
                   Text(
                     '시험지를 생성하는 중...',
@@ -134,48 +139,48 @@ class _ExamSolveWidgetState extends State<ExamSolveWidget> {
                 ],
               )
             : _error != null
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.redAccent,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '오류가 발생했습니다',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _error!,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _loading = true;
-                            _error = null;
-                          });
-                          _createAndLaunchExam();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B402B),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('다시 시도'),
-                      ),
-                    ],
-                  )
-                : const SizedBox.shrink(),
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.redAccent,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '오류가 발생했습니다',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _error!,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _loading = true;
+                        _error = null;
+                      });
+                      _createAndLaunchExam();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1B402B),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('다시 시도'),
+                  ),
+                ],
+              )
+            : const SizedBox.shrink(),
       ),
     );
   }

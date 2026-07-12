@@ -39,19 +39,17 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
         screen: 'detail',
       ).catchError((_) {}),
     );
-    if (_course.units.isEmpty) {
-      _loadCourseDetail();
-    }
+    unawaited(_loadCourseDetail(showLoading: _course.units.isEmpty));
   }
 
-  Future<void> _loadCourseDetail() async {
-    setState(() => _loadingCourse = true);
+  Future<void> _loadCourseDetail({bool showLoading = true}) async {
+    if (showLoading) setState(() => _loadingCourse = true);
     try {
       final full = await CourseService.fetchCourse(widget.course.id);
       if (!mounted) return;
       setState(() => _course = full);
     } finally {
-      if (mounted) setState(() => _loadingCourse = false);
+      if (mounted && showLoading) setState(() => _loadingCourse = false);
     }
   }
 
@@ -78,12 +76,14 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
     final course = _course;
-    final descriptionText =
-        course.description.trim().isEmpty ? '설명이 없습니다.' : course.description;
+    final descriptionText = course.description.trim().isEmpty
+        ? '설명이 없습니다.'
+        : course.description;
     final progressPercent = (course.progress * 100).round();
+    final isEnrolled = course.isEnrolled;
     final primaryActionLabel = course.isDemo
         ? '데모 코스입니다'
-        : (course.progress > 0 ? '코스 계속하기' : '수강 신청');
+        : (isEnrolled ? '코스 계속하기' : '수강 신청');
 
     return Scaffold(
       backgroundColor: kCourseBgGrey,
@@ -96,12 +96,13 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                   children: [
                     Ios26TopBar(
                       brandColor: kCourseGreen,
-                      onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (_) => const MainStudentPage(),
-                        ),
-                        (route) => false,
-                      ),
+                      onTitleTap: () =>
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const MainStudentPage(),
+                            ),
+                            (route) => false,
+                          ),
                       items: [
                         Ios26NavItem(
                           label: '학습터',
@@ -112,7 +113,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                           ),
                         ),
                         Ios26NavItem(
-                          label: '문서함',
+                          label: '책가방',
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const docx.BookWidget(),
@@ -207,7 +208,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                             _CourseUnitTile(
                               unit: unit,
                               scale: scale,
-                              isEnrolled: course.status != null,
+                              isEnrolled: isEnrolled,
                             ),
                           SizedBox(height: 20 * scale),
                           Align(
@@ -362,7 +363,7 @@ class _DetailHero extends StatelessWidget {
               ),
               SizedBox(height: 8 * scale),
               Text(
-                '% 완료',
+                '$progressPercent% 완료',
                 style: GoogleFonts.inter(
                   fontSize: 12 * scale,
                   color: Colors.black54,
@@ -502,14 +503,39 @@ class _CourseUnitTile extends StatelessWidget {
     final detail = unit.detail;
     if (detail is Map) {
       if (detail['type'] == 'textbook_view') {
-        return '교재 열람 ${detail['page_from'] ?? '?'}~${detail['page_to'] ?? '?'}P';
+        return _textbookRangeLabel(detail);
       }
       if (detail['type'] == 'problem_solve') {
         final tags = (detail['hash_tags'] as List?)?.join(', ') ?? '';
         return '문제 풀이 · 태그: $tags';
       }
+      if (detail['type'] == 'exam_solve') {
+        final duration = (detail['exam_duration'] as num?)?.toInt();
+        return duration == null || duration <= 0
+            ? '시험지 풀이'
+            : '시험지 풀이 · $duration분';
+      }
+      return _moduleTypeLabel(detail['type']?.toString() ?? unit.type);
     }
-    return detail?.toString() ?? unit.type;
+    return detail?.toString() ?? _moduleTypeLabel(unit.type);
+  }
+
+  String _textbookRangeLabel(Map detail) {
+    final from = _positivePage(detail['page_from']);
+    final to = _positivePage(detail['page_to']);
+    if (from != null && to != null) {
+      if (from == to) return '교재 열람 ${from.toString()}P';
+      return '교재 열람 ${from.toString()}~${to.toString()}P';
+    }
+    if (from != null) return '교재 열람 ${from.toString()}P부터';
+    if (to != null) return '교재 열람 ${to.toString()}P까지';
+    return '교재 열람';
+  }
+
+  int? _positivePage(dynamic value) {
+    final parsed = value is num ? value.toInt() : int.tryParse('$value');
+    if (parsed == null || parsed <= 0) return null;
+    return parsed;
   }
 
   IconData _typeIcon() {
@@ -522,6 +548,12 @@ class _CourseUnitTile extends StatelessWidget {
         return Icons.quiz_outlined;
       case 'textbook_view':
         return Icons.menu_book_outlined;
+      case 'exam_solve':
+        return Icons.assignment_outlined;
+      case 'level_test':
+        return Icons.trending_up;
+      case 'wrong_answer_review':
+        return Icons.replay;
       default:
         return Icons.category_outlined;
     }
@@ -603,7 +635,7 @@ class _CourseUnitTile extends StatelessWidget {
                 Row(
                   children: [
                     MetaPill(
-                      label: unit.type,
+                      label: _moduleTypeLabel(unit.type),
                       icon: icon,
                       scale: scale,
                     ),
@@ -634,6 +666,27 @@ class _CourseUnitTile extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+String _moduleTypeLabel(String type) {
+  switch (type) {
+    case 'textbook_view':
+      return '교재 열람';
+    case 'problem_solve':
+      return '문제 풀이';
+    case 'exam_solve':
+      return '시험지 풀이';
+    case 'level_test':
+      return '레벨 테스트';
+    case 'wrong_answer_review':
+      return '오답 복습';
+    case 'challenge_group':
+      return '도전 학습';
+    case 'curriculum_group':
+      return '커리큘럼';
+    default:
+      return type.trim().isEmpty ? '학습 모듈' : type;
   }
 }
 

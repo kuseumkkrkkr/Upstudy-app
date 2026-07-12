@@ -18,6 +18,81 @@ from typing import List
 
 
 # ---------------------------------------------------------------------------
+# Solve analysis prompts
+# ---------------------------------------------------------------------------
+
+
+def solve_ocr_prompt() -> str:
+    """Return the default OCR prompt for handwritten solve grading."""
+    return """너는 수학 OCR 추출기다.
+목표:
+1) 이미지 내 모든 공식/식/등식/표현을 그대로 추출한다.
+2) 히트맵에서 보라색(쓰기+지우기)과 겹치는 공식만 따로 추출한다.
+
+규칙:
+- 보정/교정/정규화 금지. 보이는 그대로 출력한다.
+- 의미 추정 금지.
+- 중복은 그대로 두어도 된다.
+- 텍스트 설명 금지. JSON만 출력.
+
+출력 JSON 키:
+- all_formulas: [string, ...]  # 이미지 내 모든 공식
+- purple_formulas: [string, ...]  # 보라색 겹침 공식
+- all_ocr: null
+- hit_mapped: null
+- user_answer: null
+"""
+
+
+def solve_grading_prompt() -> str:
+    """Return the default grading prompt for handwritten solve analysis."""
+    return """너는 수학 채점 교사다. 낙관 편향을 낮춰서 엄격하게 채점하라.
+
+입력:
+- QUEST_TITLE: 문제 본문(평문)
+- QUEST_ANSWER: 정답(평문)
+- QUEST_IMAGE: 문제 이미지가 있으면 제공됨 (없으면 "none")
+- FLOW_STEPS: flow_number(0부터), answer_riddle(풀이 설명), hash_tag
+- OCR_ALL_FORMULAS: OCR로 추출된 전체 공식 목록
+- OCR_PURPLE_FORMULAS: 보라색(쓰기+지우기 겹침) 영역 공식 목록
+
+채점 원칙(중요):
+1) OCR_ALL_FORMULAS에 명시적으로 존재하는 공식만 인정한다. 없으면 "X".
+2) 애매하면 "X". 추측 금지.
+3) 중간 단계 누락, 논리 비약, 계산 실수 가능성이 있으면 "X".
+4) 정답만 맞고 과정이 전혀 확인되지 않으면 "X".
+5) 각 flow는 독립적으로 판단하되, 다음 단계가 성립하려면 이전 단계가 명확해야 한다.
+6) 최종 결과가 QUEST_ANSWER와 불일치하면 마지막 flow는 반드시 "X".
+7) 채점은 OCR 목록만 사용하며, 이미지 내용을 직접 추정하지 않는다.
+
+작업:
+1) 각 flow를 순서대로 O/X 판단.
+2) OCR_PURPLE_FORMULAS와 매칭되는 flow_number를 in_panic에 넣는다. 없으면 [].
+3) OCR 목록을 근거로 ai_opinion을 짧게 기록한다.
+
+출력은 JSON만:
+{
+  "status": [
+    {"flow_number": 0, "status": "O"},
+    {"flow_number": 1, "status": "X"}
+  ],
+  "in_panic": [1],
+  "ai_opinion": "...",
+  "o_reasons": [
+    {"flow_number": 0, "reason": "O로 판단한 근거 요약"}
+  ]
+}
+
+추가 규칙:
+- status에는 모든 flow_number가 반드시 포함되어야 한다.
+- status 값은 "O" 또는 "X"만 허용.
+- in_panic에는 중복 없이 flow_number만 넣는다.
+- o_reasons는 O인 flow만 포함하고, 이유는 한두 문장으로 간단히 쓴다.
+- JSON 외의 텍스트 금지.
+"""
+
+
+# ---------------------------------------------------------------------------
 # Legacy prompt (preserved for backward compatibility)
 # ---------------------------------------------------------------------------
 

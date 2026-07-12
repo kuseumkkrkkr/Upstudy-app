@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/services/storage/local_db.dart';
 
@@ -15,6 +17,7 @@ class ActivityEventType {
   static const String book = 'book';
   static const String course = 'course';
   static const String exam = 'exam';
+  static const String graph = 'graph';
 }
 
 class ActivityEvent {
@@ -61,11 +64,13 @@ class ActivityDayRecord {
     List<String>? bookNumbers,
     List<String>? courseNumbers,
     List<String>? examNumbers,
+    List<String>? graphNumbers,
     int? score,
   }) : problemNumbers = problemNumbers ?? <String>[],
        bookNumbers = bookNumbers ?? <String>[],
        courseNumbers = courseNumbers ?? <String>[],
        examNumbers = examNumbers ?? <String>[],
+       graphNumbers = graphNumbers ?? <String>[],
        score = score ?? 0;
 
   final String dateKey;
@@ -73,6 +78,7 @@ class ActivityDayRecord {
   final List<String> bookNumbers;
   final List<String> courseNumbers;
   final List<String> examNumbers;
+  final List<String> graphNumbers;
   final int score;
 
   factory ActivityDayRecord.fromJson(
@@ -90,6 +96,7 @@ class ActivityDayRecord {
       bookNumbers: toStringList(json['books']),
       courseNumbers: toStringList(json['courses']),
       examNumbers: toStringList(json['exams']),
+      graphNumbers: toStringList(json['graphs']),
       score: (json['score'] as num?)?.toInt() ?? 0,
     );
   }
@@ -100,6 +107,7 @@ class ActivityDayRecord {
       'books': bookNumbers,
       'courses': courseNumbers,
       'exams': examNumbers,
+      'graphs': graphNumbers,
       'score': score,
     };
   }
@@ -109,6 +117,7 @@ class ActivityDayRecord {
     List<String>? bookNumbers,
     List<String>? courseNumbers,
     List<String>? examNumbers,
+    List<String>? graphNumbers,
     int? score,
   }) {
     return ActivityDayRecord(
@@ -117,6 +126,7 @@ class ActivityDayRecord {
       bookNumbers: bookNumbers ?? this.bookNumbers,
       courseNumbers: courseNumbers ?? this.courseNumbers,
       examNumbers: examNumbers ?? this.examNumbers,
+      graphNumbers: graphNumbers ?? this.graphNumbers,
       score: score ?? this.score,
     );
   }
@@ -219,6 +229,8 @@ class ActivitySnapshot {
 class ActivityStore {
   static final ValueNotifier<ActivitySnapshot> notifier =
       ValueNotifier<ActivitySnapshot>(ActivitySnapshot.empty());
+  static final ValueNotifier<AccountSummary?> accountSummaryNotifier =
+      ValueNotifier<AccountSummary?>(null);
   static bool _loaded = false;
   static String _storageKey = _activityStoreKey;
   static String? _activeUsername;
@@ -313,12 +325,13 @@ class ActivityStore {
     final updatedProblems = _addUnique(existing.problemNumbers, problemNumber);
     var updatedDay = existing.copyWith(problemNumbers: updatedProblems);
     var nextSolvedTotal = snapshot.totalSolvedCount;
+    var deltaScore = 0;
     if (!isDuplicate) {
       nextSolvedTotal += 1;
       final updatedCount = updatedProblems.length;
       final basePoints = _problemBasePointsForIndex(updatedCount);
       final weight = _problemDifficultyWeight(difficultyTier ?? 3);
-      final deltaScore = (basePoints * weight).round();
+      deltaScore = (basePoints * weight).round();
       updatedDay = updatedDay.copyWith(score: updatedDay.score + deltaScore);
     }
     final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
@@ -349,6 +362,21 @@ class ActivityStore {
         lastProblemConfig: priorConfig,
       ),
     );
+    if (!isDuplicate) {
+      unawaited(
+        _syncActivityScoreDelta(
+          deltaScore: deltaScore,
+          refId: _activityScoreRef(
+            ActivityEventType.problem,
+            todayKey,
+            problemId,
+            problemNumber,
+          ),
+          reason: 'problem_solve',
+          dateKey: todayKey,
+        ),
+      );
+    }
   }
 
   static Future<void> recordProblemIncorrect({
@@ -397,10 +425,12 @@ class ActivityStore {
     final isDuplicate = !isValid || existing.bookNumbers.contains(bookNumber);
     final updatedBooks = _addUnique(existing.bookNumbers, bookNumber);
     var updatedDay = existing.copyWith(bookNumbers: updatedBooks);
+    var deltaScore = 0;
     if (!isDuplicate) {
       final priorCount = existing.bookNumbers.length;
       if (priorCount < 2) {
-        updatedDay = updatedDay.copyWith(score: updatedDay.score + 100);
+        deltaScore = 100;
+        updatedDay = updatedDay.copyWith(score: updatedDay.score + deltaScore);
       }
     }
     final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
@@ -421,6 +451,21 @@ class ActivityStore {
         lastProblemConfig: snapshot.lastProblemConfig,
       ),
     );
+    if (deltaScore > 0) {
+      unawaited(
+        _syncActivityScoreDelta(
+          deltaScore: deltaScore,
+          refId: _activityScoreRef(
+            ActivityEventType.book,
+            todayKey,
+            bookId,
+            bookNumber,
+          ),
+          reason: 'book_view',
+          dateKey: todayKey,
+        ),
+      );
+    }
   }
 
   static Future<void> recordCourseView({
@@ -473,10 +518,11 @@ class ActivityStore {
         !isValid || existing.examNumbers.contains(resolvedNumber);
     final updatedExams = _addUnique(existing.examNumbers, resolvedNumber);
     var updatedDay = existing.copyWith(examNumbers: updatedExams);
+    var deltaScore = 0;
     if (!isDuplicate) {
       final basePoints = _examBasePoints(questionCount);
       final weight = _examDifficultyWeight(difficultyTier ?? 3);
-      final deltaScore = (basePoints * weight).round();
+      deltaScore = (basePoints * weight).round();
       updatedDay = updatedDay.copyWith(score: updatedDay.score + deltaScore);
     }
     final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
@@ -491,6 +537,21 @@ class ActivityStore {
         lastProblemConfig: snapshot.lastProblemConfig,
       ),
     );
+    if (deltaScore > 0) {
+      unawaited(
+        _syncActivityScoreDelta(
+          deltaScore: deltaScore,
+          refId: _activityScoreRef(
+            ActivityEventType.exam,
+            todayKey,
+            examId,
+            resolvedNumber,
+          ),
+          reason: 'exam_completion',
+          dateKey: todayKey,
+        ),
+      );
+    }
   }
 
   static Future<void> recordExamSession({
@@ -508,6 +569,41 @@ class ActivityStore {
     await _persist(
       ActivitySnapshot(
         days: snapshot.days,
+        totalSolvedCount: snapshot.totalSolvedCount,
+        totalIncorrectCount: snapshot.totalIncorrectCount,
+        lastDateKey: snapshot.lastDateKey,
+        lastEvent: event,
+        lastProblemConfig: snapshot.lastProblemConfig,
+      ),
+    );
+  }
+
+  static Future<void> recordGraphPractice({
+    required String graphId,
+    String? graphNumber,
+    Map<String, dynamic>? meta,
+  }) async {
+    final snapshot = await _ensureUpToDate();
+    final todayKey = _todayKey();
+    final existing =
+        snapshot.days[todayKey] ?? ActivityDayRecord(dateKey: todayKey);
+    final resolvedNumber = graphNumber?.trim().isNotEmpty == true
+        ? graphNumber!.trim()
+        : DateTime.now().millisecondsSinceEpoch.toString();
+    final updatedGraphs = _addUnique(existing.graphNumbers, resolvedNumber);
+    final updatedDay = existing.copyWith(graphNumbers: updatedGraphs);
+    final updatedDays = Map<String, ActivityDayRecord>.from(snapshot.days)
+      ..[todayKey] = updatedDay;
+    final event = ActivityEvent(
+      type: ActivityEventType.graph,
+      id: graphId,
+      number: resolvedNumber,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+      meta: meta,
+    );
+    await _persist(
+      ActivitySnapshot(
+        days: updatedDays,
         totalSolvedCount: snapshot.totalSolvedCount,
         totalIncorrectCount: snapshot.totalIncorrectCount,
         lastDateKey: snapshot.lastDateKey,
@@ -540,6 +636,37 @@ class ActivityStore {
       return legacy;
     }
     return cached;
+  }
+
+  static Future<void> _syncActivityScoreDelta({
+    required int deltaScore,
+    required String refId,
+    required String reason,
+    required String dateKey,
+  }) async {
+    if (deltaScore <= 0) return;
+    try {
+      final summary = await ApiClient.instance.recordActivityScore(
+        deltaScore: deltaScore,
+        refId: refId,
+        reason: reason,
+        dateKey: dateKey,
+      );
+      accountSummaryNotifier.value = summary;
+    } catch (error) {
+      debugPrint('Activity score sync failed: $error');
+    }
+  }
+
+  static String _activityScoreRef(
+    String type,
+    String dateKey,
+    String id,
+    String number,
+  ) {
+    final raw = '$type:$dateKey:${id.trim()}:${number.trim()}';
+    if (raw.length <= 200) return raw;
+    return raw.substring(0, 200);
   }
 
   static List<String> _addUnique(List<String> source, String value) {

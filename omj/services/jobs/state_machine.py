@@ -69,7 +69,9 @@ class JobStateMachine:
         from_status = JobState(current["status"])
 
         if to_status == from_status:
-            return self.get_status(job_id)
+            raise InvalidTransitionError(
+                f"Job is already in status {from_status.value}"
+            )
 
         if from_status in TERMINAL_STATES:
             raise InvalidTransitionError(
@@ -82,7 +84,7 @@ class JobStateMachine:
                 f"Transition {from_status.value} -> {to_status.value} not allowed"
             )
 
-        self._store.transition(
+        changed = self._store.transition(
             job_id,
             to_status,
             detail=reason,
@@ -90,6 +92,8 @@ class JobStateMachine:
             error=error,
             rejection_reason=rejection_reason,
         )
+        if not changed:
+            raise InvalidTransitionError("Job state changed concurrently")
         return self.get_status(job_id)
 
     def cancel_job(self, job_id: str, user_id: str) -> dict:
@@ -107,12 +111,14 @@ class JobStateMachine:
                 f"Cannot cancel a job in status {status.value}"
             )
 
-        self._store.transition(
+        changed = self._store.transition(
             job_id,
             JobState.rejected,
             detail=f"Cancelled by user {user_id}",
             rejection_reason="user_cancelled",
         )
+        if not changed:
+            raise InvalidTransitionError("Job state changed concurrently")
         return self.get_status(job_id)
 
     # ── queries ────────────────────────────────────────────────

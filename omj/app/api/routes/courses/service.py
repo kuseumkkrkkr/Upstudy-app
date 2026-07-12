@@ -9,6 +9,7 @@ from domain.course import engine
 from domain.course import v2_repository as repo
 from domain.course.v2_models import CourseModule, CourseModuleType, CourseV2
 from domain.academy import repository as academy_repo
+from storage.teacher_exam_document_store import has_teacher_exam_document
 from storage.textbook_storage import get_textbook, is_teacher_manual_textbook, list_textbooks
 
 
@@ -46,6 +47,10 @@ def _has_private_course_access(user: dict, course: CourseV2) -> bool:
         return True
     if role == "teacher" and _can_manage(user, course):
         return True
+    if role == "student":
+        state = repo.get_runtime_state(user_id, course.id)
+        if state.get("assigned_by_teacher") is True:
+            return True
     group_id = str(course.access_group_id or "").strip()
     if not group_id:
         return False
@@ -56,6 +61,18 @@ def _has_private_course_access(user: dict, course: CourseV2) -> bool:
         if not group or str(group.get("academy_id") or "") != str(course.access_academy_id):
             return False
     return True
+
+
+def _is_active_teacher_in_group(group_id: str, user_id: str) -> bool:
+    members = academy_repo.list_group_members(
+        group_id=group_id,
+        user_id=user_id,
+        status="active",
+    )
+    return any(
+        str(member.get("role") or "").strip().lower() in {"teacher", "admin"}
+        for member in members
+    )
 
 
 def _collect_course_textbook_ids(course: CourseV2) -> list[str]:
@@ -80,6 +97,29 @@ def _ensure_course_textbooks_selectable(course: CourseV2) -> None:
             raise HTTPException(
                 status_code=400,
                 detail="teacher_manual_textbook_not_course_selectable",
+            )
+
+
+def _collect_course_exam_ids(course: CourseV2) -> list[str]:
+    ids = []
+    for module in course.modules:
+        if module.type not in {CourseModuleType.exam_solve, CourseModuleType.level_test}:
+            continue
+        exam_id = str(module.exam_id or "").strip()
+        if exam_id and exam_id not in ids:
+            ids.append(exam_id)
+    return ids
+
+
+def _ensure_course_exams_owned(course: CourseV2) -> None:
+    owner_user_id = str(course.owner_user_id or "").strip()
+    if not owner_user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    for exam_id in _collect_course_exam_ids(course):
+        if not has_teacher_exam_document(owner_user_id, exam_id):
+            raise HTTPException(
+                status_code=400,
+                detail="teacher_exam_document_not_owned",
             )
 
 
@@ -183,6 +223,7 @@ def create_course_v2(user: dict, course: CourseV2) -> CourseV2:
         raise HTTPException(status_code=401, detail="Invalid token")
     course.owner_user_id = owner_user_id
     _ensure_course_textbooks_selectable(course)
+    _ensure_course_exams_owned(course)
     _enforce_visibility_limit(owner_user_id, bool(course.is_public))
     course = engine.insert_forced_wrong_answer_modules(course)
     repo.create_course_v2(course)
@@ -198,6 +239,50 @@ def get_course_v2(course_id: str, user: dict) -> CourseV2:
     return course
 
 
+def _runtime_summary(course: CourseV2, state: dict[str, Any]) -> dict[str, Any]:
+    if not state:
+        return {}
+    completed = state.get("completed_modules") if isinstance(state, dict) else []
+    completed_modules = [
+        str(module_id)
+        for module_id in (completed if isinstance(completed, list) else [])
+        if str(module_id).strip()
+    ]
+    total_modules = len(course.modules)
+    progress = len(completed_modules) / total_modules if total_modules else 0.0
+    status = "paused" if state.get("paused") else ("completed" if progress >= 1.0 else "in_progress")
+    current_module_id = (
+        completed_modules[-1]
+        if completed_modules
+        else (course.modules[0].id if course.modules else None)
+    )
+    return {
+        "percent": round(progress, 2),
+        "progress": state,
+        "status": status,
+        "last_action": current_module_id,
+        "completed_modules": completed_modules,
+        "module_count": total_modules,
+    }
+
+
+def course_v2_payload(course: CourseV2, user: dict, state: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    payload = course.model_dump(mode="json")
+    user_id = str(user.get("user_id") or "")
+    runtime_state = state if state is not None else repo.get_runtime_state(user_id, course.id)
+    payload.update(_runtime_summary(course, runtime_state or {}))
+    return payload
+
+
+def course_v2_payloads(courses: list[CourseV2], user: dict) -> list[dict[str, Any]]:
+    user_id = str(user.get("user_id") or "")
+    states = repo.list_runtime_states(user_id, [course.id for course in courses])
+    return [
+        course_v2_payload(course, user, states.get(course.id, {}))
+        for course in courses
+    ]
+
+
 def update_course_v2(user: dict, course_id: str, course: CourseV2) -> CourseV2:
     existing = repo.get_course_v2(course_id)
     if existing is None:
@@ -208,6 +293,7 @@ def update_course_v2(user: dict, course_id: str, course: CourseV2) -> CourseV2:
     course.id = course_id
     course.owner_user_id = existing.owner_user_id
     _ensure_course_textbooks_selectable(course)
+    _ensure_course_exams_owned(course)
     _enforce_visibility_limit(
         course.owner_user_id,
         bool(course.is_public),
@@ -286,11 +372,17 @@ def bind_course_academy_group(
         raise HTTPException(status_code=404, detail="Group not found")
     if str(group.get("academy_id") or "") != academy_id:
         raise HTTPException(status_code=400, detail="Invalid academy/group mapping")
+    if str(user.get("role") or "") != "admin" and not _is_active_teacher_in_group(
+        group_id,
+        str(user.get("user_id") or ""),
+    ):
+        raise HTTPException(status_code=403, detail="Teacher is not an active member of this group")
 
     course.access_academy_id = academy_id
     course.access_group_id = group_id
     course.is_public = False
     _ensure_course_textbooks_selectable(course)
+    _ensure_course_exams_owned(course)
     if not course.id.startswith("academy_"):
         course.id = f"academy_{academy_id}__group_{group_id}__{course.id}"
     repo.delete_course_v2(course_id)

@@ -51,6 +51,30 @@ class StudyGroupTeacherFlowTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 201)
         return resp.json()["token"]
 
+    def test_roleless_teacher_token_uses_persisted_role_for_group_owner(self) -> None:
+        teacher_token = self._register_teacher()
+        payload = auth.decode_token(teacher_token)
+        self.assertIsInstance(payload, dict)
+        roleless_token = auth.create_token(payload["sub"])
+
+        create_resp = self.client.post(
+            "/social/study-groups",
+            headers={"Authorization": f"Bearer {roleless_token}"},
+            json={
+                "name": "구형 토큰 그룹",
+                "description": "권한 보정 테스트",
+                "max_members": 10,
+                "is_public": True,
+                "lock_enabled": False,
+                "invite_code": "OLDJWT1",
+            },
+        )
+
+        self.assertEqual(create_resp.status_code, 201)
+        group = create_resp.json()
+        self.assertEqual(group["owner_role"], "teacher")
+        self.assertFalse(group["is_public"])
+
     def test_teacher_group_code_join_flow(self) -> None:
         teacher_token = self._register_teacher()
         student_token = self._register_student()

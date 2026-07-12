@@ -574,7 +574,7 @@ class ReviewCourseStore {
 
     final target = task.targetQuestionCount > 0
         ? task.targetQuestionCount
-        : math.max(quests.length, 3);
+        : math.max(quests.length, 1);
     if (quests.length < target) {
       for (final tag in task.tags) {
         final found = await _safeSearch(hashTag: tag, pageSize: target);

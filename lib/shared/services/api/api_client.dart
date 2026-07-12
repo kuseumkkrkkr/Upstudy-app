@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:s11/shared/services/api/api_contract.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 
 class ApiResponse<T> {
@@ -292,6 +293,10 @@ class DailyQuestItem {
   final bool rewardClaimed;
   final int claimedPoints;
   final String claimStatus;
+  final bool claimable;
+  final String difficulty;
+  final String difficultyLabel;
+  final String description;
 
   const DailyQuestItem({
     required this.id,
@@ -304,6 +309,10 @@ class DailyQuestItem {
     this.rewardClaimed = false,
     this.claimedPoints = 0,
     this.claimStatus = '',
+    this.claimable = false,
+    this.difficulty = 'easy',
+    this.difficultyLabel = '하',
+    this.description = '',
   });
 
   factory DailyQuestItem.fromJson(Map<String, dynamic> json) {
@@ -318,6 +327,10 @@ class DailyQuestItem {
       rewardClaimed: json['reward_claimed'] == true,
       claimedPoints: (json['claimed_points'] as num?)?.toInt() ?? 0,
       claimStatus: (json['claim_status'] ?? '').toString(),
+      claimable: json['claimable'] == true,
+      difficulty: (json['difficulty'] ?? 'easy').toString(),
+      difficultyLabel: (json['difficulty_label'] ?? '하').toString(),
+      description: (json['description'] ?? '').toString(),
     );
   }
 }
@@ -405,6 +418,15 @@ class SolveAnalysisResponse {
   final int? totalCorrect;
   final List<String>? weakTags;
   final Map<String, dynamic>? details;
+  final List<Map<String, dynamic>> status;
+  final List<Map<String, dynamic>> stepCorrectness;
+  final bool? isCorrect;
+  final List<int> inPanic;
+  final String aiOpinion;
+  final String? questId;
+  final List<String> questModel;
+  final List<String> warnings;
+  final Map<String, dynamic>? debugInfo;
 
   SolveAnalysisResponse({
     this.correctRate,
@@ -412,20 +434,99 @@ class SolveAnalysisResponse {
     this.totalCorrect,
     this.weakTags,
     this.details,
+    this.status = const [],
+    this.stepCorrectness = const [],
+    this.isCorrect,
+    this.inPanic = const [],
+    this.aiOpinion = '',
+    this.questId,
+    this.questModel = const [],
+    this.warnings = const [],
+    this.debugInfo,
   });
 
   factory SolveAnalysisResponse.fromJson(Map<String, dynamic> json) {
+    final status = _mapList(json['status']);
+    final stepCorrectness = _mapList(json['step_correctness']);
+    final parsedIsCorrect = _parseBool(json['is_correct']);
     return SolveAnalysisResponse(
       correctRate: json['correct_rate'] != null
           ? (json['correct_rate'] as num).toDouble()
           : null,
-      totalSolved: json['total_solved'],
-      totalCorrect: json['total_correct'],
+      totalSolved: (json['total_solved'] as num?)?.toInt(),
+      totalCorrect: (json['total_correct'] as num?)?.toInt(),
       weakTags: json['weak_tags'] != null
-          ? List<String>.from(json['weak_tags'])
+          ? (json['weak_tags'] as List<dynamic>)
+                .map((item) => item.toString())
+                .toList()
           : null,
-      details: json['details'],
+      details: json['details'] is Map
+          ? Map<String, dynamic>.from(json['details'] as Map)
+          : null,
+      status: status,
+      stepCorrectness: stepCorrectness.isNotEmpty
+          ? stepCorrectness
+          : _stepCorrectnessFromStatus(status),
+      isCorrect: parsedIsCorrect ?? _isCorrectFromStatus(status),
+      inPanic: (json['in_panic'] as List<dynamic>? ?? const [])
+          .map((item) => item is num ? item.toInt() : int.tryParse('$item'))
+          .whereType<int>()
+          .toList(),
+      aiOpinion: (json['ai_opinion'] ?? '').toString(),
+      questId: json['quest_id']?.toString(),
+      questModel: (json['quest_model'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      warnings: (json['warnings'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      debugInfo: json['debug'] is Map
+          ? Map<String, dynamic>.from(json['debug'] as Map)
+          : null,
     );
+  }
+
+  static List<Map<String, dynamic>> _mapList(dynamic value) {
+    if (value is! List) return const [];
+    return value
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  static bool? _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value == null) return null;
+    final text = value.toString().trim().toLowerCase();
+    if (text == 'true' || text == '1' || text == 'yes') return true;
+    if (text == 'false' || text == '0' || text == 'no') return false;
+    return null;
+  }
+
+  static bool? _isCorrectFromStatus(List<Map<String, dynamic>> status) {
+    if (status.isEmpty) return null;
+    return status.every(
+      (item) => item['status']?.toString().toUpperCase() == 'O',
+    );
+  }
+
+  static List<Map<String, dynamic>> _stepCorrectnessFromStatus(
+    List<Map<String, dynamic>> status,
+  ) {
+    return status.asMap().entries.map((entry) {
+      final item = entry.value;
+      final rawFlowNumber = item['flow_number'] ?? entry.key;
+      final flowNumber = rawFlowNumber is num
+          ? rawFlowNumber.toInt()
+          : int.tryParse('$rawFlowNumber') ?? entry.key;
+      final correct = item['status']?.toString().toUpperCase() == 'O';
+      return {
+        'step_id': flowNumber + 1,
+        'flow_number': flowNumber,
+        'correct': correct,
+        'similarity': correct ? 1.0 : 0.0,
+      };
+    }).toList();
   }
 }
 
@@ -1069,10 +1170,15 @@ class ApiClient {
   ApiClient._();
   static final ApiClient instance = ApiClient._();
 
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
-  );
+  static const String baseUrl = ApiContract.baseUrl;
+
+  static String resourceUrl(String source) {
+    final trimmed = source.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return ApiContract.url(trimmed);
+  }
 
   String? _token;
 
@@ -1158,9 +1264,10 @@ class ApiClient {
     Map<String, String>? query,
   }) async {
     await _ensureToken();
-    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
+    final uri = ApiContract.uri(path, query: query);
     log('GET $uri', name: 'ApiClient');
     final res = await http.get(uri, headers: _headers);
+    await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }
 
@@ -1170,9 +1277,10 @@ class ApiClient {
     T Function(dynamic)? parser,
   }) async {
     await _ensureToken();
-    final uri = Uri.parse('$baseUrl$path');
+    final uri = ApiContract.uri(path);
     log('POST $uri', name: 'ApiClient');
     final res = await http.post(uri, headers: _headers, body: jsonEncode(body));
+    await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }
 
@@ -1182,9 +1290,10 @@ class ApiClient {
     T Function(dynamic)? parser,
   }) async {
     await _ensureToken();
-    final uri = Uri.parse('$baseUrl$path');
+    final uri = ApiContract.uri(path);
     log('PUT $uri', name: 'ApiClient');
     final res = await http.put(uri, headers: _headers, body: jsonEncode(body));
+    await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }
 
@@ -1194,13 +1303,14 @@ class ApiClient {
     T Function(dynamic)? parser,
   }) async {
     await _ensureToken();
-    final uri = Uri.parse('$baseUrl$path');
+    final uri = ApiContract.uri(path);
     log('PATCH $uri', name: 'ApiClient');
     final res = await http.patch(
       uri,
       headers: _headers,
       body: jsonEncode(body),
     );
+    await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }
 
@@ -1210,20 +1320,28 @@ class ApiClient {
     T Function(dynamic)? parser,
   }) async {
     await _ensureToken();
-    final uri = Uri.parse('$baseUrl$path');
+    final uri = ApiContract.uri(path);
     log('DELETE $uri', name: 'ApiClient');
     final res = await http.delete(
       uri,
       headers: _headers,
       body: body == null ? null : jsonEncode(body),
     );
+    await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }
 
+  Future<void> _clearTokenOnUnauthorized(http.Response res) async {
+    if (res.statusCode == 401) {
+      await clearToken();
+    }
+  }
+
   ApiResponse<T> _parse<T>(http.Response res, T Function(dynamic)? parser) {
-    final dynamic decoded = res.body.trim().isEmpty
+    final responseBody = utf8.decode(res.bodyBytes);
+    final dynamic decoded = responseBody.trim().isEmpty
         ? <String, dynamic>{}
-        : jsonDecode(res.body);
+        : jsonDecode(responseBody);
     final Map<String, dynamic> body = decoded is Map<String, dynamic>
         ? decoded
         : <String, dynamic>{'data': decoded};
@@ -1247,6 +1365,7 @@ class ApiClient {
     throw ApiException(
       statusCode: res.statusCode,
       message: body['message'] ?? body['detail'] ?? 'Unknown error',
+      retryAfterSeconds: int.tryParse(res.headers['retry-after'] ?? ''),
     );
   }
 
@@ -1530,7 +1649,7 @@ class ApiClient {
     int pageSize = 20,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests').replace(
+    final uri = ApiContract.uri('/quests').replace(
       queryParameters: {
         'page': '$page',
         'page_size': '$pageSize',
@@ -1580,7 +1699,7 @@ class ApiClient {
     String? requestId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/generate');
+    final uri = ApiContract.uri('/quests/generate');
     final response = await http.post(
       uri,
       headers: {
@@ -1606,6 +1725,55 @@ class ApiClient {
         message: 'Failed to generate quest',
       );
     }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final quest = payload['quest'];
+    if (quest is Map) {
+      return Map<String, dynamic>.from(quest);
+    }
+    final queuedRequestId = (payload['request_id'] ?? requestId)?.toString();
+    if (queuedRequestId == null || queuedRequestId.isEmpty) {
+      throw ApiException(statusCode: 500, message: 'Missing quest data');
+    }
+    final pollStartedAt = DateTime.now();
+    for (var i = 0; i < 70; i++) {
+      final elapsed = DateTime.now().difference(pollStartedAt);
+      final delay = elapsed < const Duration(seconds: 2)
+          ? const Duration(milliseconds: 200)
+          : const Duration(milliseconds: 700);
+      await Future<void>.delayed(delay);
+      final status = await fetchQuestGenerateStatus(requestId: queuedRequestId);
+      final state = status['status']?.toString();
+      final statusQuest = status['quest'];
+      if (statusQuest is Map) {
+        return Map<String, dynamic>.from(statusQuest);
+      }
+      if (state == 'failed' || state == 'error' || state == 'cancelled') {
+        throw ApiException(
+          statusCode: 500,
+          message: status['error']?.toString() ?? 'Quest generation failed',
+        );
+      }
+    }
+    throw ApiException(statusCode: 408, message: 'Quest generation timed out');
+  }
+
+  Future<Map<String, dynamic>> cancelQuestGeneration({
+    required String requestId,
+  }) async {
+    final token = await _ensureToken();
+    final uri = ApiContract.uri(
+      ApiPaths.questsGenerateCancel,
+    ).replace(queryParameters: {'request_id': requestId});
+    final response = await http.post(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: 'Failed to cancel quest generation',
+      );
+    }
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
@@ -1613,8 +1781,8 @@ class ApiClient {
     required String requestId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/quests/generate/status',
+    final uri = ApiContract.uri(
+      '/quests/generate/status',
     ).replace(queryParameters: {'request_id': requestId});
     final response = await http.get(
       uri,
@@ -1630,7 +1798,7 @@ class ApiClient {
     required Map<String, dynamic> payload,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/variants/from-flow-draft');
+    final uri = ApiContract.uri('/quests/variants/from-flow-draft');
     final response = await http.post(
       uri,
       headers: {
@@ -1652,7 +1820,7 @@ class ApiClient {
     required Map<String, dynamic> payload,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/variants/from-prompt-note');
+    final uri = ApiContract.uri('/quests/variants/from-prompt-note');
     final response = await http.post(
       uri,
       headers: {
@@ -1674,7 +1842,7 @@ class ApiClient {
     required Map<String, dynamic> payload,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/variants/convert-mcq');
+    final uri = ApiContract.uri('/quests/variants/convert-mcq');
     final response = await http.post(
       uri,
       headers: {
@@ -1698,7 +1866,7 @@ class ApiClient {
     String? userAnswer,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/analysis/solve/variant-grade');
+    final uri = ApiContract.uri('/analysis/solve/variant-grade');
     final response = await http.post(
       uri,
       headers: {
@@ -1753,10 +1921,21 @@ class ApiClient {
     return res.data ?? const <String, dynamic>{};
   }
 
+  Future<Map<String, dynamic>> submitLevelTestAnalysis({
+    required Map<String, dynamic> payload,
+  }) async {
+    final res = await _post<Map<String, dynamic>>(
+      '/academy/analysis/level-test',
+      payload,
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    return res.data ?? const <String, dynamic>{};
+  }
+
   Future<List<Map<String, dynamic>>> listQuestTray({int limit = 100}) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/quests/tray',
+    final uri = ApiContract.uri(
+      '/quests/tray',
     ).replace(queryParameters: {'limit': '$limit'});
     final response = await http.get(
       uri,
@@ -1780,7 +1959,7 @@ class ApiClient {
     required Map<String, dynamic> payload,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/tray');
+    final uri = ApiContract.uri('/quests/tray');
     final response = await http.post(
       uri,
       headers: {
@@ -2880,11 +3059,22 @@ class ServerChatMessage {
   final String assistantMessage;
   final String character;
   final String characterName;
+  final String model;
   const ServerChatMessage({
     this.assistantMessage = '',
     this.character = '',
     this.characterName = '',
+    this.model = '',
   });
+
+  factory ServerChatMessage.fromJson(Map<String, dynamic> json) {
+    return ServerChatMessage(
+      assistantMessage: json['assistant_message']?.toString() ?? '',
+      character: json['character']?.toString() ?? '',
+      characterName: json['character_name']?.toString() ?? '',
+      model: json['model']?.toString() ?? '',
+    );
+  }
 }
 
 class QuestSearchResult {
@@ -2955,16 +3145,6 @@ class ContinueState {
     this.updatedAt,
     this.allowBack = false,
   });
-}
-
-extension SolveAnalysisCompat on SolveAnalysisResponse {
-  List<Map<String, dynamic>> get stepCorrectness => const [];
-  bool? get isCorrect => null;
-  List<String> get warnings => const [];
-  Map<String, dynamic>? get debugInfo => const {};
-  List<dynamic> get status => const [];
-  List<int> get inPanic => const [];
-  String get aiOpinion => '';
 }
 
 extension StudyGroupCompat on StudyGroup {
@@ -3045,16 +3225,27 @@ extension ApiClientLegacyCompat on ApiClient {
     return (res.data?['exam_id'] ?? '').toString();
   }
 
-  Future<ExamStatus> getExamStatus(String examId) async {
+  Future<ExamStatus> getExamStatus(String examId, {String? courseId}) async {
     final res = await _get<Map<String, dynamic>>(
       '/exams/$examId',
+      query: {
+        if (courseId != null && courseId.trim().isNotEmpty)
+          'course_id': courseId.trim(),
+      },
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return ExamStatus.fromJson(res.data ?? const {});
   }
 
-  String examPdfUrl(String examId, {bool inline = false}) =>
-      '${ApiClient.baseUrl}/exams/$examId/pdf${inline ? '?inline=1' : ''}';
+  String examPdfUrl(String examId, {bool inline = false, String? courseId}) =>
+      ApiContract.url(
+        ApiPaths.examPdf(examId),
+        query: {
+          if (inline) 'inline': '1',
+          if (courseId != null && courseId.trim().isNotEmpty)
+            'course_id': courseId.trim(),
+        },
+      );
 
   Future<Map<String, dynamic>> fetchUnitProblems({
     String? moduleId,
@@ -3141,7 +3332,7 @@ extension ApiClientLegacyCompat on ApiClient {
         .toList();
     if (tags.isEmpty) return;
 
-    final safeQuestionCount = (questionCount ?? 3).clamp(3, 30).toInt();
+    final safeQuestionCount = (questionCount ?? 3).clamp(1, 30).toInt();
     final safeMaxTier = (maxDifficultyTier ?? 3)
         .clamp(1, tags.length.clamp(1, 5))
         .toInt();
@@ -3150,7 +3341,7 @@ extension ApiClientLegacyCompat on ApiClient {
     await _ensureToken();
     final request = http.Request(
       'POST',
-      Uri.parse('${ApiClient.baseUrl}/quests/generate/stream'),
+      ApiContract.uri('/quests/generate/stream'),
     );
     request.headers.addAll({..._headers, 'Accept': 'text/event-stream'});
     request.body = jsonEncode({
@@ -3404,6 +3595,27 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<AccountSummary> fetchAccountSummary() async {
     final res = await _get<Map<String, dynamic>>(
       '/account/summary',
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    return AccountSummary.fromJson(res.data ?? const <String, dynamic>{});
+  }
+
+  Future<AccountSummary> recordActivityScore({
+    required int deltaScore,
+    required String refId,
+    String reason = 'activity_log',
+    String? dateKey,
+  }) async {
+    final body = <String, dynamic>{
+      'delta_score': deltaScore,
+      'ref_id': refId,
+      'reason': reason,
+      if (dateKey != null && dateKey.trim().isNotEmpty)
+        'date_key': dateKey.trim(),
+    };
+    final res = await _post<Map<String, dynamic>>(
+      '/account/activity-score',
+      body,
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return AccountSummary.fromJson(res.data ?? const <String, dynamic>{});
@@ -4035,8 +4247,13 @@ extension ApiClientLegacyCompat on ApiClient {
     return res.data ?? const StudyGroupMessage();
   }
 
-  Future<Map<String, dynamic>> getServerChatProfile() async =>
-      <String, dynamic>{};
+  Future<Map<String, dynamic>> getServerChatProfile() async {
+    final res = await _get<Map<String, dynamic>>(
+      ApiPaths.serverChatConfig,
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    return res.data ?? <String, dynamic>{};
+  }
 
   Future<ServerChatMessage> sendServerChatMessage({
     required String message,
@@ -4044,14 +4261,42 @@ extension ApiClientLegacyCompat on ApiClient {
     String? character,
     String? mode,
     bool? ephemeral,
-  }) async => const ServerChatMessage();
+    bool? includeUserData,
+    String? questTitle,
+    String? flow,
+    String? ocr,
+  }) async {
+    final res = await _post<ServerChatMessage>(
+      ApiPaths.serverChatMessage,
+      {
+        'user_message': message,
+        if (character != null && character.trim().isNotEmpty)
+          'character': character.trim(),
+        if (mode != null && mode.trim().isNotEmpty) 'mode': mode.trim(),
+        if (ephemeral != null) 'ephemeral': ephemeral,
+        if (includeUserData != null) 'include_user_data': includeUserData,
+        if (questTitle != null && questTitle.trim().isNotEmpty)
+          'quest_title': questTitle.trim(),
+        if (flow != null && flow.trim().isNotEmpty) 'flow': flow.trim(),
+        if (ocr != null && ocr.trim().isNotEmpty) 'ocr': ocr.trim(),
+      },
+      parser: (d) =>
+          ServerChatMessage.fromJson(Map<String, dynamic>.from(d as Map)),
+    );
+    return res.data ?? const ServerChatMessage();
+  }
 }
 
 class ApiException implements Exception {
   final int statusCode;
   final String message;
+  final int? retryAfterSeconds;
 
-  ApiException({required this.statusCode, required this.message});
+  ApiException({
+    required this.statusCode,
+    required this.message,
+    this.retryAfterSeconds,
+  });
 
   @override
   String toString() => 'ApiException($statusCode): $message';

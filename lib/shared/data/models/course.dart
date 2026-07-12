@@ -41,6 +41,9 @@ class Course {
   final String textbookId;
   final int textbookPages;
 
+  bool get isEnrolled =>
+      status != null || progress > 0 || progressDetail.isNotEmpty;
+
   Course copyWith({
     double? progress,
     List<CourseUnit>? units,
@@ -100,7 +103,7 @@ class CourseUnitMission {
   const CourseUnitMission({
     required this.title,
     required this.detail,
-    this.actionLabel = 'Start',
+    this.actionLabel = '시작',
   });
 
   final String title;

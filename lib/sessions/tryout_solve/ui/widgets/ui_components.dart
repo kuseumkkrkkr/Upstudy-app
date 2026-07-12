@@ -3,22 +3,31 @@
 class _ToolbarIcon extends StatelessWidget {
   const _ToolbarIcon({
     required this.icon,
+    required this.tooltip,
     required this.size,
     required this.color,
     required this.onTap,
   });
 
   final IconData icon;
+  final String tooltip;
   final double size;
   final Color color;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkResponse(
-      onTap: onTap,
-      radius: size * 0.8,
-      child: Icon(icon, size: size, color: color),
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 22,
+          child: Icon(icon, size: size, color: color),
+        ),
+      ),
     );
   }
 }

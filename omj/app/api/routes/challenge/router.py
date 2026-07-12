@@ -90,6 +90,36 @@ async def complete_daily_quest(
     return ApiResponse(status=JobStatus.done, data=data, message="Daily quest completed")
 
 
+@router.get("/daily-quest-templates", response_model=ApiResponse)
+async def list_daily_quest_templates(
+    request: Request,
+    enabled: Optional[bool] = None,
+    difficulty: Optional[str] = None,
+    _user=Depends(require_role("teacher", "admin")),
+):
+    data = service.list_daily_challenge_templates(enabled=enabled, difficulty=difficulty)
+    return ApiResponse(status=JobStatus.done, data=data, message="Daily quest templates listed")
+
+
+@router.put("/daily-quest-templates", response_model=ApiResponse)
+async def upsert_daily_quest_template(
+    request: Request,
+    body: dict[str, Any],
+    _user=Depends(require_role("teacher", "admin")),
+):
+    data = service.upsert_daily_challenge_template(body)
+    return ApiResponse(status=JobStatus.done, data=data, message="Daily quest template saved")
+
+
+@router.post("/daily-quest-templates/reset-defaults", response_model=ApiResponse)
+async def reset_daily_quest_templates(
+    request: Request,
+    _user=Depends(require_role("admin")),
+):
+    data = service.reset_daily_challenge_templates()
+    return ApiResponse(status=JobStatus.done, data=data, message="Daily quest templates reset")
+
+
 @router.get("", response_model=ApiResponse)
 async def list_challenges(
     request: Request,

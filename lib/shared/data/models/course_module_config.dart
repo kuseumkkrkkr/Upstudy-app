@@ -72,7 +72,7 @@ class ExamSolveConfig {
 }
 
 class ExamRangeConfig {
-  const ExamRangeConfig({this.key = '', this.tags = const <String>[] });
+  const ExamRangeConfig({this.key = '', this.tags = const <String>[]});
 
   final String key;
   final List<String> tags;
@@ -84,6 +84,7 @@ class ExamRangeConfig {
       if (raw is! List) return const <String>[];
       return raw.map((e) => e.toString()).toList();
     }
+
     return ExamRangeConfig(
       key: json['key']?.toString() ?? '',
       tags: parseTags(json['tags']),
@@ -192,7 +193,9 @@ class CurriculumGroupConfig {
       if (raw is! List) return const <CurriculumItemConfig>[];
       return raw
           .whereType<Map>()
-          .map((e) => CurriculumItemConfig.fromJson(Map<String, dynamic>.from(e)))
+          .map(
+            (e) => CurriculumItemConfig.fromJson(Map<String, dynamic>.from(e)),
+          )
           .toList();
     }
 
@@ -250,10 +253,10 @@ class CurriculumItemConfig {
   }
 
   Map<String, dynamic> toJson() => {
-        'mission_type': missionType,
-        'title': title,
-        'detail': detail,
-      };
+    'mission_type': missionType,
+    'title': title,
+    'detail': detail,
+  };
 }
 
 /// Config for challenge_group module — routes to BuildpageWidget with challenge tags.
@@ -330,33 +333,62 @@ class ChallengeGroupConfig {
 class LevelTestConfig {
   const LevelTestConfig({
     this.testType = 'ox',
+    this.examId = '',
+    this.examTitle = '',
+    this.moduleId = '',
     this.tags = const <String>[],
     this.questionCount = 10,
     this.difficultyTier = 3,
+    this.passRate = 100,
+    this.analysisEnabled = true,
+    this.analysisModel = 'gemma-4',
+    this.analysisRetentionDays = 7,
     this.courseId = '',
     this.unitIndex,
   });
 
   final String testType; // 'ox' | 'exam'
+  final String examId;
+  final String examTitle;
+  final String moduleId;
   final List<String> tags;
   final int questionCount;
   final int difficultyTier;
+  final int passRate;
+  final bool analysisEnabled;
+  final String analysisModel;
+  final int analysisRetentionDays;
   final String courseId;
   final int? unitIndex;
 
   LevelTestConfig copyWith({
     String? testType,
+    String? examId,
+    String? examTitle,
+    String? moduleId,
     List<String>? tags,
     int? questionCount,
     int? difficultyTier,
+    int? passRate,
+    bool? analysisEnabled,
+    String? analysisModel,
+    int? analysisRetentionDays,
     String? courseId,
     int? unitIndex,
   }) {
     return LevelTestConfig(
       testType: testType ?? this.testType,
+      examId: examId ?? this.examId,
+      examTitle: examTitle ?? this.examTitle,
+      moduleId: moduleId ?? this.moduleId,
       tags: tags ?? this.tags,
       questionCount: questionCount ?? this.questionCount,
       difficultyTier: difficultyTier ?? this.difficultyTier,
+      passRate: passRate ?? this.passRate,
+      analysisEnabled: analysisEnabled ?? this.analysisEnabled,
+      analysisModel: analysisModel ?? this.analysisModel,
+      analysisRetentionDays:
+          analysisRetentionDays ?? this.analysisRetentionDays,
       courseId: courseId ?? this.courseId,
       unitIndex: unitIndex ?? this.unitIndex,
     );
@@ -370,9 +402,19 @@ class LevelTestConfig {
 
     return LevelTestConfig(
       testType: json['test_type']?.toString() ?? 'ox',
-      tags: parseTags(json['tags']),
+      examId: json['exam_id']?.toString() ?? '',
+      examTitle: json['exam_title']?.toString() ?? '',
+      moduleId:
+          (json['module_id'] ?? json['moduleId'] ?? json['id'])?.toString() ??
+          '',
+      tags: parseTags(json['tags'] ?? json['hash_tags']),
       questionCount: (json['question_count'] as num?)?.toInt() ?? 10,
       difficultyTier: (json['difficulty_tier'] as num?)?.toInt() ?? 3,
+      passRate: (json['pass_rate'] as num?)?.toInt() ?? 100,
+      analysisEnabled: json['analysis_enabled'] != false,
+      analysisModel: json['analysis_model']?.toString() ?? 'gemma-4',
+      analysisRetentionDays:
+          (json['analysis_retention_days'] as num?)?.toInt() ?? 7,
       courseId: json['course_id']?.toString() ?? '',
       unitIndex: (json['unit_index'] as num?)?.toInt(),
     );
@@ -381,9 +423,16 @@ class LevelTestConfig {
   Map<String, dynamic> toJson() {
     return {
       'test_type': testType,
+      'exam_id': examId,
+      'exam_title': examTitle,
+      'module_id': moduleId,
       'tags': tags,
       'question_count': questionCount,
       'difficulty_tier': difficultyTier,
+      'pass_rate': passRate,
+      'analysis_enabled': analysisEnabled,
+      'analysis_model': analysisModel,
+      'analysis_retention_days': analysisRetentionDays,
       'course_id': courseId,
       if (unitIndex != null) 'unit_index': unitIndex,
     };

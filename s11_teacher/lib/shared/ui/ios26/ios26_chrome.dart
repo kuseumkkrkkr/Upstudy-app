@@ -1,6 +1,6 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+
+import '../../theme/app_colors.dart';
 
 class Ios26NavItem {
   const Ios26NavItem({required this.label, this.onTap, this.active = false});
@@ -56,88 +56,83 @@ class Ios26TopBar extends StatelessWidget {
     final effectiveLeftInset = leftInset ?? (compact ? 18.0 : 24.0);
 
     return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          height: barHeight,
-          padding: EdgeInsets.only(
-            left: effectiveLeftInset,
-            right: compact ? 12 : 16,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.86),
-            border: Border(
-              bottom: BorderSide(color: Colors.black.withValues(alpha: 0.07)),
+      child: Container(
+        height: barHeight,
+        padding: EdgeInsets.only(
+          left: effectiveLeftInset,
+          right: compact ? 12 : 16,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 14,
+              color: Color(0x08000000),
+              offset: Offset(0, 4),
             ),
-          ),
-          child: Row(
-            children: [
-              if (onBack != null) ...[
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: brandColor,
-                  ),
-                  onPressed: onBack,
-                ),
-                const SizedBox(width: 2),
-              ],
+          ],
+        ),
+        child: Row(
+          children: [
+            if (onBack != null) ...[
               IconButton(
-                icon: Icon(Icons.menu_rounded, color: brandColor),
-                onPressed: onMenu,
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: brandColor),
+                onPressed: onBack,
               ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: onTitleTap,
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: brandColor,
-                    fontSize: compact ? 28 : 34,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.6,
-                  ),
+              const SizedBox(width: 2),
+            ],
+            IconButton(
+              icon: Icon(Icons.menu_rounded, color: brandColor),
+              onPressed: onMenu,
+            ),
+            const SizedBox(width: 6),
+            GestureDetector(
+              onTap: onTitleTap,
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: brandColor,
+                  fontSize: compact ? 24 : 28,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-              const Spacer(),
-              if (items.isNotEmpty)
-                Flexible(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          for (final item in items)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8),
-                              child: _NavChip(
-                                item: item,
-                                brandColor: brandColor,
-                              ),
-                            ),
-                        ],
-                      ),
+            ),
+            const Spacer(),
+            if (items.isNotEmpty)
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final item in items)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: _NavChip(item: item, brandColor: brandColor),
+                          ),
+                      ],
                     ),
                   ),
                 ),
-              if (trailingIcons.isNotEmpty || actionIcons.isNotEmpty)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final item
-                        in (trailingIcons.isNotEmpty
-                            ? trailingIcons
-                            : actionIcons))
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: _ActionIcon(item: item, brandColor: brandColor),
-                      ),
-                  ],
-                ),
-            ],
-          ),
+              ),
+            if (trailingIcons.isNotEmpty || actionIcons.isNotEmpty)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final item
+                      in (trailingIcons.isNotEmpty
+                          ? trailingIcons
+                          : actionIcons))
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: _ActionIcon(item: item, brandColor: brandColor),
+                    ),
+                ],
+              ),
+          ],
         ),
       ),
     );
@@ -159,9 +154,13 @@ class _NavChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: item.active ? activeBg : Colors.white.withValues(alpha: 0.62),
+          color: item.active ? activeBg : AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: brandColor.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: item.active
+                ? brandColor.withValues(alpha: 0.2)
+                : AppColors.surfaceBorder,
+          ),
         ),
         child: Text(
           item.label,
@@ -186,7 +185,7 @@ class _ActionIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = item.active
         ? brandColor.withValues(alpha: 0.16)
-        : Colors.white.withValues(alpha: 0.62);
+        : AppColors.surfaceMuted;
     return Tooltip(
       message: item.label,
       child: InkWell(
@@ -198,7 +197,11 @@ class _ActionIcon extends StatelessWidget {
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: brandColor.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: item.active
+                  ? brandColor.withValues(alpha: 0.2)
+                  : AppColors.surfaceBorder,
+            ),
           ),
           child: Icon(item.icon, size: 18, color: brandColor),
         ),
@@ -223,17 +226,21 @@ class Ios26FrostedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.84),
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
-          ),
-          child: child,
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(color: AppColors.surfaceBorder),
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 18,
+              color: Color(0x0A000000),
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
+        child: child,
       ),
     );
   }

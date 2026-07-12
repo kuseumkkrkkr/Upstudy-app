@@ -1,11 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_example_catalog.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_expression.dart';
-import 'package:s11/sessions/graph_tools/shared/jsx_graph_html_builder.dart';
 import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
+import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
@@ -24,10 +26,7 @@ const _kPalette = <Color>[
 ];
 
 class JsxGraphPage extends StatefulWidget {
-  const JsxGraphPage({
-    super.key,
-    this.embedEnabled = true,
-  });
+  const JsxGraphPage({super.key, this.embedEnabled = true});
 
   final bool embedEnabled;
 
@@ -40,7 +39,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   final List<_GraphParameterDraft> _parameters = <_GraphParameterDraft>[];
 
   late AiFlowGraphExample _selectedExample;
-  String _graphHtml = '';
   int _nextDraftId = 0;
   bool _showAxes = true;
   bool _showGrid = true;
@@ -54,7 +52,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   void initState() {
     super.initState();
     _selectedExample = aiFlowGraphExamples.first;
-    _loadExample(_selectedExample, rebuild: true);
+    _loadExample(_selectedExample);
   }
 
   @override
@@ -65,7 +63,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     super.dispose();
   }
 
-  void _loadExample(AiFlowGraphExample example, {bool rebuild = false}) {
+  void _loadExample(AiFlowGraphExample example) {
     for (final draft in _drafts) {
       draft.dispose();
     }
@@ -85,7 +83,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     _parameters
       ..clear()
       ..addAll(
-        example.document.settings.parameters.map(_GraphParameterDraft.fromParameter),
+        example.document.settings.parameters.map(
+          _GraphParameterDraft.fromParameter,
+        ),
       );
 
     _selectedExample = example;
@@ -95,14 +95,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     _lockViewport = example.document.settings.lockViewport;
     _degreeMode = example.document.settings.degreeMode;
     _editorMessage = null;
-
-    if (rebuild) {
-      _rebuildGraph();
-    }
-  }
-
-  void _rebuildGraph() {
-    _graphHtml = buildAiFlowGraphHtml(_buildDocument());
   }
 
   AiFlowGraphDocument _buildDocument() {
@@ -145,7 +137,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         _parameters.clear();
       }
       _editorMessage = null;
-      _rebuildGraph();
     });
   }
 
@@ -177,8 +168,13 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         return;
       }
       _editorMessage = null;
-      _rebuildGraph();
     });
+    unawaited(
+      ActivityStore.recordGraphPractice(
+        graphId: 'jsx_graph_apply',
+        meta: {'source': 'jsx_graph_page', 'item_count': _drafts.length},
+      ),
+    );
   }
 
   Future<void> _showInfoDialog() async {
@@ -203,8 +199,18 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     }
 
     setState(() {
-      _loadExample(selected, rebuild: true);
+      _loadExample(selected);
     });
+    unawaited(
+      ActivityStore.recordGraphPractice(
+        graphId: selected.id,
+        meta: {
+          'source': 'graph_example',
+          'subject': selected.subject,
+          'unit': selected.unit,
+        },
+      ),
+    );
   }
 
   @override
@@ -286,10 +292,10 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           child: _catalogDialogOpen
               ? const _GraphHiddenWhileDialogOpen()
               : isLinux
-                  ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
-                  : widget.embedEnabled
-                      ? buildJsxGraphEmbed(_graphHtml)
-                      : const _GraphEmbedDisabledForTesting(),
+              ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
+              : widget.embedEnabled
+              ? buildJsxGraphEmbed(_buildDocument())
+              : const _GraphEmbedDisabledForTesting(),
         ),
       ),
     );
@@ -375,7 +381,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
               onChanged: (parameter, value) {
                 setState(() {
                   parameter.value = value;
-                  _rebuildGraph();
                 });
               },
             ),
@@ -394,7 +399,8 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
               child: ListView.separated(
                 itemCount: _drafts.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) => _buildDraftTile(_drafts[index]),
+                itemBuilder: (context, index) =>
+                    _buildDraftTile(_drafts[index]),
               ),
             ),
           const SizedBox(height: 10),
@@ -408,7 +414,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                 onSelected: (value) {
                   setState(() {
                     _showAxes = value;
-                    _rebuildGraph();
                   });
                 },
               ),
@@ -418,7 +423,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                 onSelected: (value) {
                   setState(() {
                     _showGrid = value;
-                    _rebuildGraph();
                   });
                 },
               ),
@@ -428,7 +432,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                 onSelected: (value) {
                   setState(() {
                     _lockViewport = value;
-                    _rebuildGraph();
                   });
                 },
               ),
@@ -463,7 +466,10 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
               style: FilledButton.styleFrom(
                 backgroundColor: _kGreen,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -490,7 +496,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         onToggle: () {
           setState(() {
             draft.enabled = !draft.enabled;
-            _rebuildGraph();
           });
         },
         onRemove: () => _removeDraft(draft),
@@ -534,9 +539,8 @@ class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
     super.dispose();
   }
 
-  AiFlowGraphSubjectCatalog get _subjectCatalog => aiFlowGraphCatalog.firstWhere(
-        (subject) => subject.subject == _selectedSubject,
-      );
+  AiFlowGraphSubjectCatalog get _subjectCatalog => aiFlowGraphCatalog
+      .firstWhere((subject) => subject.subject == _selectedSubject);
 
   List<AiFlowGraphFormulaSummary> get _filteredFormulas {
     final query = _query.trim().toLowerCase();
@@ -560,14 +564,20 @@ class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
   }
 
   void _selectSubject(String subject) {
-    final catalog = aiFlowGraphCatalog.firstWhere((item) => item.subject == subject);
+    final catalog = aiFlowGraphCatalog.firstWhere(
+      (item) => item.subject == subject,
+    );
     setState(() {
       _selectedSubject = subject;
       _selectedUnit = catalog.units.first;
       _query = '';
       _searchController.clear();
-      _selectedFormula = catalog.formulas.isNotEmpty ? catalog.formulas.first : null;
-      _selectedExample = catalog.examples.isNotEmpty ? catalog.examples.first : null;
+      _selectedFormula = catalog.formulas.isNotEmpty
+          ? catalog.formulas.first
+          : null;
+      _selectedExample = catalog.examples.isNotEmpty
+          ? catalog.examples.first
+          : null;
     });
   }
 
@@ -656,7 +666,8 @@ class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
                             Expanded(
                               child: _ExplorerMainPane(
                                 searchController: _searchController,
-                                onSearchChanged: (value) => setState(() => _query = value),
+                                onSearchChanged: (value) =>
+                                    setState(() => _query = value),
                                 selectedSubject: _selectedSubject,
                                 selectedUnit: _selectedUnit,
                                 formulas: formulas,
@@ -698,7 +709,8 @@ class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
                           Expanded(
                             child: _ExplorerMainPane(
                               searchController: _searchController,
-                              onSearchChanged: (value) => setState(() => _query = value),
+                              onSearchChanged: (value) =>
+                                  setState(() => _query = value),
                               selectedSubject: _selectedSubject,
                               selectedUnit: _selectedUnit,
                               formulas: formulas,
@@ -884,10 +896,7 @@ class _ExplorerMainPane extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(12),
               children: [
-                _ExplorerSectionHeader(
-                  title: '공식 파일',
-                  count: formulas.length,
-                ),
+                _ExplorerSectionHeader(title: '공식 파일', count: formulas.length),
                 if (formulas.isEmpty)
                   const _ExplorerEmpty(label: '공식 항목이 없습니다.')
                 else
@@ -902,10 +911,7 @@ class _ExplorerMainPane extends StatelessWidget {
                       onTap: () => onSelectFormula(formula),
                     ),
                 const SizedBox(height: 14),
-                _ExplorerSectionHeader(
-                  title: '예제 파일',
-                  count: examples.length,
-                ),
+                _ExplorerSectionHeader(title: '예제 파일', count: examples.length),
                 if (examples.isEmpty)
                   const _ExplorerEmpty(label: '예제 항목이 없습니다.')
                 else
@@ -1041,18 +1047,12 @@ class _ExplorerDetailPane extends StatelessWidget {
                   const Spacer(),
                   Text(
                     '출처: ${example!.sourceLabel}',
-                    style: const TextStyle(
-                      color: _kMuted,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: _kMuted, fontSize: 12),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     example!.sourceUrl,
-                    style: const TextStyle(
-                      color: _kMuted,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: _kMuted, fontSize: 12),
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -1073,76 +1073,73 @@ class _ExplorerDetailPane extends StatelessWidget {
                 ],
               )
             : formula != null
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '공식 상세',
-                        style: TextStyle(
-                          color: _kGreen,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        formula!.title,
-                        style: const TextStyle(
-                          color: _kGreen,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        formula!.unit,
-                        style: const TextStyle(
-                          color: _kMuted,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _LatexFormula(
-                        formula: formula!.formula,
-                        fontSize: 17,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        formula!.summary,
-                        style: const TextStyle(
-                          color: _kMuted,
-                          fontSize: 12.5,
-                          height: 1.5,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: _kSurfaceTint,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _kBorder),
-                        ),
-                        child: const Text(
-                          '그래프로 옮길 여지가 있는 공식은 단원별로 예제와 함께 같은 폴더에 묶어 두었습니다.',
-                          style: TextStyle(
-                            color: _kGreen,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            height: 1.45,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : const Center(
-                    child: Text(
-                      '왼쪽에서 공식 또는 예제를 선택하세요.',
-                      style: TextStyle(color: _kMuted),
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '공식 상세',
+                    style: TextStyle(
+                      color: _kGreen,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
+                  const SizedBox(height: 14),
+                  Text(
+                    formula!.title,
+                    style: const TextStyle(
+                      color: _kGreen,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    formula!.unit,
+                    style: const TextStyle(
+                      color: _kMuted,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _LatexFormula(formula: formula!.formula, fontSize: 17),
+                  const SizedBox(height: 12),
+                  Text(
+                    formula!.summary,
+                    style: const TextStyle(
+                      color: _kMuted,
+                      fontSize: 12.5,
+                      height: 1.5,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _kSurfaceTint,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _kBorder),
+                    ),
+                    child: const Text(
+                      '그래프로 옮길 여지가 있는 공식은 단원별로 예제와 함께 같은 폴더에 묶어 두었습니다.',
+                      style: TextStyle(
+                        color: _kGreen,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : const Center(
+                child: Text(
+                  '왼쪽에서 공식 또는 예제를 선택하세요.',
+                  style: TextStyle(color: _kMuted),
+                ),
+              ),
       ),
     );
   }
@@ -1205,10 +1202,7 @@ class _ExplorerNode extends StatelessWidget {
 }
 
 class _ExplorerSectionHeader extends StatelessWidget {
-  const _ExplorerSectionHeader({
-    required this.title,
-    required this.count,
-  });
+  const _ExplorerSectionHeader({required this.title, required this.count});
 
   final String title;
   final int count;
@@ -1416,10 +1410,7 @@ class _GraphEmbedDisabledForTesting extends StatelessWidget {
 }
 
 class _PracticePanel extends StatelessWidget {
-  const _PracticePanel({
-    required this.parameters,
-    required this.onChanged,
-  });
+  const _PracticePanel({required this.parameters, required this.onChanged});
 
   final List<_GraphParameterDraft> parameters;
   final void Function(_GraphParameterDraft parameter, double value) onChanged;
@@ -1474,12 +1465,15 @@ class _PracticePanel extends StatelessWidget {
               ],
             ),
             Slider(
-              value: parameter.value.clamp(parameter.min, parameter.max).toDouble(),
+              value: parameter.value
+                  .clamp(parameter.min, parameter.max)
+                  .toDouble(),
               min: parameter.min,
               max: parameter.max,
               divisions: _sliderDivisions(parameter),
               label: _formatNumber(parameter.value),
-              onChanged: (value) => onChanged(parameter, _snapToStep(parameter, value)),
+              onChanged: (value) =>
+                  onChanged(parameter, _snapToStep(parameter, value)),
             ),
           ],
         ],
@@ -1556,10 +1550,7 @@ class _CalculatorKey {
 }
 
 class _LatexFormula extends StatelessWidget {
-  const _LatexFormula({
-    required this.formula,
-    required this.fontSize,
-  });
+  const _LatexFormula({required this.formula, required this.fontSize});
 
   final String formula;
   final double fontSize;
@@ -1657,7 +1648,9 @@ class _FunctionDraftTile extends StatelessWidget {
                   height: 30,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: draft.enabled ? _hexToColor(draft.colorHex) : Colors.white,
+                    color: draft.enabled
+                        ? _hexToColor(draft.colorHex)
+                        : Colors.white,
                     border: Border.all(
                       color: _hexToColor(draft.colorHex),
                       width: 2,
@@ -1666,7 +1659,9 @@ class _FunctionDraftTile extends StatelessWidget {
                   child: Icon(
                     draft.enabled ? Icons.check_rounded : Icons.close_rounded,
                     size: 17,
-                    color: draft.enabled ? Colors.white : _hexToColor(draft.colorHex),
+                    color: draft.enabled
+                        ? Colors.white
+                        : _hexToColor(draft.colorHex),
                   ),
                 ),
               ),
@@ -1697,6 +1692,7 @@ class _FunctionDraftTile extends StatelessWidget {
               hintText: '예: sin(x), x^2-1, log(x), sqrt(9-x^2)',
             ),
           ),
+          _ExpressionPreview(controller: draft.expressionController),
           const SizedBox(height: 8),
           _CalculatorKeypad(
             onInsert: (token) {
@@ -1715,6 +1711,49 @@ class _FunctionDraftTile extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _ExpressionPreview extends StatelessWidget {
+  const _ExpressionPreview({required this.controller});
+
+  final TextEditingController? controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final listenable = controller;
+    if (listenable == null) {
+      return const SizedBox.shrink();
+    }
+
+    return AnimatedBuilder(
+      animation: listenable,
+      builder: (context, _) {
+        final raw = listenable.text.trim();
+        if (raw.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final normalized = normalizeAiFlowExpression(raw);
+        final latex = _expressionToLatex(normalized);
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _kBorder),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.functions_rounded, size: 16, color: _kGreen),
+              const SizedBox(width: 8),
+              Expanded(child: _LatexFormula(formula: 'y=$latex', fontSize: 14)),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -1796,7 +1835,9 @@ class _GraphItemDraft {
       itemId: item.id,
       type: item.type,
       label: item.label,
-      colorHex: item.colorHex.isNotEmpty ? item.colorHex : _colorToHex(fallbackColor),
+      colorHex: item.colorHex.isNotEmpty
+          ? item.colorHex
+          : _colorToHex(fallbackColor),
       enabled: item.enabled,
       expressionController: item.isFunction
           ? TextEditingController(text: item.expression ?? '')
@@ -1915,7 +1956,8 @@ double _snapToStep(_GraphParameterDraft parameter, double value) {
     return value;
   }
   final snapped =
-      parameter.min + ((value - parameter.min) / parameter.step).round() * parameter.step;
+      parameter.min +
+      ((value - parameter.min) / parameter.step).round() * parameter.step;
   return snapped.clamp(parameter.min, parameter.max).toDouble();
 }
 
@@ -1923,7 +1965,22 @@ String _formatNumber(double value) {
   if (value == value.roundToDouble()) {
     return value.toStringAsFixed(0);
   }
-  return value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  return value
+      .toStringAsFixed(2)
+      .replaceFirst(RegExp(r'0+$'), '')
+      .replaceFirst(RegExp(r'\.$'), '');
+}
+
+String _expressionToLatex(String expression) {
+  return expression
+      .replaceAll('*', r'\cdot ')
+      .replaceAllMapped(RegExp(r'\bpi\b', caseSensitive: false), (_) => r'\pi')
+      .replaceAllMapped(RegExp(r'\bsqrt\s*\(([^()]+)\)'), (match) {
+        return '\\sqrt{${match.group(1) ?? ''}}';
+      })
+      .replaceAllMapped(RegExp(r'\b(abs|sin|cos|tan|log|ln)\s*\('), (match) {
+        return '\\${match.group(1)}(';
+      });
 }
 
 Color _hexToColor(String hex) {

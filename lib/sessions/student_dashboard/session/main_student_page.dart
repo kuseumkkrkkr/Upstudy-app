@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,7 @@ import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/timer_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
+import 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/learning_tools_strip.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/attendance_store.dart';
@@ -69,7 +71,10 @@ double _ratingDisplay(double rating) {
 
 double _ratingOvr(double rating) => _ratingDisplay(rating) / _ratingOvrDivider;
 
-String _formatRatingOvr(double rating) => _ratingOvr(rating).toStringAsFixed(1);
+String _formatRatingOvr(double rating) {
+  if (rating.isNaN || rating <= 0) return '--';
+  return _ratingOvr(rating).toStringAsFixed(1);
+}
 
 String _formatRatingDelta(double deltaOvr) {
   if (deltaOvr > 0) return '+${deltaOvr.toStringAsFixed(1)}';
@@ -93,10 +98,15 @@ TextStyle _ts({
   color: color,
 );
 
-BoxDecoration _cardDeco({double radius = 36}) => BoxDecoration(
-  color: Colors.white,
+BoxDecoration _cardDeco({
+  double radius = 36,
+  Color color = Colors.white,
+  DecorationImage? image,
+}) => BoxDecoration(
+  color: color,
   borderRadius: BorderRadius.circular(radius),
   boxShadow: const [_shadow],
+  image: image,
 );
 
 double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
@@ -231,7 +241,7 @@ class MainStudentPage extends StatefulWidget {
 
 class _MainStudentPageState extends State<MainStudentPage> {
   final ScrollController _scrollController = ScrollController();
-  double _scrollOffset = 0;
+  final ValueNotifier<double> _scrollOffsetNotifier = ValueNotifier<double>(0);
   Map<DateTime, List<String>> _tasksByDate = {};
   Map<DateTime, List<String>> _teacherTasksByDate = {};
   String? _displayName;
@@ -281,8 +291,8 @@ class _MainStudentPageState extends State<MainStudentPage> {
 
   void _handleScroll() {
     final offset = _scrollController.offset;
-    if (offset == _scrollOffset) return;
-    setState(() => _scrollOffset = offset);
+    if (offset == _scrollOffsetNotifier.value) return;
+    _scrollOffsetNotifier.value = offset;
   }
 
   void _handleTasksChanged(Map<DateTime, List<String>> updated) {
@@ -328,6 +338,8 @@ class _MainStudentPageState extends State<MainStudentPage> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollOffsetNotifier.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -340,10 +352,6 @@ class _MainStudentPageState extends State<MainStudentPage> {
         media.size.height - media.padding.top - media.padding.bottom;
     final headerHeight = 72 * scale;
     final heroHeight = math.max(360 * scale, safeHeight - headerHeight);
-    final fadeDistance = heroHeight;
-    final heroOpacity = fadeDistance <= 0
-        ? 1.0
-        : (1 - (_scrollOffset / fadeDistance)).clamp(0.0, 1.0);
     final today = _dateOnly(DateTime.now());
     final todayTasks = [
       ...(_teacherTasksByDate[today] ?? const <String>[]),
@@ -352,6 +360,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
     final displayNameCandidate = _displayName?.trim();
     final isLongName = (displayNameCandidate?.length ?? 0) > 12;
     final heroBaseHeight = 360 * scale + (isLongName ? 28 * scale : 0);
+    final heroExtent = math.max(heroBaseHeight, heroHeight);
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -366,27 +375,30 @@ class _MainStudentPageState extends State<MainStudentPage> {
                 child: SingleChildScrollView(
                   controller: _scrollController,
                   physics: _HeroScrollPhysics(
-                    heroExtent: math.max(heroBaseHeight, heroHeight),
+                    heroExtent: heroExtent,
                     multiplier: 4.4,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _HeroSection(
-                        username: _displayName,
-                        height: math.max(heroBaseHeight, heroHeight),
-                        opacity: heroOpacity,
-                        onScrollDown: () {
-                          final target = math.min(
-                            heroHeight,
-                            _scrollController.position.maxScrollExtent,
-                          );
-                          _scrollController.animateTo(
-                            target,
-                            duration: const Duration(milliseconds: 380),
-                            curve: Curves.easeOut,
-                          );
-                        },
+                      _FadingHeroSection(
+                        scrollOffsetListenable: _scrollOffsetNotifier,
+                        fadeDistance: heroHeight,
+                        child: _HeroSection(
+                          username: _displayName,
+                          height: heroExtent,
+                          onScrollDown: () {
+                            final target = math.min(
+                              heroHeight,
+                              _scrollController.position.maxScrollExtent,
+                            );
+                            _scrollController.animateTo(
+                              target,
+                              duration: const Duration(milliseconds: 380),
+                              curve: Curves.easeOut,
+                            );
+                          },
+                        ),
                       ),
                       _CourseLoader(
                         key: _courseLoaderKey,
@@ -471,6 +483,7 @@ class _Header extends StatelessWidget {
       brandColor: _green,
       onMenu: () => toggleAppDrawer(context),
       trailing: const _AppBarLevelIndicator(),
+      showLevelIndicator: false,
       items: [
         Ios26NavItem(
           label: '학습터',
@@ -482,7 +495,7 @@ class _Header extends StatelessWidget {
           },
         ),
         Ios26NavItem(
-          label: '문서함',
+          label: '책가방',
           onTap: () {
             Navigator.of(
               context,
@@ -511,15 +524,38 @@ class _AppBarLevelIndicator extends StatefulWidget {
 }
 
 class _AppBarLevelIndicatorState extends State<_AppBarLevelIndicator> {
-  late final Future<AccountSummary> _summary = ApiClient.instance
-      .fetchAccountSummary();
+  late final Future<AccountSummary> _summary;
+  AccountSummary? _latestSummary;
+
+  @override
+  void initState() {
+    super.initState();
+    _summary = ApiClient.instance.fetchAccountSummary().then((summary) {
+      ActivityStore.accountSummaryNotifier.value = summary;
+      return summary;
+    });
+    ActivityStore.accountSummaryNotifier.addListener(_handleAccountSummary);
+  }
+
+  @override
+  void dispose() {
+    ActivityStore.accountSummaryNotifier.removeListener(_handleAccountSummary);
+    super.dispose();
+  }
+
+  void _handleAccountSummary() {
+    if (!mounted) return;
+    setState(() {
+      _latestSummary = ActivityStore.accountSummaryNotifier.value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<AccountSummary>(
       future: _summary,
       builder: (context, snapshot) {
-        final account = snapshot.data;
+        final account = _latestSummary ?? snapshot.data;
         if (account == null) {
           return const SizedBox.shrink();
         }
@@ -564,16 +600,40 @@ class _AppBarLevelIndicatorState extends State<_AppBarLevelIndicator> {
   }
 }
 
+class _FadingHeroSection extends StatelessWidget {
+  const _FadingHeroSection({
+    required this.scrollOffsetListenable,
+    required this.fadeDistance,
+    required this.child,
+  });
+
+  final ValueListenable<double> scrollOffsetListenable;
+  final double fadeDistance;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: scrollOffsetListenable,
+      child: RepaintBoundary(child: child),
+      builder: (context, scrollOffset, child) {
+        final opacity = fadeDistance <= 0
+            ? 1.0
+            : (1 - (scrollOffset / fadeDistance)).clamp(0.0, 1.0);
+        return Opacity(opacity: opacity, child: child);
+      },
+    );
+  }
+}
+
 class _HeroSection extends StatelessWidget {
   const _HeroSection({
     required this.username,
     required this.height,
-    required this.opacity,
     required this.onScrollDown,
   });
   final String? username;
   final double? height;
-  final double opacity;
   final VoidCallback onScrollDown;
 
   @override
@@ -585,69 +645,66 @@ class _HeroSection extends StatelessWidget {
     final titleFontSize = isLongName ? 30.0 : 36.0;
     final titleHeight = isLongName ? 1.18 : 1.1;
 
-    return Opacity(
-      opacity: opacity,
-      child: SizedBox(
-        height: height,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final heroHeight = constraints.maxHeight.isFinite
-                ? constraints.maxHeight
-                : height ?? 360 * scale;
-            final baseHeroHeight = 360 * scale;
-            final desiredContentScale = (heroHeight / baseHeroHeight)
-                .clamp(1.0, 1.35)
-                .toDouble();
-            final bottomReserve = 56 * scale;
-            final contentHeightBudget = math.max(
-              180 * scale,
-              heroHeight - bottomReserve,
-            );
-            final maxContentScale = (contentHeightBudget / (300 * scale))
-                .clamp(0.75, 1.35)
-                .toDouble();
-            final contentScale = math.min(desiredContentScale, maxContentScale);
+    return SizedBox(
+      height: height,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final heroHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : height ?? 360 * scale;
+          final baseHeroHeight = 360 * scale;
+          final desiredContentScale = (heroHeight / baseHeroHeight)
+              .clamp(1.0, 1.35)
+              .toDouble();
+          final bottomReserve = 56 * scale;
+          final contentHeightBudget = math.max(
+            180 * scale,
+            heroHeight - bottomReserve,
+          );
+          final maxContentScale = (contentHeightBudget / (300 * scale))
+              .clamp(0.75, 1.35)
+              .toDouble();
+          final contentScale = math.min(desiredContentScale, maxContentScale);
 
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(
-                  'https://images.unsplash.com/photo-1495465798138-718f86d1a4bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8c3R1ZHl8ZW58MHx8fHwxNzcwNDE0OTExfDA&ixlib=rb-4.1.0&q=80&w=1080',
-                  fit: BoxFit.cover,
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(
+                'https://images.unsplash.com/photo-1495465798138-718f86d1a4bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8c3R1ZHl8ZW58MHx8fHwxNzcwNDE0OTExfDA&ixlib=rb-4.1.0&q=80&w=1080',
+                fit: BoxFit.cover,
+              ),
+              Container(color: const Color(0xAA000000)),
+              Align(
+                alignment: Alignment.center,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: bottomReserve * 0.35),
+                  child: StatPager(
+                    displayName: displayName,
+                    titleFontSize: titleFontSize,
+                    titleHeight: titleHeight,
+                    isLongName: isLongName,
+                    contentScale: contentScale,
+                  ),
                 ),
-                Container(color: const Color(0xAA000000)),
-                Align(
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: bottomReserve * 0.35),
-                    child: StatPager(
-                      displayName: displayName,
-                      titleFontSize: titleFontSize,
-                      titleHeight: titleHeight,
-                      isLongName: isLongName,
-                      contentScale: contentScale,
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 16 * scale),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onScrollDown,
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white70,
+                      size: 36 * scale,
                     ),
                   ),
                 ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 16 * scale),
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: onScrollDown,
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Colors.white70,
-                        size: 36 * scale,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1155,28 +1212,7 @@ class _LearningSection extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: ValueListenableBuilder<AttendanceSnapshot>(
-                      valueListenable: AttendanceStore.notifier,
-                      builder: (context, snapshot, _) {
-                        final todayDone = AttendanceStore.isTodayChecked(
-                          snapshot,
-                        );
-                        const total = 1;
-                        final completed = todayDone ? 1 : 0;
-                        final progress = todayDone ? 1.0 : 0.0;
-                        final statusText = todayDone ? '출석 완료' : '출석 필요';
-                        return _ProgressCard(
-                          title: '일일 퀘스트',
-                          subtitle: '자세히 보기',
-                          progressText: '$statusText ($completed / $total)',
-                          progressValue: progress,
-                          onTap: () => showDailyTestModal(
-                            context: context,
-                            courseId: activeCourse?.id,
-                          ),
-                        );
-                      },
-                    ),
+                    child: _DailyQuestProgressCard(courseId: activeCourse?.id),
                   ),
                   SizedBox(width: 6 * scale),
                   Expanded(
@@ -1240,6 +1276,12 @@ class _LearningSection extends StatelessWidget {
                                 );
                               },
                               onGraph: () {
+                                unawaited(
+                                  ActivityStore.recordGraphPractice(
+                                    graphId: 'dashboard_graph_tool',
+                                    meta: const {'source': 'dashboard_tool'},
+                                  ),
+                                );
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => const JsxGraphPage(),
@@ -1292,6 +1334,54 @@ class _LearningSection extends StatelessWidget {
   }
 }
 
+class _InlineCta extends StatelessWidget {
+  const _InlineCta({
+    required this.onTap,
+    this.label,
+    this.tooltip,
+    this.textStyle,
+    this.iconColor = _green,
+    this.iconSize = 12,
+    this.padding = const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+    this.radius = 8,
+  });
+
+  final VoidCallback? onTap;
+  final String? label;
+  final String? tooltip;
+  final TextStyle? textStyle;
+  final Color iconColor;
+  final double iconSize;
+  final EdgeInsetsGeometry padding;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(radius),
+        onTap: onTap,
+        child: Padding(
+          padding: padding,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (label != null) ...[
+                Text(label!, style: textStyle),
+                SizedBox(width: iconSize * 0.5),
+              ],
+              Icon(Icons.arrow_forward_ios, size: iconSize, color: iconColor),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (tooltip == null) return child;
+    return Tooltip(message: tooltip!, child: child);
+  }
+}
+
 class _LearnBanner extends StatelessWidget {
   const _LearnBanner({this.onTap});
   final VoidCallback? onTap;
@@ -1299,34 +1389,113 @@ class _LearnBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 56 * scale,
-        margin: EdgeInsets.symmetric(horizontal: 14 * scale),
-        decoration: BoxDecoration(
-          color: Colors.white,
+    return Container(
+      width: double.infinity,
+      height: 56 * scale,
+      margin: EdgeInsets.symmetric(horizontal: 14 * scale),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20 * scale),
+        boxShadow: const [_shadow],
+        border: Border.all(color: _green, width: 2),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           borderRadius: BorderRadius.circular(20 * scale),
-          boxShadow: const [_shadow],
-          border: Border.all(color: _green, width: 2),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.play_arrow, color: _green, size: 32 * scale),
-            Text(
-              '학습하기',
-              style: _ts(
-                size: 28 * scale,
-                weight: FontWeight.w900,
-                color: _green,
+          onTap: onTap,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.play_arrow, color: _green, size: 32 * scale),
+              Text(
+                '학습하기',
+                style: _ts(
+                  size: 28 * scale,
+                  weight: FontWeight.w900,
+                  color: _green,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _DailyQuestProgressCard extends StatefulWidget {
+  const _DailyQuestProgressCard({required this.courseId});
+
+  final String? courseId;
+
+  @override
+  State<_DailyQuestProgressCard> createState() =>
+      _DailyQuestProgressCardState();
+}
+
+class _DailyQuestProgressCardState extends State<_DailyQuestProgressCard> {
+  Future<DailyQuestBundle?>? _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _DailyQuestProgressCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.courseId != widget.courseId) {
+      _future = _load();
+    }
+  }
+
+  Future<DailyQuestBundle?> _load() async {
+    final courseId = widget.courseId?.trim();
+    if (courseId == null || courseId.isEmpty) return null;
+    return ApiClient.instance.fetchDailyQuestBundle(courseId: courseId);
+  }
+
+  Future<void> _openDailyQuestModal() async {
+    await showDailyTestModal(context: context, courseId: widget.courseId);
+    if (!mounted) return;
+    setState(() => _future = _load());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DailyQuestBundle?>(
+      future: _future,
+      builder: (context, snapshot) {
+        final bundle = snapshot.data;
+        final items = bundle?.items ?? const <DailyQuestItem>[];
+        final completed = items
+            .where((item) => item.status == 'completed')
+            .length;
+        final total = items.isEmpty ? 5 : items.length;
+        final claimable = items.any(
+          (item) =>
+              item.claimable ||
+              (item.status == 'completed' && !item.rewardClaimed),
+        );
+        final progress = total == 0 ? 0.0 : (completed / total).clamp(0.0, 1.0);
+        final loading = snapshot.connectionState == ConnectionState.waiting;
+        final progressText = widget.courseId?.trim().isNotEmpty == true
+            ? loading
+                  ? '불러오는 중'
+                  : '완료 $completed / $total'
+            : '활성 코스가 없습니다.';
+
+        return _ProgressCard(
+          title: '일일 퀘스트',
+          subtitle: '자세히 보기',
+          progressText: progressText,
+          progressValue: progress,
+          showBadge: claimable,
+          onTap: _openDailyQuestModal,
+        );
+      },
     );
   }
 }
@@ -1339,6 +1508,7 @@ class _ProgressCard extends StatelessWidget {
     required this.progressText,
     required this.progressValue,
     this.showProgressBar = true,
+    this.showBadge = false,
     this.onTap,
   });
   final String title;
@@ -1346,88 +1516,103 @@ class _ProgressCard extends StatelessWidget {
   final String progressText;
   final double? progressValue;
   final bool showProgressBar;
+  final bool showBadge;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
 
-    Widget wrapTap(Widget child) {
-      if (onTap == null) return child;
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: child,
-      );
-    }
-
-    return Container(
-      height: 96,
-      decoration: _cardDeco(radius: 16 * scale),
-      padding: EdgeInsets.symmetric(horizontal: 18 * scale),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          height: 96,
+          decoration: _cardDeco(radius: 16 * scale),
+          padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: EdgeInsets.only(top: 12 * scale),
-                child: Text(
-                  title,
-                  style: _ts(size: 18 * scale, weight: FontWeight.bold),
-                ),
-              ),
-              if (subtitle.isNotEmpty)
-                wrapTap(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Padding(
-                    padding: EdgeInsets.only(top: 12 * scale, right: 0),
-                    child: Row(
-                      children: [
-                        Text(
-                          subtitle,
-                          style: _ts(size: 12 * scale, weight: FontWeight.bold),
-                        ),
-                        SizedBox(width: 6 * scale),
-                        Icon(Icons.arrow_forward_ios, size: 12 * scale),
-                      ],
+                    padding: EdgeInsets.only(top: 12 * scale),
+                    child: Text(
+                      title,
+                      style: _ts(size: 18 * scale, weight: FontWeight.bold),
                     ),
                   ),
-                )
-              else
-                wrapTap(
-                  Padding(
-                    padding: EdgeInsets.only(
-                      top: 12 * scale,
-                      right: 10 * scale,
+                  if (subtitle.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(top: 6 * scale),
+                      child: _InlineCta(
+                        label: subtitle,
+                        onTap: onTap,
+                        iconSize: 12 * scale,
+                        radius: 8 * scale,
+                        textStyle: _ts(
+                          size: 12 * scale,
+                          weight: FontWeight.bold,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 6 * scale,
+                          horizontal: 4 * scale,
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 6 * scale,
+                        right: 6 * scale,
+                      ),
+                      child: _InlineCta(
+                        onTap: onTap,
+                        iconSize: 12 * scale,
+                        radius: 8 * scale,
+                        padding: EdgeInsets.all(6 * scale),
+                      ),
                     ),
-                    child: Icon(Icons.arrow_forward_ios, size: 12 * scale),
+                ],
+              ),
+              if (showProgressBar && progressValue != null) ...[
+                SizedBox(height: 6 * scale),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6 * scale),
+                  child: LinearProgressIndicator(
+                    value: progressValue,
+                    minHeight: 6 * scale,
+                    backgroundColor: const Color(0xFFDDDDDD),
+                    color: _lightGreen,
+                  ),
+                ),
+              ],
+              if (progressText.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: 6 * scale),
+                  child: Text(
+                    progressText,
+                    style: _ts(size: 10 * scale, weight: FontWeight.w600),
                   ),
                 ),
             ],
           ),
-          if (showProgressBar && progressValue != null) ...[
-            SizedBox(height: 6 * scale),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6 * scale),
-              child: LinearProgressIndicator(
-                value: progressValue,
-                minHeight: 6 * scale,
-                backgroundColor: const Color(0xFFDDDDDD),
-                color: _lightGreen,
+        ),
+        if (showBadge)
+          Positioned(
+            top: -2,
+            right: -2,
+            child: Container(
+              width: 10 * scale,
+              height: 10 * scale,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE53935),
+                shape: BoxShape.circle,
               ),
             ),
-          ],
-          if (progressText.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(top: 6 * scale),
-              child: Text(
-                progressText,
-                style: _ts(size: 10 * scale, weight: FontWeight.w600),
-              ),
-            ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
@@ -1595,35 +1780,16 @@ class _BottomSection extends StatelessWidget {
                                   top: 4 * scale,
                                   bottom: 10 * scale,
                                 ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(
-                                      8 * scale,
-                                    ),
-                                    onTap: () =>
-                                        _handleRatingTap(context, isEligible),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 6 * scale,
-                                        horizontal: 4 * scale,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            ctaText,
-                                            style: _ts(size: 12 * scale),
-                                          ),
-                                          SizedBox(width: 6 * scale),
-                                          Icon(
-                                            Icons.arrow_forward_ios,
-                                            size: 12 * scale,
-                                            color: _green,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                                child: _InlineCta(
+                                  label: ctaText,
+                                  onTap: () =>
+                                      _handleRatingTap(context, isEligible),
+                                  iconSize: 12 * scale,
+                                  radius: 8 * scale,
+                                  textStyle: _ts(size: 12 * scale),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 6 * scale,
+                                    horizontal: 4 * scale,
                                   ),
                                 ),
                               ),
@@ -1640,9 +1806,8 @@ class _BottomSection extends StatelessWidget {
                 child: Container(
                   height: 190 * scale,
                   margin: EdgeInsets.only(top: 12 * scale),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16 * scale),
-                    boxShadow: const [_shadow],
+                  decoration: _cardDeco(
+                    radius: 16 * scale,
                     image: const DecorationImage(
                       fit: BoxFit.cover,
                       image: NetworkImage(
@@ -1668,12 +1833,29 @@ class _BottomSection extends StatelessWidget {
                         ),
                         SizedBox(height: 6 * scale),
                         Text(
-                          '학습 커뮤니티입니다.\n멘토링/상담 게시물을 확인하세요.',
+                          '학습 커뮤니티입니다.',
                           textAlign: TextAlign.center,
                           style: _ts(
                             size: 10 * scale,
                             weight: FontWeight.w700,
                             color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 2 * scale),
+                        _InlineCta(
+                          label: '멘토링/상담 게시물 확인',
+                          onTap: () => showSocialModal(context: context),
+                          iconColor: Colors.white,
+                          iconSize: 12 * scale,
+                          radius: 8 * scale,
+                          textStyle: _ts(
+                            size: 10 * scale,
+                            weight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 6 * scale,
+                            horizontal: 6 * scale,
                           ),
                         ),
                       ],
@@ -1766,50 +1948,44 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
       future: _future,
       builder: (context, snapshot) {
         final notices = snapshot.data ?? const <StudyGroupNotice>[];
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16 * scale),
-            onTap: notices.isEmpty
-                ? null
-                : () => _showNoticeList(context, notices),
-            child: Container(
-              width: double.infinity,
-              height: 190 * scale,
-              decoration: _cardDeco(radius: 16 * scale),
-              padding: EdgeInsets.symmetric(horizontal: 18 * scale),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(top: 12 * scale),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '공지사항',
-                          style: _ts(size: 18 * scale, weight: FontWeight.bold),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(
-                            top: 8 * scale,
-                            right: 4 * scale,
-                          ),
-                          child: Icon(
-                            Icons.arrow_forward_ios,
-                            size: 12 * scale,
-                          ),
-                        ),
-                      ],
+        return Container(
+          width: double.infinity,
+          height: 190 * scale,
+          decoration: _cardDeco(radius: 16 * scale),
+          padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 12 * scale),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '공지사항',
+                      style: _ts(size: 18 * scale, weight: FontWeight.bold),
                     ),
-                  ),
-                  SizedBox(height: 10 * scale),
-                  Expanded(
-                    child: _buildBody(context, snapshot, notices, scale),
-                  ),
-                ],
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: 8 * scale,
+                        right: 4 * scale,
+                      ),
+                      child: _InlineCta(
+                        tooltip: '공지사항 보기',
+                        onTap: notices.isEmpty
+                            ? null
+                            : () => _showNoticeList(context, notices),
+                        iconSize: 12 * scale,
+                        radius: 8 * scale,
+                        padding: EdgeInsets.all(6 * scale),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              SizedBox(height: 10 * scale),
+              Expanded(child: _buildBody(context, snapshot, notices, scale)),
+            ],
           ),
         );
       },
@@ -2002,53 +2178,44 @@ class _DashboardActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
-    final cardHeight = math.max(150 * scale, 132.0);
+    final cardHeight = math.max(156 * scale, 138.0);
     final arrowSize = math.max(16 * scale, 14.0);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16 * scale),
-        onTap: onTap,
-        child: Ink(
-          width: double.infinity,
-          height: cardHeight,
-          decoration: _cardDeco(radius: 16 * scale),
-          padding: EdgeInsets.fromLTRB(
-            18 * scale,
-            12 * scale,
-            12 * scale,
-            14 * scale,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      width: double.infinity,
+      height: cardHeight,
+      decoration: _cardDeco(radius: 16 * scale),
+      padding: EdgeInsets.fromLTRB(
+        18 * scale,
+        12 * scale,
+        12 * scale,
+        14 * scale,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: _ts(size: 18 * scale, weight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Tooltip(
-                    message: tooltip,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(18 * scale),
-                      onTap: onTap,
-                      child: Padding(
-                        padding: EdgeInsets.all(6 * scale),
-                        child: Icon(Icons.arrow_forward_ios, size: arrowSize),
-                      ),
-                    ),
-                  ),
-                ],
+              Expanded(
+                child: Text(
+                  title,
+                  style: _ts(size: 18 * scale, weight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              SizedBox(height: 6 * scale),
-              Expanded(child: child),
+              Tooltip(
+                message: tooltip,
+                child: _InlineCta(
+                  onTap: onTap,
+                  iconSize: arrowSize,
+                  radius: 18 * scale,
+                  padding: EdgeInsets.all(6 * scale),
+                ),
+              ),
             ],
           ),
-        ),
+          SizedBox(height: 6 * scale),
+          Expanded(child: child),
+        ],
       ),
     );
   }
@@ -2057,200 +2224,45 @@ class _DashboardActionCard extends StatelessWidget {
 class _ChallengeAchievementCard extends StatelessWidget {
   const _ChallengeAchievementCard();
 
-  static const _earnedBadges = [
-    _DummyBadge('불꽃 출석', Icons.local_fire_department, Color(0xFFE85D3A)),
-    _DummyBadge('정밀한 해답', Icons.auto_awesome, Color(0xFF3965EF)),
-    _DummyBadge('시간의 수호자', Icons.shield, Color(0xFF2E9853)),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
-    return _DashboardActionCard(
-      title: '도전과제 / 업적',
-      tooltip: '업적 보기',
-      onTap: () => _showAchievementModal(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _BadgeSummary(badges: _earnedBadges),
-          const Spacer(),
-          Text(
-            '최근 획득한 업적 배지가 여기에 표시됩니다.',
-            style: _ts(size: 12 * scale, color: Colors.black54),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAchievementModal(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        final scale = _uiScale(context);
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              20 * scale,
-              18 * scale,
-              20 * scale,
-              22 * scale,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '업적 보관함',
-                  style: _ts(size: 20 * scale, weight: FontWeight.w900),
-                ),
-                SizedBox(height: 12 * scale),
-                Wrap(
-                  spacing: 12 * scale,
-                  runSpacing: 12 * scale,
-                  children: _earnedBadges
-                      .map(
-                        (badge) => Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _GameBadge(badge: badge, size: 58 * scale),
-                            SizedBox(height: 6 * scale),
-                            SizedBox(
-                              width: 82 * scale,
-                              child: Text(
-                                badge.title,
-                                textAlign: TextAlign.center,
-                                style: _ts(
-                                  size: 10 * scale,
-                                  weight: FontWeight.w800,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
-            ),
-          ),
+    return ValueListenableBuilder<ActivitySnapshot>(
+      valueListenable: ActivityStore.notifier,
+      builder: (context, snapshot, _) {
+        return ValueListenableBuilder<AccountSummary?>(
+          valueListenable: ActivityStore.accountSummaryNotifier,
+          builder: (context, account, __) {
+            final accountLevel = account?.level ?? 0;
+            return _DashboardActionCard(
+              title: '도전과제 / 업적',
+              tooltip: '업적 보기',
+              onTap: () => showActivityBadgeDialog(
+                context: context,
+                snapshot: snapshot,
+                accountLevel: accountLevel,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ActivityBadgeSummary(
+                    snapshot: snapshot,
+                    accountLevel: accountLevel,
+                  ),
+                  const Spacer(),
+                  Text(
+                    '학습 동작이 쌓이면 단계별 뱃지가 열립니다.',
+                    style: _ts(size: 12 * scale, color: Colors.black54),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
   }
-}
-
-class _BadgeSummary extends StatelessWidget {
-  const _BadgeSummary({required this.badges});
-
-  final List<_DummyBadge> badges;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = _uiScale(context);
-    return Row(
-      children: [
-        Text(
-          '획득한 뱃지 ${badges.length}개',
-          style: _ts(size: 12 * scale, weight: FontWeight.w800),
-          overflow: TextOverflow.ellipsis,
-        ),
-        const Spacer(),
-        ...badges.map(
-          (badge) => Padding(
-            padding: EdgeInsets.only(left: 6 * scale),
-            child: Tooltip(
-              message: badge.title,
-              child: _GameBadge(badge: badge, size: 30 * scale),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _GameBadge extends StatelessWidget {
-  const _GameBadge({required this.badge, required this.size});
-
-  final _DummyBadge badge;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Transform.rotate(
-            angle: math.pi / 4,
-            child: Container(
-              width: size * 0.74,
-              height: size * 0.74,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    badge.color.withValues(alpha: 0.18),
-                    badge.color.withValues(alpha: 0.46),
-                  ],
-                ),
-                border: Border.all(color: badge.color, width: size * 0.045),
-                boxShadow: [
-                  BoxShadow(
-                    color: badge.color.withValues(alpha: 0.24),
-                    blurRadius: size * 0.2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            width: size * 0.64,
-            height: size * 0.64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-              border: Border.all(
-                color: badge.color.withValues(alpha: 0.45),
-                width: size * 0.035,
-              ),
-            ),
-          ),
-          Icon(badge.icon, color: badge.color, size: size * 0.38),
-          Positioned(
-            bottom: size * 0.05,
-            child: Container(
-              width: size * 0.38,
-              height: size * 0.08,
-              decoration: BoxDecoration(
-                color: badge.color,
-                borderRadius: BorderRadius.circular(size),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DummyBadge {
-  const _DummyBadge(this.title, this.icon, this.color);
-
-  final String title;
-  final IconData icon;
-  final Color color;
 }
 
 const int _activityHistoryDayCount = 56;

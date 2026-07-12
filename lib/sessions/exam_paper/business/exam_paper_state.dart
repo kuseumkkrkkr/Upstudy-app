@@ -1,8 +1,6 @@
 part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
-
 enum _ToolMode { pen, eraser, pan }
-
 
 const double _paperWidth = 794;
 const double _paperHeight = _paperWidth * 297 / 210;
@@ -16,12 +14,10 @@ const double _thumbnailTargetWidth = 120;
 const double _pageGap = 32.0;
 const double _scrollEdgePadding = 60.0;
 
-
 const Color _penRed = Color(0xFFE53935);
 const Color _penBlue = Color(0xFF1E88E5);
 const List<Color> _penColors = [_penRed, _penBlue, Colors.black];
 const List<double> _penWidths = [5, 3, 1];
-
 
 const double _secondaryHeaderHeight = 30.0;
 
@@ -33,17 +29,14 @@ class _PreviousPageIntent extends Intent {
   const _PreviousPageIntent();
 }
 
-
 abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
-
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
 
-  final ValueNotifier<Matrix4> _viewMatrix =
-
-      ValueNotifier<Matrix4>(Matrix4.identity());
+  final ValueNotifier<Matrix4> _viewMatrix = ValueNotifier<Matrix4>(
+    Matrix4.identity(),
+  );
 
   final ValueNotifier<double> _zoomScaleNotifier = ValueNotifier<double>(1.0);
-
 
   Timer? _pollTimer;
   Timer? _examCountdownTimer;
@@ -58,11 +51,9 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
 
   List<_PageLayout> _pageLayouts = const [];
 
-
   int _currentPageIndex = 0;
 
   bool _sidebarVisible = false;
-
 
   Size? _viewportSize;
 
@@ -80,7 +71,6 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
 
   double _gestureStartZoom = 1.0;
 
-
   final List<List<_Stroke>> _pageStrokes = <List<_Stroke>>[];
 
   final List<List<_UndoAction>> _pageUndoStacks = <List<_UndoAction>>[];
@@ -93,12 +83,8 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   List<Offset>? _currentEraserPoints;
 
   List<HeatmapEvent> _heatmapEventsForPage(int pageIndex) {
-    return _heatmapEventsByPage.putIfAbsent(
-      pageIndex,
-      () => <HeatmapEvent>[],
-    );
+    return _heatmapEventsByPage.putIfAbsent(pageIndex, () => <HeatmapEvent>[]);
   }
-
 
   _Stroke? _currentStroke;
   int? _currentStrokePageIndex;
@@ -109,15 +95,13 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
 
   Offset? _lastFilteredPoint;
 
-
-  _ToolMode _toolMode = _ToolMode.pen;
+  _ToolMode _toolMode = _ToolMode.pan;
 
   Color _penColor = Colors.black;
 
   double _penWidth = 3;
 
-
-  bool _scrollEnabled = false;
+  bool _scrollEnabled = true;
   double _scrollAccumulator = 0.0;
   int _scrollDirection = 0;
   DateTime? _lastScrollSwitchAt;
@@ -126,7 +110,6 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   int? _eraserPageIndex;
 
   bool _eraserActive = false;
-
 
   bool _grading = false;
 
@@ -144,11 +127,9 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   final Map<int, int?> _selectedOptions = <int, int?>{};
   DateTime? _lastFastScrollAt;
 
-
   double? _estimatedHeaderHeight;
 
   double? _estimatedFooterHeight;
-
 
   final Map<int, Uint8List> _thumbnailBytes = <int, Uint8List>{};
   final Set<int> _thumbnailQueue = <int>{};
@@ -268,10 +249,7 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
 }
 
 class _ExamPaperPageState extends _ExamPaperStateBase
-    with
-        _ExamPaperInteractionMixin,
-        _ExamPaperGradingMixin,
-        _ExamPaperUiMixin {
+    with _ExamPaperInteractionMixin, _ExamPaperGradingMixin, _ExamPaperUiMixin {
   @override
   void initState() {
     super.initState();

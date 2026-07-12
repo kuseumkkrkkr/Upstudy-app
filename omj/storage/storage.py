@@ -1,10 +1,12 @@
 import json
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from typing import Iterable
 
 from domain.quest.search_view import normalize_hash_tags
+from infra.db.connection import connect_sqlite
 
 # =========================
 # Database config
@@ -13,6 +15,17 @@ from domain.quest.search_view import normalize_hash_tags
 DB_PATH = str((Path(__file__).resolve().parent.parent / "quests.db"))
 # Keep the last store_data error so API handlers can return detail
 _LAST_STORE_ERROR: Optional[str] = None
+_LAST_STORE_ERROR_LOCAL = threading.local()
+
+
+def _connect() -> sqlite3.Connection:
+    return connect_sqlite(DB_PATH)
+
+
+def _set_last_store_error(value: Optional[str]) -> None:
+    global _LAST_STORE_ERROR
+    _LAST_STORE_ERROR = value
+    _LAST_STORE_ERROR_LOCAL.value = value
 
 
 def _normalize_content(value: Any) -> dict | None:
@@ -61,6 +74,30 @@ def _serialize_options(value: Any) -> str | None:
         normalized = [_normalize_content(item) for item in value]
         return json.dumps(normalized, ensure_ascii=False)
     return json.dumps([_normalize_content(value)], ensure_ascii=False)
+
+
+def _serialize_meta(data: Dict[str, Any]) -> str:
+    raw_meta = data.get("meta")
+    if isinstance(raw_meta, dict):
+        meta = dict(raw_meta)
+    else:
+        meta = {}
+
+    mcq_conversion = data.get("mcq_conversion")
+    if isinstance(mcq_conversion, dict):
+        meta["mcq_conversion"] = mcq_conversion
+
+    for key in (
+        "advanced_generation_context",
+        "variant_request_signature",
+        "variant_runtime_params",
+        "variant_meta",
+    ):
+        value = data.get(key)
+        if value is not None:
+            meta[key] = value
+
+    return json.dumps(meta, ensure_ascii=False)
 
 
 def _parse_options(value: Any) -> list | None:
@@ -117,7 +154,7 @@ def _ensure_column(cursor: sqlite3.Cursor, table: str, column: str, definition: 
 
 def init_db():
     """Initialize SQLite tables if they do not exist."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cursor = conn.cursor()
 
     # quest_header table
@@ -199,11 +236,11 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
     Args:
         storage_data: Data from fix_gen() with keys header/info/data/solves.
     """
-    global _LAST_STORE_ERROR
-    _LAST_STORE_ERROR = None
+    _set_last_store_error(None)
+    conn: Optional[sqlite3.Connection] = None
     try:
         init_db()
-        conn = sqlite3.connect(DB_PATH)
+        conn = _connect()
         cursor = conn.cursor()
 
         header = storage_data["header"]
@@ -275,7 +312,7 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
                 data.get("seed"),
                 json.dumps(info.get("hash_tag", []), ensure_ascii=False),
                 data.get("choice_answer_index"),
-                json.dumps(data.get("meta") or data.get("mcq_conversion") or {}, ensure_ascii=False),
+                _serialize_meta(data),
             ),
         )
 
@@ -300,26 +337,34 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
 
         conn.commit()
         conn.close()
+        conn = None
 
         print(f"데이터베이스 저장 완료 (Quest ID: {quest_id})")
         return True
 
     except sqlite3.IntegrityError as e:
-        _LAST_STORE_ERROR = f"무결성 오류: {e}"
-        print(_LAST_STORE_ERROR)
+        _set_last_store_error(f"무결성 오류: {e}")
+        print(get_last_store_error())
         return False
     except Exception as e:
-        _LAST_STORE_ERROR = f"저장 오류: {e}"
-        print(_LAST_STORE_ERROR)
+        _set_last_store_error(f"저장 오류: {e}")
+        print(get_last_store_error())
         import traceback
 
         traceback.print_exc()
         return False
+    finally:
+        if conn is not None:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            conn.close()
 
 
 def get_last_store_error() -> Optional[str]:
     """Return the last error message set by store_data (if any)."""
-    return _LAST_STORE_ERROR
+    return getattr(_LAST_STORE_ERROR_LOCAL, "value", _LAST_STORE_ERROR)
 
 
 def get_quest(quest_id: str) -> Dict[str, Any] | None:
@@ -327,7 +372,7 @@ def get_quest(quest_id: str) -> Dict[str, Any] | None:
     Retrieve a quest by id from the database.
     """
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = _connect()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM quest_header WHERE quest_id = ?", (quest_id,))
@@ -417,7 +462,7 @@ def update_quest_mcq(
 ) -> bool:
     """Persist multiple-choice options and answer metadata for an existing quest."""
     init_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -462,6 +507,9 @@ def search_quests(
         # Keep quest-id prefilter only when both quest_id and text are provided.
         # Text matching itself is handled in _matches_filters via normalized title parsing.
         candidate_ids = list(candidate_ids)
+
+    if candidate_ids is None and normalized_tags:
+        candidate_ids = _find_candidates_by_tags(normalized_tags)
 
     if candidate_ids is None:
         candidate_ids = _list_all_quest_ids()
@@ -533,7 +581,7 @@ def list_reusable_codebases(
     if not tag_set:
         return []
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -625,7 +673,7 @@ def _hash_tag_json_matches(hash_tag_json: str, normalized_tag: str) -> bool:
 def _find_candidates_by_text(text_query: str) -> List[str]:
     if not text_query:
         return []
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cursor = conn.cursor()
     cursor.execute(
         "SELECT quest_id FROM quest_data WHERE LOWER(quest_title) LIKE ?",
@@ -636,10 +684,57 @@ def _find_candidates_by_text(text_query: str) -> List[str]:
     return [row[0] for row in rows]
 
 
+def _tag_like_patterns(normalized_tag: str) -> List[str]:
+    tag = normalized_tag.strip().lstrip("#").strip().lower()
+    if not tag:
+        return []
+    variants = {tag, f"#{tag}"}
+    for item in list(variants):
+        variants.add(json.dumps(item, ensure_ascii=True)[1:-1].lower())
+    return [f"%{item}%" for item in sorted(variants)]
+
+
+def _find_candidates_by_tags(normalized_tags: List[str]) -> List[str]:
+    clauses: List[str] = []
+    params: List[str] = []
+    for tag in normalized_tags:
+        patterns = _tag_like_patterns(tag)
+        if not patterns:
+            continue
+        clauses.append(
+            "(" + " OR ".join("LOWER(tag_blob) LIKE ?" for _ in patterns) + ")"
+        )
+        params.extend(patterns)
+    if not clauses:
+        return []
+
+    conn = _connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        f"""
+        SELECT quest_id
+        FROM (
+            SELECT
+                h.quest_id AS quest_id,
+                COALESCE(qi.hash_tag, '') || ' ' || COALESCE(qd.hash_tag, '') AS tag_blob
+            FROM quest_header h
+            LEFT JOIN quest_info qi ON qi.quest_id = h.quest_id
+            LEFT JOIN quest_data qd ON qd.quest_id = h.quest_id
+        )
+        WHERE {" AND ".join(clauses)}
+        ORDER BY quest_id DESC
+        """,
+        params,
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [row[0] for row in rows]
+
+
 def _find_candidates_by_id(quest_id_query: str) -> List[str]:
     if not quest_id_query:
         return []
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cursor = conn.cursor()
     cursor.execute(
         "SELECT quest_id FROM quest_header WHERE quest_id LIKE ?",
@@ -651,7 +746,7 @@ def _find_candidates_by_id(quest_id_query: str) -> List[str]:
 
 
 def _list_all_quest_ids() -> List[str]:
-    conn = sqlite3.connect(DB_PATH)
+    conn = _connect()
     cursor = conn.cursor()
     cursor.execute("SELECT quest_id FROM quest_header ORDER BY quest_id DESC")
     rows = cursor.fetchall()

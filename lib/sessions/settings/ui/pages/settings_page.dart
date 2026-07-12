@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -17,6 +18,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _loading = true;
   bool _notificationsEnabled = true;
+  bool _textbookPageMode = false;
 
   @override
   void initState() {
@@ -27,9 +29,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_notificationsKey);
+    final textbookPageMode = await TextbookReaderPreferences.loadPageMode();
     if (!mounted) return;
     setState(() {
       _notificationsEnabled = enabled ?? true;
+      _textbookPageMode = textbookPageMode;
       _loading = false;
     });
   }
@@ -38,6 +42,11 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _notificationsEnabled = value);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_notificationsKey, value);
+  }
+
+  Future<void> _setTextbookPageMode(bool value) async {
+    setState(() => _textbookPageMode = value);
+    await TextbookReaderPreferences.savePageMode(value);
   }
 
   void _showLicenses() {
@@ -240,6 +249,25 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+          _pageShell(
+            title: '교재 보기',
+            subtitle: '교재 본문을 연속 스크롤 또는 PDF형 페이지로 볼 수 있습니다.',
+            children: [
+              _settingTile(
+                icon: Icons.auto_stories_rounded,
+                title: 'PDF형 페이지 보기',
+                subtitle: _textbookPageMode
+                    ? '교재가 페이지 단위로 열립니다.'
+                    : '교재가 아래로 스크롤되는 형태로 열립니다.',
+                trailing: Switch.adaptive(
+                  value: _textbookPageMode,
+                  onChanged: _setTextbookPageMode,
+                  activeThumbColor: AppColors.primaryLight,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           _pageShell(

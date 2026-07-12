@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:s11/shared/data/models/course.dart';
+import 'package:s11/shared/data/models/course_module_config.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/sessions/course/ui/widgets/level_test_widget.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
@@ -49,9 +51,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   void initState() {
     super.initState();
     _course = widget.course;
-    if (_course.units.isEmpty) {
-      _loadCourseDetail();
-    }
+    unawaited(_loadCourseDetail(showLoading: _course.units.isEmpty));
     final number = _courseNumber(widget.course);
     unawaited(
       ActivityStore.recordCourseView(
@@ -62,8 +62,8 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
     );
   }
 
-  Future<void> _loadCourseDetail() async {
-    setState(() => _loadingCourse = true);
+  Future<void> _loadCourseDetail({bool showLoading = true}) async {
+    if (showLoading) setState(() => _loadingCourse = true);
     try {
       final full = await CourseService.fetchCourse(widget.course.id);
       if (!mounted) return;
@@ -71,7 +71,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
         _course = full;
       });
     } finally {
-      if (mounted) setState(() => _loadingCourse = false);
+      if (mounted && showLoading) setState(() => _loadingCourse = false);
     }
   }
 
@@ -88,22 +88,25 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   void _startLearning() {
     if (widget.course.isDemo) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('泥댄뿕??肄붿뒪?낅땲?? 吏꾪뻾?꾨뒗 湲곕줉?섏? ?딆뒿?덈떎.')),
+        const SnackBar(content: Text('체험용 코스입니다. 진행률은 기록되지 않습니다.')),
       );
     }
-    final index = widget.course.units.indexWhere(
+    final index = _course.units.indexWhere(
       (unit) => unit.status != CourseUnitStatus.locked,
     );
     if (index == -1) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('No available unit yet.')));
+      ).showSnackBar(const SnackBar(content: Text('수강 가능한 유닛이 아직 없습니다.')));
       return;
     }
     setState(() => _expandedUnits.add(index));
   }
 
-  void _handleMissionTap(CourseUnit unit, CourseUnitMission mission) {
+  Future<void> _handleMissionTap(
+    CourseUnit unit,
+    CourseUnitMission mission,
+  ) async {
     final detail = mission.detail;
     if (detail is Map && detail['type'] == 'textbook_view') {
       final bookId = detail['textbook_id']?.toString() ?? '';
@@ -119,7 +122,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
         to,
         mission.title,
       );
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => TeacherCourseTextbookReaderPage(
             courseId: widget.course.id,
@@ -132,6 +135,9 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
           ),
         ),
       );
+      if (mounted) {
+        unawaited(_loadCourseDetail(showLoading: false));
+      }
       return;
     }
     if (detail is Map && detail['type'] == 'problem_solve') {
@@ -142,10 +148,12 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
       _startExamSolve(unit, detail);
       return;
     }
+    if (detail is Map && detail['type'] == 'level_test') {
+      _startLevelTest(unit, detail);
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Mission started: ${unit.title} - ${mission.title}'),
-      ),
+      SnackBar(content: Text('${unit.title} · ${mission.title} 학습을 시작합니다.')),
     );
   }
 
@@ -233,11 +241,17 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
                 totalCount: totalCount,
                 elapsedSeconds: elapsedSeconds ?? 0,
               );
+              if (mounted) {
+                unawaited(_loadCourseDetail(showLoading: false));
+              }
             },
       );
-      navigator.push(
+      await navigator.push(
         MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
       );
+      if (mounted) {
+        unawaited(_loadCourseDetail(showLoading: false));
+      }
     } catch (e) {
       scaffold.showSnackBar(SnackBar(content: Text('문제 로드 실패: $e')));
     }
@@ -251,6 +265,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
         MaterialPageRoute(
           builder: (_) => ExamPaperPage(
             examId: examId,
+            courseId: _course.id,
             timeLimitMinutes: (duration != null && duration > 0)
                 ? duration
                 : null,
@@ -271,7 +286,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
           .toList();
       if (quests.isEmpty) {
         scaffold.showSnackBar(
-          const SnackBar(content: Text('?쒗뿕 臾몄젣瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??')),
+          const SnackBar(content: Text('시험 문제를 불러오지 못했습니다.')),
         );
         return;
       }
@@ -290,8 +305,44 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
         MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
       );
     } catch (e) {
-      scaffold.showSnackBar(SnackBar(content: Text('?쒗뿕 臾몄젣 濡쒕뱶 ?ㅽ뙣: $e')));
+      scaffold.showSnackBar(SnackBar(content: Text('시험 문제 로드 실패: $e')));
     }
+  }
+
+  Future<void> _startLevelTest(CourseUnit unit, Map detail) async {
+    final moduleId =
+        (detail['id'] ?? detail['module_id'] ?? detail['moduleId'] ?? '')
+            .toString();
+    final config = LevelTestConfig.fromJson(Map<String, dynamic>.from(detail))
+        .copyWith(
+          testType: 'exam',
+          moduleId: moduleId,
+          courseId: _course.id,
+          unitIndex: _course.units.indexOf(unit),
+        );
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LevelTestWidget(
+          config: config,
+          onComplete:
+              ({
+                required int correctCount,
+                required int totalCount,
+                required bool passed,
+                int? elapsedSeconds,
+              }) async {
+                if (moduleId.isEmpty) return;
+                await ApiClient.instance.submitCourseRuntimeModule(
+                  courseId: _course.id,
+                  moduleId: moduleId,
+                  correctCount: correctCount,
+                  totalCount: totalCount,
+                  elapsedSeconds: elapsedSeconds ?? 0,
+                );
+              },
+        ),
+      ),
+    );
   }
 
   @override
@@ -329,7 +380,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '肄붿뒪 吏꾪뻾 寃쎈줈',
+                            '코스 진행 경로',
                             style: GoogleFonts.inter(
                               fontSize: 28 * scale,
                               fontWeight: FontWeight.w700,
@@ -338,7 +389,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
                           ),
                           SizedBox(height: 10 * scale),
                           Text(
-                            '?붿궡?쒕? ?뚮윭 ?곸꽭 誘몄뀡???뺤씤?섍퀬 ?ㅽ뻾?섏꽭??',
+                            '유닛을 펼쳐 상세 미션을 확인하고 차례대로 수강하세요.',
                             style: GoogleFonts.inter(
                               fontSize: 14 * scale,
                               color: Colors.black54,
@@ -469,7 +520,7 @@ class _LearningHero extends StatelessWidget {
               ),
               SizedBox(height: 8 * scale),
               Text(
-                '$progressPercent% ?꾨즺',
+                '$progressPercent% 완료',
                 style: GoogleFonts.inter(
                   fontSize: 12 * scale,
                   color: Colors.black54,
@@ -487,7 +538,7 @@ class _LearningHero extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  isDemo ? '泥댄뿕 紐⑤뱶' : '?숈뒿 怨꾩냽?섍린',
+                  isDemo ? '체험 모드' : '학습 계속하기',
                   style: GoogleFonts.inter(
                     fontSize: 13 * scale,
                     fontWeight: FontWeight.w600,
@@ -562,14 +613,13 @@ class _LearningUnitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = _statusFor(unit.status);
     final detail = unit.detail;
-    String subtitle = unit.type;
+    String subtitle = _moduleTypeLabel(unit.type);
     if (detail is Map) {
       if (detail['type'] == 'textbook_view') {
-        subtitle =
-            '援먯옱 ?대엺 ${detail['page_from'] ?? '?'}~${detail['page_to'] ?? '?'}P';
+        subtitle = _textbookRangeLabel(detail);
       } else if (detail['type'] == 'problem_solve') {
         final tags = (detail['hash_tags'] as List?)?.join(', ') ?? '';
-        subtitle = '臾몄젣 ???쨌 ?쒓렇: $tags';
+        subtitle = '문제 풀이 · 태그: $tags';
       } else if (detail['type'] == 'exam_solve') {
         final duration = (detail['exam_duration'] as num?)?.toInt();
         subtitle = duration == null || duration <= 0
@@ -658,14 +708,14 @@ class _LearningUnitCard extends StatelessWidget {
                     Row(
                       children: [
                         _MetaPill(
-                          label: unit.type,
+                          label: _moduleTypeLabel(unit.type),
                           icon: Icons.category_outlined,
                           scale: scale,
                         ),
                         SizedBox(width: 8 * scale),
                         if (unit.estimatedMinutes > 0)
                           _MetaPill(
-                            label: '${unit.estimatedMinutes} min',
+                            label: '${unit.estimatedMinutes}분',
                             icon: Icons.timer_outlined,
                             scale: scale,
                           ),
@@ -712,6 +762,24 @@ class _LearningUnitCard extends StatelessWidget {
       ),
     );
   }
+
+  String _textbookRangeLabel(Map detail) {
+    final from = _positivePage(detail['page_from']);
+    final to = _positivePage(detail['page_to']);
+    if (from != null && to != null) {
+      if (from == to) return '교재 열람 ${from.toString()}P';
+      return '교재 열람 ${from.toString()}~${to.toString()}P';
+    }
+    if (from != null) return '교재 열람 ${from.toString()}P부터';
+    if (to != null) return '교재 열람 ${to.toString()}P까지';
+    return '교재 열람';
+  }
+
+  int? _positivePage(dynamic value) {
+    final parsed = value is num ? value.toInt() : int.tryParse('$value');
+    if (parsed == null || parsed <= 0) return null;
+    return parsed;
+  }
 }
 
 class _MissionList extends StatelessWidget {
@@ -729,7 +797,7 @@ class _MissionList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (unit.missions.isEmpty) {
       return Text(
-        'No missions available yet.',
+        '등록된 미션이 없습니다.',
         style: GoogleFonts.inter(fontSize: 13 * scale, color: Colors.black54),
       );
     }
@@ -763,9 +831,9 @@ class _MissionList extends StatelessWidget {
                       SizedBox(height: 4 * scale),
                       Text(
                         mission.detail is Map
-                            ? (mission.detail['type'] == 'textbook_view'
-                                  ? '援먯옱 ?대엺'
-                                  : mission.detail['type']?.toString() ?? '')
+                            ? _moduleTypeLabel(
+                                mission.detail['type']?.toString() ?? '',
+                              )
                             : mission.detail.toString(),
                         style: GoogleFonts.inter(
                           fontSize: 12 * scale,
@@ -859,21 +927,42 @@ _StatusData _statusFor(CourseUnitStatus status) {
   switch (status) {
     case CourseUnitStatus.completed:
       return const _StatusData(
-        label: 'Completed',
+        label: '완료',
         badgeColor: Color(0xFF2EAD62),
         icon: Icons.check_circle,
       );
     case CourseUnitStatus.active:
       return const _StatusData(
-        label: 'In progress',
+        label: '진행 중',
         badgeColor: Color(0xFFF3A43A),
         icon: Icons.play_circle_fill,
       );
     case CourseUnitStatus.locked:
       return const _StatusData(
-        label: 'Locked',
+        label: '잠금',
         badgeColor: Color(0xFF9A9A9A),
         icon: Icons.lock,
       );
+  }
+}
+
+String _moduleTypeLabel(String type) {
+  switch (type) {
+    case 'textbook_view':
+      return '교재 열람';
+    case 'problem_solve':
+      return '문제 풀이';
+    case 'exam_solve':
+      return '시험지 풀이';
+    case 'level_test':
+      return '레벨 테스트';
+    case 'wrong_answer_review':
+      return '오답 복습';
+    case 'challenge_group':
+      return '도전 학습';
+    case 'curriculum_group':
+      return '커리큘럼';
+    default:
+      return type.trim().isEmpty ? '학습 모듈' : type;
   }
 }

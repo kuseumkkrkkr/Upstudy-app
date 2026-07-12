@@ -12,11 +12,13 @@ Provides CRUD + business-logic endpoints for:
 - TimetablePreference / TimetablePlan (heuristic v1)
 - StudentOverviewSnapshot (auto-build)
 """
+import json
+import random
 import re
 import sqlite3
 import uuid
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import Any, Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -29,8 +31,13 @@ from storage.social_storage import search_users_by_username
 from storage.study_group_storage import append_group_message
 from storage.rating_storage import create_user, get_user, list_tag_stats
 from storage.solve_history import list_solve_history
+from storage.level_test_analysis_storage import (
+    list_level_test_analysis_summaries,
+    save_level_test_analysis_session,
+)
 from storage.storage import DB_PATH
 from storage.weakness_storage import list_weakness_tags
+from services.ai.sam_client import generate_json, is_sam_configured
 
 router = APIRouter(prefix="/academy", tags=["academy"])
 
@@ -43,11 +50,39 @@ def _is_teacher_admin(role: str) -> bool:
     return role_norm in {"teacher", "admin", "academy_admin", "academy_teacher"}
 
 
+def _is_admin_user(user: dict) -> bool:
+    role = str(user.get("role") or "").strip().lower()
+    return role in {"admin", "academy_admin"}
+
+
 def _ensure_friend_access_or_403(caller_user_id: str, target_user_id: str) -> None:
     if not target_user_id or caller_user_id == target_user_id:
         return
     if not are_friends(caller_user_id, target_user_id):
         raise HTTPException(status_code=403, detail="Only friend students are accessible")
+
+
+def _can_submit_course_level_test(user: dict, course) -> bool:
+    user_id = str(user.get("user_id") or "")
+    role = str(user.get("role") or "").strip().lower()
+    if bool(course.is_public):
+        return True
+    if role == "admin":
+        return True
+    if role in {"teacher", "academy_teacher", "academy_admin"} and course.owner_user_id == user_id:
+        return True
+    state = course_v2_repo.get_runtime_state(user_id, course.id)
+    if state.get("assigned_by_teacher") is True:
+        return True
+    group_id = str(course.access_group_id or "").strip()
+    if not group_id:
+        return False
+    if not repo.is_active_group_member(group_id=group_id, user_id=user_id):
+        return False
+    if course.access_academy_id:
+        group = repo.get_group(group_id)
+        return bool(group and str(group.get("academy_id") or "") == str(course.access_academy_id))
+    return True
 
 
 def _parse_duration_days(value: Optional[str]) -> Optional[int]:
@@ -86,6 +121,159 @@ def _validate_course_due_date(course_id: str, due_date: Optional[str]) -> None:
     max_due = (datetime.utcnow().date() + timedelta(days=allowed_days))
     if due > max_due:
         raise HTTPException(status_code=400, detail="course_due_date_exceeds_duration")
+
+
+def _is_active_teacher_in_group(group_id: str, user_id: str) -> bool:
+    members = repo.list_group_members(
+        group_id=group_id,
+        user_id=user_id,
+        status="active",
+    )
+    return any(
+        str(member.get("role") or "").strip().lower() in {"teacher", "admin"}
+        for member in members
+    )
+
+
+def _can_manage_group(user: dict, group_id: str) -> bool:
+    if _is_admin_user(user):
+        return True
+    user_id = str(user.get("user_id") or "")
+    return bool(group_id and user_id and _is_active_teacher_in_group(group_id, user_id))
+
+
+def _can_access_group(user: dict, group_id: str) -> bool:
+    if _can_manage_group(user, group_id):
+        return True
+    user_id = str(user.get("user_id") or "")
+    return bool(group_id and user_id and repo.is_active_group_member(group_id=group_id, user_id=user_id))
+
+
+def _require_group_manager(user: dict, group_id: str) -> None:
+    if not _can_manage_group(user, group_id):
+        raise HTTPException(status_code=403, detail="Teacher is not an active member of this group")
+
+
+def _require_group_member(user: dict, group_id: str) -> None:
+    if not _can_access_group(user, group_id):
+        raise HTTPException(status_code=403, detail="Only group members can access this group")
+
+
+def _can_manage_academy(user: dict, academy_id: str) -> bool:
+    if _is_admin_user(user):
+        return True
+    user_id = str(user.get("user_id") or "")
+    academy = repo.get_academy(academy_id) if academy_id else None
+    if academy and str(academy.get("admin_user_id") or "") == user_id:
+        return True
+    return bool(
+        academy_id
+        and user_id
+        and repo.is_active_academy_teacher(academy_id=academy_id, user_id=user_id)
+    )
+
+
+def _require_academy_manager(user: dict, academy_id: str) -> None:
+    if not _can_manage_academy(user, academy_id):
+        raise HTTPException(status_code=403, detail="Teacher is not an active member of this academy")
+
+
+def _require_academy_student(academy_id: str, user_id: str) -> None:
+    if not repo.is_active_academy_member(academy_id=academy_id, user_id=user_id):
+        raise HTTPException(status_code=403, detail="Student is not an active member of this academy")
+
+
+def _require_tuition_manager(payment_id: str, user: dict) -> dict:
+    payment = repo.get_tuition_payment(payment_id)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Tuition payment not found")
+    _require_academy_manager(user, str(payment.get("academy_id") or ""))
+    return payment
+
+
+def _require_ledger_manager(ledger_id: str, user: dict) -> dict:
+    entry = repo.get_ledger_entry(ledger_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Ledger entry not found")
+    _require_academy_manager(user, str(entry.get("academy_id") or ""))
+    return entry
+
+
+def _require_consult_manager(note_id: str, user: dict) -> dict:
+    note = repo.get_consult_note(note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Consult note not found")
+    _require_academy_manager(user, str(note.get("academy_id") or ""))
+    return note
+
+
+def _require_assignment_manager(assignment_id: str, user: dict) -> dict:
+    assignment = repo.get_assignment(assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    _require_group_manager(user, str(assignment.get("group_id") or ""))
+    return assignment
+
+
+def _require_attendance_manager(log_id: str, user: dict) -> dict:
+    log = repo.get_attendance_log(log_id)
+    if not log:
+        raise HTTPException(status_code=404, detail="Attendance not found")
+    _require_group_manager(user, str(log.get("group_id") or ""))
+    return log
+
+
+def _get_submission_and_assignment(submission_id: str) -> tuple[dict, dict]:
+    submission = repo.get_submission(submission_id)
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    assignment = repo.get_assignment(str(submission.get("assignment_id") or ""))
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    return submission, assignment
+
+
+def _ensure_submission_access(user: dict, submission: dict, assignment: dict) -> None:
+    if _is_admin_user(user):
+        return
+    user_id = str(user.get("user_id") or "")
+    if user_id and str(submission.get("user_id") or "") == user_id:
+        return
+    _require_group_manager(user, str(assignment.get("group_id") or ""))
+
+
+def _validate_course_assignment_scope(
+    *,
+    course_id: str,
+    group_id: str,
+    user: dict,
+) -> None:
+    user_id = str(user.get("user_id") or "")
+    role = str(user.get("role") or "").strip().lower()
+    group = repo.get_group(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    if role != "admin" and not _is_active_teacher_in_group(group_id, user_id):
+        raise HTTPException(status_code=403, detail="Teacher is not an active member of this group")
+
+    course = course_v2_repo.get_course_v2(course_id)
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if role != "admin" and course.owner_user_id != user_id:
+        raise HTTPException(status_code=403, detail="Only the course owner can assign this course")
+    if bool(course.is_public):
+        return
+
+    course_group_id = str(course.access_group_id or "").strip()
+    course_academy_id = str(course.access_academy_id or "").strip()
+    group_academy_id = str(group.get("academy_id") or "").strip()
+    if course_group_id != group_id or (
+        course_academy_id and course_academy_id != group_academy_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Private course must be deployed to the target group before assignment",
+        )
 
 
 def _enroll_course_v2_for_students(course_id: str, user_ids: List[str]) -> None:
@@ -220,6 +408,7 @@ def _build_student_analysis(user_id: str) -> dict:
             "recent_count": recent_count,
         },
         "solve_history": list_solve_history(user_id=user_id, days=30, limit=20),
+        "level_test_analysis": list_level_test_analysis_summaries(user_id, limit=20),
         "weakness_tags": list_weakness_tags(user_id)[:12],
         "tag_ratings": [
             {
@@ -236,6 +425,45 @@ def _build_student_analysis(user_id: str) -> dict:
     }
 
 
+def _build_level_test_ai_summary(body: "LevelTestAnalysisSubmit") -> Optional[dict[str, Any]]:
+    if body.ai_summary:
+        return body.ai_summary
+    if not is_sam_configured():
+        return None
+    problems = [item.model_dump() for item in body.problem_results]
+    incorrect = [item for item in problems if item.get("is_correct") is False]
+    sample_pool = incorrect or problems
+    sample_count = min(5, max(3, len(sample_pool))) if len(sample_pool) >= 3 else len(sample_pool)
+    samples = random.sample(sample_pool, sample_count) if sample_count else []
+    prompt = (
+        "Analyze this math level-test result for a teacher. "
+        "Use only the provided anonymized statistics and problem-level minimal flow data. "
+        "Return JSON with keys: summary, mathematical_thinking, weak_points, recommended_first_actions. "
+        "Keep it concise and Korean.\n\n"
+        + json.dumps(
+            {
+                "exam_id": body.exam_id,
+                "tags": body.tags,
+                "correct_count": body.correct_count,
+                "total_count": body.total_count,
+                "accuracy": body.accuracy,
+                "elapsed_seconds": body.elapsed_seconds,
+                "problem_samples": samples,
+            },
+            ensure_ascii=False,
+        )
+    )
+    try:
+        return generate_json(
+            model=body.analysis_model or "gemma-4",
+            prompt=prompt,
+            temperature=0.2,
+            max_tokens=1200,
+        )
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Response wrapper
 # ---------------------------------------------------------------------------
@@ -244,6 +472,68 @@ class ApiResponse(BaseModel):
     success: bool = True
     data: Optional[dict] = None
     message: Optional[str] = None
+
+
+class LevelTestProblemResult(BaseModel):
+    item_index: int = Field(ge=1)
+    quest_id: str = ""
+    is_correct: bool
+    tags: list[str] = Field(default_factory=list)
+    selected_index: Optional[int] = None
+    elapsed_seconds: Optional[int] = Field(default=None, ge=0)
+    wrong_points: list[dict[str, Any]] = Field(default_factory=list)
+    flow_minimum: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class LevelTestAnalysisSubmit(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    course_id: str = Field(min_length=1, max_length=120)
+    module_id: str = Field(min_length=1, max_length=120)
+    exam_id: str = ""
+    exam_title: str = ""
+    tags: list[str] = Field(default_factory=list)
+    correct_count: int = Field(ge=0)
+    total_count: int = Field(ge=0)
+    accuracy: float = Field(ge=0, le=100)
+    passed: bool = False
+    elapsed_seconds: int = Field(default=0, ge=0)
+    analysis_model: str = "gemma-4"
+    analysis_retention_days: int = Field(default=7, ge=1, le=7)
+    ai_summary: Optional[dict[str, Any]] = None
+    problem_results: list[LevelTestProblemResult] = Field(default_factory=list)
+
+
+@router.post("/analysis/level-test", response_model=ApiResponse)
+def submit_level_test_analysis(
+    body: LevelTestAnalysisSubmit,
+    user: dict = Depends(get_current_user),
+):
+    user_id = str(user.get("user_id") or "")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    course = course_v2_repo.get_course_v2(body.course_id)
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if not _can_submit_course_level_test(user, course):
+        raise HTTPException(status_code=403, detail="Course not found")
+    module = course.get_module(body.module_id)
+    module_type = getattr(module.type, "value", str(module.type)) if module else ""
+    if module is None or module_type != "level_test":
+        raise HTTPException(status_code=404, detail="Level test module not found")
+
+    payload = body.model_dump()
+    payload["user_id"] = user_id
+    ai_summary = _build_level_test_ai_summary(body)
+    if ai_summary:
+        payload["ai_summary"] = ai_summary
+    result = save_level_test_analysis_session(
+        user_id=user_id,
+        session_id=body.session_id,
+        payload=payload,
+        retention_days=body.analysis_retention_days,
+    )
+    return ApiResponse(data=result, message="Level test analysis saved")
 
 
 @router.get("/friends/search-nickname", response_model=ApiResponse)
@@ -405,13 +695,16 @@ def get_group(group_id: str, user: dict = Depends(get_current_user)):
     data = repo.get_group(group_id)
     if not data:
         raise HTTPException(status_code=404, detail="Group not found")
+    if not bool(data.get("searchable")):
+        _require_group_member(user, group_id)
     return ApiResponse(data=data)
 
 
 @router.put("/groups/{group_id}", response_model=ApiResponse)
 def update_group(group_id: str, body: GroupUpdate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can update groups")
+    _require_group_manager(user, group_id)
     data = repo.update_group(
         group_id,
         name=body.name,
@@ -431,39 +724,10 @@ def update_group(group_id: str, body: GroupUpdate, user: dict = Depends(get_curr
 
 @router.delete("/groups/{group_id}", response_model=ApiResponse)
 def delete_group(group_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can delete groups")
+    _require_group_manager(user, group_id)
     deleted = repo.delete_group(group_id)
-    return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
-
-
-@router.get("/{academy_id}", response_model=ApiResponse)
-def get_academy(academy_id: str, user: dict = Depends(get_current_user)):
-    data = repo.get_academy(academy_id)
-    if not data:
-        raise HTTPException(status_code=404, detail="Academy not found")
-    return ApiResponse(data=data)
-
-
-@router.put("/{academy_id}", response_model=ApiResponse)
-def update_academy(academy_id: str, body: AcademyUpdate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
-        raise HTTPException(status_code=403, detail="Only teachers/admins can update academies")
-    data = repo.update_academy(
-        academy_id,
-        name=body.name,
-        address=body.address,
-        phone=body.phone,
-        admin_user_id=body.admin_user_id,
-    )
-    return ApiResponse(data=data)
-
-
-@router.delete("/{academy_id}", response_model=ApiResponse)
-def delete_academy(academy_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
-        raise HTTPException(status_code=403, detail="Only teachers/admins can delete academies")
-    deleted = repo.delete_academy(academy_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
 
 
@@ -494,6 +758,7 @@ def add_group_member(body: MemberCreate, user: dict = Depends(get_current_user))
     group = repo.get_group(body.group_id)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
+    _require_group_manager(user, body.group_id)
 
     # Check group capacity
     member_count = repo.get_group_member_count(body.group_id)
@@ -539,6 +804,7 @@ def invite_member(body: MemberInvite, user: dict = Depends(get_current_user)):
     group = repo.get_group(body.group_id)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
+    _require_group_manager(user, body.group_id)
 
     # Check group capacity
     member_count = repo.get_group_member_count(body.group_id)
@@ -601,17 +867,20 @@ def accept_invitation(member_id: str, user: dict = Depends(get_current_user)):
 
 @router.get("/groups/{group_id}/members", response_model=ApiResponse)
 def list_group_members(group_id: str, user: dict = Depends(get_current_user)):
+    _require_group_member(user, group_id)
     data = repo.list_group_members(group_id=group_id)
     return ApiResponse(data={"items": data})
 
 
 @router.delete("/members/{member_id}", response_model=ApiResponse)
 def remove_group_member(member_id: str, reason: Optional[str] = None, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
-        # Allow self-removal
-        member = repo.get_group_member(member_id)
-        if not member or member.get("user_id") != user.get("user_id"):
+    member = repo.get_group_member(member_id)
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if member.get("user_id") != user.get("user_id"):
+        if not _is_teacher_admin(str(user.get("role") or "")):
             raise HTTPException(status_code=403, detail="Only teachers/admins can remove members")
+        _require_group_manager(user, str(member.get("group_id") or ""))
     deleted = repo.remove_group_member(member_id, reason=reason)
     return ApiResponse(success=deleted, message="Removed" if deleted else "Not found")
 
@@ -623,6 +892,7 @@ def list_member_events(
     limit: int = Query(default=100, le=500),
     user: dict = Depends(get_current_user),
 ):
+    _require_group_manager(user, group_id)
     data = repo.list_member_events(group_id=group_id, event_type=event_type, limit=limit)
     return ApiResponse(data={"items": data})
 
@@ -646,8 +916,11 @@ class AttendanceUpdate(BaseModel):
 
 @router.post("/attendance", response_model=ApiResponse)
 def record_attendance(body: AttendanceCreate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can record attendance")
+    _require_group_manager(user, body.group_id)
+    if not repo.is_active_group_member(group_id=body.group_id, user_id=body.user_id):
+        raise HTTPException(status_code=403, detail="Student is not an active member of this group")
     data = repo.record_attendance(
         group_id=body.group_id,
         user_id=body.user_id,
@@ -668,28 +941,55 @@ def list_attendance(
     date_to: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    data = repo.list_attendance(
-        group_id=group_id,
-        user_id=user_id,
-        date=date,
-        date_from=date_from,
-        date_to=date_to,
-    )
+    caller_user_id = str(user.get("user_id") or "")
+    if _is_admin_user(user):
+        data = repo.list_attendance(
+            group_id=group_id,
+            user_id=user_id,
+            date=date,
+            date_from=date_from,
+            date_to=date_to,
+        )
+    elif _is_teacher_admin(str(user.get("role") or "")):
+        if group_id:
+            _require_group_manager(user, group_id)
+        data = repo.list_attendance_for_teacher(
+            teacher_user_id=caller_user_id,
+            group_id=group_id,
+            user_id=user_id,
+            date=date,
+            date_from=date_from,
+            date_to=date_to,
+        )
+    else:
+        if user_id and user_id != caller_user_id:
+            raise HTTPException(status_code=403, detail="Can only view your own attendance")
+        if group_id:
+            _require_group_member(user, group_id)
+        data = repo.list_attendance(
+            group_id=group_id,
+            user_id=caller_user_id,
+            date=date,
+            date_from=date_from,
+            date_to=date_to,
+        )
     return ApiResponse(data={"items": data})
 
 
 @router.put("/attendance/{log_id}", response_model=ApiResponse)
 def update_attendance(log_id: str, body: AttendanceUpdate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can update attendance")
+    _require_attendance_manager(log_id, user)
     data = repo.update_attendance(log_id, status=body.status, note=body.note)
     return ApiResponse(data=data)
 
 
 @router.delete("/attendance/{log_id}", response_model=ApiResponse)
 def delete_attendance(log_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can delete attendance")
+    _require_attendance_manager(log_id, user)
     deleted = repo.delete_attendance(log_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
 
@@ -701,6 +1001,10 @@ def get_attendance_stats(
     days: int = Query(default=30, ge=1, le=365),
     user: dict = Depends(get_current_user),
 ):
+    if str(user.get("user_id") or "") != user_id:
+        _require_group_manager(user, group_id)
+    else:
+        _require_group_member(user, group_id)
     data = repo.get_attendance_stats(user_id, group_id, days=days)
     return ApiResponse(data=data)
 
@@ -728,8 +1032,10 @@ class TuitionUpdate(BaseModel):
 
 @router.post("/tuition", response_model=ApiResponse)
 def create_tuition_payment(body: TuitionCreate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can record tuition")
+    _require_academy_manager(user, body.academy_id)
+    _require_academy_student(body.academy_id, body.user_id)
     data = repo.create_tuition_payment(
         academy_id=body.academy_id,
         user_id=body.user_id,
@@ -749,7 +1055,24 @@ def list_tuition_payments(
     month_label: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    data = repo.list_tuition_payments(academy_id=academy_id, user_id=user_id, month_label=month_label)
+    caller_user_id = str(user.get("user_id") or "")
+    if _is_admin_user(user):
+        data = repo.list_tuition_payments(academy_id=academy_id, user_id=user_id, month_label=month_label)
+    elif _is_teacher_admin(str(user.get("role") or "")):
+        data = repo.list_tuition_payments_for_teacher(
+            teacher_user_id=caller_user_id,
+            academy_id=academy_id,
+            user_id=user_id,
+            month_label=month_label,
+        )
+    else:
+        if user_id and user_id != caller_user_id:
+            raise HTTPException(status_code=403, detail="Can only view your own tuition")
+        data = repo.list_tuition_payments(
+            academy_id=academy_id,
+            user_id=caller_user_id,
+            month_label=month_label,
+        )
     return ApiResponse(data={"items": data})
 
 
@@ -759,16 +1082,18 @@ def get_tuition_summary(
     month_label: str,
     user: dict = Depends(get_current_user),
 ):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can view tuition summary")
+    _require_academy_manager(user, academy_id)
     data = repo.get_tuition_summary(academy_id, month_label)
     return ApiResponse(data=data)
 
 
 @router.put("/tuition/{payment_id}", response_model=ApiResponse)
 def update_tuition_payment(payment_id: str, body: TuitionUpdate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can update tuition")
+    _require_tuition_manager(payment_id, user)
     data = repo.update_tuition_payment(
         payment_id,
         amount=body.amount,
@@ -781,8 +1106,9 @@ def update_tuition_payment(payment_id: str, body: TuitionUpdate, user: dict = De
 
 @router.delete("/tuition/{payment_id}", response_model=ApiResponse)
 def delete_tuition_payment(payment_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can delete tuition")
+    _require_tuition_manager(payment_id, user)
     deleted = repo.delete_tuition_payment(payment_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
 
@@ -808,8 +1134,9 @@ class LedgerUpdate(BaseModel):
 
 @router.post("/ledger", response_model=ApiResponse)
 def create_ledger_entry(body: LedgerCreate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can record ledger entries")
+    _require_academy_manager(user, body.academy_id)
     data = repo.create_ledger_entry(
         academy_id=body.academy_id,
         category=body.category,
@@ -829,12 +1156,23 @@ def list_ledger_entries(
     transaction_date_to: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    data = repo.list_ledger_entries(
-        academy_id=academy_id,
-        category=category,
-        transaction_date_from=transaction_date_from,
-        transaction_date_to=transaction_date_to,
-    )
+    if not _is_teacher_admin(str(user.get("role") or "")):
+        raise HTTPException(status_code=403, detail="Only teachers/admins can view ledger entries")
+    if _is_admin_user(user):
+        data = repo.list_ledger_entries(
+            academy_id=academy_id,
+            category=category,
+            transaction_date_from=transaction_date_from,
+            transaction_date_to=transaction_date_to,
+        )
+    else:
+        data = repo.list_ledger_entries_for_teacher(
+            teacher_user_id=str(user.get("user_id") or ""),
+            academy_id=academy_id,
+            category=category,
+            transaction_date_from=transaction_date_from,
+            transaction_date_to=transaction_date_to,
+        )
     return ApiResponse(data={"items": data})
 
 
@@ -845,16 +1183,18 @@ def get_ledger_summary(
     transaction_date_to: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can view ledger summary")
+    _require_academy_manager(user, academy_id)
     data = repo.get_ledger_summary(academy_id, transaction_date_from, transaction_date_to)
     return ApiResponse(data=data)
 
 
 @router.put("/ledger/{ledger_id}", response_model=ApiResponse)
 def update_ledger_entry(ledger_id: str, body: LedgerUpdate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can update ledger")
+    _require_ledger_manager(ledger_id, user)
     data = repo.update_ledger_entry(
         ledger_id,
         category=body.category,
@@ -867,8 +1207,9 @@ def update_ledger_entry(ledger_id: str, body: LedgerUpdate, user: dict = Depends
 
 @router.delete("/ledger/{ledger_id}", response_model=ApiResponse)
 def delete_ledger_entry(ledger_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can delete ledger entries")
+    _require_ledger_manager(ledger_id, user)
     deleted = repo.delete_ledger_entry(ledger_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
 
@@ -897,8 +1238,10 @@ class ConsultUpdate(BaseModel):
 
 @router.post("/consult", response_model=ApiResponse)
 def create_consult_note(body: ConsultCreate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can create consult notes")
+    _require_academy_manager(user, body.academy_id)
+    _require_academy_student(body.academy_id, body.student_user_id)
     data = repo.create_consult_note(
         academy_id=body.academy_id,
         student_user_id=body.student_user_id,
@@ -918,14 +1261,24 @@ def list_consult_notes(
     student_user_id: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    data = repo.list_consult_notes(academy_id=academy_id, student_user_id=student_user_id)
+    if not _is_teacher_admin(str(user.get("role") or "")):
+        raise HTTPException(status_code=403, detail="Only teachers/admins can view consult notes")
+    if _is_admin_user(user):
+        data = repo.list_consult_notes(academy_id=academy_id, student_user_id=student_user_id)
+    else:
+        data = repo.list_consult_notes_for_teacher(
+            teacher_user_id=str(user.get("user_id") or ""),
+            academy_id=academy_id,
+            student_user_id=student_user_id,
+        )
     return ApiResponse(data={"items": data})
 
 
 @router.put("/consult/{note_id}", response_model=ApiResponse)
 def update_consult_note(note_id: str, body: ConsultUpdate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can update consult notes")
+    _require_consult_manager(note_id, user)
     data = repo.update_consult_note(
         note_id,
         parent_name=body.parent_name,
@@ -939,8 +1292,9 @@ def update_consult_note(note_id: str, body: ConsultUpdate, user: dict = Depends(
 
 @router.delete("/consult/{note_id}", response_model=ApiResponse)
 def delete_consult_note(note_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can delete consult notes")
+    _require_consult_manager(note_id, user)
     deleted = repo.delete_consult_note(note_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
 
@@ -972,9 +1326,15 @@ class StudentScheduleSync(BaseModel):
 
 @router.post("/assignments", response_model=ApiResponse)
 def create_assignment(body: AssignmentCreate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can create assignments")
+    _require_group_manager(user, body.group_id)
     if body.kind == "course":
+        _validate_course_assignment_scope(
+            course_id=body.ref_id,
+            group_id=body.group_id,
+            user=user,
+        )
         _validate_course_due_date(body.ref_id, body.due_date)
     data = repo.create_assignment(
         group_id=body.group_id,
@@ -1009,7 +1369,16 @@ def list_assignments(
     kind: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    data = repo.list_assignments(group_id=group_id, kind=kind)
+    if not _is_teacher_admin(str(user.get("role") or "")):
+        raise HTTPException(status_code=403, detail="Use the personal assignment list")
+    if _is_admin_user(user):
+        data = repo.list_assignments(group_id=group_id, kind=kind)
+    else:
+        data = repo.list_assignments_for_teacher(
+            user_id=str(user.get("user_id") or ""),
+            group_id=group_id,
+            kind=kind,
+        )
     return ApiResponse(data={"items": data})
 
 
@@ -1028,11 +1397,9 @@ def update_assignment(
     body: AssignmentUpdate,
     user: dict = Depends(get_current_user),
 ):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can update assignments")
-    current = repo.get_assignment(assignment_id)
-    if not current:
-        raise HTTPException(status_code=404, detail="Assignment not found")
+    current = _require_assignment_manager(assignment_id, user)
     if current.get("kind") == "course" and body.due_date is not None:
         _validate_course_due_date(current.get("ref_id"), body.due_date)
     data = repo.update_assignment(
@@ -1048,8 +1415,9 @@ def update_assignment(
 
 @router.delete("/assignments/{assignment_id}", response_model=ApiResponse)
 def delete_assignment(assignment_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can delete assignments")
+    _require_assignment_manager(assignment_id, user)
     deleted = repo.delete_assignment(assignment_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
 
@@ -1092,7 +1460,26 @@ def list_submissions(
     status: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    data = repo.list_submissions(assignment_id=assignment_id, user_id=user_id, status=status)
+    caller_user_id = str(user.get("user_id") or "")
+    if _is_admin_user(user):
+        data = repo.list_submissions(assignment_id=assignment_id, user_id=user_id, status=status)
+    elif _is_teacher_admin(str(user.get("role") or "")):
+        if assignment_id:
+            _require_assignment_manager(assignment_id, user)
+        data = repo.list_submissions_for_teacher(
+            teacher_user_id=caller_user_id,
+            assignment_id=assignment_id,
+            user_id=user_id,
+            status=status,
+        )
+    else:
+        if user_id and user_id != caller_user_id:
+            raise HTTPException(status_code=403, detail="Can only view your own submissions")
+        data = repo.list_submissions(
+            assignment_id=assignment_id,
+            user_id=caller_user_id,
+            status=status,
+        )
     return ApiResponse(data={"items": data})
 
 
@@ -1127,8 +1514,10 @@ class ReportCreate(BaseModel):
 
 @router.post("/reports", response_model=ApiResponse)
 def create_submission_report(body: ReportCreate, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can create reports")
+    _submission, assignment = _get_submission_and_assignment(body.submission_id)
+    _require_group_manager(user, str(assignment.get("group_id") or ""))
     data = repo.create_submission_report(
         submission_id=body.submission_id,
         correct_rate=body.correct_rate,
@@ -1144,11 +1533,15 @@ def get_submission_report(report_id: str, user: dict = Depends(get_current_user)
     data = repo.get_submission_report(report_id)
     if not data:
         raise HTTPException(status_code=404, detail="Report not found")
+    submission, assignment = _get_submission_and_assignment(str(data.get("submission_id") or ""))
+    _ensure_submission_access(user, submission, assignment)
     return ApiResponse(data=data)
 
 
 @router.get("/submissions/{submission_id}/report", response_model=ApiResponse)
 def get_report_by_submission(submission_id: str, user: dict = Depends(get_current_user)):
+    submission, assignment = _get_submission_and_assignment(submission_id)
+    _ensure_submission_access(user, submission, assignment)
     data = repo.get_report_by_submission(submission_id)
     if not data:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -1168,6 +1561,7 @@ class TimetablePreferenceCreate(BaseModel):
 
 @router.post("/timetable/preferences", response_model=ApiResponse)
 def create_timetable_preference(body: TimetablePreferenceCreate, user: dict = Depends(get_current_user)):
+    _require_group_member(user, body.group_id)
     data = repo.create_timetable_preference(
         group_id=body.group_id,
         user_id=user.get("user_id"),
@@ -1184,12 +1578,28 @@ def list_timetable_preferences(
     user_id: Optional[str] = None,
     user: dict = Depends(get_current_user),
 ):
-    data = repo.list_timetable_preferences(group_id=group_id, user_id=user_id)
+    caller_user_id = str(user.get("user_id") or "")
+    if group_id:
+        _require_group_member(user, group_id)
+        if user_id and user_id != caller_user_id and not _can_manage_group(user, group_id):
+            raise HTTPException(status_code=403, detail="Can only view your own preferences")
+        data = repo.list_timetable_preferences(group_id=group_id, user_id=user_id)
+    elif _is_admin_user(user):
+        data = repo.list_timetable_preferences(group_id=group_id, user_id=user_id)
+    else:
+        if user_id and user_id != caller_user_id:
+            raise HTTPException(status_code=403, detail="Can only view your own preferences")
+        data = repo.list_timetable_preferences(user_id=caller_user_id)
     return ApiResponse(data={"items": data})
 
 
 @router.delete("/timetable/preferences/{preference_id}", response_model=ApiResponse)
 def delete_timetable_preference(preference_id: str, user: dict = Depends(get_current_user)):
+    preference = repo.get_timetable_preference(preference_id)
+    if not preference:
+        raise HTTPException(status_code=404, detail="Preference not found")
+    if str(preference.get("user_id") or "") != str(user.get("user_id") or ""):
+        _require_group_manager(user, str(preference.get("group_id") or ""))
     deleted = repo.delete_timetable_preference(preference_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
 
@@ -1200,22 +1610,28 @@ def delete_timetable_preference(preference_id: str, user: dict = Depends(get_cur
 
 @router.post("/timetable/generate/{group_id}", response_model=ApiResponse)
 def generate_timetable(group_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can generate timetables")
+    _require_group_manager(user, group_id)
     data = repo.generate_timetable_heuristic_v1(group_id)
     return ApiResponse(data=data)
 
 
 @router.get("/timetable/plans/{group_id}", response_model=ApiResponse)
 def list_timetable_plans(group_id: str, user: dict = Depends(get_current_user)):
+    _require_group_member(user, group_id)
     data = repo.list_timetable_plans(group_id)
     return ApiResponse(data={"items": data})
 
 
 @router.post("/timetable/plans/{plan_id}/apply", response_model=ApiResponse)
 def apply_timetable_plan(plan_id: str, user: dict = Depends(get_current_user)):
-    if user.get("role") not in ("teacher", "admin"):
+    if not _is_teacher_admin(str(user.get("role") or "")):
         raise HTTPException(status_code=403, detail="Only teachers/admins can apply timetable plans")
+    plan = repo.get_timetable_plan(plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    _require_group_manager(user, str(plan.get("group_id") or ""))
     data = repo.apply_timetable_plan(plan_id)
     if not data:
         raise HTTPException(status_code=404, detail="Plan not found")
@@ -1305,4 +1721,36 @@ def delete_snapshot(snapshot_id: str, user: dict = Depends(get_current_user)):
     if user.get("role") not in ("teacher", "admin"):
         raise HTTPException(status_code=403, detail="Only teachers/admins can delete snapshots")
     deleted = repo.delete_snapshot(snapshot_id)
+    return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")
+
+
+@router.get("/{academy_id}", response_model=ApiResponse)
+def get_academy(academy_id: str, user: dict = Depends(get_current_user)):
+    data = repo.get_academy(academy_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Academy not found")
+    return ApiResponse(data=data)
+
+
+@router.put("/{academy_id}", response_model=ApiResponse)
+def update_academy(academy_id: str, body: AcademyUpdate, user: dict = Depends(get_current_user)):
+    if not _is_teacher_admin(str(user.get("role") or "")):
+        raise HTTPException(status_code=403, detail="Only teachers/admins can update academies")
+    _require_academy_manager(user, academy_id)
+    data = repo.update_academy(
+        academy_id,
+        name=body.name,
+        address=body.address,
+        phone=body.phone,
+        admin_user_id=body.admin_user_id,
+    )
+    return ApiResponse(data=data)
+
+
+@router.delete("/{academy_id}", response_model=ApiResponse)
+def delete_academy(academy_id: str, user: dict = Depends(get_current_user)):
+    if not _is_teacher_admin(str(user.get("role") or "")):
+        raise HTTPException(status_code=403, detail="Only teachers/admins can delete academies")
+    _require_academy_manager(user, academy_id)
+    deleted = repo.delete_academy(academy_id)
     return ApiResponse(success=deleted, message="Deleted" if deleted else "Not found")

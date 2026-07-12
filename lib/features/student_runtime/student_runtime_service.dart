@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-
+import '../../shared/services/api/api_client.dart';
+import '../../shared/services/api/api_contract.dart';
 import 'models.dart';
 
 /// Singleton service that manages runtime course data, sessions, and backend
@@ -14,43 +12,20 @@ class StudentRuntimeService {
 
   static final StudentRuntimeService instance = StudentRuntimeService._();
 
-  static const String _baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
-  );
-
   final StreamController<RuntimeCourseModel> _courseController =
       StreamController<RuntimeCourseModel>.broadcast();
 
   /// Emits the currently-selected course whenever it changes.
   Stream<RuntimeCourseModel> get courseStream => _courseController.stream;
 
-  /// Reads the JWT stored by the auth flow.
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token') ?? prefs.getString('student.auth.jwt');
-  }
-
-  Map<String, String> _headers(String? token) {
-    final h = <String, String>{
-      'Content-Type': 'application/json',
-    };
-    if (token != null && token.isNotEmpty) {
-      h['Authorization'] = 'Bearer $token';
-    }
-    return h;
-  }
-
   /// Loads all courses the current student is enrolled in.
   ///
   /// On 404 (backend not ready), falls back to mock data so the UI can still
   /// be demonstrated.
   Future<List<RuntimeCourseModel>> loadEnrolledCourses() async {
-    final token = await _getToken();
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/courses'),
-        headers: _headers(token),
+      final response = await ApiClient.instance.authedGet(
+        ApiContract.uri(ApiPaths.courses),
       );
 
       if (response.statusCode == 404) {
@@ -59,12 +34,15 @@ class StudentRuntimeService {
 
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
-        final dynamic payload = decoded is Map<String, dynamic> && decoded['data'] != null
+        final dynamic payload =
+            decoded is Map<String, dynamic> && decoded['data'] != null
             ? decoded['data']
             : decoded;
         final List<dynamic> courses = payload is List<dynamic>
             ? payload
-            : (payload is Map<String, dynamic> ? (payload['courses'] as List<dynamic>? ?? const []) : const []);
+            : (payload is Map<String, dynamic>
+                  ? (payload['courses'] as List<dynamic>? ?? const [])
+                  : const []);
         return courses
             .map((e) => RuntimeCourseModel.fromJson(e as Map<String, dynamic>))
             .toList();
@@ -72,34 +50,29 @@ class StudentRuntimeService {
 
       // For any other non-2xx, return mock data so the UI isn't broken.
       return _mockCourses();
-    } on SocketException catch (_) {
-      return _mockCourses();
-    } on FormatException catch (_) {
+    } on Exception catch (_) {
       return _mockCourses();
     }
   }
 
   /// Returns the next module the student should work on for [courseId].
   Future<RuntimeModuleModel?> getNextModule(int courseId) async {
-    final token = await _getToken();
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/courses/v2/runtime/next'),
-        headers: _headers(token),
-        body: jsonEncode({'course_id': '$courseId'}),
+      final response = await ApiClient.instance.authedPost(
+        ApiContract.uri(ApiPaths.courseRuntimeNext),
+        body: {'course_id': '$courseId'},
       );
 
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
-        final dynamic payload = decoded is Map<String, dynamic> && decoded['data'] != null
+        final dynamic payload =
+            decoded is Map<String, dynamic> && decoded['data'] != null
             ? decoded['data']
             : decoded;
         if (payload is! Map<String, dynamic>) {
           return null;
         }
-        return RuntimeModuleModel.fromJson(
-          payload,
-        );
+        return RuntimeModuleModel.fromJson(payload);
       }
       return null;
     } on Exception catch (_) {
@@ -112,26 +85,31 @@ class StudentRuntimeService {
     int moduleId,
     Map<String, dynamic> result,
   ) async {
-    final token = await _getToken();
     try {
-      final courseId = result['course_id']?.toString() ?? result['courseId']?.toString() ?? '';
+      final courseId =
+          result['course_id']?.toString() ??
+          result['courseId']?.toString() ??
+          '';
       if (courseId.isEmpty) {
         return false;
       }
-      final correctCount = (result['correct_count'] ?? result['correctCount'] ?? 0) as num;
-      final totalCount = (result['total_count'] ?? result['totalCount'] ?? 0) as num;
-      final elapsedSeconds = result['elapsed_seconds'] ?? result['elapsedSeconds'];
-      final response = await http.post(
-        Uri.parse('$_baseUrl/courses/v2/runtime/submit'),
-        headers: _headers(token),
-        body: jsonEncode({
+      final correctCount =
+          (result['correct_count'] ?? result['correctCount'] ?? 0) as num;
+      final totalCount =
+          (result['total_count'] ?? result['totalCount'] ?? 0) as num;
+      final elapsedSeconds =
+          result['elapsed_seconds'] ?? result['elapsedSeconds'];
+      final response = await ApiClient.instance.authedPost(
+        ApiContract.uri(ApiPaths.courseRuntimeSubmit),
+        body: {
           'course_id': courseId,
           'module_id': '$moduleId',
           'correct_count': correctCount.toInt(),
           'total_count': totalCount.toInt(),
           if (elapsedSeconds != null) 'elapsed_seconds': elapsedSeconds,
-          if (result['student_state'] != null) 'student_state': result['student_state'],
-        }),
+          if (result['student_state'] != null)
+            'student_state': result['student_state'],
+        },
       );
       return response.statusCode >= 200 && response.statusCode < 300;
     } on Exception catch (_) {
@@ -141,12 +119,10 @@ class StudentRuntimeService {
 
   /// Starts a new learning session for [courseId].
   Future<bool> startSession(int courseId) async {
-    final token = await _getToken();
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/courses/v2/runtime/next'),
-        headers: _headers(token),
-        body: jsonEncode({'course_id': '$courseId'}),
+      final response = await ApiClient.instance.authedPost(
+        ApiContract.uri(ApiPaths.courseRuntimeNext),
+        body: {'course_id': '$courseId'},
       );
       return response.statusCode >= 200 && response.statusCode < 300;
     } on Exception catch (_) {

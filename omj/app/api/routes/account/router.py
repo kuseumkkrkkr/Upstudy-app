@@ -3,9 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
-from auth import decode_token
+from auth import decode_token, resolve_token_payload_user
 from app.schemas.common import ApiResponse, JobStatus
-from storage.student_account_store import get_account_summary
+from storage.student_account_store import add_activity_score, get_account_summary
 from storage.system_notice_store import (
     delete_system_notice_by_title,
     list_system_notices,
@@ -19,6 +19,13 @@ router = APIRouter(prefix="/account", tags=["account"])
 class SystemNoticeUpsertRequest(BaseModel):
     title: str = Field(min_length=1)
     content_html: str = Field(min_length=1)
+
+
+class ActivityScoreRecordRequest(BaseModel):
+    delta_score: int = Field(gt=0, le=10000)
+    ref_id: str = Field(min_length=1, max_length=200)
+    reason: str = Field(default="activity_log", min_length=1, max_length=80)
+    date_key: str | None = Field(default=None, max_length=10)
 
 
 def _require_account_user(request: Request):
@@ -43,9 +50,10 @@ def _require_account_user(request: Request):
             detail="Invalid token",
         )
 
-    user_id = payload.get("sub")
-    username = payload.get("username") or user_id
-    role = payload.get("role") or "student"
+    user = resolve_token_payload_user(payload)
+    user_id = user["user_id"]
+    username = user["username"]
+    role = user["role"]
     request.state.user_id = user_id
     request.state.username = username
     request.state.role = role
@@ -67,6 +75,27 @@ async def get_my_account_summary(
         status=JobStatus.done,
         data=data,
         message="Account summary retrieved",
+    )
+
+
+@router.post("/activity-score", response_model=ApiResponse)
+async def record_my_activity_score(
+    body: ActivityScoreRecordRequest,
+    request: Request,
+    _user=Depends(_require_account_user),
+):
+    user_id: str = request.state.user_id
+    data = add_activity_score(
+        user_id=user_id,
+        delta_score=body.delta_score,
+        ref_id=body.ref_id,
+        reason=body.reason,
+        date_key=body.date_key,
+    )
+    return ApiResponse(
+        status=JobStatus.done,
+        data=data,
+        message="Activity score recorded",
     )
 
 

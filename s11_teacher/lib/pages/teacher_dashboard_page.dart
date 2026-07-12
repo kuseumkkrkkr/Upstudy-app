@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
 import '../widgets/design_tokens.dart';
 import 'course_builder_page.dart';
@@ -9,6 +10,7 @@ import 'exam_paper_builder_page.dart';
 import 'group_study/group_study.dart';
 import 'problem_editor_page.dart';
 import 'teacher_document_center_page.dart';
+import 'teacher_operations_page.dart';
 
 class TeacherDashboardPage extends StatelessWidget {
   const TeacherDashboardPage({super.key});
@@ -22,7 +24,7 @@ class TeacherDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F4),
+      backgroundColor: Colors.white,
       endDrawer: _IosDashboardDrawer(onLogout: () => _logout(context)),
       body: Builder(
         builder: (scaffoldContext) {
@@ -127,7 +129,7 @@ class _DashboardBackdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const DecoratedBox(
-      decoration: BoxDecoration(color: Color(0xFFF3F7F4)),
+      decoration: BoxDecoration(color: Colors.white),
       child: SizedBox.expand(),
     );
   }
@@ -268,7 +270,7 @@ class _PrimaryAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = quiet ? kCourseGreen : kCourseLightGreen;
     return Material(
-      color: quiet ? Colors.white.withValues(alpha: 0.78) : kCourseGreen,
+      color: quiet ? Colors.white : kCourseGreen,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -398,9 +400,15 @@ class _ActionGrid extends StatelessWidget {
           title: '학습 분석',
           subtitle: '현재는 그룹 관리 화면으로 이동합니다.',
           tint: kCourseGreen,
-          onTap: () => Navigator.of(
-            scaffoldContext,
-          ).pushNamed(GroupListPage.routeName),
+          onTap: () =>
+              Navigator.of(scaffoldContext).pushNamed(GroupListPage.routeName),
+        ),
+        _FeatureTile(
+          icon: Icons.account_balance_wallet_rounded,
+          title: '재무제표(회계)',
+          subtitle: '회계와 일간/월간 스케줄을 로컬 DB에 저장합니다.',
+          tint: const Color(0xFF275E6B),
+          onTap: () => _push(const TeacherOperationsPage()),
         ),
       ]),
     );
@@ -617,9 +625,9 @@ class _GlassChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -648,7 +656,7 @@ class _IosDashboardDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(0xFFF3F7F4),
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -662,7 +670,7 @@ class _IosDashboardDrawer extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: kCourseLightGreen.withValues(alpha: 0.16),
+                        color: AppColors.surfaceMuted,
                         borderRadius: BorderRadius.circular(15),
                       ),
                       child: const Icon(

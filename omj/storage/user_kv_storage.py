@@ -1,30 +1,49 @@
 import sqlite3
+import threading
 import time
 from typing import Optional
 
+from infra.db.connection import connect_sqlite
 from storage.storage import DB_PATH
+
+_SQLITE_TIMEOUT_SECONDS = 30.0
+_USER_KV_READY: set[str] = set()
+_USER_KV_LOCK = threading.Lock()
+
+
+def _connect() -> sqlite3.Connection:
+    return connect_sqlite(DB_PATH)
 
 
 def init_user_kv_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS user_kv (
-            user_id TEXT NOT NULL,
-            key TEXT NOT NULL,
-            value TEXT NOT NULL,
-            updated_at INTEGER NOT NULL,
-            PRIMARY KEY (user_id, key)
+    if DB_PATH in _USER_KV_READY:
+        return
+    with _USER_KV_LOCK:
+        if DB_PATH in _USER_KV_READY:
+            return
+        conn = _connect()
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_kv (
+                user_id TEXT NOT NULL,
+                key TEXT NOT NULL,
+                value TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                PRIMARY KEY (user_id, key)
+            )
+            """
         )
-        """
-    )
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
+        _USER_KV_READY.add(DB_PATH)
 
 
 def get_user_kv(user_id: str, key: str) -> Optional[str]:
-    conn = sqlite3.connect(DB_PATH)
+    init_user_kv_db()
+    conn = _connect()
     cur = conn.cursor()
     cur.execute(
         "SELECT value FROM user_kv WHERE user_id = ? AND key = ?",
@@ -36,7 +55,8 @@ def get_user_kv(user_id: str, key: str) -> Optional[str]:
 
 
 def set_user_kv(user_id: str, key: str, value: str) -> None:
-    conn = sqlite3.connect(DB_PATH)
+    init_user_kv_db()
+    conn = _connect()
     cur = conn.cursor()
     now_ms = int(time.time() * 1000)
     cur.execute(
@@ -54,7 +74,8 @@ def set_user_kv(user_id: str, key: str, value: str) -> None:
 
 
 def delete_user_kv(user_id: str, key: str) -> None:
-    conn = sqlite3.connect(DB_PATH)
+    init_user_kv_db()
+    conn = _connect()
     cur = conn.cursor()
     cur.execute(
         "DELETE FROM user_kv WHERE user_id = ? AND key = ?",

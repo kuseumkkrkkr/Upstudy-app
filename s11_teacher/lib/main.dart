@@ -12,6 +12,7 @@ import 'pages/teacher_store_page.dart';
 import 'pages/textbook_builder_page.dart';
 import 'pages/group_study/group_study.dart';
 import 'pages/teacher_document_center_page.dart';
+import 'pages/teacher_operations_page.dart';
 
 void main() {
   runApp(const TeacherApp());
@@ -24,7 +25,7 @@ class TeacherApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'AIFlow Teacher',
+      title: 'AIFlow 선생님',
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF45BF63),
@@ -44,6 +45,8 @@ class TeacherApp extends StatelessWidget {
         '/textbook-builder': (context) => const TextbookBuilderPage(),
         TeacherDocumentCenterPage.routeName: (context) =>
             const TeacherDocumentCenterPage(),
+        TeacherOperationsPage.routeName: (context) =>
+            const TeacherOperationsPage(),
         GroupListPage.routeName: (context) => const GroupListPage(),
         AcademyDashboardPage.routeName: (context) =>
             const AcademyDashboardPage(academyId: '', groupId: ''),

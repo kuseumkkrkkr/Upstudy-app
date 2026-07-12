@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import 'api_contract.dart';
 import 'auth_storage.dart';
 
 class ExamRangeRequest {
@@ -116,6 +117,71 @@ class QuestSearchResult {
       page: json['page'] as int? ?? 1,
       pageSize: json['page_size'] as int? ?? quests.length,
     );
+  }
+}
+
+class DailyQuestTemplate {
+  const DailyQuestTemplate({
+    required this.templateKey,
+    required this.title,
+    required this.questType,
+    required this.difficulty,
+    required this.target,
+    required this.rewardPoints,
+    this.id,
+    this.description = '',
+    this.moduleTypes = const [],
+    this.enabled = true,
+    this.sortOrder = 0,
+    this.updatedAt = '',
+  });
+
+  final int? id;
+  final String templateKey;
+  final String title;
+  final String description;
+  final String questType;
+  final String difficulty;
+  final int target;
+  final int rewardPoints;
+  final List<String> moduleTypes;
+  final bool enabled;
+  final int sortOrder;
+  final String updatedAt;
+
+  factory DailyQuestTemplate.fromJson(Map<String, dynamic> json) {
+    final moduleTypesRaw = json['module_types'];
+    return DailyQuestTemplate(
+      id: (json['id'] as num?)?.toInt(),
+      templateKey: (json['template_key'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      questType: (json['quest_type'] ?? '').toString(),
+      difficulty: (json['difficulty'] ?? 'easy').toString(),
+      target: (json['target'] as num?)?.toInt() ?? 1,
+      rewardPoints: (json['reward_points'] as num?)?.toInt() ?? 0,
+      moduleTypes: moduleTypesRaw is List
+          ? moduleTypesRaw.map((e) => e.toString()).toList()
+          : const <String>[],
+      enabled: json['enabled'] != false,
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+      updatedAt: (json['updated_at'] ?? '').toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'template_key': templateKey,
+      'title': title,
+      'description': description,
+      'quest_type': questType,
+      'difficulty': difficulty,
+      'target': target,
+      'reward_points': rewardPoints,
+      'module_types': moduleTypes,
+      'enabled': enabled,
+      'sort_order': sortOrder,
+    };
   }
 }
 
@@ -1436,10 +1502,15 @@ class ApiClient {
 
   static final ApiClient instance = ApiClient._();
 
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
-  );
+  static const String baseUrl = ApiContract.baseUrl;
+
+  static String resourceUrl(String source) {
+    final trimmed = source.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return ApiContract.url(trimmed);
+  }
 
   final http.Client _client = http.Client();
   String? _token;
@@ -1480,7 +1551,7 @@ class ApiClient {
         return stored;
       }
     }
-    final uri = Uri.parse('$baseUrl/auth/anonymous');
+    final uri = ApiContract.uri(ApiPaths.authAnonymous);
     final response = await _client.post(uri);
     if (response.statusCode != 200) {
       throw Exception('Failed to obtain token: ${response.statusCode}');
@@ -1507,10 +1578,15 @@ class ApiClient {
     throw Exception('Teacher login required');
   }
 
+  Future<void> _clearTokenIfUnauthorized(int statusCode) async {
+    if (statusCode == 401) {
+      await clearToken();
+    }
+  }
+
   Future<String?> getUserStorage(String key) async {
     final token = await _ensureToken();
-    final encodedKey = Uri.encodeComponent(key);
-    final uri = Uri.parse('$baseUrl/user/storage/$encodedKey');
+    final uri = ApiContract.uri(ApiPaths.userStorage(key));
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -1527,8 +1603,7 @@ class ApiClient {
 
   Future<void> setUserStorage(String key, String value) async {
     final token = await _ensureToken();
-    final encodedKey = Uri.encodeComponent(key);
-    final uri = Uri.parse('$baseUrl/user/storage/$encodedKey');
+    final uri = ApiContract.uri(ApiPaths.userStorage(key));
     final response = await _client.put(
       uri,
       headers: {
@@ -1544,7 +1619,7 @@ class ApiClient {
 
   Future<UserProfile> getMyProfile() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/auth/me');
+    final uri = ApiContract.uri(ApiPaths.authMe);
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -1558,7 +1633,7 @@ class ApiClient {
 
   Future<UserProfile> updateMyProfile(Map<String, dynamic> body) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/auth/me');
+    final uri = ApiContract.uri(ApiPaths.authMe);
     final response = await _client.put(
       uri,
       headers: {
@@ -1576,7 +1651,7 @@ class ApiClient {
 
   Future<void> deleteMyProfile({required String password}) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/auth/me');
+    final uri = ApiContract.uri(ApiPaths.authMe);
     final response = await _client.delete(
       uri,
       headers: {
@@ -1592,8 +1667,7 @@ class ApiClient {
 
   Future<void> deleteUserStorage(String key) async {
     final token = await _ensureToken();
-    final encodedKey = Uri.encodeComponent(key);
-    final uri = Uri.parse('$baseUrl/user/storage/$encodedKey');
+    final uri = ApiContract.uri(ApiPaths.userStorage(key));
     final response = await _client.delete(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -1615,7 +1689,7 @@ class ApiClient {
     bool completed = false,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/continue/strokes');
+    final uri = ApiContract.uri('/continue/strokes');
     final response = await _client.post(
       uri,
       headers: {
@@ -1647,8 +1721,8 @@ class ApiClient {
   }) async {
     final token = await _ensureToken();
     final encodedTarget = Uri.encodeComponent(targetId);
-    final uri = Uri.parse(
-      '$baseUrl/continue/strokes?kind=$kind&target_id=$encodedTarget',
+    final uri = ApiContract.uri(
+      '/continue/strokes?kind=$kind&target_id=$encodedTarget',
     );
     final response = await _client.get(
       uri,
@@ -1671,14 +1745,18 @@ class ApiClient {
     required int difficultyTier,
     required int questionCount,
     String paperType = 'aiflow',
+    String? title,
+    bool saveToDocumentBox = false,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/exams');
+    final uri = ApiContract.uri('/exams');
     final body = jsonEncode({
       'ranges': ranges.map((range) => range.toJson()).toList(),
       'difficulty_tier': difficultyTier,
       'question_count': questionCount,
       'paper_type': paperType,
+      if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
+      'save_to_document_box': saveToDocumentBox,
     });
     final response = await _client.post(
       uri,
@@ -1689,7 +1767,14 @@ class ApiClient {
       body: body,
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to create exam: ${response.statusCode}');
+      var detail = response.body;
+      try {
+        final payload = jsonDecode(response.body);
+        if (payload is Map && payload['detail'] != null) {
+          detail = payload['detail'].toString();
+        }
+      } catch (_) {}
+      throw Exception('Failed to create exam: ${response.statusCode} $detail');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return payload['exam_id'] as String;
@@ -1697,7 +1782,7 @@ class ApiClient {
 
   Future<ExamStatus> getExamStatus(String examId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/exams/$examId');
+    final uri = ApiContract.uri('/exams/$examId');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -1711,8 +1796,8 @@ class ApiClient {
 
   Future<List<ExamPaperSummary>> listExams({int limit = 100}) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/exams',
+    final uri = ApiContract.uri(
+      '/exams',
     ).replace(queryParameters: {'limit': '$limit'});
     final response = await _client.get(
       uri,
@@ -1743,7 +1828,10 @@ class ApiClient {
 
   Future<String> examPdfUrl(String examId, {bool inline = false}) async {
     final token = await _ensureToken();
-    return '$baseUrl/exams/$examId/pdf?inline=${inline ? '1' : '0'}&token=$token';
+    return ApiContract.url(
+      ApiPaths.examPdf(examId),
+      query: {'inline': inline ? '1' : '0', 'token': token},
+    );
   }
 
   Future<List<Map<String, dynamic>>> searchQuests({
@@ -1754,46 +1842,35 @@ class ApiClient {
     bool? isMcqBranch,
     int pageSize = 200,
   }) async {
-    final token = await _ensureToken();
-    final params = <String, String>{};
-    if (hashTag != null && hashTag.trim().isNotEmpty) {
-      params['hash_tag'] = hashTag.trim();
-    }
-    if (questId != null && questId.trim().isNotEmpty) {
-      params['quest_id'] = questId.trim();
-    }
-    if (textQuery != null && textQuery.trim().isNotEmpty) {
-      params['text'] = textQuery.trim();
-    }
-    if (pageSize > 0) {
-      params['page_size'] = pageSize.toString();
-    }
-    if (isVariant != null) {
-      params['is_variant'] = isVariant.toString();
-    }
-    if (isMcqBranch != null) {
-      params['is_mcq_branch'] = isMcqBranch.toString();
-    }
-    if (params.isEmpty) {
+    final hasQuery = [
+      hashTag,
+      questId,
+      textQuery,
+    ].any((value) => value != null && value.trim().isNotEmpty);
+    if (!hasQuery) {
       throw Exception('Search requires hash_tag, quest_id, or text');
     }
-    final uri = Uri.parse('$baseUrl/quests').replace(queryParameters: params);
-    final response = await _client.get(
-      uri,
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to search quests: ${response.statusCode}');
+    if (isVariant == true || isMcqBranch == true) {
+      return <Map<String, dynamic>>[];
     }
-    final payload = jsonDecode(response.body) as Map<String, dynamic>;
-    return QuestSearchResult.fromJson(payload).quests;
+    final payload = await searchExamEditorProblems(
+      hashTag: hashTag,
+      questId: questId,
+      text: textQuery,
+      pageSize: pageSize,
+    );
+    return _ownedQuestSearchResultFromJson(
+      payload,
+      page: 1,
+      pageSize: pageSize,
+    ).quests;
   }
 
   Future<Map<String, dynamic>> generateVariantFromFlowDraft({
     required Map<String, dynamic> payload,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/variants/from-flow-draft');
+    final uri = ApiContract.uri('/quests/variants/from-flow-draft');
     final response = await _client.post(
       uri,
       headers: {
@@ -1814,7 +1891,7 @@ class ApiClient {
     required Map<String, dynamic> payload,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/variants/from-prompt-note');
+    final uri = ApiContract.uri('/quests/variants/from-prompt-note');
     final response = await _client.post(
       uri,
       headers: {
@@ -1838,7 +1915,7 @@ class ApiClient {
     String visibilityScope = 'private_mcq',
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/variants/convert-mcq');
+    final uri = ApiContract.uri('/quests/variants/convert-mcq');
     final response = await _client.post(
       uri,
       headers: {
@@ -1866,7 +1943,7 @@ class ApiClient {
     String? userAnswer,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/analysis/solve/variant-grade');
+    final uri = ApiContract.uri('/analysis/solve/variant-grade');
     final response = await _client.post(
       uri,
       headers: {
@@ -1887,8 +1964,8 @@ class ApiClient {
 
   Future<List<Map<String, dynamic>>> listQuestTray({int limit = 100}) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/quests/tray',
+    final uri = ApiContract.uri(
+      '/quests/tray',
     ).replace(queryParameters: {'limit': '$limit'});
     final response = await _client.get(
       uri,
@@ -1909,7 +1986,7 @@ class ApiClient {
     required Map<String, dynamic> payload,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/tray');
+    final uri = ApiContract.uri('/quests/tray');
     final response = await _client.post(
       uri,
       headers: {
@@ -1935,7 +2012,7 @@ class ApiClient {
     required List<Map<String, dynamic>> items,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/exam-editor/papers');
+    final uri = ApiContract.uri('/exam-editor/papers');
     final response = await _client.post(
       uri,
       headers: {
@@ -1961,7 +2038,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> deployExamEditorPaper(String paperId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/exam-editor/papers/$paperId/deploy');
+    final uri = ApiContract.uri('/exam-editor/papers/$paperId/deploy');
     final response = await _client.post(
       uri,
       headers: {
@@ -1980,9 +2057,11 @@ class ApiClient {
 
   Future<Map<String, dynamic>> searchExamEditorProblems({
     String? hashTag,
+    String? questId,
     String? text,
     String? dateFrom,
     String? dateTo,
+    bool ownedOnly = true,
     int page = 1,
     int pageSize = 50,
   }) async {
@@ -1990,15 +2069,18 @@ class ApiClient {
     final params = <String, String>{
       'page': '$page',
       'page_size': '$pageSize',
+      'owned_only': 'true',
       if (hashTag != null && hashTag.trim().isNotEmpty)
         'hash_tag': hashTag.trim(),
+      if (questId != null && questId.trim().isNotEmpty)
+        'quest_id': questId.trim(),
       if (text != null && text.trim().isNotEmpty) 'text': text.trim(),
       if (dateFrom != null && dateFrom.trim().isNotEmpty)
         'date_from': dateFrom.trim(),
       if (dateTo != null && dateTo.trim().isNotEmpty) 'date_to': dateTo.trim(),
     };
-    final uri = Uri.parse(
-      '$baseUrl/exam-editor/problems/search',
+    final uri = ApiContract.uri(
+      '/exam-editor/problems/search',
     ).replace(queryParameters: params);
     final response = await _client.get(
       uri,
@@ -2017,7 +2099,7 @@ class ApiClient {
     required List<int> itemIndexes,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/exam-editor/tray/import');
+    final uri = ApiContract.uri('/exam-editor/tray/import');
     final response = await _client.post(
       uri,
       headers: {
@@ -2041,7 +2123,7 @@ class ApiClient {
     String? instruction,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/exam-editor/arrange/ai');
+    final uri = ApiContract.uri('/exam-editor/arrange/ai');
     final response = await _client.post(
       uri,
       headers: {
@@ -2065,7 +2147,7 @@ class ApiClient {
 
   Future<bool> toggleExamEditorSource(bool enabled) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/exam-editor/source/toggle');
+    final uri = ApiContract.uri('/exam-editor/source/toggle');
     final response = await _client.post(
       uri,
       headers: {
@@ -2094,7 +2176,7 @@ class ApiClient {
     String? requestId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/generate');
+    final uri = ApiContract.uri('/quests/generate');
     final body = jsonEncode({
       'hash_tags': hashTags,
       'solves_count': solvesCount,
@@ -2138,7 +2220,7 @@ class ApiClient {
       if (result is Map && result['quest'] is Map) {
         return Map<String, dynamic>.from(result['quest'] as Map);
       }
-      if (state == 'failed' || state == 'error') {
+      if (state == 'failed' || state == 'error' || state == 'cancelled') {
         throw Exception(
           status['error']?.toString() ?? 'Quest generation failed',
         );
@@ -2151,8 +2233,8 @@ class ApiClient {
     required String requestId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/quests/generate/status',
+    final uri = ApiContract.uri(
+      '/quests/generate/status',
     ).replace(queryParameters: {'request_id': requestId});
     final response = await _client.get(
       uri,
@@ -2164,9 +2246,28 @@ class ApiClient {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> cancelQuestGeneration({
+    required String requestId,
+  }) async {
+    final token = await _ensureToken();
+    final uri = ApiContract.uri(
+      ApiPaths.questsGenerateCancel,
+    ).replace(queryParameters: {'request_id': requestId});
+    final response = await _client.post(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to cancel quest generation: ${response.statusCode}',
+      );
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> fetchTeacherStoreSummary() async {
     final token = await _ensureTeacherToken();
-    final uri = Uri.parse('$baseUrl/teacher/store/summary');
+    final uri = ApiContract.uri('/teacher/store/summary');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2179,7 +2280,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> topUpTeacherStoreTest(int amount) async {
     final token = await _ensureTeacherToken();
-    final uri = Uri.parse('$baseUrl/teacher/store/top-up-test');
+    final uri = ApiContract.uri('/teacher/store/top-up-test');
     final response = await _client.post(
       uri,
       headers: {
@@ -2196,7 +2297,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> purchaseTeacherStoreItem(String itemId) async {
     final token = await _ensureTeacherToken();
-    final uri = Uri.parse('$baseUrl/teacher/store/purchase');
+    final uri = ApiContract.uri('/teacher/store/purchase');
     final response = await _client.post(
       uri,
       headers: {
@@ -2217,37 +2318,15 @@ class ApiClient {
     required int maxDifficultyTier,
     required int questionCount,
   }) async {
-    final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/generate/batch');
-    final body = jsonEncode({
-      'hash_tags': hashTags,
-      'min_difficulty_tier': minDifficultyTier,
-      'max_difficulty_tier': maxDifficultyTier,
-      'question_count': questionCount,
-    });
-    final response = await _client.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: body,
-    );
-    if (response.statusCode != 200) {
-      String message = 'Failed to generate problem set: ${response.statusCode}';
-      try {
-        final payload = jsonDecode(response.body) as Map<String, dynamic>;
-        final detail = payload['detail'];
-        if (detail is String && detail.trim().isNotEmpty) {
-          message = detail.trim();
-        }
-      } catch (_) {}
-      throw Exception(message);
+    final quests = <Map<String, dynamic>>[];
+    await for (final quest in generateProblemSetStream(
+      hashTags: hashTags,
+      minDifficultyTier: minDifficultyTier,
+      maxDifficultyTier: maxDifficultyTier,
+      questionCount: questionCount,
+    )) {
+      quests.add(quest);
     }
-    final payload = jsonDecode(response.body) as Map<String, dynamic>;
-    final quests = (payload['quests'] as List<dynamic>? ?? [])
-        .map((quest) => quest as Map<String, dynamic>)
-        .toList();
     if (quests.isEmpty) {
       throw Exception('Missing quests in response');
     }
@@ -2261,7 +2340,7 @@ class ApiClient {
     required int questionCount,
   }) async* {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/quests/generate/stream');
+    final uri = ApiContract.uri('/quests/generate/stream');
     final request = http.Request('POST', uri);
     request.headers['Content-Type'] = 'application/json';
     request.headers['Authorization'] = 'Bearer $token';
@@ -2327,7 +2406,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> generateCubicProblem({int? seed}) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/csat/cubic');
+    final uri = ApiContract.uri('/csat/cubic');
     final body = jsonEncode({if (seed != null) 'seed': seed});
     final response = await _client.post(
       uri,
@@ -2349,21 +2428,41 @@ class ApiClient {
     int page = 1,
     int pageSize = 20,
   }) async {
-    final token = await _ensureToken();
-    final params = <String, String>{
-      'page': page.toString(),
-      'page_size': pageSize.toString(),
-    };
-    final uri = Uri.parse('$baseUrl/quests').replace(queryParameters: params);
-    final response = await _client.get(
-      uri,
-      headers: {'Authorization': 'Bearer $token'},
+    final payload = await searchExamEditorProblems(
+      page: page,
+      pageSize: pageSize,
     );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to fetch quests: ${response.statusCode}');
-    }
-    final payload = jsonDecode(response.body) as Map<String, dynamic>;
-    return QuestSearchResult.fromJson(payload);
+    return _ownedQuestSearchResultFromJson(
+      payload,
+      page: page,
+      pageSize: pageSize,
+    );
+  }
+
+  QuestSearchResult _ownedQuestSearchResultFromJson(
+    Map<String, dynamic> payload, {
+    required int page,
+    required int pageSize,
+  }) {
+    final rawItems = payload['items'] as List<dynamic>? ?? const [];
+    final quests = rawItems.whereType<Map>().map((item) {
+      final quest = Map<String, dynamic>.from(item);
+      final title =
+          quest['quest_title'] ?? quest['quest_title_text'] ?? quest['content'];
+      return <String, dynamic>{
+        ...quest,
+        'id': quest['quest_id'] ?? quest['id'],
+        'quest_title': title,
+        'quest_title_text': quest['quest_title_text'] ?? title,
+        'hash_tags': quest['hash_tags'] ?? const <String>[],
+      };
+    }).toList();
+    return QuestSearchResult(
+      quests: quests,
+      total: (payload['total'] as num?)?.toInt() ?? quests.length,
+      page: (payload['page'] as num?)?.toInt() ?? page,
+      pageSize: (payload['page_size'] as num?)?.toInt() ?? pageSize,
+    );
   }
 
   Future<SolveAnalysisResponse> submitSolveAnalysis({
@@ -2373,7 +2472,7 @@ class ApiClient {
     Uint8List? heatmapImage,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/analysis/solve');
+    final uri = ApiContract.uri('/analysis/solve');
     final payloadWithImages = Map<String, dynamic>.from(payload);
     if (studentWorkImage != null && studentWorkImage.isNotEmpty) {
       payloadWithImages['student_work_image'] = base64Encode(studentWorkImage);
@@ -2407,7 +2506,7 @@ class ApiClient {
     Uint8List? heatmapImage,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/analysis/ocr');
+    final uri = ApiContract.uri('/analysis/ocr');
     final payloadWithImages = Map<String, dynamic>.from(payload);
     if (studentWorkImage != null && studentWorkImage.isNotEmpty) {
       payloadWithImages['student_work_image'] = base64Encode(studentWorkImage);
@@ -2441,7 +2540,7 @@ class ApiClient {
     String? submissionId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/rating/submit');
+    final uri = ApiContract.uri('/rating/submit');
     final body = jsonEncode({
       'quest_id': questId,
       'is_correct': isCorrect,
@@ -2467,7 +2566,7 @@ class ApiClient {
 
   Future<UserRating> fetchUserRating() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/rating/user');
+    final uri = ApiContract.uri('/rating/user');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2481,9 +2580,7 @@ class ApiClient {
 
   Future<UserRating> fetchUserRatingFor(String userId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/rating/user/${Uri.encodeComponent(userId)}',
-    );
+    final uri = ApiContract.uri('/rating/user/${Uri.encodeComponent(userId)}');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2497,8 +2594,8 @@ class ApiClient {
 
   Future<Map<String, dynamic>> fetchStudentAnalysis(String userId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/academy/analysis/students/${Uri.encodeComponent(userId)}',
+    final uri = ApiContract.uri(
+      '/academy/analysis/students/${Uri.encodeComponent(userId)}',
     );
     final response = await _client.get(
       uri,
@@ -2516,7 +2613,7 @@ class ApiClient {
 
   Future<List<TagRating>> fetchTagRatings() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/rating/tags');
+    final uri = ApiContract.uri('/rating/tags');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2534,7 +2631,7 @@ class ApiClient {
 
   Future<List<WeaknessTag>> fetchWeaknessTags() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/weakness/tags');
+    final uri = ApiContract.uri('/weakness/tags');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2561,8 +2658,8 @@ class ApiClient {
       'limit': limit.toString(),
       if (tag != null && tag.trim().isNotEmpty) 'tag': tag.trim(),
     };
-    final uri = Uri.parse(
-      '$baseUrl/habit/problem',
+    final uri = ApiContract.uri(
+      '/habit/problem',
     ).replace(queryParameters: params);
     final response = await _client.get(
       uri,
@@ -2588,7 +2685,7 @@ class ApiClient {
     String? questTitle,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/habit/problem');
+    final uri = ApiContract.uri('/habit/problem');
     final response = await _client.post(
       uri,
       headers: {
@@ -2613,7 +2710,7 @@ class ApiClient {
     String? questId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/habit/problem/replay');
+    final uri = ApiContract.uri('/habit/problem/replay');
     final response = await _client.post(
       uri,
       headers: {
@@ -2637,7 +2734,7 @@ class ApiClient {
     int perTag = 3,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/ox_quiz/generate');
+    final uri = ApiContract.uri('/ox_quiz/generate');
     final response = await _client.post(
       uri,
       headers: {
@@ -2663,7 +2760,7 @@ class ApiClient {
   }) async {
     final token = await _ensureToken();
     final params = {'tags': tags.join(','), 'per_tag': perTag.toString()};
-    final uri = Uri.parse('$baseUrl/ox_quiz').replace(queryParameters: params);
+    final uri = ApiContract.uri('/ox_quiz').replace(queryParameters: params);
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2684,7 +2781,7 @@ class ApiClient {
     int limit = 20,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friends/search');
+    final uri = ApiContract.uri('/social/friends/search');
     final response = await _client.post(
       uri,
       headers: {
@@ -2708,8 +2805,8 @@ class ApiClient {
     int limit = 20,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/academy/friends/search-nickname',
+    final uri = ApiContract.uri(
+      '/academy/friends/search-nickname',
     ).replace(queryParameters: {'q': query.trim(), 'limit': '$limit'});
     final response = await _client.get(
       uri,
@@ -2731,7 +2828,7 @@ class ApiClient {
 
   Future<List<FriendProfile>> listFriends() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friends');
+    final uri = ApiContract.uri('/social/friends');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2748,7 +2845,7 @@ class ApiClient {
 
   Future<List<FriendRank>> fetchFriendRankings() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friends/rankings');
+    final uri = ApiContract.uri('/social/friends/rankings');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2765,7 +2862,7 @@ class ApiClient {
 
   Future<FriendProfile> addFriend(String username) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friends/add');
+    final uri = ApiContract.uri('/social/friends/add');
     final response = await _client.post(
       uri,
       headers: {
@@ -2783,7 +2880,7 @@ class ApiClient {
 
   Future<FriendProfile> removeFriend(String username) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friends/remove');
+    final uri = ApiContract.uri('/social/friends/remove');
     final response = await _client.post(
       uri,
       headers: {
@@ -2801,7 +2898,7 @@ class ApiClient {
 
   Future<List<FriendRequest>> listFriendRequests() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friend-requests');
+    final uri = ApiContract.uri('/social/friend-requests');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2824,7 +2921,7 @@ class ApiClient {
     String? message,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friend-requests');
+    final uri = ApiContract.uri('/social/friend-requests');
     final response = await _client.post(
       uri,
       headers: {
@@ -2845,7 +2942,7 @@ class ApiClient {
 
   Future<FriendProfile> acceptFriendRequest(String requestId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friend-requests/$requestId/accept');
+    final uri = ApiContract.uri('/social/friend-requests/$requestId/accept');
     final response = await _client.post(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2861,7 +2958,7 @@ class ApiClient {
 
   Future<FriendRequest> cancelFriendRequest(String requestId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friend-requests/$requestId/cancel');
+    final uri = ApiContract.uri('/social/friend-requests/$requestId/cancel');
     final response = await _client.post(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2877,7 +2974,7 @@ class ApiClient {
 
   Future<FriendRequest> declineFriendRequest(String requestId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/friend-requests/$requestId/decline');
+    final uri = ApiContract.uri('/social/friend-requests/$requestId/decline');
     final response = await _client.post(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -2902,7 +2999,7 @@ class ApiClient {
     String? inviteCode,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups');
+    final uri = ApiContract.uri('/social/study-groups');
     final body = jsonEncode({
       'name': name.trim(),
       'description': description.trim(),
@@ -2930,13 +3027,14 @@ class ApiClient {
   }
 
   Future<List<StudyGroup>> listMyStudyGroups() async {
-    final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/mine');
+    final token = await _ensureTeacherToken();
+    final uri = ApiContract.uri('/social/study-groups/mine');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
+      await _clearTokenIfUnauthorized(response.statusCode);
       throw Exception('Failed to load study groups: ${response.statusCode}');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
@@ -2951,8 +3049,8 @@ class ApiClient {
     int limit = 20,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/search',
+    final uri = ApiContract.uri(
+      '/social/study-groups/search',
     ).replace(queryParameters: {'q': keyword, 'limit': limit.toString()});
     final response = await _client.get(
       uri,
@@ -2973,8 +3071,8 @@ class ApiClient {
     int limit = 30,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/$groupId/shared-problems',
+    final uri = ApiContract.uri(
+      '/social/study-groups/$groupId/shared-problems',
     ).replace(queryParameters: {'limit': limit.toString()});
     final response = await _client.get(
       uri,
@@ -2998,8 +3096,8 @@ class ApiClient {
     required int seed,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/$groupId/shared-problems',
+    final uri = ApiContract.uri(
+      '/social/study-groups/$groupId/shared-problems',
     );
     final response = await _client.post(
       uri,
@@ -3021,8 +3119,8 @@ class ApiClient {
     int limit = 5,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/$groupId/shared-exams',
+    final uri = ApiContract.uri(
+      '/social/study-groups/$groupId/shared-exams',
     ).replace(queryParameters: {'limit': limit.toString()});
     final response = await _client.get(
       uri,
@@ -3044,7 +3142,7 @@ class ApiClient {
     required int seed,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/shared-exams');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/shared-exams');
     final response = await _client.post(
       uri,
       headers: {
@@ -3065,7 +3163,7 @@ class ApiClient {
     String? password,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/join');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/join');
     final response = await _client.post(
       uri,
       headers: {
@@ -3086,7 +3184,7 @@ class ApiClient {
     String? password,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/join-by-code');
+    final uri = ApiContract.uri('/social/study-groups/join-by-code');
     final response = await _client.post(
       uri,
       headers: {
@@ -3110,8 +3208,8 @@ class ApiClient {
   Future<StudyGroupInviteMeta> fetchStudyGroupInviteMeta(
     String inviteCode,
   ) async {
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/invite/${inviteCode.trim()}',
+    final uri = ApiContract.uri(
+      '/social/study-groups/invite/${inviteCode.trim()}',
     );
     final response = await _client.get(uri);
     if (response.statusCode != 200) {
@@ -3130,8 +3228,8 @@ class ApiClient {
     int limit = 20,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/notices/my/system',
+    final uri = ApiContract.uri(
+      '/social/study-groups/notices/my/system',
     ).replace(queryParameters: {'limit': limit.toString()});
     final response = await _client.get(
       uri,
@@ -3154,8 +3252,8 @@ class ApiClient {
     int limit = 20,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/$groupId/notices',
+    final uri = ApiContract.uri(
+      '/social/study-groups/$groupId/notices',
     ).replace(queryParameters: {'limit': limit.toString()});
     final response = await _client.get(
       uri,
@@ -3177,7 +3275,7 @@ class ApiClient {
     required String contentHtml,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/notices');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/notices');
     final response = await _client.put(
       uri,
       headers: {
@@ -3198,8 +3296,8 @@ class ApiClient {
     required String title,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/$groupId/notices',
+    final uri = ApiContract.uri(
+      '/social/study-groups/$groupId/notices',
     ).replace(queryParameters: {'title': title.trim()});
     final response = await _client.delete(
       uri,
@@ -3218,8 +3316,8 @@ class ApiClient {
     final token = await _ensureToken();
     final params = <String, String>{'limit': limit.toString()};
     if (before != null) params['before'] = before;
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/$groupId/messages',
+    final uri = ApiContract.uri(
+      '/social/study-groups/$groupId/messages',
     ).replace(queryParameters: params);
     final response = await _client.get(
       uri,
@@ -3240,7 +3338,7 @@ class ApiClient {
     required String text,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/messages');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/messages');
     final response = await _client.post(
       uri,
       headers: {
@@ -3258,7 +3356,7 @@ class ApiClient {
 
   Future<StudyGroupTopic> getStudyGroupTopic(String groupId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/topic');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/topic');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3275,7 +3373,7 @@ class ApiClient {
     required String topic,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/topic');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/topic');
     final response = await _client.put(
       uri,
       headers: {
@@ -3293,7 +3391,7 @@ class ApiClient {
 
   Future<List<StudyGroupExam>> listStudyGroupExams(String groupId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/exams');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/exams');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3314,7 +3412,7 @@ class ApiClient {
     String? title,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/exams');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/exams');
     final response = await _client.post(
       uri,
       headers: {
@@ -3345,8 +3443,8 @@ class ApiClient {
     if (beforeMessageId != null && beforeMessageId.trim().isNotEmpty) {
       params['before'] = beforeMessageId.trim();
     }
-    final uri = Uri.parse(
-      '$baseUrl/social/messages',
+    final uri = ApiContract.uri(
+      '/social/messages',
     ).replace(queryParameters: params);
     final response = await _client.get(
       uri,
@@ -3368,7 +3466,7 @@ class ApiClient {
     required String text,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/messages');
+    final uri = ApiContract.uri('/social/messages');
     final response = await _client.post(
       uri,
       headers: {
@@ -3393,8 +3491,8 @@ class ApiClient {
     if (before != null && before.trim().isNotEmpty) {
       params['before'] = before.trim();
     }
-    final uri = Uri.parse(
-      '$baseUrl/social/conversations',
+    final uri = ApiContract.uri(
+      '/social/conversations',
     ).replace(queryParameters: params);
     final response = await _client.get(
       uri,
@@ -3413,8 +3511,8 @@ class ApiClient {
 
   Future<void> deleteConversation(String peerUsername) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/social/messages/${Uri.encodeComponent(peerUsername)}/delete',
+    final uri = ApiContract.uri(
+      '/social/messages/${Uri.encodeComponent(peerUsername)}/delete',
     );
     final response = await _client.post(
       uri,
@@ -3427,7 +3525,7 @@ class ApiClient {
 
   Future<Map<String, String>> getServerChatProfile() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/serverchat/config');
+    final uri = ApiContract.uri('/serverchat/config');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3444,7 +3542,7 @@ class ApiClient {
 
   Future<String> setServerChatCharacter(String character) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/serverchat/config');
+    final uri = ApiContract.uri('/serverchat/config');
     final response = await _client.put(
       uri,
       headers: {
@@ -3470,7 +3568,7 @@ class ApiClient {
     bool? ephemeral,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/serverchat/message');
+    final uri = ApiContract.uri('/serverchat/message');
     final body = <String, dynamic>{
       'user_message': message,
       'mode': mode,
@@ -3511,9 +3609,7 @@ class ApiClient {
     if (tag != null && tag.trim().isNotEmpty) {
       params['tag'] = tag.trim();
     }
-    final uri = Uri.parse(
-      '$baseUrl/textbooks',
-    ).replace(queryParameters: params);
+    final uri = ApiContract.uri('/textbooks').replace(queryParameters: params);
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3545,8 +3641,8 @@ class ApiClient {
     if (tag != null && tag.trim().isNotEmpty) {
       params['tag'] = tag.trim();
     }
-    final uri = Uri.parse(
-      '$baseUrl/teacher/documents',
+    final uri = ApiContract.uri(
+      '/teacher/documents',
     ).replace(queryParameters: params);
     final response = await _client.get(
       uri,
@@ -3567,7 +3663,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> getTextbook(String textbookId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/textbooks/$textbookId');
+    final uri = ApiContract.uri('/textbooks/$textbookId');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3582,7 +3678,7 @@ class ApiClient {
     Map<String, dynamic> payload,
   ) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/textbooks');
+    final uri = ApiContract.uri('/textbooks');
     final response = await _client.post(
       uri,
       headers: {
@@ -3613,8 +3709,8 @@ class ApiClient {
     if (from != null) params['date_from'] = from;
     if (to != null) params['date_to'] = to;
     if (userId != null) params['user_id_filter'] = userId;
-    final uri = Uri.parse(
-      '$baseUrl/social/study-groups/$groupId/shared-flows',
+    final uri = ApiContract.uri(
+      '/social/study-groups/$groupId/shared-flows',
     ).replace(queryParameters: params);
     final response = await _client.get(
       uri,
@@ -3640,7 +3736,7 @@ class ApiClient {
     int? difficulty,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/shared-flows');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/shared-flows');
     final body = jsonEncode({
       'codebase_id': codebaseId,
       'seed': seed,
@@ -3679,8 +3775,8 @@ class ApiClient {
       'limit': limit.toString(),
       if (kind != null && kind.trim().isNotEmpty) 'kind': kind.trim(),
     };
-    final uri = Uri.parse(
-      '$baseUrl/history/solve',
+    final uri = ApiContract.uri(
+      '/history/solve',
     ).replace(queryParameters: params);
     final response = await _client.get(
       uri,
@@ -3699,7 +3795,7 @@ class ApiClient {
 
   Future<void> deleteSharedFlow(String shareId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/shared-flows/$shareId');
+    final uri = ApiContract.uri('/social/study-groups/shared-flows/$shareId');
     final response = await _client.delete(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3721,7 +3817,7 @@ class ApiClient {
     String groupId,
   ) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/$groupId/members');
+    final uri = ApiContract.uri('/social/study-groups/$groupId/members');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3741,7 +3837,7 @@ class ApiClient {
 
   Future<SharedFlowItem> getSharedFlow(String shareId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/social/study-groups/shared-flows/$shareId');
+    final uri = ApiContract.uri('/social/study-groups/shared-flows/$shareId');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3796,8 +3892,8 @@ class ApiClient {
       if (academyId != null && academyId.isNotEmpty) 'academy_id': academyId,
       'group_type': 'academy_tutoring_group',
     };
-    final uri = Uri.parse(
-      '$baseUrl/academy/groups',
+    final uri = ApiContract.uri(
+      '/academy/groups',
     ).replace(queryParameters: query);
     final response = await _client.get(
       uri,
@@ -3818,7 +3914,7 @@ class ApiClient {
 
   Future<AcademyGroup> getAcademyGroup(String groupId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/groups/$groupId');
+    final uri = ApiContract.uri('/academy/groups/$groupId');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3845,7 +3941,7 @@ class ApiClient {
     String? scheduleJson,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/groups');
+    final uri = ApiContract.uri('/academy/groups');
     final response = await _client.post(
       uri,
       headers: {
@@ -3880,7 +3976,7 @@ class ApiClient {
     String? status,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/groups/$groupId/members');
+    final uri = ApiContract.uri('/academy/groups/$groupId/members');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -3905,7 +4001,7 @@ class ApiClient {
     required String invitedUserId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/members/invite');
+    final uri = ApiContract.uri('/academy/members/invite');
     final response = await _client.post(
       uri,
       headers: {
@@ -3931,7 +4027,7 @@ class ApiClient {
     String? date,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/attendance').replace(
+    final uri = ApiContract.uri('/academy/attendance').replace(
       queryParameters: {
         'group_id': groupId,
         if (userId != null && userId.isNotEmpty) 'user_id': userId,
@@ -3961,7 +4057,7 @@ class ApiClient {
     String? monthLabel,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/tuition').replace(
+    final uri = ApiContract.uri('/academy/tuition').replace(
       queryParameters: {
         'academy_id': academyId,
         if (userId != null && userId.isNotEmpty) 'user_id': userId,
@@ -3993,7 +4089,7 @@ class ApiClient {
     String? studentUserId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/consult').replace(
+    final uri = ApiContract.uri('/academy/consult').replace(
       queryParameters: {
         'academy_id': academyId,
         if (studentUserId != null && studentUserId.isNotEmpty)
@@ -4023,7 +4119,7 @@ class ApiClient {
     int limit = 50,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/snapshots').replace(
+    final uri = ApiContract.uri('/academy/snapshots').replace(
       queryParameters: {
         'academy_id': academyId,
         if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
@@ -4060,7 +4156,7 @@ class ApiClient {
     String chatMode = 'auto',
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/assignments');
+    final uri = ApiContract.uri('/academy/assignments');
     final response = await _client.post(
       uri,
       headers: {
@@ -4092,8 +4188,8 @@ class ApiClient {
     required String groupId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/academy/assignments',
+    final uri = ApiContract.uri(
+      '/academy/assignments',
     ).replace(queryParameters: {'group_id': groupId});
     final response = await _client.get(
       uri,
@@ -4122,7 +4218,7 @@ class ApiClient {
     String? dueDate,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/assignments/$assignmentId');
+    final uri = ApiContract.uri('/academy/assignments/$assignmentId');
     final response = await _client.patch(
       uri,
       headers: {
@@ -4147,7 +4243,7 @@ class ApiClient {
 
   Future<void> deleteAssignment(String assignmentId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/assignments/$assignmentId');
+    final uri = ApiContract.uri('/academy/assignments/$assignmentId');
     final response = await _client.delete(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -4164,7 +4260,7 @@ class ApiClient {
     int priority = 1,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/timetable/preferences');
+    final uri = ApiContract.uri('/academy/timetable/preferences');
     final response = await _client.post(
       uri,
       headers: {
@@ -4194,8 +4290,8 @@ class ApiClient {
     required String groupId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse(
-      '$baseUrl/academy/timetable/preferences',
+    final uri = ApiContract.uri(
+      '/academy/timetable/preferences',
     ).replace(queryParameters: {'group_id': groupId});
     final response = await _client.get(
       uri,
@@ -4218,7 +4314,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> generateTimetable(String groupId) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/timetable/generate/$groupId');
+    final uri = ApiContract.uri('/academy/timetable/generate/$groupId');
     final response = await _client.post(
       uri,
       headers: {
@@ -4241,7 +4337,7 @@ class ApiClient {
     required String groupId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/timetable/plans/$groupId');
+    final uri = ApiContract.uri('/academy/timetable/plans/$groupId');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -4261,7 +4357,7 @@ class ApiClient {
 
   Future<TimetablePlan> applyTimetablePlan({required String planId}) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/academy/timetable/plans/$planId/apply');
+    final uri = ApiContract.uri('/academy/timetable/plans/$planId/apply');
     final response = await _client.post(
       uri,
       headers: {
@@ -4294,7 +4390,7 @@ class ApiClient {
   }
 
   Future<void> loginTeacher(String email, String password) async {
-    final uri = Uri.parse('$baseUrl/auth/teacher/login');
+    final uri = ApiContract.uri('/auth/teacher/login');
     final response = await _client.post(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -4317,7 +4413,7 @@ class ApiClient {
     required String password,
     required String name,
   }) async {
-    final uri = Uri.parse('$baseUrl/auth/teacher/register');
+    final uri = ApiContract.uri('/auth/teacher/register');
     final response = await _client.post(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -4337,14 +4433,15 @@ class ApiClient {
   // -- Course V2 APIs ------------------------------------------------------
 
   Future<Map<String, dynamic>> getCourseV2(String id) async {
-    final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/courses/v2/$id');
+    final token = await _ensureTeacherToken();
+    final uri = ApiContract.uri('/courses/v2/$id');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to load course: ');
+      await _clearTokenIfUnauthorized(response.statusCode);
+      throw Exception('Failed to load course: ${response.statusCode}');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final data = payload['data'];
@@ -4363,7 +4460,7 @@ class ApiClient {
     String order = 'desc',
     bool includeTotal = true,
   }) async {
-    final token = await _ensureToken();
+    final token = await _ensureTeacherToken();
     final params = <String, String>{
       'limit': limit.toString(),
       'offset': offset.toString(),
@@ -4384,15 +4481,14 @@ class ApiClient {
       params['visibility'] = visibility;
     }
 
-    final uri = Uri.parse(
-      '$baseUrl/courses/v2',
-    ).replace(queryParameters: params);
+    final uri = ApiContract.uri('/courses/v2').replace(queryParameters: params);
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to list courses: ');
+      await _clearTokenIfUnauthorized(response.statusCode);
+      throw Exception('Failed to list courses: ${response.statusCode}');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     return CourseV2ListResult.fromJson(payload);
@@ -4425,8 +4521,8 @@ class ApiClient {
   Future<Map<String, dynamic>> createCourseV2(
     Map<String, dynamic> payload,
   ) async {
-    final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/courses/v2');
+    final token = await _ensureTeacherToken();
+    final uri = ApiContract.uri('/courses/v2');
     final response = await _client.post(
       uri,
       headers: {
@@ -4436,7 +4532,8 @@ class ApiClient {
       body: jsonEncode(payload),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to create course: ');
+      await _clearTokenIfUnauthorized(response.statusCode);
+      throw Exception('Failed to create course: ${response.statusCode}');
     }
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final data = body['data'];
@@ -4448,8 +4545,8 @@ class ApiClient {
     String id,
     Map<String, dynamic> payload,
   ) async {
-    final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/courses/v2/$id');
+    final token = await _ensureTeacherToken();
+    final uri = ApiContract.uri('/courses/v2/$id');
     final response = await _client.put(
       uri,
       headers: {
@@ -4459,7 +4556,8 @@ class ApiClient {
       body: jsonEncode(payload),
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to update course: ');
+      await _clearTokenIfUnauthorized(response.statusCode);
+      throw Exception('Failed to update course: ${response.statusCode}');
     }
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final data = body['data'];
@@ -4468,20 +4566,21 @@ class ApiClient {
   }
 
   Future<void> deleteCourseV2(String id) async {
-    final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/courses/v2/$id');
+    final token = await _ensureTeacherToken();
+    final uri = ApiContract.uri('/courses/v2/$id');
     final response = await _client.delete(
       uri,
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Failed to delete course: ');
+      await _clearTokenIfUnauthorized(response.statusCode);
+      throw Exception('Failed to delete course: ${response.statusCode}');
     }
   }
 
   Future<List<String>> getCourseHashTags() async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/courses/hash-tags');
+    final uri = ApiContract.uri('/courses/hash-tags');
     final response = await _client.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -4495,13 +4594,31 @@ class ApiClient {
     return data.map((e) => e.toString()).toList();
   }
 
+  Future<List<Map<String, dynamic>>> getQuestGenerationTagGroups() async {
+    final token = await _ensureToken();
+    final uri = ApiContract.uri('/quests/generation-tags');
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load generation tags: ${response.statusCode}');
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final groups = payload['groups'] as List<dynamic>? ?? const [];
+    return groups
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
   Future<Map<String, dynamic>> bindCourseToAcademyGroup({
     required String courseId,
     required String academyId,
     required String groupId,
   }) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/courses/v2/$courseId/bind-academy-group');
+    final uri = ApiContract.uri('/courses/v2/$courseId/bind-academy-group');
     final response = await _client.post(
       uri,
       headers: {
@@ -4529,7 +4646,7 @@ class ApiClient {
       'Content-Type': 'application/json',
     };
 
-    final toolsUri = Uri.parse('$baseUrl/courses/v2/ai/agent/tools');
+    final toolsUri = ApiContract.uri('/courses/v2/ai/agent/tools');
     final toolsRes = await _client.get(
       toolsUri,
       headers: {'Authorization': 'Bearer $token'},
@@ -4539,7 +4656,7 @@ class ApiClient {
     }
 
     final toolResults = <String, dynamic>{};
-    final toolCallUri = Uri.parse('$baseUrl/courses/v2/ai/agent/call');
+    final toolCallUri = ApiContract.uri('/courses/v2/ai/agent/call');
     final friendsRes = await _client.post(
       toolCallUri,
       headers: commonHeaders,
@@ -4569,7 +4686,7 @@ class ApiClient {
       }
     }
 
-    final proposeUri = Uri.parse('$baseUrl/courses/v2/ai/agent/propose');
+    final proposeUri = ApiContract.uri('/courses/v2/ai/agent/propose');
     final response = await _client.post(
       proposeUri,
       headers: commonHeaders,
@@ -4601,12 +4718,95 @@ class ApiClient {
         .toList();
   }
 
+  Future<List<DailyQuestTemplate>> listDailyQuestTemplates({
+    bool? enabled,
+    String? difficulty,
+  }) async {
+    final token = await _ensureTeacherToken();
+    final query = <String, String>{
+      if (enabled != null) 'enabled': enabled ? 'true' : 'false',
+      if (difficulty != null && difficulty.trim().isNotEmpty)
+        'difficulty': difficulty.trim(),
+    };
+    final uri = ApiContract.uri(
+      '/challenges/daily-quest-templates',
+      query: query,
+    );
+    final response = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to load daily challenge templates: ${response.statusCode}',
+      );
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = payload['data'] is Map
+        ? Map<String, dynamic>.from(payload['data'] as Map)
+        : const <String, dynamic>{};
+    final items = data['items'] as List<dynamic>? ?? const [];
+    return items
+        .whereType<Map>()
+        .map((e) => DailyQuestTemplate.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  Future<DailyQuestTemplate> saveDailyQuestTemplate(
+    DailyQuestTemplate template,
+  ) async {
+    final token = await _ensureTeacherToken();
+    final uri = ApiContract.uri('/challenges/daily-quest-templates');
+    final response = await _client.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(template.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to save daily challenge template: ${response.statusCode}',
+      );
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = payload['data'] is Map
+        ? Map<String, dynamic>.from(payload['data'] as Map)
+        : const <String, dynamic>{};
+    final item = data['item'] is Map
+        ? Map<String, dynamic>.from(data['item'] as Map)
+        : const <String, dynamic>{};
+    return DailyQuestTemplate.fromJson(item);
+  }
+
+  Future<int> resetDailyQuestTemplates() async {
+    final token = await _ensureTeacherToken();
+    final uri = ApiContract.uri(
+      '/challenges/daily-quest-templates/reset-defaults',
+    );
+    final response = await _client.post(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to reset daily challenge templates: ${response.statusCode}',
+      );
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = payload['data'] is Map
+        ? Map<String, dynamic>.from(payload['data'] as Map)
+        : const <String, dynamic>{};
+    return (data['reset_count'] as num?)?.toInt() ?? 0;
+  }
+
   Future<Map<String, dynamic>> updateTextbook(
     String id,
     Map<String, dynamic> payload,
   ) async {
     final token = await _ensureToken();
-    final uri = Uri.parse('$baseUrl/textbooks/$id');
+    final uri = ApiContract.uri('/textbooks/$id');
     final response = await _client.put(
       uri,
       headers: {

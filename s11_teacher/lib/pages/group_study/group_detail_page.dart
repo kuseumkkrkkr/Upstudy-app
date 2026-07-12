@@ -860,53 +860,25 @@ class _Ios26DetailShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       endDrawer: const TeacherAppDrawer(currentRoute: '/groups'),
-      backgroundColor: const Color(0xFFF2F7F3),
+      backgroundColor: Colors.white,
       body: Builder(
-        builder: (scaffoldContext) => Stack(
-          children: [
-            Positioned(
-              top: -100,
-              right: -60,
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0x3345BF63),
-                ),
-              ),
-            ),
-            Positioned(
-              left: -80,
-              bottom: -70,
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0x221B402B),
-                ),
-              ),
-            ),
-            SafeArea(
-              child: Column(
-                children: [
-                  Ios26TopBar(
-                    brandColor: AppColors.primary,
-                    title: 'AIFlow Teacher',
-                    onBack: () => Navigator.of(context).maybePop(),
-                    onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                    items: [
-                      const Ios26NavItem(label: '그룹스터디'),
-                      Ios26NavItem(label: groupName, active: true),
-                    ],
-                    trailingIcons: trailingIcons,
-                  ),
-                  Expanded(child: child),
+        builder: (scaffoldContext) => SafeArea(
+          child: Column(
+            children: [
+              Ios26TopBar(
+                brandColor: AppColors.primary,
+                title: 'AIFlow 선생님',
+                onBack: () => Navigator.of(context).maybePop(),
+                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                items: [
+                  const Ios26NavItem(label: '그룹스터디'),
+                  Ios26NavItem(label: groupName, active: true),
                 ],
+                trailingIcons: trailingIcons,
               ),
-            ),
-          ],
+              Expanded(child: child),
+            ],
+          ),
         ),
       ),
     );
@@ -1867,6 +1839,10 @@ class _StudentRatingTileState extends State<_StudentRatingTile> {
                       const SizedBox(height: 12),
                       _HistoryList(items: _list(data['solve_history'])),
                       const SizedBox(height: 12),
+                      _LevelTestAnalysisList(
+                        items: _list(data['level_test_analysis']),
+                      ),
+                      const SizedBox(height: 12),
                       _ProgressList(
                         title: '배정된 숙제 진행 상태',
                         icon: Icons.assignment_turned_in_outlined,
@@ -2067,6 +2043,63 @@ class _HistoryList extends StatelessWidget {
   }
 }
 
+class _LevelTestAnalysisList extends StatelessWidget {
+  const _LevelTestAnalysisList({required this.items});
+
+  final List<Map<String, dynamic>> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionBox(
+      title: '레벨 테스트 분석',
+      icon: Icons.trending_up_rounded,
+      child: items.isEmpty
+          ? const Text('레벨 테스트 분석 없음')
+          : Column(
+              children: [
+                for (final item in items.take(5))
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      item['exam_title']?.toString().isNotEmpty == true
+                          ? item['exam_title'].toString()
+                          : item['exam_id']?.toString() ?? '레벨 테스트',
+                    ),
+                    subtitle: Text(_subtitle(item)),
+                    trailing: Text(
+                      item['passed'] == true ? '통과' : '미통과',
+                      style: TextStyle(
+                        color: item['passed'] == true
+                            ? AppColors.primary
+                            : Colors.red,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+    );
+  }
+
+  static String _percent(dynamic value) {
+    final number = value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '') ?? 0;
+    return '${number.toStringAsFixed(0)}%';
+  }
+
+  static String _subtitle(Map<String, dynamic> item) {
+    final ai = item['ai_summary'] is Map
+        ? Map<String, dynamic>.from(item['ai_summary'] as Map)
+        : const <String, dynamic>{};
+    final summary = ai['summary']?.toString().trim() ?? '';
+    final base =
+        '정답률 ${_percent(item['accuracy'])} · 오답 ${item['incorrect_count'] ?? 0}문항 · 보관 ${item['expires_at'] ?? '-'}까지';
+    return summary.isEmpty ? base : '$base\n$summary';
+  }
+}
+
 class _ProgressList extends StatelessWidget {
   const _ProgressList({
     required this.title,
@@ -2210,7 +2243,7 @@ class _DetailActionButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
-        backgroundColor: Colors.white.withValues(alpha: 0.62),
+        backgroundColor: AppColors.surfaceMuted,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       ),
       icon: Icon(icon, size: 16),

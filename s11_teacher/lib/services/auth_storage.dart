@@ -18,7 +18,8 @@ class AuthStorage {
 
   Future<void> saveToken(String token, {String? username, String? role}) async {
     final prefs = await SharedPreferences.getInstance();
-    final normalizedRole = _normalizeTeacherRole(role) ?? _roleFromToken(token);
+    final normalizedRole =
+        _normalizeTeacherRole(role) ?? _teacherRoleFromToken(token);
     await prefs.setString(_tokenKey, token);
     if (username != null && username.trim().isNotEmpty) {
       await prefs.setString(_usernameKey, username.trim());
@@ -34,7 +35,16 @@ class AuthStorage {
   Future<String?> readToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);
-    if (_isTeacherToken(token)) {
+    final tokenRole = _teacherRoleFromToken(token);
+    if (tokenRole != null) {
+      return token;
+    }
+    final storedRole = _normalizeTeacherRole(prefs.getString(_roleKey));
+    final tokenPayload = _tokenPayload(token);
+    if (token != null &&
+        storedRole != null &&
+        tokenPayload != null &&
+        tokenPayload['role'] == null) {
       return token;
     }
     if (token != null) {
@@ -59,7 +69,7 @@ class AuthStorage {
     if (storedRole != null) {
       return storedRole;
     }
-    final tokenRole = _roleFromToken(token);
+    final tokenRole = _teacherRoleFromToken(token);
     if (tokenRole != null) {
       await prefs.setString(_roleKey, tokenRole);
     }
@@ -79,12 +89,20 @@ class AuthStorage {
 
   Future<String?> _migrateLegacyTeacherToken(SharedPreferences prefs) async {
     final legacyToken = prefs.getString(_legacyTokenKey);
-    if (!_isTeacherToken(legacyToken)) {
+    final tokenRole = _teacherRoleFromToken(legacyToken);
+    final storedRole = _normalizeTeacherRole(prefs.getString(_legacyRoleKey));
+    final legacyTokenPayload = _tokenPayload(legacyToken);
+    final acceptsStoredRole =
+        legacyToken != null &&
+        storedRole != null &&
+        legacyTokenPayload != null &&
+        legacyTokenPayload['role'] == null;
+    if (tokenRole == null && !acceptsStoredRole) {
       await prefs.remove(_legacyRoleKey);
       return null;
     }
 
-    final role = _roleFromToken(legacyToken);
+    final role = tokenRole ?? storedRole;
     await prefs.setString(_tokenKey, legacyToken!);
     if (role != null) {
       await prefs.setString(_roleKey, role);
@@ -107,11 +125,15 @@ class AuthStorage {
     await prefs.remove(_roleKey);
   }
 
-  static bool _isTeacherToken(String? token) {
-    return _roleFromToken(token) != null;
+  static String? _teacherRoleFromToken(String? token) {
+    return _normalizeTeacherRole(_rawRoleFromToken(token));
   }
 
-  static String? _roleFromToken(String? token) {
+  static String? _rawRoleFromToken(String? token) {
+    return _tokenPayload(token)?['role']?.toString().trim().toLowerCase();
+  }
+
+  static Map<String, dynamic>? _tokenPayload(String? token) {
     if (token == null || token.trim().isEmpty) {
       return null;
     }
@@ -128,7 +150,7 @@ class AuthStorage {
       if (decoded is! Map<String, dynamic>) {
         return null;
       }
-      return _normalizeTeacherRole(decoded['role']?.toString());
+      return decoded;
     } catch (_) {
       return null;
     }

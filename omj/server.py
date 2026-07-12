@@ -3,6 +3,8 @@ import logging
 
 import base64
 
+import hashlib
+
 import json
 
 import os
@@ -19,7 +21,7 @@ import threading
 
 import time
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -60,9 +62,11 @@ from auth import (
 
     delete_user_account,
 
+    ELEVATED_ROLES,
+
     get_user_id_by_username,
 
-    get_user_by_id,
+    get_user_by_id as get_auth_user_by_id,
 
     get_user_role,
 
@@ -71,6 +75,8 @@ from auth import (
     register_teacher,
 
     register_user,
+
+    resolve_token_payload_user,
 
     update_user_profile,
 
@@ -86,6 +92,8 @@ from auth import (
 
 )
 
+get_user_by_id = get_auth_user_by_id
+
 from analysis_service import analyze_pregrade, analyze_submission
 from services.ai.guard import check_excessive, check_harmful
 
@@ -95,11 +103,27 @@ from baselines.basemodel import ContentBlocks
 
 from exam_service import plan_exam_items
 
+from generater.fix_gen import (
+    allowed_generation_tags,
+    generation_tag_groups,
+    validate_generation_tags,
+)
 from generater.make import make, make_legacy
 
-from generater.codebase_runner import warmup_sympy_pool
+from generater.codebase_runner import (
+    hard_cancel_process_pool,
+    shutdown_process_pool,
+    warmup_sympy_pool,
+)
 
 from generater.problem_solve import generate_problem_set
+from services.jobs.cancellation import (
+    GenerationCancelled,
+    cancel_token,
+    check_cancelled,
+    register_token,
+    release_token,
+)
 
 from generater.codebase_store import (
 
@@ -135,6 +159,7 @@ from storage.exam_storage import (
     get_exam,
     get_exam_items,
     init_exam_db,
+    list_exams_by_ids,
     update_exam_item,
     update_exam_status,
 )
@@ -158,9 +183,14 @@ from storage.storage import (
     update_quest_mcq,
 )
 from domain.quest.search_view import enrich_quest_search_item, quest_title_text
+from domain.exam import repository as exam_paper_repo
 from services.ai.providers.base import get_default_provider
 from services.ai.guard import evaluate_request
-from services.jobs.state_machine import JobStateMachine
+from services.jobs.state_machine import (
+    InvalidTransitionError,
+    JobNotFoundError,
+    JobStateMachine,
+)
 from user_habit import (
     init_habit_db,
     list_problem_history,
@@ -196,8 +226,8 @@ from storage.social_storage import (
     get_friends,
     get_message_by_id,
     list_conversations,
-    get_user_by_id,
-    get_user_by_username,
+    get_user_by_id as get_social_user_by_id,
+    get_user_by_username as get_social_user_by_username,
     init_social_db,
     list_friend_requests_for_user,
     list_messages,
@@ -211,13 +241,21 @@ from study_group import study_group_router
 
 from storage.rating_storage import init_rating_db
 from storage.teacher_store import (
-    has_entitlement as teacher_has_entitlement,
     init_teacher_store_db,
     purchase as teacher_store_purchase,
     summary as teacher_store_summary,
     top_up_test as teacher_store_top_up_test,
 )
+from storage.teacher_exam_document_store import (
+    has_teacher_exam_document,
+    init_teacher_exam_document_db,
+    list_teacher_exam_documents,
+    upsert_teacher_exam_document,
+)
 from storage.student_account_store import init_student_account_db
+
+from domain.academy import repository as academy_repo
+from domain.course import v2_repository as course_v2_repo
 
 from storage.weakness_storage import (
 
@@ -232,6 +270,8 @@ from storage.weakness_storage import (
 from storage.textbook_storage import (
 
     TEACHER_MANUAL_TEXTBOOK_ID,
+
+    TEACHER_PROBLEM_GENERATION_MANUAL_TEXTBOOK_ID,
 
     create_textbook,
 
@@ -283,6 +323,9 @@ from storage.user_kv_storage import (
 
 # Server chat
 from serverchat import (
+    ChatGenerationBlocked,
+    ChatInputBlocked,
+    ChatRateLimited,
     get_character as get_serverchat_character,
     get_character_profile as get_serverchat_profile,
     handle_chat_message,
@@ -594,12 +637,21 @@ async def _startup_event() -> None:
     init_weakness_db()
     init_rating_db()
     init_teacher_store_db()
+    init_teacher_exam_document_db()
     init_student_account_db()
     init_user_db()
     init_course_db()
     _init_variant_tray_db()
     # Start background job worker
     from services.jobs.worker import JobWorker
+    from services.jobs.store import JobStore
+    stale_before = (datetime.now(timezone.utc) - timedelta(hours=6)).isoformat()
+    stale_count = JobStore().fail_stale_active(
+        before_iso=stale_before,
+        detail="Server restarted before job completed",
+    )
+    if stale_count:
+        logger.warning("Marked %s stale active jobs as failed", stale_count)
     worker_concurrency = max(1, int(os.getenv("JOB_WORKER_MAX_CONCURRENT", "6")))
     worker_poll_interval = float(os.getenv("JOB_WORKER_POLL_INTERVAL_SEC", "0.5"))
     app.state.job_worker = JobWorker(
@@ -607,13 +659,26 @@ async def _startup_event() -> None:
         max_concurrent=worker_concurrency,
     )
     await app.state.job_worker.start()
-    asyncio.create_task(_ensure_level_test_template_pool())
+    app.state.level_test_template_pool_task = asyncio.create_task(
+        _ensure_level_test_template_pool()
+    )
 
 
 @app.on_event("shutdown")
 async def _shutdown_event() -> None:
     if hasattr(app.state, "job_worker"):
         await app.state.job_worker.stop()
+    for task_name in ("level_test_template_pool_task", "seed_validator_task"):
+        task = getattr(app.state, task_name, None)
+        if task is None:
+            continue
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        setattr(app.state, task_name, None)
+    shutdown_process_pool(wait=False)
 
 
 async def _ensure_level_test_template_pool() -> None:
@@ -827,6 +892,114 @@ def _is_exam_fully_correct_for_user(exam_id: str, user_id: str) -> bool:
     return len(correct_by_index) >= total
 
 
+def _can_access_exam_document(user_id: str, exam: Optional[Dict[str, Any]]) -> bool:
+    if not user_id or not exam:
+        return False
+    exam_id = str(exam.get("exam_id") or "").strip()
+    if str(exam.get("user_id") or "") == user_id:
+        return True
+    return has_teacher_exam_document(user_id, exam_id)
+
+
+def _course_references_exam(course: Any, exam_id: str) -> bool:
+    exam_value = (exam_id or "").strip()
+    if not exam_value:
+        return False
+    for module in getattr(course, "modules", []) or []:
+        module_type = getattr(module.type, "value", str(module.type))
+        if module_type not in {"exam_solve", "level_test"}:
+            continue
+        if str(module.exam_id or "").strip() == exam_value:
+            return True
+    return False
+
+
+def _can_access_exam_via_course(user_id: str, exam_id: str, course_id: Optional[str]) -> bool:
+    course_value = str(course_id or "").strip()
+    if not user_id or not course_value:
+        return False
+    course = course_v2_repo.get_course_v2(course_value)
+    if course is None or not _course_references_exam(course, exam_id):
+        return False
+    role = str(get_user_role(user_id) or "student").strip().lower()
+    if course.is_public:
+        return True
+    if role == "admin":
+        return True
+    if role == "teacher" and (
+        not str(course.owner_user_id or "").strip()
+        or str(course.owner_user_id or "") == user_id
+    ):
+        return True
+    group_id = str(course.access_group_id or "").strip()
+    if not group_id:
+        return False
+    if not academy_repo.is_active_group_member(group_id=group_id, user_id=user_id):
+        return False
+    if course.access_academy_id:
+        group = academy_repo.get_group(group_id)
+        if not group or str(group.get("academy_id") or "") != str(course.access_academy_id):
+            return False
+    return True
+
+
+def _exam_paper_runtime_items(exam_id: str) -> Optional[List[Dict[str, Any]]]:
+    try:
+        paper_id = int(str(exam_id).strip())
+    except (TypeError, ValueError):
+        return None
+
+    paper = exam_paper_repo.get_exam_paper(paper_id)
+    if paper is None:
+        return None
+
+    try:
+        layout = json.loads(paper.layout_json or "{}")
+    except json.JSONDecodeError:
+        layout = {}
+    raw_items = layout.get("items") if isinstance(layout, dict) else []
+    if not isinstance(raw_items, list):
+        raw_items = []
+
+    items: List[Dict[str, Any]] = []
+    for index, raw in enumerate(raw_items):
+        if not isinstance(raw, dict):
+            continue
+        quest_id = str(raw.get("quest_id") or "").strip()
+        if not quest_id:
+            continue
+        quest = get_quest(quest_id)
+        data = quest.get("data", {}) if quest else {}
+        hash_tags = data.get("hash_tag") or data.get("hash_tags") or []
+        if isinstance(hash_tags, str):
+            try:
+                parsed_tags = json.loads(hash_tags)
+                hash_tags = parsed_tags if isinstance(parsed_tags, list) else [hash_tags]
+            except json.JSONDecodeError:
+                hash_tags = [hash_tags]
+        if not isinstance(hash_tags, list):
+            hash_tags = []
+        items.append(
+            {
+                "item_index": index,
+                "status": "done",
+                "subject_key": str(raw.get("subject_key") or data.get("subject_key") or "math"),
+                "hash_tags": [str(tag) for tag in hash_tags],
+                "difficulty_tier": int(raw.get("difficulty_tier") or data.get("difficulty_tier") or 3),
+                "solves_count": int(raw.get("solves_count") or data.get("solves_count") or 1),
+                "strategy_level": int(raw.get("strategy_level") or data.get("strategy_level") or 1),
+                "branch_conditions": int(raw.get("branch_conditions") or data.get("branch_conditions") or 0),
+                "question_type": raw.get("question_type") or data.get("question_type"),
+                "quest_id": quest_id,
+                "flow_count": raw.get("flow_count"),
+                "codebase_id": raw.get("codebase_id") or data.get("codebase_id"),
+                "seed": raw.get("seed") or data.get("seed"),
+                "error": None if quest else "quest not found",
+            }
+        )
+    return items
+
+
 def _extract_codebase_seed(payload: Dict[str, Any]) -> Tuple[Optional[int], Optional[int]]:
     data = payload.get("data")
     if not isinstance(data, dict):
@@ -844,7 +1017,7 @@ def _extract_codebase_seed(payload: Dict[str, Any]) -> Tuple[Optional[int], Opti
     return cb_id, seed_val
 
 
-def _init_gen_status(request_id: str, message: str = "queued") -> None:
+def _init_gen_status(request_id: str, message: str = "queued", user_id: Optional[str] = None) -> None:
 
     now = int(time.time())
 
@@ -861,6 +1034,8 @@ def _init_gen_status(request_id: str, message: str = "queued") -> None:
             "quest": None,
 
             "error": None,
+
+            "user_id": user_id,
 
         }
 
@@ -923,6 +1098,60 @@ def _get_gen_status(request_id: str) -> Optional[Dict[str, Any]]:
         return _GEN_STATUS.get(request_id)
 
 
+def _parse_job_json(value: Any) -> Any:
+    if value is None or isinstance(value, (dict, list)):
+        return value
+    if isinstance(value, str) and value.strip():
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
+def _job_updated_at_epoch(value: Any) -> int:
+    if not value:
+        return int(time.time())
+    try:
+        return int(datetime.fromisoformat(str(value)).timestamp())
+    except Exception:
+        return int(time.time())
+
+
+def _quest_job_to_status_payload(state: Dict[str, Any]) -> Dict[str, Any]:
+    status_value = str(state.get("status") or "")
+    visible_status = {
+        "queued": "queued",
+        "generating": "generating",
+        "done": "done",
+        "failed": "failed",
+        "rejected": "cancelled",
+    }.get(status_value, status_value or None)
+    result = _parse_job_json(state.get("result"))
+    quest = result.get("quest") if isinstance(result, dict) else None
+    error = state.get("error") or state.get("rejection_reason")
+    return {
+        "status": visible_status,
+        "message": visible_status,
+        "updated_at": _job_updated_at_epoch(state.get("updated_at")),
+        "quest": quest,
+        "error": error,
+    }
+
+
+def _get_quest_generation_job(request_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+    try:
+        state = JobStateMachine().get_status(request_id)
+    except JobNotFoundError:
+        return None
+    if state.get("operation") != "quest_generation":
+        return None
+    owner_id = state.get("user_id")
+    if owner_id and owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorised to view this generation")
+    return state
+
+
 
 
 
@@ -936,17 +1165,22 @@ os.makedirs(_ASSETS_DIR, exist_ok=True)
 
 load_env()
 
-_SEED_VALIDATOR_ENABLED = os.environ.get("SEED_VALIDATOR_ENABLED", "0").lower() in ("1", "true", "yes")
+_SEED_VALIDATOR_ENABLED = os.environ.get("SEED_VALIDATOR_ENABLED", "1").lower() in ("1", "true", "yes")
 
 _SEED_VALIDATOR_INTERVAL = int(os.environ.get("SEED_VALIDATOR_INTERVAL", "60"))
 
-_SEED_VALIDATOR_BATCH = int(os.environ.get("SEED_VALIDATOR_BATCH", "5"))
+_SEED_VALIDATOR_BATCH = int(os.environ.get("SEED_VALIDATOR_BATCH", "1"))
 
-_SEED_VALIDATOR_ATTEMPTS = int(os.environ.get("SEED_VALIDATOR_ATTEMPTS", "10"))
+_SEED_VALIDATOR_ATTEMPTS = int(os.environ.get("SEED_VALIDATOR_ATTEMPTS", "16"))
 
-_SEED_VALIDATOR_MAX_SUCCESSES = int(os.environ.get("SEED_VALIDATOR_MAX_SUCCESSES", "3"))
+_SEED_VALIDATOR_MAX_SUCCESSES = int(os.environ.get("SEED_VALIDATOR_MAX_SUCCESSES", "4"))
 
 _SEED_VALIDATOR_LOCK = asyncio.Lock()
+
+_QUEST_GENERATE_FAST_WAIT_MS = max(
+    0,
+    int(os.environ.get("QUEST_GENERATE_FAST_WAIT_MS", "500")),
+)
 
 
 
@@ -1004,6 +1238,10 @@ class ExamCreateRequest(BaseModel):
     question_count: int = Field(ge=4, le=100)
 
     paper_type: str = "aiflow"
+
+    title: Optional[str] = None
+
+    save_to_document_box: bool = False
 
 
 
@@ -1368,7 +1606,7 @@ class ProblemSolveGenerateRequest(BaseModel):
 
     max_difficulty_tier: int = Field(ge=1, le=5)
 
-    question_count: int = Field(ge=3, le=500)
+    question_count: int = Field(ge=1, le=500)
 
     strict_tags: bool = False
 
@@ -1408,6 +1646,8 @@ class VariantFlowNodeDraft(BaseModel):
     text: Optional[str] = None
     hash_tags: List[str] = Field(default_factory=list)
     branches: List[str] = Field(default_factory=list)
+    teacher_instruction: Optional[str] = None
+    prompt_text: Optional[str] = None
 
 
 class VariantFlowDraftRequest(BaseModel):
@@ -1416,6 +1656,8 @@ class VariantFlowDraftRequest(BaseModel):
     flow_draft: List[VariantFlowNodeDraft] = Field(default_factory=list)
     prompt: Optional[str] = None
     note_blocks: List[Dict[str, Any]] = Field(default_factory=list)
+    advanced_metrics: Dict[str, Any] = Field(default_factory=dict)
+    advanced_profile: Dict[str, Any] = Field(default_factory=dict)
     seed_override: Optional[int] = None
     tags: List[str] = Field(default_factory=list)
     solves_count: int = Field(default=4, ge=1, le=10)
@@ -1428,6 +1670,8 @@ class VariantPromptNoteRequest(BaseModel):
     base_quest_ref: Optional[VariantBaseQuestRef] = None
     prompt: Optional[str] = None
     note_blocks: List[Dict[str, Any]] = Field(default_factory=list)
+    advanced_metrics: Dict[str, Any] = Field(default_factory=dict)
+    advanced_profile: Dict[str, Any] = Field(default_factory=dict)
     seed_override: Optional[int] = None
     tags: List[str] = Field(default_factory=list)
     solves_count: int = Field(default=4, ge=1, le=10)
@@ -1601,6 +1845,7 @@ class ServerChatConfigRequest(BaseModel):
 class ServerChatConfigResponse(BaseModel):
     character: str
     character_name: str
+    model: str = ""
 
 
 class ServerChatMessageRequest(BaseModel):
@@ -1609,6 +1854,8 @@ class ServerChatMessageRequest(BaseModel):
     quest_title: Optional[str] = None
     flow: Optional[str] = None
     ocr: Optional[str] = None
+    ephemeral: bool = False
+    include_user_data: bool = False
     mode: Optional[str] = Field(default="chat", pattern="^(chat|problem|counseling)$")
 
 
@@ -1618,6 +1865,7 @@ class ServerChatMessageResponse(BaseModel):
     affection_breakdown: Dict[str, float]
     character: str
     character_name: str
+    model: str = ""
     stats: Dict[str, Any]
     history_size: int
     user_turns: int
@@ -1678,6 +1926,10 @@ class SolveAnalysisRequest(BaseModel):
 class SolveAnalysisResponse(BaseModel):
 
     status: List[Dict[str, Any]] = Field(default_factory=list)
+
+    step_correctness: List[Dict[str, Any]] = Field(default_factory=list)
+
+    is_correct: Optional[bool] = None
 
     in_panic: List[int] = Field(default_factory=list)
 
@@ -1837,7 +2089,7 @@ def _make_friend_request_response(
 ) -> FriendRequestResponse:
     direction = "incoming" if request.get("to_user_id") == me_user_id else "outgoing"
     other_id = request.get("from_user_id") if direction == "incoming" else request.get("to_user_id")
-    other = get_user_by_id(other_id) or {}
+    other = get_social_user_by_id(other_id) or {}
     username = other.get("username") or other_id or ""
     return FriendRequestResponse(
         id=request.get("id") or "",
@@ -1957,6 +2209,18 @@ class TextbookResponse(BaseModel):
 
     student_visible: bool = True
 
+    document_id: Optional[str] = None
+
+    exam_id: Optional[str] = None
+
+    type: Optional[str] = None
+
+    status: Optional[str] = None
+
+    item_count: Optional[int] = None
+
+    duration_minutes: Optional[int] = None
+
 
 
 
@@ -1972,6 +2236,13 @@ class TextbookListResponse(BaseModel):
 _TEXTBOOK_LIBRARY_KEY = "textbook_library_v1"
 
 _TEACHER_MANUAL_TEXTBOOK_ID = TEACHER_MANUAL_TEXTBOOK_ID
+_TEACHER_PROBLEM_GENERATION_MANUAL_TEXTBOOK_ID = (
+    TEACHER_PROBLEM_GENERATION_MANUAL_TEXTBOOK_ID
+)
+_TEACHER_MANUAL_TEXTBOOK_IDS = (
+    _TEACHER_MANUAL_TEXTBOOK_ID,
+    _TEACHER_PROBLEM_GENERATION_MANUAL_TEXTBOOK_ID,
+)
 
 
 def _with_textbook_visibility_flags(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -1987,11 +2258,39 @@ def _with_textbook_visibility_flags(item: Dict[str, Any]) -> Dict[str, Any]:
     return payload
 
 
-def _teacher_manual_document() -> Dict[str, Any]:
-    item = get_textbook(_TEACHER_MANUAL_TEXTBOOK_ID)
-    if item:
-        return _with_textbook_visibility_flags(item)
+def _fallback_teacher_manual_document(textbook_id: str) -> Dict[str, Any]:
     now_ms = int(time.time() * 1000)
+    if textbook_id == _TEACHER_PROBLEM_GENERATION_MANUAL_TEXTBOOK_ID:
+        return {
+            "textbook_id": _TEACHER_PROBLEM_GENERATION_MANUAL_TEXTBOOK_ID,
+            "title": "문제 생성 설명서",
+            "subtitle": "고급 생성 캔버스와 난이도 파라미터 운용 안내",
+            "category": "설명서",
+            "tags": ["설명서", "교사용", "문제생성", "고급생성"],
+            "chapters": [
+                {
+                    "title": "1. 문제 고급생성",
+                    "intro": [
+                        "이 교재는 모든 교사가 문서함에서 열람하는 문제 생성 설명서입니다.",
+                        "풀이 논리 캔버스, 노드 지시, 난이도 파라미터 반영 방식을 안내합니다.",
+                    ],
+                    "sections": [
+                        {
+                            "title": "1-1. 캔버스와 파라미터",
+                            "paragraphs": [
+                                "캔버스 노드와 연결은 flow_draft로 전달됩니다.",
+                                "세부 난이도 지표는 실제 문제 구조와 풀이 부담을 조정하는 고급 지시로 전달됩니다.",
+                            ],
+                            "images": [],
+                        }
+                    ],
+                }
+            ],
+            "cover_color": 0xFF214A73,
+            "created_at": now_ms,
+            "updated_at": now_ms,
+            "created_by": "system",
+        }
     return {
         "textbook_id": _TEACHER_MANUAL_TEXTBOOK_ID,
         "title": "설명서 기본 교재",
@@ -2029,23 +2328,105 @@ def _teacher_manual_document() -> Dict[str, Any]:
         "created_at": now_ms,
         "updated_at": now_ms,
         "created_by": "system",
-        "is_teacher_manual": True,
-        "is_course_selectable": False,
+    }
+
+
+def _teacher_manual_document(textbook_id: str) -> Dict[str, Any]:
+    item = get_textbook(textbook_id)
+    if item:
+        return _with_textbook_visibility_flags(item)
+    return _with_textbook_visibility_flags(
+        _fallback_teacher_manual_document(textbook_id)
+    )
+
+
+def _teacher_manual_documents() -> List[Dict[str, Any]]:
+    return [
+        _teacher_manual_document(textbook_id)
+        for textbook_id in _TEACHER_MANUAL_TEXTBOOK_IDS
+    ]
+
+
+def _iso_to_epoch_ms(raw: Any) -> int:
+    text = str(raw or "").strip()
+    if not text:
+        return int(time.time() * 1000)
+    try:
+        normalized = text.replace("Z", "+00:00")
+        return int(datetime.fromisoformat(normalized).timestamp() * 1000)
+    except ValueError:
+        return int(time.time() * 1000)
+
+
+def _exam_document_title(
+    params: Dict[str, Any],
+    tags: List[str],
+    *,
+    title_override: Optional[str] = None,
+) -> str:
+    title = str(title_override or "").strip()
+    if title:
+        return title
+    title = str(params.get("title") or "").strip()
+    if title:
+        return title
+    if tags:
+        return f"{tags[0]} 시험지"
+    return "시험지"
+
+
+def _build_exam_document(item: Dict[str, Any]) -> Dict[str, Any]:
+    exam_id = str(item.get("exam_id") or "").strip()
+    params = item.get("params") if isinstance(item.get("params"), dict) else {}
+    tags: List[str] = []
+    for raw_range in params.get("ranges") or []:
+        if not isinstance(raw_range, dict):
+            continue
+        for tag in raw_range.get("tags") or []:
+            text = str(tag or "").strip()
+            if text and text not in tags:
+                tags.append(text)
+    question_count = int(item.get("item_count") or params.get("question_count") or 0)
+    subtitle_bits = [f"{question_count}문항" if question_count > 0 else None]
+    status_text = str(item.get("status") or "").strip()
+    if status_text:
+        subtitle_bits.append(status_text)
+    title = _exam_document_title(
+        params,
+        tags,
+        title_override=str(item.get("document_title") or "").strip(),
+    )
+    updated_at = _iso_to_epoch_ms(item.get("document_updated_at") or item.get("updated_at"))
+    created_at = _iso_to_epoch_ms(item.get("document_created_at") or item.get("created_at"))
+    return {
+        "textbook_id": exam_id,
+        "document_id": exam_id,
+        "exam_id": exam_id,
+        "title": title,
+        "subtitle": " · ".join(part for part in subtitle_bits if part),
+        "category": "시험지",
+        "tags": tags,
+        "chapters": [],
+        "cover_color": 0xFF3F6E4A,
+        "created_at": created_at,
+        "updated_at": updated_at,
+        "created_by": None,
+        "is_teacher_manual": False,
+        "is_course_selectable": True,
         "student_visible": False,
+        "type": "exam",
+        "status": status_text,
+        "item_count": question_count,
+        "duration_minutes": int(params.get("duration_minutes") or 0),
     }
 
 
 def _effective_role_from_payload(auth_payload: Dict[str, Any]) -> tuple[str, str]:
-    user_id = str(auth_payload.get("sub") or "")
-    token_role = str(auth_payload.get("role") or "").strip().lower()
-    profile = get_user_by_id(user_id) or {}
-    db_role = str(profile.get("role") or "").strip().lower()
-    effective_role = db_role or token_role
-    if effective_role not in {"teacher", "admin"} and token_role in {"teacher", "admin"}:
-        effective_role = token_role
-    if db_role != effective_role:
-        _promote_user_role_from_token(user_id, effective_role)
-    return user_id, effective_role
+    user = resolve_token_payload_user(auth_payload)
+    profile = get_user_by_id(user["user_id"]) or {}
+    profile_role = str(profile.get("role") or "").strip().lower()
+    role = profile_role if profile_role in ELEVATED_ROLES else user["role"]
+    return user["user_id"], role
 
 
 def _is_teacher_or_admin_payload(auth_payload: Dict[str, Any]) -> bool:
@@ -2160,11 +2541,20 @@ def _ensure_default_library(user_id: str) -> List[str]:
 
     ids = _library_ids_from_meta(items)
 
-    if ids:
-
-        return ids
-
     common_books = list_textbooks(category="common")
+
+    if ids:
+        known_ids = set(ids)
+        missing_common = [
+            book
+            for book in common_books
+            if (book.get("textbook_id") or book.get("id")) not in known_ids
+        ]
+        if not missing_common:
+            return ids
+        meta = [*items, *[_build_library_meta(book) for book in missing_common]]
+        set_user_kv(user_id, _TEXTBOOK_LIBRARY_KEY, json.dumps(meta, ensure_ascii=False))
+        return _library_ids_from_meta(meta)
 
     if not common_books:
 
@@ -2395,7 +2785,10 @@ def _get_user_id(
 
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    return payload.get("sub")
+    user = resolve_token_payload_user(payload)
+    if not user["user_id"]:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user["user_id"]
 
 
 def _get_auth_payload(
@@ -2406,39 +2799,18 @@ def _get_auth_payload(
     payload = decode_token(credentials.credentials)
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
-    return payload
+    user = resolve_token_payload_user(payload)
+    if not user["user_id"]:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return {**payload, "sub": user["user_id"], "username": user["username"], "role": user["role"]}
 
 
-def _promote_user_role_from_token(user_id: str, role: str) -> None:
-    normalized_role = str(role or "").strip().lower()
-    if normalized_role not in {"teacher", "admin"}:
-        return
-    if not user_id:
-        return
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-        cur.execute(
-            """
-            UPDATE users
-            SET role = ?,
-                grade = CASE
-                    WHEN ? = 'teacher' THEN 'teacher'
-                    ELSE grade
-                END
-            WHERE user_id = ?
-              AND lower(COALESCE(role, 'student')) <> ?
-            """,
-            (normalized_role, normalized_role, user_id, normalized_role),
-        )
-        conn.commit()
-    except Exception:
-        pass
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
+def _require_admin_payload(
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
+) -> Dict[str, Any]:
+    if str(auth_payload.get("role") or "").strip().lower() != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    return auth_payload
 
 
 async def _register_ws(user_id: str, websocket: WebSocket) -> None:
@@ -2553,6 +2925,8 @@ def _startup() -> None:
 
     init_weakness_db()
 
+    init_teacher_exam_document_db()
+
     init_textbook_db()
     init_serverchat()
 
@@ -2564,7 +2938,7 @@ def _startup() -> None:
 
         pass
 
-    asyncio.create_task(_seed_validator_loop())
+    app.state.seed_validator_task = asyncio.create_task(_seed_validator_loop())
 
 
 
@@ -2586,7 +2960,7 @@ def _to_user_profile_payload(profile: Dict[str, Optional[str]]) -> Dict[str, Opt
 
 @app.get("/auth/me", response_model=UserProfile)
 def get_profile(user_id: str = Depends(_get_user_id)) -> UserProfile:
-    profile = get_user_by_id(user_id)
+    profile = get_auth_user_by_id(user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
     payload = _to_user_profile_payload(profile)
@@ -2927,7 +3301,7 @@ def create_friend_request_handler(
     payload: FriendRequestCreateRequest,
     user_id: str = Depends(_get_user_id),
 ) -> FriendRequestResponse:
-    target = get_user_by_username(payload.username)
+    target = get_social_user_by_username(payload.username)
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
     target_id = target["user_id"]
@@ -2955,7 +3329,7 @@ def accept_friend_request(
         raise HTTPException(status_code=404, detail="Request not found")
     updated = set_friend_request_status(request_id, "accepted") or request
     add_friend(user_id, request["from_user_id"])
-    other = get_user_by_id(request["from_user_id"])
+    other = get_social_user_by_id(request["from_user_id"])
     if other:
         payload = _make_friend_request_response(
             updated,
@@ -3024,7 +3398,7 @@ def list_friends(user_id: str = Depends(_get_user_id)) -> FriendListResponse:
 
 @app.get("/social/friends/rankings", response_model=FriendRankingsResponse)
 def list_friend_rankings(user_id: str = Depends(_get_user_id)) -> FriendRankingsResponse:
-    me_profile = get_user_by_id(user_id) or {}
+    me_profile = get_social_user_by_id(user_id) or {}
     me_rating = fetch_user_rating(user_id)
     friend_profiles = get_friends(user_id)
 
@@ -3079,7 +3453,7 @@ def add_friend_handler(
 
 ) -> FriendProfile:
 
-    friend = get_user_by_username(payload.username)
+    friend = get_social_user_by_username(payload.username)
 
     if not friend:
 
@@ -3109,7 +3483,7 @@ def remove_friend_handler(
 
 ) -> FriendProfile:
 
-    friend = get_user_by_username(payload.username)
+    friend = get_social_user_by_username(payload.username)
 
     if not friend:
 
@@ -3190,8 +3564,7 @@ def list_teacher_documents(
     if effective_role not in {"teacher", "admin"}:
         raise HTTPException(status_code=403, detail="Teacher only")
 
-    has_textbook_db = teacher_has_entitlement(user_id, "textbook_db")
-    allowed_ids = [] if has_textbook_db else _ensure_default_library(user_id)
+    allowed_ids = _ensure_default_library(user_id)
 
     category = None
     normalized_type = (type or "").strip().lower()
@@ -3200,17 +3573,41 @@ def list_teacher_documents(
     elif normalized_type == "common":
         category = "common"
 
+    if normalized_type == "exam":
+        documents = list_teacher_exam_documents(user_id, limit=200)
+        summaries = {
+            str(item.get("exam_id") or ""): item
+            for item in list_exams_by_ids([doc["exam_id"] for doc in documents])
+        }
+        items = []
+        tag_filter = (tag or "").strip().lower()
+        for doc in documents:
+            summary = summaries.get(str(doc.get("exam_id") or ""))
+            if not summary:
+                continue
+            item = _build_exam_document(
+                {
+                    **summary,
+                    "document_title": doc.get("title"),
+                    "document_created_at": doc.get("created_at"),
+                    "document_updated_at": doc.get("updated_at"),
+                }
+            )
+            if tag_filter:
+                haystack = " ".join(
+                    [item.get("title") or "", " ".join(item.get("tags") or [])]
+                ).lower()
+                if tag_filter not in haystack:
+                    continue
+            items.append(item)
+        return TextbookListResponse(
+            textbooks=[TextbookResponse(**item) for item in items],
+        )
+
     items: List[Dict[str, Any]] = []
     if normalized_type in {"", "textbook", "textbooks"}:
-        items.append(_teacher_manual_document())
-    if has_textbook_db:
-        items.extend(
-            list_textbooks(
-                category=category,
-                tag=tag,
-            )
-        )
-    elif allowed_ids:
+        items.extend(_teacher_manual_documents())
+    if allowed_ids:
         items.extend(
             list_textbooks(
                 category=category,
@@ -3285,7 +3682,7 @@ def create_textbook_handler(
 
         raise HTTPException(status_code=400, detail="title is required")
 
-    profile = get_user_by_id(user_id) or {}
+    profile = get_auth_user_by_id(user_id) or {}
 
     created_by = (
 
@@ -3335,6 +3732,35 @@ def list_course_hash_tags() -> Dict[str, List[str]]:
             if t:
                 tags.add(str(t))
     return {"tags": sorted(tags)}
+
+
+def _validate_generation_tags_or_400(
+    hash_tags: List[str],
+    *,
+    allow_empty: bool = False,
+) -> List[str]:
+    try:
+        return validate_generation_tags(hash_tags, allow_empty=allow_empty)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _validate_exam_ranges_or_400(ranges: List[RangeInput]) -> List[Dict[str, Any]]:
+    validated: List[Dict[str, Any]] = []
+    has_any_tags = False
+    for item in ranges:
+        tags = _validate_generation_tags_or_400(item.tags, allow_empty=True)
+        if tags:
+            has_any_tags = True
+        validated.append({"key": item.key, "tags": tags})
+    if not has_any_tags:
+        raise HTTPException(status_code=400, detail="ranges must include at least one hash tag")
+    return validated
+
+
+@app.get("/quests/generation-tags")
+def list_quest_generation_tags() -> Dict[str, Any]:
+    return {"groups": generation_tag_groups(), "tags": allowed_generation_tags()}
 
 
 
@@ -3394,6 +3820,8 @@ def enroll_course_handler(
         result = enroll_course(user_id, course_id)
     except ValueError as exc:
         detail = str(exc)
+        if "course_not_found" in detail:
+            raise HTTPException(status_code=404, detail="Course not found")
         if "course_limit_exceeded" in detail:
             raise HTTPException(status_code=403, detail=detail)
         raise HTTPException(status_code=400, detail=detail)
@@ -3555,7 +3983,7 @@ async def create_exam_handler(
     if payload.question_count < 4 or payload.question_count > 100:
         raise HTTPException(status_code=400, detail="question_count must be between 4 and 100")
 
-    ranges = [r.model_dump() for r in payload.ranges]
+    ranges = _validate_exam_ranges_or_400(payload.ranges)
 
     exam_id = str(uuid.uuid4())
 
@@ -3580,11 +4008,26 @@ async def create_exam_handler(
     create_exam(
         exam_id=exam_id,
         user_id=user_id,
-        params=payload.model_dump(),
+        params={
+            **payload.model_dump(),
+            "ranges": ranges,
+        },
         status="queued",
     )
 
     add_exam_items(exam_id, items)
+    if payload.save_to_document_box:
+        tags: List[str] = []
+        for raw_range in ranges:
+            for raw_tag in raw_range.get("tags") or []:
+                text = str(raw_tag or "").strip()
+                if text and text not in tags:
+                    tags.append(text)
+        upsert_teacher_exam_document(
+            user_id,
+            exam_id,
+            _exam_document_title({"title": payload.title or ""}, tags),
+        )
     asyncio.create_task(_run_exam_generation(exam_id, user_id))
     return ExamCreateResponse(exam_id=exam_id, status="queued")
 
@@ -3594,18 +4037,42 @@ async def create_exam_handler(
 
 @app.get("/exams/{exam_id}", response_model=ExamStatusResponse)
 
-def get_exam_handler(exam_id: str, user_id: str = Depends(_get_user_id)) -> ExamStatusResponse:
+def get_exam_handler(
+    exam_id: str,
+    course_id: Optional[str] = None,
+    user_id: str = Depends(_get_user_id),
+) -> ExamStatusResponse:
 
     exam = get_exam(exam_id)
 
-    if not exam or exam["user_id"] != user_id:
+    if exam is None:
+        if not _can_access_exam_via_course(user_id, exam_id, course_id):
+            raise HTTPException(status_code=404, detail="Exam not found")
+        paper_items = _exam_paper_runtime_items(exam_id)
+        if paper_items is None:
+            raise HTTPException(status_code=404, detail="Exam not found")
+        return ExamStatusResponse(
+            exam_id=exam_id,
+            status="done",
+            items=_resolve_items(paper_items),
+        )
+
+    if not _can_access_exam_document(user_id, exam) and not _can_access_exam_via_course(
+        user_id,
+        exam_id,
+        course_id,
+    ):
 
         raise HTTPException(status_code=404, detail="Exam not found")
 
     items = get_exam_items(exam_id)
     resolved = _resolve_items(items)
     missing = [item for item in resolved if item.codebase_id is None or item.seed is None]
-    if missing and exam.get("status") not in {"generating", "retrying", "queued"}:
+    if (
+        missing
+        and str(exam.get("user_id") or "") == user_id
+        and exam.get("status") not in {"generating", "retrying", "queued"}
+    ):
         # Auto-heal: requeue exam generation to fill missing codebase/seed.
         update_exam_status(exam_id, "retrying")
         try:
@@ -3644,6 +4111,8 @@ def download_exam_pdf(
 
     inline: bool = False,
 
+    course_id: Optional[str] = None,
+
     token: Optional[str] = None,
 
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -3671,7 +4140,11 @@ def download_exam_pdf(
 
     exam = get_exam(exam_id)
 
-    if not exam or exam["user_id"] != user_id:
+    if not _can_access_exam_document(user_id, exam) and not _can_access_exam_via_course(
+        user_id,
+        exam_id,
+        course_id,
+    ):
 
         raise HTTPException(status_code=404, detail="Exam not found")
 
@@ -3806,6 +4279,11 @@ def deploy_exam_editor_paper_handler(
             }
         )
     add_exam_items(exam_id, payload_items)
+    upsert_teacher_exam_document(
+        user_id,
+        exam_id,
+        str(paper.get("title") or "").strip() or "시험지",
+    )
     return ExamEditorDeployResponse(
         paper_id=paper_id,
         exam_id=exam_id,
@@ -3817,45 +4295,26 @@ def deploy_exam_editor_paper_handler(
 @app.get("/exam-editor/problems/search", response_model=ExamEditorSearchResponse)
 def search_exam_editor_problems_handler(
     hash_tag: Optional[str] = None,
+    quest_id: Optional[str] = None,
     text: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
+    owned_only: bool = True,
     page: int = 1,
     page_size: int = 50,
     user_id: str = Depends(_get_user_id),
 ) -> ExamEditorSearchResponse:
-    source_connected = get_source_connected(user_id)
     result = search_user_problem_set(
         user_id=user_id,
         hash_tag=hash_tag,
+        quest_id=quest_id,
         text=text,
         date_from=date_from,
         date_to=date_to,
         page=page,
         page_size=page_size,
     )
-    if source_connected or teacher_has_entitlement(user_id, "problem_db"):
-        quests = search_quests(hash_tag=hash_tag, text_query=text, page=page, page_size=page_size)
-        quest_items = quests.get("quests", [])
-        user_known = {str(item.get("quest_id")) for item in result["items"]}
-        for quest in quest_items:
-            quest_id = ((quest.get("header") or {}).get("quest_id")) if isinstance(quest, dict) else None
-            if not quest_id or quest_id in user_known:
-                continue
-            data = quest.get("data", {}) if isinstance(quest, dict) else {}
-            result["items"].append(
-                {
-                    "quest_id": quest_id,
-                    "codebase_id": data.get("codebase_id"),
-                    "seed": data.get("seed"),
-                    "question_type": data.get("question_type"),
-                    "hash_tags": data.get("hash_tag") or (quest.get("info", {}) or {}).get("hash_tag") or [],
-                    "created_at": None,
-                    "quest_title": data.get("quest_title"),
-                }
-            )
-        result["total"] = len(result["items"])
-    return ExamEditorSearchResponse(source_connected=source_connected, **result)
+    return ExamEditorSearchResponse(source_connected=False, **result)
 
 
 @app.get("/teacher/store/summary")
@@ -4015,9 +4474,37 @@ def search_quests_handler(
 
     page_size: int = 20,
 
-    user_id: str = Depends(_get_user_id),
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
 
 ) -> QuestSearchResponse:
+    user_id, effective_role = _effective_role_from_payload(auth_payload)
+
+    if effective_role == "teacher":
+        if is_variant is True or is_mcq_branch is True:
+            safe_page = max(1, page)
+            safe_page_size = max(1, min(page_size, 200))
+            return QuestSearchResponse(
+                quests=[],
+                total=0,
+                page=safe_page,
+                page_size=safe_page_size,
+            )
+        owned_results = search_user_problem_set(
+            user_id=user_id,
+            hash_tag=hash_tag,
+            quest_id=quest_id,
+            text=text,
+            page=page,
+            page_size=page_size,
+        )
+        return QuestSearchResponse(
+            quests=owned_results.get("items", []),
+            total=int(owned_results.get("total") or 0),
+            page=int(owned_results.get("page") or max(1, page)),
+            page_size=int(
+                owned_results.get("page_size") or max(1, min(page_size, 200))
+            ),
+        )
 
     results = search_quests(
 
@@ -4060,7 +4547,17 @@ def search_quests_handler(
 
 @app.get("/quests/generate/status")
 
-def quest_generate_status(request_id: str) -> Dict[str, Any]:
+def quest_generate_status(
+    request_id: str,
+    user_id: str = Depends(_get_user_id),
+) -> Dict[str, Any]:
+
+    job_state = _get_quest_generation_job(request_id, user_id)
+    if job_state is not None:
+        return {
+            "request_id": request_id,
+            **_quest_job_to_status_payload(job_state),
+        }
 
     status = _get_gen_status(request_id)
 
@@ -4082,7 +4579,12 @@ def quest_generate_status(request_id: str) -> Dict[str, Any]:
 
         }
 
-    return {"request_id": request_id, **status}
+    owner_id = status.get("user_id")
+    if owner_id and owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorised to view this generation")
+
+    visible_status = {key: value for key, value in status.items() if key != "user_id"}
+    return {"request_id": request_id, **visible_status}
 
 
 
@@ -4097,8 +4599,18 @@ async def _run_quest_generation_task(
     user_id: str,
 
 ) -> None:
+    cancel_event = register_token(request_id)
 
-    hash_tags = [tag.strip() for tag in payload.hash_tags if tag.strip()]
+    try:
+        hash_tags = validate_generation_tags(payload.hash_tags)
+    except (TypeError, ValueError) as exc:
+        _set_gen_status(
+            request_id,
+            str(exc),
+            status="failed",
+            error=str(exc),
+        )
+        return
 
     if not hash_tags:
 
@@ -4126,9 +4638,13 @@ async def _run_quest_generation_task(
 
     try:
 
+        check_cancelled(cancel_event)
+
         _set_gen_status(request_id, "generating", status="generating")
 
         async with _GEN_SEMAPHORE:
+
+            check_cancelled(cancel_event)
 
             storage_data = await asyncio.to_thread(
 
@@ -4144,7 +4660,7 @@ async def _run_quest_generation_task(
 
                 payload.reference_quest_id,
 
-                payload.strict_tags,
+                True,
 
                 payload.seed,
 
@@ -4154,7 +4670,11 @@ async def _run_quest_generation_task(
 
                 _status_cb,
 
+                cancel_event=cancel_event,
+
             )
+
+        check_cancelled(cancel_event)
 
         if not store_data(storage_data):
 
@@ -4215,6 +4735,8 @@ async def _run_quest_generation_task(
             error=str(exc),
 
         )
+    finally:
+        release_token(request_id)
 
 
 def _variant_rejection(reason_code: str, reason_message: str, suggested_fix: Optional[str] = None) -> VariantGenerateResponse:
@@ -4236,12 +4758,12 @@ def _resolve_variant_tags(
 ) -> List[str]:
     clean_tags = [t.strip() for t in tags if isinstance(t, str) and t.strip()]
     if clean_tags:
-        return clean_tags
+        return validate_generation_tags(clean_tags)
     if base_quest_ref and base_quest_ref.quest_id:
         quest = get_quest(base_quest_ref.quest_id)
         if quest:
             base_tags = (quest.get("info", {}) or {}).get("hash_tag", []) or []
-            return [t.strip() for t in base_tags if isinstance(t, str) and t.strip()]
+            return validate_generation_tags(base_tags)
     return []
 
 
@@ -4263,6 +4785,347 @@ def _validate_variant_prompt(prompt_text: str) -> Optional[VariantGenerateRespon
     return None
 
 
+def _normalize_variant_tag(tag: Any) -> str:
+    return str(tag or "").strip().lstrip("#").strip()
+
+
+def _resolve_cached_variant_runtime_params(
+    *,
+    tags: List[str],
+    solves_count: int,
+    strategy_level: int,
+    branch_conditions: int,
+) -> Tuple[int, int, int, Optional[Dict[str, Any]]]:
+    requested = (solves_count, strategy_level, branch_conditions)
+    selected_tags = {
+        _normalize_variant_tag(tag)
+        for tag in tags
+        if _normalize_variant_tag(tag)
+    }
+    if not selected_tags:
+        return (*requested, None)
+
+    best: Optional[Tuple[Tuple[int, int, int, int], Dict[str, Any], Tuple[int, int, int]]] = None
+    for entry in list_codebase_stats():
+        if int(entry.get("cached_seeds") or 0) <= 0:
+            continue
+        if str(entry.get("status") or "ok") == "disabled":
+            continue
+        entry_tags = {
+            _normalize_variant_tag(tag)
+            for tag in (entry.get("tags") or [])
+            if _normalize_variant_tag(tag)
+        }
+        if not entry_tags or not entry_tags.issubset(selected_tags):
+            continue
+        try:
+            candidate = (
+                int(entry.get("solves_count") or 0),
+                int(entry.get("strategy_level") or 0),
+                int(entry.get("branch_conditions") or 0),
+            )
+        except Exception:
+            continue
+        if candidate[0] <= 0 or candidate[1] <= 0 or candidate[2] < 0:
+            continue
+        if candidate == requested:
+            return (*requested, None)
+        distance = (
+            abs(candidate[0] - solves_count) * 2
+            + abs(candidate[1] - strategy_level)
+            + abs(candidate[2] - branch_conditions) * 2
+        )
+        rank = (
+            distance,
+            -len(entry_tags),
+            -int(entry.get("cached_seeds") or 0),
+            int(entry.get("id") or 0),
+        )
+        if best is None or rank < best[0]:
+            best = (rank, entry, candidate)
+
+    if best is None:
+        return (*requested, None)
+
+    _, entry, candidate = best
+    fallback = {
+        "requested": {
+            "solves_count": solves_count,
+            "strategy_level": strategy_level,
+            "branch_conditions": branch_conditions,
+        },
+        "used": {
+            "solves_count": candidate[0],
+            "strategy_level": candidate[1],
+            "branch_conditions": candidate[2],
+        },
+        "codebase_id": entry.get("id"),
+        "cached_seeds": entry.get("cached_seeds"),
+        "reason": "nearest_cached_codebase",
+    }
+    return (*candidate, fallback)
+
+
+_VARIANT_METRIC_LABELS = {
+    "concept": "개념 난이도",
+    "reasoning": "추론 난이도",
+    "insight": "발상 난이도",
+    "calculation": "계산량",
+    "information": "정보 밀도",
+    "trap": "함정 강도",
+    "compression": "압축도",
+    "concept_count": "개념 수",
+    "concept_depth": "개념 깊이",
+    "prerequisite_depth": "선수 개념 깊이",
+    "graph_depth": "풀이 그래프 깊이",
+    "graph_width": "풀이 그래프 폭",
+    "branch_factor": "분기 계수",
+    "merge_factor": "병합 계수",
+    "insight_count": "발상 수",
+    "insight_depth": "발상 깊이",
+    "insight_uniqueness": "발상 희소성",
+    "condition_count": "조건 수",
+    "condition_density": "조건 밀도",
+    "hidden_information": "숨은 정보량",
+    "implicit_constraints": "암묵 제약",
+    "symbolic_operations": "기호 조작량",
+    "algebra_steps": "대수 계산 단계",
+    "derivative_steps": "미분 단계",
+    "integral_steps": "적분 단계",
+    "simplification_cost": "식 정리 비용",
+    "trap_count": "함정 수",
+    "trap_severity": "함정 강도",
+    "compression_score": "압축 점수",
+    "implicit_information": "암묵 정보량",
+    "top_rate": "상위권 예상 정답률",
+    "middle_rate": "중위권 예상 정답률",
+    "low_rate": "하위권 예상 정답률",
+}
+
+_VARIANT_METRIC_DIRECTIVES = {
+    "concept": "서로 다른 개념을 결합하되 정답 변수는 하나로 유지한다.",
+    "reasoning": "조건 해석에서 결론까지 중간 추론 단계를 분명히 만든다.",
+    "insight": "정방향 계산보다 먼저 떠올려야 하는 관점 전환을 넣는다.",
+    "calculation": "계산량을 조절하되 풀이 검증 가능한 식 변형으로 제한한다.",
+    "information": "짧은 조건 안에 범위, 부호, 존재 조건을 함께 담는다.",
+    "trap": "정의역, 부호, 필요충분 조건 중 하나를 놓치면 오답이 되게 한다.",
+    "compression": "문장 하나에서 여러 암묵 결론을 끌어내게 한다.",
+    "concept_count": "사용 개념 수를 지표에 맞춰 늘리거나 줄인다.",
+    "concept_depth": "공식 대입보다 동치 변환이나 역조건 사용을 우선한다.",
+    "prerequisite_depth": "선수 개념을 직접 노출하지 말고 풀이 중 필요하게 만든다.",
+    "graph_depth": "풀이 흐름의 최장 경로를 지표에 맞춰 깊게 만든다.",
+    "graph_width": "여러 관점을 비교한 뒤 하나의 결론으로 좁히게 한다.",
+    "branch_factor": "부호, 범위, 위치 조건으로 케이스 분류를 만든다.",
+    "merge_factor": "분기된 케이스가 공통 구조로 다시 합쳐지게 한다.",
+    "insight_count": "핵심 발상 수를 지표에 맞춰 명확히 배치한다.",
+    "insight_depth": "숨은 구조를 읽어야 풀리는 발상을 넣는다.",
+    "insight_uniqueness": "대표 유형 풀이가 바로 통하지 않는 관점 전환을 둔다.",
+    "condition_count": "명시 조건 수를 지표에 맞춘다.",
+    "condition_density": "한 문장에 여러 조건을 압축한다.",
+    "hidden_information": "직접 쓰이지 않은 정보를 추론하게 한다.",
+    "implicit_constraints": "실수성, 자연수성, 존재성 같은 암묵 제약을 둔다.",
+    "symbolic_operations": "계수 비교나 식 변형 횟수를 지표에 맞춘다.",
+    "algebra_steps": "대수 정리 단계 수를 지표에 맞춘다.",
+    "derivative_steps": "도함수나 극값 조건 사용 횟수를 지표에 맞춘다.",
+    "integral_steps": "정적분 조건이나 넓이 해석 사용 횟수를 지표에 맞춘다.",
+    "simplification_cost": "최종 식 정리 비용을 지표에 맞춘다.",
+    "trap_count": "오답 유발 요소 수를 지표에 맞춘다.",
+    "trap_severity": "초반 조건 누락이 전체 풀이를 흔들도록 함정 강도를 조절한다.",
+    "compression_score": "짧은 문장에서 많은 결론을 끌어내게 한다.",
+    "implicit_information": "압축된 문장 속 암묵 정보를 풀이 핵심으로 둔다.",
+    "top_rate": "상위권 예상 정답률에 맞춰 발상 장벽을 조절한다.",
+    "middle_rate": "중위권 예상 정답률에 맞춰 계산과 함정의 부담을 조절한다.",
+    "low_rate": "하위권 예상 정답률에 맞춰 접근 가능성을 조절한다.",
+}
+
+_VARIANT_METRIC_EXAMPLES = {
+    "insight": "예: 조건을 정답에서 역추적해야 자연스럽게 식이 세워진다.",
+    "trap": "예: 정의역이나 부호 조건을 빠뜨리면 다른 정수 답이 나온다.",
+    "condition_density": "예: 연속성, 범위, 극값 조건을 한 문장에 압축한다.",
+    "branch_factor": "예: 매개변수 부호에 따라 두 케이스를 나누고 마지막에 병합한다.",
+    "algebra_steps": "예: 계수 비교와 인수분해를 거쳐야 정수 k가 드러난다.",
+    "derivative_steps": "예: 도함수의 부호 변화로 극값 위치를 제한한다.",
+    "integral_steps": "예: 정적분 조건으로 상수를 복원한 뒤 답을 계산한다.",
+    "compression_score": "예: 짧은 조건에서 연속성, 존재성, 부호 정보를 꺼낸다.",
+}
+
+_VARIANT_METRIC_LOW_EXAMPLES = {
+    "insight": "예: 대표 성질을 바로 적용하면 풀이가 시작된다.",
+    "trap": "예: 함정은 줄이고 계산 검산으로 난도를 만든다.",
+    "condition_density": "예: 조건을 문장별로 분리해 직접적으로 제시한다.",
+    "branch_factor": "예: 케이스 분류 없이 한 흐름으로 풀리게 한다.",
+    "trap_count": "예: 오답 유발 요소를 거의 두지 않는다.",
+    "trap_severity": "예: 조건을 하나 놓쳐도 검산으로 회복 가능하게 한다.",
+    "compression_score": "예: 압축된 암묵 조건보다 명시 조건 중심으로 만든다.",
+}
+
+
+_VARIANT_METRIC_LOW_DIRECTIVES = {
+    "insight": "대표 성질이나 공식 적용이 바로 보이게 한다.",
+    "trap": "오답 유발 조건을 최소화하고 검산으로 확인 가능하게 한다.",
+    "condition_density": "조건을 문장별로 분리해 직접적으로 제시한다.",
+    "branch_factor": "케이스 분류 없이 단일 풀이 흐름으로 만든다.",
+    "trap_count": "오답 유발 요소를 거의 두지 않는다.",
+    "trap_severity": "조건 누락이 치명적 오답으로 이어지지 않게 한다.",
+    "compression_score": "암묵 조건보다 명시 조건 중심으로 만든다.",
+    "information": "범위, 부호, 존재 조건을 필요한 만큼만 명시한다.",
+    "compression": "압축 표현보다 읽히는 조건 제시를 우선한다.",
+    "hidden_information": "숨은 정보 추론을 최소화한다.",
+    "implicit_constraints": "필요한 제약을 문제 본문에 명시한다.",
+    "implicit_information": "암묵 정보보다 직접 제시된 정보로 풀리게 한다.",
+    "algebra_steps": "대수 계산 단계를 짧고 검산 가능하게 유지한다.",
+    "calculation": "계산량을 낮추고 한두 번의 식 정리로 답이 나오게 한다.",
+    "graph_depth": "풀이 흐름을 짧은 직선형 구조로 만든다.",
+    "graph_width": "동시에 비교해야 하는 풀이 갈래를 줄인다.",
+}
+
+
+def _variant_metric_is_low(key: str, value: int) -> bool:
+    if key in {"branch_factor", "trap_count"}:
+        return value <= 0
+    if key in {"condition_count", "insight_count"}:
+        return value <= 1
+    return value <= 2
+
+
+def _variant_metric_is_high(key: str, value: int) -> bool:
+    if key in {"branch_factor", "trap_count"}:
+        return value >= 2
+    if key in {"condition_count", "insight_count"}:
+        return value >= 3
+    return value >= 7
+
+
+def _variant_metric_directive(key: str, value: int) -> str:
+    if _variant_metric_is_low(key, value):
+        return _VARIANT_METRIC_LOW_DIRECTIVES.get(
+            key,
+            f"{_VARIANT_METRIC_LABELS.get(key, key)} 값을 낮은 수준으로 반영한다.",
+        )
+    return _VARIANT_METRIC_DIRECTIVES.get(
+        key,
+        f"{_VARIANT_METRIC_LABELS.get(key, key)} 값을 {value} 수준으로 반영한다.",
+    )
+
+
+def _variant_metric_example(key: str, value: int) -> Optional[str]:
+    if _variant_metric_is_low(key, value):
+        return _VARIANT_METRIC_LOW_EXAMPLES.get(key)
+    if _variant_metric_is_high(key, value):
+        return _VARIANT_METRIC_EXAMPLES.get(key)
+    return None
+
+
+def _compact_variant_text(value: Any, limit: int = 240) -> str:
+    text = " ".join(str(value or "").split())
+    if len(text) <= limit:
+        return text
+    return text[:limit].rstrip() + "..."
+
+
+def _variant_metric_value(value: Any) -> Optional[int]:
+    try:
+        return int(round(float(value)))
+    except Exception:
+        return None
+
+
+def _normalize_variant_metrics(raw_metrics: Any) -> Dict[str, int]:
+    if not isinstance(raw_metrics, dict):
+        return {}
+    metrics: Dict[str, int] = {}
+    for key, value in raw_metrics.items():
+        clean_key = str(key).strip()
+        number = _variant_metric_value(value)
+        if clean_key and number is not None:
+            metrics[clean_key] = number
+    return metrics
+
+
+def _variant_metric_weight(item: Tuple[str, int]) -> float:
+    key, value = item
+    if key.endswith("_rate"):
+        return abs(value - 50) / 10.0
+    return abs(value - 5)
+
+
+def _build_variant_generation_context(payload: Any, tags: List[str]) -> Dict[str, Any]:
+    profile = payload.advanced_profile if isinstance(payload.advanced_profile, dict) else {}
+    metrics = _normalize_variant_metrics(payload.advanced_metrics)
+    if not metrics:
+        metrics = _normalize_variant_metrics(profile.get("metrics"))
+
+    dominant_metrics = []
+    for key, value in sorted(metrics.items(), key=_variant_metric_weight, reverse=True)[:8]:
+        dominant_metrics.append(
+            {
+                "id": key,
+                "label": _VARIANT_METRIC_LABELS.get(key, key),
+                "value": value,
+                "directive": _variant_metric_directive(key, value),
+            }
+        )
+
+    examples = []
+    for item in dominant_metrics:
+        metric_id = str(item.get("id") or "")
+        metric_value = _variant_metric_value(item.get("value")) or 0
+        example = _variant_metric_example(metric_id, metric_value)
+        if example and example not in examples:
+            examples.append(example)
+
+    node_directives = []
+    for node in getattr(payload, "flow_draft", [])[:8]:
+        instruction = node.teacher_instruction or node.prompt_text or node.text
+        text = _compact_variant_text(instruction, 260)
+        if not text:
+            continue
+        node_directives.append(
+            {
+                "node_id": node.node_id,
+                "tags": [str(tag) for tag in (node.hash_tags or [])[:5]],
+                "branches": [str(branch) for branch in (node.branches or [])[:5]],
+                "instruction": text,
+            }
+        )
+
+    return {
+        "tags": tags,
+        "requested_params": {
+            "solves_count": int(getattr(payload, "solves_count", 0) or 0),
+            "strategy_level": int(getattr(payload, "strategy_level", 0) or 0),
+            "branch_conditions": int(getattr(payload, "branch_conditions", 0) or 0),
+        },
+        "expected_number": _compact_variant_text(profile.get("expected_number"), 80),
+        "profile_label": _compact_variant_text(profile.get("label"), 80),
+        "profile_intent": _compact_variant_text(profile.get("intent"), 180),
+        "metrics": metrics,
+        "dominant_metrics": dominant_metrics,
+        "node_directives": node_directives,
+        "examples": examples[:4],
+        "prompt_excerpt": _compact_variant_text(payload.prompt, 900),
+    }
+
+
+def _build_variant_request_signature(
+    *,
+    tags: List[str],
+    solves_count: int,
+    strategy_level: int,
+    branch_conditions: int,
+    generation_context: Dict[str, Any],
+) -> str:
+    material = {
+        "tags": tags,
+        "solves_count": solves_count,
+        "strategy_level": strategy_level,
+        "branch_conditions": branch_conditions,
+        "generation_context": generation_context,
+    }
+    raw = json.dumps(material, ensure_ascii=False, sort_keys=True, default=str)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
 def _generate_variant_quest(
     *,
     tags: List[str],
@@ -4271,19 +5134,44 @@ def _generate_variant_quest(
     branch_conditions: int,
     seed_override: Optional[int],
     reference_quest_id: Optional[str],
+    generation_context: Optional[Dict[str, Any]] = None,
+    request_signature: Optional[str] = None,
 ) -> Dict[str, Any]:
+    if generation_context:
+        runtime_solves = solves_count
+        runtime_strategy = strategy_level
+        runtime_branches = branch_conditions
+        fallback = None
+    else:
+        runtime_solves, runtime_strategy, runtime_branches, fallback = (
+            _resolve_cached_variant_runtime_params(
+                tags=tags,
+                solves_count=solves_count,
+                strategy_level=strategy_level,
+                branch_conditions=branch_conditions,
+            )
+        )
     storage_data = make(
         tags,
-        solves_count,
-        strategy_level,
-        branch_conditions,
+        runtime_solves,
+        runtime_strategy,
+        runtime_branches,
         reference_quest_id,
-        False,
+        True,
         seed_override,
         None,
         None,
         None,
+        generation_context=generation_context,
+        request_signature=request_signature,
     )
+    if isinstance(storage_data.get("data"), dict):
+        if fallback is not None:
+            storage_data["data"]["variant_runtime_params"] = fallback
+        if generation_context:
+            storage_data["data"]["advanced_generation_context"] = generation_context
+        if request_signature:
+            storage_data["data"]["variant_request_signature"] = request_signature[:16]
     if not store_data(storage_data):
         detail = get_last_store_error() or "failed to store quest"
         raise RuntimeError(detail)
@@ -4345,34 +5233,114 @@ async def generate_quest_handler(
 
 ) -> QuestGenerateResponse:
 
-    hash_tags = [tag.strip() for tag in payload.hash_tags if tag.strip()]
+    hash_tags = _validate_generation_tags_or_400(payload.hash_tags)
 
     if not hash_tags:
 
         raise HTTPException(status_code=400, detail="hash_tags must not be empty")
 
+    payload = payload.model_copy(update={"hash_tags": hash_tags, "strict_tags": True})
+
     request_id = payload.request_id or str(uuid.uuid4())
 
-    _init_gen_status(request_id, "queued")
+    sm = JobStateMachine()
+    job = sm.start_job(
+        user_id=user_id,
+        job_type="quest_generation",
+        payload={
+            "user_id": user_id,
+            "hash_tags": hash_tags,
+            "solves_count": payload.solves_count,
+            "strategy_level": payload.strategy_level,
+            "branch_conditions": payload.branch_conditions,
+            "reference_quest_id": payload.reference_quest_id,
+            "strict_tags": True,
+            "seed": payload.seed,
+        },
+        job_id=request_id,
+    )
+    owner_id = job.get("user_id")
+    if owner_id and owner_id != user_id:
+        raise HTTPException(status_code=409, detail="request_id already exists")
+    if job.get("operation") != "quest_generation":
+        raise HTTPException(status_code=409, detail="request_id already exists")
 
-    asyncio.create_task(_run_quest_generation_task(request_id, payload, user_id))
+    if _QUEST_GENERATE_FAST_WAIT_MS > 0:
+        deadline = time.monotonic() + (_QUEST_GENERATE_FAST_WAIT_MS / 1000.0)
+        while time.monotonic() < deadline:
+            status = _get_quest_generation_job(request_id, user_id) or {}
+            state = status.get("status")
+            if state in {"done", "failed", "rejected"}:
+                mapped = _quest_job_to_status_payload(status)
+                return QuestGenerateResponse(
+                    request_id=request_id,
+                    status=mapped.get("status") or state,
+                    quest=mapped.get("quest"),
+                    error=mapped.get("error"),
+                    updated_at=mapped.get("updated_at"),
+                )
+            await asyncio.sleep(0.05)
+
+        status = _get_quest_generation_job(request_id, user_id) or {}
+        state = status.get("status")
+        if state in {"done", "failed", "rejected"}:
+            mapped = _quest_job_to_status_payload(status)
+            return QuestGenerateResponse(
+                request_id=request_id,
+                status=mapped.get("status") or state or "queued",
+                quest=mapped.get("quest"),
+                error=mapped.get("error"),
+                updated_at=mapped.get("updated_at"),
+            )
 
     return QuestGenerateResponse(
 
         request_id=request_id,
 
-        status="queued",
+        status=str(job.get("status") or "queued"),
 
         quest=None,
 
         error=None,
 
-        updated_at=int(time.time()),
+        updated_at=_job_updated_at_epoch(job.get("updated_at")),
 
     )
 
 
 
+
+
+@app.post("/quests/generate/cancel")
+def cancel_quest_generation_handler(
+    request_id: str,
+    user_id: str = Depends(_get_user_id),
+) -> Dict[str, Any]:
+    job_state = _get_quest_generation_job(request_id, user_id)
+    if job_state is not None:
+        try:
+            cancel_token(request_id)
+            hard_cancel_process_pool()
+            JobStateMachine().cancel_job(request_id, user_id)
+        except InvalidTransitionError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {"request_id": request_id, "status": "cancelled"}
+
+    status = _get_gen_status(request_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Generation request not found")
+    owner_id = status.get("user_id")
+    if owner_id and owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorised to cancel this generation")
+    cancel_token(request_id)
+    hard_cancel_process_pool()
+    _set_gen_status(
+        request_id,
+        "cancelled",
+        status="cancelled",
+        error="generation cancelled",
+    )
+    return {"request_id": request_id, "status": "cancelled"}
 
 
 @app.post("/quests/generate/batch", response_model=ProblemSolveGenerateQueuedResponse)
@@ -4385,7 +5353,7 @@ async def generate_quest_batch_handler(
 
 ) -> ProblemSolveGenerateQueuedResponse:
 
-    hash_tags = [tag.strip() for tag in payload.hash_tags if tag.strip()]
+    hash_tags = _validate_generation_tags_or_400(payload.hash_tags)
 
     if not hash_tags:
 
@@ -4401,7 +5369,7 @@ async def generate_quest_batch_handler(
             "min_difficulty_tier": payload.min_difficulty_tier,
             "max_difficulty_tier": payload.max_difficulty_tier,
             "question_count": payload.question_count,
-            "strict_tags": payload.strict_tags,
+            "strict_tags": True,
         },
     )
 
@@ -4414,27 +5382,41 @@ async def generate_quest_batch_handler(
 
 @app.post("/quests/generate/stream")
 async def generate_quest_batch_stream_handler(
+    request: Request,
     payload: ProblemSolveGenerateRequest,
     user_id: str = Depends(_get_user_id),
 ):
-    hash_tags = [tag.strip() for tag in payload.hash_tags if tag.strip()]
+    hash_tags = _validate_generation_tags_or_400(payload.hash_tags)
     if not hash_tags:
         raise HTTPException(status_code=400, detail="hash_tags must not be empty")
 
     history_entries, history_map = _load_recent_seed_history(user_id)
+    stream_token = f"stream:{user_id}:{uuid.uuid4()}"
+    cancel_event = register_token(stream_token)
 
     async def _event_stream():
         try:
             async with _GEN_SEMAPHORE:
-                quests = await asyncio.to_thread(
+                generation_task = asyncio.create_task(asyncio.to_thread(
                     generate_problem_set,
                     hash_tags=hash_tags,
                     min_difficulty_tier=payload.min_difficulty_tier,
                     max_difficulty_tier=payload.max_difficulty_tier,
                     question_count=payload.question_count,
                     recent_codebase_seeds={key: list(value) for key, value in history_map.items()},
-                )
+                    cancel_event=cancel_event,
+                ))
+                while not generation_task.done():
+                    if await request.is_disconnected():
+                        cancel_event.set()
+                        hard_cancel_process_pool()
+                        generation_task.cancel()
+                        raise GenerationCancelled("stream disconnected")
+                    await asyncio.sleep(0.2)
+                quests = await generation_task
+            check_cancelled(cancel_event)
             for quest in quests:
+                check_cancelled(cancel_event)
                 if not store_data(quest):
                     detail = get_last_store_error() or "failed to store quest"
                     yield f"data: {json.dumps({'error': detail}, ensure_ascii=False)}\n\n"
@@ -4448,8 +5430,12 @@ async def generate_quest_batch_stream_handler(
 
         except ValueError as exc:
             yield f"data: {json.dumps({'error': str(exc)}, ensure_ascii=False)}\n\n"
+        except GenerationCancelled:
+            yield f"data: {json.dumps({'error': 'generation cancelled'}, ensure_ascii=False)}\n\n"
         except Exception as exc:
             yield f"data: {json.dumps({'error': str(exc)}, ensure_ascii=False)}\n\n"
+        finally:
+            release_token(stream_token)
 
     return StreamingResponse(_event_stream(), media_type="text/event-stream")
 
@@ -4461,7 +5447,10 @@ def generate_variant_from_flow_draft(
 ) -> VariantGenerateResponse:
     if not payload.flow_draft:
         return _variant_rejection("missing_field", "flow_draft must not be empty", "Add at least one node")
-    tags = _resolve_variant_tags(payload.tags, payload.base_quest_ref)
+    try:
+        tags = _resolve_variant_tags(payload.tags, payload.base_quest_ref)
+    except (TypeError, ValueError) as exc:
+        return _variant_rejection("invalid_tags", str(exc), "Use registered generation tags")
     if not tags:
         return _variant_rejection("missing_tags", "tags must not be empty", "Provide tags or base_quest_ref.quest_id")
     prompt_text = (payload.prompt or "") + " " + json.dumps([n.model_dump() for n in payload.flow_draft], ensure_ascii=False)
@@ -4469,13 +5458,23 @@ def generate_variant_from_flow_draft(
     if rejected is not None:
         return rejected
     try:
+        generation_context = _build_variant_generation_context(payload, tags)
+        request_signature = _build_variant_request_signature(
+            tags=tags,
+            solves_count=payload.solves_count,
+            strategy_level=payload.strategy_level,
+            branch_conditions=payload.branch_conditions,
+            generation_context=generation_context,
+        )
         quest = _generate_variant_quest(
             tags=tags,
             solves_count=payload.solves_count,
             strategy_level=payload.strategy_level,
-            branch_conditions=max(payload.branch_conditions, 1),
+            branch_conditions=payload.branch_conditions,
             seed_override=payload.seed_override,
             reference_quest_id=payload.base_quest_ref.quest_id if payload.base_quest_ref else None,
+            generation_context=generation_context,
+            request_signature=request_signature,
         )
         quest.setdefault("data", {})
         quest["data"]["variant_meta"] = {
@@ -4484,6 +5483,12 @@ def generate_variant_from_flow_draft(
             "flow_draft": [n.model_dump() for n in payload.flow_draft],
             "prompt": payload.prompt,
             "note_blocks": payload.note_blocks,
+            "advanced_metrics": generation_context.get("metrics", {}),
+            "advanced_effect": {
+                "signature": request_signature[:16],
+                "dominant_metrics": generation_context.get("dominant_metrics", []),
+                "examples": generation_context.get("examples", []),
+            },
         }
         _insert_variant_tray_item(
             user_id=user_id,
@@ -4503,7 +5508,10 @@ def generate_variant_from_prompt_note(
     payload: VariantPromptNoteRequest,
     user_id: str = Depends(_get_user_id),
 ) -> VariantGenerateResponse:
-    tags = _resolve_variant_tags(payload.tags, payload.base_quest_ref)
+    try:
+        tags = _resolve_variant_tags(payload.tags, payload.base_quest_ref)
+    except (TypeError, ValueError) as exc:
+        return _variant_rejection("invalid_tags", str(exc), "Use registered generation tags")
     if not tags:
         return _variant_rejection("missing_tags", "tags must not be empty", "Provide tags or base_quest_ref.quest_id")
     prompt_text = ((payload.prompt or "").strip() + " " + json.dumps(payload.note_blocks, ensure_ascii=False)).strip()
@@ -4513,6 +5521,14 @@ def generate_variant_from_prompt_note(
     if rejected is not None:
         return rejected
     try:
+        generation_context = _build_variant_generation_context(payload, tags)
+        request_signature = _build_variant_request_signature(
+            tags=tags,
+            solves_count=payload.solves_count,
+            strategy_level=payload.strategy_level,
+            branch_conditions=payload.branch_conditions,
+            generation_context=generation_context,
+        )
         quest = _generate_variant_quest(
             tags=tags,
             solves_count=payload.solves_count,
@@ -4520,6 +5536,8 @@ def generate_variant_from_prompt_note(
             branch_conditions=payload.branch_conditions,
             seed_override=payload.seed_override,
             reference_quest_id=payload.base_quest_ref.quest_id if payload.base_quest_ref else None,
+            generation_context=generation_context,
+            request_signature=request_signature,
         )
         quest.setdefault("data", {})
         quest["data"]["variant_meta"] = {
@@ -4527,6 +5545,12 @@ def generate_variant_from_prompt_note(
             "base_quest_ref": payload.base_quest_ref.model_dump() if payload.base_quest_ref else None,
             "prompt": payload.prompt,
             "note_blocks": payload.note_blocks,
+            "advanced_metrics": generation_context.get("metrics", {}),
+            "advanced_effect": {
+                "signature": request_signature[:16],
+                "dominant_metrics": generation_context.get("dominant_metrics", []),
+                "examples": generation_context.get("examples", []),
+            },
         }
         _insert_variant_tray_item(
             user_id=user_id,
@@ -4893,7 +5917,9 @@ class AdminSeedStatusResponse(BaseModel):
 
 @app.get("/admin/seed/status", response_model=AdminSeedStatusResponse)
 
-def admin_seed_status() -> AdminSeedStatusResponse:
+def admin_seed_status(
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> AdminSeedStatusResponse:
 
     return AdminSeedStatusResponse(
 
@@ -4915,7 +5941,10 @@ def admin_seed_status() -> AdminSeedStatusResponse:
 
 @app.get("/admin/seed/toggle")
 
-def admin_seed_toggle(enabled: int = 1) -> Dict[str, Any]:
+def admin_seed_toggle(
+    enabled: int = 1,
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Dict[str, Any]:
 
     global _SEED_VALIDATOR_ENABLED
 
@@ -4929,7 +5958,9 @@ def admin_seed_toggle(enabled: int = 1) -> Dict[str, Any]:
 
 @app.get("/admin/seed/run")
 
-async def admin_seed_run() -> Dict[str, Any]:
+async def admin_seed_run(
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Dict[str, Any]:
 
     async with _SEED_VALIDATOR_LOCK:
 
@@ -5211,7 +6242,9 @@ def _render_admin_codebases(rows: List[Dict[str, Any]]) -> str:
 
 @app.get("/admin/codebases")
 
-def admin_codebases() -> Response:
+def admin_codebases(
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Response:
 
     rows = list_codebase_stats(auto_delete_disabled=True)
 
@@ -5225,7 +6258,9 @@ def admin_codebases() -> Response:
 
 @app.get("/admin/codebases.json")
 
-def admin_codebases_json() -> Dict[str, Any]:
+def admin_codebases_json(
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Dict[str, Any]:
 
     return {"codebases": list_codebase_stats(auto_delete_disabled=True)}
 
@@ -5235,7 +6270,11 @@ def admin_codebases_json() -> Dict[str, Any]:
 
 @app.get("/admin/seed/logs")
 
-def admin_seed_logs(codebase_id: Optional[int] = None, limit: int = 200) -> Dict[str, Any]:
+def admin_seed_logs(
+    codebase_id: Optional[int] = None,
+    limit: int = 200,
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Dict[str, Any]:
 
     return {"logs": list_seed_logs(codebase_id=codebase_id, limit=limit)}
 
@@ -5243,7 +6282,11 @@ def admin_seed_logs(codebase_id: Optional[int] = None, limit: int = 200) -> Dict
 
 @app.get("/admin/agent/logs")
 
-def admin_agent_logs(codebase_id: Optional[int] = None, limit: int = 200) -> Dict[str, Any]:
+def admin_agent_logs(
+    codebase_id: Optional[int] = None,
+    limit: int = 200,
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Dict[str, Any]:
 
     return {"logs": list_agent_logs(codebase_id=codebase_id, limit=limit)}
 
@@ -5255,7 +6298,10 @@ def admin_agent_logs(codebase_id: Optional[int] = None, limit: int = 200) -> Dic
 
 @app.post("/admin/codebases/delete")
 
-def admin_codebases_delete(codebase_id: int) -> Dict[str, Any]:
+def admin_codebases_delete(
+    codebase_id: int,
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Dict[str, Any]:
 
     delete_codebase(codebase_id)
 
@@ -5267,7 +6313,10 @@ def admin_codebases_delete(codebase_id: int) -> Dict[str, Any]:
 
 @app.post("/admin/codebases/repair")
 
-def admin_codebases_repair(codebase_id: int) -> Dict[str, Any]:
+def admin_codebases_repair(
+    codebase_id: int,
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Dict[str, Any]:
 
     codebases = load_codebases()
 
@@ -5351,7 +6400,11 @@ def admin_codebases_repair(codebase_id: int) -> Dict[str, Any]:
 
 @app.post("/admin/seed/validate")
 
-def admin_seed_validate(codebase_id: int, attempts: int = 10) -> Dict[str, Any]:
+def admin_seed_validate(
+    codebase_id: int,
+    attempts: int = 10,
+    _admin: Dict[str, Any] = Depends(_require_admin_payload),
+) -> Dict[str, Any]:
 
     if attempts < 1:
 
@@ -5425,6 +6478,7 @@ def serverchat_get_config(user_id: str = Depends(_get_user_id)) -> ServerChatCon
     return ServerChatConfigResponse(
         character=profile.get("character", "female"),
         character_name=profile.get("character_name", ""),
+        model=profile.get("model", ""),
     )
 
 
@@ -5434,7 +6488,12 @@ def serverchat_set_config(
     user_id: str = Depends(_get_user_id),
 ) -> ServerChatConfigResponse:
     character = set_serverchat_character(user_id, payload.character)
-    return ServerChatConfigResponse(character=character)
+    profile = get_serverchat_profile(user_id)
+    return ServerChatConfigResponse(
+        character=character,
+        character_name=profile.get("character_name", ""),
+        model="",
+    )
 
 
 @app.post("/serverchat/message", response_model=ServerChatMessageResponse)
@@ -5453,7 +6512,23 @@ def serverchat_message(
             flow=payload.flow,
             ocr=payload.ocr,
             mode=payload.mode or "chat",
+            ephemeral=payload.ephemeral,
+            include_user_data=payload.include_user_data,
         )
+    except ChatInputBlocked as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ChatRateLimited as exc:
+        raise HTTPException(
+            status_code=429,
+            detail=str(exc),
+            headers={"Retry-After": str(exc.retry_after_seconds)},
+        ) from exc
+    except ChatGenerationBlocked as exc:
+        raise HTTPException(
+            status_code=429,
+            detail=str(exc),
+            headers={"Retry-After": str(exc.retry_after_seconds)},
+        ) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return ServerChatMessageResponse(**result)
@@ -6407,10 +7482,10 @@ def list_direct_messages(
     max_total: int = 2000,
     user_id: str = Depends(_get_user_id),
 ) -> DirectMessageListResponse:
-    peer_user = get_user_by_username(peer)
+    peer_user = get_social_user_by_username(peer)
     if not peer_user:
         raise HTTPException(status_code=404, detail="Peer not found")
-    me = get_user_by_id(user_id)
+    me = get_social_user_by_id(user_id)
     me_username = me.get("username") if me else "me"
     peer_username = peer_user.get("username") or peer
     safe_limit = max(1, min(limit, 100))
@@ -6441,10 +7516,10 @@ def send_direct_message(
     text = payload.text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="Text is required")
-    peer = get_user_by_username(payload.peer)
+    peer = get_social_user_by_username(payload.peer)
     if not peer:
         raise HTTPException(status_code=404, detail="Peer not found")
-    me = get_user_by_id(user_id)
+    me = get_social_user_by_id(user_id)
     me_username = me.get("username") if me else "me"
     peer_username = peer.get("username") or payload.peer
     now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
@@ -6498,7 +7573,7 @@ def delete_direct_message_thread(
     peer: str,
     user_id: str = Depends(_get_user_id),
 ) -> Dict[str, str]:
-    peer_user = get_user_by_username(peer)
+    peer_user = get_social_user_by_username(peer)
     if not peer_user:
         raise HTTPException(status_code=404, detail="Peer not found")
     delete_conversation(user_id, peer_user["user_id"])
@@ -6517,11 +7592,11 @@ def list_conversations_handler(
         limit=safe_limit,
         before_created_at=before,
     )
-    me = get_user_by_id(user_id)
+    me = get_social_user_by_id(user_id)
     me_username = me.get("username") if me else "me"
     result: List[DirectMessageResponse] = []
     for msg in messages:
-        peer_user = get_user_by_id(msg.get("peer_id") or "") or {}
+        peer_user = get_social_user_by_id(msg.get("peer_id") or "") or {}
         peer_username = peer_user.get("username") or ""
         result.append(
             _make_dm_response(

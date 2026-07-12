@@ -53,6 +53,7 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
               required Map<String, dynamic>? quest,
               required bool isCorrect,
               required List<Map<String, dynamic>> stepCorrectness,
+              int? selectedIndex,
               int? elapsedSeconds,
             }) async {
               final question = byIndex[itemIndex];

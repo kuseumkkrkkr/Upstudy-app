@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
+import 'package:s11/shared/business/repositories/exam_paper_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/business/usecases/heatmap_engine.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
@@ -32,15 +33,16 @@ class ExamPaperPage extends StatefulWidget {
   const ExamPaperPage({
     super.key,
     this.examId,
+    this.courseId,
     this.expectedQuestionCount,
     this.timeLimitMinutes,
   });
 
   final String? examId;
+  final String? courseId;
   final int? expectedQuestionCount;
   final int? timeLimitMinutes;
 
   @override
   State<ExamPaperPage> createState() => _ExamPaperPageState();
 }
-

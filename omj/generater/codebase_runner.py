@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import atexit
+from contextlib import contextmanager
 import multiprocessing
 import os
 import re
 import types
-from concurrent.futures import ProcessPoolExecutor, TimeoutError as FutureTimeoutError
+import threading
+from concurrent.futures import ProcessPoolExecutor, TimeoutError as FutureTimeoutError, wait
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from baselines.basemodel import AISolveStep, AIQuestResult, ContentBlocks
+from services.jobs.cancellation import check_cancelled, is_cancelled
 
 
 # =========================
@@ -17,26 +20,89 @@ from baselines.basemodel import AISolveStep, AIQuestResult, ContentBlocks
 
 _pool_executor: Optional[ProcessPoolExecutor] = None
 _pool_max_workers: int = max(2, min(4, os.cpu_count() or 4))
+_pool_lock = threading.Lock()
+_active_pool_ops = 0
 
 
 def _get_pool() -> ProcessPoolExecutor:
     global _pool_executor
-    if _pool_executor is None:
-        _pool_executor = ProcessPoolExecutor(
-            max_workers=_pool_max_workers,
-            mp_context=multiprocessing.get_context("spawn"),
-        )
-    return _pool_executor
+    with _pool_lock:
+        if _pool_executor is None:
+            _pool_executor = ProcessPoolExecutor(
+                max_workers=_pool_max_workers,
+                mp_context=multiprocessing.get_context("spawn"),
+            )
+        return _pool_executor
 
 
 def shutdown_process_pool(wait: bool = True) -> None:
     global _pool_executor
-    if _pool_executor is not None:
-        _pool_executor.shutdown(wait=wait)
+    with _pool_lock:
+        if _pool_executor is not None:
+            _pool_executor.shutdown(wait=wait, cancel_futures=True)
+            _pool_executor = None
+
+
+@contextmanager
+def _track_pool_operation():
+    global _active_pool_ops
+    with _pool_lock:
+        _active_pool_ops += 1
+    try:
+        yield
+    finally:
+        with _pool_lock:
+            _active_pool_ops = max(0, _active_pool_ops - 1)
+
+
+def hard_cancel_process_pool(*, isolate_current: bool = False) -> bool:
+    """Terminate the shared codebase pool only when it will not cancel other users."""
+    global _pool_executor
+    with _pool_lock:
+        if _active_pool_ops > (1 if isolate_current else 0):
+            return False
+        pool = _pool_executor
         _pool_executor = None
+        if pool is None:
+            return False
+        processes_map = getattr(pool, "_processes", {}) or {}
+        processes = list(processes_map.values() if hasattr(processes_map, "values") else processes_map)
+        for process in processes:
+            try:
+                process.terminate()
+            except Exception:
+                pass
+        try:
+            pool.shutdown(wait=False, cancel_futures=True)
+        except Exception:
+            pass
+        return True
 
 
 atexit.register(shutdown_process_pool, wait=True)
+
+
+_WARMUP_CODE = """
+def generate_problem(seed=None):
+    return {
+        "quest_title": {"blocks": [{"type": "text", "content": "warmup"}]},
+        "quest_answer": {"blocks": [{"type": "text", "content": "0"}]},
+        "answer": 0,
+        "main_huddle": 0,
+        "primary_hash_tag": "#warmup",
+        "quest_image": None,
+        "solves": [
+            {
+                "flow": {"blocks": [{"type": "text", "content": "warmup"}]},
+                "hash_tag": ["#warmup"],
+                "hint_riddle": {"blocks": [{"type": "text", "content": "warmup"}]},
+                "answer_riddle": {"blocks": [{"type": "text", "content": "warmup"}]},
+                "enter_huddle": 0,
+                "branches": [],
+            }
+        ],
+    }
+""".strip()
 
 
 def _run_codebase_worker(args: Tuple[str, Optional[int]]) -> Dict[str, Any]:
@@ -53,8 +119,21 @@ def _run_codebase_worker(args: Tuple[str, Optional[int]]) -> Dict[str, Any]:
         return {"ok": False, "error": f"{exc}"}
 
 
+_DEBUG_LOGS = os.getenv("OMJ_GENERATOR_DEBUG", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
+
+def _debug_log(message: str) -> None:
+    if _DEBUG_LOGS:
+        print(message)
+
+
 def _log_done(role: str) -> None:
-    print(f"[{role}] 실행완료")
+    _debug_log(f"[{role}] 실행완료")
 
 
 # =========================
@@ -80,7 +159,7 @@ def compile_code(code: str) -> types.ModuleType:
     if not callable(generate_func):
         raise RuntimeError("generate_problem 함수가 없습니다.")
     _log_done("코드 컴파일")
-    print(f"[입력] compile_code code_length={len(code)}")
+    _debug_log(f"[입력] compile_code code_length={len(code)}")
     return module
 
 
@@ -100,7 +179,7 @@ def normalize_signs(text: str) -> str:
             cleaned = re.sub(pattern, repl, cleaned)
     cleaned = re.sub(r"\s{2,}", " ", cleaned)
     _log_done("부호 정규화")
-    print(f"[입력] normalize_signs len_before={len(text)} len_after={len(cleaned)}")
+    _debug_log(f"[입력] normalize_signs len_before={len(text)} len_after={len(cleaned)}")
     return cleaned
 
 
@@ -115,7 +194,7 @@ def _coerce_blocks(value: Any, field_name: str) -> ContentBlocks:
             content = normalize_signs(content)
         cleaned_blocks.append({"type": block.type, "content": content})
     _log_done(f"{field_name} 정규화")
-    print(f"[입력] _coerce_blocks field={field_name} blocks={len(cleaned_blocks)}")
+    _debug_log(f"[입력] _coerce_blocks field={field_name} blocks={len(cleaned_blocks)}")
     return ContentBlocks.model_validate({"blocks": cleaned_blocks})
 
 
@@ -330,11 +409,21 @@ def select_codebase(
     return choice
 
 
-def run_codebase(entry: Dict[str, Any], seed: Optional[int]) -> Dict[str, Any]:
+def run_codebase(
+    entry: Dict[str, Any],
+    seed: Optional[int],
+    *,
+    cancel_event: Optional[threading.Event] = None,
+) -> Dict[str, Any]:
     code = entry.get("code") or ""
     if not code.strip():
         raise RuntimeError("Codebase code is empty.")
-    result = _run_codebase_with_timeout(code, seed, timeout_seconds=None)
+    result = _run_codebase_with_timeout(
+        code,
+        seed,
+        timeout_seconds=float(os.getenv("CODEBASE_SINGLE_TIMEOUT_SEC", "12")),
+        cancel_event=cancel_event,
+    )
     _log_done("codebase 실행")
     return result
 
@@ -344,6 +433,7 @@ def run_codebase_batch(
     seeds: List[int],
     *,
     timeout_seconds: Optional[float] = None,
+    cancel_event: Optional[threading.Event] = None,
 ) -> List[Dict[str, Any]]:
     """
     Execute multiple seeds in parallel via the process pool.
@@ -353,30 +443,49 @@ def run_codebase_batch(
     code = entry.get("code") or ""
     if not code.strip():
         return [{"_error": "Codebase code is empty."} for _ in seeds]
+    check_cancelled(cancel_event)
 
-    pool = _get_pool()
-    futures = {
-        pool.submit(_run_codebase_worker, (code, seed)): idx
-        for idx, seed in enumerate(seeds)
-    }
+    with _track_pool_operation():
+        pool = _get_pool()
+        futures = {
+            pool.submit(_run_codebase_worker, (code, seed)): idx
+            for idx, seed in enumerate(seeds)
+        }
 
-    results: List[Dict[str, Any]] = [{"_error": "not executed"} for _ in seeds]
-    for future in futures:
-        idx = futures[future]
-        try:
-            payload = future.result(timeout=timeout_seconds)
-            if not payload.get("ok"):
-                results[idx] = {"_error": payload.get("error") or "codebase execution failed"}
-            else:
-                result = payload.get("result")
-                if not isinstance(result, dict):
-                    results[idx] = {"_error": "generate_problem result is not a dict."}
-                else:
-                    results[idx] = result
-        except FutureTimeoutError:
+        results: List[Dict[str, Any]] = [{"_error": "not executed"} for _ in seeds]
+        done, pending = wait(futures.keys(), timeout=timeout_seconds)
+
+        hard_cancel_needed = bool(pending)
+        for future in pending:
+            idx = futures[future]
             results[idx] = {"_error": "codebase execution timeout"}
-        except Exception as exc:
-            results[idx] = {"_error": f"{exc}"}
+            future.cancel()
+
+        for future in done:
+            idx = futures[future]
+            try:
+                check_cancelled(cancel_event)
+                payload = future.result()
+                if not payload.get("ok"):
+                    results[idx] = {"_error": payload.get("error") or "codebase execution failed"}
+                else:
+                    result = payload.get("result")
+                    if not isinstance(result, dict):
+                        results[idx] = {"_error": "generate_problem result is not a dict."}
+                    else:
+                        results[idx] = result
+            except Exception as exc:
+                results[idx] = {"_error": f"{exc}"}
+                if is_cancelled(cancel_event):
+                    hard_cancel_needed = True
+                    results[idx] = {"_error": "generation cancelled"}
+                    break
+
+        if hard_cancel_needed or is_cancelled(cancel_event):
+            for future in futures:
+                future.cancel()
+            hard_cancel_process_pool(isolate_current=True)
+            check_cancelled(cancel_event)
 
     return results
 
@@ -386,15 +495,24 @@ def _run_codebase_with_timeout(
     seed: Optional[int],
     *,
     timeout_seconds: Optional[float],
+    cancel_event: Optional[threading.Event] = None,
 ) -> Dict[str, Any]:
-    pool = _get_pool()
-    future = pool.submit(_run_codebase_worker, (code, seed))
-    try:
-        payload = future.result(timeout=timeout_seconds)
-    except FutureTimeoutError:
-        raise TimeoutError("codebase execution timeout")
-    except Exception as exc:
-        raise RuntimeError(f"codebase execution failed: {exc}")
+    check_cancelled(cancel_event)
+    with _track_pool_operation():
+        pool = _get_pool()
+        future = pool.submit(_run_codebase_worker, (code, seed))
+        try:
+            payload = future.result(timeout=timeout_seconds)
+        except FutureTimeoutError:
+            future.cancel()
+            hard_cancel_process_pool(isolate_current=True)
+            raise TimeoutError("codebase execution timeout")
+        except Exception as exc:
+            if is_cancelled(cancel_event):
+                future.cancel()
+                hard_cancel_process_pool(isolate_current=True)
+                check_cancelled(cancel_event)
+            raise RuntimeError(f"codebase execution failed: {exc}")
 
     if not payload.get("ok"):
         raise RuntimeError(payload.get("error") or "codebase execution failed")
@@ -422,9 +540,28 @@ def run_codebase_inline(entry: Dict[str, Any], seed: Optional[int]) -> Dict[str,
     return result
 
 
-# Backward-compatible no-op to satisfy existing imports
 def warmup_sympy_pool(*args: Any, **kwargs: Any) -> None:  # pragma: no cover
-    _log_done("sympy warmup(skip)")
+    """Warm process-pool workers without touching user codebases."""
+    if os.getenv("CODEBASE_POOL_WARMUP_ENABLED", "1").strip().lower() not in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        _log_done("process pool warmup(skip)")
+        return None
+    timeout = float(os.getenv("CODEBASE_POOL_WARMUP_TIMEOUT_SEC", "5"))
+    pool = _get_pool()
+    futures = [
+        pool.submit(_run_codebase_worker, (_WARMUP_CODE, seed))
+        for seed in range(_pool_max_workers)
+    ]
+    for future in futures:
+        try:
+            future.result(timeout=timeout)
+        except Exception:
+            future.cancel()
+    _log_done("process pool warmup")
     return None
 
 

@@ -191,6 +191,48 @@ def _ensure_academy_tables() -> None:
         )
         """
     )
+    cur.execute("PRAGMA table_info(academy_group_member)")
+    member_cols = {row[1] for row in cur.fetchall()}
+    if "role" not in member_cols:
+        cur.execute("ALTER TABLE academy_group_member ADD COLUMN role TEXT NOT NULL DEFAULT 'student'")
+    if "joined_at" not in member_cols:
+        cur.execute("ALTER TABLE academy_group_member ADD COLUMN joined_at TEXT")
+    if "removed_at" not in member_cols:
+        cur.execute("ALTER TABLE academy_group_member ADD COLUMN removed_at TEXT")
+    if "status" not in member_cols:
+        cur.execute("ALTER TABLE academy_group_member ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+    if "member_id" not in member_cols:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS academy_group_member_new (
+                member_id TEXT PRIMARY KEY,
+                group_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'student',
+                joined_at TEXT,
+                removed_at TEXT,
+                status TEXT NOT NULL DEFAULT 'active'
+            )
+            """
+        )
+        cur.execute(
+            """
+            INSERT INTO academy_group_member_new (
+                member_id, group_id, user_id, role, joined_at, removed_at, status
+            )
+            SELECT
+                lower(hex(randomblob(16))),
+                group_id,
+                user_id,
+                COALESCE(role, 'student'),
+                joined_at,
+                removed_at,
+                COALESCE(status, 'active')
+            FROM academy_group_member
+            """
+        )
+        cur.execute("DROP TABLE academy_group_member")
+        cur.execute("ALTER TABLE academy_group_member_new RENAME TO academy_group_member")
 
     cur.execute(
         """
@@ -860,6 +902,49 @@ def is_active_group_member(*, group_id: str, user_id: str) -> bool:
     return ok
 
 
+def is_active_academy_teacher(*, academy_id: str, user_id: str) -> bool:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT 1
+        FROM academy_group g
+        JOIN academy_group_member m ON m.group_id = g.group_id
+        WHERE g.academy_id = ?
+          AND m.user_id = ?
+          AND m.status = 'active'
+          AND lower(COALESCE(m.role, 'student')) IN ('teacher', 'admin')
+        LIMIT 1
+        """,
+        (academy_id, user_id),
+    )
+    ok = cur.fetchone() is not None
+    conn.close()
+    return ok
+
+
+def is_active_academy_member(*, academy_id: str, user_id: str) -> bool:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT 1
+        FROM academy_group g
+        JOIN academy_group_member m ON m.group_id = g.group_id
+        WHERE g.academy_id = ?
+          AND m.user_id = ?
+          AND m.status = 'active'
+        LIMIT 1
+        """,
+        (academy_id, user_id),
+    )
+    ok = cur.fetchone() is not None
+    conn.close()
+    return ok
+
+
 def remove_group_member(member_id: str, reason: Optional[str] = None) -> bool:
     _ensure_academy_tables()
     now = _now_iso()
@@ -1064,6 +1149,55 @@ def list_attendance(
     return [dict(r) for r in rows]
 
 
+def list_attendance_for_teacher(
+    *,
+    teacher_user_id: str,
+    group_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    date: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    conditions: List[str] = [
+        "m.user_id = ?",
+        "m.status = 'active'",
+        "lower(COALESCE(m.role, 'student')) IN ('teacher', 'admin')",
+    ]
+    params: List[Any] = [teacher_user_id]
+    if group_id:
+        conditions.append("a.group_id = ?")
+        params.append(group_id)
+    if user_id:
+        conditions.append("a.user_id = ?")
+        params.append(user_id)
+    if date:
+        conditions.append("a.date = ?")
+        params.append(date)
+    if date_from:
+        conditions.append("a.date >= ?")
+        params.append(date_from)
+    if date_to:
+        conditions.append("a.date <= ?")
+        params.append(date_to)
+    cur.execute(
+        f"""
+        SELECT a.*
+        FROM attendance_log a
+        JOIN academy_group_member m ON m.group_id = a.group_id
+        WHERE {' AND '.join(conditions)}
+        ORDER BY a.checked_at DESC
+        """,
+        params,
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def update_attendance(
     log_id: str,
     *,
@@ -1261,6 +1395,54 @@ def list_tuition_payments(
     return [dict(r) for r in rows]
 
 
+def list_tuition_payments_for_teacher(
+    *,
+    teacher_user_id: str,
+    academy_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    month_label: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    conditions: List[str] = [
+        """
+        EXISTS (
+            SELECT 1
+            FROM academy_group g
+            JOIN academy_group_member m ON m.group_id = g.group_id
+            WHERE g.academy_id = p.academy_id
+              AND m.user_id = ?
+              AND m.status = 'active'
+              AND lower(COALESCE(m.role, 'student')) IN ('teacher', 'admin')
+        )
+        """,
+    ]
+    params: List[Any] = [teacher_user_id]
+    if academy_id:
+        conditions.append("p.academy_id = ?")
+        params.append(academy_id)
+    if user_id:
+        conditions.append("p.user_id = ?")
+        params.append(user_id)
+    if month_label:
+        conditions.append("p.month_label = ?")
+        params.append(month_label)
+    cur.execute(
+        f"""
+        SELECT p.*
+        FROM tuition_payment p
+        WHERE {' AND '.join(conditions)}
+        ORDER BY p.paid_at DESC
+        """,
+        params,
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def update_tuition_payment(
     payment_id: str,
     *,
@@ -1418,6 +1600,58 @@ def list_ledger_entries(
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     cur.execute(
         f"SELECT * FROM finance_ledger {where} ORDER BY transaction_date DESC, created_at DESC",
+        params,
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def list_ledger_entries_for_teacher(
+    *,
+    teacher_user_id: str,
+    academy_id: Optional[str] = None,
+    category: Optional[str] = None,
+    transaction_date_from: Optional[str] = None,
+    transaction_date_to: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    conditions: List[str] = [
+        """
+        EXISTS (
+            SELECT 1
+            FROM academy_group g
+            JOIN academy_group_member m ON m.group_id = g.group_id
+            WHERE g.academy_id = l.academy_id
+              AND m.user_id = ?
+              AND m.status = 'active'
+              AND lower(COALESCE(m.role, 'student')) IN ('teacher', 'admin')
+        )
+        """,
+    ]
+    params: List[Any] = [teacher_user_id]
+    if academy_id:
+        conditions.append("l.academy_id = ?")
+        params.append(academy_id)
+    if category:
+        conditions.append("l.category = ?")
+        params.append(category)
+    if transaction_date_from:
+        conditions.append("l.transaction_date >= ?")
+        params.append(transaction_date_from)
+    if transaction_date_to:
+        conditions.append("l.transaction_date <= ?")
+        params.append(transaction_date_to)
+    cur.execute(
+        f"""
+        SELECT l.*
+        FROM finance_ledger l
+        WHERE {' AND '.join(conditions)}
+        ORDER BY l.transaction_date DESC, l.created_at DESC
+        """,
         params,
     )
     rows = cur.fetchall()
@@ -1586,6 +1820,50 @@ def list_consult_notes(
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     cur.execute(
         f"SELECT * FROM parent_consult_note {where} ORDER BY consulted_at DESC",
+        params,
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def list_consult_notes_for_teacher(
+    *,
+    teacher_user_id: str,
+    academy_id: Optional[str] = None,
+    student_user_id: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    conditions: List[str] = [
+        """
+        EXISTS (
+            SELECT 1
+            FROM academy_group g
+            JOIN academy_group_member m ON m.group_id = g.group_id
+            WHERE g.academy_id = n.academy_id
+              AND m.user_id = ?
+              AND m.status = 'active'
+              AND lower(COALESCE(m.role, 'student')) IN ('teacher', 'admin')
+        )
+        """,
+    ]
+    params: List[Any] = [teacher_user_id]
+    if academy_id:
+        conditions.append("n.academy_id = ?")
+        params.append(academy_id)
+    if student_user_id:
+        conditions.append("n.student_user_id = ?")
+        params.append(student_user_id)
+    cur.execute(
+        f"""
+        SELECT n.*
+        FROM parent_consult_note n
+        WHERE {' AND '.join(conditions)}
+        ORDER BY n.consulted_at DESC
+        """,
         params,
     )
     rows = cur.fetchall()
@@ -1794,6 +2072,43 @@ def list_assignments(
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     cur.execute(
         f"SELECT * FROM group_assignment {where} ORDER BY created_at DESC",
+        params,
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def list_assignments_for_teacher(
+    *,
+    user_id: str,
+    group_id: Optional[str] = None,
+    kind: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    conditions: List[str] = [
+        "m.user_id = ?",
+        "m.status = 'active'",
+        "lower(COALESCE(m.role, 'student')) IN ('teacher', 'admin')",
+    ]
+    params: List[Any] = [user_id]
+    if group_id:
+        conditions.append("a.group_id = ?")
+        params.append(group_id)
+    if kind:
+        conditions.append("a.kind = ?")
+        params.append(kind)
+    cur.execute(
+        f"""
+        SELECT DISTINCT a.*
+        FROM group_assignment a
+        JOIN academy_group_member m ON m.group_id = a.group_id
+        WHERE {' AND '.join(conditions)}
+        ORDER BY a.created_at DESC
+        """,
         params,
     )
     rows = cur.fetchall()
@@ -2041,6 +2356,48 @@ def list_submissions(
     return [dict(r) for r in rows]
 
 
+def list_submissions_for_teacher(
+    *,
+    teacher_user_id: str,
+    assignment_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    status: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    conditions: List[str] = [
+        "m.user_id = ?",
+        "m.status = 'active'",
+        "lower(COALESCE(m.role, 'student')) IN ('teacher', 'admin')",
+    ]
+    params: List[Any] = [teacher_user_id]
+    if assignment_id:
+        conditions.append("s.assignment_id = ?")
+        params.append(assignment_id)
+    if user_id:
+        conditions.append("s.user_id = ?")
+        params.append(user_id)
+    if status:
+        conditions.append("s.status = ?")
+        params.append(status)
+    cur.execute(
+        f"""
+        SELECT s.*
+        FROM group_submission s
+        JOIN group_assignment a ON a.assignment_id = s.assignment_id
+        JOIN academy_group_member m ON m.group_id = a.group_id
+        WHERE {' AND '.join(conditions)}
+        ORDER BY s.submitted_at DESC
+        """,
+        params,
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def update_submission_status(
     submission_id: str,
     status: str,
@@ -2215,6 +2572,17 @@ def list_timetable_preferences(
     rows = cur.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def get_timetable_preference(preference_id: str) -> Optional[Dict[str, Any]]:
+    _ensure_academy_tables()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM timetable_preference WHERE preference_id = ?", (preference_id,))
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 
 def delete_timetable_preference(preference_id: str) -> bool:

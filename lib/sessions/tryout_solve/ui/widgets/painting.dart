@@ -180,7 +180,9 @@ class _StrokePainter extends CustomPainter {
       }
     }
 
-    for (final stroke in strokes) {
+    final ordered = List<_Stroke>.from(strokes)
+      ..sort((a, b) => a.order.compareTo(b.order));
+    for (final stroke in ordered) {
       drawOne(stroke);
     }
     if (currentStroke != null) {
@@ -210,14 +212,18 @@ class _StrokePainter extends CustomPainter {
 
     if (eraserPosition != null) {
       final fillPaint = Paint()
-        ..color = Colors.black.withValues(alpha: 0.08)
+        ..color = Colors.black.withValues(alpha: 0.06)
         ..style = PaintingStyle.fill;
       final borderPaint = Paint()
-        ..color = Colors.black.withValues(alpha: 0.4)
+        ..color = Colors.black.withValues(alpha: 0.25)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
+        ..strokeWidth = 1.2;
       canvas.drawCircle(eraserPosition!, eraserRadius, fillPaint);
       canvas.drawCircle(eraserPosition!, eraserRadius, borderPaint);
+      final centerPaint = Paint()
+        ..color = Colors.black.withValues(alpha: 0.4)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(eraserPosition!, 3, centerPaint);
     }
     canvas.restore();
   }
@@ -227,6 +233,8 @@ class _StrokePainter extends CustomPainter {
     return oldDelegate.scale != scale ||
         oldDelegate.logicalSize != logicalSize ||
         oldDelegate.eraserPosition != eraserPosition ||
-        oldDelegate.backgroundColor != backgroundColor;
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.strokes.length != strokes.length ||
+        oldDelegate.currentStroke != currentStroke;
   }
 }

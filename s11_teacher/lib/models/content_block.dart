@@ -1,11 +1,10 @@
+import 'dart:convert';
+
 class ContentBlock {
   final String type;
   final String content;
 
-  const ContentBlock({
-    required this.type,
-    required this.content,
-  });
+  const ContentBlock({required this.type, required this.content});
 
   bool get isLatex {
     final normalized = type.toLowerCase();
@@ -45,6 +44,13 @@ List<ContentBlock> parseContentBlocks(dynamic value) {
   if (value is String) {
     if (value.isEmpty) {
       return [];
+    }
+    final trimmed = value.trim();
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+        (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      try {
+        return parseContentBlocks(jsonDecode(trimmed));
+      } catch (_) {}
     }
     return parseTextWithLatex(value);
   }
@@ -115,10 +121,7 @@ List<ContentBlock> normalizeFlowBlocks(List<ContentBlock> blocks) {
   return normalized.isEmpty ? blocks : normalized;
 }
 
-List<ContentBlock> prependTextBlock(
-  List<ContentBlock> blocks,
-  String prefix,
-) {
+List<ContentBlock> prependTextBlock(List<ContentBlock> blocks, String prefix) {
   if (prefix.isEmpty) {
     return blocks;
   }
@@ -132,10 +135,7 @@ List<ContentBlock> prependTextBlock(
       ...blocks.skip(1),
     ];
   }
-  return [
-    ContentBlock(type: 'text', content: prefix),
-    ...blocks,
-  ];
+  return [ContentBlock(type: 'text', content: prefix), ...blocks];
 }
 
 String contentBlocksToPlainText(List<ContentBlock> blocks) {

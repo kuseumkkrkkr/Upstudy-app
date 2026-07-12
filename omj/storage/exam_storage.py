@@ -226,6 +226,101 @@ def get_exam(exam_id: str) -> Optional[Dict[str, Any]]:
     }
 
 
+def list_exams_for_user(user_id: str, *, limit: int = 100) -> List[Dict[str, Any]]:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT
+            e.exam_id,
+            e.status,
+            e.params,
+            e.created_at,
+            e.updated_at,
+            COUNT(i.id) AS item_count
+        FROM exam e
+        LEFT JOIN exam_item i ON i.exam_id = e.exam_id
+        WHERE e.user_id = ?
+        GROUP BY e.exam_id, e.status, e.params, e.created_at, e.updated_at
+        ORDER BY e.updated_at DESC
+        LIMIT ?
+        """,
+        (user_id, max(1, int(limit))),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    items: List[Dict[str, Any]] = []
+    for row in rows:
+        try:
+            params = json.loads(row[2]) if row[2] else {}
+        except json.JSONDecodeError:
+            params = {}
+        items.append(
+            {
+                "exam_id": row[0],
+                "status": row[1],
+                "params": params if isinstance(params, dict) else {},
+                "created_at": row[3],
+                "updated_at": row[4],
+                "item_count": int(row[5] or 0),
+            }
+        )
+    return items
+
+
+def list_exams_by_ids(exam_ids: List[str]) -> List[Dict[str, Any]]:
+    ids = []
+    for raw in exam_ids:
+        exam_id = str(raw or "").strip()
+        if exam_id and exam_id not in ids:
+            ids.append(exam_id)
+    if not ids:
+        return []
+
+    placeholders = ",".join("?" for _ in ids)
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        f"""
+        SELECT
+            e.exam_id,
+            e.user_id,
+            e.status,
+            e.params,
+            e.created_at,
+            e.updated_at,
+            COUNT(i.id) AS item_count
+        FROM exam e
+        LEFT JOIN exam_item i ON i.exam_id = e.exam_id
+        WHERE e.exam_id IN ({placeholders})
+        GROUP BY e.exam_id, e.user_id, e.status, e.params, e.created_at, e.updated_at
+        """,
+        ids,
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    items: List[Dict[str, Any]] = []
+    for row in rows:
+        try:
+            params = json.loads(row[3]) if row[3] else {}
+        except json.JSONDecodeError:
+            params = {}
+        items.append(
+            {
+                "exam_id": row[0],
+                "user_id": row[1],
+                "status": row[2],
+                "params": params if isinstance(params, dict) else {},
+                "created_at": row[4],
+                "updated_at": row[5],
+                "item_count": int(row[6] or 0),
+            }
+        )
+    return items
+
+
 def get_exam_items(exam_id: str) -> List[Dict[str, Any]]:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()

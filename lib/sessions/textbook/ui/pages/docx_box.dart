@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart' as book_page;
 import 'package:s11/shared/data/models/textbook.dart';
+import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
@@ -222,7 +223,7 @@ class _BookWidgetState extends State<BookWidget> {
         final id = part.substring(idx + 1);
         if (type == 'book') {
           final b = library.where((b) => b.id == id).firstOrNull;
-          if (b != null)
+          if (b != null) {
             items.add(
               BigSectionItem(
                 id: b.id,
@@ -232,9 +233,10 @@ class _BookWidgetState extends State<BookWidget> {
                 type: BigItemType.textbook,
               ),
             );
+          }
         } else if (type == 'exam') {
           final e = exams.where((e) => e.examId == id).firstOrNull;
-          if (e != null)
+          if (e != null) {
             items.add(
               BigSectionItem(
                 id: e.examId,
@@ -244,6 +246,7 @@ class _BookWidgetState extends State<BookWidget> {
                 type: BigItemType.exam,
               ),
             );
+          }
         }
       }
       if (mounted) setState(() => _recentItems = items);
@@ -364,7 +367,7 @@ class _BookWidgetState extends State<BookWidget> {
             MaterialPageRoute(builder: (_) => const study_center.SoWidget()),
           ),
         ),
-        const Ios26NavItem(label: '문서함', active: true),
+        const Ios26NavItem(label: '책가방', active: true),
         Ios26NavItem(
           label: '친구/소셜',
           onTap: () => Navigator.of(
@@ -398,7 +401,7 @@ class _BookWidgetState extends State<BookWidget> {
         isCompact ? 10 : 12,
       ),
       child: _buildSectionCard(
-        title: '문서함',
+        title: '책가방',
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             isCompact ? 12 : 16 * scale,
@@ -624,10 +627,8 @@ class _BookWidgetState extends State<BookWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  _LatexLine(
                     item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFF1F2E27),
                       fontSize: 13,
@@ -635,10 +636,8 @@ class _BookWidgetState extends State<BookWidget> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
+                  _LatexLine(
                     item.subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: const Color(0xFF687C72),
                       fontSize: 11,
@@ -692,8 +691,11 @@ class _BookWidgetState extends State<BookWidget> {
             .firstOrNull;
         if (exam != null) _openExamPaper(context, exam);
       case BigItemType.bookBookmark:
+        _showBookmarkDetailModal(isBook: true);
+        break;
       case BigItemType.problemBookmark:
-        break; // 북마크는 별도 상세 모달
+        _showBookmarkDetailModal(isBook: false);
+        break;
     }
   }
 
@@ -916,20 +918,16 @@ class _BookWidgetState extends State<BookWidget> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  _LatexLine(
                     title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Text(
+                  _LatexLine(
                     sub,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],
@@ -962,115 +960,106 @@ class _BookWidgetState extends State<BookWidget> {
                 (e) => _BmItem(id: e.id, title: e.entryTitle, sub: e.bookTitle),
               )
               .toList()
-        : _problemBookmarks.allItems
-              .map((e) => _BmItem(id: e.id, title: e.title, sub: e.source))
-              .toList();
+        : _problemBookmarks.allItems.toList().asMap().entries.map((entry) {
+            final e = entry.value;
+            return _BmItem(
+              id: e.id,
+              title: '문제 ${entry.key + 1}',
+              sub: e.source.trim().isEmpty ? '풀이 흐름' : e.source,
+            );
+          }).toList();
 
     final pinnedId = isBook ? _pinnedBookBookmarkId : _pinnedProblemBookmarkId;
-    final preview = items.take(4).toList();
-    final slots = List<_BmItem?>.generate(
-      4,
-      (i) => i < preview.length ? preview[i] : null,
-    );
+    final preview = items.take(2).toList();
     final showEmptyLabel = preview.isEmpty;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Column(
-            children: slots.asMap().entries.map((entry) {
-              final item = entry.value;
-              if (item == null) {
+      child: showEmptyLabel
+          ? const SizedBox(
+              height: 52,
+              child: Center(
+                child: Text(
+                  '아직 없어요',
+                  style: TextStyle(fontSize: 15, color: Colors.black45),
+                ),
+              ),
+            )
+          : Column(
+              children: preview.asMap().entries.map((entry) {
+                final item = entry.value;
+                final isPinned = item.id == pinnedId;
                 return Padding(
                   padding: EdgeInsets.only(
-                    bottom: entry.key == slots.length - 1 ? 0 : 6,
+                    bottom: entry.key == preview.length - 1 ? 0 : 6,
                   ),
-                  child: _BookmarkEmptySlot(label: '아직 없어요'),
-                );
-              }
-              final isPinned = item.id == pinnedId;
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: entry.key == slots.length - 1 ? 0 : 6,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: BookWidget.primaryGreen.withValues(alpha: 0.2),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: BookWidget.primaryGreen.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: Center(
+                            child: Icon(
+                              Icons.bookmark_rounded,
+                              color: BookWidget.primaryGreen,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _LatexLine(
+                                item.title,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black87,
+                                ),
+                                maxLines: 1,
+                              ),
+                              const SizedBox(height: 2),
+                              _LatexLine(
+                                item.sub,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.2,
+                                  color: Colors.black54,
+                                ),
+                                maxLines: 1,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isPinned)
+                          const Text(
+                            '고정',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: BookWidget.mediumGreen,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 9,
-                  ),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 30,
-                        height: 30,
-                        child: Center(
-                          child: Icon(
-                            Icons.bookmark_rounded,
-                            color: BookWidget.primaryGreen,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.sub,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isPinned)
-                        const Text(
-                          '고정',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: BookWidget.mediumGreen,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          if (showEmptyLabel)
-            const IgnorePointer(
-              child: Text(
-                '아직 없어요',
-                style: TextStyle(fontSize: 18, color: Colors.black45),
-              ),
+                );
+              }).toList(),
             ),
-        ],
-      ),
     );
   }
 
@@ -1107,7 +1096,7 @@ class _BookWidgetState extends State<BookWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          _LatexLine(
             _activeCourse!.title,
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
@@ -1141,19 +1130,12 @@ class _BookWidgetState extends State<BookWidget> {
           ),
           const SizedBox(height: 10),
           // 퍼센트 텍스트 (게이지 없음)
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-              children: [
-                TextSpan(text: '$completed / $total 단계 완료  ·  '),
-                TextSpan(
-                  text: '$pct%',
-                  style: const TextStyle(
-                    color: BookWidget.primaryGreen,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          _LatexLine(
+            '$completed / $total 단계 완료  ·  $pct%',
+            style: const TextStyle(
+              fontSize: 12,
+              color: BookWidget.primaryGreen,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -1254,7 +1236,7 @@ class _BookWidgetState extends State<BookWidget> {
       borderRadius: BorderRadius.circular(999),
       border: Border.all(color: BookWidget.primaryGreen.withValues(alpha: 0.2)),
     ),
-    child: Text(
+    child: _LatexLine(
       text,
       style: const TextStyle(
         color: BookWidget.primaryGreen,
@@ -1389,10 +1371,11 @@ class _BookWidgetState extends State<BookWidget> {
                             ? Checkbox(
                                 value: checked,
                                 onChanged: (v) => setState(() {
-                                  if (v == true)
+                                  if (v == true) {
                                     selected.add(entry.examId);
-                                  else
+                                  } else {
                                     selected.remove(entry.examId);
+                                  }
                                 }),
                               )
                             : CircleAvatar(
@@ -1402,15 +1385,13 @@ class _BookWidgetState extends State<BookWidget> {
                                   color: Colors.white,
                                 ),
                               ),
-                        title: Text(
-                          _examTitle(entry),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
+                        title: _LatexLine(_examTitle(entry)),
+                        subtitle: _LatexLine(
                           _examSubtitle(entry),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 12.5,
+                          ),
                         ),
                         trailing: editMode
                             ? null
@@ -1485,10 +1466,11 @@ class _BookWidgetState extends State<BookWidget> {
                               ? Checkbox(
                                   value: checked,
                                   onChanged: (v) => setState(() {
-                                    if (v == true)
+                                    if (v == true) {
                                       selected.add(book.id);
-                                    else
+                                    } else {
                                       selected.remove(book.id);
+                                    }
                                   }),
                                 )
                               : CircleAvatar(
@@ -1499,15 +1481,13 @@ class _BookWidgetState extends State<BookWidget> {
                                     color: Colors.white,
                                   ),
                                 ),
-                          title: Text(
-                            book.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
+                          title: _LatexLine(book.title),
+                          subtitle: _LatexLine(
                             _bookSubtitle(book),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 12.5,
+                            ),
                           ),
                           trailing: editMode
                               ? null
@@ -1605,12 +1585,18 @@ class _BookWidgetState extends State<BookWidget> {
               )
               .toList()
         : _problemBookmarks.allItems
+              .toList()
+              .asMap()
+              .entries
               .map(
-                (e) => {
-                  'id': e.id,
-                  'title': e.title,
-                  'sub': e.source,
-                  'created': e.createdAt,
+                (entry) => {
+                  'id': entry.value.id,
+                  'title': '문제 ${entry.key + 1}',
+                  'sub': entry.value.source.trim().isEmpty
+                      ? '풀이 흐름'
+                      : entry.value.source,
+                  'search': entry.value.title,
+                  'created': entry.value.createdAt,
                 },
               )
               .toList();
@@ -1620,116 +1606,126 @@ class _BookWidgetState extends State<BookWidget> {
       maxWidth: 780,
       maxHeight: 640,
       child: Builder(
-        builder: (context) {
-          final page = PageController();
+        builder: (dialogContext) {
+          final filterController = TextEditingController();
+          var filter = '';
           return StatefulBuilder(
             builder: (context, setModalState) {
-              String? pinnedId = isBook
+              final pinnedId = isBook
                   ? _pinnedBookBookmarkId
                   : _pinnedProblemBookmarkId;
-              return Ios26ModalShell(
-                title: isBook ? '책 북마크' : '문제 북마크',
-                onClose: () => Navigator.of(context).pop(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: PageView.builder(
-                        controller: page,
-                        itemCount: rawItems.isEmpty ? 1 : rawItems.length,
-                        itemBuilder: (context, index) {
-                          if (rawItems.isEmpty) {
-                            return const Center(child: Text('북마크가 없습니다.'));
-                          }
-                          final item = rawItems[index];
-                          final id = item['id']?.toString();
-                          final isPinned =
-                              id != null && id.isNotEmpty && id == pinnedId;
-                          return Padding(
-                            padding: const EdgeInsets.all(18),
-                            child: Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(18),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            item['title']?.toString() ?? '-',
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                        if (isPinned)
-                                          const Icon(
-                                            Icons.push_pin,
-                                            color: BookWidget.primaryGreen,
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      item['sub']?.toString() ?? '',
-                                      style: const TextStyle(
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      '저장: ${_formatExamDate((item['created'] as int?) ?? 0)}',
-                                      style: const TextStyle(
-                                        color: Colors.black45,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+              final visibleItems = rawItems.where((item) {
+                final q = filter.trim().toLowerCase();
+                if (q.isEmpty) return true;
+                return '${item['title']} ${item['sub']} ${item['search'] ?? ''}'
+                    .toLowerCase()
+                    .contains(q);
+              }).toList();
+
+              Widget listWidget() {
+                if (visibleItems.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      '북마크가 없습니다.',
+                      style: TextStyle(color: Color(0xFF69756D)),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
-                      child: Row(
+                  );
+                }
+
+                return ListView.separated(
+                  itemCount: visibleItems.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 6),
+                  itemBuilder: (context, index) {
+                    final item = visibleItems[index];
+                    final id = item['id']?.toString();
+                    final isPinned =
+                        id != null && id.isNotEmpty && id == pinnedId;
+
+                    return ListTile(
+                      minVerticalPadding: 10,
+                      leading: CircleAvatar(
+                        backgroundColor: BookWidget.darkGreen,
+                        child: Icon(
+                          isBook
+                              ? Icons.bookmark_outline_rounded
+                              : Icons.quiz_outlined,
+                          color: Colors.white,
+                        ),
+                      ),
+                      title: _LatexLine(
+                        item['title']?.toString() ?? '-',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        maxLines: 1,
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: rawItems.isEmpty
-                                  ? null
-                                  : () async {
-                                      var current = 0;
-                                      if (page.hasClients &&
-                                          page.position.hasContentDimensions) {
-                                        current = page.page?.round() ?? 0;
-                                      }
-                                      final currentId = rawItems[current]['id']
-                                          ?.toString();
-                                      await _pinBookmark(
-                                        isBook: isBook,
-                                        id: currentId,
-                                      );
-                                      if (!mounted) return;
-                                      setModalState(() => pinnedId = currentId);
-                                    },
-                              child: const Text('핀 고정'),
+                          _LatexLine(
+                            item['sub']?.toString() ?? '',
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 12.5,
                             ),
+                            maxLines: 1,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('닫기'),
+                          Text(
+                            '저장일 ${_formatExamDate((item['created'] as int?) ?? 0)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.black38,
+                              fontSize: 11.5,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      trailing: IconButton(
+                        tooltip: isPinned ? '고정해제' : '고정',
+                        onPressed: id == null || id.isEmpty
+                            ? null
+                            : () async {
+                                await _pinBookmark(
+                                  isBook: isBook,
+                                  id: isPinned ? null : id,
+                                );
+                                if (!mounted) return;
+                                setModalState(() {});
+                              },
+                        icon: Icon(
+                          isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                          color: BookWidget.primaryGreen,
+                          size: 20,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
+
+              return Ios26ModalShell(
+                title: isBook ? '책 북마크' : '문제 북마크',
+                onClose: () => Navigator.of(dialogContext).pop(),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 10),
+                      _searchField(
+                        controller: filterController,
+                        hintText: isBook
+                            ? '책 북마크 제목 또는 교재 검색'
+                            : '문제 북마크 제목 또는 출처 검색',
+                        onChanged: (value) =>
+                            setModalState(() => filter = value.trim()),
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(child: listWidget()),
+                    ],
+                  ),
                 ),
               );
             },
@@ -1756,7 +1752,7 @@ class _BookWidgetState extends State<BookWidget> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    '교재(제목/내부정보), 시험지를 한 번에 찾아요',
+                    '교재 목차/요약과 시험지를 한 번에 찾아요',
                     style: TextStyle(color: Color(0xFF69756D), fontSize: 13),
                   ),
                   const SizedBox(height: 12),
@@ -1771,34 +1767,7 @@ class _BookWidgetState extends State<BookWidget> {
                       valueListenable: _globalSearchQuery,
                       builder: (context, query, _) {
                         final q = query.toLowerCase();
-                        return DefaultTabController(
-                          length: 3,
-                          child: Column(
-                            children: [
-                              const TabBar(
-                                labelColor: Colors.black,
-                                tabs: [
-                                  Tab(text: '교재 제목'),
-                                  Tab(text: '교재 내부정보'),
-                                  Tab(text: '시험지'),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Expanded(
-                                child: TabBarView(
-                                  children: [
-                                    _globalTextbookTitleList(dialogContext, q),
-                                    _globalTextbookContentList(
-                                      dialogContext,
-                                      q,
-                                    ),
-                                    _globalExamList(dialogContext, q),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
+                        return _globalUnifiedSearchList(dialogContext, q);
                       },
                     ),
                   ),
@@ -1811,152 +1780,69 @@ class _BookWidgetState extends State<BookWidget> {
     );
   }
 
-  Widget _globalTextbookTitleList(BuildContext dialogContext, String query) {
+  Widget _globalUnifiedSearchList(BuildContext dialogContext, String query) {
     return FutureBuilder<List<BookData>>(
       future: TextbookStore.loadLibrary(),
       builder: (context, snapshot) {
         final books = snapshot.data ?? const <BookData>[];
-        final filtered = books.where((book) {
-          if (query.isEmpty) return true;
-          return book.title.toLowerCase().contains(query) ||
-              book.subtitle.toLowerCase().contains(query);
-        }).toList();
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (filtered.isEmpty) {
-          return const Center(
-            child: Text(
-              '일치하는 교재 제목이 없습니다.',
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-        return Scrollbar(
-          thumbVisibility: true,
-          child: ListView.separated(
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final book = filtered[index];
-              final isPinned = _pinnedBook?.id == book.id;
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: book.coverColor ?? BookWidget.darkGreen,
-                  child: const Icon(Icons.book_outlined, color: Colors.white),
-                ),
-                title: Text(book.title),
-                subtitle: Text(_bookSubtitle(book)),
-                trailing: isPinned
-                    ? const Icon(Icons.push_pin, color: Colors.orange)
-                    : null,
-                onTap: () {
-                  Navigator.of(dialogContext).pop();
-                  _openTextbook(context, book);
-                },
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _globalTextbookContentList(BuildContext dialogContext, String query) {
-    return FutureBuilder<List<BookData>>(
-      future: TextbookStore.loadLibrary(),
-      builder: (context, snapshot) {
-        final books = snapshot.data ?? const <BookData>[];
-        final filtered = books.where((book) {
-          if (query.isEmpty) return true;
-          return _bookContentText(book).toLowerCase().contains(query);
-        }).toList();
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (filtered.isEmpty) {
-          return const Center(
-            child: Text(
-              '내부정보에 일치하는 교재가 없습니다.',
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-        return Scrollbar(
-          thumbVisibility: true,
-          child: ListView.separated(
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final book = filtered[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: book.coverColor ?? BookWidget.darkGreen,
-                  child: const Icon(Icons.menu_book, color: Colors.white),
-                ),
-                title: Text(book.title),
-                subtitle: Text(
-                  _bookSubtitle(book),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded, size: 16),
-                onTap: () {
-                  Navigator.of(dialogContext).pop();
-                  _openTextbook(context, book);
-                },
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _globalExamList(BuildContext dialogContext, String query) {
-    return ValueListenableBuilder<List<ExamPaperEntry>>(
-      valueListenable: ExamPaperStore.notifier,
-      builder: (context, items, _) {
-        final filtered = items.where((entry) {
-          if (query.isEmpty) return true;
-          return _examTitle(entry).toLowerCase().contains(query) ||
-              entry.examId.toLowerCase().contains(query);
-        }).toList();
-        if (filtered.isEmpty) {
-          return const Center(
-            child: Text(
-              '일치하는 시험지가 없습니다.',
-              style: TextStyle(color: Colors.black54),
-            ),
-          );
-        }
-        return Scrollbar(
-          thumbVisibility: true,
-          child: ListView.separated(
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final entry = filtered[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: BookWidget.mediumGreen,
-                  child: const Icon(
-                    Icons.assignment_outlined,
-                    color: Colors.white,
+        return ValueListenableBuilder<List<ExamPaperEntry>>(
+          valueListenable: ExamPaperStore.notifier,
+          builder: (context, exams, _) {
+            final rows = <_ArchiveSearchRow>[];
+            for (final book in books) {
+              final haystack = _bookContentText(book).toLowerCase();
+              if (query.isEmpty || haystack.contains(query)) {
+                rows.add(
+                  _ArchiveSearchRow.book(
+                    title: book.title,
+                    subtitle: _bookSearchSnippet(book, query),
+                    onTap: () {
+                      Navigator.of(dialogContext).pop();
+                      _openTextbook(context, book);
+                    },
+                    color: book.coverColor ?? BookWidget.darkGreen,
                   ),
+                );
+              }
+            }
+            for (final exam in exams) {
+              final haystack = _examSearchText(exam).toLowerCase();
+              if (query.isEmpty || haystack.contains(query)) {
+                rows.add(
+                  _ArchiveSearchRow.exam(
+                    title: _examTitle(exam),
+                    subtitle: _examSearchSnippet(exam, query),
+                    onTap: () {
+                      Navigator.of(dialogContext).pop();
+                      _openExamPaper(context, exam);
+                    },
+                  ),
+                );
+              }
+            }
+
+            if (rows.isEmpty) {
+              return const Center(
+                child: Text(
+                  '일치하는 항목이 없습니다.',
+                  style: TextStyle(color: Colors.black54),
                 ),
-                title: Text(_examTitle(entry)),
-                subtitle: Text(_examSubtitle(entry)),
-                trailing: const Icon(Icons.chevron_right_rounded, size: 16),
-                onTap: () {
-                  Navigator.of(dialogContext).pop();
-                  _openExamPaper(context, entry);
-                },
               );
-            },
-          ),
+            }
+
+            return Scrollbar(
+              thumbVisibility: true,
+              child: ListView.separated(
+                itemCount: rows.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) => rows[index].build(),
+              ),
+            );
+          },
         );
       },
     );
@@ -2013,31 +1899,6 @@ class _BookWidgetState extends State<BookWidget> {
     ),
   );
 
-  Widget _modalHeader({
-    required String title,
-    required String subtitle,
-    required VoidCallback onClose,
-  }) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.black54, fontSize: 13),
-          ),
-        ],
-      ),
-      IconButton(icon: const Icon(Icons.close), onPressed: onClose),
-    ],
-  );
-
   // ══════════════════════════════════════════════════════════
   //  FORMATTERS / HELPERS
   // ══════════════════════════════════════════════════════════
@@ -2078,6 +1939,55 @@ class _BookWidgetState extends State<BookWidget> {
     return b.toString();
   }
 
+  String _bookSearchSnippet(BookData book, String query) {
+    final target = query.trim().toLowerCase();
+    if (target.isEmpty) return _bookSubtitle(book);
+    for (final chapter in book.chapters) {
+      for (final text in <String>[
+        chapter.title,
+        ...chapter.intro,
+        for (final section in chapter.sections) section.title,
+        for (final section in chapter.sections) ...section.paragraphs,
+      ]) {
+        final lower = text.toLowerCase();
+        final index = lower.indexOf(target);
+        if (index < 0) continue;
+        final start = (index - 24).clamp(0, text.length).toInt();
+        final end = (index + target.length + 52).clamp(0, text.length).toInt();
+        return '${start > 0 ? '...' : ''}${text.substring(start, end)}${end < text.length ? '...' : ''}';
+      }
+    }
+    return _bookSubtitle(book);
+  }
+
+  String _examSearchText(ExamPaperEntry entry) {
+    return [
+      _examTitle(entry),
+      _examSubtitle(entry),
+      entry.examId,
+      entry.paperType,
+      '${entry.questionCount}',
+      entry.searchIndex,
+    ].join(' ');
+  }
+
+  String _examSearchSnippet(ExamPaperEntry entry, String query) {
+    final target = query.trim().toLowerCase();
+    if (target.isEmpty || entry.searchIndex.trim().isEmpty) {
+      return _examSubtitle(entry);
+    }
+    final lower = entry.searchIndex.toLowerCase();
+    final index = lower.indexOf(target);
+    if (index < 0) return _examSubtitle(entry);
+    final start = (index - 24).clamp(0, entry.searchIndex.length).toInt();
+    final end = (index + target.length + 52)
+        .clamp(0, entry.searchIndex.length)
+        .toInt();
+    final snippet =
+        '${start > 0 ? '...' : ''}${entry.searchIndex.substring(start, end)}${end < entry.searchIndex.length ? '...' : ''}';
+    return '시험지 내부 문제 · $snippet';
+  }
+
   String _examTypeLabel(String raw) {
     switch (raw) {
       case 'aiflow':
@@ -2116,30 +2026,126 @@ class _BmItem {
   const _BmItem({required this.id, required this.title, required this.sub});
 }
 
+class _LatexLine extends StatelessWidget {
+  const _LatexLine(
+    this.text, {
+    this.style = const TextStyle(color: Colors.black87, fontSize: 14),
+    this.maxLines,
+  });
+
+  final String text;
+  final TextStyle style;
+  final int? maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: maxLines == null
+          ? const BoxConstraints()
+          : BoxConstraints(
+              maxHeight: (style.fontSize ?? 14) * 1.35 * maxLines!,
+            ),
+      child: ClipRect(
+        child: ContentBlocksView(
+          inline: true,
+          blocks: parseTextWithLatex(text),
+          textStyle: style,
+          latexStyle: style,
+        ),
+      ),
+    );
+  }
+}
+
+class _ArchiveSearchRow {
+  const _ArchiveSearchRow._({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  factory _ArchiveSearchRow.book({
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return _ArchiveSearchRow._(
+      icon: Icons.menu_book_rounded,
+      color: color,
+      label: '교재 목차/요약',
+      title: title,
+      subtitle: subtitle,
+      onTap: onTap,
+    );
+  }
+
+  factory _ArchiveSearchRow.exam({
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return _ArchiveSearchRow._(
+      icon: Icons.assignment_outlined,
+      color: BookWidget.mediumGreen,
+      label: '시험지',
+      title: title,
+      subtitle: subtitle,
+      onTap: onTap,
+    );
+  }
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  Widget build() {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: color,
+        child: Icon(icon, color: Colors.white),
+      ),
+      title: _LatexLine(title),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: BookWidget.primaryGreen,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          ContentBlocksView(
+            inline: true,
+            blocks: parseTextWithLatex(subtitle),
+            textStyle: const TextStyle(color: Colors.black54, fontSize: 12.5),
+          ),
+        ],
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 16),
+      onTap: onTap,
+    );
+  }
+}
+
 class _DocEmptySlot extends StatelessWidget {
   final String label;
-  final bool showLabel;
-  const _DocEmptySlot({required this.label, this.showLabel = false});
+  const _DocEmptySlot({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return const Opacity(
       opacity: 0,
       child: IgnorePointer(child: _DocGhostCard()),
-    );
-  }
-}
-
-class _BookmarkEmptySlot extends StatelessWidget {
-  final String label;
-  final bool showLabel;
-  const _BookmarkEmptySlot({required this.label, this.showLabel = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Opacity(
-      opacity: 0,
-      child: IgnorePointer(child: _BookmarkGhostCard()),
     );
   }
 }
@@ -2197,58 +2203,6 @@ class _DocGhostCard extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(right: 10),
             child: Icon(Icons.chevron_right_rounded, size: 18),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BookmarkGhostCard extends StatelessWidget {
-  const _BookmarkGhostCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x17000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      child: const Row(
-        children: [
-          SizedBox(width: 30, height: 30),
-          SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '더미 북마크 제목',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  '더미 북마크 보조',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15, color: Colors.white),
-                ),
-              ],
-            ),
           ),
         ],
       ),

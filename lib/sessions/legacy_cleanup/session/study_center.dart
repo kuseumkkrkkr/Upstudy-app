@@ -202,7 +202,7 @@ class StudyCenterNavBar extends StatelessWidget {
       items: [
         const Ios26NavItem(label: '학습터', active: true),
         Ios26NavItem(
-          label: '문서함',
+          label: '책가방',
           onTap: () {
             Navigator.of(
               context,
@@ -416,7 +416,7 @@ class _QuickActionRow extends StatelessWidget {
           ),
           _QuickActionButton(
             icon: Icons.folder_copy_outlined,
-            label: '문서함',
+            label: '책가방',
             onTap: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const docx.BookWidget())),

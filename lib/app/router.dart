@@ -6,6 +6,7 @@ import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/auth/ui/pages/sign_up.dart';
+import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
@@ -32,6 +33,7 @@ class AppRoutes {
 
   // ─── Landing / Shell ───
   static const String landing = '/';
+  static const String landingAbout = LandingAboutPage.routeName;
   static const String app = '/app';
   static const String studentDashboard = '/student/dashboard';
 
@@ -87,6 +89,7 @@ Map<String, WidgetBuilder> appRoutes(
 
     // Landing / Shell
     AppRoutes.landing: (_) => const LandingPage(),
+    AppRoutes.landingAbout: (_) => const LandingAboutPage(),
     AppRoutes.app: authedStudentDashboard(),
     AppRoutes.studentDashboard: authedStudentDashboard(),
 

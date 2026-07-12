@@ -22,6 +22,14 @@ except ImportError:
     from services.jobs.state_machine import JobStateMachine, JobState, InvalidTransitionError
     from services.jobs.store import JobStore
 
+from generater.codebase_runner import hard_cancel_process_pool
+from services.jobs.cancellation import (
+    GenerationCancelled,
+    check_cancelled,
+    register_token,
+    release_token,
+)
+
 logger = logging.getLogger("jobs.worker")
 
 # Registry of job-type → async handler
@@ -141,15 +149,36 @@ class JobWorker:
                 logger.warning("Invalid transition for job_id=%s: %s", job_id, exc)
                 return
 
-            # Execute handler
+            cancel_event = register_token(job_id)
             try:
+                check_cancelled(cancel_event)
                 result = await handler(job_id, payload)
+                check_cancelled(cancel_event)
+                current = self.store.get(job_id) or {}
+                if current.get("status") != JobState.generating.value:
+                    logger.info("Job finished after status changed job_id=%s status=%s", job_id, current.get("status"))
+                    return
                 self.sm.transition(job_id, JobState.done, result=result)
                 logger.info("Job done job_id=%s type=%s", job_id, job_type)
+            except GenerationCancelled:
+                hard_cancel_process_pool()
+                current = self.store.get(job_id) or {}
+                if current.get("status") != JobState.rejected.value:
+                    self.sm.transition(
+                        job_id,
+                        JobState.rejected,
+                        reason="Generation cancelled",
+                        rejection_reason="user_cancelled",
+                    )
+                logger.info("Job cancelled job_id=%s type=%s", job_id, job_type)
             except Exception as exc:
                 error_msg = f"{exc}\n{traceback.format_exc()}"
                 logger.error("Job failed job_id=%s type=%s: %s", job_id, job_type, exc)
-                self.sm.transition(job_id, JobState.failed, error=error_msg)
+                current = self.store.get(job_id) or {}
+                if current.get("status") == JobState.generating.value:
+                    self.sm.transition(job_id, JobState.failed, error=error_msg)
+            finally:
+                release_token(job_id)
 
 
 # ------------------------------------------------------------------
@@ -340,6 +369,51 @@ async def run_level_test(job_id: str, payload: dict[str, Any]) -> dict[str, Any]
         raise ValueError(f"Unsupported test_type: {test_type}")
 
 
+async def run_quest_generation(job_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Handler for single quest generation jobs."""
+    from generater.fix_gen import validate_generation_tags
+    from generater.make import make
+    from storage.storage import get_last_store_error, store_data
+
+    hash_tags = validate_generation_tags(payload.get("hash_tags") or [])
+    if not hash_tags:
+        raise ValueError("hash_tags must not be empty")
+
+    solves_count = int(payload.get("solves_count") or 1)
+    strategy_level = int(payload.get("strategy_level") or 1)
+    branch_conditions = int(payload.get("branch_conditions") or 0)
+    seed = payload.get("seed")
+    reference_quest_id = payload.get("reference_quest_id")
+    cancel_event = register_token(job_id)
+
+    def _status_cb(message: str) -> None:
+        if message:
+            logger.info("Quest generation progress job_id=%s message=%s", job_id, message)
+
+    check_cancelled(cancel_event)
+    storage_data = await asyncio.to_thread(
+        make,
+        hash_tags,
+        solves_count,
+        strategy_level,
+        branch_conditions,
+        reference_quest_id,
+        True,
+        seed,
+        None,
+        None,
+        _status_cb,
+        cancel_event=cancel_event,
+    )
+    check_cancelled(cancel_event)
+
+    if not store_data(storage_data):
+        detail = get_last_store_error() or "failed to store quest"
+        raise RuntimeError(detail)
+
+    return {"quest": storage_data}
+
+
 async def run_quest_batch_generation(job_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Handler for 'quest_batch_generation' jobs.
 
@@ -440,6 +514,8 @@ async def run_quest_batch_generation(job_id: str, payload: dict[str, Any]) -> di
             mapping.setdefault(cb, set()).add(sd)
 
     history_entries, history_map = _load_recent_seed_history()
+    cancel_event = register_token(job_id)
+    check_cancelled(cancel_event)
 
     quests = await asyncio.to_thread(
         generate_problem_set,
@@ -448,10 +524,13 @@ async def run_quest_batch_generation(job_id: str, payload: dict[str, Any]) -> di
         max_difficulty_tier=max_tier,
         question_count=question_count,
         recent_codebase_seeds={key: list(value) for key, value in history_map.items()},
+        cancel_event=cancel_event,
     )
+    check_cancelled(cancel_event)
 
     stored_quests: list[dict[str, Any]] = []
     for quest in quests:
+        check_cancelled(cancel_event)
         if not store_data(quest):
             detail = get_last_store_error() or "failed to store quest"
             raise RuntimeError(detail)
@@ -471,4 +550,5 @@ register_handler("variant_generation", run_variant_generation)
 register_handler("quest_variant", run_quest_variant)
 register_handler("textbook_build", run_textbook_build)
 register_handler("level_test", run_level_test)
+register_handler("quest_generation", run_quest_generation)
 register_handler("quest_batch_generation", run_quest_batch_generation)

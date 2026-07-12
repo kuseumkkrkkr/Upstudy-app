@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'api_client.dart';
+import 'api_contract.dart';
 
 typedef SocialEventHandler = void Function(Map<String, dynamic> event);
 
@@ -30,15 +31,9 @@ class SocialWebSocketService {
     _connecting = true;
     try {
       final token = await ApiClient.instance.requireToken();
-      final base = ApiClient.baseUrl;
-      final baseUri = Uri.parse(base);
-      final scheme = baseUri.scheme == 'https' ? 'wss' : 'ws';
-      final uri = Uri(
-        scheme: scheme,
-        host: baseUri.host,
-        port: baseUri.hasPort ? baseUri.port : null,
-        path: '/ws/social',
-        queryParameters: {'token': token},
+      final uri = ApiContract.webSocketUri(
+        ApiPaths.socialWs,
+        query: {'token': token},
       );
       _channel = WebSocketChannel.connect(uri);
       _subscription = _channel!.stream.listen(
@@ -71,7 +66,7 @@ class SocialWebSocketService {
         return;
       }
     } else if (data is Map) {
-      parsed = Map<String, dynamic>.from(data as Map);
+      parsed = Map<String, dynamic>.from(data);
     }
     if (parsed == null) return;
     for (final handler in List<SocialEventHandler>.from(_handlers)) {

@@ -11,77 +11,15 @@ from services.ai.sam_client import (
     generate_json,
     is_sam_configured,
 )
+from services.ai.prompts import solve_grading_prompt, solve_ocr_prompt
 
 load_env()
 
 
 ANALYSIS_MODEL = DEFAULT_ANALYSIS_MODEL
 
-_DEFAULT_OCR_PROMPT = """
-너는 수학 OCR 추출기다.
-목표:
-1) 이미지 내 모든 공식/식/등식/표현을 그대로 추출한다.
-2) 히트맵에서 보라색(쓰기+지우기)과 겹치는 공식만 따로 추출한다.
-
-규칙:
-- 보정/교정/정규화 금지. 보이는 그대로 출력한다.
-- 의미 추정 금지.
-- 중복은 그대로 두어도 된다.
-- 텍스트 설명 금지. JSON만 출력.
-
-출력 JSON 키:
-- all_formulas: [string, ...]  # 이미지 내 모든 공식
-- purple_formulas: [string, ...]  # 보라색 겹침 공식
-- all_ocr: null
-- hit_mapped: null
-- user_answer: null
-"""
-
-_DEFAULT_GRADING_PROMPT = """
-너는 수학 채점 교사다. 낙관 편향을 낮춰서 엄격하게 채점하라.
-
-입력:
-- QUEST_TITLE: 문제 본문(평문)
-- QUEST_ANSWER: 정답(평문)
-- QUEST_IMAGE: 문제 이미지가 있으면 제공됨 (없으면 "none")
-- FLOW_STEPS: flow_number(0부터), answer_riddle(풀이 설명), hash_tag
-- OCR_ALL_FORMULAS: OCR로 추출된 전체 공식 목록
-- OCR_PURPLE_FORMULAS: 보라색(쓰기+지우기 겹침) 영역 공식 목록
-
-채점 원칙(중요):
-1) OCR_ALL_FORMULAS에 명시적으로 존재하는 공식만 인정한다. 없으면 "X".
-2) 애매하면 "X". 추측 금지.
-3) 중간 단계 누락, 논리 비약, 계산 실수 가능성이 있으면 "X".
-4) 정답만 맞고 과정이 전혀 확인되지 않으면 "X".
-5) 각 flow는 독립적으로 판단하되, 다음 단계가 성립하려면 이전 단계가 명확해야 한다.
-6) 최종 결과가 QUEST_ANSWER와 불일치하면 마지막 flow는 반드시 "X".
-7) 채점은 OCR 목록만 사용하며, 이미지 내용을 직접 추정하지 않는다.
-
-작업:
-1) 각 flow를 순서대로 O/X 판단.
-2) OCR_PURPLE_FORMULAS와 매칭되는 flow_number를 in_panic에 넣는다. 없으면 [].
-3) OCR 목록을 근거로 ai_opinion을 짧게 기록한다.
-
-출력은 JSON만:
-{
-  "status": [
-    {"flow_number": 0, "status": "O"},
-    {"flow_number": 1, "status": "X"}
-  ],
-  "in_panic": [1],
-  "ai_opinion": "...",
-  "o_reasons": [
-    {"flow_number": 0, "reason": "O로 판단한 근거 요약"}
-  ]
-}
-
-추가 규칙:
-- status에는 모든 flow_number가 반드시 포함되어야 한다.
-- status 값은 "O" 또는 "X"만 허용.
-- in_panic에는 중복 없이 flow_number만 넣는다.
-- o_reasons는 O인 flow만 포함하고, 이유는 한두 문장으로 간단히 쓴다.
-- JSON 외의 텍스트 금지.
-"""
+_DEFAULT_OCR_PROMPT = solve_ocr_prompt()
+_DEFAULT_GRADING_PROMPT = solve_grading_prompt()
 
 
 def analyze_submission(
@@ -119,16 +57,26 @@ def analyze_submission(
 
     ocr_all_formulas = _normalize_ocr_list(payload.get("ocr_all_formulas"))
     ocr_purple_formulas = _normalize_ocr_list(payload.get("ocr_purple_formulas"))
+    if not ocr_all_formulas:
+        ocr_all_formulas = _normalize_ocr_list(payload.get("all_formulas"))
+    if not ocr_purple_formulas:
+        ocr_purple_formulas = _normalize_ocr_list(payload.get("purple_formulas"))
     if not ocr_all_formulas and not ocr_purple_formulas:
+        ocr_payload = dict(payload)
+        # A grading prompt override must not replace the OCR extraction prompt.
+        ocr_payload["analysis_prompt"] = payload.get("ocr_analysis_prompt")
         ocr_result = analyze_pregrade(
-            payload,
+            ocr_payload,
             student_work_image_bytes=student_work_image_bytes,
             heatmap_image_bytes=heatmap_image_bytes,
         )
         ocr_all_formulas = _normalize_ocr_list(ocr_result.get("all_formulas"))
         ocr_purple_formulas = _normalize_ocr_list(ocr_result.get("purple_formulas"))
 
-    clean_payload = build_clean_payload(quest if isinstance(quest, dict) else None)
+    clean_payload = _build_grading_context(
+        quest if isinstance(quest, dict) else None,
+        payload,
+    )
     flow_items = clean_payload.get("flows") or []
     prompt = _augment_grading_prompt(
         analysis_prompt=analysis_prompt,
@@ -153,6 +101,10 @@ def analyze_submission(
     status = _normalize_status_list(result_json.get("status"), len(flow_items))
     in_panic = _normalize_in_panic(result_json.get("in_panic"), len(flow_items))
     ai_opinion = _normalize_optional_text(result_json.get("ai_opinion")) or ""
+    step_correctness = _status_to_step_correctness(status)
+    is_correct = bool(status) and all(
+        str(item.get("status", "")).upper() == "O" for item in status
+    )
     o_reasons = result_json.get("o_reasons")
     if isinstance(o_reasons, list):
         o_flow_numbers = set()
@@ -192,6 +144,8 @@ def analyze_submission(
     )
     return {
         "status": status,
+        "step_correctness": step_correctness,
+        "is_correct": is_correct,
         "in_panic": in_panic,
         "ai_opinion": ai_opinion,
         "quest_id": quest_id,
@@ -374,6 +328,26 @@ def _normalize_in_panic(value: Any, flow_count: int) -> List[int]:
     return result
 
 
+def _status_to_step_correctness(status: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    results: List[Dict[str, Any]] = []
+    for index, item in enumerate(status):
+        try:
+            flow_number = int(item.get("flow_number", index))
+        except (TypeError, ValueError):
+            flow_number = index
+        status_text = str(item.get("status", "")).strip().upper()
+        correct = status_text == "O"
+        results.append(
+            {
+                "step_id": flow_number + 1,
+                "flow_number": flow_number,
+                "correct": correct,
+                "similarity": 1.0 if correct else 0.0,
+            }
+        )
+    return results
+
+
 def _normalize_nullable_text(value: Any) -> Optional[str]:
     if value is None:
         return None
@@ -394,6 +368,15 @@ def _normalize_ocr_list(value: Any) -> List[str]:
     if isinstance(value, str):
         return [value]
     return [str(value)]
+
+
+def _normalize_hash_tags(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value).strip()
+    return [text] if text else []
 
 
 def _parse_debug_flag(value: Any) -> bool:
@@ -532,6 +515,65 @@ def _augment_ocr_prompt(
     return "\n\n".join(section for section in sections if section)
 
 
+def _build_grading_context(
+    quest: Optional[Dict[str, Any]],
+    payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    clean_payload = build_clean_payload(quest if isinstance(quest, dict) else None)
+    if not clean_payload.get("quest_title"):
+        clean_payload["quest_title"] = (
+            _normalize_optional_text(payload.get("problem")) or ""
+        )
+    if not clean_payload.get("quest_answer"):
+        clean_payload["quest_answer"] = (
+            _normalize_optional_text(payload.get("answer"))
+            or _normalize_optional_text(payload.get("quest_answer"))
+            or ""
+        )
+    if not clean_payload.get("flows"):
+        clean_payload["flows"] = _reference_steps_to_flows(
+            payload.get("reference_steps")
+        )
+    return clean_payload
+
+
+def _reference_steps_to_flows(value: Any) -> List[Dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    flows: List[Dict[str, Any]] = []
+    for index, entry in enumerate(value):
+        if not isinstance(entry, dict):
+            continue
+        flow_number = entry.get("flow_number")
+        if flow_number is None:
+            flow_number = entry.get("step_id")
+            try:
+                flow_number = int(flow_number) - 1
+            except (TypeError, ValueError):
+                flow_number = index
+        try:
+            flow_index = int(flow_number)
+        except (TypeError, ValueError):
+            flow_index = index
+        answer_text = (
+            _normalize_optional_text(entry.get("answer_riddle"))
+            or _normalize_optional_text(entry.get("answer_text"))
+            or _normalize_optional_text(entry.get("flow_text"))
+            or _normalize_optional_text(entry.get("hint_text"))
+            or ""
+        )
+        flows.append(
+            {
+                "flow_number": flow_index,
+                "hash_tag": _normalize_hash_tags(
+                    entry.get("hash_tags") or entry.get("hash_tag")
+                ),
+                "answer_riddle": answer_text,
+            }
+        )
+    return flows
+
+
 def _extract_models(quest: Optional[Dict[str, Any]]) -> List[str]:
     if not quest:
         return []
@@ -566,4 +608,3 @@ def _normalize_optional_text(value: Any) -> Optional[str]:
         return None
     text = str(value).strip()
     return text if text else None
-

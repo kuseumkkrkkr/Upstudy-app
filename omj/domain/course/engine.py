@@ -134,10 +134,22 @@ def _needs_wrong_answer_review(module: CourseModule) -> bool:
     """Return True if this module triggers a forced wrong_answer_review."""
     if module.type == CourseModuleType.wrong_answer_review:
         return False
-    policy = module.pass_policy
-    if policy is None:
+    if getattr(module, "wrong_answer_review_enabled", True) is False:
         return False
-    return policy.required_accuracy < 100.0
+    policy = module.pass_policy
+    if policy is not None:
+        return policy.required_accuracy < 100.0
+    if module.pass_rate is not None:
+        return float(module.pass_rate) < 100.0
+    return False
+
+
+def _wrong_answer_pass_policy(module: CourseModule) -> Optional[PassPolicy]:
+    if module.pass_policy is not None:
+        return deepcopy(module.pass_policy)
+    if module.pass_rate is not None:
+        return PassPolicy(required_accuracy=float(module.pass_rate))
+    return None
 
 
 def insert_forced_wrong_answer_modules(course: CourseV2) -> CourseV2:
@@ -145,23 +157,25 @@ def insert_forced_wrong_answer_modules(course: CourseV2) -> CourseV2:
 
     Rule (from PLANnow.md):
       Any module whose `required_accuracy < 100` must have a
-      `wrong_answer_review` module inserted after it.
+      `wrong_answer_review` module inserted at the end of the course.
 
     The inserted wrong_answer_review module:
-      - position is immediately after the triggering module
+      - position is fixed after all regular modules
       - flow_policy is always "full" (bypasses flowchart restrictions)
       - max_problems defaults to 10
     """
-    new_modules: list[CourseModule] = []
+    regular_modules = [
+        module for module in course.modules
+        if module.type != CourseModuleType.wrong_answer_review
+    ]
+    review_modules: list[CourseModule] = []
     inserted_count = 0
 
-    for module in course.modules:
-        new_modules.append(module)
+    if course.runtime_flags.enable_wrong_answer_auto_insert:
+        for module in regular_modules:
+            if not _needs_wrong_answer_review(module):
+                continue
 
-        if not course.runtime_flags.enable_wrong_answer_auto_insert:
-            continue
-
-        if _needs_wrong_answer_review(module):
             inserted_count += 1
             review_id = f"{module.id}_wa_{inserted_count}"
             review_mod = CourseModule(
@@ -172,10 +186,12 @@ def insert_forced_wrong_answer_modules(course: CourseV2) -> CourseV2:
                 position=module.position,
                 estimated_minutes=module.estimated_minutes,
                 max_problems=MAX_PROBLEMS_PER_MODULE,
-                pass_policy=deepcopy(module.pass_policy),
+                pass_policy=_wrong_answer_pass_policy(module),
                 flow_policy=FlowPolicy(mode="full", allow_skip=False, allow_back=True),
             )
-            new_modules.append(review_mod)
+            review_modules.append(review_mod)
+
+    new_modules = regular_modules + review_modules
 
     # Re-assign positions sequentially
     for idx, m in enumerate(new_modules):

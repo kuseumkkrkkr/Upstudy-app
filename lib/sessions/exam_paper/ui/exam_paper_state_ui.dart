@@ -1104,7 +1104,12 @@ mixin _ExamPaperUiMixin
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.all(10),
-              child: Icon(icon, key: key, size: 22, color: selected ? active : inactive),
+              child: Icon(
+                icon,
+                key: key,
+                size: 22,
+                color: selected ? active : inactive,
+              ),
             ),
           ),
         ),
@@ -1126,7 +1131,7 @@ mixin _ExamPaperUiMixin
           key: _penButtonKey,
         ),
         railButton(
-          Icons.cleaning_services_outlined,
+          Icons.backspace_outlined,
           onTap: () => selectTool(_ToolMode.eraser),
           selected: _toolMode == _ToolMode.eraser,
         ),
@@ -1135,7 +1140,11 @@ mixin _ExamPaperUiMixin
           onTap: () => selectTool(_ToolMode.pan),
           selected: _toolMode == _ToolMode.pan,
         ),
-        railButton(Icons.color_lens_outlined, onTap: _toggleColorPicker, key: _paletteButtonKey),
+        railButton(
+          Icons.color_lens_outlined,
+          onTap: _toggleColorPicker,
+          key: _paletteButtonKey,
+        ),
         railButton(
           Icons.undo_outlined,
           onTap: _undoStack.isEmpty ? null : _undo,
@@ -1155,7 +1164,8 @@ mixin _ExamPaperUiMixin
   }
 
   static const double _railTop = 80.0;
-  static const double _railButtonHeight = 54.0; // icon 22 + padding 10*2 + outer padding 6*2
+  static const double _railButtonHeight =
+      54.0; // icon 22 + padding 10*2 + outer padding 6*2
   static const double _railButtonWidth = 42.0; // icon 22 + padding 10*2
   static const double _railSpacing = _railButtonHeight;
   static const int _railIndexPen = 1;
@@ -1196,7 +1206,6 @@ mixin _ExamPaperUiMixin
     );
   }
 
-
   Widget _buildWidthPickerOverlay() {
     final rect = _buttonRect(_penButtonKey);
     if (rect == null) return const SizedBox.shrink();
@@ -1217,7 +1226,10 @@ mixin _ExamPaperUiMixin
                   });
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   child: Container(
                     width: w * 4,
                     height: w * 4,
@@ -1235,12 +1247,12 @@ mixin _ExamPaperUiMixin
   }
 
   Rect? _buttonRect(GlobalKey key) {
-    final stackBox = _mainStackKey.currentContext?.findRenderObject() as RenderBox?;
+    final stackBox =
+        _mainStackKey.currentContext?.findRenderObject() as RenderBox?;
     final btnBox = key.currentContext?.findRenderObject() as RenderBox?;
     if (stackBox == null || btnBox == null || !btnBox.attached) return null;
     final topLeft = btnBox.localToGlobal(Offset.zero, ancestor: stackBox);
     final size = btnBox.size;
     return topLeft & size;
   }
-
 }

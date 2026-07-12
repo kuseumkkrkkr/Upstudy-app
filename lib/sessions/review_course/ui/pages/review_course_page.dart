@@ -164,6 +164,7 @@ class _ReviewCoursePageState extends State<ReviewCoursePage> {
             required Map<String, dynamic>? quest,
             required bool isCorrect,
             required List<Map<String, dynamic>> stepCorrectness,
+            int? selectedIndex,
             int? elapsedSeconds,
           }) async {
             graded += 1;

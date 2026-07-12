@@ -64,15 +64,9 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
           groupId: widget.groupId,
           status: 'active',
         ),
-        client.listAttendanceLogs(
-          groupId: widget.groupId,
-        ),
-        client.listTuitionPayments(
-          academyId: widget.academyId,
-        ),
-        client.listConsultNotes(
-          academyId: widget.academyId,
-        ),
+        client.listAttendanceLogs(groupId: widget.groupId),
+        client.listTuitionPayments(academyId: widget.academyId),
+        client.listConsultNotes(academyId: widget.academyId),
         client.listSnapshots(
           academyId: widget.academyId,
           groupId: widget.groupId,
@@ -98,9 +92,7 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
     return Expanded(
       child: Card(
         color: AppColors.cardBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -179,9 +171,7 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
       padding: const EdgeInsets.all(12),
       child: Card(
         color: AppColors.cardBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
         child: DataTable(
           columns: const [
@@ -199,11 +189,14 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
                 ...weekDates.map((date) {
                   final key = '${member.userId}|$date';
                   final log = allLogMap[key];
-                  final isPresent = log != null &&
+                  final isPresent =
+                      log != null &&
                       (log.status == 'present' || log.status == 'late');
                   return DataCell(
                     Icon(
-                      isPresent ? Icons.check_circle : Icons.radio_button_unchecked,
+                      isPresent
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
                       color: isPresent ? AppColors.primary : Colors.black26,
                       size: 18,
                     ),
@@ -242,7 +235,9 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
             title: Text(p.userId.substring(0, 6)),
-            subtitle: Text('수업료 ${p.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}원'),
+            subtitle: Text(
+              '수업료 ${p.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}원',
+            ),
             trailing: Chip(
               label: Text(
                 isPaid ? '완료' : '미납',
@@ -251,9 +246,12 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
                   color: isPaid ? Colors.white : Colors.red,
                 ),
               ),
-              backgroundColor:
-                  isPaid ? AppColors.primary : Colors.red.withValues(alpha: 0.1),
-              side: isPaid ? BorderSide.none : const BorderSide(color: Colors.red),
+              backgroundColor: isPaid
+                  ? AppColors.primary
+                  : Colors.red.withValues(alpha: 0.1),
+              side: isPaid
+                  ? BorderSide.none
+                  : const BorderSide(color: Colors.red),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ),
@@ -322,10 +320,7 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
                 const SizedBox(height: 8),
                 Text(
                   '상담 대상: ${c.parentName ?? c.studentUserId.substring(0, 6)}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black87,
-                  ),
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
                 ),
                 if (c.content != null && c.content!.isNotEmpty)
                   Padding(
@@ -359,7 +354,8 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
       final existing = latestByUser[snap.userId];
       if (existing == null ||
           (snap.createdAt != null &&
-              (existing.createdAt == null || snap.createdAt!.isAfter(existing.createdAt!)))) {
+              (existing.createdAt == null ||
+                  snap.createdAt!.isAfter(existing.createdAt!)))) {
         latestByUser[snap.userId] = snap;
       }
     }
@@ -412,15 +408,11 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
                 if (weakness.isNotEmpty)
                   for (final tag in weakness)
                     Chip(
-                      label: Text(
-                        tag,
-                        style: const TextStyle(fontSize: 11),
-                      ),
+                      label: Text(tag, style: const TextStyle(fontSize: 11)),
                       backgroundColor: Colors.red.withValues(alpha: 0.08),
                       side: const BorderSide(color: Colors.red),
                       padding: EdgeInsets.zero,
-                      materialTapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     )
                 else
                   const Text(
@@ -443,10 +435,7 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
                 const SizedBox(height: 2),
                 Text(
                   s.tuitionStatus ?? '',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ],
             ),
@@ -460,11 +449,17 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text('학원 대시보드'),
           backgroundColor: AppColors.cardBg,
           foregroundColor: AppColors.primary,
           elevation: 0,
+          surfaceTintColor: Colors.white,
+          shadowColor: Colors.transparent,
+          shape: const Border(
+            bottom: BorderSide(color: AppColors.surfaceBorder),
+          ),
         ),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -472,11 +467,17 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
 
     if (_error != null) {
       return Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text('학원 대시보드'),
           backgroundColor: AppColors.cardBg,
           foregroundColor: AppColors.primary,
           elevation: 0,
+          surfaceTintColor: Colors.white,
+          shadowColor: Colors.transparent,
+          shape: const Border(
+            bottom: BorderSide(color: AppColors.surfaceBorder),
+          ),
         ),
         body: Center(
           child: Column(
@@ -484,10 +485,7 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
             children: [
               Text('오류: $_error'),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadData,
-                child: const Text('다시 시도'),
-              ),
+              ElevatedButton(onPressed: _loadData, child: const Text('다시 시도')),
             ],
           ),
         ),
@@ -496,7 +494,10 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
 
     final today = _today();
     final todayPresent = _attendanceLogs
-        .where((l) => l.date == today && (l.status == 'present' || l.status == 'late'))
+        .where(
+          (l) =>
+              l.date == today && (l.status == 'present' || l.status == 'late'),
+        )
         .length;
     final totalMembers = _members.length;
     final attendanceRate = totalMembers > 0
@@ -504,18 +505,24 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
         : '-';
 
     final month = _thisMonth();
-    final monthPayments = _tuitionPayments.where((p) => p.monthLabel == month).toList();
+    final monthPayments = _tuitionPayments
+        .where((p) => p.monthLabel == month)
+        .toList();
     final paidCount = monthPayments.where((p) => p.paidAt != null).length;
     final paymentRate = totalMembers > 0
         ? '${(paidCount / totalMembers * 100).toStringAsFixed(0)}%'
         : '-';
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('학원 대시보드'),
         backgroundColor: AppColors.cardBg,
         foregroundColor: AppColors.primary,
         elevation: 0,
+        surfaceTintColor: Colors.white,
+        shadowColor: Colors.transparent,
+        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.primary,

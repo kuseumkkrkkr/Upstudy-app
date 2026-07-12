@@ -5,6 +5,7 @@ import 'package:s11_teacher/pages/problem_editor_page.dart';
 import 'package:s11_teacher/pages/teacher_social_page.dart';
 import 'package:s11_teacher/pages/teacher_store_page.dart';
 import 'package:s11_teacher/services/api_client.dart';
+import 'package:s11_teacher/shared/theme/app_colors.dart';
 import 'package:s11_teacher/widgets/design_tokens.dart';
 import 'package:s11_teacher/shared/ui/ios26/ios26_chrome.dart';
 
@@ -25,7 +26,7 @@ class TeacherAppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(0xFFF6FAF8),
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: FutureBuilder<UserProfile>(
           future: ApiClient.instance.getMyProfile(),
@@ -258,10 +259,10 @@ class _TeacherDrawerNavAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final bgColor = selected
         ? kCourseGreen.withValues(alpha: 0.12)
-        : Colors.white.withValues(alpha: 0.82);
+        : Colors.white;
     final borderColor = selected
         ? kCourseGreen.withValues(alpha: 0.22)
-        : Colors.black.withValues(alpha: 0.05);
+        : AppColors.surfaceBorder;
     return Material(
       color: bgColor,
       borderRadius: BorderRadius.circular(24),

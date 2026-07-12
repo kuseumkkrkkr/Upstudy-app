@@ -157,6 +157,7 @@ def search_user_problem_set(
     *,
     user_id: str,
     hash_tag: Optional[str] = None,
+    quest_id: Optional[str] = None,
     text: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
@@ -171,8 +172,13 @@ def search_user_problem_set(
     if hash_tag and hash_tag.strip():
         where.append("LOWER(ups.hash_tags) LIKE ?")
         params.append(f"%{hash_tag.strip().lower().lstrip('#')}%")
+    if quest_id and quest_id.strip():
+        where.append("LOWER(ups.quest_id) LIKE ?")
+        params.append(f"%{quest_id.strip().lower()}%")
     if text and text.strip():
-        where.append("LOWER(COALESCE(qd.quest_title, '')) LIKE ?")
+        where.append(
+            "LOWER(COALESCE(qd.quest_title, '') || ' ' || COALESCE(qd.quest_answer, '')) LIKE ?"
+        )
         params.append(f"%{text.strip().lower()}%")
     if date_from and date_from.strip():
         where.append("date(ups.created_at) >= date(?)")
@@ -198,7 +204,7 @@ def search_user_problem_set(
         f"""
         SELECT
             ups.quest_id, ups.codebase_id, ups.seed, ups.question_type, ups.hash_tags, ups.created_at,
-            qd.quest_title
+            qd.quest_title, qd.quest_answer
         FROM user_problem_set ups
         LEFT JOIN quest_data qd ON qd.quest_id = ups.quest_id
         WHERE {where_clause}
@@ -218,6 +224,28 @@ def search_user_problem_set(
                 tags = [str(v) for v in parsed]
         except Exception:
             pass
+        title_text = row[6] or ""
+        answer_text = row[7] or ""
+        try:
+            parsed_title = json.loads(title_text)
+            if isinstance(parsed_title, dict):
+                title_text = " ".join(
+                    str(block.get("content", "")).strip()
+                    for block in parsed_title.get("blocks", [])
+                    if isinstance(block, dict) and str(block.get("content", "")).strip()
+                ).strip()
+        except Exception:
+            pass
+        try:
+            parsed_answer = json.loads(answer_text)
+            if isinstance(parsed_answer, dict):
+                answer_text = " ".join(
+                    str(block.get("content", "")).strip()
+                    for block in parsed_answer.get("blocks", [])
+                    if isinstance(block, dict) and str(block.get("content", "")).strip()
+                ).strip()
+        except Exception:
+            pass
         items.append(
             {
                 "quest_id": row[0],
@@ -227,6 +255,8 @@ def search_user_problem_set(
                 "hash_tags": tags,
                 "created_at": row[5],
                 "quest_title": row[6],
+                "quest_title_text": title_text,
+                "quest_answer_text": answer_text,
             }
         )
     return {"items": items, "total": total, "page": safe_page, "page_size": safe_page_size}
@@ -363,4 +393,3 @@ def get_exam_editor_paper(user_id: str, paper_id: str) -> Optional[Dict[str, Any
         "created_at": paper_row[6],
         "items": items,
     }
-

@@ -388,6 +388,80 @@ def _clean_hash_tags(hash_tags: List[str]) -> List[str]:
     return list(mapping.values())
 
 
+def generation_tag_groups() -> List[dict]:
+    labels = {
+        "common-math-1": "공통수학1",
+        "common-math-2": "공통수학2",
+        "algebra": "대수",
+        "calculus-1": "미적분Ⅰ",
+    }
+    groups: List[dict] = []
+    for subject in SUBJECT_TAG_RULES:
+        name = str(subject.get("name", ""))
+        tags = sorted(
+            str(tag).strip()
+            for tag in subject.get("tags", set())
+            if str(tag).strip()
+        )
+        groups.append(
+            {
+                "code": int(subject.get("code", 0)),
+                "grade": int(subject.get("grade", 0)),
+                "name": name,
+                "label": labels.get(name, name),
+                "tags": tags,
+            }
+        )
+    return groups
+
+
+def allowed_generation_tag_mapping() -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for group in generation_tag_groups():
+        for tag in group["tags"]:
+            normalized = _normalize_tag(tag)
+            if normalized and normalized not in mapping:
+                mapping[normalized] = tag
+    return mapping
+
+
+def allowed_generation_tags() -> List[str]:
+    return sorted(allowed_generation_tag_mapping().values())
+
+
+def validate_generation_tags(
+    hash_tags: Iterable[str],
+    *,
+    allow_empty: bool = False,
+) -> List[str]:
+    items = list(hash_tags)
+    if any(not isinstance(tag, str) for tag in items):
+        raise TypeError("hash_tags must be a list of strings")
+
+    allowed = allowed_generation_tag_mapping()
+    results: List[str] = []
+    seen: set[str] = set()
+    unknown: List[str] = []
+    for tag in items:
+        normalized = _normalize_tag(tag)
+        if not normalized:
+            continue
+        canonical = allowed.get(normalized)
+        if canonical is None:
+            unknown.append(normalized)
+            continue
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        results.append(canonical)
+
+    if unknown:
+        raise ValueError(f"unknown hash tags: {sorted(set(unknown))}")
+    if not results and not allow_empty:
+        raise ValueError("hash_tags must not be empty")
+    return results
+
+
 def _resolve_primary_tag(primary_hash_tag: str, tag_mapping: dict) -> str:
     normalized = _normalize_tag(primary_hash_tag or "")
     return tag_mapping.get(normalized, "")
