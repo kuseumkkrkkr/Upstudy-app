@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
+import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_full_face_panel.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 import 'exam_paper_editor_page.dart';
@@ -67,10 +69,12 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
       await _loadTagGroups();
     }
     if (!mounted || _tagGroups.isEmpty) return;
-    final picked = await showDialog<List<String>>(
-      context: context,
-      builder: (_) =>
-          _ExamTagPickerDialog(groups: _tagGroups, initialTags: _tags),
+    final picked = await Navigator.of(context).push<List<String>>(
+      MaterialPageRoute<List<String>>(
+        fullscreenDialog: true,
+        builder: (_) =>
+            _ExamTagPickerDialog(groups: _tagGroups, initialTags: _tags),
+      ),
     );
     if (picked == null) return;
     setState(() {
@@ -226,78 +230,82 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
     return Scaffold(
       endDrawer: const TeacherAppDrawer(currentRoute: '/exam-builder'),
       backgroundColor: kCourseBgGrey,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: kCourseGreen,
-        elevation: 0,
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.transparent,
-        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
-        title: const Text('시험지 생성'),
-        automaticallyImplyLeading: Navigator.of(context).canPop(),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              tooltip: '메뉴',
-              icon: const Icon(Icons.menu_rounded),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
-          ),
-        ],
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 920;
-          final contentWidth = constraints.maxWidth > 1180
-              ? 1180.0
-              : constraints.maxWidth;
-          final horizontalPadding = isWide ? 24.0 : 14.0;
+      body: Builder(
+        builder: (scaffoldContext) => SafeArea(
+          child: Column(
+            children: [
+              Ios26TopBar(
+                brandColor: kCourseGreen,
+                title: '빠른 시험지',
+                onBack: Navigator.of(context).canPop()
+                    ? () => Navigator.of(context).pop()
+                    : null,
+                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                items: const [
+                  Ios26NavItem(label: '설정', active: true),
+                  Ios26NavItem(label: '태그'),
+                  Ios26NavItem(label: '생성 상태'),
+                ],
+              ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 920;
+                    final contentWidth = constraints.maxWidth > 1180
+                        ? 1180.0
+                        : constraints.maxWidth;
+                    final horizontalPadding = isWide ? 24.0 : 14.0;
 
-          final settingsPanel = _buildSettingsPanel(scale);
-          final tagPanel = _buildTagPanel(scale);
+                    final settingsPanel = _buildSettingsPanel(scale);
+                    final tagPanel = _buildTagPanel(scale);
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding * scale,
-              18 * scale,
-              horizontalPadding * scale,
-              24 * scale,
-            ),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: contentWidth,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildSummaryPanel(scale),
-                    SizedBox(height: 12 * scale),
-                    if (isWide)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 7, child: settingsPanel),
-                          SizedBox(width: 12 * scale),
-                          Expanded(flex: 5, child: tagPanel),
-                        ],
-                      )
-                    else ...[
-                      settingsPanel,
-                      SizedBox(height: 12 * scale),
-                      tagPanel,
-                    ],
-                    if (_examId != null) ...[
-                      SizedBox(height: 12 * scale),
-                      _buildStatusPanel(scale),
-                    ],
-                    SizedBox(height: 16 * scale),
-                    _buildActionArea(scale, isWide: isWide),
-                  ],
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding * scale,
+                        18 * scale,
+                        horizontalPadding * scale,
+                        24 * scale,
+                      ),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: SizedBox(
+                          width: contentWidth,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildSummaryPanel(scale),
+                              SizedBox(height: 12 * scale),
+                              if (isWide)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(flex: 7, child: settingsPanel),
+                                    SizedBox(width: 12 * scale),
+                                    Expanded(flex: 5, child: tagPanel),
+                                  ],
+                                )
+                              else ...[
+                                settingsPanel,
+                                SizedBox(height: 12 * scale),
+                                tagPanel,
+                              ],
+                              if (_examId != null) ...[
+                                SizedBox(height: 12 * scale),
+                                _buildStatusPanel(scale),
+                              ],
+                              SizedBox(height: 16 * scale),
+                              _buildActionArea(scale, isWide: isWide),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -691,7 +699,7 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
       padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(26),
         border: Border.all(color: AppColors.surfaceBorder),
         boxShadow: const [kCourseShadow],
       ),
@@ -733,7 +741,7 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: kCourseGreen.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: kCourseGreen.withValues(alpha: 0.16)),
       ),
       child: Text(value, style: _valueBadgeStyle),
@@ -749,7 +757,7 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Row(
@@ -780,7 +788,7 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
         vertical: compact ? 10 : 14,
       ),
       textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: const StadiumBorder(),
       elevation: 0,
     );
   }
@@ -791,7 +799,7 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
       side: const BorderSide(color: AppColors.surfaceBorder),
       padding: EdgeInsets.symmetric(horizontal: 18 * scale, vertical: 14),
       textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: const StadiumBorder(),
     );
   }
 
@@ -932,83 +940,75 @@ class _ExamTagPickerDialogState extends State<_ExamTagPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('해시태그 선택'),
-      content: SizedBox(
-        width: 720,
-        height: 640,
-        child: Column(
-          children: [
-            TextField(
-              controller: _searchCtrl,
-              onChanged: (value) => setState(() => _query = value),
-              decoration: InputDecoration(
-                hintText: '해시태그 검색',
-                prefixIcon: const Icon(Icons.search_rounded),
-                filled: true,
-                fillColor: AppColors.surfaceMuted,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.surfaceBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.surfaceBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: kCourseLightGreen),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (_selected.isNotEmpty)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    for (final tag in _uniqueTags(_selected))
-                      Chip(
-                        label: Text(tag),
-                        deleteIcon: const Icon(Icons.close_rounded, size: 16),
-                        onDeleted: () => setState(() => _selected.remove(tag)),
-                      ),
-                  ],
-                ),
-              ),
-            if (_selected.isNotEmpty) const SizedBox(height: 12),
-            Expanded(
-              child: Scrollbar(
-                child: ListView(
-                  children: [
-                    for (final group in widget.groups) _buildGroupNode(group),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return TeacherFullFacePanel(
+      eyebrow: 'EXAM STUDIO',
+      title: '해시태그 선택',
+      description: '검색하거나 그룹을 펼쳐 시험 범위에 사용할 태그를 선택하세요.',
+      maxContentWidth: 960,
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('취소'),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () =>
               Navigator.of(context).pop(_uniqueTags(_selected.toList())),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: kCourseGreen,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text('선택 완료'),
+          child: Text('${_selected.length}개 선택 완료'),
         ),
       ],
+      content: Column(
+        children: [
+          TextField(
+            controller: _searchCtrl,
+            onChanged: (value) => setState(() => _query = value),
+            decoration: InputDecoration(
+              hintText: '해시태그 검색',
+              prefixIcon: const Icon(Icons.search_rounded),
+              filled: true,
+              fillColor: AppColors.surfaceMuted,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.surfaceBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.surfaceBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: kCourseLightGreen),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_selected.isNotEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final tag in _uniqueTags(_selected))
+                    Chip(
+                      label: Text(tag),
+                      deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                      onDeleted: () => setState(() => _selected.remove(tag)),
+                    ),
+                ],
+              ),
+            ),
+          if (_selected.isNotEmpty) const SizedBox(height: 12),
+          Expanded(
+            child: Scrollbar(
+              child: ListView(
+                children: [
+                  for (final group in widget.groups) _buildGroupNode(group),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

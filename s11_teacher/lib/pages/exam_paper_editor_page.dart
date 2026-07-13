@@ -11,8 +11,11 @@ import '../models/exam_editor_layout.dart';
 import '../models/exam_editor_models.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
+import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_full_face_panel.dart';
 import '../widgets/content_blocks_view.dart';
 import '../widgets/design_tokens.dart';
+import '../widgets/teacher_app_drawer.dart';
 
 enum _EditorLayoutMode { vertical, grid4, grid2, slider }
 
@@ -692,150 +695,120 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
   }
 
   Future<void> _showLayoutSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final selected = await Navigator.of(context).push<_EditorLayoutMode>(
+      MaterialPageRoute<_EditorLayoutMode>(
+        fullscreenDialog: true,
+        builder: (context) => TeacherFullFacePanel(
+          eyebrow: 'EXAM STUDIO',
+          title: '레이아웃 조절',
+          description: '시험지 출력 방식은 문항 데이터나 저장 구조를 변경하지 않습니다.',
+          content: ListView(
             children: [
-              const Text(
-                '레이아웃 조절',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 14),
               for (final mode in _EditorLayoutMode.values)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() => _layoutMode = mode);
-                      _rebuildPages();
-                    },
-                    child: Ink(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: mode == _layoutMode
-                              ? kCourseLightGreen
-                              : AppColors.surfaceBorder,
-                          width: mode == _layoutMode ? 2 : 1,
-                        ),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
                         color: mode == _layoutMode
-                            ? kCourseLightGreen.withValues(alpha: 0.08)
-                            : Colors.white,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(mode.icon, color: kCourseGreen),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              mode.label,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          if (mode == _layoutMode)
-                            const Icon(
-                              Icons.check_circle,
-                              color: kCourseLightGreen,
-                            ),
-                        ],
+                            ? kCourseGreen
+                            : AppColors.surfaceBorder,
                       ),
                     ),
+                    tileColor: mode == _layoutMode
+                        ? kCourseGreen
+                        : Colors.white,
+                    textColor: mode == _layoutMode
+                        ? Colors.white
+                        : Colors.black,
+                    iconColor: mode == _layoutMode
+                        ? Colors.white
+                        : Colors.black,
+                    leading: Icon(mode.icon),
+                    title: Text(
+                      mode.label,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    trailing: mode == _layoutMode
+                        ? const Icon(Icons.check_rounded)
+                        : const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).pop(mode),
                   ),
                 ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
+    if (selected == null || !mounted) return;
+    setState(() => _layoutMode = selected);
+    _rebuildPages();
   }
 
   Future<void> _showStatsSheet() async {
     final tags = _tagStats.entries.take(12).toList();
     final difficulties = _difficultyStats.entries.toList();
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      builder: (context) {
-        return SizedBox(
-          height: MediaQuery.of(context).size.height * 0.72,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            child: ListView(
-              children: [
-                const Text(
-                  '통계',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 14),
-                _buildStatTile('총 문제 수', '${_state.items.length}개'),
-                _buildStatTile('레이아웃', _layoutMode.label),
-                _buildStatTile(
-                  '객관식 문제',
-                  '${_state.items.where((item) => _optionsFor(item).isNotEmpty).length}개',
-                ),
-                _buildStatTile(
-                  '기하 문제',
-                  '${_state.items.where((item) => item.isGeometry).length}개',
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  '난이도 분포',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 10),
-                for (final entry in difficulties)
-                  _buildStatTile(entry.key, '${entry.value}개'),
-                const SizedBox(height: 18),
-                const Text(
-                  '태그 사용량',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 10),
-                if (tags.isEmpty)
-                  const Text('아직 태그 통계가 없습니다.')
-                else
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: tags
-                        .map(
-                          (entry) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(999),
-                              color: const Color(0xFFF2F2F4),
-                              border: Border.all(
-                                color: const Color(0xFFD4D4D8),
-                              ),
-                            ),
-                            child: Text('#${entry.key} ${entry.value}'),
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (context) => TeacherFullFacePanel(
+          eyebrow: 'EXAM STUDIO',
+          title: '문항 통계',
+          description: '현재 편집 중인 문항을 로컬 상태에서 집계합니다.',
+          content: ListView(
+            children: [
+              _buildStatTile('총 문제 수', '${_state.items.length}개'),
+              _buildStatTile('레이아웃', _layoutMode.label),
+              _buildStatTile(
+                '객관식 문제',
+                '${_state.items.where((item) => _optionsFor(item).isNotEmpty).length}개',
+              ),
+              _buildStatTile(
+                '기하 문제',
+                '${_state.items.where((item) => item.isGeometry).length}개',
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                '난이도 분포',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              for (final entry in difficulties)
+                _buildStatTile(entry.key, '${entry.value}개'),
+              const SizedBox(height: 18),
+              const Text(
+                '태그 사용량',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              if (tags.isEmpty)
+                const Text('아직 태그 통계가 없습니다.')
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: tags
+                      .map(
+                        (entry) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
                           ),
-                        )
-                        .toList(),
-                  ),
-              ],
-            ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: const Color(0xFFF2F2F4),
+                            border: Border.all(color: const Color(0xFFD4D4D8)),
+                          ),
+                          child: Text('#${entry.key} ${entry.value}'),
+                        ),
+                      )
+                      .toList(),
+                ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -864,20 +837,86 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
     return Scaffold(
+      endDrawer: const TeacherAppDrawer(currentRoute: '/exam-builder'),
       backgroundColor: kCourseBgGrey,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(scale),
-            Expanded(
-              child: Row(
-                children: [
-                  SizedBox(width: 360 * scale, child: _buildLeftPanel(scale)),
-                  Expanded(child: _buildPreviewArea(scale)),
+      body: Builder(
+        builder: (scaffoldContext) => SafeArea(
+          child: Column(
+            children: [
+              Ios26TopBar(
+                brandColor: kCourseGreen,
+                title: '시험지 제작 스튜디오',
+                onBack: Navigator.of(context).canPop()
+                    ? () => Navigator.of(context).pop()
+                    : null,
+                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                items: const [
+                  Ios26NavItem(label: '검색'),
+                  Ios26NavItem(label: '편집', active: true),
+                  Ios26NavItem(label: '미리보기'),
                 ],
               ),
-            ),
-          ],
+              _buildTopBar(scale),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth >= 1100) {
+                      return Row(
+                        children: [
+                          SizedBox(
+                            width: 320 * scale,
+                            child: _buildLeftPanel(scale),
+                          ),
+                          Expanded(child: _buildPreviewArea(scale)),
+                          SizedBox(
+                            width: 300 * scale,
+                            child: _buildInspectorPanel(scale),
+                          ),
+                        ],
+                      );
+                    }
+                    if (constraints.maxWidth >= 720) {
+                      return Row(
+                        children: [
+                          SizedBox(
+                            width: 300 * scale,
+                            child: _buildLeftPanel(scale),
+                          ),
+                          Expanded(child: _buildPreviewArea(scale)),
+                        ],
+                      );
+                    }
+                    return DefaultTabController(
+                      length: 3,
+                      child: Column(
+                        children: [
+                          const Material(
+                            color: Colors.white,
+                            child: TabBar(
+                              tabs: [
+                                Tab(text: '문제 검색'),
+                                Tab(text: '시험지'),
+                                Tab(text: '편집 설정'),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: TabBarView(
+                              children: [
+                                _buildLeftPanel(scale),
+                                _buildPreviewArea(scale),
+                                _buildInspectorPanel(scale),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -885,6 +924,68 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
 
   Widget _buildTopBar(double scale) {
     final fontPt = (14 * _state.fontScale).toStringAsFixed(1);
+    final titleField = TextField(
+      controller: _titleCtrl,
+      decoration: const InputDecoration(
+        border: InputBorder.none,
+        hintText: '시험지 제목',
+      ),
+      style: TextStyle(
+        fontSize: 22 * scale,
+        fontWeight: FontWeight.w700,
+        color: kCourseGreen,
+      ),
+    );
+    final toolbar = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildToolbarChip(
+            icon: Icons.remove_rounded,
+            label: 'pt',
+            onTap: () => _adjustGlobalFont(false),
+            trailing: Text(fontPt),
+          ),
+          SizedBox(width: 8 * scale),
+          _buildToolbarChip(
+            icon: Icons.add_rounded,
+            label: 'pt',
+            onTap: () => _adjustGlobalFont(true),
+          ),
+          SizedBox(width: 8 * scale),
+          _buildToolbarChip(
+            icon: _layoutMode.icon,
+            label: _layoutMode.label,
+            onTap: _showLayoutSheet,
+          ),
+          SizedBox(width: 8 * scale),
+          _buildToolbarChip(
+            icon: Icons.query_stats_rounded,
+            label: '통계',
+            onTap: _showStatsSheet,
+          ),
+          SizedBox(width: 8 * scale),
+          _buildToolbarChip(
+            icon: Icons.auto_awesome_rounded,
+            label: _aiArranging ? '배치중' : 'AI 배치',
+            onTap: _aiArranging ? null : _aiArrange,
+          ),
+          SizedBox(width: 8 * scale),
+          _buildToolbarChip(
+            icon: Icons.folder_copy_rounded,
+            label: _saving ? '저장중' : '문서함 저장',
+            onTap: _saving ? null : _saveToDocumentBox,
+          ),
+          SizedBox(width: 8 * scale),
+          _buildToolbarChip(
+            icon: Icons.picture_as_pdf_rounded,
+            label: _deploying ? 'PDF 준비중' : 'PDF',
+            onTap: _deploying ? null : _downloadPdf,
+            filled: true,
+          ),
+        ],
+      ),
+    );
     return Container(
       padding: EdgeInsets.fromLTRB(
         18 * scale,
@@ -898,67 +999,26 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _titleCtrl,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: '시험지 제목',
-                  ),
-                  style: TextStyle(
-                    fontSize: 22 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: kCourseGreen,
-                  ),
-                ),
-              ),
-              Wrap(
-                spacing: 10 * scale,
-                runSpacing: 10 * scale,
-                crossAxisAlignment: WrapCrossAlignment.center,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 900) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    titleField,
+                    SizedBox(height: 8 * scale),
+                    toolbar,
+                  ],
+                );
+              }
+              return Row(
                 children: [
-                  _buildToolbarChip(
-                    icon: Icons.remove_rounded,
-                    label: 'pt',
-                    onTap: () => _adjustGlobalFont(false),
-                    trailing: Text(fontPt),
-                  ),
-                  _buildToolbarChip(
-                    icon: Icons.add_rounded,
-                    label: 'pt',
-                    onTap: () => _adjustGlobalFont(true),
-                  ),
-                  _buildToolbarChip(
-                    icon: _layoutMode.icon,
-                    label: _layoutMode.label,
-                    onTap: _showLayoutSheet,
-                  ),
-                  _buildToolbarChip(
-                    icon: Icons.query_stats_rounded,
-                    label: '통계',
-                    onTap: _showStatsSheet,
-                  ),
-                  _buildToolbarChip(
-                    icon: Icons.auto_awesome_rounded,
-                    label: _aiArranging ? '배치중' : 'AI 배치',
-                    onTap: _aiArranging ? null : _aiArrange,
-                  ),
-                  _buildToolbarChip(
-                    icon: Icons.folder_copy_rounded,
-                    label: _saving ? '저장중' : '문서함 저장',
-                    onTap: _saving ? null : _saveToDocumentBox,
-                  ),
-                  _buildToolbarChip(
-                    icon: Icons.picture_as_pdf_rounded,
-                    label: _deploying ? 'PDF 준비중' : 'PDF',
-                    onTap: _deploying ? null : _downloadPdf,
-                    filled: true,
-                  ),
+                  Expanded(child: titleField),
+                  SizedBox(width: 14 * scale),
+                  Flexible(flex: 2, child: toolbar),
                 ],
-              ),
-            ],
+              );
+            },
           ),
           if (_aiStatus != null || _paperId != null) ...[
             SizedBox(height: 10 * scale),
@@ -1035,6 +1095,176 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  /// 필요 변수: 화면 배율 [scale], 현재 레이아웃·글자 크기·문항 통계 상태.
+  /// 작동 원리: 기존 하단 시트에서 제공하던 설정을 PC에서는 상시 노출하고,
+  /// 모바일에서는 편집 설정 탭 안에 표시해 별도 API 호출 없이 같은 상태를 수정한다.
+  Widget _buildInspectorPanel(double scale) {
+    final objectiveCount = _state.items
+        .where((item) => _optionsFor(item).isNotEmpty)
+        .length;
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(left: BorderSide(color: AppColors.surfaceBorder)),
+      ),
+      child: ListView(
+        padding: EdgeInsets.all(18 * scale),
+        children: [
+          Text(
+            '편집 설정',
+            style: TextStyle(
+              color: kCourseGreen,
+              fontSize: 22 * scale,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 6 * scale),
+          Text(
+            '레이아웃과 출력 밀도를 실시간으로 조절합니다.',
+            style: TextStyle(
+              color: Colors.black54,
+              fontSize: 12 * scale,
+              height: 1.4,
+            ),
+          ),
+          SizedBox(height: 20 * scale),
+          const Text('레이아웃', style: TextStyle(fontWeight: FontWeight.w800)),
+          SizedBox(height: 10 * scale),
+          for (final mode in _EditorLayoutMode.values)
+            Padding(
+              padding: EdgeInsets.only(bottom: 8 * scale),
+              child: _buildInspectorChoice(
+                icon: mode.icon,
+                label: mode.label,
+                selected: mode == _layoutMode,
+                onTap: () {
+                  setState(() => _layoutMode = mode);
+                  _rebuildPages();
+                },
+              ),
+            ),
+          SizedBox(height: 14 * scale),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '문제 글자',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              Text(
+                '${(14 * _state.fontScale).toStringAsFixed(1)} pt',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          Slider(
+            value: _state.fontScale,
+            min: 0.7,
+            max: 1.6,
+            divisions: 18,
+            onChanged: (value) =>
+                setState(() => _state = _state.copyWith(fontScale: value)),
+          ),
+          SizedBox(height: 8 * scale),
+          Container(
+            padding: EdgeInsets.all(16 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.surfaceBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '문항 통계',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                SizedBox(height: 12 * scale),
+                _buildInspectorMetric('전체', '${_state.items.length}문항'),
+                _buildInspectorMetric('객관식', '$objectiveCount문항'),
+                _buildInspectorMetric(
+                  '기하',
+                  '${_state.items.where((item) => item.isGeometry).length}문항',
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 14 * scale),
+          OutlinedButton.icon(
+            onPressed: _showStatsSheet,
+            icon: const Icon(Icons.query_stats_rounded),
+            label: const Text('상세 통계 보기'),
+          ),
+          SizedBox(height: 8 * scale),
+          FilledButton.icon(
+            onPressed: _deploying ? null : _downloadPdf,
+            icon: const Icon(Icons.picture_as_pdf_rounded),
+            label: Text(_deploying ? 'PDF 준비중' : 'PDF 출력'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요 변수: 아이콘, 라벨, 선택 여부, 선택 콜백.
+  /// 작동 원리: 선택 상태는 검정 면으로, 나머지는 흰색 경계 카드로 표현한다.
+  Widget _buildInspectorChoice({
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: selected ? kCourseGreen : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? kCourseGreen : AppColors.surfaceBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: selected ? Colors.white : Colors.black),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: selected ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (selected)
+              const Icon(Icons.check_rounded, size: 18, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 필요 변수: 통계명 [label], 표시값 [value].
+  /// 작동 원리: 계산된 로컬 편집 상태를 한 줄 요약으로 표시한다.
+  Widget _buildInspectorMetric(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: const TextStyle(color: Colors.black54)),
+          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+        ],
       ),
     );
   }

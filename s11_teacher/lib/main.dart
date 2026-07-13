@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'shared/theme/teacher_monochrome_scope.dart';
 import 'shared/theme/teacher_theme.dart';
 import 'pages/auth_wrapper.dart';
 import 'pages/teacher_login_page.dart';
@@ -7,6 +8,7 @@ import 'pages/teacher_dashboard_page.dart';
 import 'pages/course_builder_page.dart';
 import 'pages/course_list_page.dart';
 import 'pages/exam_paper_builder_page.dart';
+import 'pages/exam_paper_editor_page.dart';
 import 'pages/problem_editor_page.dart';
 import 'pages/teacher_social_page.dart';
 import 'pages/teacher_store_page.dart';
@@ -28,6 +30,8 @@ class TeacherApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'AIFlow 선생님',
       theme: buildTeacherTheme(),
+      builder: (context, child) =>
+          TeacherMonochromeScope(child: child ?? const SizedBox.shrink()),
       initialRoute: '/',
       routes: {
         '/': (context) => const AuthWrapper(),
@@ -37,6 +41,7 @@ class TeacherApp extends StatelessWidget {
         '/course-builder': (context) => const CourseBuilderPage(),
         CourseListPage.routeName: (context) => const CourseListPage(),
         '/exam-builder': (context) => const ExamPaperBuilderPage(),
+        '/exam-editor': (context) => const ExamPaperEditorPage(),
         '/problem-editor': (context) => const ProblemEditorPage(),
         TeacherSocialPage.routeName: (context) => const TeacherSocialPage(),
         TeacherStorePage.routeName: (context) => const TeacherStorePage(),

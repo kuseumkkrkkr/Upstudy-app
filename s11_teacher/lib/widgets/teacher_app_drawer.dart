@@ -23,6 +23,9 @@ class TeacherAppDrawer extends StatelessWidget {
   final VoidCallback? onOpenSettings;
   final Future<void> Function()? onConfirmLogout;
 
+  /// 필요 변수: 현재 라우트와 선택적 프로필/설정/로그아웃 콜백.
+  /// 작동 원리: 상단 프로필은 고정하고, 메뉴 목록은 남은 높이에서 스크롤해
+  /// 작은 화면이나 메뉴 항목 증가 시에도 Drawer 하단 오버플로우를 방지한다.
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -93,142 +96,147 @@ class TeacherAppDrawer extends StatelessWidget {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      _TeacherDrawerNavAction(
-                        icon: Icons.dashboard_customize_outlined,
-                        title: '대시보드',
-                        subtitle: '교사용 홈으로 이동합니다.',
-                        selected: currentRoute == '/dashboard',
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (currentRoute == '/dashboard') return;
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            '/dashboard',
-                            (route) => false,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _TeacherDrawerNavAction(
-                        icon: Icons.groups_rounded,
-                        title: '그룹스터디',
-                        subtitle: '교사 그룹 생성, 공유, 멤버 관리를 엽니다.',
-                        selected: currentRoute == GroupListPage.routeName,
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (currentRoute == GroupListPage.routeName) return;
-                          Navigator.of(
-                            context,
-                          ).pushNamed(GroupListPage.routeName);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _TeacherDrawerNavAction(
-                        icon: Icons.menu_book_outlined,
-                        title: '교재',
-                        subtitle: '교재 목록과 코스 자료를 관리합니다.',
-                        selected: currentRoute == CourseListPage.routeName,
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (currentRoute == CourseListPage.routeName) return;
-                          Navigator.of(
-                            context,
-                          ).pushNamed(CourseListPage.routeName);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _TeacherDrawerNavAction(
-                        icon: Icons.forum_outlined,
-                        title: '친구/채팅',
-                        subtitle: '교사용 친구 목록과 1:1 채팅으로 이동합니다.',
-                        selected: currentRoute == TeacherSocialPage.routeName,
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (currentRoute == TeacherSocialPage.routeName) {
-                            return;
-                          }
-                          Navigator.of(
-                            context,
-                          ).pushNamed(TeacherSocialPage.routeName);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _TeacherDrawerNavAction(
-                        icon: Icons.edit_note_rounded,
-                        title: '문항 제작',
-                        subtitle: '문항 초안과 변형 화면으로 이동합니다.',
-                        selected: currentRoute == '/problem-editor',
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ProblemEditorPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _TeacherDrawerNavAction(
-                        icon: Icons.storefront_rounded,
-                        title: '스토어',
-                        subtitle: '문제, 교재, 시험지 DB와 포인트를 관리합니다.',
-                        selected: currentRoute == TeacherStorePage.routeName,
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (currentRoute == TeacherStorePage.routeName) {
-                            return;
-                          }
-                          Navigator.of(
-                            context,
-                          ).pushNamed(TeacherStorePage.routeName);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      if (onOpenProfile != null) ...[
+                Expanded(
+                  child: Scrollbar(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                      children: [
                         _TeacherDrawerNavAction(
-                          icon: Icons.person_outline,
-                          title: '프로필',
-                          subtitle: '회원 정보와 계정 상태를 수정합니다.',
+                          icon: Icons.dashboard_customize_outlined,
+                          title: '대시보드',
+                          subtitle: '교사용 홈으로 이동합니다.',
+                          selected: currentRoute == '/dashboard',
                           onTap: () {
                             Navigator.pop(context);
-                            onOpenProfile?.call();
+                            if (currentRoute == '/dashboard') return;
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/dashboard',
+                              (route) => false,
+                            );
                           },
                         ),
                         const SizedBox(height: 10),
-                      ],
-                      if (onOpenSettings != null) ...[
                         _TeacherDrawerNavAction(
-                          icon: Icons.settings_outlined,
-                          title: '설정',
-                          subtitle: '앱 환경과 계정 옵션을 조정합니다.',
+                          icon: Icons.groups_rounded,
+                          title: '그룹스터디',
+                          subtitle: '교사 그룹 생성, 공유, 멤버 관리를 엽니다.',
+                          selected: currentRoute == GroupListPage.routeName,
                           onTap: () {
                             Navigator.pop(context);
-                            onOpenSettings?.call();
+                            if (currentRoute == GroupListPage.routeName) return;
+                            Navigator.of(
+                              context,
+                            ).pushNamed(GroupListPage.routeName);
                           },
                         ),
                         const SizedBox(height: 10),
+                        _TeacherDrawerNavAction(
+                          icon: Icons.menu_book_outlined,
+                          title: '교재',
+                          subtitle: '교재 목록과 코스 자료를 관리합니다.',
+                          selected: currentRoute == CourseListPage.routeName,
+                          onTap: () {
+                            Navigator.pop(context);
+                            if (currentRoute == CourseListPage.routeName) {
+                              return;
+                            }
+                            Navigator.of(
+                              context,
+                            ).pushNamed(CourseListPage.routeName);
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _TeacherDrawerNavAction(
+                          icon: Icons.forum_outlined,
+                          title: '친구/채팅',
+                          subtitle: '교사용 친구 목록과 1:1 채팅으로 이동합니다.',
+                          selected: currentRoute == TeacherSocialPage.routeName,
+                          onTap: () {
+                            Navigator.pop(context);
+                            if (currentRoute == TeacherSocialPage.routeName) {
+                              return;
+                            }
+                            Navigator.of(
+                              context,
+                            ).pushNamed(TeacherSocialPage.routeName);
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _TeacherDrawerNavAction(
+                          icon: Icons.edit_note_rounded,
+                          title: '문항 제작',
+                          subtitle: '문항 초안과 변형 화면으로 이동합니다.',
+                          selected: currentRoute == '/problem-editor',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ProblemEditorPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _TeacherDrawerNavAction(
+                          icon: Icons.storefront_rounded,
+                          title: '스토어',
+                          subtitle: '문제, 교재, 시험지 DB와 포인트를 관리합니다.',
+                          selected: currentRoute == TeacherStorePage.routeName,
+                          onTap: () {
+                            Navigator.pop(context);
+                            if (currentRoute == TeacherStorePage.routeName) {
+                              return;
+                            }
+                            Navigator.of(
+                              context,
+                            ).pushNamed(TeacherStorePage.routeName);
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        if (onOpenProfile != null) ...[
+                          _TeacherDrawerNavAction(
+                            icon: Icons.person_outline,
+                            title: '프로필',
+                            subtitle: '회원 정보와 계정 상태를 수정합니다.',
+                            onTap: () {
+                              Navigator.pop(context);
+                              onOpenProfile?.call();
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        if (onOpenSettings != null) ...[
+                          _TeacherDrawerNavAction(
+                            icon: Icons.settings_outlined,
+                            title: '설정',
+                            subtitle: '앱 환경과 계정 옵션을 조정합니다.',
+                            onTap: () {
+                              Navigator.pop(context);
+                              onOpenSettings?.call();
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        _TeacherDrawerNavAction(
+                          icon: Icons.logout_rounded,
+                          title: '로그아웃',
+                          subtitle: '현재 계정에서 안전하게 로그아웃합니다.',
+                          onTap: () async {
+                            Navigator.pop(context);
+                            if (onConfirmLogout != null) {
+                              await onConfirmLogout!.call();
+                              return;
+                            }
+                            await ApiClient.instance.clearToken();
+                            if (!context.mounted) return;
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/login',
+                              (route) => false,
+                            );
+                          },
+                        ),
                       ],
-                      _TeacherDrawerNavAction(
-                        icon: Icons.logout_rounded,
-                        title: '로그아웃',
-                        subtitle: '현재 계정에서 안전하게 로그아웃합니다.',
-                        onTap: () async {
-                          Navigator.pop(context);
-                          if (onConfirmLogout != null) {
-                            await onConfirmLogout!.call();
-                            return;
-                          }
-                          await ApiClient.instance.clearToken();
-                          if (!context.mounted) return;
-                          Navigator.of(
-                            context,
-                          ).pushNamedAndRemoveUntil('/login', (route) => false);
-                        },
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -255,6 +263,8 @@ class _TeacherDrawerNavAction extends StatelessWidget {
   final VoidCallback onTap;
   final bool selected;
 
+  /// 필요 변수: 메뉴 아이콘, 제목, 설명, 선택 상태와 탭 콜백.
+  /// 작동 원리: 선택 상태에 맞춰 색상과 테두리를 정하고 하나의 탐색 카드를 그린다.
   @override
   Widget build(BuildContext context) {
     final bgColor = selected

@@ -107,17 +107,34 @@ class Ios26TopBar extends StatelessWidget {
                   onPressed: onMenu,
                 ),
                 const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: onTitleTap,
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: compact ? 24 : 28,
-                      fontWeight: FontWeight.w800,
+                if (compact)
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: onTitleTap,
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: onTitleTap,
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ),
                 const Spacer(),
                 if (items.isNotEmpty && !compact)
                   Flexible(

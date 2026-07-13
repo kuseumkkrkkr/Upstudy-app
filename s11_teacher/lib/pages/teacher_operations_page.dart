@@ -766,7 +766,7 @@ class _FinanceSummaryRow extends StatelessWidget {
             label: '잔액',
             value: _money(summary.balance),
             color: summary.balance >= 0
-                ? const Color(0xFF22593A)
+                ? const Color(0xFF27272A)
                 : const Color(0xFF9B3A2E),
           ),
         ];

@@ -7,6 +7,8 @@ import '../pages/problem_editor_page.dart';
 import '../services/api_client.dart';
 import '../services/course_builder_payload.dart';
 import '../shared/theme/app_colors.dart';
+import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_full_face_panel.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 
@@ -380,10 +382,10 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
     final selected = Set<String>.from(module.problemIds);
     Map<String, dynamic>? activeItem;
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (dialogContext) => StatefulBuilder(
           builder: (context, setDialogState) {
             Future<void> runSearch() async {
               initialized = true;
@@ -422,255 +424,249 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
               runSearch();
             }
 
-            return AlertDialog(
-              title: const Text('문서함 문제 선택'),
-              content: SizedBox(
-                width: 960,
-                height: 560,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '교사 문서함에 저장된 문제만 연결합니다. 생성은 기존 문제 제작 스튜디오에서 처리합니다.',
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
+            return TeacherFullFacePanel(
+              eyebrow: 'COURSE STUDIO',
+              title: '문서함 문제 선택',
+              description: '교사 문서함에 저장된 문제만 코스 모듈에 연결합니다.',
+              maxContentWidth: 1180,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '교사 문서함에 저장된 문제만 연결합니다. 생성은 기존 문제 제작 스튜디오에서 처리합니다.',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: tagCtrl,
+                          decoration: _decoration('필터 태그'),
+                          onSubmitted: (_) => runSearch(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: textCtrl,
+                          decoration: _decoration('문제명/내용 검색'),
+                          onSubmitted: (_) => runSearch(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: loading ? null : runSearch,
+                        icon: const Icon(Icons.search_rounded),
+                        label: Text(loading ? '검색 중' : '검색'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: Row(
                       children: [
                         Expanded(
-                          child: TextField(
-                            controller: tagCtrl,
-                            decoration: _decoration('필터 태그'),
-                            onSubmitted: (_) => runSearch(),
+                          flex: 11,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F7F8),
+                              border: Border.all(
+                                color: AppColors.surfaceBorder,
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: loading
+                                ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                : results.isEmpty
+                                ? const Center(
+                                    child: Text('문서함에 연결할 문제가 없습니다.'),
+                                  )
+                                : ListView.separated(
+                                    padding: const EdgeInsets.all(10),
+                                    itemCount: results.length,
+                                    separatorBuilder: (_, _) =>
+                                        const SizedBox(height: 8),
+                                    itemBuilder: (context, index) {
+                                      final item = results[index];
+                                      final id = _questIdOf(item);
+                                      if (id.isEmpty) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      final selectedNow = selected.contains(id);
+                                      final activeNow =
+                                          activeItem != null &&
+                                          _questIdOf(activeItem!) == id;
+                                      return InkWell(
+                                        borderRadius: BorderRadius.circular(16),
+                                        onTap: () => setDialogState(
+                                          () => activeItem = item,
+                                        ),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 120,
+                                          ),
+                                          padding: const EdgeInsets.all(14),
+                                          decoration: BoxDecoration(
+                                            color: activeNow
+                                                ? const Color(0xFFF0F0F2)
+                                                : Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            border: Border.all(
+                                              color: activeNow
+                                                  ? kCourseGreen
+                                                  : AppColors.surfaceBorder,
+                                              width: activeNow ? 1.4 : 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Checkbox(
+                                                value: selectedNow,
+                                                onChanged: (value) {
+                                                  setDialogState(() {
+                                                    activeItem = item;
+                                                    if (value == true) {
+                                                      selected.add(id);
+                                                    } else {
+                                                      selected.remove(id);
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      _questTitleOf(item),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    Text(
+                                                      _questBodyOf(item),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        color: Colors.black54,
+                                                        height: 1.35,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    Text(
+                                                      id,
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.black45,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
-                          flex: 2,
-                          child: TextField(
-                            controller: textCtrl,
-                            decoration: _decoration('문제명/내용 검색'),
-                            onSubmitted: (_) => runSearch(),
+                          flex: 9,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                color: AppColors.surfaceBorder,
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: activeItem == null
+                                ? const Center(child: Text('왼쪽에서 문제를 선택하세요.'))
+                                : Padding(
+                                    padding: const EdgeInsets.all(18),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _questTitleOf(activeItem!),
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          _questIdOf(activeItem!),
+                                          style: const TextStyle(
+                                            color: Colors.black45,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 6,
+                                          children:
+                                              ((activeItem!['hash_tags']
+                                                          as List?) ??
+                                                      const [])
+                                                  .map(
+                                                    (tag) => Chip(
+                                                      label: Text(
+                                                        tag.toString(),
+                                                      ),
+                                                      visualDensity:
+                                                          VisualDensity.compact,
+                                                    ),
+                                                  )
+                                                  .toList()
+                                                  .cast<Widget>(),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        const Text(
+                                          '문제 미리보기',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            child: Text(
+                                              _questBodyOf(activeItem!),
+                                              style: const TextStyle(
+                                                height: 1.45,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton.icon(
-                          onPressed: loading ? null : runSearch,
-                          icon: const Icon(Icons.search_rounded),
-                          label: Text(loading ? '검색 중' : '검색'),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 11,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8FBF8),
-                                border: Border.all(
-                                  color: AppColors.surfaceBorder,
-                                ),
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: loading
-                                  ? const Center(
-                                      child: CircularProgressIndicator(),
-                                    )
-                                  : results.isEmpty
-                                  ? const Center(
-                                      child: Text('문서함에 연결할 문제가 없습니다.'),
-                                    )
-                                  : ListView.separated(
-                                      padding: const EdgeInsets.all(10),
-                                      itemCount: results.length,
-                                      separatorBuilder: (_, _) =>
-                                          const SizedBox(height: 8),
-                                      itemBuilder: (context, index) {
-                                        final item = results[index];
-                                        final id = _questIdOf(item);
-                                        if (id.isEmpty) {
-                                          return const SizedBox.shrink();
-                                        }
-                                        final selectedNow = selected.contains(
-                                          id,
-                                        );
-                                        final activeNow =
-                                            activeItem != null &&
-                                            _questIdOf(activeItem!) == id;
-                                        return InkWell(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          onTap: () => setDialogState(
-                                            () => activeItem = item,
-                                          ),
-                                          child: AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 120,
-                                            ),
-                                            padding: const EdgeInsets.all(14),
-                                            decoration: BoxDecoration(
-                                              color: activeNow
-                                                  ? const Color(0xFFEAF6EC)
-                                                  : Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                              border: Border.all(
-                                                color: activeNow
-                                                    ? kCourseGreen
-                                                    : AppColors.surfaceBorder,
-                                                width: activeNow ? 1.4 : 1,
-                                              ),
-                                            ),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Checkbox(
-                                                  value: selectedNow,
-                                                  onChanged: (value) {
-                                                    setDialogState(() {
-                                                      activeItem = item;
-                                                      if (value == true) {
-                                                        selected.add(id);
-                                                      } else {
-                                                        selected.remove(id);
-                                                      }
-                                                    });
-                                                  },
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        _questTitleOf(item),
-                                                        maxLines: 2,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 6),
-                                                      Text(
-                                                        _questBodyOf(item),
-                                                        maxLines: 2,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          color: Colors.black54,
-                                                          height: 1.35,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 8),
-                                                      Text(
-                                                        id,
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black45,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 9,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  color: AppColors.surfaceBorder,
-                                ),
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: activeItem == null
-                                  ? const Center(child: Text('왼쪽에서 문제를 선택하세요.'))
-                                  : Padding(
-                                      padding: const EdgeInsets.all(18),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            _questTitleOf(activeItem!),
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            _questIdOf(activeItem!),
-                                            style: const TextStyle(
-                                              color: Colors.black45,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 14),
-                                          Wrap(
-                                            spacing: 6,
-                                            runSpacing: 6,
-                                            children:
-                                                ((activeItem!['hash_tags']
-                                                            as List?) ??
-                                                        const [])
-                                                    .map(
-                                                      (tag) => Chip(
-                                                        label: Text(
-                                                          tag.toString(),
-                                                        ),
-                                                        visualDensity:
-                                                            VisualDensity
-                                                                .compact,
-                                                      ),
-                                                    )
-                                                    .toList()
-                                                    .cast<Widget>(),
-                                          ),
-                                          const SizedBox(height: 14),
-                                          const Text(
-                                            '문제 미리보기',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Expanded(
-                                            child: SingleChildScrollView(
-                                              child: Text(
-                                                _questBodyOf(activeItem!),
-                                                style: const TextStyle(
-                                                  height: 1.45,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               actions: [
                 TextButton(
@@ -694,8 +690,8 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
               ],
             );
           },
-        );
-      },
+        ),
+      ),
     );
     tagCtrl.dispose();
     textCtrl.dispose();
@@ -755,10 +751,10 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
       return;
     }
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (dialogContext) => StatefulBuilder(
           builder: (context, setDialogState) {
             List<Map<String, dynamic>> filteredDocuments() {
               final query = searchCtrl.text.trim().toLowerCase();
@@ -782,142 +778,136 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
               selected = visible.first;
             }
 
-            return AlertDialog(
-              title: const Text('문서함 시험지 선택'),
-              content: SizedBox(
-                width: 920,
-                height: 540,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '교사 문서함에 저장된 시험지만 연결합니다. 다른 파일 탐색은 지원하지 않습니다.',
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: searchCtrl,
-                      decoration: _decoration('시험지명/태그 검색'),
-                      onChanged: (_) => setDialogState(() {}),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FBF8),
-                          border: Border.all(color: AppColors.surfaceBorder),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: loading
-                            ? const Center(child: CircularProgressIndicator())
-                            : visible.isEmpty
-                            ? const Center(
-                                child: Text('문서함에 선택 가능한 시험지가 없습니다.'),
-                              )
-                            : ListView.separated(
-                                padding: const EdgeInsets.all(10),
-                                itemCount: visible.length,
-                                separatorBuilder: (_, _) =>
-                                    const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  final item = visible[index];
-                                  final id = _examIdOf(item);
-                                  final active =
-                                      selected != null &&
-                                      _examIdOf(selected!) == id;
-                                  return InkWell(
-                                    borderRadius: BorderRadius.circular(16),
-                                    onTap: () =>
-                                        setDialogState(() => selected = item),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 120,
-                                      ),
-                                      padding: const EdgeInsets.all(14),
-                                      decoration: BoxDecoration(
+            return TeacherFullFacePanel(
+              eyebrow: 'COURSE STUDIO',
+              title: '문서함 시험지 선택',
+              description: '교사 문서함에 저장된 시험지만 시험지 풀이 모듈에 연결합니다.',
+              maxContentWidth: 1080,
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '교사 문서함에 저장된 시험지만 연결합니다. 다른 파일 탐색은 지원하지 않습니다.',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: searchCtrl,
+                    decoration: _decoration('시험지명/태그 검색'),
+                    onChanged: (_) => setDialogState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F7F8),
+                        border: Border.all(color: AppColors.surfaceBorder),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : visible.isEmpty
+                          ? const Center(child: Text('문서함에 선택 가능한 시험지가 없습니다.'))
+                          : ListView.separated(
+                              padding: const EdgeInsets.all(10),
+                              itemCount: visible.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final item = visible[index];
+                                final id = _examIdOf(item);
+                                final active =
+                                    selected != null &&
+                                    _examIdOf(selected!) == id;
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: () =>
+                                      setDialogState(() => selected = item),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 120),
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: active
+                                          ? const Color(0xFFF0F0F2)
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
                                         color: active
-                                            ? const Color(0xFFEAF6EC)
-                                            : Colors.white,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: active
-                                              ? kCourseGreen
-                                              : AppColors.surfaceBorder,
-                                          width: active ? 1.4 : 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 2,
-                                              right: 10,
-                                            ),
-                                            child: Icon(
-                                              active
-                                                  ? Icons
-                                                        .radio_button_checked_rounded
-                                                  : Icons
-                                                        .radio_button_off_rounded,
-                                              color: active
-                                                  ? kCourseGreen
-                                                  : Colors.black26,
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  _examTitleOf(item),
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 6),
-                                                Text(
-                                                  _examSubtitleOf(item),
-                                                  style: const TextStyle(
-                                                    color: Colors.black54,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Wrap(
-                                                  spacing: 6,
-                                                  runSpacing: 6,
-                                                  children:
-                                                      ((item['tags']
-                                                                  as List?) ??
-                                                              const [])
-                                                          .take(6)
-                                                          .map(
-                                                            (tag) => Chip(
-                                                              label: Text(
-                                                                tag.toString(),
-                                                              ),
-                                                              visualDensity:
-                                                                  VisualDensity
-                                                                      .compact,
-                                                            ),
-                                                          )
-                                                          .toList(),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                                            ? kCourseGreen
+                                            : AppColors.surfaceBorder,
+                                        width: active ? 1.4 : 1,
                                       ),
                                     ),
-                                  );
-                                },
-                              ),
-                      ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 2,
+                                            right: 10,
+                                          ),
+                                          child: Icon(
+                                            active
+                                                ? Icons
+                                                      .radio_button_checked_rounded
+                                                : Icons
+                                                      .radio_button_off_rounded,
+                                            color: active
+                                                ? kCourseGreen
+                                                : Colors.black26,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                _examTitleOf(item),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                _examSubtitleOf(item),
+                                                style: const TextStyle(
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Wrap(
+                                                spacing: 6,
+                                                runSpacing: 6,
+                                                children:
+                                                    ((item['tags'] as List?) ??
+                                                            const [])
+                                                        .take(6)
+                                                        .map(
+                                                          (tag) => Chip(
+                                                            label: Text(
+                                                              tag.toString(),
+                                                            ),
+                                                            visualDensity:
+                                                                VisualDensity
+                                                                    .compact,
+                                                          ),
+                                                        )
+                                                        .toList(),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               actions: [
                 TextButton(
@@ -939,8 +929,8 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
               ],
             );
           },
-        );
-      },
+        ),
+      ),
     );
     searchCtrl.dispose();
   }
@@ -1050,44 +1040,63 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
     return Scaffold(
       endDrawer: const TeacherAppDrawer(currentRoute: '/course-builder'),
       backgroundColor: kCourseBgGrey,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: kCourseGreen,
-        elevation: 0,
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.transparent,
-        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
-        automaticallyImplyLeading: Navigator.of(context).canPop(),
-        title: Text(_isEditing ? '코스 수정' : '코스 생성'),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              tooltip: '메뉴',
-              icon: const Icon(Icons.menu_rounded),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
+      body: Builder(
+        builder: (scaffoldContext) => SafeArea(
+          child: Column(
+            children: [
+              Ios26TopBar(
+                brandColor: kCourseGreen,
+                title: _isEditing ? '코스 수정' : '코스 만들기',
+                onBack: Navigator.of(context).canPop()
+                    ? () => Navigator.of(context).pop()
+                    : null,
+                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                items: const [
+                  Ios26NavItem(label: '기본 정보', active: true),
+                  Ios26NavItem(label: '학습 모듈'),
+                  Ios26NavItem(label: '배포 설정'),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppColors.surfaceBorder),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.black54,
+                    indicator: BoxDecoration(
+                      color: kCourseGreen,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    tabs: const [
+                      Tab(text: '메타데이터'),
+                      Tab(text: '모듈'),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildTabContainer(_buildMetaTab(scale), scale),
+                          _buildTabContainer(_buildModuleTab(scale), scale),
+                        ],
+                      ),
+              ),
+            ],
           ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: kCourseGreen,
-          unselectedLabelColor: Colors.black54,
-          indicatorColor: kCourseLightGreen,
-          tabs: const [
-            Tab(text: '메타데이터'),
-            Tab(text: '모듈'),
-          ],
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildTabContainer(_buildMetaTab(scale), scale),
-                _buildTabContainer(_buildModuleTab(scale), scale),
-              ],
-            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saving ? null : _save,
         backgroundColor: kCourseGreen,
@@ -1634,9 +1643,9 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
         width: double.infinity,
         padding: EdgeInsets.all(12 * scale),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6FBF6),
+          color: const Color(0xFFF4F4F5),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFD6E7D7)),
+          border: Border.all(color: const Color(0xFFE3E3E7)),
         ),
         child: const Text(
           '문제 검색은 문서함 문제만 사용합니다. 새 문제 제작은 기존 문제 제작 스튜디오에서 바로 추가합니다.',
@@ -1687,9 +1696,9 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
         width: double.infinity,
         padding: EdgeInsets.all(12 * scale),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6FBF6),
+          color: const Color(0xFFF4F4F5),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFD6E7D7)),
+          border: Border.all(color: const Color(0xFFE3E3E7)),
         ),
         child: const Text(
           '시험지 선택은 교사 문서함에 저장된 시험지만 가능합니다.',
@@ -1770,9 +1779,9 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
         width: double.infinity,
         padding: EdgeInsets.all(12 * scale),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6FBF6),
+          color: const Color(0xFFF4F4F5),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFD6E7D7)),
+          border: Border.all(color: const Color(0xFFE3E3E7)),
         ),
         child: const Text(
           '선택한 시험지를 레벨 테스트로 실행합니다. 태그와 풀이 결과는 학습 분석 초기 데이터로 사용할 수 있게 모듈에 함께 저장됩니다.',
@@ -1956,17 +1965,26 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
     );
   }
 
+  /// 필요 변수: 탭 본문 [child]와 화면 비율 [scale]을 사용한다.
+  /// 작동 원리: 장식 컨테이너 위에 투명 Material 레이어를 두어 ListTile의
+  /// 선택 배경과 잉크 효과가 가려지지 않으며, 동일한 둥근 모서리로 자른다.
   Widget _buildTabContainer(Widget child, double scale) {
+    final borderRadius = BorderRadius.circular(16 * scale);
     return Padding(
       padding: EdgeInsets.all(12 * scale),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16 * scale),
+          borderRadius: borderRadius,
           border: Border.all(color: AppColors.surfaceBorder),
           boxShadow: const [kCourseShadow],
         ),
-        child: child,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: borderRadius,
+          clipBehavior: Clip.antiAlias,
+          child: child,
+        ),
       ),
     );
   }
@@ -2026,7 +2044,7 @@ class _ModuleListTile extends StatelessWidget {
               height: 28 * scale,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selected ? kCourseGreen : const Color(0xFFEFF4EF),
+                color: selected ? kCourseGreen : const Color(0xFFF0F0F2),
                 borderRadius: BorderRadius.circular(8 * scale),
               ),
               child: Text(

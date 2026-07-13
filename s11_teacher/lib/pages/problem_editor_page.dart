@@ -1,9 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
+import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_full_face_panel.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 
@@ -24,7 +27,6 @@ class ProblemEditorPage extends StatefulWidget {
 class _ProblemEditorPageState extends State<ProblemEditorPage> {
   final _promptCtrl = TextEditingController();
   final _baseQuestCtrl = TextEditingController();
-  final _seedCtrl = TextEditingController();
   final _dbSearchCtrl = TextEditingController();
 
   final List<String> _tags = [];
@@ -42,6 +44,11 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   int _branchConditions = 1;
   int _nextNodeId = 1;
 
+  String _canvasTool = 'edit';
+  String? _edgeSourceId;
+  String? _canvasNotice;
+  Size _canvasSize = const Size(1600, 1000);
+
   bool _loading = false;
   bool _dbSearching = false;
   String? _resultText;
@@ -51,6 +58,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   List<_GenerationTagGroup> _tagGroups = [];
   List<Map<String, dynamic>> _tray = [];
   List<Map<String, dynamic>> _dbResults = [];
+  List<Map<String, dynamic>> _teacherTextbooks = [];
+  List<Map<String, dynamic>> _teacherExams = [];
   Map<String, dynamic>? _selectedDbQuest;
 
   _GenerationProfile get _simpleProfile {
@@ -60,6 +69,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     );
   }
 
+  /// 필요 변수: 선택된 노드 ID와 현재 노드 목록.
+  /// 작동 원리: ID가 일치하는 노드 초안을 반환하고 없으면 null을 반환한다.
   _LogicNodeDraft? get _selectedNode {
     for (final node in _logicNodes) {
       if (node.id == _selectedNodeId) return node;
@@ -67,15 +78,20 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     return null;
   }
 
+  /// 필요 변수: 초기 태그·문제 저장소·고급 노드 상태.
+  /// 작동 원리: 화면 생성 시 비동기 자료를 요청하고 기본 풀이 그래프를 한 번 구성한다.
   @override
   void initState() {
     super.initState();
     _tags.addAll(_uniqueTags(widget.initialTags));
     _loadTagSuggestions();
     _loadTray();
+    _searchProblemDb();
     _resetAdvancedNodes();
   }
 
+  /// 필요 변수: 서버의 문항 생성 태그 그룹 또는 과정 태그 목록.
+  /// 작동 원리: 생성 전용 태그를 우선 조회하고 실패하면 과정 태그로 대체한다.
   Future<void> _loadTagSuggestions() async {
     try {
       final groupsRaw = await ApiClient.instance.getQuestGenerationTagGroups();
@@ -98,6 +114,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     }
   }
 
+  /// 필요 변수: 현재 교사의 최근 문항 트레이 최대 50건.
+  /// 작동 원리: 서버 목록을 읽고 화면이 살아 있을 때만 로컬 상태를 갱신한다.
   Future<void> _loadTray() async {
     try {
       final items = await ApiClient.instance.listQuestTray(limit: 50);
@@ -106,12 +124,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     } catch (_) {}
   }
 
-  int? _seedOverride() {
-    final text = _seedCtrl.text.trim();
-    if (text.isEmpty) return null;
-    return int.tryParse(text);
-  }
-
+  /// 필요 변수: 직접 입력 문항 ID와 선택한 코드베이스·seed.
+  /// 작동 원리: 값이 존재하는 참조만 API 요청 맵에 포함한다.
   Map<String, dynamic> _baseQuestRef() {
     final questId = _baseQuestCtrl.text.trim();
     return {
@@ -122,6 +136,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     };
   }
 
+  /// 필요 변수: 현재 노드 목록과 노드 ID 시퀀스.
+  /// 작동 원리: 기존 컨트롤러를 해제한 뒤 조건→발상→추론→검증 흐름으로 초기화한다.
   void _resetAdvancedNodes() {
     for (final node in _logicNodes) {
       node.dispose();
@@ -160,6 +176,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     _selectedNodeId = _logicNodes.first.id;
   }
 
+  /// 필요 변수: 노드 유형·제목·설명·초기 좌표와 증가 ID.
+  /// 작동 원리: 각 입력용 컨트롤러를 소유하는 편집 가능한 노드 초안을 만든다.
   _LogicNodeDraft _createNode({
     required String type,
     required String title,
@@ -177,7 +195,13 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     );
   }
 
+  /// 필요 변수: 새 노드 유형, 현재 노드 수와 캔버스 배치 순서.
+  /// 작동 원리: 최대 32개 경계를 지키며 격자 위치에 역할별 기본 노드를 추가한다.
   void _addLogicNode(String type) {
+    if (_logicNodes.length >= 32) {
+      setState(() => _canvasNotice = '한 캔버스에는 최대 32개 노드를 추가할 수 있습니다.');
+      return;
+    }
     final index = _logicNodes.length;
     setState(() {
       final node = _createNode(
@@ -186,12 +210,78 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         detail: _defaultNodeDetail(type),
         position: Offset(80 + (index % 4) * 220, 80 + (index ~/ 4) * 130),
       );
-      if (_selectedNode != null) {
-        _selectedNode!.nextIds.add(node.id);
-      }
       _logicNodes.add(node);
       _selectedNodeId = node.id;
+      _canvasTool = 'edit';
+      _edgeSourceId = null;
+      _canvasNotice = '${_nodeTypeLabel(type)} 노드를 추가했습니다.';
     });
+  }
+
+  /// 필요 변수: 연결 시작 노드 [source], 연결 대상 노드 [target].
+  /// 작동 원리: 노드 역할별 연결 제한과 순환 여부를 검사해 방향성 비순환 풀이 그래프를 유지한다.
+  String? _connectionBlockReason(
+    _LogicNodeDraft source,
+    _LogicNodeDraft target,
+  ) {
+    if (source.id == target.id) return '같은 노드끼리는 연결할 수 없습니다.';
+    if (source.nextIds.contains(target.id)) return '이미 연결된 노드입니다.';
+    if (source.type == 'verification') {
+      return '검증 노드는 마지막 단계라 다음 노드를 연결할 수 없습니다.';
+    }
+    final maxOutgoing = _nodeMaxOutgoing(source.type);
+    if (source.nextIds.length >= maxOutgoing) {
+      return '${_nodeTypeLabel(source.type)} 노드는 최대 $maxOutgoing개까지 연결할 수 있습니다.';
+    }
+    if (_hasNodePath(target.id, source.id)) return '순환하는 풀이 흐름은 만들 수 없습니다.';
+    return null;
+  }
+
+  /// 필요 변수: 탐색 시작 노드 ID [fromId], 도착 노드 ID [toId], 현재 연결 목록.
+  /// 작동 원리: 반복 깊이 우선 탐색으로 기존 경로를 확인해 새 연결이 순환을 만드는지 판정한다.
+  bool _hasNodePath(String fromId, String toId) {
+    final byId = {for (final node in _logicNodes) node.id: node};
+    final pending = <String>[fromId];
+    final visited = <String>{};
+    while (pending.isNotEmpty) {
+      final current = pending.removeLast();
+      if (current == toId) return true;
+      if (!visited.add(current)) continue;
+      pending.addAll(byId[current]?.nextIds ?? const <String>{});
+    }
+    return false;
+  }
+
+  /// 필요 변수: 클릭한 [node], 현재 캔버스 도구 [_canvasTool].
+  /// 작동 원리: 편집은 선택만 수행하고 연결·해제는 첫 클릭을 시작점, 두 번째 클릭을 대상점으로 처리한다.
+  void _handleCanvasNodeTap(_LogicNodeDraft node, [VoidCallback? refresh]) {
+    setState(() {
+      _selectedNodeId = node.id;
+      if (_canvasTool != 'link' && _canvasTool != 'unlink') return;
+      if (_edgeSourceId == null) {
+        _edgeSourceId = node.id;
+        _canvasNotice = '${node.titleCtrl.text.trim()}에서 시작할 대상 노드를 선택하세요.';
+        return;
+      }
+      final source = _logicNodes.firstWhere((item) => item.id == _edgeSourceId);
+      if (_canvasTool == 'link') {
+        final reason = _connectionBlockReason(source, node);
+        if (reason == null) {
+          source.nextIds.add(node.id);
+          _canvasNotice =
+              '${source.titleCtrl.text.trim()} → ${node.titleCtrl.text.trim()} 연결 완료';
+        } else {
+          _canvasNotice = reason;
+        }
+      } else if (source.nextIds.remove(node.id)) {
+        _canvasNotice =
+            '${source.titleCtrl.text.trim()} → ${node.titleCtrl.text.trim()} 연결 해제';
+      } else {
+        _canvasNotice = '두 노드 사이에 해제할 직접 연결이 없습니다.';
+      }
+      _edgeSourceId = null;
+    });
+    refresh?.call();
   }
 
   void _removeSelectedNode() {
@@ -209,13 +299,30 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
 
   Future<void> _editNodeInstruction(_LogicNodeDraft node) async {
     final ctrl = TextEditingController(text: node.teacherInstructionCtrl.text);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('세부 지시'),
-          content: SizedBox(
-            width: 420,
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        fullscreenDialog: true,
+        builder: (context) => TeacherFullFacePanel(
+          eyebrow: 'PROBLEM STUDIO',
+          title: '세부 지시',
+          description: '선택한 논리 노드에만 적용할 교사 지시를 입력합니다.',
+          maxContentWidth: 680,
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(''),
+              child: const Text('지시 제거'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(ctrl.text.trim()),
+              child: const Text('저장'),
+            ),
+          ],
+          content: Align(
+            alignment: Alignment.topCenter,
             child: TextField(
               controller: ctrl,
               maxLength: 200,
@@ -226,22 +333,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
               ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(''),
-              child: const Text('지시 제거'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(ctrl.text.trim()),
-              child: const Text('저장'),
-            ),
-          ],
-        );
-      },
+        ),
+      ),
     );
     ctrl.dispose();
     if (result == null) return;
@@ -252,12 +345,13 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     });
   }
 
+  /// 필요 변수: [_logicNodes]의 노드별 태그 목록.
+  /// 작동 원리: 고급 생성에서는 전체 태그 입력값을 섞지 않고 노드에 지정된 태그만 중복 제거해 반환한다.
   List<String> get _advancedTags {
     final tags = <String>[];
     for (final node in _logicNodes) {
       tags.addAll(node.tags);
     }
-    tags.addAll(_tags);
     return _uniqueTags(tags);
   }
 
@@ -281,6 +375,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     return true;
   }
 
+  /// 필요 변수: 선택한 [quest], 현재 편집 모드 [_editorMode].
+  /// 작동 원리: 참고문항 식별자를 연결하고 간편 모드에서만 해당 문항의 태그를 전체 태그에 병합한다.
   void _selectDbQuest(Map<String, dynamic> quest) {
     final questId = quest['quest_id']?.toString() ?? '';
     if (questId.isEmpty) return;
@@ -288,7 +384,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
       _selectedDbQuest = quest;
       _baseQuestCtrl.text = questId;
       final rawTags = quest['hash_tags'];
-      if (rawTags is List) {
+      if (_editorMode == 'simple' && rawTags is List) {
         for (final tag in rawTags) {
           final value = tag.toString().trim();
           if (value.isNotEmpty && !_tags.contains(value)) {
@@ -299,6 +395,8 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     });
   }
 
+  /// 필요 변수: 검색 모드 [_dbSearchMode], 검색어 [_dbSearchCtrl].
+  /// 작동 원리: 교사 소유 문항과 문서함의 교재·시험지를 함께 조회해 파일 트리 상태를 갱신한다.
   Future<void> _searchProblemDb() async {
     final query = _dbSearchCtrl.text.trim();
     setState(() {
@@ -306,19 +404,28 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
       _dbError = null;
     });
     try {
-      final result = await ApiClient.instance.searchExamEditorProblems(
-        text: _dbSearchMode == 'text' ? query : null,
-        hashTag: _dbSearchMode == 'hashtag' ? query : null,
-        dateFrom: _dbSearchMode == 'date' ? query : null,
-        ownedOnly: _editorMode == 'advanced',
-        pageSize: 80,
-      );
+      final results = await Future.wait<dynamic>([
+        ApiClient.instance.searchExamEditorProblems(
+          text: _dbSearchMode == 'text' ? query : null,
+          hashTag: _dbSearchMode == 'hashtag' ? query : null,
+          dateFrom: _dbSearchMode == 'date' ? query : null,
+          ownedOnly: true,
+          pageSize: 80,
+        ),
+        ApiClient.instance.listTeacherDocuments(type: 'textbook'),
+        ApiClient.instance.listTeacherDocuments(type: 'exam'),
+      ]);
+      final result = results[0] as Map<String, dynamic>;
       final items = (result['items'] as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map((item) => Map<String, dynamic>.from(item))
           .toList();
       if (!mounted) return;
-      setState(() => _dbResults = items);
+      setState(() {
+        _dbResults = items;
+        _teacherTextbooks = (results[1] as List<Map<String, dynamic>>);
+        _teacherExams = (results[2] as List<Map<String, dynamic>>);
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() => _dbError = e.toString());
@@ -327,8 +434,48 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     }
   }
 
+  /// 필요 변수: 서버 생성 응답 [result], 생성 방식 [sourceMode], 화면 모드 [advanced].
+  /// 작동 원리: 서버 저장 완료 응답을 임시저장함 목록 맨 앞에 즉시 반영해 재조회 요청을 없앤다.
+  void _addResultToTray(
+    Map<String, dynamic> result, {
+    required String sourceMode,
+    required bool advanced,
+  }) {
+    final quest = result['quest'];
+    if (quest is! Map) return;
+    final header = quest['header'];
+    final data = quest['data'];
+    if (header is! Map) return;
+    final questId = header['quest_id']?.toString().trim() ?? '';
+    if (questId.isEmpty) return;
+    final item = <String, dynamic>{
+      'quest_id': questId,
+      if (data is Map) 'codebase_id': data['codebase_id'],
+      if (data is Map) 'seed': data['seed'],
+      'source_variant_mode': sourceMode,
+      'visibility_scope': sourceMode == 'mcq_convert'
+          ? 'private_mcq'
+          : 'shared',
+      'is_mcq_branch': sourceMode == 'mcq_convert',
+      'payload': {'mode': advanced ? 'advanced' : 'simple'},
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    setState(() {
+      _tray.removeWhere((saved) => saved['quest_id']?.toString() == questId);
+      _tray.insert(0, item);
+    });
+  }
+
   Future<void> _generateVariant() async {
     final advanced = _editorMode == 'advanced';
+    final graphError = advanced ? _validateAdvancedGraph() : null;
+    if (graphError != null) {
+      setState(() {
+        _resultText = graphError;
+        _canvasNotice = graphError;
+      });
+      return;
+    }
     if (advanced && !_ensureAdvancedNodeTags()) {
       setState(() => _resultText = '생성 태그 목록을 불러오지 못했습니다.');
       return;
@@ -356,7 +503,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
       final common = <String, dynamic>{
         'base_quest_ref': _baseQuestRef(),
         'prompt': prompt,
-        'seed_override': _seedOverride(),
         'tags': tagsForPayload,
         'solves_count': profile.solvesCount,
         'strategy_level': profile.strategyLevel,
@@ -415,13 +561,63 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
           return;
         }
       }
-      await _loadTray();
+      _addResultToTray(
+        result,
+        sourceMode: advanced || _variantInputMode == 'flow_draft'
+            ? 'flow_draft'
+            : 'prompt_note',
+        advanced: advanced,
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _resultText = '오류: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// 필요 변수: [_logicNodes]와 각 노드의 [nextIds].
+  /// 작동 원리: 생성 직전에 도달 가능성·종료 검증·병합 입력 수를 검사해 불완전한 그래프 전송을 차단한다.
+  String? _validateAdvancedGraph() {
+    if (_logicNodes.isEmpty) return '풀이 논리 노드가 1개 이상 필요합니다.';
+    final indegree = {for (final node in _logicNodes) node.id: 0};
+    final neighbors = {for (final node in _logicNodes) node.id: <String>{}};
+    for (final node in _logicNodes) {
+      for (final targetId in node.nextIds) {
+        if (!indegree.containsKey(targetId)) return '존재하지 않는 노드 연결이 있습니다.';
+        indegree[targetId] = indegree[targetId]! + 1;
+        neighbors[node.id]!.add(targetId);
+        neighbors[targetId]!.add(node.id);
+      }
+    }
+    final roots = _logicNodes.where((node) => indegree[node.id] == 0).toList();
+    if (roots.isEmpty) return '풀이 시작 노드가 없습니다.';
+    final reachable = <String>{};
+    final pending = <String>[_logicNodes.first.id];
+    while (pending.isNotEmpty) {
+      final id = pending.removeLast();
+      if (!reachable.add(id)) continue;
+      pending.addAll(neighbors[id]!);
+    }
+    if (reachable.length != _logicNodes.length) {
+      return '시작점에서 도달할 수 없는 고립 노드가 있습니다.';
+    }
+    final verifications = _logicNodes.where(
+      (node) => node.type == 'verification',
+    );
+    if (verifications.isEmpty) return '마지막 단계에 검증 노드가 1개 이상 필요합니다.';
+    if (verifications.any((node) => node.nextIds.isNotEmpty)) {
+      return '검증 노드는 다른 노드로 연결될 수 없습니다.';
+    }
+    if (_logicNodes.any(
+      (node) => node.nextIds.isEmpty && node.type != 'verification',
+    )) {
+      return '모든 풀이 갈래는 검증 노드에서 끝나야 합니다.';
+    }
+    for (final node in _logicNodes.where((node) => node.type == 'merge')) {
+      if ((indegree[node.id] ?? 0) < 2) return '병합 노드는 앞선 흐름이 2개 이상 연결되어야 합니다.';
+    }
+    return null;
   }
 
   Future<void> _convertToMcq() async {
@@ -440,7 +636,11 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
       );
       if (!mounted) return;
       setState(() => _resultText = result.toString());
-      await _loadTray();
+      _addResultToTray(
+        result,
+        sourceMode: 'mcq_convert',
+        advanced: _editorMode == 'advanced',
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _resultText = '오류: $e');
@@ -617,14 +817,17 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     ];
   }
 
+  /// 필요 변수: [_logicNodes]의 내용, 연결 관계, 교사 지시, 노드별 태그.
+  /// 작동 원리: 각 노드를 생성 API의 풀이 흐름 형식으로 변환하며 태그는 해당 노드 값만 전달한다.
   List<Map<String, dynamic>> _advancedFlowDraft() {
     return _logicNodes
         .map(
           (node) => {
             'node_id': node.id,
+            'node_type': node.type,
             'text':
                 '${node.titleCtrl.text.trim()}\n${node.detailCtrl.text.trim()}',
-            'hash_tags': node.tags.isEmpty ? _tags : node.tags.toList(),
+            'hash_tags': node.tags.toList(),
             'branches': node.nextIds.toList(),
             'teacher_instruction': node.teacherInstructionCtrl.text.trim(),
             'prompt_text': _nodePromptText(node),
@@ -776,68 +979,106 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
       child: Scaffold(
         endDrawer: const TeacherAppDrawer(currentRoute: '/problem-editor'),
         backgroundColor: kCourseBgGrey,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: kCourseGreen,
-          elevation: 0,
-          surfaceTintColor: Colors.white,
-          shadowColor: Colors.transparent,
-          shape: const Border(
-            bottom: BorderSide(color: AppColors.surfaceBorder),
+        body: Builder(
+          builder: (scaffoldContext) => SafeArea(
+            child: Column(
+              children: [
+                Ios26TopBar(
+                  brandColor: kCourseGreen,
+                  title: '문항 제작 스튜디오',
+                  onBack: Navigator.of(context).canPop()
+                      ? () => Navigator.of(context).pop()
+                      : null,
+                  onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                  items: const [
+                    Ios26NavItem(label: '입력', active: true),
+                    Ios26NavItem(label: '논리 설계'),
+                    Ios26NavItem(label: '생성 설정'),
+                  ],
+                  trailingIcons: [
+                    Ios26ActionIcon(
+                      icon: Icons.info_outline_rounded,
+                      label: '설명서',
+                      onTap: _showDocumentation,
+                    ),
+                  ],
+                ),
+                _buildWorkspaceHeader(scale),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 1180;
+                      final mobile = constraints.maxWidth < 720;
+                      final simple = _editorMode == 'simple';
+                      final left = simple ? _buildLeftPanel(scale) : null;
+                      final center = _editorMode == 'simple'
+                          ? _buildSimplePipelinePanel(scale)
+                          : _buildAdvancedCanvasPanel(scale);
+                      final right = _buildRightPanel(scale);
+
+                      if (mobile) {
+                        final panels = simple
+                            ? <Widget>[if (left != null) left, center, right]
+                            : <Widget>[center, right];
+                        final tabs = simple
+                            ? const [
+                                Tab(text: '입력'),
+                                Tab(text: '흐름'),
+                                Tab(text: '설정'),
+                              ]
+                            : const [Tab(text: '논리 설계'), Tab(text: '설정')];
+                        return DefaultTabController(
+                          length: panels.length,
+                          child: Column(
+                            children: [
+                              Material(
+                                color: Colors.white,
+                                child: TabBar(tabs: tabs),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.all(10 * scale),
+                                  child: TabBarView(children: panels),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (compact) {
+                        return ListView(
+                          padding: EdgeInsets.all(14 * scale),
+                          children: [
+                            if (left != null) ...[
+                              SizedBox(height: 640 * scale, child: left),
+                              SizedBox(height: 12 * scale),
+                            ],
+                            SizedBox(
+                              height: _editorMode == 'simple' ? 420 : 620,
+                              child: center,
+                            ),
+                            SizedBox(height: 12 * scale),
+                            SizedBox(height: 760 * scale, child: right),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (left != null)
+                            SizedBox(width: 360 * scale, child: left),
+                          Expanded(child: center),
+                          SizedBox(width: 390 * scale, child: right),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-          title: const Text('문항 제작 스튜디오'),
-          automaticallyImplyLeading: Navigator.of(context).canPop(),
-          actions: [
-            Builder(
-              builder: (context) => IconButton(
-                tooltip: '메뉴',
-                icon: const Icon(Icons.menu_rounded),
-                onPressed: () => Scaffold.of(context).openEndDrawer(),
-              ),
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            _buildWorkspaceHeader(scale),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 1180;
-                  final left = _buildLeftPanel(scale);
-                  final center = _editorMode == 'simple'
-                      ? _buildSimplePipelinePanel(scale)
-                      : _buildAdvancedCanvasPanel(scale);
-                  final right = _buildRightPanel(scale);
-
-                  if (compact) {
-                    return ListView(
-                      padding: EdgeInsets.all(14 * scale),
-                      children: [
-                        SizedBox(height: 640 * scale, child: left),
-                        SizedBox(height: 12 * scale),
-                        SizedBox(
-                          height: _editorMode == 'simple' ? 420 : 620,
-                          child: center,
-                        ),
-                        SizedBox(height: 12 * scale),
-                        SizedBox(height: 760 * scale, child: right),
-                      ],
-                    );
-                  }
-
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(width: 360 * scale, child: left),
-                      Expanded(child: center),
-                      SizedBox(width: 390 * scale, child: right),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -923,11 +1164,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
                 icon: const Icon(Icons.checklist_rtl_rounded),
                 label: const Text('객관식 변환'),
               ),
-              OutlinedButton.icon(
-                onPressed: _loading ? null : _loadTray,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('임시저장함 새로고침'),
-              ),
             ],
           );
 
@@ -1009,82 +1245,55 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     );
   }
 
+  /// 필요 변수: 화면 배율 [scale], 간편 모드 입력값과 태그.
+  /// 작동 원리: 간편 모드의 생성 입력만 표시하며 고급 모드 설정은 모두 우측 패널에서 관리한다.
   Widget _buildLeftPanel(double scale) {
-    final advanced = _editorMode == 'advanced';
     return _StudioPanel(
-      title: advanced ? '고급 생성 설정' : '생성 입력',
+      title: '생성 입력',
       child: ListView(
         padding: EdgeInsets.all(16 * scale),
         children: [
-          if (!advanced) ...[
-            DropdownButtonFormField<String>(
-              initialValue: _variantInputMode,
-              decoration: const InputDecoration(
-                labelText: '입력 방식',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'prompt_note', child: Text('지시문 + 노트')),
-                DropdownMenuItem(value: 'flow_draft', child: Text('풀이 흐름 초안')),
-              ],
-              onChanged: (value) =>
-                  setState(() => _variantInputMode = value ?? 'prompt_note'),
+          DropdownButtonFormField<String>(
+            initialValue: _variantInputMode,
+            decoration: const InputDecoration(
+              labelText: '입력 방식',
+              border: OutlineInputBorder(),
             ),
-            SizedBox(height: 14 * scale),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'low', label: Text('하')),
-                ButtonSegment(value: 'middle', label: Text('중')),
-                ButtonSegment(value: 'high', label: Text('상')),
-              ],
-              selected: {_simpleLevel},
-              onSelectionChanged: (values) =>
-                  setState(() => _simpleLevel = values.first),
+            items: const [
+              DropdownMenuItem(value: 'prompt_note', child: Text('지시문 + 노트')),
+              DropdownMenuItem(value: 'flow_draft', child: Text('풀이 흐름 초안')),
+            ],
+            onChanged: (value) =>
+                setState(() => _variantInputMode = value ?? 'prompt_note'),
+          ),
+          SizedBox(height: 14 * scale),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'low', label: Text('하')),
+              ButtonSegment(value: 'middle', label: Text('중')),
+              ButtonSegment(value: 'high', label: Text('상')),
+            ],
+            selected: {_simpleLevel},
+            onSelectionChanged: (values) =>
+                setState(() => _simpleLevel = values.first),
+          ),
+          SizedBox(height: 8 * scale),
+          _MutedText(_simpleProfile.description),
+          SizedBox(height: 14 * scale),
+          TextField(
+            controller: _baseQuestCtrl,
+            decoration: const InputDecoration(
+              labelText: '기준 문항 ID',
+              border: OutlineInputBorder(),
             ),
-            SizedBox(height: 8 * scale),
-            _MutedText(_simpleProfile.description),
-            SizedBox(height: 14 * scale),
-            TextField(
-              controller: _baseQuestCtrl,
-              decoration: const InputDecoration(
-                labelText: '기준 문항 ID',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            SizedBox(height: 10 * scale),
-            TextField(
-              controller: _promptCtrl,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: '교사 지시',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ] else ...[
-            _SelectedQuestBox(
-              quest: _selectedDbQuest ?? const {'quest_id': '참고문항 없음'},
-              onClear: _selectedDbQuest == null
-                  ? () {}
-                  : () {
-                      setState(() {
-                        _selectedDbQuest = null;
-                        _baseQuestCtrl.clear();
-                      });
-                    },
-            ),
-            SizedBox(height: 8 * scale),
-            const _MutedText(
-              '참고문항은 오른쪽 저장소에서 검색 후 클릭해 연결합니다. 선택하지 않아도 직접 생성할 수 있습니다.',
-            ),
-          ],
+            onChanged: (_) => setState(() {}),
+          ),
           SizedBox(height: 10 * scale),
           TextField(
-            controller: _seedCtrl,
-            keyboardType: TextInputType.number,
+            controller: _promptCtrl,
+            maxLines: 4,
             decoration: const InputDecoration(
-              labelText: '시드 체험값',
-              helperText: '비워두면 매번 랜덤 생성됩니다.',
+              labelText: '교사 지시',
               border: OutlineInputBorder(),
             ),
           ),
@@ -1110,14 +1319,27 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     );
   }
 
+  /// 필요 변수: 화면 배율 [scale], 간편 모드의 선택 태그 [_tags].
+  /// 작동 원리: 간편 생성에서만 사용할 전체 태그를 선택·삭제할 수 있도록 구성한다.
+  Future<List<String>?> _openTagPicker(Iterable<String> initialTags) {
+    return Navigator.of(context).push<List<String>>(
+      MaterialPageRoute<List<String>>(
+        fullscreenDialog: true,
+        builder: (_) => _GenerationTagPickerDialog(
+          groups: _tagGroups,
+          fallbackTags: _availableTags,
+          initialTags: initialTags,
+        ),
+      ),
+    );
+  }
+
   Widget _buildTagEditor(double scale) {
-    final advanced = _editorMode == 'advanced';
-    final selectedTags = advanced ? _advancedTags : _tags;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          advanced ? '전체 태그' : '태그',
+        const Text(
+          '태그',
           style: TextStyle(fontWeight: FontWeight.w800, color: kCourseGreen),
         ),
         SizedBox(height: 8 * scale),
@@ -1125,14 +1347,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
           onPressed: _availableTags.isEmpty
               ? null
               : () async {
-                  final selected = await showDialog<List<String>>(
-                    context: context,
-                    builder: (_) => _GenerationTagPickerDialog(
-                      groups: _tagGroups,
-                      fallbackTags: _availableTags,
-                      initialTags: _tags,
-                    ),
-                  );
+                  final selected = await _openTagPicker(_tags);
                   if (selected == null) return;
                   setState(() {
                     _tags
@@ -1147,23 +1362,15 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: selectedTags
+          children: _tags
               .map(
                 (tag) => Chip(
                   label: Text(tag),
-                  onDeleted: advanced
-                      ? null
-                      : () => setState(() => _tags.remove(tag)),
+                  onDeleted: () => setState(() => _tags.remove(tag)),
                 ),
               )
               .toList(),
         ),
-        if (advanced) ...[
-          SizedBox(height: 8 * scale),
-          const _MutedText(
-            '고급 모드는 노드별 태그를 우선 사용합니다. 비어 있는 노드는 생성 시 랜덤 태그가 확정됩니다.',
-          ),
-        ],
       ],
     );
   }
@@ -1210,94 +1417,245 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     );
   }
 
+  /// 필요 변수: 화면 배율 [scale], 캔버스 도구 상태와 노드 목록.
+  /// 작동 원리: 일반 화면과 전체화면에서 공용 캔버스 작업영역을 사용해 편집 상태를 동일하게 유지한다.
   Widget _buildAdvancedCanvasPanel(double scale) {
     return _StudioPanel(
       title: '풀이 논리 캔버스',
       child: Padding(
         padding: EdgeInsets.all(14 * scale),
-        child: Column(
-          children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final type in _nodeTypes)
-                  OutlinedButton.icon(
-                    onPressed: () => _addLogicNode(type),
-                    icon: Icon(_nodeTypeIcon(type), size: 18),
-                    label: Text(_nodeTypeLabel(type)),
+        child: _buildCanvasWorkspace(scale),
+      ),
+    );
+  }
+
+  /// 필요 변수: 화면 배율 [scale], 전체화면 여부 [fullscreen], 선택적 갱신 함수 [refresh].
+  /// 작동 원리: 도구막대와 유한 크기 캔버스를 조합하고 현재 도구의 사용 안내를 즉시 표시한다.
+  Widget _buildCanvasWorkspace(
+    double scale, {
+    bool fullscreen = false,
+    VoidCallback? refresh,
+  }) {
+    return Column(
+      children: [
+        _buildCanvasToolbar(scale, fullscreen: fullscreen, refresh: refresh),
+        if (_canvasNotice != null) ...[
+          SizedBox(height: 8 * scale),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _canvasNotice!,
+              style: const TextStyle(color: Color(0xFF64746A), fontSize: 12),
+            ),
+          ),
+        ],
+        SizedBox(height: 10 * scale),
+        Expanded(child: _buildCanvasViewport(refresh)),
+      ],
+    );
+  }
+
+  /// 필요 변수: 현재 도구 [_canvasTool], 노드 유형 목록, 캔버스 크기.
+  /// 작동 원리: 추가·화면 이동·노드 편집·연결·해제를 서로 배타적인 동작으로 전환한다.
+  Widget _buildCanvasToolbar(
+    double scale, {
+    required bool fullscreen,
+    VoidCallback? refresh,
+  }) {
+    void selectTool(String tool, String notice) {
+      setState(() {
+        _canvasTool = tool;
+        _edgeSourceId = null;
+        _canvasNotice = notice;
+      });
+      refresh?.call();
+    }
+
+    return SizedBox(
+      height: 48 * scale,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          PopupMenuButton<String>(
+            tooltip: '노드 추가',
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            onSelected: (type) {
+              _addLogicNode(type);
+              refresh?.call();
+            },
+            itemBuilder: (context) => [
+              for (final type in _nodeTypes)
+                PopupMenuItem(
+                  value: type,
+                  child: Row(
+                    children: [
+                      Icon(_nodeTypeIcon(type), color: _nodeTypeColor(type)),
+                      const SizedBox(width: 10),
+                      Text(_nodeTypeLabel(type)),
+                    ],
                   ),
-                OutlinedButton.icon(
-                  onPressed: () => setState(_resetAdvancedNodes),
-                  icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                  label: const Text('초기화'),
                 ),
+            ],
+          ),
+          _CanvasToolButton(
+            tooltip: '화면 옮기기',
+            icon: Icons.pan_tool_alt_rounded,
+            selected: _canvasTool == 'pan',
+            onPressed: () => selectTool('pan', '빈 화면을 드래그해 캔버스를 이동합니다.'),
+          ),
+          _CanvasToolButton(
+            tooltip: '노드 편집 및 이동',
+            icon: Icons.edit_rounded,
+            selected: _canvasTool == 'edit',
+            onPressed: () => selectTool('edit', '노드를 선택하거나 드래그해 위치를 옮깁니다.'),
+          ),
+          _CanvasToolButton(
+            tooltip: '노드 연결',
+            icon: Icons.link_rounded,
+            selected: _canvasTool == 'link',
+            onPressed: () => selectTool('link', '시작 노드와 대상 노드를 차례로 선택하세요.'),
+          ),
+          _CanvasToolButton(
+            tooltip: '노드 연결 해제',
+            icon: Icons.link_off_rounded,
+            selected: _canvasTool == 'unlink',
+            onPressed: () => selectTool('unlink', '연결된 두 노드를 시작점부터 차례로 선택하세요.'),
+          ),
+          const SizedBox(width: 6),
+          IconButton(
+            tooltip: '캔버스 확장',
+            onPressed: _canvasSize.width >= 5200 && _canvasSize.height >= 3600
+                ? null
+                : () {
+                    setState(() {
+                      _canvasSize = Size(
+                        math.min(5200, _canvasSize.width + 600),
+                        math.min(3600, _canvasSize.height + 400),
+                      );
+                      _canvasNotice =
+                          '캔버스를 ${_canvasSize.width.round()} × ${_canvasSize.height.round()}로 확장했습니다.';
+                    });
+                    refresh?.call();
+                  },
+            icon: const Icon(Icons.expand_rounded),
+          ),
+          if (!fullscreen)
+            IconButton(
+              tooltip: '캔버스 전체화면',
+              onPressed: _showFullscreenCanvas,
+              icon: const Icon(Icons.fullscreen_rounded),
+            ),
+          const SizedBox(width: 8),
+          Text(
+            '${_canvasSize.width.round()} × ${_canvasSize.height.round()}',
+            style: const TextStyle(color: Color(0xFF64746A), fontSize: 11),
+          ),
+          IconButton(
+            tooltip: '캔버스 초기화',
+            onPressed: () {
+              setState(() {
+                _canvasSize = const Size(1600, 1000);
+                _resetAdvancedNodes();
+                _canvasNotice = '기본 풀이 흐름으로 초기화했습니다.';
+              });
+              refresh?.call();
+            },
+            icon: const Icon(Icons.restart_alt_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요 변수: 유한 캔버스 크기 [_canvasSize], 노드 좌표, 현재 도구.
+  /// 작동 원리: 손 도구일 때만 화면을 이동하고 연필 도구일 때만 노드 좌표를 변경한다.
+  Widget _buildCanvasViewport([VoidCallback? refresh]) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F7F8),
+          border: Border.all(color: const Color(0xFFE3E3E7)),
+        ),
+        child: InteractiveViewer(
+          constrained: false,
+          boundaryMargin: const EdgeInsets.all(120),
+          minScale: 0.25,
+          maxScale: 2.5,
+          panEnabled: _canvasTool == 'pan',
+          child: SizedBox(
+            width: _canvasSize.width,
+            height: _canvasSize.height,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _LogicEdgePainter(nodes: _logicNodes),
+                  ),
+                ),
+                for (final node in _logicNodes)
+                  Positioned(
+                    left: node.position.dx,
+                    top: node.position.dy,
+                    child: GestureDetector(
+                      onTap: _canvasTool == 'pan'
+                          ? null
+                          : () => _handleCanvasNodeTap(node, refresh),
+                      onPanUpdate: _canvasTool != 'edit'
+                          ? null
+                          : (details) {
+                              setState(() {
+                                final next = node.position + details.delta;
+                                node.position = Offset(
+                                  next.dx.clamp(8, _canvasSize.width - 190),
+                                  next.dy.clamp(8, _canvasSize.height - 108),
+                                );
+                              });
+                              refresh?.call();
+                            },
+                      child: _LogicNodeCard(
+                        node: node,
+                        selected: node.id == _selectedNodeId,
+                      ),
+                    ),
+                  ),
               ],
             ),
-            SizedBox(height: 12 * scale),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FBF8),
-                    border: Border.all(color: const Color(0xFFDDE7DD)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 필요 변수: 현재 노드와 캔버스 상태.
+  /// 작동 원리: 독립 풀페이스 라우트에서도 동일 노드 객체를 편집해 일반 화면과 결과를 즉시 공유한다.
+  Future<void> _showFullscreenCanvas() async {
+    await Navigator.of(context).push<void>(
+      PageRouteBuilder<void>(
+        fullscreenDialog: true,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (dialogContext, animation, secondaryAnimation) =>
+            StatefulBuilder(
+              builder: (context, refresh) => Scaffold(
+                appBar: AppBar(
+                  title: const Text('풀이 논리 캔버스'),
+                  leading: IconButton(
+                    tooltip: '전체화면 닫기',
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    icon: const Icon(Icons.close_rounded),
                   ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Stack(
-                        children: [
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: _LogicEdgePainter(nodes: _logicNodes),
-                            ),
-                          ),
-                          for (final node in _logicNodes)
-                            Positioned(
-                              left: node.position.dx.clamp(
-                                8,
-                                math.max(8, constraints.maxWidth - 190),
-                              ),
-                              top: node.position.dy.clamp(
-                                8,
-                                math.max(8, constraints.maxHeight - 108),
-                              ),
-                              child: GestureDetector(
-                                onTap: () =>
-                                    setState(() => _selectedNodeId = node.id),
-                                onPanUpdate: (details) {
-                                  setState(() {
-                                    final next = node.position + details.delta;
-                                    node.position = Offset(
-                                      next.dx.clamp(
-                                        8,
-                                        math.max(8, constraints.maxWidth - 190),
-                                      ),
-                                      next.dy.clamp(
-                                        8,
-                                        math.max(
-                                          8,
-                                          constraints.maxHeight - 108,
-                                        ),
-                                      ),
-                                    );
-                                  });
-                                },
-                                child: _LogicNodeCard(
-                                  node: node,
-                                  selected: node.id == _selectedNodeId,
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
+                ),
+                body: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _buildCanvasWorkspace(
+                    1,
+                    fullscreen: true,
+                    refresh: () => refresh(() {}),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
       ),
     );
   }
@@ -1306,7 +1664,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     return _StudioPanel(
       title: _editorMode == 'advanced' ? '고급 설정' : '문제 저장소',
       child: DefaultTabController(
-        length: _editorMode == 'advanced' ? 5 : 2,
+        length: _editorMode == 'advanced' ? 4 : 2,
         child: Column(
           children: [
             TabBar(
@@ -1315,7 +1673,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
               tabs: [
                 if (_editorMode == 'advanced') const Tab(text: '파라미터'),
                 if (_editorMode == 'advanced') const Tab(text: '노드'),
-                if (_editorMode == 'advanced') const Tab(text: '설명서'),
                 const Tab(text: '저장소'),
                 const Tab(text: '임시저장함'),
               ],
@@ -1325,8 +1682,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
                 children: [
                   if (_editorMode == 'advanced') _buildParameterPanel(scale),
                   if (_editorMode == 'advanced') _buildNodeEditor(scale),
-                  if (_editorMode == 'advanced')
-                    _buildDocumentationPanel(scale),
                   _buildProblemDbPanel(scale),
                   _buildTrayPanel(scale),
                 ],
@@ -1343,6 +1698,24 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     return ListView(
       padding: EdgeInsets.all(14 * scale),
       children: [
+        _SelectedQuestBox(
+          quest: _selectedDbQuest ?? const {'quest_id': '참고문항 없음'},
+          onClear: _selectedDbQuest == null
+              ? () {}
+              : () {
+                  setState(() {
+                    _selectedDbQuest = null;
+                    _baseQuestCtrl.clear();
+                  });
+                },
+        ),
+        SizedBox(height: 8 * scale),
+        const _MutedText('참고문항은 저장소 탭에서 검색해 연결합니다. 선택하지 않아도 직접 생성할 수 있습니다.'),
+        if (_resultText != null) ...[
+          SizedBox(height: 12 * scale),
+          _DocBlock(title: '최근 생성 결과', body: _resultText!),
+        ],
+        const Divider(height: 28),
         const _DocBlock(
           title: '빠른 설계',
           body:
@@ -1439,7 +1812,19 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
                 ),
               )
               .toList(),
-          onChanged: (value) => setState(() => node.type = value ?? node.type),
+          onChanged: (value) {
+            setState(() {
+              node.type = value ?? node.type;
+              final maxOutgoing = _nodeMaxOutgoing(node.type);
+              if (node.nextIds.length > maxOutgoing) {
+                final keptIds = node.nextIds.take(maxOutgoing).toList();
+                node.nextIds
+                  ..clear()
+                  ..addAll(keptIds);
+              }
+              _canvasNotice = '${_nodeTypeLabel(node.type)} 노드 규칙을 적용했습니다.';
+            });
+          },
         ),
         SizedBox(height: 10 * scale),
         TextField(
@@ -1468,14 +1853,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
                 onPressed: _availableTags.isEmpty
                     ? null
                     : () async {
-                        final selected = await showDialog<List<String>>(
-                          context: context,
-                          builder: (_) => _GenerationTagPickerDialog(
-                            groups: _tagGroups,
-                            fallbackTags: _availableTags,
-                            initialTags: node.tags.toList(),
-                          ),
-                        );
+                        final selected = await _openTagPicker(node.tags);
                         if (selected == null) return;
                         setState(() {
                           node.tags
@@ -1533,9 +1911,18 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
             onChanged: (value) {
               setState(() {
                 if (value == true) {
-                  node.nextIds.add(target.id);
+                  final reason = _connectionBlockReason(node, target);
+                  if (reason == null) {
+                    node.nextIds.add(target.id);
+                    _canvasNotice =
+                        '${node.titleCtrl.text.trim()} → ${target.titleCtrl.text.trim()} 연결 완료';
+                  } else {
+                    _canvasNotice = reason;
+                  }
                 } else {
                   node.nextIds.remove(target.id);
+                  _canvasNotice =
+                      '${node.titleCtrl.text.trim()} → ${target.titleCtrl.text.trim()} 연결 해제';
                 }
               });
             },
@@ -1550,57 +1937,219 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     );
   }
 
-  Widget _buildDocumentationPanel(double scale) {
-    return ListView(
-      padding: EdgeInsets.all(14 * scale),
-      children: [
-        const _DocBlock(
-          title: '코드베이스 파라미터 비교',
-          body:
-              '풀이 단계 수는 풀이의 길이, 전략 난이도는 핵심 발상의 강도, 분기 수는 케이스 분류와 병합 규모입니다. '
-              '예를 들어 하 난이도는 2/1/0, 상 난이도는 6/3/2로 기존 생성 파이프라인에 전달됩니다.',
+  /// 필요 변수: 현재 화면의 [context], 노드 유형과 고급 파라미터 설명.
+  /// 작동 원리: 상단 설명서 버튼을 누르면 폴더별 문서를 탐색하는 풀페이스 라우트를 연다.
+  Future<void> _showDocumentation() async {
+    await Navigator.of(context).push<void>(
+      PageRouteBuilder<void>(
+        fullscreenDialog: true,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (dialogContext, animation, secondaryAnimation) => Scaffold(
+          backgroundColor: kCourseBgGrey,
+          body: SafeArea(
+            child: _GenerationDocumentationExplorer(
+              files: _buildDocumentationFiles(),
+              onClose: () => Navigator.of(dialogContext).pop(),
+            ),
+          ),
         ),
-        for (final spec in _advancedParameterSpecs)
-          _ParameterDocTile(spec: spec),
-      ],
+      ),
     );
   }
 
+  /// 필요 변수: 노드 목록 [_nodeTypes], 파라미터 목록 [_advancedParameterSpecs].
+  /// 작동 원리: 개요·도구·노드·파라미터·실전 예시를 파일관리자에서 선택 가능한 문서로 변환한다.
+  List<_GenerationDocFile> _buildDocumentationFiles() {
+    return [
+      const _GenerationDocFile(
+        id: 'overview',
+        folder: '시작하기',
+        title: '고급 문제 생성 개요',
+        icon: Icons.rocket_launch_rounded,
+        summary: '풀이 그래프와 세부 파라미터를 함께 사용해 문제의 구조와 난이도를 설계합니다.',
+        details:
+            '풀이 단계 수는 풀이의 길이, 전략 난이도는 핵심 발상의 강도, 분기 수는 케이스 분류와 병합 규모입니다. '
+            '예를 들어 하 난이도는 2/1/0, 상 난이도는 6/3/2로 기존 생성 파이프라인에 전달됩니다.',
+        examples: [
+          '3점형: 조건 → 개념 → 계산 → 검증',
+          '30번형: 조건 → 발상/추론 분기 → 병합 → 계산 → 검증',
+        ],
+      ),
+      const _GenerationDocFile(
+        id: 'toolbar',
+        folder: '시작하기',
+        title: '캔버스 도구막대',
+        icon: Icons.build_circle_outlined,
+        summary: '화면 이동과 노드 이동을 별도 도구로 전환해 오작동을 막습니다.',
+        details:
+            '더하기는 8개 유형의 노드를 추가합니다. 손은 캔버스 화면을 이동하고, 연필은 노드를 선택하거나 위치를 옮깁니다. '
+            '링크와 링크 해제는 시작 노드와 대상 노드를 차례로 선택합니다. 확장은 최대 5200×3600까지 가능하며 전체화면에서도 같은 상태를 편집합니다.',
+        examples: [
+          '멀리 있는 노드 보기: 손 도구 → 빈 화면 드래그',
+          '노드 위치 정리: 연필 도구 → 노드 드래그',
+          '관계 만들기: 링크 → 시작 노드 → 대상 노드',
+        ],
+      ),
+      const _GenerationDocFile(
+        id: 'connection_rules',
+        folder: '시작하기',
+        title: '연결 규칙',
+        icon: Icons.account_tree_rounded,
+        summary: '연결은 방향성을 가지며 순환하지 않는 풀이 그래프로 관리합니다.',
+        details:
+            '같은 노드 연결, 중복 연결, 순환 연결은 차단됩니다. 검증 노드는 마지막 단계이므로 다음 연결이 없고, '
+            '병합 노드는 앞선 연결이 2개 이상이어야 하며 다음 연결은 1개만 허용합니다. 생성 전에는 고립 노드와 검증 노드 존재 여부를 검사합니다.',
+        examples: [
+          '조건에서 풀이가 갈라질 때 조건 → 추론 A, 조건 → 추론 B로 연결합니다.',
+          '두 풀이가 같은 결론에 도달하면 추론 A/B → 병합 → 검증으로 연결합니다.',
+          '실제 연관이 없으면 링크 해제로 해당 직접 연결만 제거합니다.',
+        ],
+      ),
+      for (final type in _nodeTypes)
+        _GenerationDocFile(
+          id: 'node_$type',
+          folder: '노드 8종',
+          title: '${_nodeTypeLabel(type)} 노드',
+          icon: _nodeTypeIcon(type),
+          summary: _defaultNodeDetail(type),
+          details: _defaultNodePrompt(type),
+          examples: _nodeDocumentationExamples(type),
+        ),
+      for (final spec in _advancedParameterSpecs)
+        _GenerationDocFile(
+          id: 'parameter_${spec.id}',
+          folder: '파라미터',
+          title: spec.label,
+          icon: Icons.tune_rounded,
+          summary:
+              '${spec.description} · 범위 ${spec.min.round()}~${spec.max.round()}',
+          details: spec.description,
+          examples: ['낮은 값: ${spec.lowExample}', '높은 값: ${spec.highExample}'],
+        ),
+      const _GenerationDocFile(
+        id: 'example_branch_merge',
+        folder: '실전 예시',
+        title: '조건 분기와 병합',
+        icon: Icons.call_merge_rounded,
+        summary: '조건 또는 생각의 흐름이 갈라졌다가 다시 하나의 결론으로 모이는 구성입니다.',
+        details:
+            '조건 노드에서 두 개의 추론 노드로 링크를 만들고, 각 추론을 같은 병합 노드로 연결합니다. '
+            '병합 이후 계산과 검증을 연결하면 분기별 근거와 공통 결론이 모두 생성 지시에 반영됩니다.',
+        examples: [
+          '조건 → (양수인 경우 / 음수인 경우) → 병합 → 계산 → 검증',
+          '발상 → (그래프 해석 / 대수 해석) → 병합 → 검증',
+        ],
+      ),
+      const _GenerationDocFile(
+        id: 'example_target',
+        folder: '실전 예시',
+        title: '목표 난이도 시작값',
+        icon: Icons.track_changes_rounded,
+        summary: '프리셋은 시작값이며 노드 구조와 파라미터를 함께 조정해야 의도가 선명해집니다.',
+        details:
+            '3점형은 짧고 직접적인 단일 흐름, 22·29번형은 발상과 추론 중심의 분기, 30번형은 깊은 그래프와 병합·검증을 권장합니다.',
+        examples: [
+          '3점형: 풀이 2 / 전략 1 / 분기 0',
+          '일반 4점형: 풀이 4 / 전략 2 / 분기 1',
+          '30번형: 풀이 7 이상 / 전략 3 / 분기 2 이상',
+        ],
+      ),
+    ];
+  }
+
+  /// 필요 변수: 문서 정보 [document], 현재 검색 모드와 검색어.
+  /// 작동 원리: 문서함 파일의 제목·분류·태그 또는 저장일을 기준으로 화면 트리만 가볍게 필터링한다.
+  bool _matchesDocumentFilter(Map<String, dynamic> document) {
+    final query = _dbSearchCtrl.text.trim().toLowerCase();
+    if (query.isEmpty) return true;
+    if (_dbSearchMode == 'date') {
+      final date = [
+        document['updated_at'],
+        document['created_at'],
+        document['document_updated_at'],
+      ].whereType<Object>().map((value) => value.toString()).join(' ');
+      return date.contains(query);
+    }
+    final values = _dbSearchMode == 'hashtag'
+        ? <dynamic>[document['tags'], document['hash_tags']]
+        : <dynamic>[
+            document['title'],
+            document['subtitle'],
+            document['category'],
+            document['textbook_id'],
+            document['exam_id'],
+          ];
+    return values
+        .map((value) => value?.toString() ?? '')
+        .join(' ')
+        .toLowerCase()
+        .contains(query);
+  }
+
+  /// 필요 변수: 현재 검색 모드 [_dbSearchMode], 검색어 [_dbSearchCtrl].
+  /// 작동 원리: 풀페이스 필터에서 조건을 확정한 경우에만 문서함 트리를 다시 조회한다.
+  Future<void> _openProblemDbFilter() async {
+    final filter = await Navigator.of(context).push<_ProblemDbFilter>(
+      MaterialPageRoute<_ProblemDbFilter>(
+        fullscreenDialog: true,
+        builder: (_) => _ProblemDbFilterDialog(
+          initialMode: _dbSearchMode,
+          initialQuery: _dbSearchCtrl.text,
+        ),
+      ),
+    );
+    if (filter == null || !mounted) return;
+    setState(() {
+      _dbSearchMode = filter.mode;
+      _dbSearchCtrl.text = filter.query;
+    });
+    await _searchProblemDb();
+  }
+
+  /// 필요 변수: 화면 배율 [scale], 교사 문서함 자료와 선택 참고문항.
+  /// 작동 원리: 문서함 자료를 교재·시험지·문항 폴더로 묶어 파일 관리자 형태로 표시한다.
   Widget _buildProblemDbPanel(double scale) {
+    final textbooks = _teacherTextbooks.where(_matchesDocumentFilter).toList();
+    final exams = _teacherExams.where(_matchesDocumentFilter).toList();
+    final query = _dbSearchCtrl.text.trim();
+    final filterLabel = query.isEmpty
+        ? '전체 자료'
+        : '${_problemDbModeLabel(_dbSearchMode)} · $query';
+
     return ListView(
       padding: EdgeInsets.all(14 * scale),
       children: [
         const _DocBlock(
           title: '교사 보유 자료',
-          body:
-              '문서함과 저장된 문제 자료에서 검색한 문항만 참고문항으로 연결합니다. 참고문항 없이도 바로 생성할 수 있습니다.',
+          body: '현재 로그인한 교사의 문서함 파일 트리입니다. 문항 파일을 선택하면 참고문항으로 연결됩니다.',
         ),
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: 'text', label: Text('텍스트')),
-            ButtonSegment(value: 'hashtag', label: Text('해시태그')),
-            ButtonSegment(value: 'date', label: Text('날짜')),
-          ],
-          selected: {_dbSearchMode},
-          onSelectionChanged: (values) =>
-              setState(() => _dbSearchMode = values.first),
-        ),
-        SizedBox(height: 10 * scale),
-        TextField(
-          controller: _dbSearchCtrl,
-          decoration: InputDecoration(
-            labelText: _dbSearchMode == 'hashtag'
-                ? '예: #미분'
-                : _dbSearchMode == 'date'
-                ? '예: 2026-07-04'
-                : '문제 본문 검색',
-            border: const OutlineInputBorder(),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.search_rounded),
-              onPressed: _dbSearching ? null : _searchProblemDb,
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7F7F8),
+            border: Border.all(color: AppColors.surfaceBorder),
+            borderRadius: BorderRadius.circular(8),
           ),
-          onSubmitted: (_) => _searchProblemDb(),
+          child: Row(
+            children: [
+              const Icon(Icons.filter_list_rounded, color: kCourseGreen),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  filterLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _dbSearching ? null : _openProblemDbFilter,
+                icon: const Icon(Icons.tune_rounded, size: 18),
+                label: const Text('검색 조건'),
+              ),
+            ],
+          ),
         ),
         if (_selectedDbQuest != null) ...[
           SizedBox(height: 10 * scale),
@@ -1614,21 +2163,49 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
             },
           ),
         ],
-        SizedBox(height: 12 * scale),
+        SizedBox(height: 10 * scale),
         if (_dbSearching)
           const LinearProgressIndicator()
         else if (_dbError != null)
           Text(_dbError!, style: const TextStyle(color: Colors.red))
-        else if (_dbResults.isEmpty)
-          const _MutedText('검색 결과가 없습니다.')
-        else
-          for (final item in _dbResults)
-            _DbQuestRow(
-              item: item,
-              selected: item['quest_id'] == _selectedDbQuest?['quest_id'],
-              onTap: () => _selectDbQuest(item),
-              contentToText: _contentToText,
-            ),
+        else ...[
+          _DocumentTreeFolder(
+            label: '문항',
+            icon: Icons.quiz_outlined,
+            itemCount: _dbResults.length,
+            initiallyExpanded: true,
+            emptyText: '조건에 맞는 보유 문항이 없습니다.',
+            children: [
+              for (final item in _dbResults)
+                _DbQuestRow(
+                  item: item,
+                  selected: item['quest_id'] == _selectedDbQuest?['quest_id'],
+                  onTap: () => _selectDbQuest(item),
+                  contentToText: _contentToText,
+                ),
+            ],
+          ),
+          _DocumentTreeFolder(
+            label: '교재',
+            icon: Icons.menu_book_outlined,
+            itemCount: textbooks.length,
+            emptyText: '조건에 맞는 교재가 없습니다.',
+            children: [
+              for (final item in textbooks)
+                _DocumentFileRow(item: item, type: 'textbook'),
+            ],
+          ),
+          _DocumentTreeFolder(
+            label: '시험지',
+            icon: Icons.description_outlined,
+            itemCount: exams.length,
+            emptyText: '조건에 맞는 시험지가 없습니다.',
+            children: [
+              for (final item in exams)
+                _DocumentFileRow(item: item, type: 'exam'),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -1637,12 +2214,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
     return ListView(
       padding: EdgeInsets.all(14 * scale),
       children: [
-        OutlinedButton.icon(
-          onPressed: _loadTray,
-          icon: const Icon(Icons.refresh_rounded),
-          label: const Text('새로고침'),
-        ),
-        SizedBox(height: 12 * scale),
         if (_tray.isEmpty)
           const _MutedText('임시저장함이 비어 있습니다.')
         else
@@ -1655,7 +2226,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
   void dispose() {
     _promptCtrl.dispose();
     _baseQuestCtrl.dispose();
-    _seedCtrl.dispose();
     _dbSearchCtrl.dispose();
     for (final node in _logicNodes) {
       node.dispose();
@@ -1839,68 +2409,66 @@ class _GenerationTagPickerDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('해시태그 선택'),
-      content: SizedBox(
-        width: 620,
-        height: 560,
-        child: Column(
-          children: [
-            TextField(
-              controller: _searchCtrl,
-              onChanged: (value) => setState(() => _query = value),
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search_rounded),
-                labelText: '태그 검색',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            if (_selected.isNotEmpty)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: _selected
-                      .map(
-                        (tag) => Chip(
-                          label: Text(tag),
-                          onDeleted: () =>
-                              setState(() => _selected.remove(tag)),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: ListView(
-                children: [
-                  for (final group in _groups)
-                    _TagGroupTile(
-                      group: group,
-                      selected: _selected,
-                      matches: _matches,
-                      onChanged: () => setState(() {}),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return TeacherFullFacePanel(
+      eyebrow: 'PROBLEM STUDIO',
+      title: '해시태그 선택',
+      description: '문항 생성 또는 선택한 논리 노드에 사용할 태그를 검색합니다.',
+      maxContentWidth: 820,
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('취소'),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () =>
               Navigator.of(context).pop(_uniqueTags(_selected.toList())),
-          child: const Text('선택 완료'),
+          child: Text('${_selected.length}개 선택 완료'),
         ),
       ],
+      content: Column(
+        children: [
+          TextField(
+            controller: _searchCtrl,
+            onChanged: (value) => setState(() => _query = value),
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search_rounded),
+              labelText: '태그 검색',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (_selected.isNotEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: _selected
+                    .map(
+                      (tag) => Chip(
+                        label: Text(tag),
+                        onDeleted: () => setState(() => _selected.remove(tag)),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView(
+              children: [
+                for (final group in _groups)
+                  _TagGroupTile(
+                    group: group,
+                    selected: _selected,
+                    matches: _matches,
+                    onChanged: () => setState(() {}),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2040,14 +2608,14 @@ class _WorkflowStepChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? kCourseGreen : const Color(0xFF90AA91);
+    final color = active ? kCourseGreen : const Color(0xFF71717A);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
-        color: active ? const Color(0xFFEAF5ED) : Colors.white,
+        color: active ? const Color(0xFFF0F0F2) : Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: active ? kCourseGreen : const Color(0xFFDDE7DD),
+          color: active ? kCourseGreen : const Color(0xFFE3E3E7),
         ),
       ),
       child: Row(
@@ -2156,7 +2724,7 @@ class _SimpleLevelTile extends StatelessWidget {
         width: 190,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEAF5ED) : Colors.white,
+          color: selected ? const Color(0xFFF0F0F2) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected ? kCourseGreen : AppColors.surfaceBorder,
@@ -2232,7 +2800,7 @@ class _LogicNodeCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: selected ? color : const Color(0xFFDDE7DD),
+          color: selected ? color : const Color(0xFFE3E3E7),
           width: selected ? 2 : 1,
         ),
         boxShadow: const [
@@ -2291,6 +2859,35 @@ class _LogicNodeCard extends StatelessWidget {
   }
 }
 
+class _CanvasToolButton extends StatelessWidget {
+  const _CanvasToolButton({
+    required this.tooltip,
+    required this.icon,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  /// 필요 변수: 도구 이름 [tooltip], 아이콘 [icon], 선택 상태 [selected].
+  /// 작동 원리: 현재 도구만 강조해 화면 이동과 노드 편집 동작을 시각적으로 구분한다.
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: selected ? const Color(0xFFE4E4E7) : null,
+        foregroundColor: selected ? kCourseGreen : const Color(0xFF64746A),
+      ),
+      icon: Icon(icon),
+    );
+  }
+}
+
 class _LogicEdgePainter extends CustomPainter {
   const _LogicEdgePainter({required this.nodes});
 
@@ -2300,11 +2897,11 @@ class _LogicEdgePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final byId = {for (final node in nodes) node.id: node};
     final paint = Paint()
-      ..color = const Color(0xFF90AA91)
+      ..color = const Color(0xFF71717A)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
     final arrowPaint = Paint()
-      ..color = const Color(0xFF90AA91)
+      ..color = const Color(0xFF71717A)
       ..style = PaintingStyle.fill;
 
     for (final node in nodes) {
@@ -2454,6 +3051,295 @@ class _MetricSlider extends StatelessWidget {
   }
 }
 
+class _GenerationDocFile {
+  const _GenerationDocFile({
+    required this.id,
+    required this.folder,
+    required this.title,
+    required this.icon,
+    required this.summary,
+    required this.details,
+    required this.examples,
+  });
+
+  final String id;
+  final String folder;
+  final String title;
+  final IconData icon;
+  final String summary;
+  final String details;
+  final List<String> examples;
+
+  String toMarkdown() {
+    final exampleText = examples.map((item) => '- $item').join('\n');
+    return '# $title\n\n$summary\n\n## 상세 설명\n\n$details\n\n## 예시\n\n$exampleText';
+  }
+}
+
+class _GenerationDocumentationExplorer extends StatefulWidget {
+  const _GenerationDocumentationExplorer({
+    required this.files,
+    required this.onClose,
+  });
+
+  final List<_GenerationDocFile> files;
+  final VoidCallback onClose;
+
+  @override
+  State<_GenerationDocumentationExplorer> createState() =>
+      _GenerationDocumentationExplorerState();
+}
+
+class _GenerationDocumentationExplorerState
+    extends State<_GenerationDocumentationExplorer> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  late String _selectedId;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedId = widget.files.first.id;
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  _GenerationDocFile get _selectedFile => widget.files.firstWhere(
+    (file) => file.id == _selectedId,
+    orElse: () => widget.files.first,
+  );
+
+  List<_GenerationDocFile> get _visibleFiles {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return widget.files;
+    return widget.files
+        .where(
+          (file) => [
+            file.folder,
+            file.title,
+            file.summary,
+            file.details,
+            ...file.examples,
+          ].join(' ').toLowerCase().contains(query),
+        )
+        .toList();
+  }
+
+  /// 필요 변수: 검색 결과 [_visibleFiles]와 선택 문서 [_selectedId].
+  /// 작동 원리: 폴더 트리와 단일 문서 상세창을 반응형 2단 구조로 배치한다.
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, color: kCourseGreen),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  '문제 생성 설명서',
+                  style: TextStyle(
+                    color: kCourseGreen,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: '설명서 닫기',
+                onPressed: widget.onClose,
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tree = _buildFileTree();
+              final details = _buildDocumentDetails(context);
+              if (constraints.maxWidth < 720) {
+                return Column(
+                  children: [
+                    SizedBox(height: 260, child: tree),
+                    const Divider(height: 1),
+                    Expanded(child: details),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  SizedBox(width: 310, child: tree),
+                  const VerticalDivider(width: 1),
+                  Expanded(child: details),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 필요 변수: 검색어 [_query], 설명서 파일 목록 [widget.files].
+  /// 작동 원리: 같은 폴더의 파일을 묶고 검색 결과에 포함된 문서만 탐색 트리에 표시한다.
+  Widget _buildFileTree() {
+    final groups = <String, List<_GenerationDocFile>>{};
+    for (final file in _visibleFiles) {
+      groups.putIfAbsent(file.folder, () => []).add(file);
+    }
+    return Material(
+      color: const Color(0xFFF7F7F8),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              controller: _searchCtrl,
+              decoration: const InputDecoration(
+                hintText: '설명서 검색',
+                prefixIcon: Icon(Icons.search_rounded),
+                isDense: true,
+              ),
+              onChanged: (value) => setState(() => _query = value),
+            ),
+          ),
+          Expanded(
+            child: groups.isEmpty
+                ? const Center(child: Text('검색 결과가 없습니다.'))
+                : ListView(
+                    children: [
+                      for (final entry in groups.entries)
+                        ExpansionTile(
+                          initiallyExpanded: true,
+                          leading: const Icon(
+                            Icons.folder_open_rounded,
+                            color: kCourseGreen,
+                          ),
+                          title: Text(
+                            '${entry.key} (${entry.value.length})',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          children: [
+                            for (final file in entry.value)
+                              ListTile(
+                                dense: true,
+                                selected: file.id == _selectedId,
+                                selectedTileColor: const Color(0xFFE4E4E7),
+                                leading: Icon(file.icon, size: 19),
+                                title: Text(file.title),
+                                onTap: () =>
+                                    setState(() => _selectedId = file.id),
+                              ),
+                          ],
+                        ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요 변수: 현재 선택 문서 [_selectedFile].
+  /// 작동 원리: 한 번에 한 문서의 설명과 예시만 표시하고 Markdown 형태로 복사할 수 있게 한다.
+  Widget _buildDocumentDetails(BuildContext context) {
+    final file = _selectedFile;
+    return ListView(
+      key: ValueKey(file.id),
+      padding: const EdgeInsets.all(24),
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE4E4E7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(file.icon, color: kCourseGreen),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    file.folder,
+                    style: const TextStyle(color: Color(0xFF64746A)),
+                  ),
+                  Text(
+                    file.title,
+                    style: const TextStyle(
+                      color: kCourseGreen,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: '현재 문서 복사',
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: file.toMarkdown()));
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('현재 설명서를 Markdown으로 복사했습니다.')),
+                );
+              },
+              icon: const Icon(Icons.copy_all_rounded),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        SelectableText(
+          file.summary,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
+        ),
+        const Divider(height: 36),
+        const Text(
+          '상세 설명',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        SelectableText(file.details, style: const TextStyle(height: 1.65)),
+        const SizedBox(height: 24),
+        const Text(
+          '예시',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        for (var index = 0; index < file.examples.length; index++)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F7F8),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE3E3E7)),
+            ),
+            child: SelectableText('${index + 1}. ${file.examples[index]}'),
+          ),
+      ],
+    );
+  }
+}
+
 class _DocBlock extends StatelessWidget {
   const _DocBlock({required this.title, required this.body});
 
@@ -2466,9 +3352,9 @@ class _DocBlock extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBF8),
+        color: const Color(0xFFF7F7F8),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE7DD)),
+        border: Border.all(color: const Color(0xFFE3E3E7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2488,25 +3374,198 @@ class _DocBlock extends StatelessWidget {
   }
 }
 
-class _ParameterDocTile extends StatelessWidget {
-  const _ParameterDocTile({required this.spec});
+/// 필요 변수: 검색 모드 [mode].
+/// 작동 원리: 내부 검색 모드 코드를 필터 라인에 표시할 한국어로 변환한다.
+String _problemDbModeLabel(String mode) {
+  return switch (mode) {
+    'hashtag' => '해시태그',
+    'date' => '날짜',
+    _ => '텍스트',
+  };
+}
 
-  final _ParameterSpec spec;
+class _ProblemDbFilter {
+  const _ProblemDbFilter({required this.mode, required this.query});
 
+  final String mode;
+  final String query;
+}
+
+class _ProblemDbFilterDialog extends StatefulWidget {
+  const _ProblemDbFilterDialog({
+    required this.initialMode,
+    required this.initialQuery,
+  });
+
+  final String initialMode;
+  final String initialQuery;
+
+  @override
+  State<_ProblemDbFilterDialog> createState() => _ProblemDbFilterDialogState();
+}
+
+class _ProblemDbFilterDialogState extends State<_ProblemDbFilterDialog> {
+  late final TextEditingController _controller;
+  late String _mode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialQuery);
+    _mode = widget.initialMode;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// 필요 변수: 검색 모드 [_mode], 검색어 컨트롤러 [_controller].
+  /// 작동 원리: 풀페이스 작업면 안에서 조건을 편집하고 적용할 때 부모 화면으로 값을 반환한다.
+  @override
+  Widget build(BuildContext context) {
+    final hint = switch (_mode) {
+      'hashtag' => '예: #미분',
+      'date' => '예: 2026-07-04',
+      _ => '문제 본문, 문서명, 폴더명',
+    };
+    return TeacherFullFacePanel(
+      eyebrow: 'PROBLEM STUDIO',
+      title: '문서함 검색 필터',
+      description: '문제 본문, 태그, 날짜 기준으로 교사 문서함을 다시 조회합니다.',
+      maxContentWidth: 680,
+      actions: [
+        OutlinedButton(
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(const _ProblemDbFilter(mode: 'text', query: '')),
+          child: const Text('초기화'),
+        ),
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('취소'),
+        ),
+        FilledButton.icon(
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(_ProblemDbFilter(mode: _mode, query: _controller.text.trim())),
+          icon: const Icon(Icons.search_rounded),
+          label: const Text('적용'),
+        ),
+      ],
+      content: Align(
+        alignment: Alignment.topCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'text', label: Text('텍스트')),
+                ButtonSegment(value: 'hashtag', label: Text('해시태그')),
+                ButtonSegment(value: 'date', label: Text('날짜')),
+              ],
+              selected: {_mode},
+              onSelectionChanged: (values) =>
+                  setState(() => _mode = values.first),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: '검색어',
+                hintText: hint,
+                border: const OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => Navigator.of(context).pop(
+                _ProblemDbFilter(mode: _mode, query: _controller.text.trim()),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentTreeFolder extends StatelessWidget {
+  const _DocumentTreeFolder({
+    required this.label,
+    required this.icon,
+    required this.itemCount,
+    required this.emptyText,
+    required this.children,
+    this.initiallyExpanded = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final int itemCount;
+  final String emptyText;
+  final List<Widget> children;
+  final bool initiallyExpanded;
+
+  /// 필요 변수: 폴더명 [label], 파일 수 [itemCount], 하위 파일 [children].
+  /// 작동 원리: 문서 종류별 폴더를 접고 펼칠 수 있는 파일 트리 한 단계로 렌더링한다.
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
-      tilePadding: EdgeInsets.zero,
-      title: Text(
-        spec.label,
-        style: const TextStyle(fontWeight: FontWeight.w800),
+      initiallyExpanded: initiallyExpanded,
+      tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+      childrenPadding: const EdgeInsets.only(left: 12),
+      leading: Icon(icon, color: kCourseGreen),
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$itemCount', style: const TextStyle(color: Color(0xFF64746A))),
+          const SizedBox(width: 6),
+          const Icon(Icons.expand_more_rounded),
+        ],
       ),
-      subtitle: Text(spec.description),
-      children: [
-        _DocBlock(title: '설명', body: spec.description),
-        _DocBlock(title: '낮은 값 예시', body: spec.lowExample),
-        _DocBlock(title: '높은 값 예시', body: spec.highExample),
-      ],
+      children: children.isEmpty
+          ? [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                child: _MutedText(emptyText),
+              ),
+            ]
+          : children,
+    );
+  }
+}
+
+class _DocumentFileRow extends StatelessWidget {
+  const _DocumentFileRow({required this.item, required this.type});
+
+  final Map<String, dynamic> item;
+  final String type;
+
+  /// 필요 변수: 문서 정보 [item], 문서 종류 [type].
+  /// 작동 원리: 교재와 시험지를 선택 불가능한 문서함 파일 행으로 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    final title = item['title']?.toString().trim();
+    final fallbackId = type == 'exam' ? item['exam_id'] : item['textbook_id'];
+    final fileName = title == null || title.isEmpty
+        ? fallbackId?.toString() ?? '이름 없는 파일'
+        : title;
+    final tags = item['tags'] is List
+        ? (item['tags'] as List).map((tag) => tag.toString()).join(', ')
+        : '';
+    return ListTile(
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      leading: Icon(
+        type == 'exam' ? Icons.description_outlined : Icons.menu_book_outlined,
+        color: const Color(0xFF64746A),
+      ),
+      title: Text(fileName, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: tags.isEmpty
+          ? null
+          : Text(tags, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }
@@ -2522,7 +3581,7 @@ class _SelectedQuestBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF5ED),
+        color: const Color(0xFFF0F0F2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: kCourseGreen),
       ),
@@ -2580,7 +3639,8 @@ class _TrayItemCard extends StatelessWidget {
     final questId = item['quest_id']?.toString() ?? '문항 ID 없음';
     final mode = _modeLabel(item['source_variant_mode']?.toString());
     final scope = _scopeLabel(item['visibility_scope']?.toString());
-    final createdAt = item['created_at']?.toString() ?? '';
+    final createdAt =
+        item['updated_at']?.toString() ?? item['created_at']?.toString() ?? '';
     final payload = item['payload'];
     final workflowMode = payload is Map ? payload['mode']?.toString() : null;
     final modeText = workflowMode == 'advanced'
@@ -2595,7 +3655,7 @@ class _TrayItemCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE7DD)),
+        border: Border.all(color: const Color(0xFFE3E3E7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2660,7 +3720,7 @@ class _DbQuestRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEAF5ED) : Colors.white,
+          color: selected ? const Color(0xFFF0F0F2) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected ? kCourseGreen : AppColors.surfaceBorder,
@@ -3392,6 +4452,7 @@ const _nodeTypes = <String>[
   'reasoning',
   'computation',
   'trap',
+  'merge',
   'verification',
 ];
 
@@ -3409,6 +4470,8 @@ String _nodeTypeLabel(String type) {
       return '계산';
     case 'trap':
       return '함정';
+    case 'merge':
+      return '병합';
     case 'verification':
       return '검증';
     default:
@@ -3430,6 +4493,8 @@ String _defaultNodeDetail(String type) {
       return '계산량과 식 정리 단계를 조절한다.';
     case 'trap':
       return '정의역, 부호, 필요충분 조건 함정을 설계한다.';
+    case 'merge':
+      return '둘 이상의 분기 결과에서 공통 결론을 찾아 하나의 풀이 흐름으로 병합한다.';
     case 'verification':
       return '정답 유일성과 조건 모순 여부를 검증한다.';
     default:
@@ -3451,10 +4516,37 @@ String _defaultNodePrompt(String type) {
       return '계산은 검산 가능한 수준으로 유지하고 불필요한 전개를 줄인다.';
     case 'trap':
       return '정의역, 부호, 필요충분 조건 중 하나의 자연스러운 오답 유발 요소를 포함한다.';
+    case 'merge':
+      return '앞선 두 개 이상의 분기에서 공통으로 성립하는 결론을 명시하고 이후 흐름을 하나로 합친다.';
     case 'verification':
       return '정답 유일성, 조건 모순 여부, 풀이 가능성을 마지막 단계에서 확인한다.';
     default:
       return '문제 생성 논리에 맞는 보편적인 풀이 단계를 구성한다.';
+  }
+}
+
+/// 필요 변수: 노드 역할 [type].
+/// 작동 원리: 설명서에서 바로 따라 할 수 있는 역할별 연결·작성 예시를 반환한다.
+List<String> _nodeDocumentationExamples(String type) {
+  switch (type) {
+    case 'condition':
+      return ['f(x)가 모든 실수에서 미분 가능하다는 명시 조건과 연속성이라는 암묵 조건을 분리합니다.'];
+    case 'concept':
+      return ['미분계수의 정의, 극값 조건처럼 풀이에 실제 사용할 교과 개념만 지정합니다.'];
+    case 'insight':
+      return ['정답에서 조건을 역추적하거나 그래프의 대칭성을 먼저 찾도록 지시합니다.'];
+    case 'reasoning':
+      return ['조건에서 보조식으로, 보조식에서 계수 결정으로 이어지는 근거를 단계별로 적습니다.'];
+    case 'computation':
+      return ['다항식 전개 2회와 계수 비교 1회처럼 허용할 계산량을 구체적으로 제한합니다.'];
+    case 'trap':
+      return ['제곱 후 생기는 불필요한 해나 정의역 누락을 자연스러운 오답 갈래로 설계합니다.'];
+    case 'merge':
+      return ['부호에 따른 두 경우가 모두 같은 계수 조건에 도달하도록 두 연결을 병합합니다.'];
+    case 'verification':
+      return ['후보 답을 원래 조건에 대입해 유일성·정의역·교육과정 범위를 마지막에 확인합니다.'];
+    default:
+      return const ['노드의 역할과 다음 노드로 이어지는 근거를 구체적으로 작성합니다.'];
   }
 }
 
@@ -3484,6 +4576,8 @@ IconData _nodeTypeIcon(String type) {
       return Icons.functions_rounded;
     case 'trap':
       return Icons.warning_amber_rounded;
+    case 'merge':
+      return Icons.call_merge_rounded;
     case 'verification':
       return Icons.verified_rounded;
     default:
@@ -3505,10 +4599,33 @@ Color _nodeTypeColor(String type) {
       return const Color(0xFFD6477C);
     case 'trap':
       return const Color(0xFF927A1F);
+    case 'merge':
+      return const Color(0xFF137C8B);
     case 'verification':
       return kCourseGreen;
     default:
       return kCourseGreen;
+  }
+}
+
+/// 필요 변수: 노드 역할 [type].
+/// 작동 원리: 기능별 의미가 흐려지지 않도록 허용 가능한 최대 다음 연결 수를 반환한다.
+int _nodeMaxOutgoing(String type) {
+  switch (type) {
+    case 'verification':
+      return 0;
+    case 'merge':
+      return 1;
+    case 'computation':
+    case 'trap':
+      return 2;
+    case 'condition':
+    case 'concept':
+    case 'insight':
+    case 'reasoning':
+      return 4;
+    default:
+      return 1;
   }
 }
 
