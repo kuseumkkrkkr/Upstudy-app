@@ -193,14 +193,11 @@ class _BalancePanel extends StatelessWidget {
             runSpacing: 8,
             children: amounts
                 .map(
-                  (amount) => FilledButton.tonalIcon(
-                    onPressed: busy ? null : () => onTopUp(amount),
-                    style: FilledButton.styleFrom(
-                      foregroundColor: kCourseGreen,
-                      backgroundColor: AppColors.surfaceMuted,
-                    ),
-                    icon: const Icon(Icons.add_card_rounded),
-                    label: Text('+$amount'),
+                  (amount) => _StoreAction(
+                    label: '+$amount P',
+                    icon: Icons.add_rounded,
+                    dark: false,
+                    onTap: busy ? null : () => onTopUp(amount),
                   ),
                 )
                 .toList(),
@@ -271,20 +268,13 @@ class _StoreItemCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              FilledButton.icon(
-                onPressed: owned || busy || itemId.isEmpty
+              _StoreAction(
+                onTap: owned || busy || itemId.isEmpty
                     ? null
                     : () => onPurchase(itemId),
-                style: FilledButton.styleFrom(
-                  backgroundColor: owned
-                      ? AppColors.surfaceMuted
-                      : kCourseGreen,
-                  foregroundColor: owned ? kCourseGreen : Colors.white,
-                ),
-                icon: Icon(
-                  owned ? Icons.verified_rounded : Icons.shopping_bag_rounded,
-                ),
-                label: Text(owned ? '보유 중' : '구매'),
+                dark: !owned,
+                icon: owned ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                label: owned ? '보유 중' : '구매',
               ),
             ],
           ),
@@ -302,5 +292,58 @@ class _StoreItemCard extends StatelessWidget {
       default:
         return Icons.extension_rounded;
     }
+  }
+}
+
+/// 포인트 충전과 상품 구매 동작을 공통 캡슐 UI로 표현한다.
+/// [onTap]이 null이면 보유 중 또는 처리 중 상태로 비활성화한다.
+class _StoreAction extends StatelessWidget {
+  const _StoreAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.dark = true,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: onTap == null ? 0.48 : 1,
+      child: Material(
+        color: dark ? Colors.black : AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: dark ? null : Border.all(color: AppColors.surfaceBorder),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 18, color: dark ? Colors.white : Colors.black),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: dark ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

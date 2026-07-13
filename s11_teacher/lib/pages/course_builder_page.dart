@@ -7,8 +7,8 @@ import '../pages/problem_editor_page.dart';
 import '../services/api_client.dart';
 import '../services/course_builder_payload.dart';
 import '../shared/theme/app_colors.dart';
-import '../shared/ui/ios26/ios26_chrome.dart';
 import '../shared/ui/ios26/teacher_full_face_panel.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 
@@ -1037,81 +1037,41 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
-    return Scaffold(
+    return TeacherStudioShell(
+      currentRoute: '/course-builder',
+      eyebrow: 'COURSE WORKSPACE',
+      title: _isEditing ? '코스 수정' : '코스 만들기',
+      description: '기본 정보와 학습 모듈을 구성하고 저장 전 흐름을 검토합니다.',
       endDrawer: const TeacherAppDrawer(currentRoute: '/course-builder'),
-      backgroundColor: kCourseBgGrey,
-      body: Builder(
-        builder: (scaffoldContext) => SafeArea(
-          child: Column(
-            children: [
-              Ios26TopBar(
-                brandColor: kCourseGreen,
-                title: _isEditing ? '코스 수정' : '코스 만들기',
-                onBack: Navigator.of(context).canPop()
-                    ? () => Navigator.of(context).pop()
-                    : null,
-                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                items: const [
-                  Ios26NavItem(label: '기본 정보', active: true),
-                  Ios26NavItem(label: '학습 모듈'),
-                  Ios26NavItem(label: '배포 설정'),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.82),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: AppColors.surfaceBorder),
-                  ),
-                  child: TabBar(
+      onBack: Navigator.of(context).canPop()
+          ? () => Navigator.of(context).pop()
+          : null,
+      actions: [
+        TeacherStudioAction(
+          label: _saving ? '저장 중' : '저장',
+          icon: Icons.save_rounded,
+          onTap: _saving ? null : _save,
+          primary: true,
+        ),
+      ],
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: _BuilderTabSwitcher(controller: _tabController),
+          ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
                     controller: _tabController,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.black54,
-                    indicator: BoxDecoration(
-                      color: kCourseGreen,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: Colors.transparent,
-                    tabs: const [
-                      Tab(text: '메타데이터'),
-                      Tab(text: '모듈'),
+                    children: [
+                      _buildTabContainer(_buildMetaTab(scale), scale),
+                      _buildTabContainer(_buildModuleTab(scale), scale),
                     ],
                   ),
-                ),
-              ),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildTabContainer(_buildMetaTab(scale), scale),
-                          _buildTabContainer(_buildModuleTab(scale), scale),
-                        ],
-                      ),
-              ),
-            ],
           ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _saving ? null : _save,
-        backgroundColor: kCourseGreen,
-        foregroundColor: Colors.white,
-        icon: _saving
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Icon(Icons.save),
-        label: Text(_saving ? '저장 중' : '저장'),
+        ],
       ),
     );
   }
@@ -1984,6 +1944,68 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
           borderRadius: borderRadius,
           clipBehavior: Clip.antiAlias,
           child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요 변수: 기존 TabController.
+/// 작동 원리: 메타데이터와 모듈 작업공간을 넓은 캡슐 탭으로 전환하고 TabBarView 상태를 동기화한다.
+class _BuilderTabSwitcher extends StatelessWidget {
+  const _BuilderTabSwitcher({required this.controller});
+
+  final TabController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) => Container(
+        height: 52,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.88),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.surfaceBorder),
+        ),
+        child: Row(
+          children: [
+            _item(0, Icons.tune_rounded, '기본 정보'),
+            _item(1, Icons.account_tree_outlined, '학습 모듈'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _item(int index, IconData icon, String label) {
+    final selected = controller.index == index;
+    return Expanded(
+      child: Material(
+        color: selected ? Colors.black : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => controller.animateTo(index),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: selected ? Colors.white : Colors.black45,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected ? Colors.white : Colors.black54,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

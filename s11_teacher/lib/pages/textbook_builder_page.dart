@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/textbook.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 
@@ -612,66 +613,55 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
-    return Scaffold(
+    return TeacherStudioShell(
+      currentRoute: '/textbook-builder',
+      eyebrow: 'TEXTBOOK WORKSPACE',
+      title: widget.initialBook != null ? '교재 편집' : '교재 작성',
+      description: '블록을 조합하고 순서를 바꾸며 학습자 화면을 즉시 확인합니다.',
       endDrawer: const TeacherAppDrawer(currentRoute: '/textbook-builder'),
-      backgroundColor: kCourseBgGrey,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: kCourseGreen,
-        elevation: 0,
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.transparent,
-        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
-        automaticallyImplyLeading: Navigator.of(context).canPop(),
-        title: Text(widget.initialBook != null ? '교재 편집' : '교재 작성'),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              tooltip: '메뉴',
-              icon: const Icon(Icons.menu_rounded, color: kCourseGreen),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
-          ),
-          TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: kCourseGreen),
-            onPressed: () => setState(() => _isPreview = !_isPreview),
-            icon: Icon(
-              _isPreview ? Icons.edit : Icons.preview,
-              color: kCourseGreen,
-            ),
-            label: Text(
-              _isPreview ? '편집' : '미리보기',
-              style: const TextStyle(color: kCourseGreen),
-            ),
-          ),
-          TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: kCourseGreen),
-            onPressed: () {
-              final book = _buildBookData();
-              Navigator.of(context).pop(book);
-            },
-            icon: const Icon(Icons.check, color: kCourseGreen),
-            label: const Text('완료', style: TextStyle(color: kCourseGreen)),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: _isPreview
-          ? StudentViewPreview(
-              book: _buildBookData(),
-              scale: scale,
-              onEditPressed: () => setState(() => _isPreview = false),
+      onBack: Navigator.of(context).canPop()
+          ? () => Navigator.of(context).pop()
+          : null,
+      actions: [
+        TeacherStudioAction(
+          label: _isPreview ? '편집으로' : '미리보기',
+          icon: _isPreview ? Icons.edit_rounded : Icons.preview_rounded,
+          onTap: () => setState(() => _isPreview = !_isPreview),
+        ),
+        TeacherStudioAction(
+          label: '완료',
+          icon: Icons.check_rounded,
+          primary: true,
+          onTap: () {
+            final book = _buildBookData();
+            Navigator.of(context).pop(book);
+          },
+        ),
+      ],
+      child: _isPreview
+          ? Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: AppColors.surfaceBorder),
+              ),
+              child: StudentViewPreview(
+                book: _buildBookData(),
+                scale: scale,
+                onEditPressed: () => setState(() => _isPreview = false),
+              ),
             )
           : Column(
               children: [
-                // Metadata header
                 Container(
-                  padding: EdgeInsets.all(16 * scale),
-                  decoration: const BoxDecoration(
+                  margin: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 10),
+                  padding: EdgeInsets.all(18 * scale),
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border(
-                      bottom: BorderSide(color: AppColors.surfaceBorder),
-                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppColors.surfaceBorder),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,15 +670,15 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                         controller: _titleCtrl,
                         style: TextStyle(
                           fontSize: 22 * scale,
-                          fontWeight: FontWeight.bold,
-                          color: kCourseGreen,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
                         ),
                         decoration: InputDecoration(
                           hintText: '교재 제목',
                           hintStyle: TextStyle(
                             fontSize: 22 * scale,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade400,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black26,
                           ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
@@ -705,7 +695,7 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                           hintText: '부제목 또는 설명',
                           hintStyle: TextStyle(
                             fontSize: 14 * scale,
-                            color: Colors.grey.shade400,
+                            color: Colors.black38,
                           ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
@@ -714,7 +704,6 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                     ],
                   ),
                 ),
-                // Block list
                 Expanded(
                   child: ReorderableListView.builder(
                     buildDefaultDragHandles: false,
@@ -723,9 +712,8 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                       horizontal: 16 * scale,
                     ),
                     itemCount: _blocks.length,
-                    onReorder: (oldIndex, newIndex) {
+                    onReorderItem: (oldIndex, newIndex) {
                       setState(() {
-                        if (newIndex > oldIndex) newIndex--;
                         final b = _blocks.removeAt(oldIndex);
                         _blocks.insert(newIndex, b);
                       });
@@ -740,43 +728,32 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                     },
                   ),
                 ),
-                // Bottom action bar
                 Container(
-                  padding: EdgeInsets.all(12 * scale),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(
-                      top: BorderSide(color: AppColors.surfaceBorder),
-                    ),
+                  margin: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+                  padding: EdgeInsets.all(10 * scale),
+                  decoration: BoxDecoration(
+                    color: const Color(0xF7FFFFFF),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: AppColors.surfaceBorder),
                   ),
                   child: SafeArea(
+                    top: false,
                     child: Row(
                       children: [
-                        Text(
-                          '${_blocks.length} 블록',
-                          style: TextStyle(
-                            fontSize: 12 * scale,
-                            color: Colors.black54,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            '${_blocks.length} 블록',
+                            style: TextStyle(
+                              fontSize: 12 * scale,
+                              color: Colors.black54,
+                            ),
                           ),
                         ),
                         const Spacer(),
-                        ElevatedButton.icon(
-                          onPressed: _saving ? null : _save,
-                          icon: _saving
-                              ? SizedBox(
-                                  width: 16 * scale,
-                                  height: 16 * scale,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.save),
-                          label: Text(_saving ? '저장 중...' : '저장'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kCourseGreen,
-                            foregroundColor: Colors.white,
-                          ),
+                        _TextbookCapsuleButton(
+                          loading: _saving,
+                          onTap: _saving ? null : _save,
                         ),
                       ],
                     ),
@@ -784,6 +761,54 @@ class _TextbookBuilderPageState extends State<TextbookBuilderPage> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// 필요 변수: 저장 중 상태와 기존 저장 콜백.
+/// 작동 원리: 하단 작업 바의 저장 기능을 검정 캡슐 버튼으로 제공한다.
+class _TextbookCapsuleButton extends StatelessWidget {
+  const _TextbookCapsuleButton({required this.loading, required this.onTap});
+
+  final bool loading;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              else
+                const Icon(Icons.save_rounded, size: 17, color: Colors.white),
+              const SizedBox(width: 7),
+              Text(
+                loading ? '저장 중' : '저장',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

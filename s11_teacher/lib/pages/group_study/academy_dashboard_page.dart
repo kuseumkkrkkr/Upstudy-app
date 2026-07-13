@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:s11_teacher/services/api_client.dart';
 import 'package:s11_teacher/shared/theme/app_colors.dart';
+import 'package:s11_teacher/shared/ui/ios26/teacher_studio_shell.dart';
+import 'package:s11_teacher/widgets/teacher_app_drawer.dart';
 
 class AcademyDashboardPage extends StatefulWidget {
   const AcademyDashboardPage({
@@ -17,6 +19,56 @@ class AcademyDashboardPage extends StatefulWidget {
 
   @override
   State<AcademyDashboardPage> createState() => _AcademyDashboardPageState();
+}
+
+/// 필요 변수: 기존 학원 대시보드 탭 컨트롤러.
+/// 작동 원리: 구형 TabBar 대신 선택 탭만 검은 캡슐로 표시하고 원래 TabBarView 상태를 그대로 전환한다.
+class _AcademyTabStrip extends StatelessWidget {
+  const _AcademyTabStrip({required this.controller});
+
+  final TabController controller;
+
+  static const _labels = ['출석부', '수납/납입', '상담 이력', '학생별 요약'];
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) => SizedBox(
+        height: 54,
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+          scrollDirection: Axis.horizontal,
+          itemCount: _labels.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 7),
+          itemBuilder: (context, index) {
+            final selected = controller.index == index;
+            return Material(
+              color: selected ? Colors.black : const Color(0xFFF1F1F3),
+              borderRadius: BorderRadius.circular(999),
+              child: InkWell(
+                onTap: () => controller.animateTo(index),
+                borderRadius: BorderRadius.circular(999),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 17),
+                  child: Center(
+                    child: Text(
+                      _labels[index],
+                      style: TextStyle(
+                        color: selected ? Colors.white : Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _AcademyDashboardPageState extends State<AcademyDashboardPage>
@@ -89,41 +141,81 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
   }
 
   Widget _summaryCard(String label, String value, IconData icon) {
-    return Expanded(
-      child: Card(
-        color: AppColors.cardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, color: AppColors.primary, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
+    return Container(
+      constraints: const BoxConstraints(minWidth: 180),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE1E1E5)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 24,
+            offset: Offset(0, 10),
           ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F0F2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: Colors.black, size: 18),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 필요 변수: 로딩·오류·정상 상태에서 표시할 본문과 상단 작업 목록.
+  /// 작동 원리: 모든 상태를 동일한 교사용 작업공간 셸 안에 넣어 탐색 구조가 사라지지 않도록 한다.
+  Widget _dashboardShell({
+    required Widget child,
+    List<TeacherStudioAction> actions = const [],
+  }) {
+    return TeacherStudioShell(
+      currentRoute: '/groups',
+      eyebrow: 'ACADEMY OPERATIONS',
+      title: '학원 운영',
+      description: '출석, 수납, 상담과 학생 현황을 탭별로 확인합니다.',
+      onBack: () => Navigator.of(context).maybePop(),
+      endDrawer: const TeacherAppDrawer(currentRoute: '/groups'),
+      actions: actions,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: ColoredBox(color: Colors.white, child: child),
         ),
       ),
     );
@@ -448,45 +540,47 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text('학원 대시보드'),
-          backgroundColor: AppColors.cardBg,
-          foregroundColor: AppColors.primary,
-          elevation: 0,
-          surfaceTintColor: Colors.white,
-          shadowColor: Colors.transparent,
-          shape: const Border(
-            bottom: BorderSide(color: AppColors.surfaceBorder),
-          ),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
+      return _dashboardShell(
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_error != null) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text('학원 대시보드'),
-          backgroundColor: AppColors.cardBg,
-          foregroundColor: AppColors.primary,
-          elevation: 0,
-          surfaceTintColor: Colors.white,
-          shadowColor: Colors.transparent,
-          shape: const Border(
-            bottom: BorderSide(color: AppColors.surfaceBorder),
+      return _dashboardShell(
+        actions: [
+          TeacherStudioAction(
+            label: '다시 시도',
+            icon: Icons.refresh_rounded,
+            onTap: _loadData,
+            primary: true,
           ),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('오류: $_error'),
-              const SizedBox(height: 16),
-              ElevatedButton(onPressed: _loadData, child: const Text('다시 시도')),
-            ],
+        ],
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 440),
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F6),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off_rounded, size: 32),
+                const SizedBox(height: 14),
+                const Text(
+                  '데이터를 불러오지 못했습니다',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.black54, height: 1.45),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -513,43 +607,34 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage>
         ? '${(paidCount / totalMembers * 100).toStringAsFixed(0)}%'
         : '-';
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('학원 대시보드'),
-        backgroundColor: AppColors.cardBg,
-        foregroundColor: AppColors.primary,
-        elevation: 0,
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.transparent,
-        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          indicatorColor: AppColors.primary,
-          isScrollable: true,
-          tabs: const [
-            Tab(text: '출석부'),
-            Tab(text: '수납/납입'),
-            Tab(text: '상담 이력'),
-            Tab(text: '학생별 요약'),
-          ],
+    return _dashboardShell(
+      actions: [
+        TeacherStudioAction(
+          label: '새로고침',
+          icon: Icons.refresh_rounded,
+          onTap: _loadData,
         ),
-      ),
-      body: Column(
+      ],
+      child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                _summaryCard('총 학생 수', '$totalMembers명', Icons.people),
+                _summaryCard('총 학생 수', '$totalMembers명', Icons.people_outline),
                 const SizedBox(width: 10),
-                _summaryCard('오늘 출석률', attendanceRate, Icons.check_circle),
+                _summaryCard(
+                  '오늘 출석률',
+                  attendanceRate,
+                  Icons.check_circle_outline,
+                ),
                 const SizedBox(width: 10),
-                _summaryCard('이번달 수납률', paymentRate, Icons.payments),
+                _summaryCard('이번달 수납률', paymentRate, Icons.payments_outlined),
               ],
             ),
           ),
+          _AcademyTabStrip(controller: _tabController),
           Expanded(
             child: TabBarView(
               controller: _tabController,

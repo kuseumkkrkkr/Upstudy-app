@@ -76,18 +76,80 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
       if (courses.isEmpty) return;
       final picked = await showDialog<Map<String, dynamic>>(
         context: context,
-        builder: (ctx) => SimpleDialog(
-          title: const Text('코스 링크 보내기'),
-          children: courses
-              .map(
-                (c) => SimpleDialogOption(
-                  onPressed: () => Navigator.of(ctx).pop(c),
-                  child: Text(
-                    c['title']?.toString() ?? c['id']?.toString() ?? '코스',
+        builder: (ctx) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 520, maxHeight: 560),
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: AppColors.surfaceBorder),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '코스 선택',
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '대화에 공유할 코스를 선택하세요.',
+                  style: TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: courses.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (_, index) {
+                      final course = courses[index];
+                      return Material(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          onTap: () => Navigator.of(ctx).pop(course),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 15,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.auto_stories_rounded,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    course['title']?.toString() ??
+                                        course['id']?.toString() ??
+                                        '코스',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-              )
-              .toList(),
+              ],
+            ),
+          ),
         ),
       );
       if (picked == null) return;
@@ -133,8 +195,18 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
+                : _messages.isEmpty
+                ? const Center(
+                    child: Text(
+                      '아직 메시지가 없습니다.',
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final m = _messages[index];
@@ -148,12 +220,12 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
                             horizontal: 14,
                             vertical: 12,
                           ),
-                          constraints: const BoxConstraints(maxWidth: 320),
+                          constraints: const BoxConstraints(maxWidth: 520),
                           decoration: BoxDecoration(
                             color: m.isMine
                                 ? kCourseGreen
                                 : AppColors.surfaceMuted,
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(22),
                             border: Border.all(
                               color: m.isMine
                                   ? kCourseGreen
@@ -174,55 +246,73 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
           ),
           SafeArea(
             top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textCtrl,
-                      decoration: InputDecoration(
-                        hintText: '메시지 입력',
-                        filled: true,
-                        fillColor: AppColors.surfaceMuted,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: AppColors.surfaceBorder,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: AppColors.surfaceBorder,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: kCourseLightGreen,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      onSubmitted: (_) => _send(),
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 960),
+                margin: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.surfaceBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  FilledButton.icon(
-                    onPressed: _send,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: kCourseGreen,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(96, 54),
-                      shape: RoundedRectangleBorder(
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _textCtrl,
+                        decoration: InputDecoration(
+                          hintText: '메시지 입력',
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            borderSide: const BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            borderSide: const BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            borderSide: const BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                        ),
+                        onSubmitted: (_) => _send(),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Material(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(18),
+                      child: InkWell(
+                        onTap: _send,
                         borderRadius: BorderRadius.circular(18),
+                        child: const SizedBox(
+                          width: 56,
+                          height: 54,
+                          child: Icon(
+                            Icons.arrow_upward_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text('전송'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

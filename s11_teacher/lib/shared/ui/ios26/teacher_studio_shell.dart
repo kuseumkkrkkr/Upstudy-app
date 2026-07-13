@@ -131,15 +131,9 @@ class TeacherStudioShell extends StatelessWidget {
               );
 
               if (!desktop) return workspace;
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: 224,
-                    child: _StudioSidebar(currentRoute: currentRoute),
-                  ),
-                  Expanded(child: workspace),
-                ],
+              return _CollapsibleDesktopFrame(
+                currentRoute: currentRoute,
+                workspace: workspace,
               );
             },
           ),
@@ -161,7 +155,7 @@ class TeacherStudioShell extends StatelessWidget {
       children: [
         Ios26TopBar(
           brandColor: AppColors.primary,
-          title: desktop ? '교사용 홈  /  $title' : 'AIFlow',
+          title: desktop ? 'AIFlow Teacher' : 'AIFlow',
           onBack: onBack,
           onMenu: desktop
               ? null
@@ -182,6 +176,46 @@ class TeacherStudioShell extends StatelessWidget {
             currentRoute: currentRoute,
             onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
           ),
+      ],
+    );
+  }
+}
+
+/// 필요 변수: 현재 경로와 실제 페이지 작업공간.
+/// 작동 원리: 데스크톱 사이드바의 열림 상태만 로컬로 관리해 넓은 작업 화면이 필요할 때 즉시 접는다.
+class _CollapsibleDesktopFrame extends StatefulWidget {
+  const _CollapsibleDesktopFrame({
+    required this.currentRoute,
+    required this.workspace,
+  });
+
+  final String currentRoute;
+  final Widget workspace;
+
+  @override
+  State<_CollapsibleDesktopFrame> createState() =>
+      _CollapsibleDesktopFrameState();
+}
+
+class _CollapsibleDesktopFrameState extends State<_CollapsibleDesktopFrame> {
+  bool _expanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          width: _expanded ? 224 : 82,
+          child: _StudioSidebar(
+            currentRoute: widget.currentRoute,
+            expanded: _expanded,
+            onToggle: () => setState(() => _expanded = !_expanded),
+          ),
+        ),
+        Expanded(child: widget.workspace),
       ],
     );
   }
@@ -321,9 +355,15 @@ class _StudioActionButton extends StatelessWidget {
 }
 
 class _StudioSidebar extends StatelessWidget {
-  const _StudioSidebar({required this.currentRoute});
+  const _StudioSidebar({
+    required this.currentRoute,
+    required this.expanded,
+    required this.onToggle,
+  });
 
   final String currentRoute;
+  final bool expanded;
+  final VoidCallback onToggle;
 
   static const _items = <(String, IconData, String)>[
     ('/dashboard', Icons.home_rounded, '교사용 홈'),
@@ -332,6 +372,8 @@ class _StudioSidebar extends StatelessWidget {
     ('/course-list', Icons.grid_view_rounded, '코스 관리'),
     ('/teacher-documents', Icons.folder_outlined, '문서함'),
     ('/groups', Icons.groups_2_outlined, '그룹 관리'),
+    ('/teacher-operations', Icons.calendar_month_outlined, '운영 관리'),
+    ('/teacher-social', Icons.forum_outlined, '친구·채팅'),
     ('/teacher-store', Icons.storefront_outlined, '스토어'),
   ];
 
@@ -341,7 +383,12 @@ class _StudioSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 14, 0, 14),
-      padding: const EdgeInsets.fromLTRB(14, 18, 14, 16),
+      padding: EdgeInsets.fromLTRB(
+        expanded ? 14 : 10,
+        18,
+        expanded ? 14 : 10,
+        16,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF111113),
         borderRadius: BorderRadius.circular(30),
@@ -356,79 +403,105 @@ class _StudioSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(8, 4, 8, 26),
-            child: Row(
-              children: [
-                _BrandMark(),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              expanded ? 8 : 2,
+              4,
+              expanded ? 2 : 2,
+              22,
+            ),
+            child: expanded
+                ? Row(
                     children: [
-                      Text(
-                        'AIFlow',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 17,
+                      const _BrandMark(),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AIFlow',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 17,
+                              ),
+                            ),
+                            Text(
+                              'Teacher workspace',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 9,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Text(
-                        'Teacher workspace',
-                        style: TextStyle(color: Colors.white54, fontSize: 9),
-                      ),
+                      _SidebarToggle(expanded: true, onTap: onToggle),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      const _BrandMark(),
+                      const SizedBox(height: 10),
+                      _SidebarToggle(expanded: false, onTap: onToggle),
                     ],
                   ),
-                ),
-              ],
-            ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(9, 0, 9, 8),
-            child: Text(
-              '제작 및 관리',
-              style: TextStyle(
-                color: Colors.white38,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
+          if (expanded)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(9, 0, 9, 8),
+              child: Text(
+                '제작 및 관리',
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
-          ),
           for (final item in _items)
             _SidebarItem(
               route: item.$1,
               icon: item.$2,
               label: item.$3,
               selected: currentRoute == item.$1,
+              expanded: expanded,
             ),
           const Spacer(),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(expanded ? 12 : 7),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white12),
             ),
-            child: const Row(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleAvatar(
-                  radius: 17,
+                  radius: expanded ? 17 : 15,
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person_rounded, color: Colors.black),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '교사 계정',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Icon(
+                    Icons.person_rounded,
+                    size: expanded ? 24 : 21,
+                    color: Colors.black,
                   ),
                 ),
-                Icon(Icons.more_horiz_rounded, color: Colors.white54),
+                if (expanded) ...[
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      '교사 계정',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.more_horiz_rounded, color: Colors.white54),
+                ],
               ],
             ),
           ),
@@ -459,24 +532,62 @@ class _BrandMark extends StatelessWidget {
   }
 }
 
+class _SidebarToggle extends StatelessWidget {
+  const _SidebarToggle({required this.expanded, required this.onTap});
+
+  final bool expanded;
+  final VoidCallback onTap;
+
+  /// 필요 변수: 현재 펼침 상태와 토글 콜백.
+  /// 작동 원리: 사이드바 폭만 전환하며 페이지 내부 상태와 기능에는 관여하지 않는다.
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: expanded ? '사이드바 접기' : '사이드바 펼치기',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            expanded
+                ? Icons.keyboard_double_arrow_left_rounded
+                : Icons.keyboard_double_arrow_right_rounded,
+            size: 17,
+            color: Colors.white70,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SidebarItem extends StatelessWidget {
   const _SidebarItem({
     required this.route,
     required this.icon,
     required this.label,
     required this.selected,
+    required this.expanded,
   });
 
   final String route;
   final IconData icon;
   final String label;
   final bool selected;
+  final bool expanded;
 
   /// 필요 변수: 이동 경로와 선택 상태.
   /// 작동 원리: 선택한 메뉴만 밝은 면으로 표시하고 기존 named route를 호출한다.
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final item = Padding(
       padding: const EdgeInsets.only(bottom: 5),
       child: Material(
         color: selected ? Colors.white : Colors.transparent,
@@ -485,31 +596,42 @@ class _SidebarItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: selected ? null : () => Navigator.of(context).pushNamed(route),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            padding: EdgeInsets.symmetric(
+              horizontal: expanded ? 12 : 8,
+              vertical: 11,
+            ),
             child: Row(
+              mainAxisAlignment: expanded
+                  ? MainAxisAlignment.start
+                  : MainAxisAlignment.center,
               children: [
                 Icon(
                   icon,
                   size: 18,
                   color: selected ? Colors.black : Colors.white60,
                 ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: selected ? Colors.black : Colors.white60,
-                      fontSize: 12,
-                      fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                if (expanded) ...[
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: selected ? Colors.black : Colors.white60,
+                        fontSize: 12,
+                        fontWeight: selected
+                            ? FontWeight.w900
+                            : FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
         ),
       ),
     );
+    return expanded ? item : Tooltip(message: label, child: item);
   }
 }
 

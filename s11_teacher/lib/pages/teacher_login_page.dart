@@ -19,7 +19,6 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
   String? _errorMessage;
 
   static const Color _primary = AppColors.primary;
-  static const Color _accent = AppColors.primaryLight;
   static const Color _pageBackground = Colors.white;
   static const Color _mutedText = Color(0xFF71717A);
 
@@ -141,29 +140,29 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
-      prefixIcon: Icon(prefixIcon, color: _primary),
+      prefixIcon: Icon(prefixIcon, color: _primary, size: 20),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFFF6F6F7),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(18),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(18),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: _accent, width: 2),
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: _primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide(color: Colors.red.shade300),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide(color: Colors.red.shade400, width: 2),
       ),
     );
@@ -229,7 +228,7 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
@@ -333,20 +332,11 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
             ),
           ),
           const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: _isLoading ? null : _login,
-            style: FilledButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(52),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            icon: _isLoading
-                ? const SizedBox.shrink()
-                : const Icon(Icons.login_rounded),
-            label: _isLoading
+          _LoginAction(
+            label: '로그인',
+            icon: Icons.arrow_forward_rounded,
+            onTap: _isLoading ? null : _login,
+            child: _isLoading
                 ? const SizedBox(
                     height: 20,
                     width: 20,
@@ -355,27 +345,14 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text(
-                    '로그인',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
+                : null,
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: _isLoading ? null : _continueAsGuest,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _primary,
-              side: const BorderSide(color: _primary),
-              minimumSize: const Size.fromHeight(52),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            icon: const Icon(Icons.person_outline_rounded),
-            label: const Text(
-              '게스트로 계속하기',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
+          _LoginAction(
+            label: '게스트로 계속하기',
+            icon: Icons.person_outline_rounded,
+            dark: false,
+            onTap: _isLoading ? null : _continueAsGuest,
           ),
           const SizedBox(height: 24),
           Wrap(
@@ -443,7 +420,7 @@ class _BrandPanel extends StatelessWidget {
     final textAlign = compact ? TextAlign.center : TextAlign.start;
 
     return Container(
-      color: AppColors.primary,
+      color: const Color(0xFF111113),
       padding: EdgeInsets.all(compact ? 24 : 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -455,7 +432,7 @@ class _BrandPanel extends StatelessWidget {
             height: compact ? 56 : 68,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
             ),
             child: Icon(
@@ -535,6 +512,68 @@ class _ErrorBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 로그인 화면의 핵심 동작을 일관된 캡슐형 버튼으로 표시한다.
+/// [onTap]이 null이면 비활성화하고 [child]가 있으면 진행 상태로 대체한다.
+class _LoginAction extends StatelessWidget {
+  const _LoginAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.dark = true,
+    this.child,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool dark;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: onTap == null ? 0.48 : 1,
+      child: Material(
+        color: dark ? const Color(0xFF111113) : const Color(0xFFF3F3F4),
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: dark ? null : Border.all(color: AppColors.surfaceBorder),
+            ),
+            child:
+                child ??
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 20,
+                      color: dark ? Colors.white : Colors.black,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: dark ? Colors.white : Colors.black,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+          ),
+        ),
       ),
     );
   }

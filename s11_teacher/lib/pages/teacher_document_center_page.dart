@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
+import '../widgets/teacher_app_drawer.dart';
 
 class TeacherDocumentCenterPage extends StatefulWidget {
   const TeacherDocumentCenterPage({super.key});
@@ -121,35 +123,37 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Ios26TopBar(
-              brandColor: kCourseGreen,
-              title: '문서함',
-              onBack: () => Navigator.of(context).maybePop(),
-              onMenu: () {},
-              items: const [
-                Ios26NavItem(label: '교재', active: true),
-                Ios26NavItem(label: '권한 참조'),
-              ],
-              trailingIcons: [
-                Ios26ActionIcon(
-                  icon: Icons.refresh_rounded,
-                  label: '새로고침',
-                  onTap: _loadDocuments,
-                ),
-              ],
-            ),
-            Expanded(child: _buildBody()),
-          ],
+    return TeacherStudioShell(
+      currentRoute: TeacherDocumentCenterPage.routeName,
+      eyebrow: 'TEACHING LIBRARY',
+      title: '문서함',
+      description: '수업에 연결할 교재를 분류하고 필요한 정보를 한 화면에서 확인합니다.',
+      onBack: Navigator.of(context).canPop()
+          ? () => Navigator.of(context).maybePop()
+          : null,
+      endDrawer: const TeacherAppDrawer(
+        currentRoute: TeacherDocumentCenterPage.routeName,
+      ),
+      actions: [
+        TeacherStudioAction(
+          label: '새로고침',
+          icon: Icons.refresh_rounded,
+          onTap: _loadDocuments,
+          primary: true,
+        ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: ColoredBox(color: Colors.white, child: _buildBody()),
         ),
       ),
     );
   }
 
+  /// 필요 변수: 로딩 상태, 폴더 목록, 검색어와 선택 교재.
+  /// 작동 원리: PC는 분류·목록·상세 3열을 유지하고 모바일은 분류를 가로 캡슐로 전환한다.
   Widget _buildBody() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -160,6 +164,36 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 1040;
+        final compact = constraints.maxWidth < 720;
+        if (compact) {
+          return Column(
+            children: [
+              SizedBox(
+                height: 58,
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _folders.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 7),
+                  itemBuilder: (context, index) {
+                    final folder = _folders[index];
+                    final active = folder == _selectedFolder;
+                    return _FolderCapsule(
+                      label: folder,
+                      active: active,
+                      onTap: () => setState(() => _selectedFolder = folder),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 4, 14, 12),
+                child: _DocumentSearchField(controller: _searchController),
+              ),
+              Expanded(child: _buildDocumentList()),
+            ],
+          );
+        }
         return Row(
           children: [
             SizedBox(
@@ -175,34 +209,7 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: '교재명, 태그, 폴더 검색',
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        filled: true,
-                        fillColor: AppColors.surfaceMuted,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: AppColors.surfaceBorder,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: AppColors.surfaceBorder,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(
-                            color: kCourseLightGreen,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    ),
+                    child: _DocumentSearchField(controller: _searchController),
                   ),
                   Expanded(child: _buildDocumentList()),
                 ],
@@ -236,6 +243,76 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
           onTap: () => _selectDocument(document),
         );
       },
+    );
+  }
+}
+
+/// 필요 변수: 검색 컨트롤러.
+/// 작동 원리: 모든 화면 폭에서 동일한 검색 상태를 사용하되 흑백 작업공간 입력 형태로 표시한다.
+class _DocumentSearchField extends StatelessWidget {
+  const _DocumentSearchField({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: '교재명, 태그, 폴더 검색',
+        prefixIcon: const Icon(Icons.search_rounded, color: Colors.black54),
+        filled: true,
+        fillColor: const Color(0xFFF4F4F6),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFFE2E2E6)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Colors.black, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요 변수: 폴더명, 선택 여부, 선택 콜백.
+/// 작동 원리: 좁은 화면에서 고정 레일 대신 가로 스크롤 가능한 캡슐 필터를 제공한다.
+class _FolderCapsule extends StatelessWidget {
+  const _FolderCapsule({
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: active ? Colors.black : const Color(0xFFF3F3F5),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: active ? Colors.white : Colors.black,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

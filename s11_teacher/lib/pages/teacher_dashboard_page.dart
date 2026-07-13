@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import 'course_builder_page.dart';
 import 'course_list_page.dart';
@@ -23,97 +24,38 @@ class TeacherDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return TeacherStudioShell(
+      currentRoute: '/dashboard',
+      eyebrow: 'TEACHER WORKSPACE',
+      title: '오늘의 작업',
+      description: '자주 쓰는 제작 도구와 수업 관리 기능을 바로 시작하세요.',
       endDrawer: _IosDashboardDrawer(onLogout: () => _logout(context)),
-      body: Builder(
-        builder: (scaffoldContext) {
-          return Stack(
-            children: [
-              const _DashboardBackdrop(),
-              SafeArea(
-                child: Column(
-                  children: [
-                    Ios26TopBar(
-                      brandColor: kCourseGreen,
-                      title: '교사용 홈',
-                      onMenu: () =>
-                          Scaffold.of(scaffoldContext).openEndDrawer(),
-                      items: [
-                        const Ios26NavItem(label: '홈', active: true),
-                        Ios26NavItem(
-                          label: '문서함',
-                          onTap: () => _open(
-                            scaffoldContext,
-                            const TeacherDocumentCenterPage(),
-                          ),
-                        ),
-                        Ios26NavItem(
-                          label: '코스',
-                          onTap: () =>
-                              _open(scaffoldContext, const CourseListPage()),
-                        ),
-                        Ios26NavItem(
-                          label: '문항 제작',
-                          onTap: () =>
-                              _open(scaffoldContext, const ProblemEditorPage()),
-                        ),
-                      ],
-                      trailingIcons: [
-                        Ios26ActionIcon(
-                          icon: Icons.add_task_rounded,
-                          label: '코스 생성',
-                          onTap: () =>
-                              _open(scaffoldContext, const CourseBuilderPage()),
-                        ),
-                        Ios26ActionIcon(
-                          icon: Icons.folder_open_rounded,
-                          label: '문서함',
-                          onTap: () => _open(
-                            scaffoldContext,
-                            const TeacherDocumentCenterPage(),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Expanded(
-                      child: CustomScrollView(
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: _HeroPanel(
-                              onCreateCourse: () => _open(
-                                scaffoldContext,
-                                const CourseBuilderPage(),
-                              ),
-                              onOpenDocuments: () => _open(
-                                scaffoldContext,
-                                const TeacherDocumentCenterPage(),
-                              ),
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
-                            sliver: _ActionGrid(
-                              scaffoldContext: scaffoldContext,
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-                            sliver: SliverToBoxAdapter(
-                              child: _LowerPanels(
-                                scaffoldContext: scaffoldContext,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
+      actions: [
+        TeacherStudioAction(
+          label: '코스 생성',
+          icon: Icons.add_task_rounded,
+          primary: true,
+          onTap: () => _open(context, const CourseBuilderPage()),
+        ),
+        TeacherStudioAction(
+          label: '문서함',
+          icon: Icons.folder_open_rounded,
+          onTap: () => _open(context, const TeacherDocumentCenterPage()),
+        ),
+      ],
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+            sliver: _ActionGrid(scaffoldContext: context),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+            sliver: SliverToBoxAdapter(
+              child: _LowerPanels(scaffoldContext: context),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -123,6 +65,7 @@ class TeacherDashboardPage extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _DashboardBackdrop extends StatelessWidget {
   const _DashboardBackdrop();
 
@@ -141,6 +84,7 @@ class _DashboardBackdrop extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _HeroPanel extends StatelessWidget {
   const _HeroPanel({
     required this.onCreateCourse,
@@ -346,88 +290,98 @@ class _ActionGrid extends StatelessWidget {
 
   final BuildContext scaffoldContext;
 
+  /// 필요 변수: 현재 슬리버의 실제 가로 폭.
+  /// 작동 원리: 전체 창 크기가 아닌 작업 영역 제약으로 열 수와 카드 비율을 정해
+  /// 접힌 사이드바와 모바일 화면에서도 카드 내용이 잘리지 않게 배치한다.
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final columns = width >= 1180
-        ? 4
-        : width >= 860
-        ? 3
-        : width >= 620
-        ? 2
-        : 1;
-    final ratio = width < 620
-        ? 2.85
-        : width < 1180
-        ? 1.5
-        : 1.68;
-    return SliverGrid(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        crossAxisSpacing: 14,
-        mainAxisSpacing: 14,
-        childAspectRatio: ratio,
-      ),
-      delegate: SliverChildListDelegate.fixed([
-        _FeatureTile(
-          icon: Icons.add_task_rounded,
-          title: '코스 생성',
-          subtitle: '페이지 범위, 최소 시간, 교재 권한을 설정합니다.',
-          tint: kCourseLightGreen,
-          onTap: () => _push(const CourseBuilderPage()),
-        ),
-        _FeatureTile(
-          icon: Icons.folder_open_rounded,
-          title: '문서함',
-          subtitle: '교재만 선별해서 코스에 연결합니다.',
-          tint: const Color(0xFF27272A),
-          onTap: () => _push(const TeacherDocumentCenterPage()),
-        ),
-        _FeatureTile(
-          icon: Icons.menu_book_rounded,
-          title: '코스 관리',
-          subtitle: '배포한 코스와 연결된 교재를 확인합니다.',
-          tint: const Color(0xFF3F3F46),
-          onTap: () => _push(const CourseListPage()),
-        ),
-        _FeatureTile(
-          icon: Icons.assignment_rounded,
-          title: '시험지 생성',
-          subtitle: '문항을 묶어 평가 자료를 만듭니다.',
-          tint: const Color(0xFF18181B),
-          onTap: () => _push(const ExamPaperBuilderPage()),
-        ),
-        _FeatureTile(
-          icon: Icons.edit_note_rounded,
-          title: '문항 제작',
-          subtitle: '문항 초안과 변형을 정리합니다.',
-          tint: const Color(0xFF52525B),
-          onTap: () => _push(const ProblemEditorPage()),
-        ),
-        _FeatureTile(
-          icon: Icons.groups_rounded,
-          title: '그룹 관리',
-          subtitle: '학생 그룹과 수업 운영 상태를 봅니다.',
-          tint: const Color(0xFF09090B),
-          onTap: () =>
-              Navigator.of(scaffoldContext).pushNamed(GroupListPage.routeName),
-        ),
-        _FeatureTile(
-          icon: Icons.analytics_rounded,
-          title: '학습 분석',
-          subtitle: '현재는 그룹 관리 화면으로 이동합니다.',
-          tint: kCourseGreen,
-          onTap: () =>
-              Navigator.of(scaffoldContext).pushNamed(GroupListPage.routeName),
-        ),
-        _FeatureTile(
-          icon: Icons.account_balance_wallet_rounded,
-          title: '재무제표(회계)',
-          subtitle: '회계와 일간/월간 스케줄을 로컬 DB에 저장합니다.',
-          tint: const Color(0xFF71717A),
-          onTap: () => _push(const TeacherOperationsPage()),
-        ),
-      ]),
+    return SliverLayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.crossAxisExtent;
+        final columns = width >= 1180
+            ? 4
+            : width >= 860
+            ? 3
+            : width >= 620
+            ? 2
+            : 1;
+        final ratio = switch (columns) {
+          1 => 2.35,
+          2 => 1.35,
+          3 => 1.5,
+          _ => 1.68,
+        };
+        return SliverGrid(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: ratio,
+          ),
+          delegate: SliverChildListDelegate.fixed([
+            _FeatureTile(
+              icon: Icons.add_task_rounded,
+              title: '코스 생성',
+              subtitle: '페이지 범위, 최소 시간, 교재 권한을 설정합니다.',
+              tint: kCourseLightGreen,
+              onTap: () => _push(const CourseBuilderPage()),
+            ),
+            _FeatureTile(
+              icon: Icons.folder_open_rounded,
+              title: '문서함',
+              subtitle: '교재만 선별해서 코스에 연결합니다.',
+              tint: const Color(0xFF27272A),
+              onTap: () => _push(const TeacherDocumentCenterPage()),
+            ),
+            _FeatureTile(
+              icon: Icons.menu_book_rounded,
+              title: '코스 관리',
+              subtitle: '배포한 코스와 연결된 교재를 확인합니다.',
+              tint: const Color(0xFF3F3F46),
+              onTap: () => _push(const CourseListPage()),
+            ),
+            _FeatureTile(
+              icon: Icons.assignment_rounded,
+              title: '시험지 생성',
+              subtitle: '문항을 묶어 평가 자료를 만듭니다.',
+              tint: const Color(0xFF18181B),
+              onTap: () => _push(const ExamPaperBuilderPage()),
+            ),
+            _FeatureTile(
+              icon: Icons.edit_note_rounded,
+              title: '문항 제작',
+              subtitle: '문항 초안과 변형을 정리합니다.',
+              tint: const Color(0xFF52525B),
+              onTap: () => _push(const ProblemEditorPage()),
+            ),
+            _FeatureTile(
+              icon: Icons.groups_rounded,
+              title: '그룹 관리',
+              subtitle: '학생 그룹과 수업 운영 상태를 봅니다.',
+              tint: const Color(0xFF09090B),
+              onTap: () => Navigator.of(
+                scaffoldContext,
+              ).pushNamed(GroupListPage.routeName),
+            ),
+            _FeatureTile(
+              icon: Icons.analytics_rounded,
+              title: '학습 분석',
+              subtitle: '현재는 그룹 관리 화면으로 이동합니다.',
+              tint: kCourseGreen,
+              onTap: () => Navigator.of(
+                scaffoldContext,
+              ).pushNamed(GroupListPage.routeName),
+            ),
+            _FeatureTile(
+              icon: Icons.account_balance_wallet_rounded,
+              title: '재무제표(회계)',
+              subtitle: '회계와 일간/월간 스케줄을 로컬 DB에 저장합니다.',
+              tint: const Color(0xFF71717A),
+              onTap: () => _push(const TeacherOperationsPage()),
+            ),
+          ]),
+        );
+      },
     );
   }
 

@@ -212,51 +212,57 @@ class _SocialSummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    labelText: '닉네임',
-                    hintText: '닉네임으로 친구 추가',
-                    filled: true,
-                    fillColor: AppColors.surfaceMuted,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: const BorderSide(
-                        color: AppColors.surfaceBorder,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: const BorderSide(
-                        color: AppColors.surfaceBorder,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: const BorderSide(
-                        color: kCourseLightGreen,
-                        width: 2,
-                      ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 520;
+              final field = TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: '닉네임',
+                  hintText: '닉네임으로 친구 추가',
+                  filled: true,
+                  fillColor: AppColors.surfaceMuted,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(
+                      color: AppColors.surfaceBorder,
                     ),
                   ),
-                  onSubmitted: (_) => onAdd(),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(
+                      color: AppColors.surfaceBorder,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(
+                      color: Colors.black,
+                      width: 1.5,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              FilledButton.icon(
-                onPressed: onAdd,
-                style: FilledButton.styleFrom(
-                  backgroundColor: kCourseGreen,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(110, 54),
-                ),
-                icon: const Icon(Icons.person_add_alt_1_rounded),
-                label: const Text('추가'),
-              ),
-            ],
+                onSubmitted: (_) => onAdd(),
+              );
+              final action = _SocialAction(
+                label: '친구 추가',
+                icon: Icons.person_add_alt_1_rounded,
+                onTap: onAdd,
+              );
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [field, const SizedBox(height: 10), action],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: field),
+                  const SizedBox(width: 10),
+                  action,
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -352,14 +358,11 @@ class _FriendCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: onChat,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: kCourseGreen,
-              side: const BorderSide(color: AppColors.surfaceBorder),
-            ),
-            icon: const Icon(Icons.chat_bubble_outline_rounded),
-            label: const Text('채팅'),
+          _SocialAction(
+            onTap: onChat,
+            dark: false,
+            icon: Icons.chat_bubble_outline_rounded,
+            label: '채팅',
           ),
           const SizedBox(width: 8),
           IconButton(
@@ -371,6 +374,57 @@ class _FriendCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 친구 추가와 채팅 진입을 터치하기 쉬운 캡슐형 액션으로 표시한다.
+/// 모바일에서는 전체 너비를 사용하고 PC에서는 내용 너비를 유지한다.
+class _SocialAction extends StatelessWidget {
+  const _SocialAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.dark = true,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: dark ? Colors.black : AppColors.surfaceMuted,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: 54,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: dark ? null : Border.all(color: AppColors.surfaceBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 19, color: dark ? Colors.white : Colors.black),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: dark ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

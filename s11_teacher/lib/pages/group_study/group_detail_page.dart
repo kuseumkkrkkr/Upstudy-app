@@ -6,6 +6,7 @@ import 'package:s11_teacher/pages/group_study/academy_dashboard_page.dart';
 import 'package:s11_teacher/services/api_client.dart';
 import 'package:s11_teacher/shared/theme/app_colors.dart';
 import 'package:s11_teacher/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11_teacher/shared/ui/ios26/teacher_studio_shell.dart';
 import 'package:s11_teacher/widgets/teacher_app_drawer.dart';
 
 class GroupDetailPage extends StatefulWidget {
@@ -858,27 +859,27 @@ class _Ios26DetailShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TeacherStudioShell(
+      currentRoute: '/groups',
+      eyebrow: 'GROUP WORKSPACE',
+      title: '그룹 작업공간',
+      description: '$groupName의 멤버, 수업, 채팅을 탭으로 빠르게 관리합니다.',
+      onBack: () => Navigator.of(context).maybePop(),
       endDrawer: const TeacherAppDrawer(currentRoute: '/groups'),
-      backgroundColor: Colors.white,
-      body: Builder(
-        builder: (scaffoldContext) => SafeArea(
-          child: Column(
-            children: [
-              Ios26TopBar(
-                brandColor: AppColors.primary,
-                title: 'AIFlow 선생님',
-                onBack: () => Navigator.of(context).maybePop(),
-                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                items: [
-                  const Ios26NavItem(label: '그룹스터디'),
-                  Ios26NavItem(label: groupName, active: true),
-                ],
-                trailingIcons: trailingIcons,
-              ),
-              Expanded(child: child),
-            ],
+      actions: [
+        for (final action in trailingIcons)
+          TeacherStudioAction(
+            label: action.label,
+            icon: action.icon,
+            onTap: action.onTap,
+            primary: action.active,
           ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: ColoredBox(color: Colors.white, child: child),
         ),
       ),
     );

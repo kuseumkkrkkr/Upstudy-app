@@ -5,6 +5,7 @@ import 'package:s11_teacher/pages/group_study/group_detail_page.dart';
 import 'package:s11_teacher/services/api_client.dart';
 import 'package:s11_teacher/shared/theme/app_colors.dart';
 import 'package:s11_teacher/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11_teacher/shared/ui/ios26/teacher_studio_shell.dart';
 import 'package:s11_teacher/widgets/teacher_app_drawer.dart';
 
 class GroupListPage extends StatefulWidget {
@@ -116,52 +117,6 @@ class _GroupListPageState extends State<GroupListPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
           children: [
-            Ios26FrostedCard(
-              radius: 30,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.admin_panel_settings_outlined,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '교사용 그룹 관리',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          '검색 노출 없이 초대 코드와 링크만으로 입장하는 그룹스터디를 관리합니다.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.45,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
             if (_groups.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 56),
@@ -544,26 +499,29 @@ class _Ios26TeacherShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TeacherStudioShell(
+      currentRoute: GroupListPage.routeName,
+      eyebrow: 'CLASS COMMUNITY',
+      title: '그룹 관리',
+      description: '초대부터 수업 배정까지 그룹 운영에 필요한 작업을 한곳에서 처리합니다.',
+      onBack: Navigator.of(context).canPop()
+          ? () => Navigator.of(context).maybePop()
+          : null,
       endDrawer: const TeacherAppDrawer(currentRoute: GroupListPage.routeName),
-      backgroundColor: Colors.white,
-      body: Builder(
-        builder: (scaffoldContext) => SafeArea(
-          child: Column(
-            children: [
-              Ios26TopBar(
-                brandColor: AppColors.primary,
-                title: 'AIFlow 선생님',
-                onBack: Navigator.of(context).canPop()
-                    ? () => Navigator.of(context).maybePop()
-                    : null,
-                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                items: const [Ios26NavItem(label: '그룹스터디', active: true)],
-                trailingIcons: trailingIcons,
-              ),
-              Expanded(child: child),
-            ],
+      actions: [
+        for (final action in trailingIcons)
+          TeacherStudioAction(
+            label: action.label,
+            icon: action.icon,
+            onTap: action.onTap,
+            primary: action.active,
           ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: ColoredBox(color: Colors.white, child: child),
         ),
       ),
     );

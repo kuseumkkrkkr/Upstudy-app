@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
-import '../shared/ui/ios26/ios26_chrome.dart';
 import '../shared/ui/ios26/teacher_full_face_panel.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 import 'exam_paper_editor_page.dart';
@@ -227,85 +227,81 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
-    return Scaffold(
+    return TeacherStudioShell(
+      currentRoute: '/exam-builder',
+      eyebrow: 'QUICK GENERATOR',
+      title: '빠른 시험지',
+      description: '유형과 난이도, 태그만 선택해 즉시 시험지를 생성합니다.',
       endDrawer: const TeacherAppDrawer(currentRoute: '/exam-builder'),
-      backgroundColor: kCourseBgGrey,
-      body: Builder(
-        builder: (scaffoldContext) => SafeArea(
-          child: Column(
-            children: [
-              Ios26TopBar(
-                brandColor: kCourseGreen,
-                title: '빠른 시험지',
-                onBack: Navigator.of(context).canPop()
-                    ? () => Navigator.of(context).pop()
-                    : null,
-                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                items: const [
-                  Ios26NavItem(label: '설정', active: true),
-                  Ios26NavItem(label: '태그'),
-                  Ios26NavItem(label: '생성 상태'),
-                ],
-              ),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 920;
-                    final contentWidth = constraints.maxWidth > 1180
-                        ? 1180.0
-                        : constraints.maxWidth;
-                    final horizontalPadding = isWide ? 24.0 : 14.0;
+      onBack: Navigator.of(context).canPop()
+          ? () => Navigator.of(context).pop()
+          : null,
+      actions: [
+        TeacherStudioAction(
+          label: _generating ? '생성 중' : '시험지 생성',
+          icon: Icons.auto_awesome_rounded,
+          onTap: _generating ? null : _generate,
+          primary: true,
+        ),
+        TeacherStudioAction(
+          label: '태그 선택',
+          icon: Icons.sell_outlined,
+          onTap: _loadingTags ? null : _openTagPicker,
+        ),
+      ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 920;
+          final contentWidth = constraints.maxWidth > 1180
+              ? 1180.0
+              : constraints.maxWidth;
+          final horizontalPadding = isWide ? 24.0 : 14.0;
 
-                    final settingsPanel = _buildSettingsPanel(scale);
-                    final tagPanel = _buildTagPanel(scale);
+          final settingsPanel = _buildSettingsPanel(scale);
+          final tagPanel = _buildTagPanel(scale);
 
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(
-                        horizontalPadding * scale,
-                        18 * scale,
-                        horizontalPadding * scale,
-                        24 * scale,
-                      ),
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: SizedBox(
-                          width: contentWidth,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildSummaryPanel(scale),
-                              SizedBox(height: 12 * scale),
-                              if (isWide)
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(flex: 7, child: settingsPanel),
-                                    SizedBox(width: 12 * scale),
-                                    Expanded(flex: 5, child: tagPanel),
-                                  ],
-                                )
-                              else ...[
-                                settingsPanel,
-                                SizedBox(height: 12 * scale),
-                                tagPanel,
-                              ],
-                              if (_examId != null) ...[
-                                SizedBox(height: 12 * scale),
-                                _buildStatusPanel(scale),
-                              ],
-                              SizedBox(height: 16 * scale),
-                              _buildActionArea(scale, isWide: isWide),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding * scale,
+              18 * scale,
+              horizontalPadding * scale,
+              24 * scale,
+            ),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: contentWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSummaryPanel(scale),
+                    SizedBox(height: 12 * scale),
+                    if (isWide)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 7, child: settingsPanel),
+                          SizedBox(width: 12 * scale),
+                          Expanded(flex: 5, child: tagPanel),
+                        ],
+                      )
+                    else ...[
+                      settingsPanel,
+                      SizedBox(height: 12 * scale),
+                      tagPanel,
+                    ],
+                    if (_examId != null) ...[
+                      SizedBox(height: 12 * scale),
+                      _buildStatusPanel(scale),
+                    ],
+                    SizedBox(height: 16 * scale),
+                    _buildActionArea(scale, isWide: isWide),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -392,25 +388,9 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
           value: _paperType == 'aiflow' ? 'AIFlow' : 'CSAT',
         ),
         SizedBox(height: 10 * scale),
-        SizedBox(
-          width: double.infinity,
-          child: SegmentedButton<String>(
-            showSelectedIcon: true,
-            selectedIcon: const Icon(Icons.check_rounded, size: 18),
-            segments: const [
-              ButtonSegment(value: 'aiflow', label: Text('AIFlow')),
-              ButtonSegment(value: 'csat', label: Text('CSAT')),
-            ],
-            selected: {_paperType},
-            style: SegmentedButton.styleFrom(
-              selectedBackgroundColor: kCourseGreen.withValues(alpha: 0.1),
-              selectedForegroundColor: kCourseGreen,
-              foregroundColor: Colors.black87,
-              side: const BorderSide(color: AppColors.surfaceBorder),
-              textStyle: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            onSelectionChanged: (set) => setState(() => _paperType = set.first),
-          ),
+        _ExamTypeCapsule(
+          value: _paperType,
+          onChanged: (value) => setState(() => _paperType = value),
         ),
       ],
     );
@@ -838,6 +818,53 @@ List<String> _uniqueTags(Iterable<String> tags) {
     results.add(value);
   }
   return results;
+}
+
+/// 필요 변수: 현재 시험지 유형과 변경 콜백.
+/// 작동 원리: Material SegmentedButton 대신 두 개의 넓은 캡슐 면으로 유형을 전환한다.
+class _ExamTypeCapsule extends StatelessWidget {
+  const _ExamTypeCapsule({required this.value, required this.onChanged});
+
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F2),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD8D8DC)),
+      ),
+      child: Row(children: [_item('aiflow', 'AIFlow'), _item('csat', 'CSAT')]),
+    );
+  }
+
+  Widget _item(String itemValue, String label) {
+    final selected = value == itemValue;
+    return Expanded(
+      child: Material(
+        color: selected ? Colors.black : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => onChanged(itemValue),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.black54,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ExamTagGroup {

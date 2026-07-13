@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 import 'course_builder_page.dart';
@@ -259,41 +260,29 @@ class _CourseListPageState extends State<CourseListPage> {
     final scale = courseUiScale(context);
     final totalPages = _total == 0 ? 1 : (_total / _pageSize).ceil();
     final end = (_page * _pageSize) + _courses.length;
-    return Scaffold(
+    return TeacherStudioShell(
+      currentRoute: CourseListPage.routeName,
+      eyebrow: 'COURSE LIBRARY',
+      title: '코스 관리',
+      description: '학습 흐름을 찾고, 공개 상태와 구성을 한 화면에서 관리합니다.',
       endDrawer: const TeacherAppDrawer(currentRoute: CourseListPage.routeName),
-      backgroundColor: kCourseBgGrey,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: kCourseGreen,
-        elevation: 0,
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.transparent,
-        shape: const Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
-        automaticallyImplyLeading: Navigator.of(context).canPop(),
-        title: const Text('코스 관리'),
-        actions: [
-          IconButton(
-            tooltip: '새로고침',
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: _loading ? null : () => _load(resetPage: false),
-          ),
-          Builder(
-            builder: (context) => IconButton(
-              tooltip: '메뉴',
-              icon: const Icon(Icons.menu_rounded),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _saving ? null : () => _openBuilder(),
-        backgroundColor: kCourseGreen,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('새 코스'),
-      ),
-      body: Column(
+      onBack: Navigator.of(context).canPop()
+          ? () => Navigator.of(context).pop()
+          : null,
+      actions: [
+        TeacherStudioAction(
+          label: '새 코스',
+          icon: Icons.add_rounded,
+          onTap: _saving ? null : () => _openBuilder(),
+          primary: true,
+        ),
+        TeacherStudioAction(
+          label: '새로고침',
+          icon: Icons.refresh_rounded,
+          onTap: _loading ? null : () => _load(resetPage: false),
+        ),
+      ],
+      child: Column(
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(
@@ -322,7 +311,9 @@ class _CourseListPageState extends State<CourseListPage> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     SizedBox(
-                      width: 280,
+                      width: MediaQuery.sizeOf(context).width < 720
+                          ? MediaQuery.sizeOf(context).width - 32
+                          : 320,
                       child: TextField(
                         controller: _searchCtrl,
                         decoration: InputDecoration(
@@ -434,8 +425,10 @@ class _CourseListPageState extends State<CourseListPage> {
                         },
                       ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: _loading
+                    _CapsuleButton(
+                      label: '필터 초기화',
+                      icon: Icons.filter_alt_off_rounded,
+                      onTap: _loading
                           ? null
                           : () {
                               _searchCtrl.clear();
@@ -447,8 +440,6 @@ class _CourseListPageState extends State<CourseListPage> {
                               });
                               _load(resetPage: true);
                             },
-                      icon: const Icon(Icons.filter_alt_off_rounded),
-                      label: const Text('필터 초기화'),
                     ),
                   ],
                 ),
@@ -557,7 +548,12 @@ class _CourseListPageState extends State<CourseListPage> {
               style: TextStyle(color: Colors.red, fontSize: 14 * scale),
             ),
             SizedBox(height: 16 * scale),
-            ElevatedButton(onPressed: _load, child: const Text('다시 시도')),
+            _CapsuleButton(
+              label: '다시 시도',
+              icon: Icons.refresh_rounded,
+              onTap: _load,
+              primary: true,
+            ),
           ],
         ),
       );
@@ -571,141 +567,49 @@ class _CourseListPageState extends State<CourseListPage> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              child: DataTable(
-                headingRowHeight: 48,
-                dataRowMinHeight: 64,
-                dataRowMaxHeight: 84,
-                showCheckboxColumn: true,
-                columns: const [
-                  DataColumn(label: Text('코스')),
-                  DataColumn(label: Text('모듈')),
-                  DataColumn(label: Text('노출')),
-                  DataColumn(label: Text('교재')),
-                  DataColumn(label: Text('태그')),
-                  DataColumn(label: Text('수정일')),
-                  DataColumn(label: Text('작업')),
-                ],
-                rows: _courses.map((course) {
-                  final id = course['id']?.toString() ?? '';
-                  final selected = _selectedIds.contains(id);
-                  final public = course['is_public'] == true;
-                  final tags = _tagsFor(course);
-                  return DataRow(
-                    selected: selected,
-                    onSelectChanged: (value) {
-                      setState(() {
-                        if (value == true) {
-                          _selectedIds.add(id);
-                        } else {
-                          _selectedIds.remove(id);
-                        }
-                      });
-                    },
-                    cells: [
-                      DataCell(
-                        SizedBox(
-                          width: 300,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _courseTitle(course),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _courseDescription(course),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      DataCell(Text(_moduleCountLabel(course))),
-                      DataCell(_Badge(label: public ? '공개' : '비공개', scale: 1)),
-                      DataCell(Text(_textbookLabel(course))),
-                      DataCell(
-                        SizedBox(
-                          width: 180,
-                          child: Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
-                            children: tags.isEmpty
-                                ? [const Text('-')]
-                                : tags
-                                      .take(3)
-                                      .map(
-                                        (tag) => _Badge(label: tag, scale: 1),
-                                      )
-                                      .toList(),
-                          ),
-                        ),
-                      ),
-                      DataCell(Text(_updatedLabel(course))),
-                      DataCell(
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: '수정',
-                              icon: const Icon(Icons.edit_outlined),
-                              onPressed: () => _openBuilder(courseId: id),
-                            ),
-                            IconButton(
-                              tooltip: public ? '비공개로 전환' : '공개로 전환',
-                              icon: Icon(
-                                public
-                                    ? Icons.visibility_rounded
-                                    : Icons.visibility_off_rounded,
-                                color: public ? kCourseGreen : Colors.black45,
-                              ),
-                              onPressed: () => _toggleVisibility(course),
-                            ),
-                            IconButton(
-                              tooltip: '삭제',
-                              icon: const Icon(
-                                Icons.delete_outline_rounded,
-                                color: Colors.red,
-                              ),
-                              onPressed: () => _deleteCourse(
-                                id,
-                                title: _courseTitle(course),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 1080
+            ? 3
+            : constraints.maxWidth >= 700
+            ? 2
+            : 1;
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisExtent: 250,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
           ),
-        ),
-      ),
+          itemCount: _courses.length,
+          itemBuilder: (context, index) {
+            final course = _courses[index];
+            final id = course['id']?.toString() ?? '';
+            final selected = _selectedIds.contains(id);
+            final public = course['is_public'] == true;
+            final tags = _tagsFor(course);
+            return _CourseCard(
+              title: _courseTitle(course),
+              description: _courseDescription(course),
+              moduleCount: _moduleCountLabel(course),
+              textbook: _textbookLabel(course),
+              updatedAt: _updatedLabel(course),
+              tags: tags,
+              isPublic: public,
+              selected: selected,
+              onSelected: () {
+                setState(() {
+                  selected ? _selectedIds.remove(id) : _selectedIds.add(id);
+                });
+              },
+              onEdit: () => _openBuilder(courseId: id),
+              onVisibility: () => _toggleVisibility(course),
+              onDelete: () => _deleteCourse(id, title: _courseTitle(course)),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -782,6 +686,224 @@ class _Badge extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+/// 필요 변수: 문구, 아이콘, 실행 콜백, 강조 여부.
+/// 작동 원리: 구형 Material 버튼 대신 동일한 높이의 캡슐 표면에서 기존 콜백을 실행한다.
+class _CapsuleButton extends StatelessWidget {
+  const _CapsuleButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.primary = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: primary ? Colors.black : Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: Container(
+          height: 46,
+          padding: const EdgeInsets.symmetric(horizontal: 17),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFD7D7DB)),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: primary ? Colors.white : Colors.black,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  color: primary ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요 변수: 코스 표시 정보와 선택·수정·공개·삭제 콜백.
+/// 작동 원리: 표의 좁은 작업 열을 넓은 카드로 바꾸되 모든 기존 관리 기능을 그대로 연결한다.
+class _CourseCard extends StatelessWidget {
+  const _CourseCard({
+    required this.title,
+    required this.description,
+    required this.moduleCount,
+    required this.textbook,
+    required this.updatedAt,
+    required this.tags,
+    required this.isPublic,
+    required this.selected,
+    required this.onSelected,
+    required this.onEdit,
+    required this.onVisibility,
+    required this.onDelete,
+  });
+
+  final String title;
+  final String description;
+  final String moduleCount;
+  final String textbook;
+  final String updatedAt;
+  final List<String> tags;
+  final bool isPublic;
+  final bool selected;
+  final VoidCallback onSelected;
+  final VoidCallback onEdit;
+  final VoidCallback onVisibility;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? const Color(0xFFF0F0F2) : Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onEdit,
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: selected ? Colors.black : const Color(0xFFDADADD),
+              width: selected ? 1.4 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _Badge(label: isPublic ? '공개' : '비공개', scale: 1),
+                  const Spacer(),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    tooltip: '선택',
+                    onPressed: onSelected,
+                    icon: Icon(
+                      selected
+                          ? Icons.check_circle_rounded
+                          : Icons.circle_outlined,
+                      color: selected ? Colors.black : Colors.black38,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                description.isEmpty ? '설명이 아직 없습니다.' : description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.45,
+                  color: Colors.black54,
+                ),
+              ),
+              const Spacer(),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _Badge(label: '모듈 $moduleCount', scale: 1),
+                  ...tags.take(2).map((tag) => _Badge(label: tag, scale: 1)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      textbook == '-' ? updatedAt : textbook,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  ),
+                  _CardAction(
+                    icon: Icons.edit_outlined,
+                    tooltip: '수정',
+                    onTap: onEdit,
+                  ),
+                  _CardAction(
+                    icon: isPublic
+                        ? Icons.visibility_rounded
+                        : Icons.visibility_off_rounded,
+                    tooltip: isPublic ? '비공개로 전환' : '공개로 전환',
+                    onTap: onVisibility,
+                  ),
+                  _CardAction(
+                    icon: Icons.delete_outline_rounded,
+                    tooltip: '삭제',
+                    onTap: onDelete,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요 변수: 아이콘, 도움말, 실행 콜백.
+/// 작동 원리: 카드 내부의 자주 쓰는 작업을 작은 원형 표면으로 구분해 오작동을 줄인다.
+class _CardAction extends StatelessWidget {
+  const _CardAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onTap,
+      style: IconButton.styleFrom(backgroundColor: const Color(0xFFF1F1F3)),
+      icon: Icon(icon, size: 17),
     );
   }
 }
