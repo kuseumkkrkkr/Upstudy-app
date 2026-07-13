@@ -290,98 +290,126 @@ class _ActionGrid extends StatelessWidget {
 
   final BuildContext scaffoldContext;
 
-  /// 필요 변수: 현재 슬리버의 실제 가로 폭.
-  /// 작동 원리: 전체 창 크기가 아닌 작업 영역 제약으로 열 수와 카드 비율을 정해
-  /// 접힌 사이드바와 모바일 화면에서도 카드 내용이 잘리지 않게 배치한다.
+  /// 필요 변수: 교사용 화면의 Navigator 문맥.
+  /// 작동 원리: 기능을 같은 크기의 카드로 나열하지 않고 실제 작업 순서인 제작·준비·
+  /// 운영 단계로 묶어 다음 행동을 빠르게 판단하도록 한다. 각 항목은 기존 경로만 호출한다.
   @override
   Widget build(BuildContext context) {
-    return SliverLayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.crossAxisExtent;
-        final columns = width >= 1180
-            ? 4
-            : width >= 860
-            ? 3
-            : width >= 620
-            ? 2
-            : 1;
-        final ratio = switch (columns) {
-          1 => 2.35,
-          2 => 1.35,
-          3 => 1.5,
-          _ => 1.68,
-        };
-        return SliverGrid(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            crossAxisSpacing: 14,
-            mainAxisSpacing: 14,
-            childAspectRatio: ratio,
+    final phases = <_WorkflowPhase>[
+      _WorkflowPhase(
+        index: '01',
+        title: '제작 시작',
+        description: '수업에 필요한 핵심 콘텐츠를 먼저 만듭니다.',
+        actions: [
+          _WorkflowAction(
+            icon: Icons.add_task_rounded,
+            title: '코스 설계',
+            detail: '교재와 이수 조건 구성',
+            onTap: () => _push(const CourseBuilderPage()),
           ),
-          delegate: SliverChildListDelegate.fixed([
-            _FeatureTile(
-              icon: Icons.add_task_rounded,
-              title: '코스 생성',
-              subtitle: '페이지 범위, 최소 시간, 교재 권한을 설정합니다.',
-              tint: kCourseLightGreen,
-              onTap: () => _push(const CourseBuilderPage()),
+          _WorkflowAction(
+            icon: Icons.assignment_rounded,
+            title: '시험지 만들기',
+            detail: '난이도와 문항 범위 설정',
+            onTap: () => _push(const ExamPaperBuilderPage()),
+          ),
+          _WorkflowAction(
+            icon: Icons.edit_note_rounded,
+            title: '문항 제작',
+            detail: '초안과 변형 문항 작성',
+            onTap: () => _push(const ProblemEditorPage()),
+          ),
+        ],
+      ),
+      _WorkflowPhase(
+        index: '02',
+        title: '수업 준비',
+        description: '만든 자료를 찾아 수업 흐름에 연결합니다.',
+        actions: [
+          _WorkflowAction(
+            icon: Icons.folder_open_rounded,
+            title: '문서함 열기',
+            detail: '보유 교재 확인 및 연결',
+            onTap: () => _push(const TeacherDocumentCenterPage()),
+          ),
+          _WorkflowAction(
+            icon: Icons.menu_book_rounded,
+            title: '코스 관리',
+            detail: '공개 상태와 구성 검토',
+            onTap: () => _push(const CourseListPage()),
+          ),
+        ],
+      ),
+      _WorkflowPhase(
+        index: '03',
+        title: '운영 확인',
+        description: '학생 배정과 수업 진행 상태를 점검합니다.',
+        actions: [
+          _WorkflowAction(
+            icon: Icons.groups_rounded,
+            title: '그룹 운영',
+            detail: '학생·과제·공지 관리',
+            onTap: () => Navigator.of(
+              scaffoldContext,
+            ).pushNamed(GroupListPage.routeName),
+          ),
+          _WorkflowAction(
+            icon: Icons.analytics_rounded,
+            title: '학습 분석',
+            detail: '그룹별 진행 현황 확인',
+            onTap: () => Navigator.of(
+              scaffoldContext,
+            ).pushNamed(GroupListPage.routeName),
+          ),
+          _WorkflowAction(
+            icon: Icons.account_balance_wallet_rounded,
+            title: '운영 기록',
+            detail: '일정과 회계 기록 관리',
+            onTap: () => _push(const TeacherOperationsPage()),
+          ),
+        ],
+      ),
+    ];
+
+    return SliverToBoxAdapter(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final horizontal = constraints.maxWidth >= 920;
+          return Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: const Color(0xFFE2E2E6)),
             ),
-            _FeatureTile(
-              icon: Icons.folder_open_rounded,
-              title: '문서함',
-              subtitle: '교재만 선별해서 코스에 연결합니다.',
-              tint: const Color(0xFF27272A),
-              onTap: () => _push(const TeacherDocumentCenterPage()),
-            ),
-            _FeatureTile(
-              icon: Icons.menu_book_rounded,
-              title: '코스 관리',
-              subtitle: '배포한 코스와 연결된 교재를 확인합니다.',
-              tint: const Color(0xFF3F3F46),
-              onTap: () => _push(const CourseListPage()),
-            ),
-            _FeatureTile(
-              icon: Icons.assignment_rounded,
-              title: '시험지 생성',
-              subtitle: '문항을 묶어 평가 자료를 만듭니다.',
-              tint: const Color(0xFF18181B),
-              onTap: () => _push(const ExamPaperBuilderPage()),
-            ),
-            _FeatureTile(
-              icon: Icons.edit_note_rounded,
-              title: '문항 제작',
-              subtitle: '문항 초안과 변형을 정리합니다.',
-              tint: const Color(0xFF52525B),
-              onTap: () => _push(const ProblemEditorPage()),
-            ),
-            _FeatureTile(
-              icon: Icons.groups_rounded,
-              title: '그룹 관리',
-              subtitle: '학생 그룹과 수업 운영 상태를 봅니다.',
-              tint: const Color(0xFF09090B),
-              onTap: () => Navigator.of(
-                scaffoldContext,
-              ).pushNamed(GroupListPage.routeName),
-            ),
-            _FeatureTile(
-              icon: Icons.analytics_rounded,
-              title: '학습 분석',
-              subtitle: '현재는 그룹 관리 화면으로 이동합니다.',
-              tint: kCourseGreen,
-              onTap: () => Navigator.of(
-                scaffoldContext,
-              ).pushNamed(GroupListPage.routeName),
-            ),
-            _FeatureTile(
-              icon: Icons.account_balance_wallet_rounded,
-              title: '재무제표(회계)',
-              subtitle: '회계와 일간/월간 스케줄을 로컬 DB에 저장합니다.',
-              tint: const Color(0xFF71717A),
-              onTap: () => _push(const TeacherOperationsPage()),
-            ),
-          ]),
-        );
-      },
+            child: horizontal
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var index = 0; index < phases.length; index++) ...[
+                        Expanded(
+                          child: _WorkflowPhaseView(phase: phases[index]),
+                        ),
+                        if (index != phases.length - 1)
+                          const _WorkflowConnector(),
+                      ],
+                    ],
+                  )
+                : Column(
+                    children: [
+                      for (var index = 0; index < phases.length; index++) ...[
+                        _WorkflowPhaseView(phase: phases[index]),
+                        if (index != phases.length - 1)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Icon(Icons.keyboard_arrow_down_rounded),
+                          ),
+                      ],
+                    ],
+                  ),
+          );
+        },
+      ),
     );
   }
 
@@ -390,75 +418,147 @@ class _ActionGrid extends StatelessWidget {
   }
 }
 
-class _FeatureTile extends StatelessWidget {
-  const _FeatureTile({
+class _WorkflowPhase {
+  const _WorkflowPhase({
+    required this.index,
+    required this.title,
+    required this.description,
+    required this.actions,
+  });
+
+  final String index;
+  final String title;
+  final String description;
+  final List<_WorkflowAction> actions;
+}
+
+class _WorkflowAction {
+  const _WorkflowAction({
     required this.icon,
     required this.title,
-    required this.subtitle,
-    required this.tint,
+    required this.detail,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
-  final String subtitle;
-  final Color tint;
+  final String detail;
   final VoidCallback onTap;
+}
+
+class _WorkflowPhaseView extends StatelessWidget {
+  const _WorkflowPhaseView({required this.phase});
+
+  final _WorkflowPhase phase;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Text(
+                phase.index,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    phase.title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    phase.description,
+                    style: const TextStyle(color: Colors.black54, height: 1.35),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+        for (final action in phase.actions) _WorkflowActionRow(action: action),
+      ],
+    );
+  }
+}
+
+class _WorkflowActionRow extends StatelessWidget {
+  const _WorkflowActionRow({required this.action});
+
+  final _WorkflowAction action;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: Ios26FrostedCard(
-          radius: 22,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        onTap: action.onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 11),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: tint.withValues(alpha: 0.13),
-                      borderRadius: BorderRadius.circular(14),
+              Icon(action.icon, size: 19),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      action.title,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
-                    child: Icon(icon, color: tint),
-                  ),
-                  const Spacer(),
-                  Icon(Icons.arrow_forward_ios_rounded, size: 14, color: tint),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: kCourseGreen,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
+                    const SizedBox(height: 2),
+                    Text(
+                      action.detail,
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.black.withValues(alpha: 0.58),
-                  fontSize: 12,
-                  height: 1.34,
-                ),
-              ),
+              const Icon(Icons.arrow_forward_rounded, size: 17),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _WorkflowConnector extends StatelessWidget {
+  const _WorkflowConnector();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(10, 6, 10, 0),
+      child: Icon(Icons.arrow_forward_rounded, color: Colors.black26),
     );
   }
 }

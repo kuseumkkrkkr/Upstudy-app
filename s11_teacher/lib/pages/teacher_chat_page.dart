@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_adaptive_panel.dart';
 import '../widgets/design_tokens.dart';
 
 class TeacherChatPage extends StatefulWidget {
@@ -74,82 +75,52 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
       final courses = await ApiClient.instance.listCoursesV2(mineOnly: true);
       if (!mounted) return;
       if (courses.isEmpty) return;
-      final picked = await showDialog<Map<String, dynamic>>(
+      final picked = await showTeacherAdaptivePanel<Map<String, dynamic>>(
         context: context,
-        builder: (ctx) => Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 520, maxHeight: 560),
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
+        eyebrow: 'SHARE IN CHAT',
+        title: '코스 바로 보내기',
+        description: '${widget.peerUsername} 학생이 열 수 있는 코스 링크를 선택합니다.',
+        icon: Icons.send_to_mobile_rounded,
+        bodyBuilder: (panelContext) => ListView.separated(
+          itemCount: courses.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (_, index) {
+            final course = courses[index];
+            return Material(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: AppColors.surfaceBorder),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '코스 선택',
-                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  '대화에 공유할 코스를 선택하세요.',
-                  style: TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 16),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: courses.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 8),
-                    itemBuilder: (_, index) {
-                      final course = courses[index];
-                      return Material(
-                        color: AppColors.surfaceMuted,
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
-                          onTap: () => Navigator.of(ctx).pop(course),
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 15,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.auto_stories_rounded,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    course['title']?.toString() ??
-                                        course['id']?.toString() ??
-                                        '코스',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                          ),
+              borderRadius: BorderRadius.circular(22),
+              child: InkWell(
+                onTap: () => Navigator.of(panelContext).pop(course),
+                borderRadius: BorderRadius.circular(22),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceMuted,
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                      );
-                    },
+                        child: const Icon(Icons.auto_stories_rounded),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          course['title']?.toString() ??
+                              course['id']?.toString() ??
+                              '코스',
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_rounded, size: 18),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       );
       if (picked == null) return;

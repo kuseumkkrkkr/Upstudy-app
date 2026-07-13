@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_adaptive_panel.dart';
 import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
@@ -106,18 +107,18 @@ class _TeacherDocumentCenterPageState extends State<TeacherDocumentCenterPage> {
     );
   }
 
-  void _selectDocument(Map<String, dynamic> document) {
+  Future<void> _selectDocument(Map<String, dynamic> document) async {
     final compact = MediaQuery.of(context).size.width < 980;
     setState(() => _selectedDocument = document);
     if (!compact) return;
-    showModalBottomSheet<void>(
+    await showTeacherAdaptivePanel<void>(
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (_) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.82,
-        child: _DocumentDetail(document: document),
-      ),
+      eyebrow: 'DOCUMENT INSPECTOR',
+      title: _text(document['title'], '교재 상세'),
+      description: '수업에 연결하기 전에 문서 정보와 권한 상태를 확인합니다.',
+      icon: Icons.description_outlined,
+      maxWidth: 620,
+      bodyBuilder: (_) => _DocumentDetail(document: document),
     );
   }
 

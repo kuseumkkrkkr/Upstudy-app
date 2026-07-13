@@ -6,6 +6,7 @@ import 'package:s11_teacher/pages/group_study/academy_dashboard_page.dart';
 import 'package:s11_teacher/services/api_client.dart';
 import 'package:s11_teacher/shared/theme/app_colors.dart';
 import 'package:s11_teacher/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11_teacher/shared/ui/ios26/teacher_adaptive_panel.dart';
 import 'package:s11_teacher/shared/ui/ios26/teacher_studio_shell.dart';
 import 'package:s11_teacher/widgets/teacher_app_drawer.dart';
 
@@ -122,27 +123,49 @@ class _GroupDetailPageState extends State<GroupDetailPage>
     ).showSnackBar(SnackBar(content: Text('$label 복사 완료')));
   }
 
-  void _showQrDialog() {
+  Future<void> _showQrDialog() async {
     final group = _group;
     if (group == null) return;
     final inviteUrl = ApiClient.instance.buildStudentInviteUrl(
       group.inviteCode ?? '',
     );
-    showDialog<void>(
+    await showTeacherAdaptivePanel<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('참여 QR'),
-        content: SizedBox(
-          width: 320,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              QrImageView(data: inviteUrl, size: 190),
-              const SizedBox(height: 10),
-              SelectableText(inviteUrl, style: const TextStyle(fontSize: 12)),
-            ],
+      eyebrow: 'GROUP ACCESS',
+      title: '학생 초대',
+      description: 'QR을 스캔하거나 링크를 복사해 이 그룹으로 학생을 초대하세요.',
+      icon: Icons.qr_code_2_rounded,
+      maxWidth: 520,
+      bodyBuilder: (_) => ListView(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: QrImageView(data: inviteUrl, size: 220),
           ),
-        ),
+          const SizedBox(height: 14),
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            child: InkWell(
+              onTap: () => _copy(inviteUrl, '초대 링크'),
+              borderRadius: BorderRadius.circular(22),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(child: SelectableText(inviteUrl)),
+                    const SizedBox(width: 12),
+                    const Icon(Icons.copy_rounded),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -194,40 +217,22 @@ class _GroupDetailPageState extends State<GroupDetailPage>
             onShiftDueDate: _shiftAssignmentDueDate,
           ),
           const SizedBox(height: 12),
-          Ios26FrostedCard(
-            radius: 24,
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                FilledButton.icon(
-                  onPressed: _academyMembers.isEmpty ? null : _sendCourse,
-                  icon: const Icon(Icons.send_rounded),
-                  label: const Text('코스 보내주기'),
-                ),
-                FilledButton.icon(
-                  onPressed: _academyMembers.isEmpty ? null : _sendHomework,
-                  icon: const Icon(Icons.assignment_turned_in_rounded),
-                  label: const Text('숙제 내주기'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: widget.academyId.isEmpty
-                      ? null
-                      : () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => AcademyDashboardPage(
-                                academyId: widget.academyId,
-                                groupId: widget.groupId,
-                              ),
-                            ),
-                          );
-                        },
-                  icon: const Icon(Icons.analytics_outlined),
-                  label: const Text('학습 분석'),
-                ),
-              ],
-            ),
+          _TeachingActionBoard(
+            studentCount: _academyMembers.length,
+            onCourse: _academyMembers.isEmpty ? null : _sendCourse,
+            onHomework: _academyMembers.isEmpty ? null : _sendHomework,
+            onAnalysis: widget.academyId.isEmpty
+                ? null
+                : () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AcademyDashboardPage(
+                          academyId: widget.academyId,
+                          groupId: widget.groupId,
+                        ),
+                      ),
+                    );
+                  },
           ),
           const SizedBox(height: 12),
           _StudentAnalysisList(students: _academyMembers),
@@ -325,9 +330,13 @@ class _GroupDetailPageState extends State<GroupDetailPage>
 
   Future<List<String>?> _pickStudents() async {
     final initial = _academyMembers.map((m) => m.userId).toSet();
-    return showDialog<List<String>>(
+    return showTeacherAdaptivePanel<List<String>>(
       context: context,
-      builder: (_) => _StudentPickerDialog(
+      eyebrow: 'ASSIGN RECIPIENTS',
+      title: '받을 학생 선택',
+      description: '전체 또는 필요한 학생만 골라 같은 자료를 배정합니다.',
+      icon: Icons.groups_2_rounded,
+      bodyBuilder: (_) => _StudentPickerDialog(
         students: _academyMembers,
         initialSelected: initial,
       ),
@@ -339,9 +348,13 @@ class _GroupDetailPageState extends State<GroupDetailPage>
     if (selectedStudents == null || selectedStudents.isEmpty) return;
     final courses = await ApiClient.instance.listCoursesV2(mineOnly: true);
     if (!mounted) return;
-    final course = await showDialog<Map<String, dynamic>>(
+    final course = await showTeacherAdaptivePanel<Map<String, dynamic>>(
       context: context,
-      builder: (_) => _CoursePickerDialog(courses: courses),
+      eyebrow: 'ASSIGN COURSE',
+      title: '보낼 코스 선택',
+      description: '학생이 바로 학습할 코스를 하나 선택하세요.',
+      icon: Icons.menu_book_rounded,
+      bodyBuilder: (_) => _CoursePickerDialog(courses: courses),
     );
     if (course == null) return;
     final dueDate = _courseDueDate(course['duration']?.toString());
@@ -366,9 +379,13 @@ class _GroupDetailPageState extends State<GroupDetailPage>
       type: 'textbook',
     );
     if (!mounted) return;
-    final document = await showDialog<Map<String, dynamic>>(
+    final document = await showTeacherAdaptivePanel<Map<String, dynamic>>(
       context: context,
-      builder: (_) => _DocumentPickerDialog(documents: documents),
+      eyebrow: 'ASSIGN HOMEWORK',
+      title: '숙제 교재 선택',
+      description: '문서함에서 학생에게 전달할 교재를 고르세요.',
+      icon: Icons.assignment_turned_in_rounded,
+      bodyBuilder: (_) => _DocumentPickerDialog(documents: documents),
     );
     if (document == null || !mounted) return;
     final dueDate = await showDatePicker(
@@ -422,22 +439,17 @@ class _GroupDetailPageState extends State<GroupDetailPage>
   }
 
   Future<void> _deleteNotice(StudyGroupNotice notice) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showTeacherDecisionPanel(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('공지 삭제'),
-        content: Text('"${notice.title}" 공지를 삭제합니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+      eyebrow: 'NOTICE REVIEW',
+      title: '「${notice.title}」 삭제',
+      description: '학생에게 게시된 공지를 목록에서 제거합니다.',
+      confirmLabel: '공지 삭제하기',
+      destructive: true,
+      consequences: const [
+        '학생과 교사 화면의 공지 목록에서 제거됩니다.',
+        '같은 제목으로 다시 작성할 수 있지만 현재 내용은 복원되지 않습니다.',
+      ],
     );
     if (confirmed != true) return;
     try {
@@ -459,61 +471,70 @@ class _GroupDetailPageState extends State<GroupDetailPage>
     final contentCtrl = TextEditingController(
       text: existing == null ? '' : _noticePreviewText(existing.contentHtml),
     );
-    return showDialog<_NoticeDraft>(
+    return showTeacherAdaptivePanel<_NoticeDraft>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(existing == null ? '공지 작성' : '공지 수정'),
-        content: SizedBox(
-          width: 560,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleCtrl,
-                decoration: const InputDecoration(labelText: '제목'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: contentCtrl,
-                minLines: 10,
-                maxLines: 16,
-                decoration: const InputDecoration(
-                  labelText: '내용',
-                  hintText: '학생에게 보여줄 공지 내용을 입력하세요.',
-                ),
-              ),
-            ],
+      eyebrow: existing == null ? 'NEW NOTICE' : 'EDIT NOTICE',
+      title: existing == null ? '새 공지 작성' : '공지 내용 수정',
+      description: '학생에게 실제로 보일 제목과 내용을 한 화면에서 검토합니다.',
+      icon: Icons.campaign_rounded,
+      maxWidth: 680,
+      barrierDismissible: false,
+      bodyBuilder: (_) => ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          TextField(
+            controller: titleCtrl,
+            decoration: const InputDecoration(
+              labelText: '공지 제목',
+              hintText: '한눈에 알아볼 수 있는 제목',
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop(
-                _NoticeDraft(
-                  title: titleCtrl.text.trim(),
-                  contentText: contentCtrl.text,
-                ),
-              );
-            },
-            child: const Text('저장'),
+          const SizedBox(height: 14),
+          TextField(
+            controller: contentCtrl,
+            minLines: 14,
+            maxLines: 24,
+            decoration: const InputDecoration(
+              labelText: '학생에게 보일 내용',
+              hintText: '일정, 준비물, 유의사항을 구체적으로 입력하세요.',
+              alignLabelWithHint: true,
+            ),
           ),
         ],
       ),
+      actionsBuilder: (panelContext) => [
+        TeacherPanelAction(
+          label: '작성 취소',
+          icon: Icons.close_rounded,
+          onTap: () => Navigator.of(panelContext).pop(),
+        ),
+        TeacherPanelAction(
+          label: existing == null ? '공지 게시하기' : '수정 내용 저장',
+          icon: Icons.check_rounded,
+          primary: true,
+          onTap: () => Navigator.of(panelContext).pop(
+            _NoticeDraft(
+              title: titleCtrl.text.trim(),
+              contentText: contentCtrl.text,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  void _showNoticePreview(StudyGroupNotice notice) {
-    showDialog<void>(
+  Future<void> _showNoticePreview(StudyGroupNotice notice) {
+    return showTeacherAdaptivePanel<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(notice.title),
-        content: SizedBox(
-          width: 720,
-          height: 520,
+      eyebrow: 'STUDENT PREVIEW',
+      title: notice.title,
+      description: '학생 화면에 표시되는 공지 내용을 그대로 미리 봅니다.',
+      icon: Icons.visibility_rounded,
+      maxWidth: 820,
+      bodyBuilder: (_) => ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: ColoredBox(
+          color: Colors.white,
           child: InAppWebView(
             initialData: InAppWebViewInitialData(
               data: _buildNoticeHtmlDocument(notice.title, notice.contentHtml),
@@ -521,12 +542,6 @@ class _GroupDetailPageState extends State<GroupDetailPage>
             initialSettings: InAppWebViewSettings(transparentBackground: true),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('닫기'),
-          ),
-        ],
       ),
     );
   }
@@ -839,6 +854,148 @@ String _buildNoticeHtmlDocument(String title, String body) {
 ''';
 }
 
+class _TeachingActionBoard extends StatelessWidget {
+  const _TeachingActionBoard({
+    required this.studentCount,
+    required this.onCourse,
+    required this.onHomework,
+    required this.onAnalysis,
+  });
+
+  final int studentCount;
+  final VoidCallback? onCourse;
+  final VoidCallback? onHomework;
+  final VoidCallback? onAnalysis;
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = [
+      (
+        Icons.send_rounded,
+        '코스 배정',
+        studentCount == 0 ? '먼저 학생을 초대하세요' : '$studentCount명 중 받을 학생 선택',
+        onCourse,
+      ),
+      (
+        Icons.assignment_turned_in_rounded,
+        '숙제 전달',
+        '교재 선택 후 마감일 지정',
+        onHomework,
+      ),
+      (Icons.analytics_outlined, '진행 분석', '출석·학습·상담 현황 확인', onAnalysis),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111113),
+        borderRadius: BorderRadius.circular(26),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final horizontal = constraints.maxWidth >= 720;
+          final children = [
+            for (final action in actions)
+              Expanded(
+                child: _TeachingActionRow(
+                  icon: action.$1,
+                  title: action.$2,
+                  description: action.$3,
+                  onTap: action.$4,
+                ),
+              ),
+          ];
+          if (horizontal) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < children.length; index++) ...[
+                  children[index],
+                  if (index != children.length - 1) const SizedBox(width: 10),
+                ],
+              ],
+            );
+          }
+          return Column(
+            children: [
+              for (var index = 0; index < actions.length; index++) ...[
+                _TeachingActionRow(
+                  icon: actions[index].$1,
+                  title: actions[index].$2,
+                  description: actions[index].$3,
+                  onTap: actions[index].$4,
+                ),
+                if (index != actions.length - 1) const SizedBox(height: 8),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TeachingActionRow extends StatelessWidget {
+  const _TeachingActionRow({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: onTap == null ? Colors.white10 : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(icon, color: onTap == null ? Colors.white38 : Colors.black),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: onTap == null ? Colors.white54 : Colors.black,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        color: onTap == null ? Colors.white38 : Colors.black54,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: onTap == null ? Colors.white24 : Colors.black,
+                size: 17,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NoticeDraft {
   const _NoticeDraft({required this.title, required this.contentText});
 
@@ -957,23 +1114,31 @@ class _GroupChatWorkspaceState extends State<_GroupChatWorkspace> {
     return student.userId;
   }
 
-  void _openGroupChat(BuildContext context) {
-    showDialog<void>(
+  Future<void> _openGroupChat(BuildContext context) {
+    return showTeacherAdaptivePanel<void>(
       context: context,
-      builder: (_) => _ChatRoomDialog(
-        title: '그룹스터디 단체채팅',
-        child: _GroupMessagePanel(groupId: widget.groupId),
-      ),
+      eyebrow: 'GROUP CONVERSATION',
+      title: '그룹스터디 단체채팅',
+      description: '이 그룹에 참여한 학생 전체와 메시지를 주고받습니다.',
+      icon: Icons.forum_rounded,
+      maxWidth: 760,
+      bodyBuilder: (_) => _GroupMessagePanel(groupId: widget.groupId),
     );
   }
 
-  void _openDirectChat(BuildContext context, AcademyGroupMember student) {
-    showDialog<void>(
+  Future<void> _openDirectChat(
+    BuildContext context,
+    AcademyGroupMember student,
+  ) {
+    return showTeacherAdaptivePanel<void>(
       context: context,
-      builder: (_) => _ChatRoomDialog(
-        title: _studentLabel(student),
-        child: _DirectMessageRoom(peerUsername: _peerUsername(student)),
-      ),
+      eyebrow: 'DIRECT CONVERSATION',
+      title: _studentLabel(student),
+      description: '선택한 학생과 나누는 1:1 메시지입니다.',
+      icon: Icons.chat_bubble_rounded,
+      maxWidth: 760,
+      bodyBuilder: (_) =>
+          _DirectMessageRoom(peerUsername: _peerUsername(student)),
     );
   }
 }
@@ -1037,56 +1202,6 @@ class _ChatRoomTile extends StatelessWidget {
               const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChatRoomDialog extends StatelessWidget {
-  const _ChatRoomDialog({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(28),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: SizedBox(
-        width: 720,
-        height: 640,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 10, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: Padding(padding: const EdgeInsets.all(12), child: child),
-            ),
-          ],
         ),
       ),
     );
@@ -1585,52 +1700,77 @@ class _StudentPickerDialogState extends State<_StudentPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('학생 선택'),
-      content: SizedBox(
-        width: 420,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            CheckboxListTile(
-              value: _selected.length == widget.students.length,
-              onChanged: (value) {
-                setState(() {
-                  _selected.clear();
-                  if (value == true) {
-                    _selected.addAll(widget.students.map((e) => e.userId));
-                  }
-                });
-              },
-              title: const Text('전체 학생'),
-            ),
-            const Divider(),
-            for (final student in widget.students)
-              CheckboxListTile(
-                value: _selected.contains(student.userId),
-                onChanged: (value) {
-                  setState(() {
-                    if (value == true) {
-                      _selected.add(student.userId);
-                    } else {
-                      _selected.remove(student.userId);
-                    }
-                  });
-                },
-                title: Text(student.userId),
-                subtitle: Text(student.role),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Material(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(22),
+          child: CheckboxListTile(
+            value: _selected.length == widget.students.length,
+            onChanged: (value) {
+              setState(() {
+                _selected.clear();
+                if (value == true) {
+                  _selected.addAll(widget.students.map((e) => e.userId));
+                }
+              });
+            },
+            title: Text(
+              '전체 학생 ${widget.students.length}명',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
               ),
-          ],
+            ),
+            subtitle: Text(
+              '${_selected.length}명 선택됨',
+              style: const TextStyle(color: Colors.white60),
+            ),
+            checkColor: Colors.black,
+            activeColor: Colors.white,
+          ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+        const SizedBox(height: 12),
+        Expanded(
+          child: ListView.separated(
+            itemCount: widget.students.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final student = widget.students[index];
+              final selected = _selected.contains(student.userId);
+              return Material(
+                color: selected ? const Color(0xFFE9E9EC) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                child: CheckboxListTile(
+                  value: selected,
+                  onChanged: (value) {
+                    setState(() {
+                      if (value == true) {
+                        _selected.add(student.userId);
+                      } else {
+                        _selected.remove(student.userId);
+                      }
+                    });
+                  },
+                  title: Text(
+                    student.userId,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: Text(student.role),
+                ),
+              );
+            },
+          ),
         ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_selected.toList()),
-          child: const Text('선택'),
+        const SizedBox(height: 12),
+        TeacherPanelAction(
+          label: '${_selected.length}명에게 계속',
+          icon: Icons.arrow_forward_rounded,
+          primary: true,
+          onTap: _selected.isEmpty
+              ? null
+              : () => Navigator.of(context).pop(_selected.toList()),
         ),
       ],
     );
@@ -1644,28 +1784,21 @@ class _CoursePickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('코스 선택'),
-      content: SizedBox(
-        width: 520,
-        height: 420,
-        child: courses.isEmpty
-            ? const Center(child: Text('보유 코스가 없습니다.'))
-            : ListView.builder(
-                itemCount: courses.length,
-                itemBuilder: (context, index) {
-                  final course = courses[index];
-                  return ListTile(
-                    leading: const Icon(Icons.menu_book_rounded),
-                    title: Text(course['title']?.toString() ?? '제목 없음'),
-                    subtitle: Text(
-                      '권장 기간 ${course['duration']?.toString() ?? '미지정'}',
-                    ),
-                    onTap: () => Navigator.of(context).pop(course),
-                  );
-                },
-              ),
-      ),
+    if (courses.isEmpty) {
+      return const Center(child: Text('보유 코스가 없습니다.'));
+    }
+    return ListView.separated(
+      itemCount: courses.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final course = courses[index];
+        return _PickerResultTile(
+          icon: Icons.menu_book_rounded,
+          title: course['title']?.toString() ?? '제목 없음',
+          subtitle: '권장 기간 ${course['duration']?.toString() ?? '미지정'}',
+          onTap: () => Navigator.of(context).pop(course),
+        );
+      },
     );
   }
 }
@@ -1677,33 +1810,82 @@ class _DocumentPickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('문서함'),
-      content: SizedBox(
-        width: 560,
-        height: 440,
-        child: documents.isEmpty
-            ? const Center(child: Text('문서함에 교재가 없습니다.'))
-            : ListView.builder(
-                itemCount: documents.length,
-                itemBuilder: (context, index) {
-                  final doc = documents[index];
-                  final id =
-                      (doc['textbook_id'] ??
-                              doc['document_id'] ??
-                              doc['id'] ??
-                              '')
-                          .toString();
-                  return ListTile(
-                    leading: const Icon(Icons.description_outlined),
-                    title: Text(doc['title']?.toString() ?? '제목 없음'),
-                    subtitle: Text(
-                      '${doc['category']?.toString() ?? '미분류'} · $id',
-                    ),
-                    onTap: () => Navigator.of(context).pop(doc),
-                  );
-                },
+    if (documents.isEmpty) {
+      return const Center(child: Text('문서함에 교재가 없습니다.'));
+    }
+    return ListView.separated(
+      itemCount: documents.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final doc = documents[index];
+        final id = (doc['textbook_id'] ?? doc['document_id'] ?? doc['id'] ?? '')
+            .toString();
+        return _PickerResultTile(
+          icon: Icons.description_outlined,
+          title: doc['title']?.toString() ?? '제목 없음',
+          subtitle: '${doc['category']?.toString() ?? '미분류'} · $id',
+          onTap: () => Navigator.of(context).pop(doc),
+        );
+      },
+    );
+  }
+}
+
+class _PickerResultTile extends StatelessWidget {
+  const _PickerResultTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F0F2),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_rounded),
+            ],
+          ),
+        ),
       ),
     );
   }

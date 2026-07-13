@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
+import '../shared/ui/ios26/teacher_adaptive_panel.dart';
 import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
@@ -109,27 +110,18 @@ class _CourseListPageState extends State<CourseListPage> {
   }
 
   Future<void> _deleteCourse(String courseId, {String? title}) async {
-    final confirmed = await showDialog<bool>(
+    final courseTitle = title == null || title.isEmpty ? '선택한 코스' : title;
+    final confirmed = await showTeacherDecisionPanel(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('코스 삭제'),
-        content: Text(
-          title == null || title.isEmpty
-              ? '이 코스를 삭제하시겠습니까?'
-              : '"$title" 코스를 삭제하시겠습니까?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+      eyebrow: 'COURSE REVIEW',
+      title: '$courseTitle 삭제',
+      description: '목록에서 제거하기 전에 학습 흐름에 미치는 영향을 확인하세요.',
+      confirmLabel: '코스 삭제하기',
+      destructive: true,
+      consequences: const [
+        '현재 코스 목록에서 즉시 제거됩니다.',
+        '배포 또는 학습 기록과 연결된 상태를 먼저 확인하는 것이 좋습니다.',
+      ],
     );
     if (confirmed != true) return;
 
@@ -152,23 +144,17 @@ class _CourseListPageState extends State<CourseListPage> {
   Future<void> _deleteSelected() async {
     if (_selectedIds.isEmpty) return;
     final count = _selectedIds.length;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showTeacherDecisionPanel(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('선택 삭제'),
-        content: Text('$count개 코스를 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+      eyebrow: 'BULK COURSE REVIEW',
+      title: '$count개 코스 일괄 삭제',
+      description: '여러 코스에 적용되는 작업입니다. 선택 범위를 한 번 더 확인하세요.',
+      confirmLabel: '$count개 삭제하기',
+      destructive: true,
+      consequences: [
+        '선택한 $count개 코스가 순서대로 삭제됩니다.',
+        '일부 삭제가 실패하면 완료된 항목은 되돌아오지 않습니다.',
+      ],
     );
     if (confirmed != true) return;
 
@@ -214,6 +200,101 @@ class _CourseListPageState extends State<CourseListPage> {
         context,
       ).showSnackBar(SnackBar(content: Text('노출 설정 변경 실패: $e')));
     }
+  }
+
+  /// 필요 변수: 현재 노출·정렬·태그 설정.
+  /// 작동 원리: 목록 위에 모든 드롭다운을 상시 노출하지 않고 별도 작업 패널에서
+  /// 임시 값을 검토한 뒤 적용할 때만 기존 조회 함수를 호출한다.
+  Future<void> _openViewSettings() async {
+    var visibility = _visibility;
+    var sort = _sort;
+    var descending = _descending;
+    var selectedTag = _selectedTag;
+
+    final applied = await showTeacherAdaptivePanel<bool>(
+      context: context,
+      eyebrow: 'COURSE VIEW',
+      title: '목록 보기 방식',
+      description: '찾는 코스에 맞게 공개 상태, 정렬 기준, 태그를 조합합니다.',
+      icon: Icons.tune_rounded,
+      maxWidth: 560,
+      bodyBuilder: (panelContext) => StatefulBuilder(
+        builder: (context, setPanelState) => ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            _FilterChoiceGroup<String>(
+              label: '공개 상태',
+              value: visibility,
+              options: const [
+                ('all', '전체'),
+                ('public', '공개'),
+                ('private', '비공개'),
+              ],
+              onChanged: (value) => setPanelState(() => visibility = value),
+            ),
+            const SizedBox(height: 18),
+            _FilterChoiceGroup<String>(
+              label: '정렬 기준',
+              value: sort,
+              options: const [
+                ('updated_at', '최근 수정'),
+                ('created_at', '최근 생성'),
+                ('title', '제목'),
+                ('target_ovr', '목표 OVR'),
+                ('difficulty', '난이도'),
+              ],
+              onChanged: (value) => setPanelState(() => sort = value),
+            ),
+            const SizedBox(height: 18),
+            _FilterChoiceGroup<bool>(
+              label: '정렬 방향',
+              value: descending,
+              options: const [(true, '내림차순'), (false, '오름차순')],
+              onChanged: (value) => setPanelState(() => descending = value),
+            ),
+            if (_availableTags.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              _FilterChoiceGroup<String?>(
+                label: '태그 범위',
+                value: selectedTag,
+                options: [
+                  const (null, '전체 태그'),
+                  ..._availableTags.map((tag) => (tag, tag)),
+                ],
+                onChanged: (value) => setPanelState(() => selectedTag = value),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actionsBuilder: (panelContext) => [
+        TeacherPanelAction(
+          label: '기본값으로',
+          icon: Icons.restart_alt_rounded,
+          onTap: () {
+            visibility = 'all';
+            sort = 'updated_at';
+            descending = true;
+            selectedTag = null;
+            Navigator.of(panelContext).pop(true);
+          },
+        ),
+        TeacherPanelAction(
+          label: '이 보기 적용',
+          icon: Icons.check_rounded,
+          primary: true,
+          onTap: () => Navigator.of(panelContext).pop(true),
+        ),
+      ],
+    );
+    if (applied != true || !mounted) return;
+    setState(() {
+      _visibility = visibility;
+      _sort = sort;
+      _descending = descending;
+      _selectedTag = selectedTag;
+    });
+    await _load(resetPage: true);
   }
 
   String _courseTitle(Map<String, dynamic> course) {
@@ -305,143 +386,52 @@ class _CourseListPageState extends State<CourseListPage> {
                   ],
                 ),
                 SizedBox(height: 12 * scale),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: MediaQuery.sizeOf(context).width < 720
-                          ? MediaQuery.sizeOf(context).width - 32
-                          : 320,
-                      child: TextField(
-                        controller: _searchCtrl,
-                        decoration: InputDecoration(
-                          labelText: '검색',
-                          hintText: '제목, 설명',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          suffixIcon: IconButton(
-                            tooltip: '검색',
-                            icon: const Icon(Icons.search_rounded),
-                            onPressed: _loading
-                                ? null
-                                : () => _load(resetPage: true),
-                          ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 700;
+                    final search = TextField(
+                      controller: _searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: '코스 제목이나 설명으로 바로 찾기',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: IconButton(
+                          tooltip: '검색',
+                          icon: const Icon(Icons.arrow_forward_rounded),
+                          onPressed: _loading
+                              ? null
+                              : () => _load(resetPage: true),
                         ),
-                        onSubmitted: (_) {
-                          if (_loading) return;
-                          _load(resetPage: true);
-                        },
                       ),
-                    ),
-                    SizedBox(
-                      width: 160,
-                      child: DropdownButtonFormField<String>(
-                        key: ValueKey(_visibility),
-                        initialValue: _visibility,
-                        decoration: _fieldDecoration('노출'),
-                        items: const [
-                          DropdownMenuItem(value: 'all', child: Text('전체')),
-                          DropdownMenuItem(value: 'public', child: Text('공개')),
-                          DropdownMenuItem(
-                            value: 'private',
-                            child: Text('비공개'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _visibility = value);
-                          _load(resetPage: true);
-                        },
-                      ),
-                    ),
-                    SizedBox(
-                      width: 180,
-                      child: DropdownButtonFormField<String>(
-                        key: ValueKey(_sort),
-                        initialValue: _sort,
-                        decoration: _fieldDecoration('정렬'),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'updated_at',
-                            child: Text('최근 수정'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'created_at',
-                            child: Text('최근 생성'),
-                          ),
-                          DropdownMenuItem(value: 'title', child: Text('제목')),
-                          DropdownMenuItem(
-                            value: 'target_ovr',
-                            child: Text('목표 OVR'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'difficulty',
-                            child: Text('난이도'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _sort = value);
-                          _load(resetPage: true);
-                        },
-                      ),
-                    ),
-                    IconButton.filledTonal(
-                      tooltip: _descending ? '오름차순' : '내림차순',
-                      onPressed: () {
-                        setState(() => _descending = !_descending);
+                      onSubmitted: (_) {
+                        if (_loading) return;
                         _load(resetPage: true);
                       },
-                      icon: Icon(
-                        _descending ? Icons.south_rounded : Icons.north_rounded,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 180,
-                      child: DropdownButtonFormField<String?>(
-                        key: ValueKey(_selectedTag),
-                        initialValue: _selectedTag,
-                        decoration: _fieldDecoration('태그'),
-                        items: [
-                          const DropdownMenuItem<String?>(
-                            value: null,
-                            child: Text('전체 태그'),
-                          ),
-                          ..._availableTags.map(
-                            (tag) => DropdownMenuItem<String?>(
-                              value: tag,
-                              child: Text(tag),
-                            ),
-                          ),
+                    );
+                    final settings = _ViewSettingsSummary(
+                      visibility: _visibility,
+                      sort: _sort,
+                      descending: _descending,
+                      tag: _selectedTag,
+                      onTap: _openViewSettings,
+                    );
+                    if (compact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          search,
+                          const SizedBox(height: 10),
+                          settings,
                         ],
-                        onChanged: (value) {
-                          setState(() => _selectedTag = value);
-                          _load(resetPage: true);
-                        },
-                      ),
-                    ),
-                    _CapsuleButton(
-                      label: '필터 초기화',
-                      icon: Icons.filter_alt_off_rounded,
-                      onTap: _loading
-                          ? null
-                          : () {
-                              _searchCtrl.clear();
-                              setState(() {
-                                _selectedTag = null;
-                                _visibility = 'all';
-                                _sort = 'updated_at';
-                                _descending = true;
-                              });
-                              _load(resetPage: true);
-                            },
-                    ),
-                  ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: search),
+                        const SizedBox(width: 12),
+                        settings,
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -449,38 +439,11 @@ class _CourseListPageState extends State<CourseListPage> {
           if (_selectedIds.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.surfaceBorder),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      '${_selectedIds.length}개 선택됨',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: () => setState(_selectedIds.clear),
-                      icon: const Icon(Icons.close_rounded),
-                      label: const Text('선택 해제'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      onPressed: _saving ? null : _deleteSelected,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
-                      icon: const Icon(Icons.delete_outline_rounded),
-                      label: const Text('선택 삭제'),
-                    ),
-                  ],
-                ),
+              child: _SelectionCommandDock(
+                count: _selectedIds.length,
+                busy: _saving,
+                onClear: () => setState(_selectedIds.clear),
+                onDelete: _deleteSelected,
               ),
             ),
           Expanded(child: _buildTable(scale)),
@@ -610,26 +573,6 @@ class _CourseListPageState extends State<CourseListPage> {
           },
         );
       },
-    );
-  }
-
-  InputDecoration _fieldDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.surfaceBorder),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.surfaceBorder),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kCourseLightGreen, width: 2),
-      ),
     );
   }
 }
@@ -904,6 +847,178 @@ class _CardAction extends StatelessWidget {
       onPressed: onTap,
       style: IconButton.styleFrom(backgroundColor: const Color(0xFFF1F1F3)),
       icon: Icon(icon, size: 17),
+    );
+  }
+}
+
+class _FilterChoiceGroup<T> extends StatelessWidget {
+  const _FilterChoiceGroup({
+    required this.label,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final String label;
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final option in options)
+              Material(
+                color: option.$1 == value ? Colors.black : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: () => onChanged(option.$1),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 12,
+                    ),
+                    child: Text(
+                      option.$2,
+                      style: TextStyle(
+                        color: option.$1 == value ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ViewSettingsSummary extends StatelessWidget {
+  const _ViewSettingsSummary({
+    required this.visibility,
+    required this.sort,
+    required this.descending,
+    required this.tag,
+    required this.onTap,
+  });
+
+  final String visibility;
+  final String sort;
+  final bool descending;
+  final String? tag;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const visibilityLabels = {'all': '전체', 'public': '공개', 'private': '비공개'};
+    const sortLabels = {
+      'updated_at': '최근 수정',
+      'created_at': '최근 생성',
+      'title': '제목',
+      'target_ovr': '목표 OVR',
+      'difficulty': '난이도',
+    };
+    final summary = [
+      visibilityLabels[visibility] ?? visibility,
+      sortLabels[sort] ?? sort,
+      descending ? '내림차순' : '오름차순',
+      if (tag != null) tag!,
+    ].join(' · ');
+    return Material(
+      color: Colors.black,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.tune_rounded, color: Colors.white, size: 18),
+              const SizedBox(width: 9),
+              Flexible(
+                child: Text(
+                  summary,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectionCommandDock extends StatelessWidget {
+  const _SelectionCommandDock({
+    required this.count,
+    required this.busy,
+    required this.onClear,
+    required this.onDelete,
+  });
+
+  final int count;
+  final bool busy;
+  final VoidCallback onClear;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111113),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              '대량 작업 · $count개 코스',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          TeacherPanelAction(
+            label: '선택 해제',
+            icon: Icons.close_rounded,
+            onTap: onClear,
+          ),
+          TeacherPanelAction(
+            label: busy ? '처리 중' : '선택 코스 검토 후 삭제',
+            icon: Icons.delete_outline_rounded,
+            primary: true,
+            onTap: busy ? null : onDelete,
+          ),
+        ],
+      ),
     );
   }
 }

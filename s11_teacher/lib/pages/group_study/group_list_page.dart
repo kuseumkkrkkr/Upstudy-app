@@ -5,6 +5,7 @@ import 'package:s11_teacher/pages/group_study/group_detail_page.dart';
 import 'package:s11_teacher/services/api_client.dart';
 import 'package:s11_teacher/shared/theme/app_colors.dart';
 import 'package:s11_teacher/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11_teacher/shared/ui/ios26/teacher_adaptive_panel.dart';
 import 'package:s11_teacher/shared/ui/ios26/teacher_studio_shell.dart';
 import 'package:s11_teacher/widgets/teacher_app_drawer.dart';
 
@@ -58,17 +59,33 @@ class _GroupListPageState extends State<GroupListPage> {
   }
 
   Future<void> _showCreateDialog() async {
-    final created = await showDialog<StudyGroup>(
+    final created = await showTeacherAdaptivePanel<StudyGroup>(
       context: context,
-      builder: (_) => const _CreateTeacherGroupDialog(),
+      eyebrow: 'NEW PRIVATE CLASS',
+      title: '새 그룹 설계',
+      description: '학생 공개 검색 없이 초대 링크로만 참여하는 수업 공간을 만듭니다.',
+      icon: Icons.group_add_rounded,
+      barrierDismissible: false,
+      bodyBuilder: (_) => const _CreateTeacherGroupDialog(),
     );
     if (created == null) return;
     if (!mounted) return;
     await _loadGroups();
     if (!mounted) return;
-    await showDialog<void>(
+    await _showSharePanel(created);
+  }
+
+  /// 필요 변수: 생성되었거나 기존에 선택한 그룹.
+  /// 작동 원리: 작은 QR 팝업 대신 복사 가능한 코드·링크와 QR을 한 작업면에 제공한다.
+  Future<void> _showSharePanel(StudyGroup group) {
+    return showTeacherAdaptivePanel<void>(
       context: context,
-      builder: (_) => _ShareDialog(group: created),
+      eyebrow: 'INVITE STUDENTS',
+      title: '${group.name} 공유',
+      description: '학생은 참여코드나 QR 링크 중 편한 방식으로 입장할 수 있습니다.',
+      icon: Icons.ios_share_rounded,
+      maxWidth: 520,
+      bodyBuilder: (_) => _ShareDialog(group: group),
     );
   }
 
@@ -232,10 +249,7 @@ class _GroupListPageState extends State<GroupListPage> {
                           const Spacer(),
                           TextButton(
                             onPressed: () {
-                              showDialog<void>(
-                                context: context,
-                                builder: (_) => _ShareDialog(group: group),
-                              );
+                              _showSharePanel(group);
                             },
                             child: const Text('QR 보기'),
                           ),
@@ -351,35 +365,25 @@ class _CreateTeacherGroupDialogState extends State<_CreateTeacherGroupDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Ios26FrostedCard(
-        radius: 30,
-        child: SizedBox(
-          width: 520,
-          child: SingleChildScrollView(
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _PanelSectionLabel(
+            index: '01',
+            title: '기본 정보',
+            description: '학생 화면에서 구분하기 쉬운 이름과 설명을 입력하세요.',
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFE3E3E7)),
+            ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '교사용 그룹 생성',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '학생 검색에는 보이지 않고, 공유 코드와 링크만 활성화됩니다.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 18),
                 _Ios26Field(controller: _nameCtrl, label: '그룹명'),
                 const SizedBox(height: 10),
                 _Ios26Field(
@@ -394,7 +398,25 @@ class _CreateTeacherGroupDialogState extends State<_CreateTeacherGroupDialog> {
                   label: '최대 인원',
                   keyboardType: TextInputType.number,
                 ),
-                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          _PanelSectionLabel(
+            index: '02',
+            title: '입장 방식',
+            description: '참여코드는 자동 생성하거나 직접 지정할 수 있습니다.',
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFE3E3E7)),
+            ),
+            child: Column(
+              children: [
                 _Ios26Field(
                   controller: _inviteCtrl,
                   label: '참여코드',
@@ -418,28 +440,20 @@ class _CreateTeacherGroupDialogState extends State<_CreateTeacherGroupDialog> {
                   const SizedBox(height: 10),
                   _Ios26Field(controller: _passwordCtrl, label: '비밀번호'),
                 ],
-                const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _FooterButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      label: '취소',
-                    ),
-                    const SizedBox(width: 8),
-                    _FooterButton(
-                      onPressed: _isSubmitting ? null : _submit,
-                      label: _isSubmitting ? '생성 중' : '생성',
-                      filled: true,
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
-        ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: TeacherPanelAction(
+              label: _isSubmitting ? '그룹 생성 중' : '이 설정으로 그룹 만들기',
+              icon: Icons.arrow_forward_rounded,
+              primary: true,
+              onTap: _isSubmitting ? null : _submit,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -454,39 +468,45 @@ class _ShareDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final inviteCode = group.inviteCode ?? '';
     final inviteUrl = ApiClient.instance.buildStudentInviteUrl(inviteCode);
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Ios26FrostedCard(
-        radius: 30,
-        child: SizedBox(
-          width: 380,
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFFE3E3E7)),
+          ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                group.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  color: AppColors.primary,
-                ),
+              QrImageView(data: inviteUrl, size: 210),
+              const SizedBox(height: 14),
+              const Text(
+                '카메라로 스캔',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
               ),
-              const SizedBox(height: 10),
-              QrImageView(data: inviteUrl, size: 180),
-              const SizedBox(height: 12),
-              SelectableText('참여코드: $inviteCode'),
-              const SizedBox(height: 6),
-              SelectableText(inviteUrl, style: const TextStyle(fontSize: 12)),
-              const SizedBox(height: 16),
-              _FooterButton(
-                onPressed: () => Navigator.of(context).pop(),
-                label: '닫기',
-                filled: true,
+              const SizedBox(height: 5),
+              const Text(
+                '학생 기기에서 바로 참여 화면을 엽니다.',
+                style: TextStyle(color: Colors.black54),
               ),
             ],
           ),
         ),
-      ),
+        const SizedBox(height: 14),
+        _ShareValueCard(
+          label: '참여코드',
+          value: inviteCode,
+          onCopy: () => Clipboard.setData(ClipboardData(text: inviteCode)),
+        ),
+        const SizedBox(height: 10),
+        _ShareValueCard(
+          label: '초대 링크',
+          value: inviteUrl,
+          onCopy: () => Clipboard.setData(ClipboardData(text: inviteUrl)),
+        ),
+      ],
     );
   }
 }
@@ -551,6 +571,118 @@ class _GlassActionButton extends StatelessWidget {
       ),
       icon: Icon(icon, size: 16),
       label: Text(label),
+    );
+  }
+}
+
+class _PanelSectionLabel extends StatelessWidget {
+  const _PanelSectionLabel({
+    required this.index,
+    required this.title,
+    required this.description,
+  });
+
+  final String index;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            index,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                description,
+                style: const TextStyle(color: Colors.black54, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShareValueCard extends StatelessWidget {
+  const _ShareValueCard({
+    required this.label,
+    required this.value,
+    required this.onCopy,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback onCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onCopy,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    SelectableText(
+                      value,
+                      maxLines: 2,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Icon(Icons.copy_rounded),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

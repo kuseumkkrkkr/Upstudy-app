@@ -4,6 +4,7 @@ import '../models/textbook.dart';
 import '../models/content_block.dart';
 import '../widgets/content_blocks_view.dart';
 import '../services/api_client.dart';
+import '../shared/ui/ios26/teacher_adaptive_panel.dart';
 
 // ??? Exact Student Colors ???
 
@@ -295,9 +296,15 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
   }
 
   Future<void> _openProfileMenu(BuildContext context) async {
-    await showDialog(
+    await showTeacherAdaptivePanel<void>(
       context: context,
-      builder: (dialogContext) => _ProfileDialog(
+      eyebrow: 'ACCOUNT PROFILE',
+      title: '프로필과 로그인 정보',
+      description: '기본 정보와 비밀번호 변경을 구분해 검토한 뒤 저장합니다.',
+      icon: Icons.manage_accounts_rounded,
+      maxWidth: 620,
+      barrierDismissible: false,
+      bodyBuilder: (_) => _ProfileDialog(
         onProfileUpdated: () {
           if (mounted) {
             setState(() {});
@@ -311,51 +318,66 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
     final passwordController = TextEditingController();
     final isBusy = ValueNotifier<bool>(false);
     final errorText = ValueNotifier<String?>(null);
-    await showDialog<void>(
+    await showTeacherAdaptivePanel<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('?뚯썝?덊눜'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('?뺣쭚 ?덊눜?섏떆寃좎뒿?덇퉴? ???묒뾽? ?섎룎由????놁뒿?덈떎.'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: '?꾩옱 鍮꾨?踰덊샇',
-                border: OutlineInputBorder(),
-              ),
+      eyebrow: 'ACCOUNT REVIEW',
+      title: '회원 탈퇴',
+      description: '계정과 학습 기록을 삭제하기 전에 현재 비밀번호로 본인 여부를 확인합니다.',
+      icon: Icons.person_remove_rounded,
+      maxWidth: 540,
+      barrierDismissible: false,
+      bodyBuilder: (panelContext) => ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
             ),
-            ValueListenableBuilder<String?>(
-              valueListenable: errorText,
-              builder: (_, error, __) => error == null
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Text(
-                        error,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('삭제되는 정보', style: TextStyle(fontWeight: FontWeight.w900)),
+                SizedBox(height: 8),
+                Text('계정 정보와 연결된 개인 학습 기록은 복원할 수 없습니다.'),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('痍⑥냼'),
           ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: '현재 비밀번호',
+              hintText: '본인 확인을 위해 입력하세요.',
+            ),
+          ),
+          ValueListenableBuilder<String?>(
+            valueListenable: errorText,
+            builder: (_, error, __) => error == null
+                ? const SizedBox.shrink()
+                : Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(
+                      error,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 18),
           ValueListenableBuilder<bool>(
             valueListenable: isBusy,
-            builder: (_, busy, __) => TextButton(
-              onPressed: busy
+            builder: (_, busy, __) => TeacherPanelAction(
+              label: busy ? '탈퇴 처리 중' : '비밀번호 확인 후 탈퇴',
+              icon: Icons.delete_forever_outlined,
+              primary: true,
+              onTap: busy
                   ? null
                   : () async {
                       final password = passwordController.text;
                       if (password.isEmpty) {
-                        errorText.value = '鍮꾨?踰덊샇瑜??낅젰?댁＜?몄슂.';
+                        errorText.value = '현재 비밀번호를 입력해주세요.';
                         return;
                       }
                       isBusy.value = true;
@@ -365,7 +387,7 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                         );
                         await ApiClient.instance.clearToken();
                         if (!mounted) return;
-                        Navigator.of(dialogContext).pop();
+                        Navigator.of(panelContext).pop();
                         if (!mounted) return;
                         Navigator.of(
                           context,
@@ -376,7 +398,6 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                         isBusy.value = false;
                       }
                     },
-              child: const Text('?덊눜'),
             ),
           ),
         ],
@@ -388,45 +409,35 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
   }
 
   Future<void> _openSettingsMenu(BuildContext context) async {
-    await showModalBottomSheet<void>(
+    await showTeacherAdaptivePanel<void>(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '설정',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.manage_accounts_outlined),
-                title: const Text('회원정보 수정'),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _openProfileMenu(context);
-                },
-              ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.delete_outline),
-                title: const Text('회원탈퇴'),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _openDeleteDialog(context);
-                },
-              ),
-            ],
+      eyebrow: 'ACCOUNT SETTINGS',
+      title: '계정 작업 선택',
+      description: '수정과 삭제를 분리해 실수 없이 필요한 작업만 진행합니다.',
+      icon: Icons.settings_rounded,
+      maxWidth: 520,
+      bodyBuilder: (panelContext) => ListView(
+        children: [
+          _SettingsTaskTile(
+            icon: Icons.manage_accounts_outlined,
+            title: '회원정보 수정',
+            description: '이름, 학교, 학년과 로그인 정보를 변경합니다.',
+            onTap: () {
+              Navigator.pop(panelContext);
+              _openProfileMenu(context);
+            },
           ),
-        ),
+          const SizedBox(height: 10),
+          _SettingsTaskTile(
+            icon: Icons.delete_outline,
+            title: '회원 탈퇴 검토',
+            description: '삭제되는 정보를 확인한 뒤 비밀번호로 승인합니다.',
+            onTap: () {
+              Navigator.pop(panelContext);
+              _openDeleteDialog(context);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -515,14 +526,14 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
   Future<void> _openSearch() async {
     final controller = TextEditingController();
     var results = <_SearchResult>[];
-    await showModalBottomSheet(
+    await showTeacherAdaptivePanel<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => StatefulBuilder(
+      eyebrow: 'TEXTBOOK SEARCH',
+      title: '교재 안에서 찾기',
+      description: '제목과 본문을 함께 검색하고 결과 위치로 바로 이동합니다.',
+      icon: Icons.manage_search_rounded,
+      maxWidth: 640,
+      bodyBuilder: (panelContext) => StatefulBuilder(
         builder: (context, setModalState) {
           void performSearch(String query) {
             final q = query.trim().toLowerCase();
@@ -555,103 +566,89 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
             setModalState(() => results = found);
           }
 
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Container(
-              constraints: const BoxConstraints(maxHeight: 500),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle bar
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+          return Column(
+            children: [
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: '검색어를 입력하세요',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: controller.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            controller.clear();
+                            setModalState(() => results = []);
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
                   ),
-                  // Search field
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      controller: controller,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: '검색어를 입력하세요',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: controller.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  controller.clear();
-                                  setModalState(() => results = []);
-                                },
-                              )
-                            : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _kBorder),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _kPrimary),
-                        ),
-                      ),
-                      onChanged: performSearch,
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kPrimary),
                   ),
-                  // Results
-                  Expanded(
-                    child: results.isEmpty && controller.text.isNotEmpty
-                        ? Center(
-                            child: Text(
-                              '검색 결과가 없습니다',
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 14,
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: results.length,
-                            itemBuilder: (_, i) {
-                              final r = results[i];
-                              return ListTile(
-                                leading: const Icon(
-                                  Icons.article_outlined,
-                                  color: _kPrimary,
-                                ),
-                                title: Text(
-                                  r.title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  r.preview,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  _scrollToEntry(r.entryIndex);
-                                },
-                              );
-                            },
-                          ),
-                  ),
-                ],
+                ),
+                onChanged: performSearch,
               ),
-            ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: results.isEmpty && controller.text.isNotEmpty
+                    ? Center(
+                        child: Text(
+                          '검색 결과가 없습니다',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: results.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final r = results[i];
+                          return Material(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            child: ListTile(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              leading: const Icon(
+                                Icons.article_outlined,
+                                color: _kPrimary,
+                              ),
+                              title: Text(
+                                r.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                r.preview,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              trailing: const Icon(Icons.arrow_forward_rounded),
+                              onTap: () {
+                                Navigator.pop(panelContext);
+                                _scrollToEntry(r.entryIndex);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           );
         },
       ),
@@ -1237,6 +1234,69 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
 
 // ??? Minimal Graph Placeholder Card ???
 
+class _SettingsTaskTile extends StatelessWidget {
+  const _SettingsTaskTile({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F0F2),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(icon),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_rounded),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfileDialog extends StatefulWidget {
   const _ProfileDialog({required this.onProfileUpdated});
 
@@ -1331,76 +1391,99 @@ class _ProfileDialogState extends State<_ProfileDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('프로필 수정'),
-      content: SizedBox(
-        width: 420,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: _idController,
-                    decoration: const InputDecoration(
-                      labelText: 'ID / Login ID',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _schoolController,
-                    decoration: const InputDecoration(labelText: 'School'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _gradeController,
-                    decoration: const InputDecoration(labelText: 'Grade'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'New Password (optional)',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _passwordConfirmController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'New Password confirm',
-                    ),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 10),
-                    Text(_error!, style: const TextStyle(color: Colors.red)),
-                  ],
-                  if (_saving) ...[
-                    const SizedBox(height: 8),
-                    const LinearProgressIndicator(),
-                  ],
-                ],
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '기본 정보',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
               ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _idController,
+                decoration: const InputDecoration(labelText: '로그인 ID'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: '이름'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: '이메일'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _schoolController,
+                decoration: const InputDecoration(labelText: '학교'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _gradeController,
+                decoration: const InputDecoration(labelText: '학년'),
+              ),
+            ],
+          ),
         ),
-        ElevatedButton(
-          onPressed: _saving ? null : _save,
-          child: const Text('Save'),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '비밀번호 변경',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '변경하지 않으려면 두 칸 모두 비워두세요.',
+                style: TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: '새 비밀번호'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _passwordConfirmController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: '새 비밀번호 확인'),
+              ),
+            ],
+          ),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 10),
+          Text(_error!, style: const TextStyle(color: Colors.red)),
+        ],
+        if (_saving) ...[
+          const SizedBox(height: 8),
+          const LinearProgressIndicator(),
+        ],
+        const SizedBox(height: 16),
+        TeacherPanelAction(
+          label: _saving ? '저장 중' : '변경 내용 저장',
+          icon: Icons.check_rounded,
+          primary: true,
+          onTap: _saving ? null : _save,
         ),
       ],
     );
