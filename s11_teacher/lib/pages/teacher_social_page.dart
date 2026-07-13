@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 import 'teacher_chat_page.dart';
@@ -99,76 +100,59 @@ class _TeacherSocialPageState extends State<TeacherSocialPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return TeacherStudioShell(
+      currentRoute: TeacherSocialPage.routeName,
+      eyebrow: 'TEACHER COMMUNITY',
+      title: '친구 · 채팅',
+      description: '학생과 동료를 찾고 1:1 대화를 같은 작업공간에서 이어갑니다.',
       endDrawer: const TeacherAppDrawer(
         currentRoute: TeacherSocialPage.routeName,
       ),
-      body: Builder(
-        builder: (scaffoldContext) => SafeArea(
-          child: Column(
-            children: [
-              Ios26TopBar(
-                brandColor: kCourseGreen,
-                title: '친구 · 채팅',
-                onBack: () => Navigator.of(context).maybePop(),
-                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                items: const [
-                  Ios26NavItem(label: '친구 목록', active: true),
-                  Ios26NavItem(label: '1:1 채팅'),
-                ],
-                trailingIcons: [
-                  Ios26ActionIcon(
-                    icon: Icons.refresh_rounded,
-                    label: '새로고침',
-                    onTap: _loading ? null : _load,
-                  ),
-                ],
-              ),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-                    children: [
-                      _SocialSummaryCard(
-                        controller: _searchCtrl,
-                        friendCount: _friends.length,
-                        onAdd: _addByNickname,
-                      ),
-                      const SizedBox(height: 16),
-                      if (_loading)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 64),
-                          child: Center(child: CircularProgressIndicator()),
-                        )
-                      else if (_filteredFriends.isEmpty)
-                        const _EmptyFriendsCard()
-                      else
-                        ..._filteredFriends.map(
-                          (friend) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _FriendCard(
-                              friend: friend,
-                              onChat: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => TeacherChatPage(
-                                      peerUsername: friend.username,
-                                    ),
-                                  ),
-                                );
-                              },
-                              onRemove: () => _removeFriend(friend.username),
-                            ),
-                          ),
+      actions: [
+        TeacherStudioAction(
+          label: '새로고침',
+          icon: Icons.refresh_rounded,
+          onTap: _loading ? null : _load,
+          primary: true,
+        ),
+      ],
+      child: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+          children: [
+            _SocialSummaryCard(
+              controller: _searchCtrl,
+              friendCount: _friends.length,
+              onAdd: _addByNickname,
+            ),
+            const SizedBox(height: 16),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.only(top: 64),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_filteredFriends.isEmpty)
+              const _EmptyFriendsCard()
+            else
+              ..._filteredFriends.map(
+                (friend) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _FriendCard(
+                    friend: friend,
+                    onChat: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              TeacherChatPage(peerUsername: friend.username),
                         ),
-                    ],
+                      );
+                    },
+                    onRemove: () => _removeFriend(friend.username),
                   ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );

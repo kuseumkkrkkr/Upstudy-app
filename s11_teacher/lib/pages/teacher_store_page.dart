@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
 
@@ -79,77 +80,61 @@ class _TeacherStorePageState extends State<TeacherStorePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return TeacherStudioShell(
+      currentRoute: TeacherStorePage.routeName,
+      eyebrow: 'TEACHER STORE',
+      title: '스토어',
+      description: '보유 포인트를 확인하고 필요한 교사용 상품을 같은 작업공간에서 선택합니다.',
       endDrawer: const TeacherAppDrawer(
         currentRoute: TeacherStorePage.routeName,
       ),
-      body: Builder(
-        builder: (scaffoldContext) => SafeArea(
-          child: Column(
-            children: [
-              Ios26TopBar(
-                brandColor: kCourseGreen,
-                title: '스토어',
-                onBack: () => Navigator.maybePop(context),
-                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                items: const [
-                  Ios26NavItem(label: '상품', active: true),
-                  Ios26NavItem(label: '포인트'),
-                ],
-                trailingIcons: [
-                  Ios26ActionIcon(
-                    icon: Icons.refresh_rounded,
-                    label: '새로고침',
-                    onTap: _busy ? null : _load,
+      actions: [
+        TeacherStudioAction(
+          label: '새로고침',
+          icon: Icons.refresh_rounded,
+          onTap: _busy ? null : _load,
+          primary: true,
+        ),
+      ],
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                children: [
+                  _BalancePanel(
+                    balance: _balance,
+                    busy: _busy,
+                    onTopUp: _topUp,
+                  ),
+                  const SizedBox(height: 18),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 720;
+                      return Wrap(
+                        spacing: 14,
+                        runSpacing: 14,
+                        children: _items
+                            .map(
+                              (item) => SizedBox(
+                                width: compact
+                                    ? constraints.maxWidth
+                                    : (constraints.maxWidth - 14) / 2,
+                                child: _StoreItemCard(
+                                  item: item,
+                                  busy: _busy,
+                                  onPurchase: _purchase,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
                   ),
                 ],
               ),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : RefreshIndicator(
-                        onRefresh: _load,
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-                          children: [
-                            _BalancePanel(
-                              balance: _balance,
-                              busy: _busy,
-                              onTopUp: _topUp,
-                            ),
-                            const SizedBox(height: 18),
-                            LayoutBuilder(
-                              builder: (context, constraints) {
-                                final compact = constraints.maxWidth < 720;
-                                return Wrap(
-                                  spacing: 14,
-                                  runSpacing: 14,
-                                  children: _items
-                                      .map(
-                                        (item) => SizedBox(
-                                          width: compact
-                                              ? constraints.maxWidth
-                                              : (constraints.maxWidth - 14) / 2,
-                                          child: _StoreItemCard(
-                                            item: item,
-                                            busy: _busy,
-                                            onPurchase: _purchase,
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

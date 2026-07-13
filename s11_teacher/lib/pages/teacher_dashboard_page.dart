@@ -49,12 +49,7 @@ class TeacherDashboardPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
             sliver: _ActionGrid(scaffoldContext: context),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-            sliver: SliverToBoxAdapter(
-              child: _LowerPanels(scaffoldContext: context),
-            ),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 28)),
         ],
       ),
     );
@@ -559,128 +554,6 @@ class _WorkflowConnector extends StatelessWidget {
     return const Padding(
       padding: EdgeInsets.fromLTRB(10, 6, 10, 0),
       child: Icon(Icons.arrow_forward_rounded, color: Colors.black26),
-    );
-  }
-}
-
-class _LowerPanels extends StatelessWidget {
-  const _LowerPanels({required this.scaffoldContext});
-
-  final BuildContext scaffoldContext;
-
-  @override
-  Widget build(BuildContext context) {
-    final compact = MediaQuery.of(context).size.width < 860;
-    final panels = [
-      _StatusPanel(
-        title: '코스 교재 흐름',
-        icon: Icons.auto_stories_rounded,
-        rows: const [
-          _StatusRow(label: '저장 방식', value: '교재 복사 없음'),
-          _StatusRow(label: '접근 방식', value: 'textbook_id 권한 연결'),
-          _StatusRow(label: '학생 화면', value: '코스 전용 리더'),
-        ],
-      ),
-      _StatusPanel(
-        title: '빠른 점검',
-        icon: Icons.check_circle_outline_rounded,
-        rows: const [
-          _StatusRow(label: '문서함 필터', value: 'type=textbook'),
-          _StatusRow(label: '이수율', value: '페이지 + 누적 시간'),
-          _StatusRow(label: '일반 교재 UI', value: '기존 화면 유지'),
-        ],
-      ),
-    ];
-    if (compact) {
-      return Column(
-        children: [
-          for (final panel in panels) ...[panel, const SizedBox(height: 12)],
-        ],
-      );
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var index = 0; index < panels.length; index++) ...[
-          Expanded(child: panels[index]),
-          if (index != panels.length - 1) const SizedBox(width: 14),
-        ],
-      ],
-    );
-  }
-}
-
-class _StatusPanel extends StatelessWidget {
-  const _StatusPanel({
-    required this.title,
-    required this.icon,
-    required this.rows,
-  });
-
-  final String title;
-  final IconData icon;
-  final List<_StatusRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Ios26FrostedCard(
-      radius: 24,
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: kCourseGreen),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: kCourseGreen,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          for (final row in rows) row,
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusRow extends StatelessWidget {
-  const _StatusRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Colors.black.withValues(alpha: 0.56),
-                fontSize: 13,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: kCourseGreen,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

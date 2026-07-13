@@ -18,6 +18,8 @@ void main() {
     expect(find.text('제작 시작'), findsOneWidget);
     expect(find.text('수업 준비'), findsOneWidget);
     expect(find.text('운영 확인'), findsOneWidget);
+    expect(find.text('코스 교재 흐름'), findsNothing);
+    expect(find.text('빠른 점검'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

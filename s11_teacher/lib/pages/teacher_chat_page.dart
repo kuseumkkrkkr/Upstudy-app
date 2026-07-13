@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
-import '../shared/ui/ios26/ios26_chrome.dart';
 import '../shared/ui/ios26/teacher_adaptive_panel.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
+import '../widgets/teacher_app_drawer.dart';
 
 class TeacherChatPage extends StatefulWidget {
   const TeacherChatPage({super.key, required this.peerUsername});
@@ -146,23 +147,23 @@ class _TeacherChatPageState extends State<TeacherChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
+    return TeacherStudioShell(
+      currentRoute: '/teacher-social',
+      eyebrow: 'DIRECT CONVERSATION',
+      title: widget.peerUsername,
+      description: '학생과의 1:1 메시지와 코스 공유를 같은 작업공간에서 이어갑니다.',
+      onBack: () => Navigator.of(context).maybePop(),
+      endDrawer: const TeacherAppDrawer(currentRoute: '/teacher-social'),
+      actions: [
+        TeacherStudioAction(
+          label: '코스 링크 보내기',
+          icon: Icons.send_to_mobile_rounded,
+          onTap: _sendCourseLink,
+          primary: true,
+        ),
+      ],
+      child: Column(
         children: [
-          Ios26TopBar(
-            brandColor: kCourseGreen,
-            title: widget.peerUsername,
-            onBack: () => Navigator.of(context).maybePop(),
-            items: const [Ios26NavItem(label: '1:1 채팅', active: true)],
-            trailingIcons: [
-              Ios26ActionIcon(
-                icon: Icons.send_to_mobile_rounded,
-                label: '코스 링크 보내기',
-                onTap: _sendCourseLink,
-              ),
-            ],
-          ),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())

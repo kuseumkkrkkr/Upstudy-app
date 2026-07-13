@@ -48,6 +48,66 @@ extension on _EditorLayoutMode {
   }
 }
 
+class _ExamWorkspaceScrollLabel extends StatelessWidget {
+  const _ExamWorkspaceScrollLabel({
+    required this.index,
+    required this.title,
+    required this.description,
+  });
+
+  final String index;
+  final String title;
+  final String description;
+
+  /// 필요 변수: 단계 번호 [index], 제목 [title], 안내 문구 [description].
+  /// 작동 원리: 세로 시험지 작업 문서에서 각 작업 구간의 시작점을 흑백 단계 표식으로 구분한다.
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Text(
+            index,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                description,
+                style: const TextStyle(color: Colors.black54, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class ExamPaperEditorPage extends StatefulWidget {
   final String? initialExamId;
   final List<ExamEditorItem>? initialItems;
@@ -842,6 +902,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
       eyebrow: 'EXAM STUDIO',
       title: '시험지 제작 스튜디오',
       description: '문제 검색부터 AI 배치·PDF 출력까지 한 작업면에서 이어갑니다.',
+      sidebarInitiallyExpanded: false,
       endDrawer: const TeacherAppDrawer(currentRoute: '/exam-editor'),
       onBack: Navigator.of(context).canPop()
           ? () => Navigator.of(context).pop()
@@ -869,84 +930,50 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
           primary: true,
         ),
       ],
-      child: Column(
-        children: [
-          _buildTopBar(scale),
-          Expanded(child: _buildResponsiveEditor(scale)),
-        ],
-      ),
+      child: _buildResponsiveEditor(scale),
     );
   }
 
-  /// 필요 변수: 화면 배율 [scale]과 기존 검색·미리보기·설정 패널.
-  /// 작동 원리: 기능 위젯은 그대로 두고 PC에서는 카드형 3단, 모바일에서는 3개 탭으로 재배치한다.
+  /// 필요 변수: 화면 배율 [scale]과 기존 검색·시험지 미리보기 패널.
+  /// 작동 원리: 제목·편집 설정·문제 검색·시험지를 한 개의 세로 작업 문서로 이어
+  /// 고정된 좌우 칸 대신 화면 전체가 아래로 스크롤되도록 한다.
   Widget _buildResponsiveEditor(double scale) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= 1080) {
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              20 * scale,
-              8 * scale,
-              20 * scale,
-              20 * scale,
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 278 * scale,
-                  child: _buildEditorSurface(_buildLeftPanel(scale)),
-                ),
-                SizedBox(width: 14 * scale),
-                Expanded(child: _buildEditorSurface(_buildPreviewArea(scale))),
-              ],
-            ),
-          );
-        }
-        if (constraints.maxWidth >= 720) {
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              16 * scale,
-              8 * scale,
-              16 * scale,
-              16 * scale,
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 290 * scale,
-                  child: _buildEditorSurface(_buildLeftPanel(scale)),
-                ),
-                SizedBox(width: 12 * scale),
-                Expanded(child: _buildEditorSurface(_buildPreviewArea(scale))),
-              ],
-            ),
-          );
-        }
-        return DefaultTabController(
-          length: 2,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const TeacherStudioTabStrip(labels: ['문제 검색', '시험지']),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    12 * scale,
-                    8 * scale,
-                    12 * scale,
-                    0,
-                  ),
-                  child: TabBarView(
-                    children: [
-                      _buildEditorSurface(_buildLeftPanel(scale)),
-                      _buildEditorSurface(_buildPreviewArea(scale)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+        final mobile = constraints.maxWidth < 720;
+        return ListView(
+          key: const ValueKey('exam-workspace-scroll'),
+          padding: EdgeInsets.fromLTRB(
+            (mobile ? 12 : 20) * scale,
+            0,
+            (mobile ? 12 : 20) * scale,
+            28 * scale,
           ),
+          children: [
+            _buildTopBar(scale),
+            SizedBox(height: 18 * scale),
+            const _ExamWorkspaceScrollLabel(
+              index: '01',
+              title: '문제 검색과 담기',
+              description: '검색 결과를 확인하고 시험지에 넣을 문제 순서를 정리합니다.',
+            ),
+            SizedBox(height: 10 * scale),
+            SizedBox(
+              height: (mobile ? 980 : 1120) * scale,
+              child: _buildEditorSurface(_buildLeftPanel(scale)),
+            ),
+            SizedBox(height: 24 * scale),
+            const _ExamWorkspaceScrollLabel(
+              index: '02',
+              title: '시험지 편집과 미리보기',
+              description: '넓어진 작업면에서 배치와 출력 결과를 확인합니다.',
+            ),
+            SizedBox(height: 10 * scale),
+            SizedBox(
+              height: (mobile ? 1080 : 1320) * scale,
+              child: _buildEditorSurface(_buildPreviewArea(scale)),
+            ),
+          ],
         );
       },
     );

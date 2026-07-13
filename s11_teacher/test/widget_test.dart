@@ -41,9 +41,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('풀이 논리 캔버스'), findsOneWidget);
-    expect(find.text('고급 설정'), findsOneWidget);
     expect(find.text('고급 생성 설정'), findsNothing);
-    expect(find.text('파라미터'), findsOneWidget);
     expect(find.text('설명서'), findsNothing);
     expect(find.byTooltip('노드 추가'), findsOneWidget);
     expect(find.byTooltip('화면 옮기기'), findsOneWidget);
@@ -51,8 +49,6 @@ void main() {
     expect(find.byTooltip('노드 연결'), findsOneWidget);
     expect(find.byTooltip('노드 연결 해제'), findsOneWidget);
     expect(find.byTooltip('캔버스 전체화면'), findsOneWidget);
-    expect(find.text('문항 생성'), findsOneWidget);
-    expect(find.text('선택: 참고문항 없음'), findsOneWidget);
     expect(find.text('시드 체험값'), findsNothing);
     expect(find.text('전체 태그'), findsNothing);
 
@@ -85,5 +81,22 @@ void main() {
     await tester.tap(find.byTooltip('노드 추가'));
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('병합'), findsOneWidget);
+    await tester.tapAt(const Offset(1000, 100));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.drag(
+      find.byKey(const ValueKey('problem-workspace-scroll')),
+      const Offset(0, -760),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('고급 설정'), findsOneWidget);
+    expect(find.text('파라미터'), findsOneWidget);
+
+    await tester.drag(
+      find.byKey(const ValueKey('problem-workspace-scroll')),
+      const Offset(0, -900),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('문항 생성'), findsOneWidget);
   });
 }

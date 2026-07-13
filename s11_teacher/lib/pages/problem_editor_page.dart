@@ -982,6 +982,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         eyebrow: 'PROBLEM STUDIO',
         title: '문항 제작 스튜디오',
         description: '간편 생성, 풀이 흐름, 문제 DB 검색을 한곳에서 관리합니다.',
+        sidebarInitiallyExpanded: false,
         endDrawer: const TeacherAppDrawer(currentRoute: '/problem-editor'),
         onBack: Navigator.of(context).canPop()
             ? () => Navigator.of(context).pop()
@@ -1015,22 +1016,17 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
             primary: true,
           ),
         ],
-        child: Column(
-          children: [
-            _buildWorkspaceHeader(scale),
-            Expanded(child: _buildResponsiveWorkspace(scale)),
-          ],
-        ),
+        child: _buildResponsiveWorkspace(scale),
       ),
     );
   }
 
-  /// 필요 변수: 화면 배율 [scale]과 현재 편집 모드.
-  /// 작동 원리: 같은 입력·캔버스·저장소 위젯을 PC에서는 3단, 모바일에서는 탭으로 재배치한다.
+  /// 필요 변수: 화면 배율 [scale], 현재 편집 모드와 실제 작업영역 폭.
+  /// 작동 원리: 입력·논리 흐름·설정 패널을 고정 높이 가로 칸에 가두지 않고 한 개의
+  /// 세로 작업 문서로 이어 붙여 상단 설정부터 마지막 저장소까지 화면 전체가 스크롤된다.
   Widget _buildResponsiveWorkspace(double scale) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < 980;
         final mobile = constraints.maxWidth < 720;
         final simple = _editorMode == 'simple';
         final left = simple ? _buildLeftPanel(scale) : null;
@@ -1038,75 +1034,55 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
             ? _buildSimplePipelinePanel(scale)
             : _buildAdvancedCanvasPanel(scale);
         final right = _buildRightPanel(scale);
-
-        if (mobile) {
-          final panels = simple
-              ? <Widget>[if (left != null) left, center, right]
-              : <Widget>[center, right];
-          final tabLabels = simple
-              ? const ['입력', '흐름', '설정']
-              : const ['논리 설계', '설정·저장소'];
-          return DefaultTabController(
-            length: panels.length,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TeacherStudioTabStrip(labels: tabLabels),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      12 * scale,
-                      8 * scale,
-                      12 * scale,
-                      0,
-                    ),
-                    child: TabBarView(children: panels),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (compact) {
-          return ListView(
-            padding: EdgeInsets.fromLTRB(
-              18 * scale,
-              8 * scale,
-              18 * scale,
-              18 * scale,
-            ),
-            children: [
-              if (left != null) ...[
-                SizedBox(height: 600 * scale, child: left),
-                SizedBox(height: 14 * scale),
-              ],
-              SizedBox(height: simple ? 420 : 620, child: center),
-              SizedBox(height: 14 * scale),
-              SizedBox(height: 720 * scale, child: right),
-            ],
-          );
-        }
-
-        return Padding(
+        return ListView(
+          key: const ValueKey('problem-workspace-scroll'),
           padding: EdgeInsets.fromLTRB(
-            20 * scale,
-            8 * scale,
-            20 * scale,
-            20 * scale,
+            (mobile ? 12 : 20) * scale,
+            0,
+            (mobile ? 12 : 20) * scale,
+            28 * scale,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (left != null) ...[
-                SizedBox(width: 280 * scale, child: left),
-                SizedBox(width: 14 * scale),
-              ],
-              Expanded(child: center),
-              SizedBox(width: 14 * scale),
-              SizedBox(width: 292 * scale, child: right),
+          children: [
+            _buildWorkspaceHeader(scale),
+            SizedBox(height: 16 * scale),
+            if (left != null) ...[
+              _WorkspaceScrollLabel(
+                index: '01',
+                title: '생성 입력',
+                description: '기준 문항과 교사 지시를 먼저 정리합니다.',
+              ),
+              SizedBox(height: 10 * scale),
+              SizedBox(height: (mobile ? 650 : 720) * scale, child: left),
+              SizedBox(height: 22 * scale),
             ],
-          ),
+            _WorkspaceScrollLabel(
+              index: simple ? '02' : '01',
+              title: simple ? '풀이 흐름 확인' : '풀이 논리 설계',
+              description: simple
+                  ? '선택한 난이도의 생성 흐름을 검토합니다.'
+                  : '넓어진 캔버스에서 노드와 연결을 설계합니다.',
+            ),
+            SizedBox(height: 10 * scale),
+            SizedBox(
+              height:
+                  (simple ? (mobile ? 520 : 600) : (mobile ? 700 : 820)) *
+                  scale,
+              child: center,
+            ),
+            SizedBox(height: 22 * scale),
+            _WorkspaceScrollLabel(
+              index: simple ? '03' : '02',
+              title: simple ? '저장소와 임시저장' : '세부 설정과 저장소',
+              description: '생성 결과, 참고 문항, 저장 상태를 마지막으로 확인합니다.',
+            ),
+            SizedBox(height: 10 * scale),
+            SizedBox(
+              height:
+                  (simple ? (mobile ? 760 : 860) : (mobile ? 900 : 1040)) *
+                  scale,
+              child: right,
+            ),
+          ],
         );
       },
     );
@@ -2372,6 +2348,66 @@ class _GenerationTagGroup {
   final List<String> tags;
 }
 
+class _WorkspaceScrollLabel extends StatelessWidget {
+  const _WorkspaceScrollLabel({
+    required this.index,
+    required this.title,
+    required this.description,
+  });
+
+  final String index;
+  final String title;
+  final String description;
+
+  /// 필요 변수: 단계 번호 [index], 제목 [title], 안내 문구 [description].
+  /// 작동 원리: 문항 제작의 입력·설계·저장 구간을 세로 스크롤 흐름 안에서 명확히 구분한다.
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Text(
+            index,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                description,
+                style: const TextStyle(color: Colors.black54, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _GenerationTagPickerDialog extends StatefulWidget {
   const _GenerationTagPickerDialog({
     required this.groups,
@@ -2673,23 +2709,26 @@ class _StudioPanel extends StatelessWidget {
         border: Border.all(color: AppColors.surfaceBorder),
         boxShadow: const [kCourseShadow],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: kCourseGreen,
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: kCourseGreen,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
-          ),
-          const Divider(height: 1),
-          Expanded(child: child),
-        ],
+            const Divider(height: 1),
+            Expanded(child: child),
+          ],
+        ),
       ),
     );
   }

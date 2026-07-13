@@ -6,34 +6,60 @@ import 'package:s11_teacher/shared/ui/ios26/teacher_full_face_panel.dart';
 
 /// 필요 변수: 390×844 모바일 테스트 화면.
 /// 작동 원리: 제작 스튜디오와 풀페이스 패널을 실제 모바일 제약으로 렌더링해
-/// 핵심 탭과 액션이 사라지거나 RenderFlex 오버플로우가 발생하지 않는지 확인한다.
+/// 세로 작업 문서의 단계와 액션이 사라지거나 RenderFlex 오버플로우가 발생하지 않는지 확인한다.
 void main() {
   Future<void> setMobileSurface(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
   }
 
-  testWidgets('문항 제작 스튜디오는 모바일에서 세 작업 탭을 유지한다', (tester) async {
+  testWidgets('문항 제작 스튜디오는 모바일에서 전체 세로 작업 흐름을 유지한다', (tester) async {
     await setMobileSurface(tester);
     await tester.pumpWidget(
       const MaterialApp(home: ProblemEditorPage(initialTags: ['#함수'])),
     );
     await tester.pump();
 
-    expect(find.text('입력'), findsWidgets);
-    expect(find.text('흐름'), findsOneWidget);
-    expect(find.text('설정'), findsOneWidget);
+    expect(find.text('생성 입력'), findsWidgets);
+    final problemScrollable = find
+        .descendant(
+          of: find.byKey(const ValueKey('problem-workspace-scroll')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    final problemState = tester.state<ScrollableState>(problemScrollable);
+    expect(problemState.position.maxScrollExtent, greaterThan(1000));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('시험지 편집기는 모바일에서 검색·시험지·설정 탭을 유지한다', (tester) async {
+  testWidgets('시험지 편집기는 모바일에서 검색과 편집을 세로로 이어간다', (tester) async {
     await setMobileSurface(tester);
     await tester.pumpWidget(const MaterialApp(home: ExamPaperEditorPage()));
     await tester.pump();
 
-    expect(find.text('문제 검색'), findsWidgets);
-    expect(find.text('시험지'), findsOneWidget);
-    expect(find.text('편집 설정'), findsOneWidget);
+    expect(find.text('문제 검색과 담기'), findsOneWidget);
+    final examScrollable = find
+        .descendant(
+          of: find.byKey(const ValueKey('exam-workspace-scroll')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    final examState = tester.state<ScrollableState>(examScrollable);
+    expect(examState.position.maxScrollExtent, greaterThan(1000));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('제작 스튜디오는 PC에서 사이드바를 접은 상태로 시작한다', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(const MaterialApp(home: ProblemEditorPage()));
+    await tester.pump();
+
+    expect(
+      find.byIcon(Icons.keyboard_double_arrow_right_rounded),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 

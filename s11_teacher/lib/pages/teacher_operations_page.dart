@@ -7,7 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/teacher_operations_store.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/design_tokens.dart';
+import '../widgets/teacher_app_drawer.dart';
 
 enum _OpsSection { finance, schedule }
 
@@ -114,90 +116,84 @@ class _TeacherOperationsPageState extends State<TeacherOperationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Ios26TopBar(
-              brandColor: kCourseGreen,
-              title: '운영 관리',
-              onBack: () => Navigator.of(context).pop(),
-              items: const [Ios26NavItem(label: '로컬 저장', active: true)],
-            ),
-            Expanded(
-              child: FutureBuilder<_OperationsState>(
-                future: _future,
-                builder: (context, snapshot) {
-                  final data = snapshot.data ?? _OperationsState.empty();
-                  return ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-                    children: [
-                      _HeaderControls(
-                        section: _section,
-                        scheduleScope: _scheduleScope,
-                        selectedDate: _selectedDate,
-                        onSectionChanged: (section) {
-                          setState(() {
-                            _section = section;
-                          });
-                        },
-                        onScheduleScopeChanged: (scope) {
-                          setState(() {
-                            _scheduleScope = scope;
-                            _future = _load();
-                          });
-                        },
-                        onPickDate: _pickSelectedDate,
-                        onMoveDate: _moveSelectedDate,
-                        onOpenCalendar: () =>
-                            _openDeviceCalendar(_selectedDate),
-                      ),
-                      const SizedBox(height: 14),
-                      if (snapshot.connectionState == ConnectionState.waiting)
-                        const LinearProgressIndicator(minHeight: 2),
-                      if (_section == _OpsSection.finance)
-                        _FinancePanel(
-                          selectedDate: _selectedDate,
-                          entries: data.financeEntries,
-                          summary: data.financeSummary,
-                          titleCtrl: _financeTitleCtrl,
-                          categoryCtrl: _financeCategoryCtrl,
-                          amountCtrl: _financeAmountCtrl,
-                          memoCtrl: _financeMemoCtrl,
-                          type: _financeType,
-                          occurredOn: _financeDate,
-                          onTypeChanged: (value) {
-                            setState(() {
-                              _financeType = value;
-                            });
-                          },
-                          onPickDate: _pickFinanceDate,
-                          onSave: _saveFinance,
-                          onDelete: _deleteFinance,
-                        )
-                      else
-                        _SchedulePanel(
-                          entries: data.scheduleEntries,
-                          scope: _scheduleScope,
-                          titleCtrl: _scheduleTitleCtrl,
-                          noteCtrl: _scheduleNoteCtrl,
-                          start: _scheduleStart,
-                          end: _scheduleEnd,
-                          onPickStart: () => _pickScheduleTime(start: true),
-                          onPickEnd: () => _pickScheduleTime(start: false),
-                          onSave: _saveSchedule,
-                          onDelete: _deleteSchedule,
-                          onOpenCalendar: _openDeviceCalendar,
-                          onExportIcs: _exportScheduleIcs,
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
+    return TeacherStudioShell(
+      currentRoute: TeacherOperationsPage.routeName,
+      eyebrow: 'TEACHER OPERATIONS',
+      title: '운영 관리',
+      description: '수업 일정과 수입·지출 기록을 같은 작업공간에서 관리합니다.',
+      endDrawer: const TeacherAppDrawer(
+        currentRoute: TeacherOperationsPage.routeName,
+      ),
+      actions: [
+        TeacherStudioAction(
+          label: '새로고침',
+          icon: Icons.refresh_rounded,
+          onTap: _reload,
+          primary: true,
         ),
+      ],
+      child: FutureBuilder<_OperationsState>(
+        future: _future,
+        builder: (context, snapshot) {
+          final data = snapshot.data ?? _OperationsState.empty();
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+            children: [
+              _HeaderControls(
+                section: _section,
+                scheduleScope: _scheduleScope,
+                selectedDate: _selectedDate,
+                onSectionChanged: (section) {
+                  setState(() => _section = section);
+                },
+                onScheduleScopeChanged: (scope) {
+                  setState(() {
+                    _scheduleScope = scope;
+                    _future = _load();
+                  });
+                },
+                onPickDate: _pickSelectedDate,
+                onMoveDate: _moveSelectedDate,
+                onOpenCalendar: () => _openDeviceCalendar(_selectedDate),
+              ),
+              const SizedBox(height: 14),
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const LinearProgressIndicator(minHeight: 2),
+              if (_section == _OpsSection.finance)
+                _FinancePanel(
+                  selectedDate: _selectedDate,
+                  entries: data.financeEntries,
+                  summary: data.financeSummary,
+                  titleCtrl: _financeTitleCtrl,
+                  categoryCtrl: _financeCategoryCtrl,
+                  amountCtrl: _financeAmountCtrl,
+                  memoCtrl: _financeMemoCtrl,
+                  type: _financeType,
+                  occurredOn: _financeDate,
+                  onTypeChanged: (value) =>
+                      setState(() => _financeType = value),
+                  onPickDate: _pickFinanceDate,
+                  onSave: _saveFinance,
+                  onDelete: _deleteFinance,
+                )
+              else
+                _SchedulePanel(
+                  entries: data.scheduleEntries,
+                  scope: _scheduleScope,
+                  titleCtrl: _scheduleTitleCtrl,
+                  noteCtrl: _scheduleNoteCtrl,
+                  start: _scheduleStart,
+                  end: _scheduleEnd,
+                  onPickStart: () => _pickScheduleTime(start: true),
+                  onPickEnd: () => _pickScheduleTime(start: false),
+                  onSave: _saveSchedule,
+                  onDelete: _deleteSchedule,
+                  onOpenCalendar: _openDeviceCalendar,
+                  onExportIcs: _exportScheduleIcs,
+                ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -13,6 +13,7 @@ import 'package:s11_teacher/pages/teacher_register_page.dart';
 import 'package:s11_teacher/pages/teacher_social_page.dart';
 import 'package:s11_teacher/pages/teacher_store_page.dart';
 import 'package:s11_teacher/pages/textbook_builder_page.dart';
+import 'package:s11_teacher/shared/ui/ios26/teacher_studio_shell.dart';
 
 /// 필요 변수: 390×844 모바일 화면과 독립 교사용 페이지 목록.
 /// 작동 원리: API가 연결되지 않은 초기 상태에서도 각 페이지를 모바일 제약으로
@@ -45,4 +46,20 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('운영·친구·스토어는 독립 창이 아닌 공통 교사용 셸에서 열린다', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    for (final page in const <Widget>[
+      TeacherOperationsPage(),
+      TeacherSocialPage(),
+      TeacherStorePage(),
+    ]) {
+      await tester.pumpWidget(MaterialApp(home: page));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(TeacherStudioShell), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+  });
 }
