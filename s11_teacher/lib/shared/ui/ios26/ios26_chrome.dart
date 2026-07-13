@@ -99,14 +99,16 @@ class Ios26TopBar extends StatelessWidget {
                   ),
                   const SizedBox(width: 2),
                 ],
-                IconButton(
-                  icon: const Icon(
-                    Icons.menu_rounded,
-                    color: AppColors.primary,
+                if (onMenu != null) ...[
+                  IconButton(
+                    icon: const Icon(
+                      Icons.menu_rounded,
+                      color: AppColors.primary,
+                    ),
+                    onPressed: onMenu,
                   ),
-                  onPressed: onMenu,
-                ),
-                const SizedBox(width: 6),
+                  const SizedBox(width: 6),
+                ],
                 if (compact)
                   Flexible(
                     child: GestureDetector(

@@ -13,6 +13,7 @@ import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
 import '../shared/ui/ios26/teacher_full_face_panel.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../widgets/content_blocks_view.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
@@ -836,88 +837,140 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
-    return Scaffold(
-      endDrawer: const TeacherAppDrawer(currentRoute: '/exam-builder'),
-      backgroundColor: kCourseBgGrey,
-      body: Builder(
-        builder: (scaffoldContext) => SafeArea(
+    return TeacherStudioShell(
+      currentRoute: '/exam-editor',
+      eyebrow: 'EXAM STUDIO',
+      title: '시험지 제작 스튜디오',
+      description: '문제 검색부터 AI 배치·PDF 출력까지 한 작업면에서 이어갑니다.',
+      endDrawer: const TeacherAppDrawer(currentRoute: '/exam-editor'),
+      onBack: Navigator.of(context).canPop()
+          ? () => Navigator.of(context).pop()
+          : null,
+      topItems: const [
+        Ios26NavItem(label: '검색'),
+        Ios26NavItem(label: '편집', active: true),
+        Ios26NavItem(label: '미리보기'),
+      ],
+      actions: [
+        TeacherStudioAction(
+          label: _aiArranging ? '배치 중' : 'AI 배치',
+          icon: Icons.auto_awesome_rounded,
+          onTap: _aiArranging ? null : _aiArrange,
+        ),
+        TeacherStudioAction(
+          label: _saving ? '저장 중' : '문서함 저장',
+          icon: Icons.folder_copy_rounded,
+          onTap: _saving ? null : _saveToDocumentBox,
+        ),
+        TeacherStudioAction(
+          label: _deploying ? '준비 중' : 'PDF',
+          icon: Icons.picture_as_pdf_rounded,
+          onTap: _deploying ? null : _downloadPdf,
+          primary: true,
+        ),
+      ],
+      child: Column(
+        children: [
+          _buildTopBar(scale),
+          Expanded(child: _buildResponsiveEditor(scale)),
+        ],
+      ),
+    );
+  }
+
+  /// 필요 변수: 화면 배율 [scale]과 기존 검색·미리보기·설정 패널.
+  /// 작동 원리: 기능 위젯은 그대로 두고 PC에서는 카드형 3단, 모바일에서는 3개 탭으로 재배치한다.
+  Widget _buildResponsiveEditor(double scale) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 1080) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              20 * scale,
+              8 * scale,
+              20 * scale,
+              20 * scale,
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 278 * scale,
+                  child: _buildEditorSurface(_buildLeftPanel(scale)),
+                ),
+                SizedBox(width: 14 * scale),
+                Expanded(child: _buildEditorSurface(_buildPreviewArea(scale))),
+                SizedBox(width: 14 * scale),
+                SizedBox(
+                  width: 270 * scale,
+                  child: _buildEditorSurface(_buildInspectorPanel(scale)),
+                ),
+              ],
+            ),
+          );
+        }
+        if (constraints.maxWidth >= 720) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              16 * scale,
+              8 * scale,
+              16 * scale,
+              16 * scale,
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 290 * scale,
+                  child: _buildEditorSurface(_buildLeftPanel(scale)),
+                ),
+                SizedBox(width: 12 * scale),
+                Expanded(child: _buildEditorSurface(_buildPreviewArea(scale))),
+              ],
+            ),
+          );
+        }
+        return DefaultTabController(
+          length: 3,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Ios26TopBar(
-                brandColor: kCourseGreen,
-                title: '시험지 제작 스튜디오',
-                onBack: Navigator.of(context).canPop()
-                    ? () => Navigator.of(context).pop()
-                    : null,
-                onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                items: const [
-                  Ios26NavItem(label: '검색'),
-                  Ios26NavItem(label: '편집', active: true),
-                  Ios26NavItem(label: '미리보기'),
-                ],
-              ),
-              _buildTopBar(scale),
+              const TeacherStudioTabStrip(labels: ['문제 검색', '시험지', '편집 설정']),
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth >= 1100) {
-                      return Row(
-                        children: [
-                          SizedBox(
-                            width: 320 * scale,
-                            child: _buildLeftPanel(scale),
-                          ),
-                          Expanded(child: _buildPreviewArea(scale)),
-                          SizedBox(
-                            width: 300 * scale,
-                            child: _buildInspectorPanel(scale),
-                          ),
-                        ],
-                      );
-                    }
-                    if (constraints.maxWidth >= 720) {
-                      return Row(
-                        children: [
-                          SizedBox(
-                            width: 300 * scale,
-                            child: _buildLeftPanel(scale),
-                          ),
-                          Expanded(child: _buildPreviewArea(scale)),
-                        ],
-                      );
-                    }
-                    return DefaultTabController(
-                      length: 3,
-                      child: Column(
-                        children: [
-                          const Material(
-                            color: Colors.white,
-                            child: TabBar(
-                              tabs: [
-                                Tab(text: '문제 검색'),
-                                Tab(text: '시험지'),
-                                Tab(text: '편집 설정'),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: TabBarView(
-                              children: [
-                                _buildLeftPanel(scale),
-                                _buildPreviewArea(scale),
-                                _buildInspectorPanel(scale),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    12 * scale,
+                    8 * scale,
+                    12 * scale,
+                    0,
+                  ),
+                  child: TabBarView(
+                    children: [
+                      _buildEditorSurface(_buildLeftPanel(scale)),
+                      _buildEditorSurface(_buildPreviewArea(scale)),
+                      _buildEditorSurface(_buildInspectorPanel(scale)),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  /// 필요 변수: 기존 검색·미리보기·설정 위젯.
+  /// 작동 원리: 내부 기능에는 관여하지 않고 공통 카드 경계와 둥근 클리핑만 적용한다.
+  Widget _buildEditorSurface(Widget child) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: AppColors.surfaceBorder),
+          boxShadow: const [kCourseShadow],
         ),
+        child: child,
       ),
     );
   }
@@ -964,38 +1017,21 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
             label: '통계',
             onTap: _showStatsSheet,
           ),
-          SizedBox(width: 8 * scale),
-          _buildToolbarChip(
-            icon: Icons.auto_awesome_rounded,
-            label: _aiArranging ? '배치중' : 'AI 배치',
-            onTap: _aiArranging ? null : _aiArrange,
-          ),
-          SizedBox(width: 8 * scale),
-          _buildToolbarChip(
-            icon: Icons.folder_copy_rounded,
-            label: _saving ? '저장중' : '문서함 저장',
-            onTap: _saving ? null : _saveToDocumentBox,
-          ),
-          SizedBox(width: 8 * scale),
-          _buildToolbarChip(
-            icon: Icons.picture_as_pdf_rounded,
-            label: _deploying ? 'PDF 준비중' : 'PDF',
-            onTap: _deploying ? null : _downloadPdf,
-            filled: true,
-          ),
         ],
       ),
     );
     return Container(
+      margin: EdgeInsets.fromLTRB(18 * scale, 0, 18 * scale, 0),
       padding: EdgeInsets.fromLTRB(
         18 * scale,
         14 * scale,
         18 * scale,
         12 * scale,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: AppColors.surfaceBorder)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Column(
         children: [
@@ -1317,7 +1353,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                 : _buildSearchResults(scale),
           ),
           _buildProblemSetHeader(scale),
-          SizedBox(height: 260 * scale, child: _buildProblemSet(scale)),
+          Flexible(child: _buildProblemSet(scale)),
         ],
       ),
     );

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../services/api_client.dart';
 import '../shared/theme/app_colors.dart';
 import '../shared/ui/ios26/ios26_chrome.dart';
+import '../shared/ui/ios26/teacher_studio_shell.dart';
 import '../shared/ui/ios26/teacher_full_face_panel.dart';
 import '../widgets/design_tokens.dart';
 import '../widgets/teacher_app_drawer.dart';
@@ -976,111 +977,138 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
           ),
         ),
       ),
-      child: Scaffold(
+      child: TeacherStudioShell(
+        currentRoute: '/problem-editor',
+        eyebrow: 'PROBLEM STUDIO',
+        title: '문항 제작 스튜디오',
+        description: '간편 생성, 풀이 흐름, 문제 DB 검색을 한곳에서 관리합니다.',
         endDrawer: const TeacherAppDrawer(currentRoute: '/problem-editor'),
-        backgroundColor: kCourseBgGrey,
-        body: Builder(
-          builder: (scaffoldContext) => SafeArea(
+        onBack: Navigator.of(context).canPop()
+            ? () => Navigator.of(context).pop()
+            : null,
+        topItems: [
+          const Ios26NavItem(label: '입력', active: true),
+          const Ios26NavItem(label: '논리 설계'),
+        ],
+        trailingIcons: [
+          Ios26ActionIcon(
+            icon: Icons.info_outline_rounded,
+            label: '설명서',
+            onTap: _showDocumentation,
+          ),
+        ],
+        actions: [
+          TeacherStudioAction(
+            label: 'DB 검색',
+            icon: Icons.search_rounded,
+            onTap: _openProblemDbFilter,
+          ),
+          TeacherStudioAction(
+            label: '객관식 변환',
+            icon: Icons.checklist_rtl_rounded,
+            onTap: _loading ? null : _convertToMcq,
+          ),
+          TeacherStudioAction(
+            label: _loading ? '생성 중' : '문항 생성',
+            icon: Icons.auto_awesome_rounded,
+            onTap: _loading ? null : _generateVariant,
+            primary: true,
+          ),
+        ],
+        child: Column(
+          children: [
+            _buildWorkspaceHeader(scale),
+            Expanded(child: _buildResponsiveWorkspace(scale)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 필요 변수: 화면 배율 [scale]과 현재 편집 모드.
+  /// 작동 원리: 같은 입력·캔버스·저장소 위젯을 PC에서는 3단, 모바일에서는 탭으로 재배치한다.
+  Widget _buildResponsiveWorkspace(double scale) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 980;
+        final mobile = constraints.maxWidth < 720;
+        final simple = _editorMode == 'simple';
+        final left = simple ? _buildLeftPanel(scale) : null;
+        final center = simple
+            ? _buildSimplePipelinePanel(scale)
+            : _buildAdvancedCanvasPanel(scale);
+        final right = _buildRightPanel(scale);
+
+        if (mobile) {
+          final panels = simple
+              ? <Widget>[if (left != null) left, center, right]
+              : <Widget>[center, right];
+          final tabLabels = simple
+              ? const ['입력', '흐름', '설정']
+              : const ['논리 설계', '설정·저장소'];
+          return DefaultTabController(
+            length: panels.length,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Ios26TopBar(
-                  brandColor: kCourseGreen,
-                  title: '문항 제작 스튜디오',
-                  onBack: Navigator.of(context).canPop()
-                      ? () => Navigator.of(context).pop()
-                      : null,
-                  onMenu: () => Scaffold.of(scaffoldContext).openEndDrawer(),
-                  items: const [
-                    Ios26NavItem(label: '입력', active: true),
-                    Ios26NavItem(label: '논리 설계'),
-                    Ios26NavItem(label: '생성 설정'),
-                  ],
-                  trailingIcons: [
-                    Ios26ActionIcon(
-                      icon: Icons.info_outline_rounded,
-                      label: '설명서',
-                      onTap: _showDocumentation,
-                    ),
-                  ],
-                ),
-                _buildWorkspaceHeader(scale),
+                TeacherStudioTabStrip(labels: tabLabels),
                 Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 1180;
-                      final mobile = constraints.maxWidth < 720;
-                      final simple = _editorMode == 'simple';
-                      final left = simple ? _buildLeftPanel(scale) : null;
-                      final center = _editorMode == 'simple'
-                          ? _buildSimplePipelinePanel(scale)
-                          : _buildAdvancedCanvasPanel(scale);
-                      final right = _buildRightPanel(scale);
-
-                      if (mobile) {
-                        final panels = simple
-                            ? <Widget>[if (left != null) left, center, right]
-                            : <Widget>[center, right];
-                        final tabs = simple
-                            ? const [
-                                Tab(text: '입력'),
-                                Tab(text: '흐름'),
-                                Tab(text: '설정'),
-                              ]
-                            : const [Tab(text: '논리 설계'), Tab(text: '설정')];
-                        return DefaultTabController(
-                          length: panels.length,
-                          child: Column(
-                            children: [
-                              Material(
-                                color: Colors.white,
-                                child: TabBar(tabs: tabs),
-                              ),
-                              Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.all(10 * scale),
-                                  child: TabBarView(children: panels),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      if (compact) {
-                        return ListView(
-                          padding: EdgeInsets.all(14 * scale),
-                          children: [
-                            if (left != null) ...[
-                              SizedBox(height: 640 * scale, child: left),
-                              SizedBox(height: 12 * scale),
-                            ],
-                            SizedBox(
-                              height: _editorMode == 'simple' ? 420 : 620,
-                              child: center,
-                            ),
-                            SizedBox(height: 12 * scale),
-                            SizedBox(height: 760 * scale, child: right),
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (left != null)
-                            SizedBox(width: 360 * scale, child: left),
-                          Expanded(child: center),
-                          SizedBox(width: 390 * scale, child: right),
-                        ],
-                      );
-                    },
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      12 * scale,
+                      8 * scale,
+                      12 * scale,
+                      0,
+                    ),
+                    child: TabBarView(children: panels),
                   ),
                 ),
               ],
             ),
+          );
+        }
+
+        if (compact) {
+          return ListView(
+            padding: EdgeInsets.fromLTRB(
+              18 * scale,
+              8 * scale,
+              18 * scale,
+              18 * scale,
+            ),
+            children: [
+              if (left != null) ...[
+                SizedBox(height: 600 * scale, child: left),
+                SizedBox(height: 14 * scale),
+              ],
+              SizedBox(height: simple ? 420 : 620, child: center),
+              SizedBox(height: 14 * scale),
+              SizedBox(height: 720 * scale, child: right),
+            ],
+          );
+        }
+
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            20 * scale,
+            8 * scale,
+            20 * scale,
+            20 * scale,
           ),
-        ),
-      ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (left != null) ...[
+                SizedBox(width: 280 * scale, child: left),
+                SizedBox(width: 14 * scale),
+              ],
+              Expanded(child: center),
+              SizedBox(width: 14 * scale),
+              SizedBox(width: 292 * scale, child: right),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1093,17 +1121,17 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
 
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.fromLTRB(10 * scale, 10 * scale, 10 * scale, 0),
-      padding: EdgeInsets.all(12 * scale),
+      margin: EdgeInsets.fromLTRB(18 * scale, 0, 18 * scale, 0),
+      padding: EdgeInsets.all(14 * scale),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(26),
         border: Border.all(color: AppColors.surfaceBorder),
         boxShadow: const [kCourseShadow],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 980;
+          final compact = constraints.maxWidth < 720;
           final modeSwitch = SizedBox(
             width: compact ? constraints.maxWidth : 210 * scale,
             child: SegmentedButton<String>(
@@ -1150,34 +1178,16 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
               ),
             ],
           );
-          final actions = Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _loading ? null : _generateVariant,
-                icon: const Icon(Icons.auto_awesome_rounded),
-                label: const Text('문항 생성'),
-              ),
-              OutlinedButton.icon(
-                onPressed: _loading ? null : _convertToMcq,
-                icon: const Icon(Icons.checklist_rtl_rounded),
-                label: const Text('객관식 변환'),
-              ),
-            ],
-          );
-
           final content = compact
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text(
+                      '제작 방식',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    SizedBox(height: 10 * scale),
                     modeSwitch,
-                    SizedBox(height: 10 * scale),
-                    steps,
-                    SizedBox(height: 10 * scale),
-                    summary,
-                    SizedBox(height: 10 * scale),
-                    actions,
                   ],
                 )
               : Row(
@@ -1194,8 +1204,6 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
                         ],
                       ),
                     ),
-                    SizedBox(width: 12 * scale),
-                    actions,
                   ],
                 );
 
@@ -1254,6 +1262,7 @@ class _ProblemEditorPageState extends State<ProblemEditorPage> {
         padding: EdgeInsets.all(16 * scale),
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _variantInputMode,
             decoration: const InputDecoration(
               labelText: '입력 방식',
@@ -2657,10 +2666,10 @@ class _StudioPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(10),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: AppColors.surfaceBorder),
         boxShadow: const [kCourseShadow],
       ),
