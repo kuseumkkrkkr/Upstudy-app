@@ -99,7 +99,6 @@ class TeacherStudioShell extends StatelessWidget {
     this.topItems = const <Ios26NavItem>[],
     this.trailingIcons = const <Ios26ActionIcon>[],
     this.onBack,
-    this.sidebarInitiallyExpanded = true,
   });
 
   final String currentRoute;
@@ -112,7 +111,6 @@ class TeacherStudioShell extends StatelessWidget {
   final List<Ios26NavItem> topItems;
   final List<Ios26ActionIcon> trailingIcons;
   final VoidCallback? onBack;
-  final bool sidebarInitiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +134,6 @@ class TeacherStudioShell extends StatelessWidget {
               return _CollapsibleDesktopFrame(
                 currentRoute: currentRoute,
                 workspace: workspace,
-                initiallyExpanded: sidebarInitiallyExpanded,
               );
             },
           ),
@@ -190,12 +187,10 @@ class _CollapsibleDesktopFrame extends StatefulWidget {
   const _CollapsibleDesktopFrame({
     required this.currentRoute,
     required this.workspace,
-    required this.initiallyExpanded,
   });
 
   final String currentRoute;
   final Widget workspace;
-  final bool initiallyExpanded;
 
   @override
   State<_CollapsibleDesktopFrame> createState() =>
@@ -203,15 +198,7 @@ class _CollapsibleDesktopFrame extends StatefulWidget {
 }
 
 class _CollapsibleDesktopFrameState extends State<_CollapsibleDesktopFrame> {
-  late bool _expanded;
-
-  /// 필요 변수: 화면별 초기 사이드바 상태 [widget.initiallyExpanded].
-  /// 작동 원리: 일반 페이지는 펼치고 제작 스튜디오는 접힌 상태로 최초 작업 폭을 결정한다.
-  @override
-  void initState() {
-    super.initState();
-    _expanded = widget.initiallyExpanded;
-  }
+  bool _expanded = true;
 
   @override
   Widget build(BuildContext context) {
