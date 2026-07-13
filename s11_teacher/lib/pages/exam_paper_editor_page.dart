@@ -899,11 +899,6 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                 ),
                 SizedBox(width: 14 * scale),
                 Expanded(child: _buildEditorSurface(_buildPreviewArea(scale))),
-                SizedBox(width: 14 * scale),
-                SizedBox(
-                  width: 270 * scale,
-                  child: _buildEditorSurface(_buildInspectorPanel(scale)),
-                ),
               ],
             ),
           );
@@ -929,11 +924,11 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
           );
         }
         return DefaultTabController(
-          length: 3,
+          length: 2,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const TeacherStudioTabStrip(labels: ['문제 검색', '시험지', '편집 설정']),
+              const TeacherStudioTabStrip(labels: ['문제 검색', '시험지']),
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
@@ -946,7 +941,6 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                     children: [
                       _buildEditorSurface(_buildLeftPanel(scale)),
                       _buildEditorSurface(_buildPreviewArea(scale)),
-                      _buildEditorSurface(_buildInspectorPanel(scale)),
                     ],
                   ),
                 ),
@@ -993,18 +987,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildToolbarChip(
-            icon: Icons.remove_rounded,
-            label: 'pt',
-            onTap: () => _adjustGlobalFont(false),
-            trailing: Text(fontPt),
-          ),
-          SizedBox(width: 8 * scale),
-          _buildToolbarChip(
-            icon: Icons.add_rounded,
-            label: 'pt',
-            onTap: () => _adjustGlobalFont(true),
-          ),
+          _buildFontSizeControl(fontPt, scale),
           SizedBox(width: 8 * scale),
           _buildToolbarChip(
             icon: _layoutMode.icon,
@@ -1029,9 +1012,10 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
         12 * scale,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.surfaceBorder),
+        color: Colors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white),
+        boxShadow: const [kCourseShadow],
       ),
       child: Column(
         children: [
@@ -1041,17 +1025,54 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    titleField,
-                    SizedBox(height: 8 * scale),
-                    toolbar,
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 14 * scale),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: titleField,
+                    ),
+                    SizedBox(height: 12 * scale),
+                    Row(
+                      children: [
+                        const Text(
+                          '편집 설정',
+                          style: TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        SizedBox(width: 12 * scale),
+                        Expanded(child: toolbar),
+                      ],
+                    ),
                   ],
                 );
               }
               return Row(
                 children: [
-                  Expanded(child: titleField),
-                  SizedBox(width: 14 * scale),
-                  Flexible(flex: 2, child: toolbar),
+                  SizedBox(
+                    width: 320 * scale,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 14 * scale),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: titleField,
+                    ),
+                  ),
+                  SizedBox(width: 20 * scale),
+                  Container(
+                    width: 1,
+                    height: 34 * scale,
+                    color: AppColors.surfaceBorder,
+                  ),
+                  SizedBox(width: 20 * scale),
+                  const Text(
+                    '편집 설정',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  SizedBox(width: 12 * scale),
+                  Expanded(child: toolbar),
                 ],
               );
             },
@@ -1087,220 +1108,112 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
     );
   }
 
+  /// 필요 변수: 현재 글자 크기 [fontPt], 화면 배율 [scale].
+  /// 작동 원리: 기존 증감 콜백을 하나의 iOS형 스테퍼 안에 묶어 글자 크기를 즉시 조절한다.
+  Widget _buildFontSizeControl(String fontPt, double scale) {
+    return Container(
+      height: 42 * scale,
+      padding: EdgeInsets.symmetric(horizontal: 6 * scale),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F2),
+        borderRadius: BorderRadius.circular(16 * scale),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildStepperButton(
+            icon: Icons.remove_rounded,
+            tooltip: '글자 크기 줄이기',
+            onTap: () => _adjustGlobalFont(false),
+            scale: scale,
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8 * scale),
+            child: Text(
+              '$fontPt pt',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+            ),
+          ),
+          _buildStepperButton(
+            icon: Icons.add_rounded,
+            tooltip: '글자 크기 키우기',
+            onTap: () => _adjustGlobalFont(true),
+            scale: scale,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요 변수: 아이콘, 접근성 문구, 기존 글자 크기 콜백, 화면 배율.
+  /// 작동 원리: 스테퍼 내부의 원형 터치 영역만 제공하고 전달받은 콜백을 그대로 호출한다.
+  Widget _buildStepperButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    required double scale,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: SizedBox(
+          width: 30 * scale,
+          height: 30 * scale,
+          child: Icon(icon, size: 17 * scale),
+        ),
+      ),
+    );
+  }
+
   Widget _buildToolbarChip({
     required IconData icon,
     required String label,
     required VoidCallback? onTap,
-    Widget? trailing,
-    bool filled = false,
   }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
-      onTap: onTap,
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          color: filled ? kCourseGreen : const Color(0xFFF4F4F5),
-          border: Border.all(
-            color: filled ? kCourseGreen : const Color(0xFFD4D4D8),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: filled ? Colors.white : kCourseGreen),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: filled ? Colors.white : Colors.black87,
-              ),
-            ),
-            if (trailing != null) ...[
-              const SizedBox(width: 6),
-              DefaultTextStyle(
-                style: TextStyle(
-                  fontSize: 12,
-                  color: filled ? Colors.white : Colors.black54,
-                ),
-                child: trailing,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 필요 변수: 화면 배율 [scale], 현재 레이아웃·글자 크기·문항 통계 상태.
-  /// 작동 원리: 기존 하단 시트에서 제공하던 설정을 PC에서는 상시 노출하고,
-  /// 모바일에서는 편집 설정 탭 안에 표시해 별도 API 호출 없이 같은 상태를 수정한다.
-  Widget _buildInspectorPanel(double scale) {
-    final objectiveCount = _state.items
-        .where((item) => _optionsFor(item).isNotEmpty)
-        .length;
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(left: BorderSide(color: AppColors.surfaceBorder)),
-      ),
-      child: ListView(
-        padding: EdgeInsets.all(18 * scale),
-        children: [
-          Text(
-            '편집 설정',
-            style: TextStyle(
-              color: kCourseGreen,
-              fontSize: 22 * scale,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          SizedBox(height: 6 * scale),
-          Text(
-            '레이아웃과 출력 밀도를 실시간으로 조절합니다.',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 12 * scale,
-              height: 1.4,
-            ),
-          ),
-          SizedBox(height: 20 * scale),
-          const Text('레이아웃', style: TextStyle(fontWeight: FontWeight.w800)),
-          SizedBox(height: 10 * scale),
-          for (final mode in _EditorLayoutMode.values)
-            Padding(
-              padding: EdgeInsets.only(bottom: 8 * scale),
-              child: _buildInspectorChoice(
-                icon: mode.icon,
-                label: mode.label,
-                selected: mode == _layoutMode,
-                onTap: () {
-                  setState(() => _layoutMode = mode);
-                  _rebuildPages();
-                },
-              ),
-            ),
-          SizedBox(height: 14 * scale),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  '문제 글자',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-              Text(
-                '${(14 * _state.fontScale).toStringAsFixed(1)} pt',
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ],
-          ),
-          Slider(
-            value: _state.fontScale,
-            min: 0.7,
-            max: 1.6,
-            divisions: 18,
-            onChanged: (value) =>
-                setState(() => _state = _state.copyWith(fontScale: value)),
-          ),
-          SizedBox(height: 8 * scale),
-          Container(
-            padding: EdgeInsets.all(16 * scale),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.surfaceBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Opacity(
+      opacity: onTap == null ? 0.45 : 1,
+      child: Material(
+        color: const Color(0xFFF0F0F2),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(7, 6, 13, 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  '문항 통계',
-                  style: TextStyle(fontWeight: FontWeight.w900),
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(11),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x12000000),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, size: 17, color: Colors.black),
                 ),
-                SizedBox(height: 12 * scale),
-                _buildInspectorMetric('전체', '${_state.items.length}문항'),
-                _buildInspectorMetric('객관식', '$objectiveCount문항'),
-                _buildInspectorMetric(
-                  '기하',
-                  '${_state.items.where((item) => item.isGeometry).length}문항',
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 14 * scale),
-          OutlinedButton.icon(
-            onPressed: _showStatsSheet,
-            icon: const Icon(Icons.query_stats_rounded),
-            label: const Text('상세 통계 보기'),
-          ),
-          SizedBox(height: 8 * scale),
-          FilledButton.icon(
-            onPressed: _deploying ? null : _downloadPdf,
-            icon: const Icon(Icons.picture_as_pdf_rounded),
-            label: Text(_deploying ? 'PDF 준비중' : 'PDF 출력'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 필요 변수: 아이콘, 라벨, 선택 여부, 선택 콜백.
-  /// 작동 원리: 선택 상태는 검정 면으로, 나머지는 흰색 경계 카드로 표현한다.
-  Widget _buildInspectorChoice({
-    required IconData icon,
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: BoxDecoration(
-          color: selected ? kCourseGreen : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? kCourseGreen : AppColors.surfaceBorder,
-          ),
         ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: selected ? Colors.white : Colors.black),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: selected ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            if (selected)
-              const Icon(Icons.check_rounded, size: 18, color: Colors.white),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 필요 변수: 통계명 [label], 표시값 [value].
-  /// 작동 원리: 계산된 로컬 편집 상태를 한 줄 요약으로 표시한다.
-  Widget _buildInspectorMetric(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(label, style: const TextStyle(color: Colors.black54)),
-          ),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
-        ],
       ),
     );
   }
@@ -1367,12 +1280,12 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
     ];
 
     return Container(
-      height: 48 * scale,
+      height: 46 * scale,
+      padding: EdgeInsets.all(4 * scale),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24 * scale),
-        border: Border.all(color: Colors.black54, width: 1.2),
+        color: const Color(0xFFEDEDEF),
+        borderRadius: BorderRadius.circular(18 * scale),
       ),
-      clipBehavior: Clip.antiAlias,
       child: Row(
         children: [
           for (final mode in modes)
@@ -1396,40 +1309,52 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
     required double scale,
   }) {
     final selected = _searchMode == value;
-    return InkWell(
-      onTap: () => setState(() => _searchMode = value),
-      child: Container(
-        height: double.infinity,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? kCourseGreen.withValues(alpha: 0.16)
-              : Colors.transparent,
-          border: Border(
-            right: value == 'date'
-                ? BorderSide.none
-                : const BorderSide(color: Colors.black45),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (selected) ...[
-              Icon(icon, size: 18 * scale, color: kCourseGreen),
-              SizedBox(width: 8 * scale),
-            ],
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 16 * scale,
-                  color: Colors.black87,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                ),
-              ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 2 * scale),
+      child: Material(
+        color: selected ? Colors.white : Colors.transparent,
+        borderRadius: BorderRadius.circular(14 * scale),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14 * scale),
+          onTap: () => setState(() => _searchMode = value),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14 * scale),
+              boxShadow: selected
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x14000000),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ]
+                  : const [],
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 15 * scale,
+                  color: selected ? Colors.black : Colors.black45,
+                ),
+                SizedBox(width: 5 * scale),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13 * scale,
+                      color: selected ? Colors.black : Colors.black54,
+                      fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
