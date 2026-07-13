@@ -185,13 +185,13 @@ class _GroupListPageState extends State<GroupListPage> {
                             height: 40,
                             decoration: BoxDecoration(
                               color: const Color(
-                                0xFF45BF63,
+                                0xFF27272A,
                               ).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
                               Icons.school_outlined,
-                              color: Color(0xFF2C8D46),
+                              color: Color(0xFF27272A),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -225,7 +225,7 @@ class _GroupListPageState extends State<GroupListPage> {
                               vertical: 5,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE9F7ED),
+                              color: const Color(0xFFF0F0F2),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Text(
@@ -233,7 +233,7 @@ class _GroupListPageState extends State<GroupListPage> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF2C8D46),
+                                color: Color(0xFF27272A),
                               ),
                             ),
                           ),

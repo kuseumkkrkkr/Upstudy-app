@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIFlow 교사용 전체 기능 시안</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="full-app.css">
+</head>
+<body>
+  <div class="prototype-bar">
+    <div>
+      <strong>AIFlow Teacher · 전체 기능 시안</strong>
+      <span>실제 API는 호출하지 않는 UX 확인용 프로토타입</span>
+    </div>
+    <div class="prototype-bar__actions">
+      <button class="control-button is-active" data-viewport="desktop">PC</button>
+      <button class="control-button" data-viewport="mobile">모바일</button>
+      <button class="control-button" data-action="coverage">기능 매핑</button>
+    </div>
+  </div>
+
+  <div class="prototype-canvas">
+    <div class="app-frame" id="appFrame">
+      <div class="app-shell">
+        <aside class="side-rail">
+          <button class="brand" data-nav="dashboard" aria-label="교사용 홈">
+            <span class="brand__mark">A</span>
+            <span><b>AIFlow</b><small>Teacher workspace</small></span>
+          </button>
+          <nav class="primary-nav" id="primaryNav" aria-label="교사용 전체 메뉴"></nav>
+          <div class="rail-profile">
+            <span class="avatar">김</span>
+            <span><b>김선생</b><small>수학 · 교사</small></span>
+            <button class="icon-button" data-action="profile-menu" aria-label="프로필 메뉴">•••</button>
+          </div>
+        </aside>
+
+        <section class="work-area">
+          <header class="app-header">
+            <div class="mobile-brand"><span class="brand__mark">A</span><b>AIFlow</b></div>
+            <div class="breadcrumbs" id="breadcrumbs">홈</div>
+            <div class="app-header__actions">
+              <button class="icon-button" data-action="global-search" aria-label="전체 검색">⌕</button>
+              <button class="icon-button has-dot" data-action="notifications" aria-label="알림">♢</button>
+              <span class="save-state">모든 변경 저장됨</span>
+            </div>
+          </header>
+          <main class="screen-host" id="screenHost" tabindex="-1"></main>
+          <nav class="mobile-nav" id="mobileNav" aria-label="모바일 주요 메뉴"></nav>
+        </section>
+
+        <div class="scrim" id="scrim" hidden></div>
+        <aside class="task-panel" id="taskPanel" aria-hidden="true" aria-label="작업 패널">
+          <header class="task-panel__head">
+            <div><span class="eyebrow" id="taskKicker">작업</span><h2 id="taskTitle">작업 제목</h2></div>
+            <button class="icon-button" data-action="close-panel" aria-label="닫기">×</button>
+          </header>
+          <div class="task-panel__body" id="taskBody"></div>
+          <footer class="task-panel__foot" id="taskFoot"></footer>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <template id="iconTemplate">
+    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path></path></svg>
+  </template>
+  <script src="full-app.js"></script>
+</body>
+</html>

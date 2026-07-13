@@ -1,0 +1,30 @@
+{
+  "source": {
+    "title": "100 card design templates UI kit (Community)",
+    "fileKey": "BZ1k0xSxoHFbciRM3g1iil",
+    "nodeId": "109:137",
+    "url": "https://www.figma.com/design/BZ1k0xSxoHFbciRM3g1iil/100-card-design-templates-UI-kit--Community-?node-id=109-137",
+    "licenseNote": "Community 파일의 실제 라이선스 조건은 Figma 원본 페이지에서 최종 확인해야 합니다."
+  },
+  "retrieval": {
+    "date": "2026-07-13",
+    "encoding": "UTF-8",
+    "status": "partial",
+    "obtained": [
+      "공개 oEmbed 메타데이터",
+      "800px 커버 미리보기"
+    ],
+    "blocked": [
+      "원본 노드 레이어 트리",
+      "컴포넌트 및 variants",
+      "개별 이미지와 아이콘 export",
+      "Figma variables와 styles"
+    ],
+    "reason": "Figma Starter MCP 호출 한도 소진",
+    "doNotClaimAsExtracted": [
+      "tokens/tokens.json",
+      "icons/studio-icons.svg",
+      "components/studio-components.css"
+    ]
+  }
+}

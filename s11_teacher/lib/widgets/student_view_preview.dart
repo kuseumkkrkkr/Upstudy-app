@@ -7,10 +7,10 @@ import '../services/api_client.dart';
 
 // ??? Exact Student Colors ???
 
-const Color _kPrimary = Color(0xFF1B402B);
-const Color _kPrimaryLight = Color(0xFF45BF63);
-const Color _kBg = Color(0xFFF8F8F8);
-const Color _kBorder = Color(0xFFE0E3E7);
+const Color _kPrimary = Color(0xFF0A0A0A);
+const Color _kPrimaryLight = Color(0xFF27272A);
+const Color _kBg = Color(0xFFF4F4F5);
+const Color _kBorder = Color(0xFFE3E3E7);
 
 // ??? Preview Data Models ???
 
@@ -456,7 +456,7 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                         style: TextStyle(
                           fontSize: 34,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1B402B),
+                          color: Color(0xFF0A0A0A),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -464,12 +464,12 @@ class _StudentViewPreviewState extends State<StudentViewPreview> {
                         profile.username,
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF486150),
+                          color: Color(0xFF52525B),
                         ),
                       ),
                       Text(
                         profile.name,
-                        style: const TextStyle(color: Color(0xFF6A776F)),
+                        style: const TextStyle(color: Color(0xFF71717A)),
                       ),
                     ],
                   );

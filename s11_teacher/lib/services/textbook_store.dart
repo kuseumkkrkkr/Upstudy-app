@@ -18,7 +18,7 @@ class TextbookStore {
     id: 'test_textbook',
     title: '테스트 교재',
     subtitle: '교재 사용법 안내',
-    coverColor: Color(0xFF1B402B),
+    coverColor: Color(0xFF0A0A0A),
     category: 'common',
     tags: ['테스트', '안내'],
     chapters: [

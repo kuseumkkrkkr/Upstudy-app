@@ -1,0 +1,116 @@
+.studio-card {
+  min-width: 0;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.studio-card--quiet {
+  background: var(--surface-muted);
+  box-shadow: none;
+}
+
+.studio-card__head,
+.studio-row,
+.studio-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.studio-card__head {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.studio-kicker {
+  margin: 0 0 6px;
+  color: var(--brand-bright);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.studio-title {
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, 38px);
+  line-height: 1.18;
+  letter-spacing: -.04em;
+}
+
+.studio-copy {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.studio-button {
+  min-height: 44px;
+  padding: 0 16px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: transform var(--ease), border-color var(--ease), background var(--ease);
+}
+
+.studio-button:hover {
+  border-color: var(--brand-bright);
+  transform: translateY(-1px);
+}
+
+.studio-button--primary {
+  color: white;
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.studio-button--soft {
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-color: transparent;
+}
+
+.studio-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  color: var(--ink-muted);
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.studio-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.studio-field {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  outline: 0;
+}
+
+.studio-field:focus {
+  border-color: var(--brand-bright);
+  box-shadow: 0 0 0 3px rgb(0 0 0 / 12%);
+}

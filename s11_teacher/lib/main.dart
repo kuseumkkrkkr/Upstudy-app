@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'shared/theme/teacher_theme.dart';
 import 'pages/auth_wrapper.dart';
 import 'pages/teacher_login_page.dart';
 import 'pages/teacher_register_page.dart';
@@ -26,10 +27,7 @@ class TeacherApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AIFlow 선생님',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF45BF63),
-      ),
+      theme: buildTeacherTheme(),
       initialRoute: '/',
       routes: {
         '/': (context) => const AuthWrapper(),

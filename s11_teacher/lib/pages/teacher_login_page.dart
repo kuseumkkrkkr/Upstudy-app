@@ -21,7 +21,7 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
   static const Color _primary = AppColors.primary;
   static const Color _accent = AppColors.primaryLight;
   static const Color _pageBackground = Colors.white;
-  static const Color _mutedText = Color(0xFF66746B);
+  static const Color _mutedText = Color(0xFF71717A);
 
   @override
   void initState() {

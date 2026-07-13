@@ -21,7 +21,7 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
   bool _obscureConfirmPassword = true;
   String? _errorMessage;
 
-  static const Color _themeColor = Color(0xFF45BF63);
+  static const Color _themeColor = Color(0xFF27272A);
   static const Color _primary = AppColors.primary;
 
   @override

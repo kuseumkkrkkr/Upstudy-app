@@ -24,7 +24,7 @@ class TeacherDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       endDrawer: _IosDashboardDrawer(onLogout: () => _logout(context)),
       body: Builder(
         builder: (scaffoldContext) {
@@ -129,7 +129,13 @@ class _DashboardBackdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const DecoratedBox(
-      decoration: BoxDecoration(color: Colors.white),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFAFAFB), Color(0xFFEDEDF0)],
+        ),
+      ),
       child: SizedBox.expand(),
     );
   }
@@ -149,15 +155,20 @@ class _HeroPanel extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final compact = width < 760;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 12 : 20,
+        compact ? 12 : 18,
+        compact ? 12 : 20,
+        12,
+      ),
       child: Ios26FrostedCard(
         radius: 32,
-        padding: const EdgeInsets.all(22),
+        padding: EdgeInsets.all(compact ? 18 : 22),
         child: compact
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _heroCopy(),
+                  _heroCopy(compact: true),
                   const SizedBox(height: 18),
                   _HeroActions(
                     onCreateCourse: onCreateCourse,
@@ -182,7 +193,9 @@ class _HeroPanel extends StatelessWidget {
     );
   }
 
-  Widget _heroCopy() {
+  /// 필요 변수: 모바일 배치 여부.
+  /// 작동 원리: 같은 안내 정보를 유지하면서 작은 화면에서 제목 크기만 낮춘다.
+  Widget _heroCopy({bool compact = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -196,11 +209,11 @@ class _HeroPanel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 18),
-        const Text(
+        Text(
           '오늘 수업 흐름을 바로 설계하세요',
           style: TextStyle(
             color: kCourseGreen,
-            fontSize: 32,
+            fontSize: compact ? 28 : 32,
             height: 1.12,
             fontWeight: FontWeight.w900,
           ),
@@ -343,7 +356,11 @@ class _ActionGrid extends StatelessWidget {
         : width >= 620
         ? 2
         : 1;
-    final ratio = width < 620 ? 2.85 : 1.24;
+    final ratio = width < 620
+        ? 2.85
+        : width < 1180
+        ? 1.5
+        : 1.68;
     return SliverGrid(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
@@ -363,35 +380,35 @@ class _ActionGrid extends StatelessWidget {
           icon: Icons.folder_open_rounded,
           title: '문서함',
           subtitle: '교재만 선별해서 코스에 연결합니다.',
-          tint: const Color(0xFF4C8D67),
+          tint: const Color(0xFF27272A),
           onTap: () => _push(const TeacherDocumentCenterPage()),
         ),
         _FeatureTile(
           icon: Icons.menu_book_rounded,
           title: '코스 관리',
           subtitle: '배포한 코스와 연결된 교재를 확인합니다.',
-          tint: const Color(0xFF347252),
+          tint: const Color(0xFF3F3F46),
           onTap: () => _push(const CourseListPage()),
         ),
         _FeatureTile(
           icon: Icons.assignment_rounded,
           title: '시험지 생성',
           subtitle: '문항을 묶어 평가 자료를 만듭니다.',
-          tint: const Color(0xFF2E6847),
+          tint: const Color(0xFF18181B),
           onTap: () => _push(const ExamPaperBuilderPage()),
         ),
         _FeatureTile(
           icon: Icons.edit_note_rounded,
           title: '문항 제작',
           subtitle: '문항 초안과 변형을 정리합니다.',
-          tint: const Color(0xFF235A3B),
+          tint: const Color(0xFF52525B),
           onTap: () => _push(const ProblemEditorPage()),
         ),
         _FeatureTile(
           icon: Icons.groups_rounded,
           title: '그룹 관리',
           subtitle: '학생 그룹과 수업 운영 상태를 봅니다.',
-          tint: const Color(0xFF214F37),
+          tint: const Color(0xFF09090B),
           onTap: () =>
               Navigator.of(scaffoldContext).pushNamed(GroupListPage.routeName),
         ),
@@ -407,7 +424,7 @@ class _ActionGrid extends StatelessWidget {
           icon: Icons.account_balance_wallet_rounded,
           title: '재무제표(회계)',
           subtitle: '회계와 일간/월간 스케줄을 로컬 DB에 저장합니다.',
-          tint: const Color(0xFF275E6B),
+          tint: const Color(0xFF71717A),
           onTap: () => _push(const TeacherOperationsPage()),
         ),
       ]),

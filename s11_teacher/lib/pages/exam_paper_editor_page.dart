@@ -821,9 +821,9 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                             ),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(999),
-                              color: const Color(0xFFF3F7EE),
+                              color: const Color(0xFFF2F2F4),
                               border: Border.all(
-                                color: const Color(0xFFCCD7C2),
+                                color: const Color(0xFFD4D4D8),
                               ),
                             ),
                             child: Text('#${entry.key} ${entry.value}'),
@@ -845,7 +845,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFF8FAF5),
+        color: const Color(0xFFF7F7F8),
         border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Row(
@@ -1005,9 +1005,9 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          color: filled ? kCourseGreen : const Color(0xFFF6F8F3),
+          color: filled ? kCourseGreen : const Color(0xFFF4F4F5),
           border: Border.all(
-            color: filled ? kCourseGreen : const Color(0xFFD5DDCB),
+            color: filled ? kCourseGreen : const Color(0xFFD4D4D8),
           ),
         ),
         child: Row(
@@ -1270,7 +1270,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
           decoration: BoxDecoration(
             color: const Color(0xFFFDFDFC),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFDCE4D4)),
+            border: Border.all(color: const Color(0xFFE3E3E7)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1344,7 +1344,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFDDE5D4)),
+              border: Border.all(color: const Color(0xFFE3E3E7)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1457,13 +1457,13 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
         vertical: 6 * scale,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F7EE),
+        color: const Color(0xFFF2F2F4),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFCAD5C2)),
+        border: Border.all(color: const Color(0xFFD4D4D8)),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11 * scale, color: const Color(0xFF5F6B59)),
+        style: TextStyle(fontSize: 11 * scale, color: const Color(0xFF52525B)),
       ),
     );
   }
@@ -1532,7 +1532,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
 
   Widget _buildGridPreview(double scale) {
     return Container(
-      color: const Color(0xFFF2F4EF),
+      color: const Color(0xFFF2F2F4),
       child: SingleChildScrollView(
         padding: EdgeInsets.all(24 * scale),
         child: Column(
@@ -1666,7 +1666,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                       bottom: 0,
                       child: Container(
                         width: 1,
-                        color: const Color(0xFFE6EAE1),
+                        color: const Color(0xFFE4E4E7),
                       ),
                     ),
                     if (page.entries.any((entry) => entry.rowSpan == 1))
@@ -1676,7 +1676,7 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                         top: constraints.maxHeight / 2 - 0.5,
                         child: Container(
                           height: 1,
-                          color: const Color(0xFFE6EAE1),
+                          color: const Color(0xFFE4E4E7),
                         ),
                       ),
                   ],
@@ -1792,10 +1792,10 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
       duration: const Duration(milliseconds: 120),
       padding: EdgeInsets.all(14 * scale),
       decoration: BoxDecoration(
-        color: highlighted ? const Color(0xFFF4FAEE) : const Color(0xFFFFFEFC),
+        color: highlighted ? const Color(0xFFF2F2F4) : const Color(0xFFFFFEFC),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: highlighted ? kCourseLightGreen : const Color(0xFFDCE4D4),
+          color: highlighted ? kCourseLightGreen : const Color(0xFFE3E3E7),
           width: highlighted ? 2 : 1,
         ),
       ),
@@ -1899,8 +1899,8 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
                         ),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFF5F7F3),
-                          border: Border.all(color: const Color(0xFFD6DED0)),
+                          color: const Color(0xFFF4F4F5),
+                          border: Border.all(color: const Color(0xFFE3E3E7)),
                         ),
                         child: Text(
                           String.fromCharCode(0x2460 + entry.key),
@@ -1952,9 +1952,9 @@ class _ExamPaperEditorPageState extends State<ExamPaperEditorPage> {
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          color: const Color(0xFFF4F7F0),
+          color: const Color(0xFFF4F4F5),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0xFFD6DED0)),
+          border: Border.all(color: const Color(0xFFE3E3E7)),
         ),
         child: Icon(icon, size: 14, color: Colors.black54),
       ),

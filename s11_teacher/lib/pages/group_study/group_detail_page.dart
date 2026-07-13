@@ -162,11 +162,11 @@ class _GroupDetailPageState extends State<GroupDetailPage>
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: const Color(
-                  0xFF45BF63,
+                  0xFF27272A,
                 ).withValues(alpha: 0.12),
                 child: Text(
                   name.isEmpty ? '?' : name.substring(0, 1).toUpperCase(),
-                  style: const TextStyle(color: Color(0xFF2C8D46)),
+                  style: const TextStyle(color: Color(0xFF27272A)),
                 ),
               ),
               title: Text(name),
@@ -680,9 +680,9 @@ class _GroupDetailPageState extends State<GroupDetailPage>
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4FBF6),
+                      color: const Color(0xFFF4F4F5),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF7BC58F)),
+                      border: Border.all(color: const Color(0xFFD4D4D8)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1949,7 +1949,7 @@ class _MetricChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4FBF6),
+        color: const Color(0xFFF4F4F5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -2188,7 +2188,7 @@ class _SectionBox extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBF8),
+        color: const Color(0xFFF7F7F8),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),

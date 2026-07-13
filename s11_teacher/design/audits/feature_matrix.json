@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "source": "s11_teacher/lib",
+    "purpose": "클릭형 시안의 실제 기능 일대일 포함 여부 확인",
+    "encoding": "UTF-8"
+  },
+  "screens": [
+    {"id":"auth","source":"pages/auth_wrapper.dart, pages/teacher_login_page.dart, pages/teacher_register_page.dart","methods":["isAuthenticated","loginTeacher","requireToken","registerTeacher"],"features":["자동 로그인","교사 로그인","교사 가입","로그인/가입 전환"]},
+    {"id":"dashboard","source":"pages/teacher_dashboard_page.dart","methods":["clearToken"],"features":["코스 생성","문서함","코스 관리","시험지 생성","문항 제작","그룹 관리","학습 분석","재무제표","로그아웃"]},
+    {"id":"problem-studio","source":"pages/problem_editor_page.dart","methods":["getQuestGenerationTagGroups","getCourseHashTags","listQuestTray","searchExamEditorProblems","listTeacherDocuments","generateVariantFromFlowDraft","generateVariantFromPromptNote","convertQuestToMcq"],"features":["간편/고급 모드","문항 생성","객관식 변환","지시문+노트","풀이 흐름 캔버스","노드 태그","세부 지시","문제 DB 검색","문서함 필터","임시저장함"]},
+    {"id":"exam-builder","source":"pages/exam_paper_builder_page.dart","methods":["getQuestGenerationTagGroups","createExam","getExamStatus","examPdfUrl"],"features":["태그 선택","시험지 생성","상태 확인","PDF 다운로드","상세 편집 전환"]},
+    {"id":"exam-editor","source":"pages/exam_paper_editor_page.dart","methods":["searchExamEditorProblems","saveExamEditorPaper","deployExamEditorPaper","getExamStatus","examPdfUrl","arrangeExamEditorAi"],"features":["검색 모드","문제 담기","최대 100문항","순서 변경","레이아웃 전환","폰트/간격","통계","AI 배치","문서함 저장","PDF 배포"]},
+    {"id":"course-list","source":"pages/course_list_page.dart","methods":["getCourseHashTags","listCoursesV2Page","getCourseV2","updateCourseV2","deleteCourseV2"],"features":["공개 필터","정렬","태그 필터","페이지 이동","노출 전환","단일/다중 삭제","편집"]},
+    {"id":"course-builder","source":"pages/course_builder_page.dart","methods":["getCourseHashTags","getQuestGenerationTagGroups","listTeacherDocuments","getCourseV2","searchExamEditorProblems","createCourseV2","updateCourseV2"],"features":["기본 정보","난이도/OVR","모듈 추가","교재 선택","시험지 선택","문항 생성/검색","오답 복습","최소 시간","객관식 자동 구성","AI 분석","저장"]},
+    {"id":"textbook-builder","source":"pages/textbook_builder_page.dart","methods":["createTextbook"],"features":["제목/부제","챕터/섹션","블록 편집","슬래시 명령","미리보기","저장","완료 반환"]},
+    {"id":"documents","source":"pages/teacher_document_center_page.dart","methods":["listTeacherDocuments"],"features":["교재/시험지 필터","문서 선택","태그","재시도","미리보기"]},
+    {"id":"groups","source":"pages/group_study/group_list_page.dart","methods":["listMyStudyGroups","createStudyGroup","buildStudentInviteUrl"],"features":["그룹 목록","그룹 생성","비밀번호 잠금","참여코드","QR","그룹 상세 이동"]},
+    {"id":"group-detail","source":"pages/group_study/group_detail_page.dart","methods":["listMyStudyGroups","listGroupMembers","listStudyGroupMemberProfiles","listAcademyGroupMembers","listAssignments","listGroupNotices","buildStudentInviteUrl","listCoursesV2","listTeacherDocuments","createAssignment","updateAssignment","deleteAssignment","upsertGroupNotice","deleteGroupNoticeByTitle","fetchStudyGroupMessages","sendStudyGroupMessage","fetchDirectMessages","sendDirectMessage","fetchStudentAnalysis"],"features":["멤버","교사 초대","코스 배정","숙제 배정","공지 CRUD","과제 수정/삭제","그룹 채팅","1:1 채팅","학생 분석","QR"]},
+    {"id":"academy","source":"pages/group_study/academy_dashboard_page.dart","methods":["listAcademyGroupMembers","listAttendanceLogs","listTuitionPayments","listConsultNotes","listSnapshots"],"features":["출석률","주간 출석","수납","상담","학생 요약","약점 태그"]},
+    {"id":"operations","source":"pages/teacher_operations_page.dart, services/teacher_operations_store.dart","methods":["listFinanceEntries","financeSummary","upsertFinanceEntry","deleteFinanceEntry","listScheduleEntries","upsertScheduleEntry","deleteScheduleEntry"],"features":["일간/월간 재무","수입/지출 저장","재무 삭제","스케줄 저장/삭제","날짜 이동","기기 캘린더","ICS 내보내기"]},
+    {"id":"social","source":"pages/teacher_social_page.dart","methods":["listFriends","addFriend","removeFriend"],"features":["친구 목록","친구 추가","친구 삭제","1:1 채팅 이동"]},
+    {"id":"chat","source":"pages/teacher_chat_page.dart","methods":["fetchDirectMessages","sendDirectMessage","listCoursesV2"],"features":["메시지 조회","메시지 전송","코스 공유"]},
+    {"id":"store","source":"pages/teacher_store_page.dart","methods":["fetchTeacherStoreSummary","topUpTeacherStoreTest","purchaseTeacherStoreItem"],"features":["잔액/요약","테스트 충전","문제/교재/시험지 구매"]},
+    {"id":"profile","source":"widgets/student_view_preview.dart, widgets/teacher_app_drawer.dart","methods":["getMyProfile","updateMyProfile","deleteMyProfile","clearToken"],"features":["프로필 조회/수정","설정","계정 삭제","로그아웃"]}
+  ]
+}
