@@ -288,17 +288,32 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final graphTop = tester.getTopLeft(find.text('첫 번째 풀이 단계')).dy;
-    final problemTop = tester.getTopLeft(find.text('문제 정보')).dy;
-    expect(graphTop, lessThan(problemTop));
+    expect(find.text('첫 번째 풀이 단계'), findsOneWidget);
+    expect(find.text('문제 정보'), findsNothing);
+    expect(find.byTooltip('축소'), findsOneWidget);
+    expect(find.byTooltip('확대'), findsOneWidget);
+    expect(find.text('초기화'), findsOneWidget);
+    final scaleLabel = find.byWidgetPredicate(
+      (widget) => widget is Text && (widget.data ?? '').endsWith('%'),
+    );
+    expect(scaleLabel, findsOneWidget);
+    final initialScale = tester.widget<Text>(scaleLabel).data;
+    await tester.tap(find.byTooltip('확대'));
+    await tester.pump();
+    expect(tester.widget<Text>(scaleLabel).data, isNot(initialScale));
 
+    await tester.scrollUntilVisible(
+      find.text('문제 정보'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('문제 정보'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('노드를 선택해주세요'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    final detailTop = tester.getTopLeft(find.text('노드를 선택해주세요')).dy;
-    expect(problemTop, lessThan(detailTop));
+    expect(find.text('노드를 선택해주세요'), findsOneWidget);
   });
 
   testWidgets('코스 목록은 진행 상태와 완료 상태를 서로 다른 화면으로 연다', (tester) async {

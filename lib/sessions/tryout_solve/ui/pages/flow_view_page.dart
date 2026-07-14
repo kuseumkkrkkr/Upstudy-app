@@ -255,7 +255,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
                       return ListView(
                         padding: const EdgeInsets.all(10),
                         children: [
-                          _buildCanvasPanel(height: 520),
+                          _buildCanvasPanel(height: 760),
                           const SizedBox(height: 10),
                           _buildLeftPanel(
                             questTitleBlocks,
@@ -535,7 +535,13 @@ class _FlowViewPageState extends State<FlowViewPage> {
                 padding: const EdgeInsets.all(10),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(color: Colors.white, child: content),
+                  child: CustomPaint(
+                    painter: const _FlowDotGridPainter(),
+                    child: ColoredBox(
+                      color: Colors.transparent,
+                      child: content,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1059,6 +1065,7 @@ class _FlowCanvas extends StatefulWidget {
 class _FlowCanvasState extends State<_FlowCanvas> {
   final TransformationController _controller = TransformationController();
   Size? _initializedViewport;
+  double _scale = .75;
 
   /// 필요한 변수는 확대·이동 변환 컨트롤러다.
   /// 작동 원리는 Flow 화면 종료 시 컨트롤러 리스너를 정리한다.
@@ -1066,6 +1073,30 @@ class _FlowCanvasState extends State<_FlowCanvas> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  /// 필요한 변수는 현재 변환 행렬과 확대 배율 변화량이다.
+  /// 작동 원리는 화면 중심을 유지한 채 60%~250% 범위에서 HTML 확대·축소 버튼을 동작시키는 것이다.
+  void _zoom(double factor) {
+    final current = _scale;
+    final next = (current * factor).clamp(0.6, 2.5);
+    if ((next - current).abs() < .001) return;
+    final factorValue = next / current;
+    _controller.value = _controller.value.clone()
+      ..scaleByDouble(factorValue, factorValue, 1, 1);
+    _scale = next;
+    setState(() {});
+  }
+
+  /// 필요한 변수는 현재 뷰포트와 그래프 크기다.
+  /// 작동 원리는 초기 75% 배율과 중앙 정렬을 복원해 HTML의 초기화 버튼과 동일하게 동작하는 것이다.
+  void _reset(Size viewport) {
+    const scale = .75;
+    final dx = (viewport.width - widget.graph.size.width * scale) / 2;
+    _controller.value = Matrix4.diagonal3Values(scale, scale, 1)
+      ..setTranslationRaw(dx, 38, 0);
+    _scale = scale;
+    setState(() {});
   }
 
   /// 필요한 변수는 현재 뷰포트 폭과 그래프 전체 크기다.
@@ -1076,62 +1107,77 @@ class _FlowCanvasState extends State<_FlowCanvas> {
       builder: (context, constraints) {
         final viewport = Size(constraints.maxWidth, constraints.maxHeight);
         if (_initializedViewport != viewport) {
-          const initialScale = 0.6;
+          const initialScale = 0.75;
           final dx =
               (viewport.width - widget.graph.size.width * initialScale) / 2;
           _controller.value = Matrix4.diagonal3Values(
             initialScale,
             initialScale,
             1,
-          )..setTranslationRaw(dx, 8, 0);
+          )..setTranslationRaw(dx, 38, 0);
           _initializedViewport = viewport;
         }
-        return InteractiveViewer(
-          transformationController: _controller,
-          boundaryMargin: const EdgeInsets.all(200),
-          constrained: false,
-          minScale: 0.6,
-          maxScale: 2.5,
-          child: SizedBox(
-            width: widget.graph.size.width,
-            height: widget.graph.size.height,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _FlowEdgePainter(
-                      edges: widget.graph.edges,
-                      positions: widget.graph.positions,
-                      nodeSizes: widget.graph.nodeSizes,
+        return Stack(
+          children: [
+            InteractiveViewer(
+              transformationController: _controller,
+              boundaryMargin: const EdgeInsets.all(200),
+              constrained: false,
+              minScale: 0.6,
+              maxScale: 2.5,
+              child: SizedBox(
+                width: widget.graph.size.width,
+                height: widget.graph.size.height,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _FlowEdgePainter(
+                          edges: widget.graph.edges,
+                          positions: widget.graph.positions,
+                          nodeSizes: widget.graph.nodeSizes,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                ...widget.graph.nodes.values.map((node) {
-                  final position = widget.graph.positions[node.id];
-                  if (position == null) return const SizedBox.shrink();
-                  final nodeSize =
-                      widget.graph.nodeSizes[node.id] ??
-                      const Size(
-                        _FlowGraphBuilder.nodeWidth,
-                        _FlowGraphBuilder.nodeMinHeight,
+                    ...widget.graph.nodes.values.map((node) {
+                      final position = widget.graph.positions[node.id];
+                      if (position == null) return const SizedBox.shrink();
+                      final nodeSize =
+                          widget.graph.nodeSizes[node.id] ??
+                          const Size(
+                            _FlowGraphBuilder.nodeWidth,
+                            _FlowGraphBuilder.nodeMinHeight,
+                          );
+                      return Positioned(
+                        left: position.dx,
+                        top: position.dy,
+                        width: nodeSize.width,
+                        height: nodeSize.height,
+                        child: _FlowNodeCard(
+                          node: node,
+                          selected: widget.selected?.id == node.id,
+                          state:
+                              widget.nodeStates[node.id] ??
+                              _FlowNodeState.normal,
+                          onTap: () => widget.onNodeTap(node),
+                        ),
                       );
-                  return Positioned(
-                    left: position.dx,
-                    top: position.dy,
-                    width: nodeSize.width,
-                    height: nodeSize.height,
-                    child: _FlowNodeCard(
-                      node: node,
-                      selected: widget.selected?.id == node.id,
-                      state:
-                          widget.nodeStates[node.id] ?? _FlowNodeState.normal,
-                      onTap: () => widget.onNodeTap(node),
-                    ),
-                  );
-                }),
-              ],
+                    }),
+                  ],
+                ),
+              ),
             ),
-          ),
+            Positioned(
+              left: 8,
+              top: 8,
+              child: _FlowZoomControls(
+                scale: _scale,
+                onZoomOut: () => _zoom(.8),
+                onZoomIn: () => _zoom(1.25),
+                onReset: () => _reset(viewport),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -1315,12 +1361,17 @@ class _FlowEdgePainter extends CustomPainter {
         from.dy + fromSize.height,
       );
       final end = Offset(to.dx + toSize.width / 2, to.dy);
-      final midY = (start.dy + end.dy) / 2;
+      final controlDistance = (end.dy - start.dy).abs() * .52;
       final path = Path()
         ..moveTo(start.dx, start.dy)
-        ..lineTo(start.dx, midY)
-        ..lineTo(end.dx, midY)
-        ..lineTo(end.dx, end.dy);
+        ..cubicTo(
+          start.dx,
+          start.dy + controlDistance,
+          end.dx,
+          end.dy - controlDistance,
+          end.dx,
+          end.dy,
+        );
       canvas.drawPath(path, paint);
     }
   }
@@ -1331,6 +1382,72 @@ class _FlowEdgePainter extends CustomPainter {
         oldDelegate.positions != positions ||
         oldDelegate.nodeSizes != nodeSizes;
   }
+}
+
+class _FlowDotGridPainter extends CustomPainter {
+  const _FlowDotGridPainter();
+
+  /// 필요한 변수는 현재 캔버스 크기다.
+  /// 작동 원리는 20px 간격의 옅은 점을 찍어 HTML Flow 작업 영역의 격자 배경을 재현하는 것이다.
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = const Color(0xFFD9DFEA);
+    for (double x = 8; x < size.width; x += 20) {
+      for (double y = 8; y < size.height; y += 20) {
+        canvas.drawCircle(Offset(x, y), .75, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FlowDotGridPainter oldDelegate) => false;
+}
+
+class _FlowZoomControls extends StatelessWidget {
+  const _FlowZoomControls({
+    required this.scale,
+    required this.onZoomOut,
+    required this.onZoomIn,
+    required this.onReset,
+  });
+
+  final double scale;
+  final VoidCallback onZoomOut;
+  final VoidCallback onZoomIn;
+  final VoidCallback onReset;
+
+  /// 필요한 변수는 현재 배율과 축소·확대·초기화 콜백이다.
+  /// 작동 원리는 HTML 캔버스 좌측 상단의 네 개 소형 컨트롤을 같은 순서로 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white.withValues(alpha: .94),
+    borderRadius: BorderRadius.circular(10),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          tooltip: '축소',
+          visualDensity: VisualDensity.compact,
+          onPressed: onZoomOut,
+          icon: const Icon(Icons.remove, size: 16),
+        ),
+        Text(
+          '${(scale * 100).round()}%',
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+        ),
+        IconButton(
+          tooltip: '확대',
+          visualDensity: VisualDensity.compact,
+          onPressed: onZoomIn,
+          icon: const Icon(Icons.add, size: 16),
+        ),
+        TextButton(
+          onPressed: onReset,
+          child: const Text('초기화', style: TextStyle(fontSize: 10)),
+        ),
+      ],
+    ),
+  );
 }
 
 class _FlowEdge {
