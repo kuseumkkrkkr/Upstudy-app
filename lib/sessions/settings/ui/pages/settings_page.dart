@@ -3,11 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/theme/app_colors.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 
 class SettingsPage extends StatefulWidget {
   static const routeName = '/settings';
 
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.preview = false});
+
+  final bool preview;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -23,7 +29,11 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.preview) {
+      _loading = false;
+    } else {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -167,8 +177,171 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  /// 필요한 변수는 교재 보기·알림·로딩 상태이다.
+  /// 작동 원리는 HTML의 로컬 환경 히어로와 세 개 번호 카드에 기존 저장 콜백을 연결하는 것이다.
+  Widget _buildHtmlSettings(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F4F6),
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Builder(
+              builder: (context) => Ios26TopBar(
+                brandColor: Colors.black,
+                showLevelIndicator: false,
+                onMenu: () => toggleAppDrawer(context),
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.learning,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                children: [
+                  const Text(
+                    'PREFERENCES',
+                    style: TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 1.7,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '설정',
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '실제로 저장되는 학습 환경만 간결하게 조정합니다.',
+                    style: TextStyle(color: Colors.black45),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfilePage()),
+                    ),
+                    child: const Text('프로필로 돌아가기'),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF202022),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: const Row(
+                      children: [
+                        _SettingsHeroIcon(),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'LOCAL PREFERENCES',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 9,
+                                  letterSpacing: 1.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              SizedBox(height: 14),
+                              Text(
+                                '이 기기의 학습 환경',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '자동 저장',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _SettingsPanel(
+                    number: '01',
+                    title: '교재 보기',
+                    subtitle: '본문을 연속 스크롤 또는 PDF형 페이지로 봅니다.',
+                    child: _settingTile(
+                      icon: Icons.auto_stories_outlined,
+                      title: 'PDF형 페이지 보기',
+                      subtitle: _textbookPageMode
+                          ? '현재 페이지 단위로 열립니다.'
+                          : '현재 연속 스크롤로 열립니다.',
+                      trailing: Switch.adaptive(
+                        value: _textbookPageMode,
+                        onChanged: _setTextbookPageMode,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _SettingsPanel(
+                    number: '02',
+                    title: '알림',
+                    subtitle: '멤버 모든 알림을 한 번에 켜거나 끕니다.',
+                    child: _settingTile(
+                      icon: Icons.notifications_none_rounded,
+                      title: '모든 알림',
+                      subtitle: _notificationsEnabled
+                          ? '현재 모든 알림이 켜져 있습니다.'
+                          : '현재 모든 알림이 꺼져 있습니다.',
+                      trailing: Switch.adaptive(
+                        value: _notificationsEnabled,
+                        onChanged: _setNotificationsEnabled,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _SettingsPanel(
+                    number: '03',
+                    title: '앱 정보',
+                    subtitle: 'AIFlow에 포함된 오픈소스 라이선스를 확인합니다.',
+                    child: _settingTile(
+                      icon: Icons.receipt_long_outlined,
+                      title: '라이선스 보기',
+                      subtitle: 'Flutter와 포함된 패키지 정보',
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _showLicenses,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      const bool.fromEnvironment('USE_LEGACY_SETTINGS')
+      ? _buildLegacySettings(context)
+      : _buildHtmlSettings(context);
+
+  /// 필요한 변수는 기존 설정 상태이다.
+  /// 작동 원리는 회귀 비교 시 기존 단일 스크롤 설정 화면을 구성하는 것이다.
+  Widget _buildLegacySettings(BuildContext context) {
     if (_loading) {
       return const Scaffold(
         backgroundColor: Color(0xFFF6F6F1),
@@ -317,4 +490,88 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+}
+
+class _SettingsHeroIcon extends StatelessWidget {
+  const _SettingsHeroIcon();
+
+  /// 필요한 변수는 없으며 설정 히어로의 톱니바퀴 아이콘을 표시한다.
+  /// 작동 원리는 밝은 정사각 표면으로 어두운 히어로와 대비를 만드는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 42,
+    height: 42,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(13),
+    ),
+    child: const Icon(Icons.settings_outlined, size: 20),
+  );
+}
+
+class _SettingsPanel extends StatelessWidget {
+  const _SettingsPanel({
+    required this.number,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+  final String number;
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  /// 필요한 변수는 순서·제목·설명·설정 제어다.
+  /// 작동 원리는 HTML의 큰 흰색 카드 안에 번호 배지와 실제 제어를 수직 배치하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: const Color(0xFFE0E0E2)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFF202022),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.only(left: 46),
+          child: Text(
+            subtitle,
+            style: const TextStyle(fontSize: 10, color: Colors.black45),
+          ),
+        ),
+        const SizedBox(height: 22),
+        child,
+      ],
+    ),
+  );
 }

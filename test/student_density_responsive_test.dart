@@ -18,6 +18,10 @@ import 'package:s11/features/group_study/group_list_page.dart';
 import 'package:s11/features/group_study/group_detail_page.dart';
 import 'package:s11/features/group_study/student_academy_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
+import 'package:s11/sessions/auth/ui/pages/login_page.dart';
+import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
+import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
+import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -571,5 +575,80 @@ void main() {
     await tester.drag(find.byType(ListView).first, const Offset(0, -650));
     await tester.pump();
     expect(find.text('친구 상태'), findsOneWidget);
+  });
+
+  testWidgets('500px 로그인은 HTML 복원 히어로와 학생 폼을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LoginPage(
+          initialUsername: 'student01',
+          initialPassword: 'password123',
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('WELCOME BACK'), findsOneWidget);
+    expect(find.text('멈춘 곳에서\n다시 시작해요.'), findsOneWidget);
+    expect(find.text('STUDENT LOGIN'), findsOneWidget);
+    expect(find.text('로그인'), findsWidgets);
+  });
+
+  testWidgets('500px 회원가입은 HTML 세 단계와 학생 기본 폼을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: SignupPage(preview: true)));
+    await tester.pump();
+    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
+    expect(find.text('나에게 맞는 학습을\n설정해 볼까요?'), findsOneWidget);
+    expect(find.text('01  기본 정보'), findsOneWidget);
+    expect(find.text('계정 정보 입력하기 →'), findsOneWidget);
+  });
+
+  testWidgets('500px 프로필은 HTML 학생 히어로와 학습 정보를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProfilePage(
+          initialProfile: UserProfile(
+            userId: 's1',
+            username: 'student01',
+            name: '김학생',
+            grade: '2학년',
+            track: '중학교',
+            subject: '수학',
+            school: 'AIFlow 중학교',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('MY ACCOUNT'), findsOneWidget);
+    expect(find.text('STUDENT PROFILE'), findsOneWidget);
+    expect(find.text('18.6'), findsOneWidget);
+    expect(find.text('LEARNING PROFILE'), findsOneWidget);
+  });
+
+  testWidgets('500px 설정은 HTML 로컬 히어로와 세 설정 카드를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      const MaterialApp(home: SettingsPage(preview: true)),
+    );
+    await tester.pump();
+    expect(find.text('PREFERENCES'), findsOneWidget);
+    expect(find.text('LOCAL PREFERENCES'), findsOneWidget);
+    expect(find.text('교재 보기'), findsOneWidget);
+    expect(find.text('알림'), findsOneWidget);
   });
 }
