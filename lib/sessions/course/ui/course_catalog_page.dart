@@ -1004,6 +1004,34 @@ class _CourseLibrary extends StatelessWidget {
               style: TextStyle(color: StudentDensityTokens.muted),
             ),
           )
+        else if (mobile)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: StudentDensityTokens.surface,
+                border: Border.all(color: StudentDensityTokens.line),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                children: [
+                  for (var index = 0; index < courses.length; index++) ...[
+                    CourseCard(
+                      course: courses[index],
+                      onTap: () => onOpen(courses[index]),
+                      joinedMobileList: true,
+                    ),
+                    if (index != courses.length - 1)
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: StudentDensityTokens.line,
+                      ),
+                  ],
+                ],
+              ),
+            ),
+          )
         else
           LayoutBuilder(
             builder: (context, constraints) {
@@ -1086,10 +1114,16 @@ class _StatusPill extends StatelessWidget {
 }
 
 class CourseCard extends StatelessWidget {
-  const CourseCard({super.key, required this.course, required this.onTap});
+  const CourseCard({
+    super.key,
+    required this.course,
+    required this.onTap,
+    this.joinedMobileList = false,
+  });
 
   final Course course;
   final VoidCallback onTap;
+  final bool joinedMobileList;
 
   /// 필요한 변수는 코스 정보와 진입 콜백이다.
   /// 작동 원리: 추천 점수·상태·설명·메타·행동을 HTML 전체 코스 카드 순서로 배치한다.
@@ -1101,6 +1135,96 @@ class CourseCard extends StatelessWidget {
         ? '수강 중'
         : '공개';
     final score = course.targetOvr > 0 ? '${course.targetOvr}' : '—';
+    if (joinedMobileList) {
+      return Material(
+        color: StudentDensityTokens.surface,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 256,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 17),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: StudentDensityTokens.surfaceMuted,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          score,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      _StatusPill(label: status),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    course.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 21,
+                      height: 1.16,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    course.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: 11,
+                      height: 1.55,
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      _CourseMetaPill(label: course.isCompleted ? '완료' : '공개'),
+                      const SizedBox(width: 6),
+                      _CourseMetaPill(
+                        label: course.lessons > 0
+                            ? '${course.lessons}강'
+                            : course.level,
+                      ),
+                      const SizedBox(width: 6),
+                      _CourseMetaPill(
+                        label: course.isCompleted
+                            ? '${(course.progress * 100).round()}%'
+                            : course.duration,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    course.isCompleted ? '미리보기 ›' : '코스 상세 ›',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return StudentDensitySurface(
       padding: EdgeInsets.zero,
       onTap: onTap,
@@ -1163,6 +1287,33 @@ class CourseCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CourseMetaPill extends StatelessWidget {
+  const _CourseMetaPill({required this.label});
+
+  final String label;
+
+  /// 필요한 변수는 코스 공개·분량·기간 메타 문구다.
+  /// 작동 원리: HTML 모바일 카드의 9px 회색 캡슐을 같은 높이와 대비로 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: StudentDensityTokens.muted,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
