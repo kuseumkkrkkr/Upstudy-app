@@ -11,9 +11,14 @@ import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 class SettingsPage extends StatefulWidget {
   static const routeName = '/settings';
 
-  const SettingsPage({super.key, this.preview = false});
+  const SettingsPage({
+    super.key,
+    this.preview = false,
+    this.showLicensesOnStart = false,
+  });
 
   final bool preview;
+  final bool showLicensesOnStart;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -31,6 +36,9 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     if (widget.preview) {
       _loading = false;
+      if (widget.showLicensesOnStart) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _showLicenses());
+      }
     } else {
       _load();
     }
@@ -324,6 +332,51 @@ class _SettingsPageState extends State<SettingsPage> {
                       onTap: _showLicenses,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF202022),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'STORAGE CONTRACT',
+                          style: TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 1.6,
+                            color: Colors.white54,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          '서버 요청 없이\n바로 저장돼요.',
+                          style: TextStyle(
+                            fontSize: 26,
+                            height: 1.02,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(height: 18),
+                        _StorageCode('settings.notifications_enabled'),
+                        SizedBox(height: 8),
+                        _StorageCode('textbook_reader.page_mode'),
+                        SizedBox(height: 14),
+                        Text(
+                          '설정 화면에서는 /user/storage API를 호출하지 않습니다.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white54,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -490,6 +543,32 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+}
+
+class _StorageCode extends StatelessWidget {
+  const _StorageCode(this.value);
+
+  final String value;
+
+  /// 필요한 변수는 로컬 설정 키다.
+  /// 작동 원리는 서버 요청 없는 저장 계약을 어두운 코드 표면에 한 줄로 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .08),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.white12),
+    ),
+    child: Text(
+      value,
+      style: const TextStyle(
+        color: Colors.white70,
+        fontSize: 11,
+        fontFamily: 'monospace',
+      ),
+    ),
+  );
 }
 
 class _SettingsHeroIcon extends StatelessWidget {

@@ -93,15 +93,33 @@ def capture(args: argparse.Namespace) -> None:
         browser = playwright.chromium.launch(
             executable_path=str(EDGE),
             headless=True,
-            args=["--disable-gpu", "--hide-scrollbars"],
+            args=["--enable-unsafe-swiftshader", "--hide-scrollbars"],
         )
         page = browser.new_page(viewport={"width": args.width, "height": args.height})
         page.goto(url, wait_until="networkidle")
         page.wait_for_timeout(args.wait_ms)
+        cdp = page.context.new_cdp_session(page) if flutter_source else None
         page.screenshot(path=output_dir / "scroll-00.png")
         for index in range(1, args.steps + 1):
-            page.mouse.move(args.width // 2, args.height // 2)
-            page.mouse.wheel(0, args.scroll_by)
+            if flutter_source:
+                x = 8
+                start_y = min(args.height - 80, 860)
+                end_y = max(90, start_y - args.scroll_by)
+                cdp.send(
+                    "Input.dispatchTouchEvent",
+                    {"type": "touchStart", "touchPoints": [{"x": x, "y": start_y}]},
+                )
+                for step in range(1, 17):
+                    y = start_y + (end_y - start_y) * step / 16
+                    cdp.send(
+                        "Input.dispatchTouchEvent",
+                        {"type": "touchMove", "touchPoints": [{"x": x, "y": y}]},
+                    )
+                    page.wait_for_timeout(16)
+                cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+            else:
+                page.mouse.move(args.width // 2, args.height // 2)
+                page.mouse.wheel(0, args.scroll_by)
             page.wait_for_timeout(450)
             page.screenshot(path=output_dir / f"scroll-{index:02d}.png")
         for click_index, click in enumerate(args.click, start=1):

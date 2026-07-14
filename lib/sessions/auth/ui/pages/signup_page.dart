@@ -3,12 +3,15 @@ import "package:flutter/material.dart";
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 class SignupPage extends StatefulWidget {
   static const routeName = '/signup';
-  const SignupPage({super.key, this.preview = false});
+  const SignupPage({super.key, this.preview = false, this.initialStage = 0});
 
   final bool preview;
+  final int initialStage;
 
   @override
   State<SignupPage> createState() => _SignupPageState();
@@ -24,7 +27,10 @@ class _SignupPageState extends State<SignupPage> {
   final _pwConfirmController = TextEditingController();
   final _profileImageController = TextEditingController();
   final _schoolController = TextEditingController();
+  String _track = '중학교';
   String _subject = '수학';
+  int _stage = 0;
+  bool _agreed = true;
   bool _loading = false;
 
   /// 필요한 변수는 미리보기 여부다.
@@ -32,11 +38,13 @@ class _SignupPageState extends State<SignupPage> {
   @override
   void initState() {
     super.initState();
+    _stage = widget.initialStage.clamp(0, 2);
     if (!widget.preview) return;
     _nameController.text = '김학생';
     _gradeController.text = '2학년';
     _schoolController.text = 'AIFlow 중학교';
     _idController.text = 'student01';
+    _emailController.text = 'student@example.com';
     _pwController.text = 'password123';
     _pwConfirmController.text = 'password123';
   }
@@ -55,7 +63,16 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_nameController.text.trim().isEmpty ||
+        _gradeController.text.trim().isEmpty ||
+        _schoolController.text.trim().isEmpty ||
+        _idController.text.trim().isEmpty ||
+        _pwController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('필수 정보를 모두 입력해 주세요.')));
+      return;
+    }
     if (_pwController.text != _pwConfirmController.text) {
       ScaffoldMessenger.of(
         context,
@@ -104,107 +121,35 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
+      drawer: const AppDrawer(),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+        child: Column(
           children: [
-            const Row(
-              children: [
-                _SignupLogo(),
-                SizedBox(width: 10),
-                Text(
-                  'AIFlow',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'CREATE ACCOUNT',
-              style: TextStyle(
-                fontSize: 10,
-                letterSpacing: 1.6,
-                color: Colors.black54,
-                fontWeight: FontWeight.w900,
+            Builder(
+              builder: (context) => Ios26TopBar(
+                brandColor: Colors.black,
+                showLevelIndicator: false,
+                onMenu: () => toggleAppDrawer(context),
+                items: const [],
               ),
             ),
-            const SizedBox(height: 26),
-            const Text(
-              '나에게 맞는 학습을\n설정해 볼까요?',
-              style: TextStyle(
-                fontSize: 36,
-                height: .98,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 28),
-            OutlinedButton(
-              onPressed: () => Navigator.of(context).maybePop(),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(44),
-              ),
-              child: const Text('로그인으로 돌아가기'),
-            ),
-            const SizedBox(height: 16),
-            const _SignupSteps(),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFE4E4E6)),
-              ),
+            Expanded(
               child: Form(
                 key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 48),
                   children: [
-                    _signupField(_nameController, '이름', required: true),
-                    const SizedBox(height: 14),
-                    _signupField(_gradeController, '학년', required: true),
-                    const SizedBox(height: 14),
-                    DropdownButtonFormField<String>(
-                      initialValue: _subject,
-                      decoration: _signupDecoration('과목'),
-                      items: const [
-                        DropdownMenuItem(value: '수학', child: Text('수학')),
-                        DropdownMenuItem(value: '과학', child: Text('과학')),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _subject = value ?? '수학'),
-                    ),
-                    const SizedBox(height: 14),
-                    _signupField(_schoolController, '학교'),
-                    const SizedBox(height: 18),
-                    FilledButton(
-                      onPressed: _loading ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF202022),
-                        minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text('계정 정보 입력하기 →'),
-                    ),
-                    const SizedBox(height: 24),
-                    _signupField(_idController, '아이디', required: true),
-                    const SizedBox(height: 14),
-                    _signupField(_emailController, '이메일'),
-                    const SizedBox(height: 14),
-                    _signupField(
-                      _pwController,
-                      '비밀번호',
-                      required: true,
-                      obscure: true,
-                    ),
-                    const SizedBox(height: 14),
-                    _signupField(
-                      _pwConfirmController,
-                      '비밀번호 확인',
-                      required: true,
-                      obscure: true,
+                    _buildHeader(),
+                    const SizedBox(height: 16),
+                    _SignupSteps(stage: _stage, onSelected: _setStage),
+                    const SizedBox(height: 12),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      child: switch (_stage) {
+                        0 => _buildProfileStage(),
+                        1 => _buildAccountStage(),
+                        _ => _buildConfirmStage(),
+                      },
                     ),
                   ],
                 ),
@@ -215,6 +160,291 @@ class _SignupPageState extends State<SignupPage> {
       ),
     );
   }
+
+  /// 필요한 변수는 현재 Navigator다.
+  /// 작동 원리는 HTML과 같은 브랜드·제목·로그인 복귀 버튼을 한 헤더에 배치하는 것이다.
+  Widget _buildHeader() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Row(
+        children: [
+          _SignupLogo(),
+          SizedBox(width: 10),
+          Text(
+            'AIFlow',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+      const SizedBox(height: 14),
+      const Text(
+        'CREATE ACCOUNT',
+        style: TextStyle(
+          fontSize: 10,
+          letterSpacing: 1.6,
+          color: Colors.black54,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 26),
+      const Text(
+        '나에게 맞는 학습을\n설정해 볼까요?',
+        style: TextStyle(
+          fontSize: 36,
+          height: .98,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 28),
+      OutlinedButton(
+        onPressed: () => Navigator.of(context).maybePop(),
+        child: const Text('로그인으로 돌아가기'),
+      ),
+    ],
+  );
+
+  /// 필요한 변수는 이동할 단계 번호다.
+  /// 작동 원리는 진행 배지나 다음 버튼을 누르면 해당 HTML 패널만 표시하는 것이다.
+  void _setStage(int stage) => setState(() => _stage = stage.clamp(0, 2));
+
+  /// 필요한 변수는 학생 기본 정보와 다음 단계 콜백이다.
+  /// 작동 원리는 시안의 STEP 01 설명·필수 요약·과정 폼을 한 카드에 구성하는 것이다.
+  Widget _buildProfileStage() => _stageCard(
+    key: const ValueKey('signup-profile'),
+    eyebrow: 'STEP 01 · PROFILE',
+    title: '먼저 학생 정보를\n알려주세요.',
+    description: '과정과 학년은 커리큘럼 추천의 기준이 되며 프로필에서 언제든 수정할 수 있습니다.',
+    summary: const ['필수  이름 · 과정 · 학년 · 학교', '선택  고등 과정의 과목'],
+    children: [
+      _signupField(_nameController, '이름', required: true),
+      const SizedBox(height: 14),
+      DropdownButtonFormField<String>(
+        initialValue: _track,
+        decoration: _signupDecoration('과정'),
+        items: const [
+          DropdownMenuItem(value: '중학교', child: Text('중학교')),
+          DropdownMenuItem(value: '고등학교', child: Text('고등학교')),
+        ],
+        onChanged: (value) => setState(() => _track = value ?? '중학교'),
+      ),
+      const SizedBox(height: 14),
+      _signupField(_gradeController, '학년', required: true),
+      const SizedBox(height: 14),
+      DropdownButtonFormField<String>(
+        initialValue: _subject,
+        decoration: _signupDecoration('과목'),
+        items: const [
+          DropdownMenuItem(value: '수학', child: Text('수학')),
+          DropdownMenuItem(value: '수학Ⅰ', child: Text('수학Ⅰ')),
+          DropdownMenuItem(value: '미적분', child: Text('미적분')),
+        ],
+        onChanged: (value) => setState(() => _subject = value ?? '수학'),
+      ),
+      const SizedBox(height: 14),
+      _signupField(_schoolController, '학교', required: true),
+      const SizedBox(height: 6),
+      const Text(
+        '학교명을 입력하면 자동완성 결과를 확인합니다.',
+        style: TextStyle(fontSize: 11, color: Colors.black45),
+      ),
+      const SizedBox(height: 18),
+      _primaryButton('계정 정보 입력하기 →', () => _setStage(1)),
+    ],
+  );
+
+  /// 필요한 변수는 계정 컨트롤러와 다음 단계 콜백이다.
+  /// 작동 원리는 STEP 02 규칙·아이디·비밀번호·선택 이메일 입력을 별도 패널로 제공하는 것이다.
+  Widget _buildAccountStage() => _stageCard(
+    key: const ValueKey('signup-account'),
+    eyebrow: 'STEP 02 · ACCOUNT',
+    title: '사용할 계정을\n만들어 주세요.',
+    description: '각 단계가 확인되어야 다음 입력이 열립니다.',
+    summary: const ['아이디  영문·숫자 4–16자', '비밀번호  영문+숫자 8–20자', '이메일  선택 입력'],
+    children: [
+      _signupField(_idController, '아이디', required: true),
+      const SizedBox(height: 6),
+      const Text(
+        '사용 가능한 형식입니다.',
+        style: TextStyle(
+          fontSize: 11,
+          color: Color(0xFF227A43),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 14),
+      _signupField(_pwController, '비밀번호', required: true, obscure: true),
+      const SizedBox(height: 14),
+      _signupField(
+        _pwConfirmController,
+        '비밀번호 확인',
+        required: true,
+        obscure: true,
+      ),
+      const SizedBox(height: 14),
+      _signupField(_emailController, '이메일 · 선택'),
+      const SizedBox(height: 18),
+      _primaryButton('입력 정보 확인하기 →', () => _setStage(2)),
+    ],
+  );
+
+  /// 필요한 변수는 지금까지 입력한 학생·계정 정보와 동의 상태다.
+  /// 작동 원리는 STEP 03에서 최종 값을 요약하고 실제 가입 API 버튼을 연결하는 것이다.
+  Widget _buildConfirmStage() => _stageCard(
+    key: const ValueKey('signup-confirm'),
+    eyebrow: 'STEP 03 · CONFIRM',
+    title: '이 정보로\n시작할게요.',
+    description: '가입 완료 후 JWT가 저장되고 학생 홈으로 이동합니다.',
+    children: [
+      _confirmRow('학생', _nameController.text),
+      _confirmRow('학습 과정', '$_track ${_gradeController.text} · $_subject'),
+      _confirmRow('학교', _schoolController.text),
+      _confirmRow('아이디', _idController.text),
+      _confirmRow('이메일', _emailController.text),
+      CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        value: _agreed,
+        onChanged: (value) => setState(() => _agreed = value ?? false),
+        title: const Text(
+          '입력 정보와 서비스 이용 안내를 확인했습니다.',
+          style: TextStyle(fontSize: 12),
+        ),
+      ),
+      _primaryButton('가입하고 학습 시작하기', _agreed && !_loading ? _submit : null),
+      const SizedBox(height: 8),
+      OutlinedButton(
+        onPressed: () => _setStage(1),
+        child: const Text('이전 단계 수정'),
+      ),
+    ],
+  );
+
+  /// 필요한 변수는 단계 키·설명 문구·요약·폼 자식이다.
+  /// 작동 원리는 모든 가입 단계를 동일한 흰 카드와 설명/입력 2영역 구조로 묶는 것이다.
+  Widget _stageCard({
+    required Key key,
+    required String eyebrow,
+    required String title,
+    required String description,
+    List<String> summary = const [],
+    required List<Widget> children,
+  }) => Material(
+    key: key,
+    color: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(28),
+      side: const BorderSide(color: Color(0xFFE4E4E6)),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            eyebrow,
+            style: const TextStyle(
+              fontSize: 10,
+              letterSpacing: 1.5,
+              color: Colors.black54,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 28,
+              height: 1.02,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black45,
+              height: 1.45,
+            ),
+          ),
+          if (summary.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F6),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final item in summary)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          ...children,
+        ],
+      ),
+    ),
+  );
+
+  /// 필요한 변수는 버튼 레이블과 선택적 콜백이다.
+  /// 작동 원리는 회원가입의 주요 행동을 50px 검은 전폭 버튼으로 통일하는 것이다.
+  Widget _primaryButton(String label, VoidCallback? onPressed) => FilledButton(
+    onPressed: onPressed,
+    style: FilledButton.styleFrom(
+      backgroundColor: const Color(0xFF202022),
+      minimumSize: const Size.fromHeight(50),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    child: _loading
+        ? const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
+          )
+        : Text(label),
+  );
+
+  /// 필요한 변수는 요약 레이블과 현재 입력값이다.
+  /// 작동 원리는 최종 확인 정보를 구분선이 있는 한 행으로 표시하는 것이다.
+  Widget _confirmRow(String label, String value) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 13),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: Color(0xFFE7E7E9))),
+    ),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 86,
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Colors.black45),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value.isEmpty ? '선택 안 함' : value,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    ),
+  );
 
   /// 필요한 변수는 컨트롤러·레이블·필수·비밀번호 여부다.
   /// 작동 원리는 회원가입 모든 필드에 동일한 둥근 테두리와 필수 검증을 적용하는 것이다.
@@ -267,7 +497,10 @@ class _SignupLogo extends StatelessWidget {
 }
 
 class _SignupSteps extends StatelessWidget {
-  const _SignupSteps();
+  const _SignupSteps({required this.stage, required this.onSelected});
+
+  final int stage;
+  final ValueChanged<int> onSelected;
 
   /// 필요한 변수는 없으며 회원가입 세 단계를 고정 레이블로 표시한다.
   /// 작동 원리는 첫 단계만 검은 배지로 활성화해 HTML 진행 표시를 재현하는 것이다.
@@ -279,12 +512,27 @@ class _SignupSteps extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       border: Border.all(color: const Color(0xFFE4E4E6)),
     ),
-    child: const Row(
+    child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('01  기본 정보', style: TextStyle(fontWeight: FontWeight.w900)),
-        Text('02  계정 만들기', style: TextStyle(color: Colors.black38)),
-        Text('03  최종 확인', style: TextStyle(color: Colors.black38)),
+        for (final item in const [
+          (0, '01', '기본 정보'),
+          (1, '02', '계정 만들기'),
+          (2, '03', '최종 확인'),
+        ])
+          TextButton(
+            onPressed: () => onSelected(item.$1),
+            child: Text(
+              '${item.$2}  ${item.$3}',
+              style: TextStyle(
+                fontSize: 12,
+                color: stage == item.$1 ? Colors.black : Colors.black38,
+                fontWeight: stage == item.$1
+                    ? FontWeight.w900
+                    : FontWeight.w500,
+              ),
+            ),
+          ),
       ],
     ),
   );

@@ -608,6 +608,14 @@ void main() {
     expect(find.text('나에게 맞는 학습을\n설정해 볼까요?'), findsOneWidget);
     expect(find.text('01  기본 정보'), findsOneWidget);
     expect(find.text('계정 정보 입력하기 →'), findsOneWidget);
+    await tester.tap(find.text('02  계정 만들기'));
+    await tester.pumpAndSettle();
+    expect(find.text('STEP 02 · ACCOUNT'), findsOneWidget);
+    expect(find.text('입력 정보 확인하기 →'), findsOneWidget);
+    await tester.tap(find.text('03  최종 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text('STEP 03 · CONFIRM'), findsOneWidget);
+    expect(find.text('가입하고 학습 시작하기'), findsOneWidget);
   });
 
   testWidgets('500px 프로필은 HTML 학생 히어로와 학습 정보를 유지한다', (tester) async {
@@ -635,6 +643,18 @@ void main() {
     expect(find.text('STUDENT PROFILE'), findsOneWidget);
     expect(find.text('18.6'), findsOneWidget);
     expect(find.text('LEARNING PROFILE'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -720));
+    await tester.pumpAndSettle();
+    expect(find.text('SECURITY'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -720));
+    await tester.pumpAndSettle();
+    expect(find.text('DANGER ZONE'), findsOneWidget);
+    final deleteButton = find.widgetWithText(OutlinedButton, '계정 삭제');
+    await tester.ensureVisible(deleteButton);
+    await tester.tap(deleteButton);
+    await tester.pumpAndSettle();
+    expect(find.text('계정 삭제'), findsWidgets);
+    expect(find.text('현재 비밀번호'), findsOneWidget);
   });
 
   testWidgets('500px 설정은 HTML 로컬 히어로와 세 설정 카드를 유지한다', (tester) async {
@@ -650,5 +670,9 @@ void main() {
     expect(find.text('LOCAL PREFERENCES'), findsOneWidget);
     expect(find.text('교재 보기'), findsOneWidget);
     expect(find.text('알림'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(find.text('STORAGE CONTRACT'), findsOneWidget);
+    expect(find.text('settings.notifications_enabled'), findsOneWidget);
   });
 }

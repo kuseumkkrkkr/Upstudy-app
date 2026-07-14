@@ -237,6 +237,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
       Uri.base.queryParameters['height'] ?? '',
     );
     final screen = Uri.base.queryParameters['screen'] ?? 'dashboard';
+    final action = Uri.base.queryParameters['action'] ?? '';
     final courses = _previewCourses();
     final screenHome = switch (screen) {
       'courses' => CourseCatalogPage(
@@ -410,7 +411,14 @@ class StudentDensityPreviewApp extends StatelessWidget {
         initialUsername: 'student01',
         initialPassword: 'password123',
       ),
-      'signup' => const SignupPage(preview: true),
+      'signup' => SignupPage(
+        preview: true,
+        initialStage: action == 'signup-account'
+            ? 1
+            : action == 'signup-confirm'
+            ? 2
+            : 0,
+      ),
       'profile' => ProfilePage(
         initialProfile: UserProfile(
           userId: 'student-1',
@@ -420,13 +428,23 @@ class StudentDensityPreviewApp extends StatelessWidget {
           track: '중학교',
           subject: '수학',
           school: 'AIFlow 중학교',
+          email: 'student@example.com',
         ),
+        initialTextbookPageMode: true,
+        showDeleteDialogOnStart: action == 'profile-delete',
       ),
-      'settings' => const SettingsPage(preview: true),
+      'settings' => SettingsPage(
+        preview: true,
+        showLicensesOnStart: action == 'licenses',
+      ),
       _ => const MainStudentPage(username: '김학생'),
     };
-    final action = Uri.base.queryParameters['action'] ?? '';
-    final home = action.isEmpty
+    final handledInScreen =
+        action == 'signup-account' ||
+        action == 'signup-confirm' ||
+        action == 'profile-delete' ||
+        action == 'licenses';
+    final home = action.isEmpty || handledInScreen
         ? screenHome
         : _PreviewActionLauncher(action: action, child: screenHome);
     return MaterialApp(
