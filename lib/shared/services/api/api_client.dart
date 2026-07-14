@@ -1,5 +1,7 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:developer';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/shared/services/api/api_contract.dart';
@@ -25,6 +27,7 @@ class ApiResponse<T> {
     );
   }
 }
+
 class _CachedApiResponse {
   _CachedApiResponse({
     required this.savedAt,
@@ -1235,9 +1238,10 @@ class ApiClient {
   }
 
   String? _token;
+  http.Client _httpClient = http.Client();
   static final Map<String, _CachedApiResponse> _memoryCache = {};
-  static final Map<String, Future<ApiResponse<dynamic>>>
-  _inflightCacheRequests = {};
+  static final Map<String, Future<http.Response>> _inflightCacheRequests = {};
+  int _cacheGeneration = 0;
 
   Future<String> _ensureToken() async {
     if (_token != null) return _token!;
@@ -1248,7 +1252,12 @@ class ApiClient {
     throw ApiException(statusCode: 401, message: 'Missing auth token');
   }
 
+  /// 필요한 변수는 새 인증 토큰과 선택 사용자명이다.
+  /// 기존 사용자와 토큰이 달라지면 이전 네임스페이스를 먼저 비워 계정 간 응답 혼입을 막는다.
   Future<void> setToken(String token, {String? username}) async {
+    if (_token != null && _token != token) {
+      await clearUserCache(token: _token);
+    }
     _token = token;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('jwt_token', token);
@@ -1258,7 +1267,10 @@ class ApiClient {
     await AuthStorage.instance.saveToken(token, username: username);
   }
 
+  /// 현재 토큰을 변수로 사용해 해당 사용자의 메모리·영속 캐시와 진행 GET을 정리한다.
+  /// 캐시 세대를 올린 뒤 인증 정보를 지워, 늦게 끝난 요청이 로그아웃 후 캐시를 되살리지 못하게 한다.
   Future<void> clearToken() async {
+    await clearUserCache(token: _token);
     _token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
@@ -1335,10 +1347,6 @@ class ApiClient {
       return _parseCachedBody<T>(cached, parser);
     }
 
-    if (_inflightCacheRequests.containsKey(key)) {
-      return _inflightCacheRequests[key]!.then((value) => value as ApiResponse<T>);
-    }
-
     final requestHeaders = <String, String>{
       ..._headers,
       if (cached?.etag != null && cached!.etag!.isNotEmpty)
@@ -1347,24 +1355,30 @@ class ApiClient {
         'If-Modified-Since': cached.lastModified,
     };
 
-    final request = () async {
+    final requestGeneration = _cacheGeneration;
+
+    /// 필요한 변수는 캐시 키·조건부 요청 헤더·현재 캐시 세대다.
+    /// 네트워크에서는 원시 응답만 합치고, 각 호출자는 자신의 parser로 별도 변환한다.
+    Future<http.Response> requestRaw() async {
       final logSuffix = cached == null
           ? 'network'
-          : (cached.etag != null && cached!.etag!.isNotEmpty) ||
-                    cached.lastModified.isNotEmpty
-                ? 'revalidate'
-                : 'network';
+          : (cached.etag != null && cached.etag!.isNotEmpty) ||
+                cached.lastModified.isNotEmpty
+          ? 'revalidate'
+          : 'network';
       log('GET $uri ($logSuffix)', name: 'ApiClient');
 
-      final res = await http.get(uri, headers: requestHeaders);
+      final res = await _httpClient.get(uri, headers: requestHeaders);
       await _clearTokenOnUnauthorized(res);
 
       if (useCache && res.statusCode == 304 && cached != null) {
-        return _parseCachedBody<T>(cached, parser);
+        return _cachedHttpResponse(cached);
       }
 
-      final parsed = _parse(res, parser);
-      if (useCache && res.statusCode >= 200 && res.statusCode < 300) {
+      if (useCache &&
+          res.statusCode >= 200 &&
+          res.statusCode < 300 &&
+          requestGeneration == _cacheGeneration) {
         await _saveCache(
           key,
           keyBody: res.body,
@@ -1374,35 +1388,104 @@ class ApiClient {
           lastModified: res.headers['last-modified'],
         );
       }
-      return parsed;
-    };
+      return res;
+    }
 
-    final future = request();
-    _inflightCacheRequests[key] = future;
+    final future = _inflightCacheRequests.putIfAbsent(key, requestRaw);
     try {
-      return await future;
+      final response = await future;
+      return _parse(response, parser);
     } finally {
-      _inflightCacheRequests.remove(key);
+      if (identical(_inflightCacheRequests[key], future)) {
+        _inflightCacheRequests.remove(key);
+      }
     }
   }
 
+  /// 필요한 변수는 요청 경로·정렬된 쿼리·현재 토큰이다.
+  /// 토큰 전체를 SHA-256으로 단방향 변환해 사용자별 키를 만들고 원문 노출을 피한다.
   String _cacheKey(String path, Map<String, String>? query) {
-    final sortedPairs = query == null
-        ? <MapEntry<String, String>>[]
-        : query.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+    final sortedPairs =
+        query == null ? <MapEntry<String, String>>[] : query.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
     final normalizedQuery = sortedPairs
         .map(
-          (e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}',
+          (e) =>
+              '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}',
         )
         .join('&');
     final normalizedPath = normalizedQuery.isEmpty
         ? path
         : '$path?$normalizedQuery';
-    final userTag = _token == null
-        ? 'anonymous'
-        : (_token!.length <= 12 ? _token! : _token!.substring(0, 12));
+    final userTag = _userCacheTag(_token);
     return '${userTag}_$normalizedPath';
   }
+
+  /// 필요한 변수는 선택 토큰이며, UTF-8 바이트를 SHA-256으로 해시한다.
+  /// 토큰이 없을 때만 고정 anonymous 네임스페이스를 반환한다.
+  String _userCacheTag(String? token) {
+    if (token == null || token.isEmpty) return 'anonymous';
+    return sha256.convert(utf8.encode(token)).toString();
+  }
+
+  /// 필요한 변수는 무효화할 API 경로와 현재 사용자 태그다.
+  /// 쿼리 유무와 관계없이 동일 경로로 시작하는 메모리·영속 캐시 및 진행 요청을 제거한다.
+  Future<void> invalidateCachePath(String path) async {
+    final prefix = '${_userCacheTag(_token)}_$path';
+    _memoryCache.removeWhere((key, _) => key.startsWith(prefix));
+    _inflightCacheRequests.removeWhere((key, _) => key.startsWith(prefix));
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs
+        .getKeys()
+        .where((key) => key.startsWith('$_cacheNamespace$prefix'))
+        .toList(growable: false);
+    await Future.wait(keys.map(prefs.remove));
+  }
+
+  /// 필요한 변수는 정리 대상 토큰이며 생략 시 현재 토큰을 사용한다.
+  /// 사용자 해시로 시작하는 모든 캐시를 제거하고 세대를 증가시켜 지연 응답의 저장을 차단한다.
+  Future<void> clearUserCache({String? token}) async {
+    final prefix = '${_userCacheTag(token ?? _token)}_';
+    _cacheGeneration += 1;
+    _memoryCache.removeWhere((key, _) => key.startsWith(prefix));
+    _inflightCacheRequests.removeWhere((key, _) => key.startsWith(prefix));
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs
+        .getKeys()
+        .where((key) => key.startsWith('$_cacheNamespace$prefix'))
+        .toList(growable: false);
+    await Future.wait(keys.map(prefs.remove));
+  }
+
+  /// 필요한 변수는 테스트용 HTTP 클라이언트다.
+  /// 실제 네트워크 없이 동시 GET 병합과 parser 분리를 검증할 때만 전송 계층을 교체한다.
+  @visibleForTesting
+  void setHttpClientForTest(http.Client client) {
+    _httpClient.close();
+    _httpClient = client;
+  }
+
+  /// 필요한 변수는 확인할 토큰이다. 테스트에서 SHA-256 사용자 격리 값을 직접 검증한다.
+  @visibleForTesting
+  String userCacheTagForTest(String token) => _userCacheTag(token);
+
+  /// 필요한 변수는 경로·원시 JSON·TTL이다. 네트워크 없이 현재 사용자 캐시를 준비한다.
+  @visibleForTesting
+  Future<void> seedCacheForTest(
+    String path,
+    String body, {
+    Duration ttl = const Duration(minutes: 5),
+  }) => _saveCache(
+    _cacheKey(path, null),
+    keyBody: body,
+    ttl: ttl,
+    statusCode: 200,
+  );
+
+  /// 필요한 변수는 경로다. 현재 사용자 메모리 캐시 존재 여부를 테스트에 반환한다.
+  @visibleForTesting
+  bool hasMemoryCacheForTest(String path) =>
+      _memoryCache.containsKey(_cacheKey(path, null));
 
   Future<_CachedApiResponse?> _readCache(String key) async {
     if (_memoryCache.containsKey(key)) {
@@ -1443,7 +1526,10 @@ class ApiClient {
     _memoryCache[key] = cached;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('$_cacheNamespace$key', jsonEncode(cached.toJsonMap()));
+      await prefs.setString(
+        '$_cacheNamespace$key',
+        jsonEncode(cached.toJsonMap()),
+      );
     } catch (_) {}
   }
 
@@ -1451,13 +1537,22 @@ class ApiClient {
     _CachedApiResponse cached,
     T Function(dynamic)? parser,
   ) {
-    final response = http.Response(
+    return _parse(_cachedHttpResponse(cached), parser);
+  }
+
+  /// 필요한 변수는 저장된 원시 본문·상태 코드다.
+  /// 캐시 데이터도 네트워크 응답과 같은 객체로 복원해 parser 적용 지점을 하나로 유지한다.
+  http.Response _cachedHttpResponse(_CachedApiResponse cached) {
+    return http.Response(
       cached.body,
       cached.statusCode,
-      headers: const {'content-type': 'application/json; charset=utf-8', 'from-cache': '1'},
+      headers: const {
+        'content-type': 'application/json; charset=utf-8',
+        'from-cache': '1',
+      },
     );
-    return _parse(response, parser);
   }
+
   Future<ApiResponse<T>> _post<T>(
     String path,
     Map<String, dynamic> body, {
@@ -1856,7 +1951,8 @@ class ApiClient {
       'page_size': '$pageSize',
       if (hashTag != null && hashTag.trim().isNotEmpty)
         'hash_tag': hashTag.trim(),
-      if (questId != null && questId.trim().isNotEmpty) 'quest_id': questId.trim(),
+      if (questId != null && questId.trim().isNotEmpty)
+        'quest_id': questId.trim(),
       if ((text ?? textQuery) != null && (text ?? textQuery)!.trim().isNotEmpty)
         'text': (text ?? textQuery)!.trim(),
       if (isVariant != null) 'is_variant': '$isVariant',
@@ -1874,15 +1970,13 @@ class ApiClient {
         }
         if (d is Map<String, dynamic>) {
           final map = Map<String, dynamic>.from(d);
-          final items = map['quests'] ??
-              map['items'] ??
-              map['data'] ??
-              const <dynamic>[];
+          final items =
+              map['quests'] ?? map['items'] ?? map['data'] ?? const <dynamic>[];
           return items is List
               ? items
-                  .whereType<Map>()
-                  .map((e) => Map<String, dynamic>.from(e))
-                  .toList()
+                    .whereType<Map>()
+                    .map((e) => Map<String, dynamic>.from(e))
+                    .toList()
               : const <Map<String, dynamic>>[];
         }
         return const <Map<String, dynamic>>[];
@@ -2103,6 +2197,8 @@ class ApiClient {
     return res.data ?? const <String, dynamic>{};
   }
 
+  /// 필요한 변수는 코스·모듈·정오답 수·소요 시간이다.
+  /// 모듈 제출 성공 후 코스 목록·상세·런타임 캐시를 한 경로 기준으로 비운다.
   Future<Map<String, dynamic>> submitCourseRuntimeModule({
     required String courseId,
     required String moduleId,
@@ -2121,6 +2217,7 @@ class ApiClient {
           if (perProblemElapsedSeconds != null)
             'per_problem_elapsed_seconds': perProblemElapsedSeconds,
         }, parser: (d) => Map<String, dynamic>.from(d as Map));
+    await invalidateCachePath('/courses');
     return res.data ?? const <String, dynamic>{};
   }
 
@@ -3433,7 +3530,11 @@ extension ApiClientLegacyCompat on ApiClient {
     await _ensureToken();
     final effectiveToken = _token;
     if (effectiveToken == null) {
-      return ApiResponse<T>(success: false, data: null, message: 'No auth token');
+      return ApiResponse<T>(
+        success: false,
+        data: null,
+        message: 'No auth token',
+      );
     }
 
     final oldToken = previousToken;
@@ -4135,6 +4236,8 @@ extension ApiClientLegacyCompat on ApiClient {
     return res.data ?? <String, dynamic>{};
   }
 
+  /// 필요한 변수는 코스·모듈·교재·현재 페이지와 선택 범위다.
+  /// 최소 체류 검증 완료 응답을 받은 뒤 관련 코스 캐시를 즉시 무효화한다.
   Future<Map<String, dynamic>> completeCourseTextbookRuntime({
     required String courseId,
     required String moduleId,
@@ -4155,6 +4258,7 @@ extension ApiClientLegacyCompat on ApiClient {
       },
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
+    await invalidateCachePath('/courses');
     return res.data ?? <String, dynamic>{};
   }
 
@@ -4536,12 +4640,12 @@ extension ApiClientLegacyCompat on ApiClient {
           .whereType<Map>()
           .map((e) {
             final item = Map<String, dynamic>.from(e);
-          return GroupSharedProblem(
-            id: item['codebase_id']?.toString() ?? '',
-            shareId: item['share_id']?.toString() ?? '',
-          );
-        })
-        .toList(),
+            return GroupSharedProblem(
+              id: item['codebase_id']?.toString() ?? '',
+              shareId: item['share_id']?.toString() ?? '',
+            );
+          })
+          .toList(),
       useCache: true,
       cacheTtl: const Duration(minutes: 2),
     );
@@ -4559,7 +4663,7 @@ extension ApiClientLegacyCompat on ApiClient {
           .whereType<Map>()
           .map((e) {
             final item = Map<String, dynamic>.from(e);
-        return GroupSharedExam(
+            return GroupSharedExam(
               id: item['exam_id']?.toString() ?? '',
               shareId: item['share_id']?.toString() ?? '',
               examId: item['exam_id']?.toString() ?? '',
