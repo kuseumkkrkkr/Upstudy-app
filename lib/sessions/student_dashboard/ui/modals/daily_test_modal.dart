@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 
+/// 필요한 변수는 화면 context·활성 코스 ID·선택적 감사용 초기 데이터다.
+/// 작동 원리는 실제 퀘스트 API 상태를 HTML 세로 액션 패널 안에 열고 배경을 블러 처리하는 것이다.
 Future<T?> showDailyTestModal<T>({
   required BuildContext context,
   String? courseId,
+  DailyQuestBundle? initialBundle,
 }) {
   return showDialog<T>(
     context: context,
@@ -21,7 +24,12 @@ Future<T?> showDailyTestModal<T>({
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
               child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
-            Center(child: DailyTestModal(courseId: courseId)),
+            Center(
+              child: DailyTestModal(
+                courseId: courseId,
+                initialBundle: initialBundle,
+              ),
+            ),
           ],
         ),
       );
@@ -30,9 +38,10 @@ Future<T?> showDailyTestModal<T>({
 }
 
 class DailyTestModal extends StatefulWidget {
-  const DailyTestModal({super.key, this.courseId});
+  const DailyTestModal({super.key, this.courseId, this.initialBundle});
 
   final String? courseId;
+  final DailyQuestBundle? initialBundle;
 
   @override
   State<DailyTestModal> createState() => _DailyTestModalState();
@@ -45,10 +54,18 @@ class _DailyTestModalState extends State<DailyTestModal> {
   String? _claimingQuestId;
   int? _rewardBurstPoints;
 
+  /// 필요한 변수는 선택적 초기 번들과 코스 ID다.
+  /// 작동 원리는 초기 데이터가 있으면 즉시 표시하고 없으면 활성 코스의 일일 퀘스트를 한 번 조회하는 것이다.
   @override
   void initState() {
     super.initState();
-    _load();
+    final initialBundle = widget.initialBundle;
+    if (initialBundle != null) {
+      _bundle = initialBundle;
+      _loading = false;
+    } else {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -122,6 +139,8 @@ class _DailyTestModalState extends State<DailyTestModal> {
     }
   }
 
+  /// 필요한 변수는 퀘스트 목록·완료율·현재 화면 크기다.
+  /// 작동 원리는 최대 720px 세로 패널 안에 보상 상태와 목록을 반응형으로 표시하는 것이다.
   @override
   Widget build(BuildContext context) {
     final bundle = _bundle;
@@ -131,11 +150,12 @@ class _DailyTestModalState extends State<DailyTestModal> {
     final progress = total == 0 ? 0.0 : completed / total;
     final percentLabel = '${(progress * 100).round()}%';
 
+    final size = MediaQuery.sizeOf(context);
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: SizedBox(
-        width: 1040,
-        height: 560,
+        width: size.width > 760 ? 720 : size.width * .94,
+        height: size.height * .9,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -148,6 +168,8 @@ class _DailyTestModalState extends State<DailyTestModal> {
     );
   }
 
+  /// 필요한 변수는 일일 퀘스트 목록·완료율 문구·진행값이다.
+  /// 작동 원리는 HTML 헤더와 설명, 검정 진행 막대, 실제 보상 행을 위에서 아래로 구성하는 것이다.
   Widget _buildPanel(
     List<DailyQuestItem> items,
     String percentLabel,
@@ -161,36 +183,67 @@ class _DailyTestModalState extends State<DailyTestModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.close, size: 28),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 22, 18, 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'DAILY QUEST',
+                        style: TextStyle(
+                          color: Colors.black45,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.4,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        '일일 테스트',
+                        style: TextStyle(
+                          fontSize: 30,
+                          height: 1,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1.2,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Expanded(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.only(bottom: 4),
-                  child: Text('일일 퀘스트', style: TextStyle(fontSize: 24)),
+                IconButton.outlined(
+                  tooltip: '닫기',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const Divider(height: 1),
           if (_loading)
             const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_error != null)
             Expanded(child: Center(child: Text(_error!)))
           else ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(34, 0, 34, 0),
+              padding: const EdgeInsets.fromLTRB(24, 34, 24, 0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text(
+                    '현재 코스에서 오늘 풀 수 있는 테스트입니다.',
+                    style: TextStyle(color: Colors.black54, fontSize: 14),
+                  ),
+                  const SizedBox(height: 18),
                   Text(
                     '완료율 $percentLabel',
-                    style: const TextStyle(fontSize: 14),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   ClipRRect(
@@ -198,21 +251,21 @@ class _DailyTestModalState extends State<DailyTestModal> {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 6,
-                      backgroundColor: const Color(0xCCE6E6E6),
+                      backgroundColor: const Color(0xFFE6E6E8),
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF45BF63),
+                        Colors.black,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             Expanded(
               child: items.isEmpty
                   ? const Center(child: Text('오늘의 퀘스트가 없습니다.'))
                   : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(34, 0, 34, 28),
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
                       itemCount: items.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
@@ -236,6 +289,8 @@ class _RewardBurst extends StatelessWidget {
 
   final int points;
 
+  /// 필요한 변수는 지급된 포인트와 애니메이션 진행값이다.
+  /// 작동 원리는 보상 수령 직후 포인트 문구를 위로 이동시키며 서서히 숨기는 것이다.
   @override
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
@@ -289,6 +344,8 @@ class _DailyQuestRow extends StatelessWidget {
   bool get _completed => item.status == 'completed';
   bool get _claimable => item.claimable || (_completed && !item.rewardClaimed);
 
+  /// 필요한 변수는 퀘스트 상태·보상 수령 중 여부·수령 콜백이다.
+  /// 작동 원리는 진행 중 항목만 검정으로 강조하고 완료·대기 항목은 흰색 행으로 구분하는 것이다.
   @override
   Widget build(BuildContext context) {
     final progressText =
@@ -298,25 +355,36 @@ class _DailyQuestRow extends StatelessWidget {
               ? '수령 완료'
               : '완료'
         : '진행 중';
-    final statusColor = _completed
-        ? const Color(0xFF2E9853)
-        : const Color(0xFF9A9A9A);
+    final active = !_completed && item.progress > 0;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 58),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      constraints: const BoxConstraints(minHeight: 72),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDEDED),
-        borderRadius: BorderRadius.circular(14),
+        color: active ? Colors.black : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: active ? Colors.black : const Color(0xFFDCDCE0),
+        ),
       ),
       child: Row(
         children: [
-          Icon(
-            _completed ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: statusColor,
-            size: 20,
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: active ? Colors.white : const Color(0xFFF4F4F6),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFDCDCE0)),
+            ),
+            child: Icon(
+              _completed ? Icons.check_rounded : Icons.article_outlined,
+              color: Colors.black,
+              size: 20,
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,13 +395,16 @@ class _DailyQuestRow extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                  ),
+                  ).copyWith(color: active ? Colors.white : Colors.black),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
                 Text(
                   '${item.difficultyLabel} · $progressText · $statusLabel',
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: active ? Colors.white70 : Colors.black54,
+                  ),
                 ),
               ],
             ),
@@ -355,15 +426,15 @@ class _DailyQuestRow extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Icon(
+                Icon(
                   Icons.monetization_on_rounded,
-                  color: Color(0xFF5DA676),
+                  color: active ? Colors.white70 : Colors.black45,
                   size: 18,
                 ),
                 Text(
                   '${item.rewardPoints}',
-                  style: const TextStyle(
-                    color: Color(0xFF5DA676),
+                  style: TextStyle(
+                    color: active ? Colors.white70 : Colors.black54,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -384,7 +455,11 @@ class _DailyQuestRow extends StatelessWidget {
                     item.rewardClaimed
                         ? Icons.verified_rounded
                         : Icons.redeem_rounded,
-                    color: _claimable ? Colors.black : Colors.black38,
+                    color: active
+                        ? Colors.white
+                        : _claimable
+                        ? Colors.black
+                        : Colors.black38,
                   ),
             onPressed: _claimable && !claiming ? onClaim : null,
           ),

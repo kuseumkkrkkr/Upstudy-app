@@ -11,6 +11,7 @@ import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/course.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
 /// 필요한 변수는 HTML 코스 시안에 표시되는 상태·진행률·추천 정보다.
@@ -270,7 +271,42 @@ class _PreviewActionLauncherState extends State<_PreviewActionLauncher> {
       case 'study-mode':
         await showStudyModeModal<void>(context: context);
       case 'daily-test':
-        await showDailyTestModal<void>(context: context);
+        await showDailyTestModal<void>(
+          context: context,
+          initialBundle: const DailyQuestBundle(
+            account: AccountSummary(),
+            items: [
+              DailyQuestItem(
+                id: 'daily-1',
+                questType: 'problem',
+                title: '일차함수 기본',
+                target: 10,
+                progress: 4,
+                status: 'in_progress',
+                rewardPoints: 80,
+              ),
+              DailyQuestItem(
+                id: 'daily-2',
+                questType: 'graph',
+                title: '그래프 해석',
+                target: 1,
+                progress: 0,
+                status: 'pending',
+                rewardPoints: 60,
+              ),
+              DailyQuestItem(
+                id: 'daily-3',
+                questType: 'ox',
+                title: '오늘의 OX',
+                target: 1,
+                progress: 1,
+                status: 'completed',
+                rewardPoints: 40,
+                rewardClaimed: true,
+              ),
+            ],
+          ),
+        );
       case 'today-tasks':
         final today = DateUtils.dateOnly(DateTime.now());
         await showTodayTasksModal<void>(

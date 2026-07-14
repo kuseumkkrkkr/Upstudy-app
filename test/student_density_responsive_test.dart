@@ -5,6 +5,9 @@ import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 
@@ -254,5 +257,60 @@ void main() {
     expect(find.text('y = 4x - 1'), findsOneWidget);
     expect(find.byTooltip('펜'), findsOneWidget);
     expect(find.byTooltip('제출'), findsOneWidget);
+  });
+
+  testWidgets('500px 홈 액션 패널은 일일 테스트와 오늘 할 일 구조를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final today = DateUtils.dateOnly(DateTime.now());
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DailyTestModal(
+            initialBundle: DailyQuestBundle(
+              account: AccountSummary(),
+              items: [
+                DailyQuestItem(
+                  id: 'one',
+                  questType: 'problem',
+                  title: '일차함수 기본',
+                  target: 10,
+                  progress: 4,
+                  status: 'in_progress',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('DAILY QUEST'), findsOneWidget);
+    expect(find.text('일차함수 기본'), findsOneWidget);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TodayTasksModal(
+            initialTasksByDate: {
+              today: const ['개인 복습 20분'],
+            },
+            lockedTasksByDate: {
+              today: const ['문제 12개', '교재 3장 읽기'],
+            },
+            onTasksChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+    expect(find.text('TODAY TASKS'), findsOneWidget);
+    expect(find.text('문제 12개'), findsOneWidget);
+    expect(find.text('교재 3장 읽기'), findsOneWidget);
+    expect(find.text('개인 복습 20분'), findsOneWidget);
+    await tester.tap(find.text('일정 달력에서 보기'));
+    await tester.pump();
+    expect(find.text('${today.year}년 ${today.month}월'), findsOneWidget);
   });
 }

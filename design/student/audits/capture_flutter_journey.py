@@ -107,7 +107,7 @@ def capture(args: argparse.Namespace) -> None:
         for click_index, click in enumerate(args.click, start=1):
             x, y = _parse_click(click)
             page.mouse.click(x, y)
-            page.wait_for_timeout(600)
+            page.wait_for_timeout(args.click_wait_ms)
             page.screenshot(path=output_dir / f"click-{click_index:02d}-{x}-{y}.png")
         browser.close()
 
@@ -128,6 +128,7 @@ def main() -> None:
     parser.add_argument("--scroll-by", type=int, default=720)
     parser.add_argument("--click", action="append", default=[])
     parser.add_argument("--wait-ms", type=int, default=2500)
+    parser.add_argument("--click-wait-ms", type=int, default=2500)
     parser.add_argument("--port", type=int, default=8981)
     args = parser.parse_args()
     started = time.perf_counter()
