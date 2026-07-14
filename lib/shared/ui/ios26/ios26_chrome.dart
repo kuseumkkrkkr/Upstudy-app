@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/modal/level_detail_modal.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 class Ios26NavItem {
   const Ios26NavItem({required this.label, this.onTap, this.active = false});
@@ -55,11 +56,13 @@ class Ios26TopBar extends StatelessWidget {
   final bool showLevelIndicator;
   final double? leftInset;
 
+  /// 필요 변수: 현재 화면 폭과 전달받은 메뉴·행동 목록.
+  /// 작동 원리: 데스크톱은 중앙 캡슐 메뉴, 모바일은 햄버거와 최소 행동만 표시합니다.
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final compact = width < 980;
-    final barHeight = compact ? 64.0 : 72.0;
+    final barHeight = compact ? 58.0 : 68.0;
     final effectiveLeftInset = leftInset ?? (compact ? 18.0 : 24.0);
 
     return ClipRRect(
@@ -97,18 +100,41 @@ class Ios26TopBar extends StatelessWidget {
               ],
               GestureDetector(
                 onTap: onTitleTap,
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: brandColor,
-                    fontSize: compact ? 28 : 34,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: StudentDensityTokens.dark,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'A',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: StudentDensityTokens.ink,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const Spacer(),
-              if (items.isNotEmpty)
+              if (items.isNotEmpty && !compact)
                 Flexible(
                   child: Align(
                     alignment: Alignment.centerRight,
@@ -138,7 +164,10 @@ class Ios26TopBar extends StatelessWidget {
               if (showLevelIndicator)
                 Padding(
                   padding: const EdgeInsets.only(left: 10),
-                  child: _Ios26LevelIndicator(brandColor: brandColor),
+                  child: _Ios26LevelIndicator(
+                    brandColor: brandColor,
+                    compact: compact,
+                  ),
                 ),
               if ((trailingIcons.isNotEmpty || actionIcons.isNotEmpty))
                 Row(
@@ -163,9 +192,10 @@ class Ios26TopBar extends StatelessWidget {
 }
 
 class _Ios26LevelIndicator extends StatefulWidget {
-  const _Ios26LevelIndicator({required this.brandColor});
+  const _Ios26LevelIndicator({required this.brandColor, required this.compact});
 
   final Color brandColor;
+  final bool compact;
 
   @override
   State<_Ios26LevelIndicator> createState() => _Ios26LevelIndicatorState();
@@ -209,8 +239,12 @@ class _Ios26LevelIndicatorState extends State<_Ios26LevelIndicator> {
           onTap: () => LevelDetailModal.show(context, account),
           borderRadius: BorderRadius.circular(999),
           child: Container(
-            width: 132,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            width: widget.compact ? 40 : 132,
+            height: widget.compact ? 40 : null,
+            padding: EdgeInsets.symmetric(
+              horizontal: widget.compact ? 8 : 10,
+              vertical: 8,
+            ),
             decoration: BoxDecoration(
               color: widget.brandColor.withValues(alpha: 0.09),
               borderRadius: BorderRadius.circular(999),
@@ -218,32 +252,54 @@ class _Ios26LevelIndicatorState extends State<_Ios26LevelIndicator> {
                 color: widget.brandColor.withValues(alpha: 0.16),
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: account.levelProgress,
-                      minHeight: 6,
-                      backgroundColor: Colors.white.withValues(alpha: 0.9),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        widget.brandColor,
+            child: widget.compact
+                ? Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: account.levelProgress,
+                        strokeWidth: 2.5,
+                        color: StudentDensityTokens.dark,
+                        backgroundColor: StudentDensityTokens.line,
                       ),
-                    ),
+                      Text(
+                        '${account.level}',
+                        style: const TextStyle(
+                          color: StudentDensityTokens.ink,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: account.levelProgress,
+                            minHeight: 6,
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.9,
+                            ),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              widget.brandColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'lv. ${account.level}',
+                        style: TextStyle(
+                          color: widget.brandColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'lv. ${account.level}',
-                  style: TextStyle(
-                    color: widget.brandColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
           ),
         );
       },
@@ -259,21 +315,19 @@ class _NavChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeBg = brandColor.withValues(alpha: 0.16);
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: item.onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: item.active ? activeBg : Colors.white.withValues(alpha: 0.62),
+          color: item.active ? StudentDensityTokens.dark : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: brandColor.withValues(alpha: 0.2)),
         ),
         child: Text(
           item.label,
           style: TextStyle(
-            color: brandColor,
+            color: item.active ? Colors.white : StudentDensityTokens.muted,
             fontSize: 13,
             fontWeight: item.active ? FontWeight.w700 : FontWeight.w500,
           ),
@@ -292,8 +346,8 @@ class _ActionIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = item.active
-        ? brandColor.withValues(alpha: 0.16)
-        : Colors.white.withValues(alpha: 0.62);
+        ? StudentDensityTokens.dark
+        : StudentDensityTokens.surface;
     return Tooltip(
       message: item.label,
       child: InkWell(
@@ -305,9 +359,13 @@ class _ActionIcon extends StatelessWidget {
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: brandColor.withValues(alpha: 0.2)),
+            border: Border.all(color: StudentDensityTokens.line),
           ),
-          child: Icon(item.icon, size: 18, color: brandColor),
+          child: Icon(
+            item.icon,
+            size: 18,
+            color: item.active ? Colors.white : StudentDensityTokens.ink,
+          ),
         ),
       ),
     );

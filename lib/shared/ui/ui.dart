@@ -1,4 +1,4 @@
-﻿// UI components: app_bar, components, drawer, graphs, modal
+// UI components: app_bar, components, drawer, graphs, modal
 export 'app_bar/header_bar.dart';
 export 'app_bar/solve_header.dart';
 export 'components/content_blocks_view.dart';
@@ -17,3 +17,4 @@ export 'graphs/quadratic_graph.dart';
 export 'graphs/rational_graph.dart';
 export 'modal/modal_shell.dart';
 export 'modal/level_detail_modal.dart';
+export 'student_density/student_density.dart';
