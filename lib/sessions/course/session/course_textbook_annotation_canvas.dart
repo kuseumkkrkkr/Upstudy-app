@@ -12,10 +12,12 @@ class CourseTextbookAnnotationCanvas extends StatefulWidget {
     super.key,
     required this.storageKey,
     required this.child,
+    this.collapseToolbar = false,
   });
 
   final String storageKey;
   final Widget child;
+  final bool collapseToolbar;
 
   // 필요 변수: storageKey와 child. 작동 원리: 페이지별 필기 상태를 관리하는 State를 만든다.
   @override
@@ -40,11 +42,13 @@ class _CourseTextbookAnnotationCanvasState
   Size _canvasSize = Size.zero;
   int _revision = 0;
   int _persistedRevision = 0;
+  late bool _toolbarExpanded;
 
   // 필요 변수: 현재 storageKey. 작동 원리: 첫 화면이 준비되면 저장된 페이지 필기를 한 번 읽는다.
   @override
   void initState() {
     super.initState();
+    _toolbarExpanded = !widget.collapseToolbar;
     unawaited(_load());
   }
 
@@ -222,8 +226,27 @@ class _CourseTextbookAnnotationCanvasState
             },
           ),
         ),
-        Positioned(top: 10, right: 10, child: _buildToolbar()),
+        Positioned(
+          top: 10,
+          right: 10,
+          child: _toolbarExpanded ? _buildToolbar() : _buildToolbarLauncher(),
+        ),
       ],
+    );
+  }
+
+  /// 필요한 변수는 접힌 필기 도구 상태다.
+  /// 작동 원리는 HTML 종이 화면을 가리지 않는 단일 버튼을 누르면 모든 필기 기능을 펼치는 것이다.
+  Widget _buildToolbarLauncher() {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.94),
+      elevation: 2,
+      shape: const CircleBorder(),
+      child: IconButton(
+        tooltip: '필기 도구',
+        onPressed: () => setState(() => _toolbarExpanded = true),
+        icon: const Icon(Icons.edit_outlined),
+      ),
     );
   }
 
@@ -274,6 +297,15 @@ class _CourseTextbookAnnotationCanvasState
             onPressed: _strokes.isEmpty ? null : _undo,
             icon: const Icon(Icons.undo_rounded),
           ),
+          if (widget.collapseToolbar)
+            IconButton(
+              tooltip: '필기 도구 닫기',
+              onPressed: () => setState(() {
+                _tool = _AnnotationTool.move;
+                _toolbarExpanded = false;
+              }),
+              icon: const Icon(Icons.close_rounded),
+            ),
         ],
       ),
     );

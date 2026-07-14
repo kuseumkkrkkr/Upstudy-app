@@ -223,7 +223,7 @@ void main() {
         .toList(growable: false);
     expect(
       find.text('런타임 검증 교재'),
-      findsOneWidget,
+      findsNWidgets(2),
       reason:
           '현재 화면 텍스트: $visibleTexts / 요청: ${requests.map((e) => e.url.path)}',
     );
@@ -234,6 +234,9 @@ void main() {
         '/courses/v2/course-1/textbooks/book-1',
       ]),
     );
+    expect(find.byTooltip('필기 도구'), findsOneWidget);
+    await tester.tap(find.byTooltip('필기 도구'));
+    await tester.pump();
     expect(find.byTooltip('이동'), findsOneWidget);
     expect(find.byTooltip('펜'), findsOneWidget);
     expect(find.byTooltip('지우개'), findsOneWidget);

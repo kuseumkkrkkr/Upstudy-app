@@ -19,6 +19,8 @@ class TeacherCourseTextbookReaderPage extends StatefulWidget {
     required this.pageTo,
     required this.minMinutes,
     this.enforceMinMinutes = false,
+    this.previewBook,
+    this.previewElapsedSeconds = 0,
   });
 
   final String courseId;
@@ -28,6 +30,8 @@ class TeacherCourseTextbookReaderPage extends StatefulWidget {
   final int pageTo;
   final int minMinutes;
   final bool enforceMinMinutes;
+  final BookData? previewBook;
+  final int previewElapsedSeconds;
 
   @override
   State<TeacherCourseTextbookReaderPage> createState() =>
@@ -36,10 +40,10 @@ class TeacherCourseTextbookReaderPage extends StatefulWidget {
 
 class _TeacherCourseTextbookReaderPageState
     extends State<TeacherCourseTextbookReaderPage> {
-  static const _green = Color(0xFF163D2A);
-  static const _mint = Color(0xFF67C976);
-  static const _paper = Color(0xFFFBFAF3);
-  static const _ink = Color(0xFF1E2A22);
+  static const _green = Colors.black;
+  static const _mint = Colors.black;
+  static const _paper = Color(0xFFFFFEF9);
+  static const _ink = Color(0xFF151515);
 
   final _pageController = PageController();
   Timer? _heartbeatTimer;
@@ -54,7 +58,6 @@ class _TeacherCourseTextbookReaderPageState
   int _serverElapsedSeconds = 0;
   double? _serverCompletion;
   DateTime? _startedAt;
-  bool _showTableOfContents = true;
   bool _runtimeCompleted = false;
   bool _allowPop = false;
   bool _bookmarkBusy = false;
@@ -91,13 +94,32 @@ class _TeacherCourseTextbookReaderPageState
     super.initState();
     _startedAt = DateTime.now();
     _currentPage = _pageFrom;
-    _load();
+    final previewBook = widget.previewBook;
+    if (previewBook == null) {
+      _load();
+    } else {
+      _loadPreview(previewBook);
+    }
+  }
+
+  /// 필요한 변수는 캡처·테스트용 교재와 초기 체류 시간이다.
+  /// 작동 원리는 네트워크 런타임을 만들지 않고 실제 페이지 변환과 필기·북마크 UI만 동일하게 초기화하는 것이다.
+  void _loadPreview(BookData book) {
+    final pages = _buildPages(book)
+        .where((page) => page.number >= _pageFrom && page.number <= _pageTo)
+        .toList(growable: false);
+    _book = book;
+    _pages = pages.isEmpty ? _buildFallbackPages(book) : pages;
+    _currentPage = _pages.first.number;
+    _serverElapsedSeconds = widget.previewElapsedSeconds;
+    _loading = false;
+    unawaited(_loadBookmarks());
   }
 
   @override
   void dispose() {
     _heartbeatTimer?.cancel();
-    if (!_runtimeCompleted) {
+    if (!_runtimeCompleted && widget.previewBook == null) {
       unawaited(_completeRuntime());
     }
     _pageController.dispose();
@@ -276,6 +298,7 @@ class _TeacherCourseTextbookReaderPageState
   Future<void> _sendHeartbeat() async {
     if (!mounted || _loading || _pages.isEmpty) return;
     setState(() => _elapsedSeconds = _localElapsedSeconds());
+    if (widget.previewBook != null) return;
     try {
       final runtime = await ApiClient.instance.heartbeatCourseTextbookRuntime(
         courseId: widget.courseId,
@@ -292,6 +315,10 @@ class _TeacherCourseTextbookReaderPageState
 
   Future<void> _completeRuntime() async {
     if (_runtimeCompleted) return;
+    if (widget.previewBook != null) {
+      _runtimeCompleted = true;
+      return;
+    }
     try {
       final runtime = await ApiClient.instance.completeCourseTextbookRuntime(
         courseId: widget.courseId,
@@ -359,7 +386,7 @@ class _TeacherCourseTextbookReaderPageState
         await _closeReader();
       },
       child: Scaffold(
-        backgroundColor: _green,
+        backgroundColor: const Color(0xFFE9E9E7),
         body: SafeArea(
           child: _loading
               ? const Center(
@@ -372,17 +399,17 @@ class _TeacherCourseTextbookReaderPageState
                     final wide = constraints.maxWidth >= 980;
                     return Column(
                       children: [
-                        _buildTopBar(book, showTocToggle: wide),
+                        _buildTopBar(book),
+                        _buildDocumentStrip(book),
                         Expanded(
                           child: Row(
                             children: [
-                              if (wide && _showTableOfContents)
-                                _buildTableOfContents(),
+                              if (wide) _buildTableOfContents(),
                               Expanded(child: _buildReaderSurface()),
                             ],
                           ),
                         ),
-                        if (!wide) _buildMobileRail(),
+                        _buildReaderFooter(wide: wide),
                       ],
                     );
                   },
@@ -393,9 +420,9 @@ class _TeacherCourseTextbookReaderPageState
   }
 
   // 필요 변수: 교재 제목, 현재 페이지, 목차 표시 여부. 작동 원리: 진행 상태와 북마크·보기 모드를 한 행에서 제어한다.
-  Widget _buildTopBar(BookData? book, {required bool showTocToggle}) {
+  Widget _buildTopBar(BookData? book) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
         border: Border(
@@ -407,7 +434,11 @@ class _TeacherCourseTextbookReaderPageState
           IconButton(
             tooltip: '닫기',
             onPressed: _closeReader,
-            icon: const Icon(Icons.arrow_back_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFF3F3F3),
+              side: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            icon: const Icon(Icons.close_rounded),
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -419,20 +450,69 @@ class _TeacherCourseTextbookReaderPageState
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.notoSansKr(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
                     color: _ink,
                   ),
                 ),
                 Text(
-                  'p.$_currentPage / $_pageFrom-$_pageTo  ·  ${_formatTime(_elapsedSeconds + _serverElapsedSeconds)}',
+                  '$_currentPage / $_pageTo페이지  ·  ${_formatTime(_elapsedSeconds + _serverElapsedSeconds)}',
                   style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ],
             ),
           ),
-          _ProgressBadge(label: '이수율', value: _completion),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F3F3),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+            ),
+            child: Row(
+              children: [
+                _ReaderModeButton(
+                  tooltip: '한 쪽씩',
+                  icon: Icons.view_carousel_outlined,
+                  selected: !_scrollMode,
+                  onPressed: () => setState(() => _scrollMode = false),
+                ),
+                _ReaderModeButton(
+                  tooltip: '스크롤',
+                  icon: Icons.view_agenda_outlined,
+                  selected: _scrollMode,
+                  onPressed: () => setState(() => _scrollMode = true),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요한 변수는 교재명과 현재 페이지 북마크 상태다.
+  /// 작동 원리는 HTML의 두 번째 문서 스트립에 자료명과 북마크 동작을 분리해 표시하는 것이다.
+  Widget _buildDocumentStrip(BookData? book) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF7F7F7),
+        border: Border(bottom: BorderSide(color: Color(0xFFE1E1E1))),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.menu_book_outlined, size: 18),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              book?.title ?? '교재 보기',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+            ),
+          ),
           IconButton(
             key: const ValueKey('course-textbook-bookmark'),
             tooltip: _isCurrentPageBookmarked ? '북마크 해제' : '북마크 추가',
@@ -441,34 +521,8 @@ class _TeacherCourseTextbookReaderPageState
               _isCurrentPageBookmarked
                   ? Icons.bookmark_rounded
                   : Icons.bookmark_border_rounded,
+              size: 19,
             ),
-          ),
-          if (showTocToggle) ...[
-            IconButton(
-              tooltip: _showTableOfContents ? '목차 닫기' : '목차 열기',
-              onPressed: () =>
-                  setState(() => _showTableOfContents = !_showTableOfContents),
-              icon: Icon(
-                _showTableOfContents ? Icons.toc_rounded : Icons.toc_outlined,
-              ),
-            ),
-            const SizedBox(width: 4),
-          ],
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(
-                value: false,
-                icon: Icon(Icons.view_carousel_outlined),
-              ),
-              ButtonSegment(
-                value: true,
-                icon: Icon(Icons.view_agenda_outlined),
-              ),
-            ],
-            selected: {_scrollMode},
-            showSelectedIcon: false,
-            onSelectionChanged: (value) =>
-                setState(() => _scrollMode = value.first),
           ),
         ],
       ),
@@ -480,8 +534,8 @@ class _TeacherCourseTextbookReaderPageState
       return const Center(child: Text('표시할 교재 페이지가 없습니다.'));
     }
     return Container(
-      color: const Color(0xFFE9EEE8),
-      padding: const EdgeInsets.all(18),
+      color: const Color(0xFFE9E9E7),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
       child: _scrollMode ? _buildScrollReader() : _buildPageReader(),
     );
   }
@@ -496,14 +550,17 @@ class _TeacherCourseTextbookReaderPageState
         _sendHeartbeat();
       },
       itemBuilder: (context, index) {
-        return Center(
+        final compact = MediaQuery.sizeOf(context).width < 700;
+        return Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
+            constraints: BoxConstraints(maxWidth: compact ? 360 : 760),
             child: CourseTextbookAnnotationCanvas(
               key: ValueKey(
                 'course-textbook-annotation-${_pages[index].number}',
               ),
               storageKey: _annotationStorageKey(_pages[index].number),
+              collapseToolbar: compact,
               child: _PaperPage(page: _pages[index]),
             ),
           ),
@@ -526,6 +583,7 @@ class _TeacherCourseTextbookReaderPageState
             child: CourseTextbookAnnotationCanvas(
               key: ValueKey('course-textbook-annotation-${page.number}'),
               storageKey: _annotationStorageKey(page.number),
+              collapseToolbar: MediaQuery.sizeOf(context).width < 700,
               child: _PaperPage(
                 page: page,
                 onVisible: () => _currentPage = page.number,
@@ -572,28 +630,85 @@ class _TeacherCourseTextbookReaderPageState
     );
   }
 
-  Widget _buildMobileRail() {
+  /// 필요한 변수는 현재 페이지 위치·이수율·화면 폭이다.
+  /// 작동 원리는 HTML 리더처럼 이전·현재 페이지·다음과 진행 막대·목차를 하단 고정 영역에 배치하는 것이다.
+  Widget _buildReaderFooter({required bool wide}) {
+    final currentIndex = _pages.indexWhere(
+      (page) => page.number == _currentPage,
+    );
+    final hasPrevious = currentIndex > 0;
+    final hasNext = currentIndex >= 0 && currentIndex < _pages.length - 1;
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-      child: Row(
+      padding: EdgeInsets.fromLTRB(wide ? 24 : 12, 8, wide ? 24 : 12, 10),
+      child: Column(
         children: [
-          Expanded(
-            child: LinearProgressIndicator(
-              value: _completion,
-              color: _mint,
-              backgroundColor: Colors.black.withValues(alpha: 0.08),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              OutlinedButton.icon(
+                onPressed: hasPrevious
+                    ? () => _jumpToPage(_pages[currentIndex - 1].number)
+                    : null,
+                icon: const Icon(Icons.chevron_left_rounded, size: 17),
+                label: const Text('이전'),
+              ),
+              Text(
+                '$_currentPage / $_pageTo',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              OutlinedButton(
+                onPressed: hasNext
+                    ? () => _jumpToPage(_pages[currentIndex + 1].number)
+                    : null,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('다음'),
+                    SizedBox(width: 4),
+                    Icon(Icons.chevron_right_rounded, size: 17),
+                  ],
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            tooltip: '목차',
-            icon: const Icon(Icons.toc_rounded),
-            onPressed: () => showModalBottomSheet<void>(
-              context: context,
-              showDragHandle: true,
-              builder: (_) =>
-                  SizedBox(height: 420, child: _buildTableOfContents()),
-            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                '학습 시간 ${_formatTime(_elapsedSeconds + _serverElapsedSeconds)}',
+                style: const TextStyle(fontSize: 10, color: Colors.black54),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: _completion,
+                  minHeight: 4,
+                  color: _mint,
+                  backgroundColor: Colors.black.withValues(alpha: 0.08),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '${(_completion * 100).round()}%',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(width: 6),
+              IconButton(
+                tooltip: '목차',
+                icon: const Icon(Icons.toc_rounded, size: 19),
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  showDragHandle: true,
+                  builder: (_) =>
+                      SizedBox(height: 420, child: _buildTableOfContents()),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -732,36 +847,32 @@ class _ReaderParagraph extends StatelessWidget {
   }
 }
 
-class _ProgressBadge extends StatelessWidget {
-  const _ProgressBadge({required this.label, required this.value});
+class _ReaderModeButton extends StatelessWidget {
+  const _ReaderModeButton({
+    required this.tooltip,
+    required this.icon,
+    required this.selected,
+    required this.onPressed,
+  });
 
-  final String label;
-  final double value;
+  final String tooltip;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onPressed;
 
+  /// 필요한 변수는 보기 모드 아이콘·선택 상태·전환 콜백이다.
+  /// 작동 원리는 HTML의 두 칸 보기 전환에서 선택된 방식만 검은 원으로 강조하는 것이다.
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 86,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
-          ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: value,
-            color: _TeacherCourseTextbookReaderPageState._mint,
-            backgroundColor: Colors.black.withValues(alpha: 0.08),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${(value * 100).round()}%',
-            style: const TextStyle(fontSize: 11),
-          ),
-        ],
+    return IconButton(
+      tooltip: tooltip,
+      visualDensity: VisualDensity.compact,
+      style: IconButton.styleFrom(
+        backgroundColor: selected ? Colors.black : Colors.transparent,
+        foregroundColor: selected ? Colors.white : Colors.black54,
       ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 17),
     );
   }
 }

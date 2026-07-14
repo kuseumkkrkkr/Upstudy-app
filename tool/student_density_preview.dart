@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
+import 'package:s11/sessions/course/session/teacher_course_textbook_reader_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
@@ -12,6 +13,7 @@ import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/course.dart';
+import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
@@ -150,6 +152,36 @@ ProblemSolveConfig _previewSolveConfig() => const ProblemSolveConfig(
   ],
 );
 
+/// 필요한 변수는 HTML 교재 리더에 표시할 장·절·본문이다.
+/// 작동 원리는 실제 교재 모델을 고정 입력으로 만들어 페이지 이동·필기·북마크 UI를 네트워크 없이 검증하는 것이다.
+BookData _previewTextbook() => const BookData(
+  id: 'preview-linear-textbook',
+  title: '중2 일차함수 개념서',
+  subtitle: '그래프와 기울기를 한 권으로 정리합니다.',
+  chapters: [
+    BookChapter(
+      title: '01 일차함수의 뜻',
+      intro: [
+        '두 변수 x, y 사이의 관계가 y = ax + b 꼴로 나타날 때 y는 x의 일차함수라고 합니다.',
+        '그래프 위의 두 점을 이용하면 변화량의 비로 기울기를 구할 수 있습니다.',
+      ],
+      sections: [
+        BookSection(
+          title: '기울기와 y절편',
+          paragraphs: [
+            '기울기 a는 x가 1만큼 증가할 때 y가 얼마나 변하는지를 나타냅니다.',
+            'y절편 b는 그래프가 y축과 만나는 점의 y좌표입니다.',
+          ],
+        ),
+        BookSection(
+          title: '그래프 해석하기',
+          paragraphs: ['기울기가 양수이면 오른쪽으로 갈수록 그래프가 올라가고, 음수이면 내려갑니다.'],
+        ),
+      ],
+    ),
+  ],
+);
+
 /// 필요한 변수는 브라우저 viewport와 선택적인 width/height 쿼리다.
 /// 작동 원리: 실제 학생 홈을 그대로 실행하고 논리 화면 크기만 고정해 HTML 시안과 같은 좌표계로 캡처한다.
 void main() {
@@ -193,6 +225,16 @@ class StudentDensityPreviewApp extends StatelessWidget {
       'level-test' => const LevelTestHomePage(),
       'solve' => BuildpageWidget(config: _previewSolveConfig()),
       'textbooks' => const BookWidget(),
+      'textbook-reader' => TeacherCourseTextbookReaderPage(
+        courseId: 'preview-course',
+        moduleId: 'preview-module',
+        textbookId: 'preview-linear-textbook',
+        pageFrom: 1,
+        pageTo: 3,
+        minMinutes: 20,
+        previewBook: _previewTextbook(),
+        previewElapsedSeconds: 18 * 60,
+      ),
       _ => const MainStudentPage(username: '김학생'),
     };
     final action = Uri.base.queryParameters['action'] ?? '';
