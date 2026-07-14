@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +23,57 @@ class ApiResponse<T> {
           : json['data'] as T?,
       message: json['message'] as String?,
     );
+  }
+}
+class _CachedApiResponse {
+  _CachedApiResponse({
+    required this.savedAt,
+    required this.ttlMs,
+    required this.body,
+    required this.statusCode,
+    this.etag,
+    this.lastModified = '',
+    this.headersJson,
+  });
+
+  factory _CachedApiResponse.fromJson(Map<String, dynamic> json) {
+    return _CachedApiResponse(
+      savedAt: (json['savedAt'] is num)
+          ? (json['savedAt'] as num).toInt()
+          : int.tryParse(json['savedAt']?.toString() ?? '') ?? 0,
+      ttlMs: (json['ttlMs'] is num)
+          ? (json['ttlMs'] as num).toInt()
+          : int.tryParse(json['ttlMs']?.toString() ?? '') ?? 0,
+      body: (json['body'] ?? '').toString(),
+      statusCode: (json['statusCode'] is num)
+          ? (json['statusCode'] as num).toInt()
+          : int.tryParse(json['statusCode']?.toString() ?? '') ?? 200,
+      etag: json['etag']?.toString(),
+      lastModified: json['lastModified']?.toString() ?? '',
+      headersJson: json['headersJson']?.toString(),
+    );
+  }
+
+  final int savedAt;
+  final int ttlMs;
+  final String body;
+  final int statusCode;
+  final String? etag;
+  final String lastModified;
+  final String? headersJson;
+
+  bool isFresh(int nowMs) => ttlMs > 0 && nowMs - savedAt <= ttlMs;
+
+  Map<String, dynamic> toJsonMap() {
+    return <String, dynamic>{
+      'savedAt': savedAt,
+      'ttlMs': ttlMs,
+      'body': body,
+      'statusCode': statusCode,
+      if (etag != null) 'etag': etag!,
+      if (lastModified.isNotEmpty) 'lastModified': lastModified,
+      if (headersJson != null) 'headersJson': headersJson!,
+    };
   }
 }
 
@@ -1171,6 +1222,9 @@ class ApiClient {
   static final ApiClient instance = ApiClient._();
 
   static const String baseUrl = ApiContract.baseUrl;
+  static const String _cacheNamespace = 'api_cache_v1_';
+  static const int _cacheBodySizeLimit = 300000;
+  static const Duration _fallbackCacheTtl = Duration(minutes: 10);
 
   static String resourceUrl(String source) {
     final trimmed = source.trim();
@@ -1181,6 +1235,9 @@ class ApiClient {
   }
 
   String? _token;
+  static final Map<String, _CachedApiResponse> _memoryCache = {};
+  static final Map<String, Future<ApiResponse<dynamic>>>
+  _inflightCacheRequests = {};
 
   Future<String> _ensureToken() async {
     if (_token != null) return _token!;
@@ -1262,15 +1319,145 @@ class ApiClient {
     String path, {
     T Function(dynamic)? parser,
     Map<String, String>? query,
+    bool useCache = false,
+    bool forceRefresh = false,
+    Duration? cacheTtl,
   }) async {
     await _ensureToken();
     final uri = ApiContract.uri(path, query: query);
-    log('GET $uri', name: 'ApiClient');
-    final res = await http.get(uri, headers: _headers);
-    await _clearTokenOnUnauthorized(res);
-    return _parse(res, parser);
+    final key = _cacheKey(path, query);
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    final cached = useCache && !forceRefresh ? await _readCache(key) : null;
+    final ttlToUse = cacheTtl ?? _fallbackCacheTtl;
+
+    if (useCache && cached != null && cached.isFresh(nowMs)) {
+      return _parseCachedBody<T>(cached, parser);
+    }
+
+    if (_inflightCacheRequests.containsKey(key)) {
+      return _inflightCacheRequests[key]!.then((value) => value as ApiResponse<T>);
+    }
+
+    final requestHeaders = <String, String>{
+      ..._headers,
+      if (cached?.etag != null && cached!.etag!.isNotEmpty)
+        'If-None-Match': cached.etag!,
+      if (cached?.lastModified != null && cached!.lastModified.isNotEmpty)
+        'If-Modified-Since': cached.lastModified,
+    };
+
+    final request = () async {
+      final logSuffix = cached == null
+          ? 'network'
+          : (cached.etag != null && cached!.etag!.isNotEmpty) ||
+                    cached.lastModified.isNotEmpty
+                ? 'revalidate'
+                : 'network';
+      log('GET $uri ($logSuffix)', name: 'ApiClient');
+
+      final res = await http.get(uri, headers: requestHeaders);
+      await _clearTokenOnUnauthorized(res);
+
+      if (useCache && res.statusCode == 304 && cached != null) {
+        return _parseCachedBody<T>(cached, parser);
+      }
+
+      final parsed = _parse(res, parser);
+      if (useCache && res.statusCode >= 200 && res.statusCode < 300) {
+        await _saveCache(
+          key,
+          keyBody: res.body,
+          ttl: ttlToUse,
+          statusCode: res.statusCode,
+          etag: res.headers['etag'],
+          lastModified: res.headers['last-modified'],
+        );
+      }
+      return parsed;
+    };
+
+    final future = request();
+    _inflightCacheRequests[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inflightCacheRequests.remove(key);
+    }
   }
 
+  String _cacheKey(String path, Map<String, String>? query) {
+    final sortedPairs = query == null
+        ? <MapEntry<String, String>>[]
+        : query.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+    final normalizedQuery = sortedPairs
+        .map(
+          (e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}',
+        )
+        .join('&');
+    final normalizedPath = normalizedQuery.isEmpty
+        ? path
+        : '$path?$normalizedQuery';
+    final userTag = _token == null
+        ? 'anonymous'
+        : (_token!.length <= 12 ? _token! : _token!.substring(0, 12));
+    return '${userTag}_$normalizedPath';
+  }
+
+  Future<_CachedApiResponse?> _readCache(String key) async {
+    if (_memoryCache.containsKey(key)) {
+      return _memoryCache[key];
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('$_cacheNamespace$key');
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        final cached = _CachedApiResponse.fromJson(decoded);
+        _memoryCache[key] = cached;
+        return cached;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<void> _saveCache(
+    String key, {
+    required String keyBody,
+    required Duration ttl,
+    required int statusCode,
+    String? etag,
+    String? lastModified,
+  }) async {
+    if (keyBody.length > _cacheBodySizeLimit) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final cached = _CachedApiResponse(
+      savedAt: now,
+      ttlMs: ttl.inMilliseconds,
+      body: keyBody,
+      statusCode: statusCode,
+      etag: etag,
+      lastModified: lastModified ?? '',
+    );
+    _memoryCache[key] = cached;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('$_cacheNamespace$key', jsonEncode(cached.toJsonMap()));
+    } catch (_) {}
+  }
+
+  ApiResponse<T> _parseCachedBody<T>(
+    _CachedApiResponse cached,
+    T Function(dynamic)? parser,
+  ) {
+    final response = http.Response(
+      cached.body,
+      cached.statusCode,
+      headers: const {'content-type': 'application/json; charset=utf-8', 'from-cache': '1'},
+    );
+    return _parse(response, parser);
+  }
   Future<ApiResponse<T>> _post<T>(
     String path,
     Map<String, dynamic> body, {
@@ -1381,6 +1568,8 @@ class ApiClient {
             .map((e) => StudyGroup.fromJson(e))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 30),
     );
     return res.data ?? const [];
   }
@@ -1441,6 +1630,8 @@ class ApiClient {
       '/social/study-groups/invite/${inviteCode.trim()}',
       parser: (d) =>
           StudyGroupInviteMeta.fromJson(Map<String, dynamic>.from(d as Map)),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 5),
     );
     return res.data ??
         StudyGroupInviteMeta(
@@ -1462,6 +1653,8 @@ class ApiClient {
             .map((e) => FriendProfile.fromJson(e))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
     return res.data ?? const [];
   }
@@ -1474,6 +1667,8 @@ class ApiClient {
             .map((e) => FriendRequest.fromJson(e))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
     return res.data ?? const [];
   }
@@ -1530,6 +1725,8 @@ class ApiClient {
         if (from != null && from.isNotEmpty) 'from': from,
         if (to != null && to.isNotEmpty) 'to': to,
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 30),
     );
     return res.data ?? const [];
   }
@@ -1546,6 +1743,8 @@ class ApiClient {
       parser: (d) {
         return (d['items'] as List).map((e) => ExamItem.fromJson(e)).toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 3),
     );
   }
 
@@ -1573,6 +1772,8 @@ class ApiClient {
     return _get(
       '/exam-editor/papers/$paperId',
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -1608,6 +1809,8 @@ class ApiClient {
         if (dateTo != null && dateTo.trim().isNotEmpty)
           'date_to': dateTo.trim(),
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 30),
     );
   }
 
@@ -1648,44 +1851,46 @@ class ApiClient {
     int page = 1,
     int pageSize = 20,
   }) async {
-    final token = await _ensureToken();
-    final uri = ApiContract.uri('/quests').replace(
-      queryParameters: {
-        'page': '$page',
-        'page_size': '$pageSize',
-        if (hashTag != null && hashTag.trim().isNotEmpty)
-          'hash_tag': hashTag.trim(),
-        if (questId != null && questId.trim().isNotEmpty)
-          'quest_id': questId.trim(),
-        if ((text ?? textQuery) != null &&
-            (text ?? textQuery)!.trim().isNotEmpty)
-          'text': (text ?? textQuery)!.trim(),
-        if (isVariant != null) 'is_variant': '$isVariant',
-        if (isMcqBranch != null) 'is_mcq_branch': '$isMcqBranch',
+    final query = <String, String>{
+      'page': '$page',
+      'page_size': '$pageSize',
+      if (hashTag != null && hashTag.trim().isNotEmpty)
+        'hash_tag': hashTag.trim(),
+      if (questId != null && questId.trim().isNotEmpty) 'quest_id': questId.trim(),
+      if ((text ?? textQuery) != null && (text ?? textQuery)!.trim().isNotEmpty)
+        'text': (text ?? textQuery)!.trim(),
+      if (isVariant != null) 'is_variant': '$isVariant',
+      if (isMcqBranch != null) 'is_mcq_branch': '$isMcqBranch',
+    };
+    final res = await _get<List<Map<String, dynamic>>>(
+      '/quests',
+      query: query,
+      parser: (d) {
+        if (d is List) {
+          return d
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }
+        if (d is Map<String, dynamic>) {
+          final map = Map<String, dynamic>.from(d);
+          final items = map['quests'] ??
+              map['items'] ??
+              map['data'] ??
+              const <dynamic>[];
+          return items is List
+              ? items
+                  .whereType<Map>()
+                  .map((e) => Map<String, dynamic>.from(e))
+                  .toList()
+              : const <Map<String, dynamic>>[];
+        }
+        return const <Map<String, dynamic>>[];
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 30),
     );
-    final response = await http.get(
-      uri,
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode != 200) {
-      throw ApiException(
-        statusCode: response.statusCode,
-        message: 'Failed to search quests',
-      );
-    }
-    final decoded = jsonDecode(response.body);
-    if (decoded is List) {
-      return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    }
-    if (decoded is Map) {
-      final map = Map<String, dynamic>.from(decoded);
-      final items = map['quests'] ?? map['items'] ?? map['data'] ?? const [];
-      if (items is List) {
-        return items.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      }
-    }
-    return const [];
+    return res.data ?? const <Map<String, dynamic>>[];
   }
 
   Future<Map<String, dynamic>> generateQuest({
@@ -1780,18 +1985,16 @@ class ApiClient {
   Future<Map<String, dynamic>> fetchQuestGenerateStatus({
     required String requestId,
   }) async {
-    final token = await _ensureToken();
-    final uri = ApiContract.uri(
+    final res = await _get<Map<String, dynamic>>(
       '/quests/generate/status',
-    ).replace(queryParameters: {'request_id': requestId});
-    final response = await http.get(
-      uri,
-      headers: {'Authorization': 'Bearer $token'},
+      query: {'request_id': requestId},
+      parser: (d) => d is Map<String, dynamic>
+          ? Map<String, dynamic>.from(d)
+          : const <String, dynamic>{},
+      useCache: true,
+      cacheTtl: const Duration(seconds: 1),
     );
-    if (response.statusCode != 200) {
-      return <String, dynamic>{};
-    }
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    return res.data ?? <String, dynamic>{};
   }
 
   Future<Map<String, dynamic>> generateVariantFromFlowDraft({
@@ -1933,26 +2136,17 @@ class ApiClient {
   }
 
   Future<List<Map<String, dynamic>>> listQuestTray({int limit = 100}) async {
-    final token = await _ensureToken();
-    final uri = ApiContract.uri(
+    final res = await _get<List<Map<String, dynamic>>>(
       '/quests/tray',
-    ).replace(queryParameters: {'limit': '$limit'});
-    final response = await http.get(
-      uri,
-      headers: {'Authorization': 'Bearer $token'},
+      query: {'limit': '$limit'},
+      parser: (d) => (d['items'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      useCache: true,
+      cacheTtl: const Duration(seconds: 20),
     );
-    if (response.statusCode != 200) {
-      throw ApiException(
-        statusCode: response.statusCode,
-        message: 'Failed to load quest tray',
-      );
-    }
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final items = data['items'] as List<dynamic>? ?? const [];
-    return items
-        .whereType<Map>()
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    return res.data ?? const <Map<String, dynamic>>[];
   }
 
   Future<Map<String, dynamic>> createQuestTrayItem({
@@ -1991,6 +2185,8 @@ class ApiClient {
     return _get(
       '/solve_analysis/$userId',
       parser: (d) => SolveAnalysisResponse.fromJson(d),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
     );
   }
 
@@ -2018,11 +2214,18 @@ class ApiClient {
       parser: (d) {
         return (d['items'] as List).map((e) => Academy.fromJson(e)).toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
   Future<ApiResponse<Academy>> getAcademy(String academyId) async {
-    return _get('/academy/$academyId', parser: (d) => Academy.fromJson(d));
+    return _get(
+      '/academy/$academyId',
+      parser: (d) => Academy.fromJson(d),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
+    );
   }
 
   Future<ApiResponse<Academy>> updateAcademy(
@@ -2091,6 +2294,8 @@ class ApiClient {
         if (groupType != null) 'group_type': groupType,
         if (searchable != null) 'searchable': searchable.toString(),
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -2098,6 +2303,8 @@ class ApiClient {
     return _get(
       '/academy/groups/$groupId',
       parser: (d) => AcademyGroup.fromJson(d),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -2179,6 +2386,8 @@ class ApiClient {
             .map((e) => AcademyGroupMember.fromJson(e))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 45),
     );
   }
 
@@ -2228,6 +2437,8 @@ class ApiClient {
         if (dateFrom != null) 'date_from': dateFrom,
         if (dateTo != null) 'date_to': dateTo,
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 45),
     );
   }
 
@@ -2240,6 +2451,8 @@ class ApiClient {
       '/academy/attendance/stats/$groupId/$userId',
       parser: (d) => AttendanceStats.fromJson(d),
       query: {'days': days.toString()},
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
   }
 
@@ -2297,6 +2510,8 @@ class ApiClient {
         if (userId != null) 'user_id': userId,
         if (monthLabel != null) 'month_label': monthLabel,
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -2308,6 +2523,8 @@ class ApiClient {
       '/academy/tuition/summary/$academyId',
       parser: (d) => d as Map<String, dynamic>,
       query: {'month_label': monthLabel},
+      useCache: true,
+      cacheTtl: const Duration(hours: 1),
     );
   }
 
@@ -2353,6 +2570,8 @@ class ApiClient {
           'transaction_date_from': transactionDateFrom,
         if (transactionDateTo != null) 'transaction_date_to': transactionDateTo,
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -2369,6 +2588,8 @@ class ApiClient {
           'transaction_date_from': transactionDateFrom,
         if (transactionDateTo != null) 'transaction_date_to': transactionDateTo,
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -2413,6 +2634,8 @@ class ApiClient {
         if (academyId != null) 'academy_id': academyId,
         if (studentUserId != null) 'student_user_id': studentUserId,
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
     );
   }
 
@@ -2455,6 +2678,8 @@ class ApiClient {
         if (groupId != null) 'group_id': groupId,
         if (kind != null) 'kind': kind,
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
   }
 
@@ -2469,6 +2694,8 @@ class ApiClient {
             .toList();
       },
       query: {if (kind != null) 'kind': kind},
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
   }
 
@@ -2526,6 +2753,8 @@ class ApiClient {
         if (userId != null) 'user_id': userId,
         if (status != null) 'status': status,
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 45),
     );
   }
 
@@ -2568,6 +2797,8 @@ class ApiClient {
     return _get(
       '/academy/reports/$reportId',
       parser: (d) => SubmissionReport.fromJson(d),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 5),
     );
   }
 
@@ -2577,6 +2808,8 @@ class ApiClient {
     return _get(
       '/academy/submissions/$submissionId/report',
       parser: (d) => SubmissionReport.fromJson(d),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 5),
     );
   }
 
@@ -2615,6 +2848,8 @@ class ApiClient {
         if (groupId != null) 'group_id': groupId,
         if (userId != null) 'user_id': userId,
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -2644,6 +2879,8 @@ class ApiClient {
             .map((e) => TimetablePlan.fromJson(e))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -2688,6 +2925,8 @@ class ApiClient {
         if (groupId != null) 'group_id': groupId,
         'limit': limit.toString(),
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
     );
   }
 
@@ -2697,6 +2936,8 @@ class ApiClient {
     return _get(
       '/academy/snapshots/$snapshotId',
       parser: (d) => StudentOverviewSnapshot.fromJson(d),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
   }
 
@@ -2995,12 +3236,16 @@ class GroupSharedExam {
   final String id;
   final String shareId;
   final String examId;
-  final int seed;
+  final String title;
+  final String senderName;
+  final String createdAt;
   const GroupSharedExam({
     this.id = '',
     this.shareId = '',
     this.examId = '',
-    this.seed = 0,
+    this.title = '',
+    this.senderName = '',
+    this.createdAt = '',
   });
 }
 
@@ -3008,11 +3253,15 @@ class StudyGroupMessage {
   final String messageId;
   final String userId;
   final String text;
+  final String messageType;
+  final Map<String, dynamic>? payload;
   final String createdAt;
   const StudyGroupMessage({
     this.messageId = '',
     this.userId = '',
     this.text = '',
+    this.messageType = 'text',
+    this.payload,
     this.createdAt = '',
   });
 }
@@ -3170,11 +3419,64 @@ extension FriendRequestCompat on FriendRequest {
 }
 
 extension ApiClientLegacyCompat on ApiClient {
+  // APIClient의 내부 _get 캐시 정책을 URI 단위 GET 호출에도 재사용한다.
+  // 입력은 Uri 한 건만 받아, 경로/쿼리를 _cacheKey에 맞게 추출해 캐시 키를 생성한다.
+  // 반환은 기존 APIResponse 형태로 통일해 파싱과 캐시 재사용 규칙을 동일하게 적용한다.
+  Future<ApiResponse<T>> authedGetJson<T>(
+    Uri uri, {
+    T Function(dynamic)? parser,
+    bool useCache = false,
+    bool forceRefresh = false,
+    Duration? cacheTtl,
+  }) async {
+    final previousToken = _token;
+    await _ensureToken();
+    final effectiveToken = _token;
+    if (effectiveToken == null) {
+      return ApiResponse<T>(success: false, data: null, message: 'No auth token');
+    }
+
+    final oldToken = previousToken;
+    if (effectiveToken != oldToken) {
+      _token = effectiveToken;
+    }
+
+    final query = <String, String>{};
+    uri.queryParameters.forEach((key, value) {
+      query[key] = value;
+    });
+    try {
+      return await _get<T>(
+        uri.path,
+        query: query.isEmpty ? null : query,
+        parser: parser,
+        useCache: useCache,
+        forceRefresh: forceRefresh,
+        cacheTtl: cacheTtl,
+      );
+    } finally {
+      _token = oldToken;
+    }
+  }
+
+  // 기존 authedGet 동작은 캐시를 쓰지 않는 Response 반환을 유지한다.
+  // 즉시 사용처 호환성을 위해 반환 타입은 유지하되, 내부적으로 최소한 토큰 보장만 수행한다.
   Future<String> requireToken() => _ensureToken();
 
   Future<http.Response> authedGet(Uri uri, {String? token}) async {
-    final jwt = token ?? await _ensureToken();
-    return http.get(uri, headers: {'Authorization': 'Bearer $jwt'});
+    final previousToken = _token;
+    if (token != null && token != previousToken) {
+      _token = token;
+    } else if (_token == null) {
+      await _ensureToken();
+    }
+    final jwt = token ?? _token!;
+
+    try {
+      return http.get(uri, headers: {'Authorization': 'Bearer $jwt'});
+    } finally {
+      _token = previousToken;
+    }
   }
 
   Future<http.Response> authedPost(
@@ -3194,7 +3496,11 @@ extension ApiClientLegacyCompat on ApiClient {
   }
 
   Future<String?> getUserStorage(String key) async {
-    final resp = await _get('/user/storage/$key');
+    final resp = await _get(
+      '/user/storage/$key',
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
+    );
     return (resp.data as Map?)?['value']?.toString();
   }
 
@@ -3233,6 +3539,8 @@ extension ApiClientLegacyCompat on ApiClient {
           'course_id': courseId.trim(),
       },
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(seconds: 20),
     );
     return ExamStatus.fromJson(res.data ?? const {});
   }
@@ -3263,6 +3571,8 @@ extension ApiClientLegacyCompat on ApiClient {
         final courseRes = await _get<Map<String, dynamic>>(
           '/courses/$courseId',
           parser: (d) => Map<String, dynamic>.from(d as Map),
+          useCache: true,
+          cacheTtl: const Duration(minutes: 10),
         );
         final course = courseRes.data ?? const <String, dynamic>{};
         final units = (course['units'] as List<dynamic>? ?? const []);
@@ -3333,9 +3643,9 @@ extension ApiClientLegacyCompat on ApiClient {
     if (tags.isEmpty) return;
 
     final safeQuestionCount = (questionCount ?? 3).clamp(1, 30).toInt();
-    final safeMaxTier = (maxDifficultyTier ?? 3)
-        .clamp(1, tags.length.clamp(1, 5))
-        .toInt();
+    // 필요 변수: 사용자가 고른 최대 난이도와 태그 목록.
+    // 작동 원리: 태그 수 검증은 서버의 티어별 규칙에 맡기고 요청한 1~5 티어를 그대로 보존한다.
+    final safeMaxTier = (maxDifficultyTier ?? 3).clamp(1, 5).toInt();
     final safeMinTier = (minDifficultyTier ?? 2).clamp(1, safeMaxTier).toInt();
 
     await _ensureToken();
@@ -3398,6 +3708,8 @@ extension ApiClientLegacyCompat on ApiClient {
             )
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(hours: 1),
     );
     return res.data ?? const [];
   }
@@ -3420,6 +3732,8 @@ extension ApiClientLegacyCompat on ApiClient {
           );
         }).toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
     return res.data ?? const [];
   }
@@ -3570,6 +3884,8 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get<Map<String, dynamic>>(
       '/rating/user',
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
     return UserRating.fromJson(res.data ?? const {});
   }
@@ -3588,6 +3904,8 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get<Map<String, dynamic>>(
       '/rating/user/$id',
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
     return UserRating.fromJson(res.data ?? const {});
   }
@@ -3596,6 +3914,8 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get<Map<String, dynamic>>(
       '/account/summary',
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
     );
     return AccountSummary.fromJson(res.data ?? const <String, dynamic>{});
   }
@@ -3641,6 +3961,8 @@ extension ApiClientLegacyCompat on ApiClient {
       '/challenges/daily-quests',
       query: {'course_id': courseId},
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(seconds: 20),
     );
     return DailyQuestBundle.fromJson(res.data ?? const <String, dynamic>{});
   }
@@ -3708,6 +4030,8 @@ extension ApiClientLegacyCompat on ApiClient {
         if (type != null && type.trim().isNotEmpty) 'type': type.trim(),
       },
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
     final data = res.data ?? const <String, dynamic>{};
     return (data['textbooks'] as List<dynamic>? ?? const [])
@@ -3720,6 +4044,8 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get<Map<String, dynamic>>(
       '/textbooks/$textbookId',
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 30),
     );
     return res.data ?? <String, dynamic>{};
   }
@@ -3733,6 +4059,8 @@ extension ApiClientLegacyCompat on ApiClient {
       path,
       query: {if (type != null && type.trim().isNotEmpty) 'type': type.trim()},
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 15),
     );
     final data = res.data;
     if (data is Map<String, dynamic>) {
@@ -3753,6 +4081,8 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get<Map<String, dynamic>>(
       '/courses/v2/$courseId/textbooks/$textbookId',
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 15),
     );
     return res.data ?? <String, dynamic>{};
   }
@@ -3948,6 +4278,8 @@ extension ApiClientLegacyCompat on ApiClient {
           );
         }).toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 45),
     );
     return res.data ?? const [];
   }
@@ -3967,6 +4299,8 @@ extension ApiClientLegacyCompat on ApiClient {
           );
         }).toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
     );
     return res.data ?? const [];
   }
@@ -3986,6 +4320,8 @@ extension ApiClientLegacyCompat on ApiClient {
           );
         }).toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
     );
     return res.data ?? const [];
   }
@@ -4013,6 +4349,8 @@ extension ApiClientLegacyCompat on ApiClient {
             .map((e) => DirectMessage.fromJson(e as Map<String, dynamic>))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 10),
     );
     return res.data ?? const [];
   }
@@ -4037,6 +4375,8 @@ extension ApiClientLegacyCompat on ApiClient {
             .map((e) => DirectMessage.fromJson(e as Map<String, dynamic>))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 10),
     );
     return res.data ?? const [];
   }
@@ -4092,6 +4432,8 @@ extension ApiClientLegacyCompat on ApiClient {
             .map((e) => StudyGroup.fromJson(e as Map<String, dynamic>))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 30),
     );
     return res.data ?? const [];
   }
@@ -4116,6 +4458,8 @@ extension ApiClientLegacyCompat on ApiClient {
             .map((e) => StudyGroupNotice.fromJson(Map<String, dynamic>.from(e)))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
     );
     return res.data ?? const [];
   }
@@ -4133,6 +4477,8 @@ extension ApiClientLegacyCompat on ApiClient {
             .map((e) => StudyGroupNotice.fromJson(Map<String, dynamic>.from(e)))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
     );
     return res.data ?? const [];
   }
@@ -4151,6 +4497,8 @@ extension ApiClientLegacyCompat on ApiClient {
             .map((e) => StudyGroupNotice.fromJson(Map<String, dynamic>.from(e)))
             .toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
     );
     return res.data ?? const [];
   }
@@ -4180,24 +4528,93 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<List<GroupSharedProblem>> listGroupSharedProblems(
     String groupId, {
     int limit = 30,
-  }) async => const [];
+  }) async {
+    final res = await _get(
+      '/social/study-groups/$groupId/shared-problems',
+      query: {'limit': '$limit'},
+      parser: (d) => ((d['items'] as List<dynamic>?) ?? const [])
+          .whereType<Map>()
+          .map((e) {
+            final item = Map<String, dynamic>.from(e);
+          return GroupSharedProblem(
+            id: item['codebase_id']?.toString() ?? '',
+            shareId: item['share_id']?.toString() ?? '',
+          );
+        })
+        .toList(),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
+    );
+    return res.data ?? const [];
+  }
 
   Future<List<GroupSharedExam>> listGroupSharedExams(
     String groupId, {
     int limit = 30,
-  }) async => const [];
+  }) async {
+    final res = await _get(
+      '/social/study-groups/$groupId/shared-exams',
+      query: {'limit': '$limit'},
+      parser: (d) => ((d['items'] as List<dynamic>?) ?? const [])
+          .whereType<Map>()
+          .map((e) {
+            final item = Map<String, dynamic>.from(e);
+        return GroupSharedExam(
+              id: item['exam_id']?.toString() ?? '',
+              shareId: item['share_id']?.toString() ?? '',
+              examId: item['exam_id']?.toString() ?? '',
+              title: item['title']?.toString() ?? '시험지',
+              senderName: item['sender_name']?.toString() ?? '시스템',
+              createdAt: item['created_at']?.toString() ?? '',
+            );
+          })
+          .toList(),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 2),
+    );
+    return res.data ?? const [];
+  }
 
   Future<GroupSharedProblem> shareGroupProblem({
     required String groupId,
     required int codebaseId,
     required int seed,
-  }) async => const GroupSharedProblem();
+  }) async {
+    final res = await _post(
+      '/social/study-groups/$groupId/shared-problems',
+      {'codebase_id': codebaseId, 'seed': seed},
+      parser: (d) {
+        final item = Map<String, dynamic>.from(d as Map);
+        return GroupSharedProblem(
+          id: item['codebase_id']?.toString() ?? '',
+          shareId: item['share_id']?.toString() ?? '',
+        );
+      },
+    );
+    return res.data ?? const GroupSharedProblem();
+  }
 
   Future<GroupSharedExam> shareGroupExam({
     required String groupId,
     required String examId,
-    required int seed,
-  }) async => const GroupSharedExam();
+  }) async {
+    final res = await _post(
+      '/social/study-groups/$groupId/shared-exams',
+      {'exam_id': examId.trim()},
+      parser: (d) {
+        final item = Map<String, dynamic>.from(d as Map);
+        return GroupSharedExam(
+          id: item['exam_id']?.toString() ?? '',
+          shareId: item['share_id']?.toString() ?? '',
+          examId: item['exam_id']?.toString() ?? '',
+          title: item['title']?.toString() ?? '시험지',
+          senderName: item['sender_name']?.toString() ?? '시스템',
+          createdAt: item['created_at']?.toString() ?? '',
+        );
+      },
+    );
+    return res.data ?? const GroupSharedExam();
+  }
 
   Future<List<StudyGroupMessage>> fetchStudyGroupMessages({
     required String groupId,
@@ -4219,10 +4636,16 @@ extension ApiClientLegacyCompat on ApiClient {
             messageId: (m['message_id'] ?? '').toString(),
             userId: (m['user_id'] ?? '').toString(),
             text: (m['text'] ?? '').toString(),
+            messageType: (m['message_type'] ?? 'text').toString(),
+            payload: m['payload'] is Map
+                ? Map<String, dynamic>.from(m['payload'] as Map)
+                : null,
             createdAt: (m['created_at'] ?? '').toString(),
           );
         }).toList();
       },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 10),
     );
     return res.data ?? const [];
   }
@@ -4240,6 +4663,10 @@ extension ApiClientLegacyCompat on ApiClient {
           messageId: (m['message_id'] ?? '').toString(),
           userId: (m['user_id'] ?? '').toString(),
           text: (m['text'] ?? '').toString(),
+          messageType: (m['message_type'] ?? 'text').toString(),
+          payload: m['payload'] is Map
+              ? Map<String, dynamic>.from(m['payload'] as Map)
+              : null,
           createdAt: (m['created_at'] ?? '').toString(),
         );
       },
@@ -4251,6 +4678,8 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get<Map<String, dynamic>>(
       ApiPaths.serverChatConfig,
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(hours: 1),
     );
     return res.data ?? <String, dynamic>{};
   }

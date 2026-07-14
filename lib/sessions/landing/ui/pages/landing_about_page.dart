@@ -18,28 +18,79 @@ class LandingAboutPage extends StatefulWidget {
 }
 
 class _LandingAboutPageState extends State<LandingAboutPage>
-    with SingleTickerProviderStateMixin {
-  static const _logoAsset = 'assets/54bba925b2ad92c9.png';
+    with WidgetsBindingObserver {
   static const _contactEmail = 'aiflow683@gmail.com';
 
   final _scrollController = ScrollController();
+  final _heroKey = GlobalKey();
   final _aboutKey = GlobalKey();
-  late final AnimationController _animation;
+  final _processKey = GlobalKey();
+  bool _isAppActive = true;
+  bool _isHeroVisible = true;
+  bool _isAboutVisible = true;
+  bool _isProcessVisible = true;
 
+  /// 스크롤·앱 생명주기 감지를 등록하고, 첫 프레임 뒤의 실제 노출 영역을 계산합니다.
+  ///
+  /// [_scrollController]는 섹션의 화면 노출 여부를 갱신하는 데 사용합니다.
   @override
   void initState() {
     super.initState();
-    _animation = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 18),
-    )..repeat();
+    WidgetsBinding.instance.addObserver(this);
+    _scrollController.addListener(_updateAnimationVisibility);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateAnimationVisibility();
+    });
   }
 
+  /// 등록한 리스너를 해제해 화면 종료 후 애니메이션이 남지 않게 합니다.
   @override
   void dispose() {
-    _animation.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _scrollController.removeListener(_updateAnimationVisibility);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// 앱이 백그라운드에 있으면 모든 ticker를 멈추고 복귀 시 다시 허용합니다.
+  ///
+  /// [state]는 Flutter가 전달하는 앱 생명주기 상태입니다.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final isActive = state == AppLifecycleState.resumed;
+    if (_isAppActive == isActive) return;
+    setState(() => _isAppActive = isActive);
+  }
+
+  /// 화면 좌표를 기준으로 [key]가 현재 뷰포트와 겹치는지 확인합니다.
+  ///
+  /// [key]는 각 애니메이션 섹션의 RenderBox를 찾는 데 사용하며, 찾지 못한
+  /// 첫 레이아웃 순간에는 콘텐츠가 멈춘 채 노출되지 않도록 true를 반환합니다.
+  bool _isSectionVisible(GlobalKey key) {
+    final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return true;
+    final top = renderBox.localToGlobal(Offset.zero).dy;
+    final bottom = top + renderBox.size.height;
+    final viewportHeight = MediaQuery.sizeOf(context).height;
+    return bottom > 0 && top < viewportHeight;
+  }
+
+  /// 스크롤 뒤 노출된 섹션만 ticker를 실행하도록 상태를 최소 횟수로 갱신합니다.
+  void _updateAnimationVisibility() {
+    if (!mounted) return;
+    final heroVisible = _isSectionVisible(_heroKey);
+    final aboutVisible = _isSectionVisible(_aboutKey);
+    final processVisible = _isSectionVisible(_processKey);
+    if (_isHeroVisible == heroVisible &&
+        _isAboutVisible == aboutVisible &&
+        _isProcessVisible == processVisible) {
+      return;
+    }
+    setState(() {
+      _isHeroVisible = heroVisible;
+      _isAboutVisible = aboutVisible;
+      _isProcessVisible = processVisible;
+    });
   }
 
   void _openLogin() {
@@ -104,22 +155,49 @@ class _LandingAboutPageState extends State<LandingAboutPage>
             controller: _scrollController,
             child: Column(
               children: [
-                _HeroSection(
-                  animation: _animation,
-                  onLogin: _openLogin,
-                  onLearnMore: _scrollToAbout,
-                  onContact: _contact,
+                KeyedSubtree(
+                  key: _heroKey,
+                  child: TickerMode(
+                    enabled: _isAppActive && _isHeroVisible,
+                    child: _LoopingAnimation(
+                      builder: (animation) => _HeroSection(
+                        animation: animation,
+                        onLogin: _openLogin,
+                        onLearnMore: _scrollToAbout,
+                        onContact: _contact,
+                      ),
+                    ),
+                  ),
                 ),
-                RepaintBoundary(
-                  child: _AboutSection(key: _aboutKey, animation: _animation),
+                KeyedSubtree(
+                  key: _aboutKey,
+                  child: TickerMode(
+                    enabled: _isAppActive && _isAboutVisible,
+                    child: RepaintBoundary(
+                      child: _LoopingAnimation(
+                        builder: (animation) =>
+                            _AboutSection(animation: animation),
+                      ),
+                    ),
+                  ),
                 ),
-                RepaintBoundary(child: _ProcessSection(animation: _animation)),
+                KeyedSubtree(
+                  key: _processKey,
+                  child: TickerMode(
+                    enabled: _isAppActive && _isProcessVisible,
+                    child: RepaintBoundary(
+                      child: _LoopingAnimation(
+                        builder: (animation) =>
+                            _ProcessSection(animation: animation),
+                      ),
+                    ),
+                  ),
+                ),
                 RepaintBoundary(child: _ContactSection(onContact: _contact)),
               ],
             ),
           ),
           _Header(
-            logoAsset: _logoAsset,
             onLogin: _openLogin,
             onLearnMore: _scrollToAbout,
             onContact: _contact,
@@ -130,15 +208,52 @@ class _LandingAboutPageState extends State<LandingAboutPage>
   }
 }
 
+/// 화면에 표시되는 각 데모에 독립적인 반복 애니메이션을 제공합니다.
+///
+/// [builder]는 controller 값을 구독하는 데모 위젯을 만들며, 상위 [TickerMode]가
+/// 비활성화되면 controller의 프레임 콜백도 함께 멈춥니다.
+class _LoopingAnimation extends StatefulWidget {
+  const _LoopingAnimation({required this.builder});
+
+  final Widget Function(Animation<double> animation) builder;
+
+  @override
+  State<_LoopingAnimation> createState() => _LoopingAnimationState();
+}
+
+class _LoopingAnimationState extends State<_LoopingAnimation>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  /// 18초 단위의 데모 애니메이션을 생성해 반복 재생합니다.
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 18),
+    )..repeat();
+  }
+
+  /// controller를 해제해 ticker와 프레임 콜백을 정리합니다.
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// 하위 데모가 controller만 구독하게 하여 상위 레이아웃 재빌드를 막습니다.
+  @override
+  Widget build(BuildContext context) => widget.builder(_controller);
+}
+
 class _Header extends StatelessWidget {
   const _Header({
-    required this.logoAsset,
     required this.onLogin,
     required this.onLearnMore,
     required this.onContact,
   });
 
-  final String logoAsset;
   final VoidCallback onLogin;
   final VoidCallback onLearnMore;
   final VoidCallback onContact;
@@ -166,7 +281,11 @@ class _Header extends StatelessWidget {
                         SizedBox(
                           width: compact ? 54 : 72,
                           height: compact ? 54 : 72,
-                          child: Image.asset(logoAsset, fit: BoxFit.cover),
+                          child: const Icon(
+                            Icons.auto_awesome_rounded,
+                            color: Colors.white,
+                            semanticLabel: 'AIFlow 로고',
+                          ),
                         ),
                         SizedBox(width: compact ? 8 : 14),
                         if (!compact)
@@ -560,7 +679,7 @@ class _ShowreelDevice extends StatelessWidget {
 }
 
 class _AboutSection extends StatelessWidget {
-  const _AboutSection({super.key, required this.animation});
+  const _AboutSection({required this.animation});
 
   final Animation<double> animation;
 

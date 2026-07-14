@@ -16,3 +16,4 @@ export 'graphs/logarithmic_graph.dart';
 export 'graphs/quadratic_graph.dart';
 export 'graphs/rational_graph.dart';
 export 'modal/modal_shell.dart';
+export 'modal/level_detail_modal.dart';

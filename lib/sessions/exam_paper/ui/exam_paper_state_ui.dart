@@ -13,6 +13,32 @@ mixin _ExamPaperUiMixin
     });
   }
 
+  /// 보기 위젯이 실제로 렌더링된 화면 영역을 저장한다.
+  /// 확대·이동된 시험지에서도 상단 입력 레이어가 같은 글로벌 좌표로 선택을 판별한다.
+  void _updateOptionHitRegion(int itemIndex, int optionIndex, Rect region) {
+    _optionHitRegions.putIfAbsent(itemIndex, () => <int, Rect>{})[optionIndex] =
+        region;
+  }
+
+  /// 등록된 보기 영역 안을 클릭했으면 선택 상태를 바꾸고 캔버스 입력을 막는다.
+  /// 이미 선택한 보기를 다시 누르면 선택을 해제한다.
+  @override
+  bool _selectOptionAt(Offset globalPosition) {
+    for (final itemEntry in _optionHitRegions.entries) {
+      for (final optionEntry in itemEntry.value.entries) {
+        final key = _optionHitRegionKey(itemEntry.key, optionEntry.key);
+        final renderObject = key.currentContext?.findRenderObject();
+        final region = renderObject is RenderBox && renderObject.hasSize
+            ? renderObject.localToGlobal(Offset.zero) & renderObject.size
+            : optionEntry.value;
+        if (!region.contains(globalPosition)) continue;
+        _handleOptionSelection(itemEntry.key, optionEntry.key);
+        return true;
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -435,6 +461,8 @@ mixin _ExamPaperUiMixin
             totalPages: _pageCount,
             selectedOptions: _selectedOptions,
             onOptionSelected: _handleOptionSelection,
+            optionHitRegionKeyFor: _optionHitRegionKey,
+            onOptionHitRegionChanged: _updateOptionHitRegion,
             lowDetail: _fastScrollActiveSafe,
           ),
         ),
@@ -863,6 +891,7 @@ mixin _ExamPaperUiMixin
                     onPointerMove: _handlePointerMove,
                     onPointerUp: _handlePointerUp,
                     onPointerCancel: _handlePointerCancel,
+                    onPointerHover: _handlePointerHover,
                     onPointerSignal: _handlePointerSignal,
                   ),
                 ),
@@ -977,6 +1006,8 @@ mixin _ExamPaperUiMixin
                       : null,
                   selectedOptions: _selectedOptions,
                   onOptionSelected: _handleOptionSelection,
+                  optionHitRegionKeyFor: _optionHitRegionKey,
+                  onOptionHitRegionChanged: _updateOptionHitRegion,
                   lowDetail: _fastScrollActiveSafe,
                 ),
               ),
@@ -997,6 +1028,8 @@ mixin _ExamPaperUiMixin
           : null;
       final eraserPosition = _eraserActive && _eraserPageIndex == index
           ? _eraserPosition
+          : _toolMode == _ToolMode.eraser && _eraserCursorPageIndex == index
+          ? _eraserCursorPosition
           : null;
       return Positioned(
         left: 0,
@@ -1077,6 +1110,10 @@ mixin _ExamPaperUiMixin
           return;
         }
         _toolMode = mode;
+        if (mode != _ToolMode.eraser) {
+          _eraserCursorPosition = null;
+          _eraserCursorPageIndex = null;
+        }
         _scrollEnabled = mode == _ToolMode.pan;
         if (mode != _ToolMode.pan) {
           _colorPickerOpen = false;
@@ -1131,7 +1168,7 @@ mixin _ExamPaperUiMixin
           key: _penButtonKey,
         ),
         railButton(
-          Icons.backspace_outlined,
+          Icons.cleaning_services_outlined,
           onTap: () => selectTool(_ToolMode.eraser),
           selected: _toolMode == _ToolMode.eraser,
         ),

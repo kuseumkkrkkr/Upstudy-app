@@ -52,7 +52,10 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
     try {
       final courses = await CourseService.fetchMyCourses();
       setState(() {
-        _courses = courses;
+        // 완료 코스는 검색 필터의 미리보기에서만 확인하며 학습 선택 목록에서는 제외한다.
+        _courses = courses
+            .where((course) => !course.isCompleted)
+            .toList(growable: false);
         _loading = false;
       });
     } catch (_) {

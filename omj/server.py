@@ -366,6 +366,15 @@ def include_api_routers() -> None:
     """Attach API routers with explicit diagnostics."""
     app.include_router(study_group_router)
 
+    # 필요 변수: 독립 대결장 라우터 모듈.
+    # 작동 원리: 아레나 장애가 기존 소셜·학습 라우터 등록을 막지 않도록 분리해 로드한다.
+    try:
+        from arena import router as arena_router
+
+        _safe_include_router(arena_router, name="arena")
+    except Exception as exc:
+        logger.error("failed to load arena router: %s", exc)
+
     # V2 course routers
     try:
         from app.api.routes.courses import (

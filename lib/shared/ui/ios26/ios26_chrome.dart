@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/ui/modal/level_detail_modal.dart';
 
 class Ios26NavItem {
   const Ios26NavItem({required this.label, this.onTap, this.active = false});
@@ -204,41 +205,45 @@ class _Ios26LevelIndicatorState extends State<_Ios26LevelIndicator> {
           return const SizedBox.shrink();
         }
 
-        return Container(
-          width: 132,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: widget.brandColor.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: widget.brandColor.withValues(alpha: 0.16),
+        return InkWell(
+          onTap: () => LevelDetailModal.show(context, account),
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            width: 132,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.brandColor.withValues(alpha: 0.09),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: widget.brandColor.withValues(alpha: 0.16),
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: account.levelProgress,
-                    minHeight: 6,
-                    backgroundColor: Colors.white.withValues(alpha: 0.9),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      widget.brandColor,
+            child: Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: account.levelProgress,
+                      minHeight: 6,
+                      backgroundColor: Colors.white.withValues(alpha: 0.9),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        widget.brandColor,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'lv. ${account.level}',
-                style: TextStyle(
-                  color: widget.brandColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                const SizedBox(width: 8),
+                Text(
+                  'lv. ${account.level}',
+                  style: TextStyle(
+                    color: widget.brandColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

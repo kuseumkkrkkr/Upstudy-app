@@ -7,7 +7,6 @@ import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
 
 class LandingPage extends StatelessWidget {
   static const routeName = '/';
-  static const _logoAsset = 'assets/54bba925b2ad92c9.png';
   static const _contactEmail = 'aiflow683@gmail.com';
 
   const LandingPage({super.key});
@@ -83,9 +82,9 @@ class LandingPage extends StatelessWidget {
                   width: 70,
                   height: 70,
                   color: Colors.black,
-                  child: Image.asset(
-                    _logoAsset,
-                    fit: BoxFit.cover,
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Colors.white,
                     semanticLabel: 'AIFlow 로고',
                   ),
                 ),

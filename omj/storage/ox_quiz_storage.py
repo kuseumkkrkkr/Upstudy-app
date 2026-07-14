@@ -122,3 +122,35 @@ def fetch_questions_by_tags(
             )
     conn.close()
     return results
+
+
+def fetch_random_questions(limit: int = 10) -> List[Dict[str, str | int | bool]]:
+    """
+    필요 변수: 반환할 최대 문항 수.
+    작동 원리: 태그 조건이 없는 아레나용 OX 문항을 DB 전체에서 무작위로 제한 조회한다.
+    """
+    init_ox_quiz_db()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT id, tag, question, answer, created_at, created_by
+        FROM ox_quiz_questions
+        ORDER BY RANDOM()
+        LIMIT ?
+        """,
+        (max(1, min(int(limit), 100)),),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [
+        {
+            "id": row[0],
+            "tag": row[1],
+            "question": row[2],
+            "answer": bool(row[3]),
+            "created_at": row[4],
+            "created_by": row[5],
+        }
+        for row in rows
+    ]

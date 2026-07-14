@@ -1,4 +1,4 @@
-﻿part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
+part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
 class _ExamPaperContent extends StatelessWidget {
   const _ExamPaperContent({
@@ -8,6 +8,8 @@ class _ExamPaperContent extends StatelessWidget {
     this.statusMessage,
     this.selectedOptions = const <int, int?>{},
     this.onOptionSelected,
+    this.optionHitRegionKeyFor,
+    this.onOptionHitRegionChanged,
     this.lowDetail = false,
   });
 
@@ -17,6 +19,10 @@ class _ExamPaperContent extends StatelessWidget {
   final String? statusMessage;
   final Map<int, int?> selectedOptions;
   final void Function(int itemIndex, int optionIndex)? onOptionSelected;
+  final GlobalKey Function(int itemIndex, int optionIndex)?
+  optionHitRegionKeyFor;
+  final void Function(int itemIndex, int optionIndex, Rect region)?
+  onOptionHitRegionChanged;
   final bool lowDetail;
 
   static const TextStyle _baseStyle = TextStyle(
@@ -80,10 +86,7 @@ class _ExamPaperContent extends StatelessWidget {
                 child: Text(
                   '2025학년도 대학수학능력시험 문제지',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 21,
-                    fontFamily: 'Batang',
-                  ),
+                  style: const TextStyle(fontSize: 21, fontFamily: 'Batang'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -110,10 +113,7 @@ class _ExamPaperContent extends StatelessWidget {
       return Center(
         child: Text(
           statusMessage!,
-          style: _baseStyle.copyWith(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
+          style: _baseStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
           textAlign: TextAlign.center,
         ),
       );
@@ -174,10 +174,7 @@ class _ExamPaperContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '${item.itemIndex}.',
-          style: _questionNumberStyle,
-        ),
+        Text('${item.itemIndex}.', style: _questionNumberStyle),
         const SizedBox(height: 6),
         Expanded(
           child: LayoutBuilder(
@@ -237,7 +234,22 @@ class _ExamPaperContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(options.length, (index) {
         final isSelected = selectedIndex == index;
+        final hitRegionKey = optionHitRegionKeyFor?.call(itemIndex, index);
+        if (hitRegionKey != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final renderObject = hitRegionKey.currentContext
+                ?.findRenderObject();
+            if (renderObject is! RenderBox || !renderObject.hasSize) return;
+            final origin = renderObject.localToGlobal(Offset.zero);
+            onOptionHitRegionChanged?.call(
+              itemIndex,
+              index,
+              origin & renderObject.size,
+            );
+          });
+        }
         return InkWell(
+          key: hitRegionKey,
           onTap: onOptionSelected == null
               ? null
               : () => onOptionSelected!(itemIndex, index),
@@ -433,12 +445,7 @@ class _ExamPaperContent extends StatelessWidget {
           text: const Text('첫째항과 공비가 모두 정수 k인 등비수열 {aₙ}이'),
         ),
         const SizedBox(height: 10),
-        Center(
-          child: Text(
-            'a1a2 + a2a3 = 30',
-            style: _mathStyle(13.5),
-          ),
-        ),
+        Center(child: Text('a1a2 + a2a3 = 30', style: _mathStyle(13.5))),
         const SizedBox(height: 10),
         _problemLine(
           number: '',
@@ -482,7 +489,9 @@ class _ExamPaperContent extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               decoration: const BoxDecoration(
                 color: Color(0xFFE0E0E0),
-                border: Border(right: BorderSide(color: Colors.black, width: 1)),
+                border: Border(
+                  right: BorderSide(color: Colors.black, width: 1),
+                ),
               ),
               child: Text('$safePage'),
             ),
@@ -502,10 +511,7 @@ class _ExamPaperContent extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black, width: 1),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
@@ -519,8 +525,7 @@ class _ExamPaperContent extends StatelessWidget {
       spacing: 6,
       runSpacing: 4,
       children: [
-        if (number.isNotEmpty)
-          Text(number, style: _questionNumberStyle),
+        if (number.isNotEmpty) Text(number, style: _questionNumberStyle),
         DefaultTextStyle.merge(style: _baseStyle, child: text),
         if (points != null && points.isNotEmpty)
           Text('[$points]', style: _pointsStyle),
@@ -531,9 +536,7 @@ class _ExamPaperContent extends StatelessWidget {
   Widget _optionsRow(List<String> options) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: options
-          .map((opt) => Text(opt, style: _optionStyle))
-          .toList(),
+      children: options.map((opt) => Text(opt, style: _optionStyle)).toList(),
     );
   }
 

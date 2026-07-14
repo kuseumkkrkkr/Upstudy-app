@@ -1,6 +1,5 @@
 ﻿import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
@@ -14,6 +13,7 @@ import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/exam_paper_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/business/usecases/heatmap_engine.dart';
+import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/flow_view_page.dart';
 
@@ -34,12 +34,16 @@ class ExamPaperPage extends StatefulWidget {
     super.key,
     this.examId,
     this.courseId,
+    this.moduleId,
+    this.passRate = 100,
     this.expectedQuestionCount,
     this.timeLimitMinutes,
   });
 
   final String? examId;
   final String? courseId;
+  final String? moduleId;
+  final int passRate;
   final int? expectedQuestionCount;
   final int? timeLimitMinutes;
 

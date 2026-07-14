@@ -13,7 +13,11 @@ const BoxShadow kCourseShadow = BoxShadow(
 );
 
 /// 화면 폭에 따라 카드/타이포 크기를 조정하는 헬퍼.
-double courseUiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
+double courseUiScale(
+  BuildContext context, {
+  double min = 0.6,
+  double max = 1.0,
+}) {
   final width = MediaQuery.of(context).size.width;
   final scale = width / 1100;
   if (scale < min) return min;

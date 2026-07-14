@@ -20,6 +20,9 @@ dependencies:
   shared_preferences: ^2.2.2
   sqflite: ^2.3.3+1
   path: ^1.9.0
+  flutter_inappwebview: ^6.1.5
+  web_socket_channel: ^3.0.3
+  math_expressions: ^3.1.0
 
 environment:
   sdk: ^3.9.0

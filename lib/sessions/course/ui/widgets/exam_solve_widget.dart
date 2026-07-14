@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:s11/shared/data/models/course_module_config.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
+import 'course_runtime_state_view.dart';
 
 /// ExamSolveWidget — creates an exam via ApiClient then routes to BuildpageWidget.
 ///
@@ -119,69 +119,24 @@ class _ExamSolveWidgetState extends State<ExamSolveWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      body: Center(
-        child: _loading
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Color(0xFF1B402B)),
-                  const SizedBox(height: 20),
-                  Text(
-                    '시험지를 생성하는 중...',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1B402B),
-                    ),
-                  ),
-                ],
-              )
-            : _error != null
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.redAccent,
-                    size: 48,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '오류가 발생했습니다',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _error!,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _loading = true;
-                        _error = null;
-                      });
-                      _createAndLaunchExam();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B402B),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('다시 시도'),
-                  ),
-                ],
-              )
-            : const SizedBox.shrink(),
-      ),
+    return CourseRuntimeStateView(
+      title: '시험 학습',
+      message: '시험지를 구성하고 있어요',
+      icon: Icons.assignment_outlined,
+      loading: _loading,
+      error: _error,
+      detail: '${widget.config.questionCount}문제 · 제출 전까지 학습 흐름이 유지됩니다.',
+      onRetry: _retry,
     );
+  }
+
+  /// 필요 변수: 현재 로딩 및 오류 상태를 사용한다.
+  /// 작동 원리: 오류 메시지를 초기화하고 시험 생성 절차를 다시 실행한다.
+  void _retry() {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    _createAndLaunchExam();
   }
 }

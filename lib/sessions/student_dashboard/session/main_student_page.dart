@@ -16,6 +16,7 @@ import 'package:s11/sessions/student_dashboard/ui/modals/curriculum_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/social_modal.dart';
+import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
@@ -28,12 +29,13 @@ import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/attendance_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/modal/level_detail_modal.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
-import 'package:s11/sessions/course/session/course_pages.dart';
+import 'package:s11/sessions/course/session/course_learning_page.dart';
 
 const _green = Color(0xFF1B402B);
 const _lightGreen = Color(0xFF45BF63);
@@ -331,7 +333,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
     setState(() => _courseLoaderKey = UniqueKey());
     if (selected != null) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => CourseDetailPage(course: selected)),
+        MaterialPageRoute(builder: (_) => CourseLearningPage(course: selected)),
       );
     }
   }
@@ -451,14 +453,18 @@ class _CourseLoaderState extends State<_CourseLoader> {
     try {
       final courses = await CourseService.fetchMyCourses();
       setState(() {
-        if (courses.isEmpty) {
+        // 완료 코스는 다시 활성 코스로 선택하지 않고 검색 화면에서만 미리보기를 제공한다.
+        final activeCourses = courses
+            .where((course) => !course.isCompleted)
+            .toList(growable: false);
+        if (activeCourses.isEmpty) {
           _course = null;
         } else {
-          _course = courses.firstWhere(
+          _course = activeCourses.firstWhere(
             (Course c) => c.progress > 0 && !c.isDemo,
-            orElse: () => courses.firstWhere(
+            orElse: () => activeCourses.firstWhere(
               (Course c) => !c.isDemo,
-              orElse: () => courses.first,
+              orElse: () => activeCourses.first,
             ),
           );
         }
@@ -560,39 +566,43 @@ class _AppBarLevelIndicatorState extends State<_AppBarLevelIndicator> {
           return const SizedBox.shrink();
         }
 
-        return Container(
-          width: 150,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: _green.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: _green.withValues(alpha: 0.16)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: account.levelProgress,
-                    minHeight: 6,
-                    backgroundColor: Colors.white.withValues(alpha: 0.9),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      _lightGreen,
+        return InkWell(
+          onTap: () => LevelDetailModal.show(context, account),
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            width: 150,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _green.withValues(alpha: 0.09),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: _green.withValues(alpha: 0.16)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: account.levelProgress,
+                      minHeight: 6,
+                      backgroundColor: Colors.white.withValues(alpha: 0.9),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        _lightGreen,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'lv. ${account.level}',
-                style: const TextStyle(
-                  color: _green,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                const SizedBox(width: 8),
+                Text(
+                  'lv. ${account.level}',
+                  style: const TextStyle(
+                    color: _green,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -1824,7 +1834,7 @@ class _BottomSection extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '수학문제 포럼',
+                          '수학 대결장',
                           style: _ts(
                             size: 30 * scale,
                             weight: FontWeight.w900,
@@ -1833,7 +1843,7 @@ class _BottomSection extends StatelessWidget {
                         ),
                         SizedBox(height: 6 * scale),
                         Text(
-                          '학습 커뮤니티입니다.',
+                          '1v1 · 2v2 실시간 실력 대결',
                           textAlign: TextAlign.center,
                           style: _ts(
                             size: 10 * scale,
@@ -1843,8 +1853,8 @@ class _BottomSection extends StatelessWidget {
                         ),
                         SizedBox(height: 2 * scale),
                         _InlineCta(
-                          label: '멘토링/상담 게시물 확인',
-                          onTap: () => showSocialModal(context: context),
+                          label: '대결장 입장',
+                          onTap: () => showArena(context),
                           iconColor: Colors.white,
                           iconSize: 12 * scale,
                           radius: 8 * scale,

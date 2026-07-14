@@ -6,6 +6,7 @@ import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
+import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
     as study_center;
@@ -43,6 +44,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
   final TextEditingController _searchCtrl = TextEditingController();
   Future<List<Course>>? _future;
   double? _lastRecommend;
+  bool _showCompletedCourses = false;
 
   @override
   void initState() {
@@ -109,10 +111,26 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
         course.focusTags.any((tag) => tag.toLowerCase().contains(q));
   }
 
+  /// 필요 변수: 선택한 [course]의 수강 여부를 사용한다.
+  /// 작동 원리: 수강 중이면 현재 진도 화면으로 직행하고, 미수강이면 상세/신청 화면을 연다.
   void _openCourse(Course course) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => CourseDetailPage(course: course)));
+    final page = course.isEnrolled && !course.isCompleted
+        ? CourseLearningPage(course: course)
+        : CourseDetailPage(course: course);
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
+  /// 필요 변수: 현재 Navigator의 이전 경로 존재 여부를 사용한다.
+  /// 작동 원리: 이전 화면이 있으면 복귀하고, 단독 진입이면 학생 홈으로 안전하게 이동한다.
+  void _goBack() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+    navigator.pushReplacement(
+      MaterialPageRoute(builder: (_) => const MainStudentPage()),
+    );
   }
 
   @override
@@ -126,7 +144,10 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
         child: FutureBuilder<List<Course>>(
           future: _future,
           builder: (context, snapshot) {
-            final courses = snapshot.data ?? const <Course>[];
+            final loadedCourses = snapshot.data ?? const <Course>[];
+            final courses = loadedCourses
+                .where((course) => _showCompletedCourses || !course.isCompleted)
+                .toList(growable: false);
             final featured = courses.take(2).toList(growable: false);
             return SingleChildScrollView(
               child: Column(
@@ -134,6 +155,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                 children: [
                   Ios26TopBar(
                     brandColor: kCourseGreen,
+                    onBack: _goBack,
                     onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
                         builder: (_) => const MainStudentPage(),
@@ -186,6 +208,10 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                           controller: _searchCtrl,
                           ratingLabel: _formatVisibleOvr(rating),
                           onSearch: _load,
+                          showCompletedCourses: _showCompletedCourses,
+                          onShowCompletedChanged: (value) {
+                            setState(() => _showCompletedCourses = value);
+                          },
                         ),
                         SizedBox(height: 22 * scale),
                         if (snapshot.connectionState == ConnectionState.waiting)
@@ -462,12 +488,16 @@ class _SearchBar extends StatelessWidget {
     required this.controller,
     required this.ratingLabel,
     required this.onSearch,
+    required this.showCompletedCourses,
+    required this.onShowCompletedChanged,
   });
 
   final double scale;
   final TextEditingController controller;
   final String ratingLabel;
   final VoidCallback onSearch;
+  final bool showCompletedCourses;
+  final ValueChanged<bool> onShowCompletedChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -512,6 +542,18 @@ class _SearchBar extends StatelessWidget {
                 onPressed: onSearch,
                 icon: const Icon(Icons.auto_awesome_rounded),
                 label: Text('내 OVR $ratingLabel'),
+              ),
+              FilterChip(
+                selected: showCompletedCourses,
+                onSelected: onShowCompletedChanged,
+                avatar: Icon(
+                  showCompletedCourses
+                      ? Icons.check_circle_rounded
+                      : Icons.history_rounded,
+                  size: 18 * scale,
+                ),
+                label: const Text('완료한 코스 보기'),
+                tooltip: '완료한 코스는 미리보기만 가능합니다',
               ),
             ],
           );
@@ -673,8 +715,16 @@ class _CompareCard extends StatelessWidget {
           SizedBox(height: 16 * scale),
           FilledButton.icon(
             onPressed: onOpen,
-            icon: const Icon(Icons.play_arrow_rounded),
-            label: Text(course.progress > 0 ? '이어 듣기' : '강좌 보기'),
+            icon: Icon(
+              course.isCompleted
+                  ? Icons.visibility_outlined
+                  : Icons.play_arrow_rounded,
+            ),
+            label: Text(
+              course.isCompleted
+                  ? '완료 코스 미리보기'
+                  : (course.progress > 0 ? '현재 학습 보기' : '강좌 보기'),
+            ),
           ),
         ],
       ),
@@ -782,7 +832,9 @@ class CourseCard extends StatelessWidget {
                 SizedBox(width: 10 * scale),
                 Expanded(
                   child: Text(
-                    course.level.isEmpty ? '강좌' : course.level,
+                    course.isCompleted
+                        ? '학습 완료 · 미리보기 전용'
+                        : (course.level.isEmpty ? '강좌' : course.level),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
@@ -792,7 +844,12 @@ class CourseCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(Icons.arrow_forward_rounded, size: 18 * scale),
+                Icon(
+                  course.isCompleted
+                      ? Icons.visibility_outlined
+                      : Icons.arrow_forward_rounded,
+                  size: 18 * scale,
+                ),
               ],
             ),
             SizedBox(height: 12 * scale),
@@ -849,7 +906,9 @@ class CourseCard extends StatelessWidget {
             ),
             SizedBox(height: 6 * scale),
             Text(
-              course.status == null ? '수강 전' : '$progressPercent% 완료',
+              course.isCompleted
+                  ? '완료됨 · 다시 수강할 수 없습니다'
+                  : (course.status == null ? '수강 전' : '$progressPercent% 완료'),
               style: GoogleFonts.inter(
                 fontSize: 11 * scale,
                 color: Colors.black54,

@@ -8,10 +8,20 @@ import 'package:s11/shared/data/models/course_module_config.dart';
 /// to launch individually. Each item maps to a mission type handled by the
 /// course learning page's mission tap handler.
 class CurriculumGroupWidget extends StatefulWidget {
-  const CurriculumGroupWidget({super.key, required this.config, this.onComplete});
+  const CurriculumGroupWidget({
+    super.key,
+    required this.config,
+    this.onComplete,
+  });
 
   final CurriculumGroupConfig config;
-  final void Function({required int correctCount, required int totalCount, required bool passed, int? elapsedSeconds})? onComplete;
+  final void Function({
+    required int correctCount,
+    required int totalCount,
+    required bool passed,
+    int? elapsedSeconds,
+  })?
+  onComplete;
 
   @override
   State<CurriculumGroupWidget> createState() => _CurriculumGroupWidgetState();
@@ -26,35 +36,80 @@ class _CurriculumGroupWidgetState extends State<CurriculumGroupWidget> {
     final items = config.items;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: const Color(0xFFF3F6F3),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1B402B),
-        foregroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: const Color(0xFFF3F6F3),
+        foregroundColor: const Color(0xFF173B29),
         title: Text(
           config.title.isNotEmpty ? config.title : '커리큘럼 그룹',
           style: GoogleFonts.inter(fontWeight: FontWeight.w600),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          tooltip: '코스로 돌아가기',
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: items.isEmpty
           ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final isCompleted = _completedItems.contains(index);
-                return _buildItemCard(
-                  context,
-                  index: index,
-                  item: item,
-                  isCompleted: isCompleted,
-                );
-              },
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+              children: [
+                _buildProgressHeader(items.length),
+                const SizedBox(height: 18),
+                for (var index = 0; index < items.length; index++)
+                  _buildItemCard(
+                    context,
+                    index: index,
+                    item: items[index],
+                    isCompleted: _completedItems.contains(index),
+                  ),
+              ],
             ),
+    );
+  }
+
+  /// 필요 변수: 전체 항목 수와 완료된 항목 집합을 사용한다.
+  /// 작동 원리: 그룹 안에서 현재 위치를 숫자와 진행 막대로 함께 보여준다.
+  Widget _buildProgressHeader(int totalCount) {
+    final completed = _completedItems.length;
+    final progress = totalCount == 0 ? 0.0 : completed / totalCount;
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFF173B29),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '학습 경로',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$completed/$totalCount 완료 · 위에서부터 차례로 진행해 보세요.',
+            style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              color: const Color(0xFF55CD73),
+              backgroundColor: Colors.white24,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -63,11 +118,7 @@ class _CurriculumGroupWidgetState extends State<CurriculumGroupWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.menu_book_outlined,
-            size: 64,
-            color: Colors.black26,
-          ),
+          const Icon(Icons.menu_book_outlined, size: 64, color: Colors.black26),
           const SizedBox(height: 16),
           Text(
             '등록된 학습 항목이 없습니다',
@@ -115,7 +166,9 @@ class _CurriculumGroupWidgetState extends State<CurriculumGroupWidget> {
           ),
           child: Icon(
             icon,
-            color: isCompleted ? const Color(0xFF45BF63) : const Color(0xFF1B402B),
+            color: isCompleted
+                ? const Color(0xFF45BF63)
+                : const Color(0xFF1B402B),
           ),
         ),
         title: Text(
@@ -128,10 +181,7 @@ class _CurriculumGroupWidgetState extends State<CurriculumGroupWidget> {
         ),
         subtitle: Text(
           label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            color: Colors.black54,
-          ),
+          style: GoogleFonts.inter(fontSize: 12, color: Colors.black54),
         ),
         trailing: isCompleted
             ? const Icon(Icons.check_circle, color: Color(0xFF45BF63))
@@ -148,9 +198,7 @@ class _CurriculumGroupWidgetState extends State<CurriculumGroupWidget> {
                   passed: _completedItems.length >= widget.config.items.length,
                 );
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${item.title} 학습을 시작합니다'),
-                  ),
+                  SnackBar(content: Text('${item.title} 학습을 시작합니다')),
                 );
               },
       ),

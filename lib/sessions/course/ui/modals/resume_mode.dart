@@ -65,7 +65,7 @@ VoidCallback buildResumeAction(BuildContext context) {
             return;
           }
           final screen = last.meta?['screen']?.toString();
-          if (screen == 'learning') {
+          if (screen == 'learning' && !course.isCompleted) {
             navigator.push(
               MaterialPageRoute(
                 builder: (_) => CourseLearningPage(course: course!),
@@ -80,17 +80,14 @@ VoidCallback buildResumeAction(BuildContext context) {
           );
           return;
         case ActivityEventType.problem:
-          final configRaw =
-              last.meta?['config'] ?? snapshot.lastProblemConfig;
+          final configRaw = last.meta?['config'] ?? snapshot.lastProblemConfig;
           final config = configRaw is Map
               ? ProblemSolveConfig.fromJson(
                   Map<String, dynamic>.from(configRaw),
                 )
               : const ProblemSolveConfig();
           navigator.push(
-            MaterialPageRoute(
-              builder: (_) => BuildpageWidget(config: config),
-            ),
+            MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
           );
           return;
         default:

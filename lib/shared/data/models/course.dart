@@ -44,6 +44,16 @@ class Course {
   bool get isEnrolled =>
       status != null || progress > 0 || progressDetail.isNotEmpty;
 
+  /// 필요 변수: 서버 상태값과 전체 진행률을 사용한다.
+  /// 작동 원리: 상태가 완료이거나 진행률이 100%에 도달하면 재수강할 수 없는 완료 코스로 판정한다.
+  bool get isCompleted {
+    final normalizedStatus = status?.trim().toLowerCase();
+    return normalizedStatus == 'completed' ||
+        normalizedStatus == 'complete' ||
+        normalizedStatus == 'finished' ||
+        progress >= 0.999;
+  }
+
   Course copyWith({
     double? progress,
     List<CourseUnit>? units,
