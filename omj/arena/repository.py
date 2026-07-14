@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import time
@@ -18,11 +19,12 @@ class RedisArenaRepository:
     """Redis에서 큐·활성 경기·멱등키·임시 팀 채팅을 공유한다."""
 
     def __init__(self, url: str | None = None) -> None:
-        """필요 변수: 선택 Redis URL. URL이 있으면 비동기 클라이언트를 지연 생성한다."""
+        """필요 변수: 선택 Redis URL. 클라이언트와 단일 health-check 잠금을 지연 사용하도록 준비한다."""
 
         self.url = (url if url is not None else os.getenv("REDIS_URL", "")).strip()
         self._client: Any | None = None
         self._last_ping_at = 0.0
+        self._ping_lock = asyncio.Lock()
 
     @property
     def enabled(self) -> bool:
@@ -31,31 +33,57 @@ class RedisArenaRepository:
         return bool(self.url)
 
     async def _redis(self) -> Any:
-        """필요 변수: Redis URL. 최초 접근 때 연결 객체를 만들고 ping 실패는 운영 오류로 변환한다."""
+        """필요 변수: Redis URL·풀 크기·연결/응답 대기 시간. 제한된 Blocking 풀을 만들고 ping 실패는 운영 오류로 변환한다."""
 
         if not self.enabled:
             return None
         if self._client is None:
             try:
-                from redis.asyncio import Redis
+                from redis.asyncio import BlockingConnectionPool, Redis
 
-                self._client = Redis.from_url(
+                max_connections = max(
+                    16,
+                    int(os.getenv("ARENA_REDIS_MAX_CONNECTIONS", "256")),
+                )
+                pool_timeout = max(
+                    0.5,
+                    float(os.getenv("ARENA_REDIS_POOL_TIMEOUT_SECONDS", "10")),
+                )
+                pool = BlockingConnectionPool.from_url(
                     self.url,
+                    max_connections=max_connections,
+                    timeout=pool_timeout,
                     encoding="utf-8",
                     decode_responses=True,
-                    socket_connect_timeout=1.5,
-                    socket_timeout=2.0,
+                    socket_connect_timeout=max(
+                        1.5,
+                        float(
+                            os.getenv(
+                                "ARENA_REDIS_CONNECT_TIMEOUT_SECONDS",
+                                "3",
+                            )
+                        ),
+                    ),
+                    socket_timeout=max(
+                        2.0,
+                        float(os.getenv("ARENA_REDIS_SOCKET_TIMEOUT_SECONDS", "10")),
+                    ),
                     health_check_interval=15,
                 )
+                self._client = Redis.from_pool(pool)
             except Exception as exc:  # pragma: no cover - 선택 의존성 로드 실패
                 raise ArenaStoreUnavailable("Redis 클라이언트를 초기화할 수 없습니다.") from exc
         if time.monotonic() - self._last_ping_at >= 5:
-            try:
-                await self._client.ping()
-                self._last_ping_at = time.monotonic()
-            except Exception as exc:
-                self._last_ping_at = 0.0
-                raise ArenaStoreUnavailable("Redis 연결 장애로 신규 매칭을 중단했습니다.") from exc
+            async with self._ping_lock:
+                if time.monotonic() - self._last_ping_at >= 5:
+                    try:
+                        await self._client.ping()
+                        self._last_ping_at = time.monotonic()
+                    except Exception as exc:
+                        self._last_ping_at = 0.0
+                        raise ArenaStoreUnavailable(
+                            "Redis 연결 장애로 신규 매칭을 중단했습니다."
+                        ) from exc
         return self._client
 
     async def join(
@@ -171,10 +199,20 @@ class RedisArenaRepository:
 
     @asynccontextmanager
     async def match_lock(self, match_id: str) -> AsyncIterator[None]:
-        """필요 변수: 경기 ID. 답안 중복 제출과 상태 유실을 막는 분산 잠금을 제공한다."""
+        """필요 변수: 경기 ID·잠금 임대/대기 시간. 답안 중복 제출과 상태 유실을 막는 분산 잠금을 제공한다."""
 
         redis = await self._redis()
-        lock = redis.lock(f"arena:lock:{match_id}", timeout=8, blocking_timeout=3)
+        lock = redis.lock(
+            f"arena:lock:{match_id}",
+            timeout=max(
+                8.0,
+                float(os.getenv("ARENA_REDIS_LOCK_TTL_SECONDS", "30")),
+            ),
+            blocking_timeout=max(
+                3.0,
+                float(os.getenv("ARENA_REDIS_LOCK_WAIT_SECONDS", "10")),
+            ),
+        )
         acquired = await lock.acquire()
         if not acquired:
             raise ArenaStoreUnavailable("경기 상태 잠금을 획득하지 못했습니다.")

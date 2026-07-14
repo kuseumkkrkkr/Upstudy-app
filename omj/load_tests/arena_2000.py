@@ -14,6 +14,10 @@ from typing import Any
 import httpx
 import websockets
 
+LOAD_HTTP_TIMEOUT_SECONDS = 120
+LOAD_WEBSOCKET_TIMEOUT_SECONDS = 60
+LOAD_TRANSPORT_RETRIES = 3
+
 
 def _load_tokens(path: Path, expected: int) -> list[str]:
     """필요 변수: UTF-8 토큰 파일과 목표 인원. 빈 줄을 제외하고 정확한 사용자 토큰 수를 검증한다."""
@@ -25,33 +29,45 @@ def _load_tokens(path: Path, expected: int) -> list[str]:
 
 
 async def _join_queue(client: httpx.AsyncClient, token: str, index: int) -> dict[str, Any]:
-    """필요 변수: HTTP 클라이언트·JWT·사용자 순번. 고유 멱등키로 1v1 OX 큐에 참가한다."""
+    """필요 변수: HTTP 클라이언트·JWT·사용자 순번. 같은 멱등키로 전송 오류만 재시도하며 큐에 참가한다."""
 
-    response = await client.post(
-        "/arena/queue/join",
-        headers={"Authorization": f"Bearer {token}"},
-        json={"queue_type": "duel_ox", "idempotency_key": f"load-join-{index}-{uuid.uuid4().hex}"},
-    )
-    response.raise_for_status()
-    return response.json()
+    idempotency_key = f"load-join-{index}-{uuid.uuid4().hex}"
+    for attempt in range(LOAD_TRANSPORT_RETRIES):
+        try:
+            response = await client.post(
+                "/arena/queue/join",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"queue_type": "duel_ox", "idempotency_key": idempotency_key},
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.TransportError:
+            if attempt + 1 >= LOAD_TRANSPORT_RETRIES:
+                raise
+            await asyncio.sleep(0.25 * (attempt + 1))
+    raise RuntimeError("큐 참가 전송 재시도 상태가 올바르지 않습니다.")
 
 
 async def _active_match(client: httpx.AsyncClient, token: str) -> str:
-    """필요 변수: HTTP 클라이언트와 JWT. 매칭 성립까지 캐시 없는 요약 API를 제한 시간 동안 조회한다."""
+    """필요 변수: HTTP 클라이언트와 JWT. 일시 전송 오류를 건너뛰며 캐시 없는 요약 API를 조회한다."""
 
-    deadline = time.monotonic() + 60
+    deadline = time.monotonic() + LOAD_HTTP_TIMEOUT_SECONDS
     while time.monotonic() < deadline:
-        response = await client.get(
-            "/arena/summary",
-            headers={"Authorization": f"Bearer {token}"},
-            params={"load_nonce": uuid.uuid4().hex},
-        )
+        try:
+            response = await client.get(
+                "/arena/summary",
+                headers={"Authorization": f"Bearer {token}"},
+                params={"load_nonce": uuid.uuid4().hex},
+            )
+        except httpx.TransportError:
+            await asyncio.sleep(0.25)
+            continue
         response.raise_for_status()
         match_id = response.json().get("active_match_id")
         if match_id:
             return str(match_id)
         await asyncio.sleep(0.2)
-    raise TimeoutError("60초 안에 매칭이 성립하지 않았습니다.")
+    raise TimeoutError(f"{LOAD_HTTP_TIMEOUT_SECONDS}초 안에 매칭이 성립하지 않았습니다.")
 
 
 async def _socket_worker(
@@ -64,11 +80,18 @@ async def _socket_worker(
     """필요 변수: WS 주소·JWT·경기·순번·2,000 연결 장벽. 동일 답안을 두 번 보내 멱등 시도 횟수를 비교한다."""
 
     uri = f"{ws_base}/ws/arena?token={token}&match_id={match_id}"
-    async with websockets.connect(uri, open_timeout=15, ping_interval=20, max_size=2**20) as socket:
+    async with websockets.connect(
+        uri,
+        open_timeout=LOAD_WEBSOCKET_TIMEOUT_SECONDS,
+        ping_interval=20,
+        max_size=2**20,
+    ) as socket:
         await ready.wait()
         question_id = ""
         while not question_id:
-            event = json.loads(await asyncio.wait_for(socket.recv(), timeout=20))
+            event = json.loads(
+                await asyncio.wait_for(socket.recv(), timeout=LOAD_WEBSOCKET_TIMEOUT_SECONDS)
+            )
             if event.get("type") == "match_state":
                 questions = event.get("data", {}).get("questions", [])
                 if questions:
@@ -91,7 +114,9 @@ async def _next_answer_result(socket: Any) -> dict[str, Any]:
     """필요 변수: 열린 WebSocket. 상태 이벤트를 건너뛰고 다음 답안 결과만 반환한다."""
 
     while True:
-        event = json.loads(await asyncio.wait_for(socket.recv(), timeout=20))
+        event = json.loads(
+            await asyncio.wait_for(socket.recv(), timeout=LOAD_WEBSOCKET_TIMEOUT_SECONDS)
+        )
         if event.get("type") == "answer_result":
             return dict(event["data"])
         if event.get("type") == "error":
@@ -103,7 +128,7 @@ async def run(base_url: str, tokens_path: Path, connections: int) -> None:
 
     tokens = _load_tokens(tokens_path, connections)
     limits = httpx.Limits(max_connections=connections + 100, max_keepalive_connections=200)
-    timeout = httpx.Timeout(30)
+    timeout = httpx.Timeout(LOAD_HTTP_TIMEOUT_SECONDS)
     async with httpx.AsyncClient(base_url=base_url, limits=limits, timeout=timeout) as client:
         await asyncio.gather(*(_join_queue(client, token, index) for index, token in enumerate(tokens)))
         match_ids = await asyncio.gather(*(_active_match(client, token) for token in tokens))
