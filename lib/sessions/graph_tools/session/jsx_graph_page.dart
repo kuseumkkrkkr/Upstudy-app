@@ -9,13 +9,14 @@ import 'package:s11/sessions/graph_tools/shared/aiflow_graph_expression.dart';
 import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/theme/app_colors.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
-const _kGreen = AppColors.primary;
-const _kBorder = Color(0xFFE2E7E2);
-const _kMuted = Color(0xFF67796D);
+const _kGreen = Color(0xFF202022);
+const _kBorder = Color(0xFFE1E1E4);
+const _kMuted = Color(0xFF77777D);
 const _kSurface = Colors.white;
-const _kSurfaceTint = Color(0xFFF4F7F3);
+const _kSurfaceTint = Color(0xFFF5F5F7);
 const _kPalette = <Color>[
   Color(0xFF2F7CF6),
   Color(0xFFDD5F34),
@@ -35,6 +36,7 @@ class JsxGraphPage extends StatefulWidget {
 }
 
 class _JsxGraphPageState extends State<JsxGraphPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final List<_GraphItemDraft> _drafts = <_GraphItemDraft>[];
   final List<_GraphParameterDraft> _parameters = <_GraphParameterDraft>[];
 
@@ -218,7 +220,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     final isLinux = !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.background,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
@@ -264,16 +268,42 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     );
   }
 
+  /// 필요한 변수는 현재 Scaffold·Navigator와 예제 선택 콜백이다.
+  /// 작동 원리는 HTML처럼 전역 앱 바와 그래프 전용 뒤로가기·예제 바를 두 단으로 분리하는 것이다.
   Widget _buildHeader() {
-    return Ios26TopBar(
-      brandColor: _kGreen,
-      title: 'AIFlow',
-      onBack: () => Navigator.of(context).maybePop(),
-      trailingIcons: [
-        Ios26ActionIcon(
-          icon: Icons.info_outline_rounded,
-          label: '예제',
-          onTap: _showInfoDialog,
+    return Column(
+      children: [
+        Ios26TopBar(
+          brandColor: Colors.black,
+          showLevelIndicator: false,
+          onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+          items: const [],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 0),
+          child: _SurfaceCard(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: '그래프 닫기',
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.chevron_left_rounded),
+                ),
+                const SizedBox(width: 4),
+                const Text(
+                  '그래프 그리기',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+                const Spacer(),
+                OutlinedButton.icon(
+                  onPressed: _showInfoDialog,
+                  icon: const Icon(Icons.info_outline_rounded, size: 17),
+                  label: const Text('예제'),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -284,18 +314,57 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       padding: EdgeInsets.zero,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(26),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FBF8),
-            border: Border.all(color: _kBorder),
-          ),
-          child: _catalogDialogOpen
-              ? const _GraphHiddenWhileDialogOpen()
-              : isLinux
-              ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
-              : widget.embedEnabled
-              ? buildJsxGraphEmbed(_buildDocument())
-              : const _GraphEmbedDisabledForTesting(),
+        child: Column(
+          children: [
+            Container(
+              height: 60,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: _kBorder)),
+              ),
+              child: Row(
+                children: [
+                  const Text(
+                    '좌표평면',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                  const Spacer(),
+                  for (final icon in const [
+                    Icons.add,
+                    Icons.remove,
+                    Icons.home_outlined,
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(left: 7),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF6F6F8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _kBorder),
+                        ),
+                        child: Icon(icon, size: 20),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(color: Color(0xFFFAFAFB)),
+                child: _catalogDialogOpen
+                    ? const _GraphHiddenWhileDialogOpen()
+                    : isLinux
+                    ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
+                    : widget.embedEnabled
+                    ? buildJsxGraphEmbed(_buildDocument())
+                    : const _GraphEmbedDisabledForTesting(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1396,17 +1465,126 @@ class _GraphEmbedDisabledForTesting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        '그래프 임베드 비활성화',
-        style: TextStyle(
-          color: _kMuted,
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
+    return Stack(
+      children: [
+        const Positioned.fill(
+          child: CustomPaint(painter: _GraphPreviewPainter()),
         ),
-      ),
+        Positioned(
+          right: 14,
+          bottom: 14,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: _kBorder),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('━  f(x)=a(x-h)²+k', style: TextStyle(fontSize: 10)),
+                Text('┄  y=2x+1', style: TextStyle(fontSize: 10)),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
+}
+
+class _GraphPreviewPainter extends CustomPainter {
+  const _GraphPreviewPainter();
+
+  /// 필요한 변수는 좌표평면의 실제 캔버스 크기다.
+  /// 작동 원리는 네트워크 없는 감사에서도 격자·축·이차함수·직선을 HTML과 같은 흑백 선으로 그리는 것이다.
+  @override
+  void paint(Canvas canvas, Size size) {
+    final grid = Paint()
+      ..color = const Color(0xFFE7E7EA)
+      ..strokeWidth = 1;
+    for (double x = 0; x <= size.width; x += 24) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
+    }
+    for (double y = 0; y <= size.height; y += 24) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
+    }
+    final axis = Paint()
+      ..color = const Color(0xFF88888E)
+      ..strokeWidth = 1.3;
+    canvas.drawLine(
+      Offset(size.width * .48, 0),
+      Offset(size.width * .48, size.height),
+      axis,
+    );
+    canvas.drawLine(
+      Offset(0, size.height * .58),
+      Offset(size.width, size.height * .58),
+      axis,
+    );
+    final curve = Paint()
+      ..color = const Color(0xFF242426)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+    final path = Path();
+    for (var index = 0; index <= 120; index++) {
+      final t = index / 120;
+      final x = 20 + t * (size.width - 40);
+      final normalized = (t - .68) * 2.25;
+      final y = size.height * .22 + normalized * normalized * size.height * .5;
+      if (index == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(path, curve);
+    final line = Paint()
+      ..color = const Color(0xFF85858C)
+      ..strokeWidth = 3;
+    for (var index = 0; index < 18; index += 2) {
+      final start = index / 18;
+      final end = (index + 1) / 18;
+      canvas.drawLine(
+        Offset(
+          20 + start * (size.width - 40),
+          size.height * (.78 - start * .62),
+        ),
+        Offset(20 + end * (size.width - 40), size.height * (.78 - end * .62)),
+        line,
+      );
+    }
+    final points = <(Offset, String)>[
+      (Offset(size.width * .42, size.height * .47), 'A'),
+      (Offset(size.width * .64, size.height * .26), 'B'),
+    ];
+    for (final entry in points) {
+      final point = entry.$1;
+      canvas.drawCircle(point, 13, Paint()..color = Colors.white);
+      canvas.drawCircle(point, 11, Paint()..color = const Color(0xFF202022));
+      final label = TextPainter(
+        text: TextSpan(
+          text: entry.$2,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      label.paint(
+        canvas,
+        Offset(point.dx - label.width / 2, point.dy - label.height / 2),
+      );
+    }
+  }
+
+  /// 필요한 변수는 이전 페인터 참조다.
+  /// 작동 원리는 고정 시안 그래프이므로 크기 변경 외에는 다시 그리지 않는 것이다.
+  @override
+  bool shouldRepaint(covariant _GraphPreviewPainter oldDelegate) => false;
 }
 
 class _PracticePanel extends StatelessWidget {

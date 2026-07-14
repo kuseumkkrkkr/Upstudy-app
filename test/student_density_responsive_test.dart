@@ -22,6 +22,8 @@ import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
+import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -575,6 +577,47 @@ void main() {
     await tester.drag(find.byType(ListView).first, const Offset(0, -650));
     await tester.pump();
     expect(find.text('친구 상태'), findsOneWidget);
+  });
+
+  testWidgets('500px 학습 도구는 HTML 세 모달 카드와 타이머 실행을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/study-center': (_) => const SizedBox.shrink()},
+        home: const StudentLearningToolsPage(),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('LEARNING TOOLS'), findsOneWidget);
+    expect(find.text('빠른 노트'), findsOneWidget);
+    expect(find.text('집중 타이머'), findsOneWidget);
+    expect(find.text('집중 모드'), findsOneWidget);
+    await tester.tap(find.text('집중 타이머'));
+    await tester.pumpAndSettle();
+    expect(find.text('스톱워치'), findsOneWidget);
+    expect(find.text('타이머'), findsWidgets);
+  });
+
+  testWidgets('500px 채팅은 HTML 실시간 대화 카드와 전송 입력을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: StudentDirectChatPage(peerUsername: '이수학', preview: true),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('SOCIAL'), findsOneWidget);
+    expect(find.text('채팅'), findsOneWidget);
+    expect(find.text('오늘 일차함수 챌린지 같이 풀래?'), findsOneWidget);
+    expect(find.text('좋아! 8시에 시작하자.'), findsOneWidget);
+    expect(find.text('메시지 입력'), findsOneWidget);
+    expect(find.text('전송'), findsOneWidget);
   });
 
   testWidgets('500px 로그인은 HTML 복원 히어로와 학생 폼을 유지한다', (tester) async {

@@ -112,26 +112,6 @@ class _FriendRequest {
   }
 }
 
-typedef DirectMessageListener = void Function(DirectMessage message);
-
-class SocialMessageHub {
-  static final List<DirectMessageListener> _listeners = [];
-
-  static void addListener(DirectMessageListener listener) {
-    _listeners.add(listener);
-  }
-
-  static void removeListener(DirectMessageListener listener) {
-    _listeners.remove(listener);
-  }
-
-  static void dispatch(DirectMessage message) {
-    for (final listener in List<DirectMessageListener>.from(_listeners)) {
-      listener(message);
-    }
-  }
-}
-
 class _FriendRank {
   const _FriendRank({
     required this.rank,

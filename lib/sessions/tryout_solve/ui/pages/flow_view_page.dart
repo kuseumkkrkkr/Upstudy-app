@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/business/repositories/problem_bookmark_store.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
-import 'package:s11/shared/ui/app_bar/solve_header.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
@@ -47,6 +48,7 @@ class SharedMeta {
 }
 
 class _FlowViewPageState extends State<FlowViewPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final _FlowGraph _graph;
   _FlowNode? _selected;
   late final Map<String, _FlowNodeState> _nodeStates;
@@ -214,21 +216,15 @@ class _FlowViewPageState extends State<FlowViewPage> {
     final questAnswerRiddle = parseContentBlocks(questData['answer_riddle']);
     final allFormulas = questData['all_formulas'];
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.white,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Stack(
           children: [
             Column(
               children: [
-                SolveHeader(
-                  title: widget.title,
-                  onInfo: widget.sharedMode
-                      ? _toggleFormulaModal
-                      : _shareToGroupStudy,
-                  infoIcon: widget.sharedMode
-                      ? Icons.info_outline
-                      : Icons.share_outlined,
-                ),
+                _buildFlowChrome(),
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -297,6 +293,85 @@ class _FlowViewPageState extends State<FlowViewPage> {
           ],
         ),
       ),
+    );
+  }
+
+  /// 필요한 변수는 공유 모드·공유/북마크 콜백과 현재 Navigator다.
+  /// 작동 원리는 HTML의 전역 상단 바 아래에 SOLUTION FLOW 제목과 두 주요 행동을 배치하는 것이다.
+  Widget _buildFlowChrome() {
+    return Column(
+      children: [
+        Ios26TopBar(
+          brandColor: Colors.black,
+          showLevelIndicator: false,
+          onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+          items: const [],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 22, 14, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'SOLUTION FLOW',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.7,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Flow 분석',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '제출 결과를 짧게 확인한 뒤 기준 분기형 Flow에서 틀린 단계와 정답 풀이를 분석합니다.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.black45,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: widget.sharedMode
+                          ? _toggleFormulaModal
+                          : _shareToGroupStudy,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(46),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(widget.sharedMode ? '공식 정보' : '그룹에 공유'),
+                    ),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _bookmarkProblem,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF202022),
+                        minimumSize: const Size.fromHeight(46),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text('문제 북마크'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -935,7 +1010,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
   }
 }
 
-class _FlowCanvas extends StatelessWidget {
+class _FlowCanvas extends StatefulWidget {
   final _FlowGraph graph;
   final _FlowNode? selected;
   final Map<String, _FlowNodeState> nodeStates;
@@ -949,54 +1024,87 @@ class _FlowCanvas extends StatelessWidget {
   });
 
   @override
+  State<_FlowCanvas> createState() => _FlowCanvasState();
+}
+
+class _FlowCanvasState extends State<_FlowCanvas> {
+  final TransformationController _controller = TransformationController();
+  Size? _initializedViewport;
+
+  /// 필요한 변수는 확대·이동 변환 컨트롤러다.
+  /// 작동 원리는 Flow 화면 종료 시 컨트롤러 리스너를 정리한다.
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// 필요한 변수는 현재 뷰포트 폭과 그래프 전체 크기다.
+  /// 작동 원리는 60% 축척에서 루트 노드가 중앙에 오도록 첫 변환만 계산하고 이후 사용자 이동은 보존한다.
+  @override
   Widget build(BuildContext context) {
-    return InteractiveViewer(
-      boundaryMargin: const EdgeInsets.all(200),
-      constrained: false,
-      minScale: 0.6,
-      maxScale: 2.5,
-      child: SizedBox(
-        width: graph.size.width,
-        height: graph.size.height,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _FlowEdgePainter(
-                  edges: graph.edges,
-                  positions: graph.positions,
-                  nodeSizes: graph.nodeSizes,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final viewport = Size(constraints.maxWidth, constraints.maxHeight);
+        if (_initializedViewport != viewport) {
+          const initialScale = 0.6;
+          final dx =
+              (viewport.width - widget.graph.size.width * initialScale) / 2;
+          _controller.value = Matrix4.diagonal3Values(
+            initialScale,
+            initialScale,
+            1,
+          )..setTranslationRaw(dx, 8, 0);
+          _initializedViewport = viewport;
+        }
+        return InteractiveViewer(
+          transformationController: _controller,
+          boundaryMargin: const EdgeInsets.all(200),
+          constrained: false,
+          minScale: 0.6,
+          maxScale: 2.5,
+          child: SizedBox(
+            width: widget.graph.size.width,
+            height: widget.graph.size.height,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _FlowEdgePainter(
+                      edges: widget.graph.edges,
+                      positions: widget.graph.positions,
+                      nodeSizes: widget.graph.nodeSizes,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            ...graph.nodes.values.map((node) {
-              final position = graph.positions[node.id];
-              if (position == null) {
-                return const SizedBox.shrink();
-              }
-              final nodeSize =
-                  graph.nodeSizes[node.id] ??
-                  const Size(
-                    _FlowGraphBuilder.nodeWidth,
-                    _FlowGraphBuilder.nodeMinHeight,
+                ...widget.graph.nodes.values.map((node) {
+                  final position = widget.graph.positions[node.id];
+                  if (position == null) return const SizedBox.shrink();
+                  final nodeSize =
+                      widget.graph.nodeSizes[node.id] ??
+                      const Size(
+                        _FlowGraphBuilder.nodeWidth,
+                        _FlowGraphBuilder.nodeMinHeight,
+                      );
+                  return Positioned(
+                    left: position.dx,
+                    top: position.dy,
+                    width: nodeSize.width,
+                    height: nodeSize.height,
+                    child: _FlowNodeCard(
+                      node: node,
+                      selected: widget.selected?.id == node.id,
+                      state:
+                          widget.nodeStates[node.id] ?? _FlowNodeState.normal,
+                      onTap: () => widget.onNodeTap(node),
+                    ),
                   );
-              final isSelected = selected?.id == node.id;
-              return Positioned(
-                left: position.dx,
-                top: position.dy,
-                width: nodeSize.width,
-                height: nodeSize.height,
-                child: _FlowNodeCard(
-                  node: node,
-                  selected: isSelected,
-                  state: nodeStates[node.id] ?? _FlowNodeState.normal,
-                  onTap: () => onNodeTap(node),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
+                }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

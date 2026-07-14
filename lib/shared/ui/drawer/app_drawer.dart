@@ -117,6 +117,12 @@ class AppDrawer extends StatelessWidget {
                     subtitle: '검색과 필터로 상품 찾기',
                     onTap: () => _openRoute(context, '/marketplace'),
                   ),
+                  _DrawerItem(
+                    icon: Icons.add_box_outlined,
+                    title: '학습 도구',
+                    subtitle: '노트·타이머·집중 모드',
+                    onTap: () => _openRoute(context, '/tools'),
+                  ),
                   const Divider(height: 22, indent: 24, endIndent: 24),
                   _DrawerItem(
                     icon: Icons.smart_toy_outlined,

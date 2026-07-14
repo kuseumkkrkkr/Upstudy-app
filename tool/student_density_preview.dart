@@ -24,6 +24,10 @@ import 'package:s11/features/group_study/group_list_page.dart';
 import 'package:s11/features/group_study/group_detail_page.dart';
 import 'package:s11/features/group_study/student_academy_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
+import 'package:s11/sessions/tryout_solve/ui/pages/flow_view_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
+import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
+import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/services/api/api_client.dart';
@@ -164,6 +168,50 @@ ProblemSolveConfig _previewSolveConfig() => const ProblemSolveConfig(
   ],
 );
 
+/// 필요한 변수는 HTML Flow 시안의 문제·풀이 단계·분기다.
+/// 작동 원리는 실제 Flow 그래프가 정답·오답·후속 노드를 네트워크 없이 렌더하도록 고정 문제를 만든다.
+Map<String, dynamic> _previewFlowQuest() => {
+  'data': {
+    'quest_id': 'preview-flow-linear',
+    'quest_title': '두 점을 지나는 일차함수의 식을 구하세요.',
+    'codebase_id': 21,
+    'seed': 2407,
+    'hash_tag': ['일차함수', '기울기'],
+    'answer_riddle': 'y = 2x + 1',
+    'all_formulas': 'a = (7-3)/(3-1) = 2, b = 1',
+  },
+  'solves': [
+    {
+      'flow': 'STEP 01\n조건 해석\n(1, 3), (3, 7)',
+      'hash_tag': ['좌표'],
+      'hint_riddle': 'x와 y의 변화량을 각각 표시해 보세요.',
+      'branches': [
+        [
+          {
+            'flow': 'STEP 02-A\n변화량 순서 확인\nΔy / Δx = 2 / 4',
+            'hash_tag': ['부호'],
+          },
+        ],
+        [
+          {
+            'flow': 'STEP 02-B\n기울기 계산\n(7-3) / (3-1) = 2',
+            'hash_tag': ['기울기'],
+          },
+        ],
+      ],
+    },
+    {
+      'flow': 'STEP 03\n절편 구하기\n3 = 2 × 1 + b',
+      'hash_tag': ['y절편'],
+      'answer_riddle': 'y = 2x + 1',
+    },
+    {
+      'flow': 'STEP 04\n다른 점으로 검산\n7 = 2 × 3 + 1',
+      'hash_tag': ['검산'],
+    },
+  ],
+};
+
 /// 필요한 변수는 HTML 교재 리더에 표시할 장·절·본문이다.
 /// 작동 원리는 실제 교재 모델을 고정 입력으로 만들어 페이지 이동·필기·북마크 UI를 네트워크 없이 검증하는 것이다.
 BookData _previewTextbook() => const BookData(
@@ -240,6 +288,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
     final action = Uri.base.queryParameters['action'] ?? '';
     final courses = _previewCourses();
     final screenHome = switch (screen) {
+      'dashboard' => const MainStudentPage(username: '김학생'),
       'courses' => CourseCatalogPage(
         courseFeedLoader: ({required keyword, recommend}) async {
           if (keyword.trim().isEmpty) return courses;
@@ -260,6 +309,20 @@ class StudentDensityPreviewApp extends StatelessWidget {
       'wrong-answers' => const WrongAnswerListPage(),
       'level-test' => const LevelTestHomePage(),
       'solve' => BuildpageWidget(config: _previewSolveConfig()),
+      'flow' => FlowViewPage(
+        quest: _previewFlowQuest(),
+        title: '일차함수 Flow 분석',
+        stepCorrectness: const [
+          {'correct': true},
+          {'correct': false},
+          {'correct': true},
+          {'correct': true},
+          {'correct': false},
+        ],
+      ),
+      'tools' => const StudentLearningToolsPage(),
+      'graph' => const JsxGraphPage(embedEnabled: false),
+      'chat' => const StudentDirectChatPage(peerUsername: '이수학', preview: true),
       'textbooks' => const BookWidget(),
       'textbook-reader' => TeacherCourseTextbookReaderPage(
         courseId: 'preview-course',

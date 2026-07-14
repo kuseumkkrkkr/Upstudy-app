@@ -17,6 +17,7 @@ import 'package:s11/features/group_study/group_study.dart';
 import 'package:s11/features/course_runtime/course_runtime_page.dart';
 import 'package:s11/features/flow_access/flow_access_page.dart';
 import 'package:s11/features/arena/arena_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
@@ -46,6 +47,7 @@ class AppRoutes {
   static const String social = '/social';
   static const String marketplace = '/marketplace';
   static const String arena = '/arena';
+  static const String tools = '/tools';
 
   // ─── Learning ───
   static const String studentRuntime = StudentRuntimePage.routeName;
@@ -105,6 +107,7 @@ Map<String, WidgetBuilder> appRoutes(
     AppRoutes.social: (_) => const SoWidget(),
     AppRoutes.marketplace: (_) => const MarketplacePage(),
     AppRoutes.arena: (_) => const ArenaPage(),
+    AppRoutes.tools: (_) => const StudentLearningToolsPage(),
 
     // Learning
     AppRoutes.studentRuntime: (_) => const StudentRuntimePage(),

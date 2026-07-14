@@ -1813,7 +1813,9 @@ class _ChatMessage {
 class _MessengerDialog extends StatefulWidget {
   const _MessengerDialog({
     required this.info,
+    // ignore: unused_element_parameter
     this.onMessageSent,
+    // ignore: unused_element_parameter
     this.onDeleteThread,
   });
 

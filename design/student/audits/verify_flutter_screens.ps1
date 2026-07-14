@@ -21,9 +21,9 @@ $screens = @(
   @{ Id = 'group-detail'; File = 'lib/features/group_study/group_detail_page.dart'; Marker = 'class GroupDetailPage' },
   @{ Id = 'academy'; File = 'lib/features/group_study/student_academy_page.dart'; Marker = 'class StudentAcademyPage' },
   @{ Id = 'friends'; File = 'lib/sessions/friend/ui/friend_screen.dart'; Marker = 'class SoWidget' },
-  @{ Id = 'chat'; File = 'lib/sessions/learning_tools/ui/pages/server_chat_page.dart'; Marker = 'class ServerChatPage' },
+  @{ Id = 'chat'; File = 'lib/sessions/friend/ui/student_direct_chat_page.dart'; Marker = 'class StudentDirectChatPage' },
   @{ Id = 'marketplace'; File = 'lib/sessions/marketplace/ui/pages/marketplace_page.dart'; Marker = 'class MarketplacePage' },
-  @{ Id = 'tools'; File = 'lib/sessions/learning_tools/ui/pages/notepad_page.dart'; Marker = 'class NotepadPage' },
+  @{ Id = 'tools'; File = 'lib/sessions/learning_tools/ui/pages/student_learning_tools_page.dart'; Marker = 'class StudentLearningToolsPage' },
   @{ Id = 'graph'; File = 'lib/sessions/graph_tools/session/jsx_graph_page.dart'; Marker = 'class JsxGraphPage' },
   @{ Id = 'flow'; File = 'lib/sessions/tryout_solve/ui/pages/flow_view_page.dart'; Marker = 'class FlowViewPage' },
   @{ Id = 'profile'; File = 'lib/sessions/auth/ui/pages/profile_page.dart'; Marker = 'class ProfilePage' },
@@ -43,6 +43,16 @@ foreach ($screen in $screens) {
   }
   if ($source -match 'data-screen-contract|FEATURE_LEDGER|ENDPOINT_LEDGER') {
     throw "Development ledger leaked into Flutter screen: $($screen.Id)"
+  }
+}
+
+# 필요 변수: 실제 브라우저 감사 진입점과 25개 화면 ID다.
+# 작동 원리: 파일 표식만 존재하고 렌더 진입이 빠지는 회귀를 막기 위해 모든 ID의 switch 매핑을 확인한다.
+$previewTool = $utf8.GetString([System.IO.File]::ReadAllBytes((Join-Path $root 'tool/student_density_preview.dart')))
+foreach ($screen in $screens) {
+  $mapping = "'$($screen.Id)' =>"
+  if ($previewTool -notmatch [regex]::Escape($mapping)) {
+    throw "Missing Flutter browser preview route: $($screen.Id)"
   }
 }
 

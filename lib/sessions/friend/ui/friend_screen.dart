@@ -1733,15 +1733,17 @@ class _SoWidgetState extends State<SoWidget> {
 
   void _openMessageThread(_MessageInfo info) {
     _markMessagesRead(thread: info.name);
-    _showBlurDialog(
-      _MessengerDialog(
-        info: info,
-        onMessageSent: (message) => _upsertThreadPreview(
-          info.name,
-          message.text,
-          at: message.createdAt,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StudentDirectChatPage(
+          peerUsername: info.name,
+          onMessageSent: (message) => _upsertThreadPreview(
+            info.name,
+            message.text,
+            at: message.createdAt,
+          ),
+          onThreadDeleted: () => _removeThread(info.name),
         ),
-        onDeleteThread: () => _removeThread(info.name),
       ),
     );
   }
