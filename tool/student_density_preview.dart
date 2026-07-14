@@ -12,6 +12,7 @@ import 'package:s11/sessions/textbook/ui/pages/docx_box.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
+import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/data/models/textbook.dart';
@@ -183,6 +184,29 @@ BookData _previewTextbook() => const BookData(
   ],
 );
 
+/// 필요한 변수는 아레나 프로필과 네 대결 큐다.
+/// 작동 원리는 실제 아레나 위젯에 운영 응답과 같은 맵을 주입해 네트워크 없이 랭크 화면을 검증하는 것이다.
+Map<String, dynamic> _previewArenaSummary() => {
+  'profile': {'tier': 'B', 'rating': 1580, 'wins': 18, 'losses': 9, 'draws': 2},
+  'queues': [
+    for (final queue in [
+      ('duel_exam', 'B', 1580, 18),
+      ('duel_ox', 'A', 1810, 9),
+      ('team_exam', 'C', 1420, 24),
+      ('team_ox', 'B', 1550, 12),
+    ])
+      {
+        'queue_type': queue.$1,
+        'tier': queue.$2,
+        'rating': queue.$3,
+        'wins': 18,
+        'losses': 9,
+        'draws': 2,
+        'estimated_wait_seconds': queue.$4,
+      },
+  ],
+};
+
 /// 필요한 변수는 브라우저 viewport와 선택적인 width/height 쿼리다.
 /// 작동 원리: 실제 학생 홈을 그대로 실행하고 논리 화면 크기만 고정해 HTML 시안과 같은 좌표계로 캡처한다.
 void main() {
@@ -241,6 +265,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
         pageCountHint: 5,
         initialPageIndex: 1,
       ),
+      'arena' => ArenaPage(initialSummary: _previewArenaSummary()),
       _ => const MainStudentPage(username: '김학생'),
     };
     final action = Uri.base.queryParameters['action'] ?? '';

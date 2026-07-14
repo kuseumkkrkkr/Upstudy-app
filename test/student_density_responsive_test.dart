@@ -11,6 +11,7 @@ import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
+import 'package:s11/features/arena/arena_page.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -342,5 +343,55 @@ void main() {
     await tester.tap(find.text('2 / 5'));
     await tester.pumpAndSettle();
     expect(find.text('페이지 미리보기'), findsOneWidget);
+  });
+
+  testWidgets('500px 아레나는 HTML 랭크 프로필과 네 대결 큐를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ArenaPage(
+          initialSummary: {
+            'profile': {
+              'tier': 'B',
+              'rating': 1580,
+              'wins': 18,
+              'losses': 9,
+              'draws': 2,
+            },
+            'queues': [
+              for (final type in [
+                'duel_exam',
+                'duel_ox',
+                'team_exam',
+                'team_ox',
+              ])
+                {
+                  'queue_type': type,
+                  'tier': 'B',
+                  'rating': 1580,
+                  'wins': 18,
+                  'losses': 9,
+                  'draws': 2,
+                  'estimated_wait_seconds': 12,
+                },
+            ],
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('RANKED MATCH'), findsOneWidget);
+    expect(find.text('실력으로 증명하는\n20분.'), findsOneWidget);
+    expect(find.text('1,580'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -700));
+    await tester.pump();
+    expect(find.text('대결 방식 선택'), findsOneWidget);
+    expect(find.text('1v1 시험 대결'), findsOneWidget);
+    expect(find.text('2v2 OX 대결'), findsOneWidget);
   });
 }

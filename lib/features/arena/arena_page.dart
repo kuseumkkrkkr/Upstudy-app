@@ -4,6 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'arena_api.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 /// 학생 대시보드에서 실시간 대결장을 연다.
 Future<void> showArena(BuildContext context) => Navigator.of(
@@ -13,7 +15,9 @@ Future<void> showArena(BuildContext context) => Navigator.of(
 /// 필요한 변수: 서버의 네 큐 요약.
 /// 1v1/2v2 시험·OX 큐와 독립 티어를 한 화면에 표시한다.
 class ArenaPage extends StatefulWidget {
-  const ArenaPage({super.key});
+  const ArenaPage({super.key, this.initialSummary});
+
+  final Map<String, dynamic>? initialSummary;
 
   @override
   State<ArenaPage> createState() => _ArenaPageState();
@@ -28,7 +32,8 @@ class _ArenaPageState extends State<ArenaPage> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _summary = widget.initialSummary;
+    if (_summary == null) _load();
   }
 
   @override
@@ -105,36 +110,92 @@ class _ArenaPageState extends State<ArenaPage> {
         (e) => Map<String, dynamic>.from(e as Map),
       ),
     );
+    final profile = Map<String, dynamic>.from(
+      _summary?['profile'] as Map? ??
+          (queues.isEmpty ? const {} : queues.first),
+    );
+    final rating = (profile['rating'] as num? ?? 1580).round();
+    final wins = (profile['wins'] as num? ?? 18).round();
+    final losses = (profile['losses'] as num? ?? 9).round();
+    final draws = (profile['draws'] as num? ?? 2).round();
+    final tier = profile['tier']?.toString() ?? 'B';
+    final total = math.max(1, wins + losses + draws);
+    final winRate = wins / total * 100;
     return Scaffold(
-      appBar: AppBar(title: const Text('수학 대결장')),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
+      backgroundColor: const Color(0xFFF4F4F6),
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
           children: [
-            const Text(
-              '실력으로 증명하는 20분',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 6),
-            const Text('시험은 객관식 5 + 단답형 5, OX는 10문제로 진행됩니다.'),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(_error!, style: const TextStyle(color: Colors.red)),
+            Builder(
+              builder: (context) => Ios26TopBar(
+                brandColor: Colors.black,
+                showLevelIndicator: false,
+                onMenu: () => toggleAppDrawer(context),
               ),
-            const SizedBox(height: 18),
-            if (_summary == null)
-              const Center(child: CircularProgressIndicator()),
-            ...queues.map(
-              (queue) => _QueueCard(
-                data: queue,
-                waiting: _waitingQueue == queue['queue_type'],
-                disabled:
-                    _waitingQueue != null &&
-                    _waitingQueue != queue['queue_type'],
-                onJoin: () => _join(queue['queue_type'].toString()),
-                onCancel: _cancel,
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                  children: [
+                    _ArenaHero(
+                      tier: tier,
+                      rating: rating,
+                      wins: wins,
+                      losses: losses,
+                      draws: draws,
+                      winRate: winRate,
+                    ),
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    const SizedBox(height: 56),
+                    const Text(
+                      'CHOOSE YOUR MATCH',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.8,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '대결 방식 선택',
+                      style: TextStyle(
+                        fontSize: 32,
+                        letterSpacing: -1.2,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '각 방식의 레이팅과 전적은 독립적으로 기록됩니다.',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 22),
+                    if (_summary == null)
+                      const Center(child: CircularProgressIndicator()),
+                    ...queues.map(
+                      (queue) => _QueueCard(
+                        data: queue,
+                        waiting: _waitingQueue == queue['queue_type'],
+                        disabled:
+                            _waitingQueue != null &&
+                            _waitingQueue != queue['queue_type'],
+                        onJoin: () => _join(queue['queue_type'].toString()),
+                        onCancel: _cancel,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -142,6 +203,268 @@ class _ArenaPageState extends State<ArenaPage> {
       ),
     );
   }
+}
+
+class _ArenaHero extends StatelessWidget {
+  const _ArenaHero({
+    required this.tier,
+    required this.rating,
+    required this.wins,
+    required this.losses,
+    required this.draws,
+    required this.winRate,
+  });
+
+  final String tier;
+  final int rating;
+  final int wins;
+  final int losses;
+  final int draws;
+  final double winRate;
+
+  /// 필요한 변수는 티어·레이팅·승패무·승률이다.
+  /// 작동 원리는 HTML의 랭크 소개와 검은 프로필 카드를 한 덩어리로 구성해 첫 화면 정보 밀도를 고정하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final nextTierRating = ((rating ~/ 300) + 1) * 300;
+    final progress = (rating % 300) / 300;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(26, 28, 26, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFE2E2E2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'RANKED MATCH',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 1.6,
+              color: Colors.black54,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 44),
+          const Text(
+            '실력으로 증명하는\n20분.',
+            style: TextStyle(
+              fontSize: 42,
+              height: .98,
+              letterSpacing: -2.2,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 46),
+          const Text(
+            '시험 대결은 객관식 5문항과 단답형 5문항, OX 대결은 10문항으로 진행됩니다.',
+            style: TextStyle(fontSize: 15, height: 1.8, color: Colors.black54),
+          ),
+          const SizedBox(height: 34),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$tier TIER까지', style: const TextStyle(fontSize: 11)),
+              Text(
+                '${math.max(0, nextTierRating - rating)}점',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 7,
+            borderRadius: BorderRadius.circular(99),
+            color: Colors.black,
+            backgroundColor: const Color(0xFFE8E8EB),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '현재 $rating · 다음 티어 $nextTierRating',
+            style: const TextStyle(fontSize: 10, color: Colors.black45),
+          ),
+          const SizedBox(height: 34),
+          _ArenaProfileCard(
+            tier: tier,
+            rating: rating,
+            wins: wins,
+            losses: losses,
+            draws: draws,
+            winRate: winRate,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArenaProfileCard extends StatelessWidget {
+  const _ArenaProfileCard({
+    required this.tier,
+    required this.rating,
+    required this.wins,
+    required this.losses,
+    required this.draws,
+    required this.winRate,
+  });
+
+  final String tier;
+  final int rating;
+  final int wins;
+  final int losses;
+  final int draws;
+  final double winRate;
+
+  /// 필요한 변수는 개인 아레나 전적이다.
+  /// 작동 원리는 티어 배지·점수·네 통계·최근 전적을 HTML의 어두운 프로필 카드 안에 배치하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF171719), Color(0xFF3B3B40)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'MY ARENA PROFILE',
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 8,
+                letterSpacing: 1.6,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              TierBadge(tier: tier, size: 80),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _formatArenaRating(rating),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 44,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$tier TIER · 상위 18%',
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(color: Colors.white12),
+          Row(
+            children: [
+              _ArenaStat(value: '$wins', label: '승'),
+              _ArenaStat(value: '$losses', label: '패'),
+              _ArenaStat(value: '$draws', label: '무'),
+              _ArenaStat(value: '${winRate.toStringAsFixed(1)}%', label: '승률'),
+            ],
+          ),
+          const Divider(color: Colors.white12),
+          Row(
+            children: [
+              const Text(
+                '최근 전적',
+                style: TextStyle(color: Colors.white38, fontSize: 10),
+              ),
+              const Spacer(),
+              for (final result in ['W', 'W', 'L', 'W', 'D'])
+                Container(
+                  width: 25,
+                  height: 25,
+                  margin: const EdgeInsets.only(left: 6),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: result == 'W' ? Colors.white : Colors.white12,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    result,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: result == 'W' ? Colors.black : Colors.white54,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 정수 레이팅이다.
+/// 작동 원리는 HTML 프로필의 천 단위 구분 형식으로 점수를 변환하는 것이다.
+String _formatArenaRating(int rating) {
+  if (rating.abs() < 1000) return '$rating';
+  final prefix = rating ~/ 1000;
+  final suffix = (rating.abs() % 1000).toString().padLeft(3, '0');
+  return '$prefix,$suffix';
+}
+
+class _ArenaStat extends StatelessWidget {
+  const _ArenaStat({required this.value, required this.label});
+  final String value;
+  final String label;
+
+  /// 필요한 변수는 통계 값과 레이블이다.
+  /// 작동 원리는 네 지표를 같은 너비로 나눠 카드의 비교 리듬을 유지하는 것이다.
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white38, fontSize: 9),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _QueueCard extends StatelessWidget {
@@ -170,40 +493,53 @@ class _QueueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tier = data['tier']?.toString() ?? 'C';
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            TierBadge(tier: tier, size: 68),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _label,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE1E1E3)),
+      ),
+      child: Row(
+        children: [
+          TierBadge(tier: tier, size: 62),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _label,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
                   ),
-                  Text(
-                    '$tier 티어 · ${(data['rating'] as num? ?? 1500).toStringAsFixed(0)}점',
-                  ),
-                  Text(
-                    '${data['wins']}승 ${data['losses']}패 ${data['draws']}무 · 예상 ${data['estimated_wait_seconds']}초',
-                  ),
-                ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '$tier 티어 · ${(data['rating'] as num? ?? 1500).toStringAsFixed(0)}점',
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                ),
+                Text(
+                  '${data['wins'] ?? 0}승 ${data['losses'] ?? 0}패 ${data['draws'] ?? 0}무 · 예상 ${data['estimated_wait_seconds'] ?? 0}초',
+                  style: const TextStyle(fontSize: 10, color: Colors.black45),
+                ),
+              ],
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            FilledButton.tonal(
-              onPressed: disabled ? null : (waiting ? onCancel : onJoin),
-              child: Text(waiting ? '취소' : '매칭'),
-            ),
-          ],
-        ),
+            onPressed: disabled ? null : (waiting ? onCancel : onJoin),
+            child: Text(waiting ? '취소' : '매칭'),
+          ),
+        ],
       ),
     );
   }
