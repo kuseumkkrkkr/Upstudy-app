@@ -1553,6 +1553,8 @@ class ApiClient {
     );
   }
 
+  /// 필요한 변수는 POST 경로·JSON 본문·선택 parser와 교체 가능한 HTTP 클라이언트다.
+  /// 인증 헤더를 붙여 동일 전송 계층으로 보내므로 런타임 API도 네트워크 없이 계약 테스트할 수 있다.
   Future<ApiResponse<T>> _post<T>(
     String path,
     Map<String, dynamic> body, {
@@ -1561,7 +1563,11 @@ class ApiClient {
     await _ensureToken();
     final uri = ApiContract.uri(path);
     log('POST $uri', name: 'ApiClient');
-    final res = await http.post(uri, headers: _headers, body: jsonEncode(body));
+    final res = await _httpClient.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode(body),
+    );
     await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }

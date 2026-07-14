@@ -91,8 +91,9 @@ class Ios26TopBar extends StatelessWidget {
                   onPressed: onBack,
                 ),
                 const SizedBox(width: 2),
-              ] else ...[
+              ] else if (compact) ...[
                 IconButton(
+                  key: const ValueKey('student-mobile-menu'),
                   icon: Icon(Icons.menu_rounded, color: brandColor),
                   onPressed: onMenu,
                 ),
