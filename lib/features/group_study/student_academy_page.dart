@@ -7,6 +7,7 @@ import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/features/group_study/student_academy_details_dialog.dart';
 
 class StudentAcademyPage extends StatefulWidget {
   const StudentAcademyPage({
@@ -120,6 +121,24 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
+  /// 필요한 변수는 현재 학원·시간표·미리보기 여부다.
+  /// 작동 원리는 HTML에 정의된 학원 정보·출석·시간표·제출·보고서·스냅샷·그룹을 한 모달의 7개 탭으로 연다.
+  Future<void> _openAcademyDetails() async {
+    final academy = _academy;
+    if (academy == null) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => StudentAcademyDetailsDialog(
+        academyId: widget.academyId,
+        academyName: academy.name,
+        subtitle: academy.subtitle,
+        teacher: academy.teacher,
+        fallbackSchedule: _schedule,
+        preview: widget.initialAcademy != null,
+      ),
+    );
+  }
+
   /// 필요한 변수는 현재 학원·과제·출석·시간표 상태다.
   /// 작동 원리는 HTML의 학원 정보, 오늘 할 일, 이번 주 수업 순서로 한 개 학생 작업 스크롤을 구성하는 것이다.
   @override
@@ -181,7 +200,7 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
                           ),
                           const SizedBox(height: 16),
                           OutlinedButton(
-                            onPressed: () {},
+                            onPressed: _openAcademyDetails,
                             child: const Text('학원 정보'),
                           ),
                           const SizedBox(height: 12),

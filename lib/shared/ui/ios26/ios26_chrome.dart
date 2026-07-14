@@ -180,18 +180,26 @@ class Ios26TopBar extends StatelessWidget {
                       _TopCircleButton(
                         icon: Icons.search_rounded,
                         tooltip: '검색',
-                        onTap: onSearch,
+                        onTap:
+                            onSearch ?? () => _showStudentQuickSearch(context),
                       ),
                       const SizedBox(width: 8),
                       _TopCircleButton(
                         icon: Icons.notifications_none_rounded,
                         tooltip: '알림',
                         showBadge: true,
-                        onTap: onNotifications,
+                        onTap:
+                            onNotifications ??
+                            () => _showStudentNotifications(context),
                       ),
                       if (!compact) ...[
                         const SizedBox(width: 8),
-                        _CompactProfile(label: profileLabel, onTap: onProfile),
+                        _CompactProfile(
+                          label: profileLabel,
+                          onTap:
+                              onProfile ??
+                              () => Navigator.of(context).pushNamed('/profile'),
+                        ),
                       ],
                     ],
                     if (trailing != null)
@@ -224,6 +232,296 @@ class Ios26TopBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 필요한 변수는 현재 Navigator 문맥이다.
+/// 작동 원리는 HTML QUICK FIND와 같은 검색 시트를 열고 코스·교재·친구·마켓 명명 라우트로 연결하는 것이다.
+void _showStudentQuickSearch(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => const _StudentQuickSearchSheet(),
+  );
+}
+
+/// 필요한 변수는 현재 Navigator 문맥이다.
+/// 작동 원리는 시스템 공지와 친구 요청을 한 번에 조회하는 HTML 알림 센터 시트를 여는 것이다.
+void _showStudentNotifications(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => const _StudentNotificationsSheet(),
+  );
+}
+
+class _StudentQuickSearchSheet extends StatefulWidget {
+  const _StudentQuickSearchSheet();
+
+  /// 필요한 변수는 검색 시트 위젯이다.
+  /// 작동 원리는 입력값에 따라 네 개 핵심 학생 목적지를 즉시 필터링하는 상태를 만든다.
+  @override
+  State<_StudentQuickSearchSheet> createState() =>
+      _StudentQuickSearchSheetState();
+}
+
+class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
+  static const _destinations = <({String title, String detail, String route})>[
+    (title: '코스', detail: '수강 중·추천·완료 코스 찾기', route: '/courses'),
+    (title: '책가방', detail: '교재·시험지·북마크 찾기', route: '/bookbag'),
+    (title: '친구/소셜', detail: '친구·그룹·학원 찾기', route: '/social'),
+    (title: '마켓플레이스', detail: '문제·교재·태그 찾기', route: '/marketplace'),
+  ];
+  String _query = '';
+
+  /// 필요한 변수는 선택 목적지와 현재 시트 Navigator다.
+  /// 작동 원리는 시트를 먼저 닫고 루트 Navigator에서 공용 명명 라우트를 연다.
+  void _open(({String title, String detail, String route}) destination) {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    Navigator.of(context).pop();
+    navigator.pushNamed(destination.route);
+  }
+
+  /// 필요한 변수는 검색어와 네 목적지 메타다.
+  /// 작동 원리는 제목·설명에 포함되는 목적지만 HTML식 고밀도 목록으로 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final normalized = _query.trim().toLowerCase();
+    final visible = _destinations
+        .where(
+          (item) =>
+              normalized.isEmpty ||
+              '${item.title} ${item.detail}'.toLowerCase().contains(normalized),
+        )
+        .toList(growable: false);
+    return _StudentUtilitySheet(
+      kicker: 'QUICK FIND',
+      title: '전체 검색',
+      description: '코스, 교재, 문제, 친구를 현재 기능별 검색으로 연결합니다.',
+      children: [
+        TextField(
+          autofocus: true,
+          onChanged: (value) => setState(() => _query = value),
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.search_rounded),
+            hintText: '함수, 코스, 친구 검색',
+          ),
+        ),
+        const SizedBox(height: 14),
+        for (final item in visible)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              item.title,
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+            subtitle: Text(item.detail),
+            trailing: const Icon(Icons.arrow_forward_rounded),
+            onTap: () => _open(item),
+          ),
+        if (visible.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: Text('연결할 검색 화면이 없습니다.')),
+          ),
+      ],
+    );
+  }
+}
+
+class _StudentNotificationSnapshot {
+  const _StudentNotificationSnapshot({
+    required this.notices,
+    required this.friendRequests,
+  });
+
+  final List<StudyGroupNotice> notices;
+  final List<FriendRequest> friendRequests;
+}
+
+class _StudentNotificationsSheet extends StatefulWidget {
+  const _StudentNotificationsSheet();
+
+  /// 필요한 변수는 알림 센터 위젯이다.
+  /// 작동 원리는 한 번만 생성되는 공지·친구 요청 병렬 조회 Future를 보관하는 상태를 만든다.
+  @override
+  State<_StudentNotificationsSheet> createState() =>
+      _StudentNotificationsSheetState();
+}
+
+class _StudentNotificationsSheetState
+    extends State<_StudentNotificationsSheet> {
+  late final Future<_StudentNotificationSnapshot> _future = _load();
+
+  /// 필요한 변수는 전역 공지와 친구 요청 API다.
+  /// 작동 원리는 두 GET을 병렬 실행해 상단 바 클릭당 화면 갱신을 한 번으로 제한하는 것이다.
+  Future<_StudentNotificationSnapshot> _load() async {
+    final results = await Future.wait<Object>([
+      ApiClient.instance.listGlobalSystemNotices(limit: 8),
+      ApiClient.instance.listFriendRequests(),
+    ]);
+    return _StudentNotificationSnapshot(
+      notices: results[0] as List<StudyGroupNotice>,
+      friendRequests: results[1] as List<FriendRequest>,
+    );
+  }
+
+  /// 필요한 변수는 공지·친구 요청 비동기 결과다.
+  /// 작동 원리는 HTML LIVE STATUS처럼 요청 수와 최신 공지를 한 시트에 표시하고 실패는 재진입 가능한 안내로 남긴다.
+  @override
+  Widget build(BuildContext context) => _StudentUtilitySheet(
+    kicker: 'LIVE STATUS',
+    title: '알림 센터',
+    description: '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
+    children: [
+      FutureBuilder<_StudentNotificationSnapshot>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Padding(
+              padding: EdgeInsets.all(28),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            return const _UtilityNoticeRow(
+              title: '알림을 불러오지 못했습니다.',
+              detail: '네트워크 연결 후 알림 센터를 다시 열어 주세요.',
+              meta: '재시도',
+            );
+          }
+          final data = snapshot.data!;
+          return Column(
+            children: [
+              _UtilityNoticeRow(
+                title: '친구 요청',
+                detail: data.friendRequests.isEmpty
+                    ? '새로운 친구 요청이 없습니다.'
+                    : '받은 요청을 친구/소셜에서 확인하세요.',
+                meta: '${data.friendRequests.length}',
+              ),
+              for (final notice in data.notices)
+                _UtilityNoticeRow(
+                  title: notice.title.isEmpty ? '시스템 공지' : notice.title,
+                  detail: notice.contentHtml
+                      .replaceAll(RegExp('<[^>]*>'), ' ')
+                      .trim(),
+                  meta: notice.createdAt.isEmpty ? '공지' : notice.createdAt,
+                ),
+              if (data.notices.isEmpty)
+                const _UtilityNoticeRow(
+                  title: '확인할 공지가 없습니다.',
+                  detail: '새 공지가 도착하면 이곳에 표시됩니다.',
+                  meta: '0',
+                ),
+            ],
+          );
+        },
+      ),
+    ],
+  );
+}
+
+class _StudentUtilitySheet extends StatelessWidget {
+  const _StudentUtilitySheet({
+    required this.kicker,
+    required this.title,
+    required this.description,
+    required this.children,
+  });
+
+  final String kicker;
+  final String title;
+  final String description;
+  final List<Widget> children;
+
+  /// 필요한 변수는 시트 제목·설명·본문이다.
+  /// 작동 원리는 HTML 공용 액션 모달의 여백·타이포·최대 높이를 모든 화면에서 동일하게 유지하는 것이다.
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        0,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 720),
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Text(
+              kicker,
+              style: const TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.7,
+                color: Colors.black54,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            Text(description, style: const TextStyle(color: Colors.black45)),
+            const SizedBox(height: 18),
+            ...children,
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _UtilityNoticeRow extends StatelessWidget {
+  const _UtilityNoticeRow({
+    required this.title,
+    required this.detail,
+    required this.meta,
+  });
+
+  final String title;
+  final String detail;
+  final String meta;
+
+  /// 필요한 변수는 알림 제목·본문·메타다.
+  /// 작동 원리는 각 알림을 얇은 구분선과 우측 상태로 압축해 공지 수가 늘어도 빠르게 스캔하게 한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 14),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: Color(0xFFE4E4E6))),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 4),
+              Text(
+                detail,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          meta,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Ios26LevelIndicator extends StatefulWidget {

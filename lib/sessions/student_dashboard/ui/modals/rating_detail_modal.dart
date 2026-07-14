@@ -97,6 +97,84 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
     }
   }
 
+  /// 필요한 변수는 상승·하락·강점·약점 태그와 현재 로딩 상태다.
+  /// 작동 원리는 현재 레이팅 데이터를 HTML 학습 보고서 모달의 요약·강점·보완 카드로 변환한다.
+  void _openReport() {
+    final rising = _buildRising();
+    final falling = _buildFalling();
+    final strong = _buildStrong();
+    final weak = _buildWeak();
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('학습 레이팅 보고서'),
+        content: SizedBox(
+          width: 560,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'RATING REPORT',
+                  style: TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 1.5,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ReportSection(
+                  title: '상승 개념',
+                  values: rising
+                      .map(
+                        (item) =>
+                            '${item.label}  +${item.delta.toStringAsFixed(1)}',
+                      )
+                      .toList(),
+                ),
+                _ReportSection(
+                  title: '보완 개념',
+                  values: falling
+                      .map(
+                        (item) =>
+                            '${item.label}  ${item.delta.toStringAsFixed(1)}',
+                      )
+                      .toList(),
+                ),
+                _ReportSection(
+                  title: '현재 강점',
+                  values: strong
+                      .map(
+                        (item) =>
+                            '${item.label}  ${item.score.toStringAsFixed(1)}',
+                      )
+                      .toList(),
+                ),
+                _ReportSection(
+                  title: '우선 복습',
+                  values: weak
+                      .map(
+                        (item) =>
+                            '${item.label}  ${item.score.toStringAsFixed(1)}',
+                      )
+                      .toList(),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _currentQuery(String text) {
     final trimmed = text.trimRight();
     if (trimmed.isEmpty) return '';
@@ -291,6 +369,7 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
                               : _OverviewBody(
                                   scale: scale,
                                   onSearchTap: _enterSearchMode,
+                                  onReportTap: _openReport,
                                   rising: rising,
                                   falling: falling,
                                   strong: strong,
@@ -358,6 +437,7 @@ class _OverviewBody extends StatelessWidget {
   const _OverviewBody({
     required this.scale,
     required this.onSearchTap,
+    required this.onReportTap,
     required this.rising,
     required this.falling,
     required this.strong,
@@ -368,6 +448,7 @@ class _OverviewBody extends StatelessWidget {
 
   final double scale;
   final VoidCallback onSearchTap;
+  final VoidCallback onReportTap;
   final List<_TagDelta> rising;
   final List<_TagDelta> falling;
   final List<_TagScore> strong;
@@ -392,7 +473,11 @@ class _OverviewBody extends StatelessWidget {
               isLoading: isLoading,
             ),
             SizedBox(height: 16 * scale),
-            _OverviewActions(scale: scale, onSearchTap: onSearchTap),
+            _OverviewActions(
+              scale: scale,
+              onSearchTap: onSearchTap,
+              onReportTap: onReportTap,
+            ),
             SizedBox(height: 16 * scale),
             _OvrRadarCard(
               scale: scale,
@@ -435,7 +520,11 @@ class _OverviewBody extends StatelessWidget {
                       onTap: onSearchTap,
                     ),
                     SizedBox(height: 12 * scale),
-                    _ActionButton(scale: scale, label: '보고서 보기', onTap: () {}),
+                    _ActionButton(
+                      scale: scale,
+                      label: '보고서 보기',
+                      onTap: onReportTap,
+                    ),
                   ],
                 ),
               ),
@@ -456,10 +545,15 @@ class _OverviewBody extends StatelessWidget {
 }
 
 class _OverviewActions extends StatelessWidget {
-  const _OverviewActions({required this.scale, required this.onSearchTap});
+  const _OverviewActions({
+    required this.scale,
+    required this.onSearchTap,
+    required this.onReportTap,
+  });
 
   final double scale;
   final VoidCallback onSearchTap;
+  final VoidCallback onReportTap;
 
   @override
   Widget build(BuildContext context) {
@@ -468,7 +562,7 @@ class _OverviewActions extends StatelessWidget {
       children: [
         _ActionButton(scale: scale, label: '세부 해시태그 검색', onTap: onSearchTap),
         SizedBox(height: 12 * scale),
-        _ActionButton(scale: scale, label: '보고서 보기', onTap: () {}),
+        _ActionButton(scale: scale, label: '보고서 보기', onTap: onReportTap),
       ],
     );
   }
@@ -908,6 +1002,43 @@ class _ActionButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ReportSection extends StatelessWidget {
+  const _ReportSection({required this.title, required this.values});
+  final String title;
+  final List<String> values;
+
+  /// 필요한 변수는 보고서 구역 제목과 태그 값 목록이다.
+  /// 작동 원리는 빈 데이터와 실제 레이팅 데이터를 같은 흑백 보고서 카드로 표시한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 9),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF5F5F7),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 7),
+        if (values.isEmpty)
+          const Text(
+            '아직 분석할 기록이 없습니다.',
+            style: TextStyle(color: Colors.black45),
+          )
+        else
+          for (final value in values)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(value),
+            ),
+      ],
+    ),
+  );
 }
 
 class _TagDelta {

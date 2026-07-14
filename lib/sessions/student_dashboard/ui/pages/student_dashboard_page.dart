@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
 import 'package:s11/sessions/student_dashboard/ui/pages/mainpage_widget.dart';
 import 'package:s11/sessions/student_dashboard/business/student_dashboard_data.dart';
+import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 
 /// 학생 대시보드 화면.
 class BuildboxCopyWidget extends StatelessWidget {
@@ -17,13 +18,13 @@ class BuildboxCopyWidget extends StatelessWidget {
     List<int>? activityLevels,
     String? dailyGraphLabel,
   }) : data = (data ?? StudentDashboardData.demo).copyWith(
-          username: username,
-          grade: grade,
-          profileImageUrl: profileImageUrl,
-          completionRate: completionRate,
-          activityLevels: activityLevels,
-          dailyGraphLabel: dailyGraphLabel,
-        );
+         username: username,
+         grade: grade,
+         profileImageUrl: profileImageUrl,
+         completionRate: completionRate,
+         activityLevels: activityLevels,
+         dailyGraphLabel: dailyGraphLabel,
+       );
 
   final StudentDashboardData data;
 
@@ -32,6 +33,8 @@ class BuildboxCopyWidget extends StatelessWidget {
   String get grade => data.grade;
   String get profileImageUrl => data.profileImageUrl;
 
+  /// 필요한 변수는 데모 대시보드 데이터와 현재 화면 문맥이다.
+  /// 작동 원리는 레거시 진입에서도 편집 버튼을 실제 프로필 화면으로 연결해 빈 액션을 남기지 않는 것이다.
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -42,7 +45,7 @@ class BuildboxCopyWidget extends StatelessWidget {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                _buildHeader(),
+                _buildHeader(context),
                 const SizedBox(height: 15),
                 _buildProfileSection(),
                 const SizedBox(height: 15),
@@ -66,7 +69,9 @@ class BuildboxCopyWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  /// 필요한 변수는 현재 Navigator 문맥이다.
+  /// 작동 원리는 HTML 상단 편집 아이콘을 프로필 수정 화면으로 이동시키는 것이다.
+  Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
       height: 100,
@@ -81,7 +86,9 @@ class BuildboxCopyWidget extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.edit_rounded, size: 40),
-            onPressed: () {},
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ProfilePage())),
           ),
         ],
       ),

@@ -11,6 +11,7 @@ import 'package:s11/sessions/course/ui/widgets/level_test_widget.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
+import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
@@ -791,7 +792,10 @@ class _CurrentLearning extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            OutlinedButton(onPressed: () {}, child: const Text('완료 조건')),
+            OutlinedButton(
+              onPressed: () => showCoursePolicyDialog(context),
+              child: const Text('완료 조건'),
+            ),
           ],
         ],
       ),
@@ -857,7 +861,7 @@ class _CurrentLearning extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () => showCoursePolicyDialog(context),
                           child: const Text('완료 조건'),
                         ),
                         const SizedBox(height: 16),

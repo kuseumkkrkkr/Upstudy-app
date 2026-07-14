@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
+import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
@@ -207,12 +208,21 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                                 snapshot.connectionState ==
                                 ConnectionState.waiting,
                             onOpen: _openCourse,
+                            onReorder: () => showCourseReorderDialog(
+                              context,
+                              courses: active,
+                              onSaved: _load,
+                            ),
                           ),
                           const SizedBox(height: 14),
                           if (recommended.isNotEmpty)
                             _RecommendationSection(
                               courses: recommended,
                               onOpen: _openCourse,
+                              onCompare: () => showCourseCompareDialog(
+                                context,
+                                courses: recommended,
+                              ),
                             ),
                           const SizedBox(height: 14),
                           _CourseLibrary(
@@ -464,11 +474,13 @@ class _ResumeCourses extends StatelessWidget {
     required this.courses,
     required this.loading,
     required this.onOpen,
+    required this.onReorder,
   });
 
   final List<Course> courses;
   final bool loading;
   final ValueChanged<Course> onOpen;
+  final VoidCallback onReorder;
 
   /// 필요한 변수는 수강 중 코스·로딩 상태·진입 콜백이다.
   /// 작동 원리: PC는 두 코스를 한 행에, 모바일은 편집 버튼 아래 세로 목록으로 표시한다.
@@ -502,12 +514,15 @@ class _ResumeCourses extends StatelessWidget {
                 ),
               ),
               if (!mobile)
-                OutlinedButton(onPressed: () {}, child: const Text('순서 편집')),
+                OutlinedButton(
+                  onPressed: onReorder,
+                  child: const Text('순서 편집'),
+                ),
             ],
           ),
           if (mobile) ...[
             const SizedBox(height: 36),
-            OutlinedButton(onPressed: () {}, child: const Text('순서 편집')),
+            OutlinedButton(onPressed: onReorder, child: const Text('순서 편집')),
           ],
           SizedBox(height: mobile ? 16 : 36),
           const Divider(height: 1),
@@ -733,10 +748,15 @@ class _CourseProgress extends StatelessWidget {
 }
 
 class _RecommendationSection extends StatelessWidget {
-  const _RecommendationSection({required this.courses, required this.onOpen});
+  const _RecommendationSection({
+    required this.courses,
+    required this.onOpen,
+    required this.onCompare,
+  });
 
   final List<Course> courses;
   final ValueChanged<Course> onOpen;
+  final VoidCallback onCompare;
 
   /// 필요한 변수는 추천 코스 목록과 이동 콜백이다.
   /// 작동 원리: 첫 추천은 큰 91점 카드, 나머지는 우측 대안 목록으로 배치하고 모바일에서는 세로로 쌓는다.
@@ -780,7 +800,10 @@ class _RecommendationSection extends StatelessWidget {
                   style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
                 ),
               ),
-              OutlinedButton(onPressed: () {}, child: const Text('두 코스 비교')),
+              OutlinedButton(
+                onPressed: onCompare,
+                child: const Text('두 코스 비교'),
+              ),
             ],
           ),
           const SizedBox(height: 12),

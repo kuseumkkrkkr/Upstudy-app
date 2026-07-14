@@ -9,6 +9,7 @@ import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/course/session/teacher_course_textbook_reader_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
+import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/flow_view_page.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/api_client.dart';
@@ -348,5 +349,59 @@ void main() {
     expect(find.byType(CourseDetailPage), findsOneWidget);
     expect(find.text('완료한 코스 · 미리보기'), findsWidgets);
     expect(find.text('코스 계속하기'), findsNothing);
+  });
+
+  testWidgets('코스 HTML 액션은 순서·비교·완료 조건 모달을 연다', (tester) async {
+    final courses = _entryCourses();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Column(
+              children: [
+                TextButton(
+                  onPressed: () => showCourseReorderDialog(
+                    context,
+                    courses: courses,
+                    onSaved: () {},
+                  ),
+                  child: const Text('순서 열기'),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      showCourseCompareDialog(context, courses: courses),
+                  child: const Text('비교 열기'),
+                ),
+                TextButton(
+                  onPressed: () => showCoursePolicyDialog(context),
+                  child: const Text('정책 열기'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('순서 열기'));
+    await tester.pumpAndSettle();
+    expect(find.text('MY COURSE ORDER'), findsOneWidget);
+    expect(find.text('진행 코스'), findsOneWidget);
+    await tester.tap(find.byTooltip('닫기'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('비교 열기'));
+    await tester.pumpAndSettle();
+    expect(find.text('COMPARE COURSES'), findsOneWidget);
+    expect(find.text('완료 코스'), findsOneWidget);
+    await tester.tap(find.byTooltip('닫기'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('정책 열기'));
+    await tester.pumpAndSettle();
+    expect(find.text('RUNTIME POLICY'), findsOneWidget);
+    expect(find.text('최소 학습 시간'), findsOneWidget);
+    expect(find.text('진행 시간 보존'), findsOneWidget);
+    expect(find.text('완료 후 다음 모듈'), findsOneWidget);
   });
 }

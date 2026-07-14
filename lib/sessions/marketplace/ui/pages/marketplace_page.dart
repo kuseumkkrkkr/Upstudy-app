@@ -21,6 +21,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
   final TextEditingController _queryController = TextEditingController();
   List<_MarketItem> _items = const <_MarketItem>[];
   String _filter = '전체';
+  String _courseFilter = '전체 과정';
+  String _priceFilter = '전체 가격';
   bool _loading = false;
   String? _error;
 
@@ -93,7 +95,53 @@ class _MarketplacePageState extends State<MarketplacePage> {
             _ => true,
           };
         })
+        .where(
+          (item) =>
+              _courseFilter == '전체 과정' ||
+              item.searchText.contains(_courseFilter.toLowerCase()),
+        )
+        .where((item) {
+          if (_priceFilter == '무료') {
+            return item.subtitle.contains('무료') || item.subtitle.contains('0P');
+          }
+          if (_priceFilter == '유료') {
+            return !item.subtitle.contains('무료') &&
+                !item.subtitle.contains('0P');
+          }
+          return true;
+        })
         .toList(growable: false);
+  }
+
+  /// 필요한 변수는 현재 유형·과정·가격 필터다.
+  /// 작동 원리는 HTML의 필터+ 바텀시트에서 조건을 임시 선택한 뒤 적용 시 한 번만 목록 상태를 갱신한다.
+  Future<void> _openMarketFilter() async {
+    final result = await showModalBottomSheet<(String, String, String)>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (_) => _MarketFilterSheet(
+        type: _filter,
+        course: _courseFilter,
+        price: _priceFilter,
+      ),
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _filter = result.$1;
+      _courseFilter = result.$2;
+      _priceFilter = result.$3;
+    });
+  }
+
+  /// 필요한 변수는 검색 패널이 전달한 기본 필터명이다.
+  /// 작동 원리는 필터+만 상세 시트를 열고 나머지 유형은 즉시 로컬 전환한다.
+  void _handleFilterChanged(String value) {
+    if (value == '필터+') {
+      unawaited(_openMarketFilter());
+      return;
+    }
+    setState(() => _filter = value);
   }
 
   /// 필요한 변수는 현재 항목의 제목·유형·설명·가격이다.
@@ -212,8 +260,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       controller: _queryController,
                       loading: _loading,
                       filter: _filter,
-                      onFilterChanged: (value) =>
-                          setState(() => _filter = value),
+                      onFilterChanged: _handleFilterChanged,
                       onSearch: _search,
                     ),
                     const SizedBox(height: 12),
@@ -542,6 +589,141 @@ class _CountBadge extends StatelessWidget {
     child: Text(
       '$count개',
       style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+    ),
+  );
+}
+
+class _MarketFilterSheet extends StatefulWidget {
+  const _MarketFilterSheet({
+    required this.type,
+    required this.course,
+    required this.price,
+  });
+
+  final String type;
+  final String course;
+  final String price;
+
+  @override
+  State<_MarketFilterSheet> createState() => _MarketFilterSheetState();
+}
+
+class _MarketFilterSheetState extends State<_MarketFilterSheet> {
+  late String _type = widget.type == '필터+' ? '전체' : widget.type;
+  late String _course = widget.course;
+  late String _price = widget.price;
+
+  /// 필요한 변수는 유형·과정·가격 임시 선택값이다.
+  /// 작동 원리는 HTML 필터 모달처럼 세 조건을 독립 칩으로 고르고 적용 시 부모 목록에 한 번 반환한다.
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'MARKET FILTER',
+              style: TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.7,
+                color: Colors.black54,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 7),
+            const Text(
+              '마켓 필터',
+              style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              '카테고리와 과정, 가격 조건으로 문제와 교재를 좁힙니다.',
+              style: TextStyle(color: Colors.black45),
+            ),
+            const SizedBox(height: 18),
+            _FilterGroup(
+              label: '카테고리',
+              values: const ['전체', '문제', '교재'],
+              selected: _type,
+              onSelected: (value) => setState(() => _type = value),
+            ),
+            _FilterGroup(
+              label: '과정',
+              values: const ['전체 과정', '중학교', '고등학교'],
+              selected: _course,
+              onSelected: (value) => setState(() => _course = value),
+            ),
+            _FilterGroup(
+              label: '가격',
+              values: const ['전체 가격', '무료', '유료'],
+              selected: _price,
+              onSelected: (value) => setState(() => _price = value),
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF202022),
+                minimumSize: const Size.fromHeight(50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              onPressed: () =>
+                  Navigator.of(context).pop((_type, _course, _price)),
+              child: const Text('필터 적용'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterGroup extends StatelessWidget {
+  const _FilterGroup({
+    required this.label,
+    required this.values,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final List<String> values;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  /// 필요한 변수는 그룹명·선택지·현재 선택·변경 콜백이다.
+  /// 작동 원리는 한 필터 그룹의 단일 선택 상태를 흑백 ChoiceChip으로 표시한다.
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final value in values)
+              ChoiceChip(
+                label: Text(value),
+                selected: selected == value,
+                showCheckmark: false,
+                selectedColor: const Color(0xFF202022),
+                labelStyle: TextStyle(
+                  color: selected == value ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w800,
+                ),
+                onSelected: (_) => onSelected(value),
+              ),
+          ],
+        ),
+      ],
     ),
   );
 }

@@ -290,8 +290,9 @@ class _AttendanceTabState extends State<_AttendanceTab> {
   @override
   Widget build(BuildContext context) {
     final filteredLogs = widget.logs.where((log) {
-      if (_selectedGroupId != null && log.groupId != _selectedGroupId)
+      if (_selectedGroupId != null && log.groupId != _selectedGroupId) {
         return false;
+      }
       if (_selectedDate != null && log.date != _selectedDate) return false;
       return true;
     }).toList();
@@ -304,7 +305,7 @@ class _AttendanceTabState extends State<_AttendanceTab> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String?>(
-                  value: _selectedGroupId,
+                  initialValue: _selectedGroupId,
                   decoration: const InputDecoration(
                     labelText: '그룹 필터',
                     border: OutlineInputBorder(),
@@ -406,7 +407,7 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -458,7 +459,7 @@ class _TuitionTabState extends State<_TuitionTab> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String?>(
-                  value: _selectedMonth,
+                  initialValue: _selectedMonth,
                   decoration: const InputDecoration(
                     labelText: '월 필터',
                     border: OutlineInputBorder(),
@@ -593,8 +594,9 @@ class _AddPaymentDialogState extends State<_AddPaymentDialog> {
           onPressed: () {
             if (_userIdCtrl.text.isEmpty ||
                 _amountCtrl.text.isEmpty ||
-                _monthCtrl.text.isEmpty)
+                _monthCtrl.text.isEmpty) {
               return;
+            }
             Navigator.pop(context, {
               'user_id': _userIdCtrl.text,
               'amount': _amountCtrl.text,
@@ -916,7 +918,7 @@ class _SummaryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

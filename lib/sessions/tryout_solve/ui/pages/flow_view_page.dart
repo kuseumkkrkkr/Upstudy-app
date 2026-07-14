@@ -898,7 +898,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
           Row(
             children: [
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () => _showSharedMetaDialog(meta),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B402B),
                   foregroundColor: Colors.white,
@@ -933,6 +933,35 @@ class _FlowViewPageState extends State<FlowViewPage> {
                   child: const Text('공유 취소'),
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요한 변수는 공유 ID·공유자·시각·태그·난이도다.
+  /// 작동 원리는 공유 Flow의 공식 정보와 소유권 상태를 HTML 상세 모달에서 다시 확인하게 한다.
+  void _showSharedMetaDialog(SharedMeta meta) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('공유 Flow 정보'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('공유자 · ${meta.userId}'),
+            Text('공유일 · ${meta.createdAt}'),
+            Text('난이도 · ${meta.difficulty ?? '-'}'),
+            Text('태그 · ${meta.tags.join(' · ')}'),
+            const SizedBox(height: 10),
+            const Text('현재 Flow의 문제 정보·단계 상태·공식·정답 풀이를 공유 범위에서 열람합니다.'),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
           ),
         ],
       ),

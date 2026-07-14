@@ -19,6 +19,7 @@ class WrongAnswerListPage extends StatefulWidget {
 
 class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
   String _filter = '전체 8';
+  bool _latestFirst = true;
 
   static const _items = <_ReviewItem>[
     _ReviewItem(
@@ -90,7 +91,8 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
           )
           .toList();
     }
-    return _items;
+    final items = List<_ReviewItem>.from(_items);
+    return _latestFirst ? items : items.reversed.toList(growable: false);
   }
 
   /// 필요한 변수는 현재 필터·화면 폭·복습 항목이다.
@@ -137,6 +139,9 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
                             filter: _filter,
                             onFilter: (value) =>
                                 setState(() => _filter = value),
+                            latestFirst: _latestFirst,
+                            onSort: () =>
+                                setState(() => _latestFirst = !_latestFirst),
                             onAction: _showReviewAction,
                           );
                           const side = _WeakPoints();
@@ -372,12 +377,16 @@ class _ReviewList extends StatelessWidget {
     required this.items,
     required this.filter,
     required this.onFilter,
+    required this.latestFirst,
+    required this.onSort,
     required this.onAction,
   });
 
   final List<_ReviewItem> items;
   final String filter;
   final ValueChanged<String> onFilter;
+  final bool latestFirst;
+  final VoidCallback onSort;
   final void Function(String, _ReviewItem?) onAction;
 
   /// 필요한 변수는 복습 목록·선택 필터·행동 콜백이다.
@@ -414,7 +423,10 @@ class _ReviewList extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          OutlinedButton(onPressed: () {}, child: const Text('최신순 ↕')),
+          OutlinedButton(
+            onPressed: onSort,
+            child: Text(latestFirst ? '최신순 ↕' : '오래된순 ↕'),
+          ),
           const Divider(height: 28),
           for (var index = 0; index < items.length; index++) ...[
             _ReviewRow(item: items[index], onAction: onAction),

@@ -198,6 +198,22 @@ void main() {
     expect(find.text('책가방'), findsOneWidget);
     expect(find.text('친구/소셜'), findsOneWidget);
     expect(find.text('마켓플레이스'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('검색'));
+    await tester.pumpAndSettle();
+    expect(find.text('QUICK FIND'), findsOneWidget);
+    expect(find.text('전체 검색'), findsOneWidget);
+    expect(find.text('수강 중·추천·완료 코스 찾기'), findsOneWidget);
+    Navigator.of(tester.element(find.text('QUICK FIND'))).pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('알림'));
+    await tester.pump();
+    expect(find.text('LIVE STATUS'), findsOneWidget);
+    expect(find.text('알림 센터'), findsOneWidget);
+    Navigator.of(tester.element(find.text('LIVE STATUS'))).pop();
+    await tester.pump();
+
     await tester.tap(find.text('마켓플레이스'));
     await tester.pumpAndSettle();
     expect(find.text('상단 마켓 도착'), findsOneWidget);
@@ -442,6 +458,16 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, '교재'));
     await tester.pump();
     expect(find.text('중2 함수 실전 100제'), findsNothing);
+    await tester.tap(find.widgetWithText(ChoiceChip, '필터+'));
+    await tester.pumpAndSettle();
+    expect(find.text('MARKET FILTER'), findsOneWidget);
+    expect(find.text('카테고리'), findsOneWidget);
+    expect(find.text('과정'), findsOneWidget);
+    expect(find.text('가격'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, '무료'));
+    await tester.tap(find.text('필터 적용'));
+    await tester.pumpAndSettle();
+    expect(find.text('개념이 보이는 그래프'), findsOneWidget);
     await tester.tap(find.text('개념이 보이는 그래프'));
     await tester.pumpAndSettle();
     expect(find.text('확인'), findsOneWidget);
@@ -507,6 +533,9 @@ void main() {
       MaterialApp(
         home: GroupDetailPage(
           groupId: 'g1',
+          initialShareHistory: const [],
+          initialShareExams: const [],
+          initialChatMessages: const [],
           initialGroup: group,
           initialMembers: [
             AcademyGroupMember(
@@ -524,6 +553,29 @@ void main() {
     await tester.tap(find.textContaining('채팅 열기'));
     await tester.pumpAndSettle();
     expect(find.text('중2 심화 스터디 채팅'), findsOneWidget);
+    Navigator.of(tester.element(find.text('중2 심화 스터디 채팅'))).pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('멤버 보기'));
+    await tester.pumpAndSettle();
+    expect(find.text('그룹 멤버'), findsOneWidget);
+    expect(find.text('이수학'), findsOneWidget);
+    Navigator.of(tester.element(find.text('그룹 멤버'))).pop();
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.widgetWithText(OutlinedButton, '필터'));
+    await tester.tap(find.widgetWithText(OutlinedButton, '필터'));
+    await tester.pumpAndSettle();
+    expect(find.text('GROUP FLOW FILTER'), findsOneWidget);
+    expect(find.text('필터 적용'), findsOneWidget);
+    Navigator.of(tester.element(find.text('GROUP FLOW FILTER'))).pop();
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('내 풀이 공유'));
+    await tester.tap(find.text('내 풀이 공유'));
+    await tester.pumpAndSettle();
+    expect(find.text('SHARE SOLVE HISTORY'), findsOneWidget);
+    expect(find.text('선택 항목 공유'), findsOneWidget);
   });
 
   testWidgets('500px 학원은 HTML 정보·오늘 할 일·시간표 구조를 유지한다', (tester) async {
@@ -560,6 +612,18 @@ void main() {
     expect(find.text('AIFlow 수학학원'), findsOneWidget);
     expect(find.text('오늘 할 일'), findsOneWidget);
     expect(find.text('이번 주 수업'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, '학원 정보'));
+    await tester.pumpAndSettle();
+    expect(find.text('출석 기록'), findsOneWidget);
+    expect(find.text('학생 시간표'), findsOneWidget);
+    expect(find.text('제출 기록'), findsOneWidget);
+    expect(find.text('학습 보고서'), findsOneWidget);
+    expect(find.text('학습 스냅샷'), findsOneWidget);
+    expect(find.text('학원 그룹'), findsOneWidget);
+    await tester.tap(find.text('출석 기록'));
+    await tester.pump();
+    expect(find.text('18:54 입실이 기록되었습니다.'), findsOneWidget);
   });
 
   testWidgets('500px 친구/소셜은 HTML 소식·대화·친구 순서를 유지한다', (tester) async {

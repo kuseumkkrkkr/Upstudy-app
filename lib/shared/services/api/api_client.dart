@@ -245,12 +245,13 @@ class SharedFlowItem {
 
   factory SharedFlowItem.fromJson(Map<String, dynamic> json) {
     return SharedFlowItem(
-      id: json['id'] ?? json['flow_id'] ?? '',
+      id: json['share_id'] ?? json['id'] ?? json['flow_id'] ?? '',
       groupId: json['group_id'] ?? '',
-      senderId: json['sender_id'] ?? json['sender_user_id'] ?? '',
-      kind: json['kind'] ?? '',
-      refId: json['ref_id'] ?? '',
-      title: json['title'],
+      senderId:
+          json['user_id'] ?? json['sender_id'] ?? json['sender_user_id'] ?? '',
+      kind: json['kind'] ?? 'flow',
+      refId: json['quest_id'] ?? json['ref_id'] ?? '',
+      title: json['quest_title'] ?? json['title'],
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : null,
@@ -4272,6 +4273,8 @@ extension ApiClientLegacyCompat on ApiClient {
     return listStudyGroups();
   }
 
+  /// 필요한 변수는 그룹 ID와 풀이를 재현할 문제·분석 데이터다.
+  /// 작동 원리는 서버 공유 API에 원문을 POST하고 성공 직후 그룹 Flow GET 캐시를 비우는 것이다.
   Future<SharedFlowItem> shareFlowToGroup({
     required String groupId,
     required String questId,
@@ -4284,28 +4287,58 @@ extension ApiClientLegacyCompat on ApiClient {
     List<String> tags = const [],
     int? difficulty,
   }) async {
-    return SharedFlowItem(
-      id: '',
-      groupId: groupId,
-      senderId: '',
-      kind: 'flow',
-      refId: questId,
-      title: questTitle,
-      createdAt: DateTime.now(),
+    final response = await _post(
+      '/social/study-groups/$groupId/shared-flows',
+      {
+        'codebase_id': codebaseId,
+        'seed': seed,
+        if (questId.trim().isNotEmpty) 'quest_id': questId.trim(),
+        if (questTitle != null && questTitle.trim().isNotEmpty)
+          'quest_title': questTitle.trim(),
+        'status_json': statusJson,
+        'all_formulas': allFormulas,
+        'answer_riddle': answerRiddle,
+        'tags': tags,
+        if (difficulty != null) 'difficulty': difficulty,
+      },
+      parser: (data) =>
+          SharedFlowItem.fromJson(Map<String, dynamic>.from(data as Map)),
     );
+    await invalidateCachePath('/social/study-groups/$groupId/shared-flows');
+    return response.data ??
+        SharedFlowItem(
+          id: '',
+          groupId: groupId,
+          senderId: '',
+          kind: 'flow',
+          refId: questId,
+          title: questTitle,
+        );
   }
 
-  Future<void> deleteSharedFlow(String shareId) async {}
+  /// 필요한 변수는 공유 ID다.
+  /// 작동 원리는 소유권 검증이 포함된 서버 DELETE를 실행하고 모든 그룹 Flow 캐시를 제거하는 것이다.
+  Future<void> deleteSharedFlow(String shareId) async {
+    await _delete('/social/study-groups/shared-flows/${shareId.trim()}');
+    await invalidateCachePath('/social/study-groups');
+  }
 
+  /// 필요한 변수는 공유 ID다.
+  /// 작동 원리는 서버에서 필기·수식이 포함된 공유 Flow 원문을 조회해 화면 모델로 변환하는 것이다.
   Future<SharedFlowItem> getSharedFlow(String shareId) async {
-    return SharedFlowItem(
-      id: shareId,
-      groupId: '',
-      senderId: '',
-      kind: 'flow',
-      refId: '',
-      createdAt: DateTime.now(),
+    final response = await _get(
+      '/social/study-groups/shared-flows/${shareId.trim()}',
+      parser: (data) =>
+          SharedFlowItem.fromJson(Map<String, dynamic>.from(data as Map)),
     );
+    return response.data ??
+        SharedFlowItem(
+          id: shareId,
+          groupId: '',
+          senderId: '',
+          kind: 'flow',
+          refId: '',
+        );
   }
 
   Future<QuestSearchResult> fetchQuestPage({
