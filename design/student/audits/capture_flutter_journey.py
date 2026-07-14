@@ -86,7 +86,7 @@ def capture(args: argparse.Namespace) -> None:
     query = f"screen={args.screen}"
     if flutter_source:
         query = f"width={args.width}&height={args.height}&{query}"
-    elif args.action:
+    if args.action:
         query = f"{query}&action={args.action}"
     url = f"http://127.0.0.1:{args.port}/{entry}?{query}"
     with _serve(args.port, web_root), sync_playwright() as playwright:

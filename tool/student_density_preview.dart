@@ -4,6 +4,9 @@ import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/shared/data/models/course.dart';
@@ -143,7 +146,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
     );
     final screen = Uri.base.queryParameters['screen'] ?? 'dashboard';
     final courses = _previewCourses();
-    final home = switch (screen) {
+    final screenHome = switch (screen) {
       'courses' => CourseCatalogPage(
         courseFeedLoader: ({required keyword, recommend}) async {
           if (keyword.trim().isEmpty) return courses;
@@ -165,6 +168,10 @@ class StudentDensityPreviewApp extends StatelessWidget {
       'level-test' => const LevelTestHomePage(),
       _ => const MainStudentPage(username: '김학생'),
     };
+    final action = Uri.base.queryParameters['action'] ?? '';
+    final home = action.isEmpty
+        ? screenHome
+        : _PreviewActionLauncher(action: action, child: screenHome);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
@@ -210,4 +217,52 @@ class StudentDensityPreviewApp extends StatelessWidget {
       home: home,
     );
   }
+}
+
+class _PreviewActionLauncher extends StatefulWidget {
+  const _PreviewActionLauncher({required this.action, required this.child});
+
+  final String action;
+  final Widget child;
+
+  // 필요한 변수: 감사 액션과 실제 화면이다. 작동 원리: 첫 렌더 뒤 실제 모달을 여는 상태를 생성한다.
+  @override
+  State<_PreviewActionLauncher> createState() => _PreviewActionLauncherState();
+}
+
+class _PreviewActionLauncherState extends State<_PreviewActionLauncher> {
+  // 필요한 변수: URL에서 전달된 모달 액션이다. 작동 원리: 실제 화면이 그려진 다음 한 번만 해당 홈 모달을 호출한다.
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openAction());
+  }
+
+  /// 필요한 변수는 현재 context와 감사 액션 이름이다.
+  /// 작동 원리는 실제 공개 모달 함수를 호출해 좌표 클릭 없이 동일한 상태를 반복 캡처하는 것이다.
+  Future<void> _openAction() async {
+    if (!mounted) return;
+    switch (widget.action) {
+      case 'study-mode':
+        await showStudyModeModal<void>(context: context);
+      case 'daily-test':
+        await showDailyTestModal<void>(context: context);
+      case 'today-tasks':
+        final today = DateUtils.dateOnly(DateTime.now());
+        await showTodayTasksModal<void>(
+          context: context,
+          tasksByDate: {
+            today: const ['개인 복습 20분'],
+          },
+          lockedTasksByDate: {
+            today: const ['문제 12개', '교재 3장 읽기'],
+          },
+          onTasksChanged: (_) {},
+        );
+    }
+  }
+
+  /// 필요한 변수는 감사 대상 실제 화면이다. 작동 원리는 모달의 배경으로 원래 화면을 그대로 유지한다.
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
