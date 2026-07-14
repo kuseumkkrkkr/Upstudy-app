@@ -1863,3 +1863,306 @@ body.is-reader-mode .reader-page > .endpoint-ledger { display: none; }
   .reader-mobile-rail .reader-icon { width: 16px; }
   .reader-page.is-scroll-view .reader-paper { width: 100%; min-width: 0; min-height: 820px; }
 }
+
+/* 정보 밀도 리디자인: 기능 계약은 유지하고 반복 설명·히어로·중복 컨테이너의 시각 점유만 줄인다. */
+body:not(.is-exam-mode):not(.is-solve-mode):not(.is-reader-mode) .page-head { margin-bottom: 16px; }
+body:not(.is-exam-mode):not(.is-solve-mode):not(.is-reader-mode) .page-head h1 { font-size: clamp(32px, 4vw, 52px); }
+body:not(.is-exam-mode):not(.is-solve-mode):not(.is-reader-mode) .page-head p { max-width: 700px; margin-top: 8px; line-height: 1.45; }
+
+/* 학생 홈은 기존 순서를 유지하되 중복된 스크롤 CTA와 과도한 인사 면적을 제거한다. */
+body[data-screen="dashboard"] .hero { min-height: 176px; padding: 30px 38px; }
+body[data-screen="dashboard"] .hero h1 { font-size: clamp(38px, 4.3vw, 56px); }
+body[data-screen="dashboard"] .hero p { max-width: 600px; margin: 12px 0 0; }
+body[data-screen="dashboard"] .hero [data-scroll] { display: none; }
+body[data-screen="dashboard"] .learn-banner { min-height: 96px; }
+body[data-screen="dashboard"] .activity-strip { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
+body[data-screen="dashboard"] .rating-card { color: var(--ink); background: white; }
+body[data-screen="dashboard"] .rating-card .eyebrow,
+body[data-screen="dashboard"] .rating-card .muted { color: var(--muted); }
+body[data-screen="dashboard"] .rating-card .rank-badge { color: white; background: var(--dark); }
+body[data-screen="dashboard"] .rating-card .button { color: white; background: var(--dark); }
+body[data-screen="dashboard"] .arena-card { color: var(--ink); background: linear-gradient(135deg, #f8f8fa, #e9e9ed); }
+body[data-screen="dashboard"] .arena-card .eyebrow,
+body[data-screen="dashboard"] .arena-card .muted { color: var(--muted); }
+body[data-screen="dashboard"] .arena-card .arena-orb { color: white; background: var(--dark); }
+
+/* 코스 탐색은 검색과 상태 필터를 한 도구막대로 보이게 하고 추천 설명의 높이를 줄인다. */
+body[data-screen="courses"] .course-search-dock { gap: 8px; padding: 10px 12px; }
+body[data-screen="courses"] .course-filter-row { flex-wrap: nowrap; overflow-x: auto; }
+body[data-screen="courses"] .course-resume { margin-top: 12px; }
+body[data-screen="courses"] .course-recommend-main { min-height: 260px; }
+body[data-screen="courses"] .recommend-copy { padding: 28px; }
+body[data-screen="courses"] .recommend-copy h2 { font-size: clamp(30px, 3.2vw, 46px); }
+body[data-screen="courses"] .recommend-copy p { margin-top: 10px; }
+
+/* 코스 상세의 네 지표는 하나의 요약 띠처럼 연결한다. */
+body[data-screen="course-detail"] .page > .grid.four { gap: 0; overflow: hidden; background: white; border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow-card); }
+body[data-screen="course-detail"] .page > .grid.four > .card { min-height: 100px; padding: 18px 20px; border: 0; border-left: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+body[data-screen="course-detail"] .page > .grid.four > .card:first-child { border-left: 0; }
+
+/* 코스 학습은 소개보다 현재 미션을 먼저 읽을 수 있도록 런타임 헤더를 압축한다. */
+body[data-screen="course-learning"] .learning-hero { grid-template-columns: minmax(0, 1fr) 300px; min-height: 190px; border-radius: 28px; }
+body[data-screen="course-learning"] .learning-hero-copy { padding: 24px 30px; }
+body[data-screen="course-learning"] .learning-hero-copy h2 { margin-top: 10px; font-size: clamp(28px, 3vw, 40px); }
+body[data-screen="course-learning"] .learning-hero-copy > p { margin-top: 8px; }
+body[data-screen="course-learning"] .learning-author { display: none; }
+body[data-screen="course-learning"] .learning-overall { padding: 24px; }
+body[data-screen="course-learning"] .learning-overall > strong { font-size: 58px; }
+body[data-screen="course-learning"] .learning-current { margin-top: 10px; }
+
+/* 복습은 주 행동과 진행 상태만 크게 두고 부가 통계를 한 줄에 압축한다. */
+body[data-screen="wrong-answers"] .page-head > .button { display: none; }
+body[data-screen="wrong-answers"] .review-hero { grid-template-columns: minmax(0, 1fr) 150px; min-height: 224px; border-radius: 28px; }
+body[data-screen="wrong-answers"] .review-hero__copy { padding: 28px 34px 22px; }
+body[data-screen="wrong-answers"] .review-hero__copy h2 { font-size: clamp(34px, 4vw, 48px); }
+body[data-screen="wrong-answers"] .review-hero__copy p { margin: 10px 0 16px; }
+body[data-screen="wrong-answers"] .review-ring { width: 112px; height: 112px; }
+body[data-screen="wrong-answers"] .review-ring > span { width: 108px; height: 108px; }
+body[data-screen="wrong-answers"] .review-ring > span::before { width: 88px; height: 88px; }
+body[data-screen="wrong-answers"] .review-ring strong { font-size: 42px; }
+body[data-screen="wrong-answers"] .review-hero__stats > span { padding: 11px 22px; }
+
+/* 책가방 상단 수치와 검색을 한 줄 요약으로 유지한다. */
+body[data-screen="textbooks"] .bookbag-summary { min-height: 108px; padding: 18px 24px; }
+body[data-screen="textbooks"] .bookbag-summary-counts span { min-width: 66px; padding-inline: 12px; }
+body[data-screen="textbooks"] .bookbag-simple-grid { gap: 10px; margin-top: 10px; }
+
+/* 친구 홈은 상단 알림과 목록에 중복된 친구 찾기·요청 버튼을 한 번만 보여준다. */
+body[data-screen="friends"] .social-priority > button:last-child { display: none; }
+body[data-screen="friends"] .social-priority { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body[data-screen="friends"] .social-main-grid { margin-top: 10px; }
+body[data-screen="friends"] .social-main-grid .inline-actions { display: none; }
+body[data-screen="friends"] .shared-content-line { margin-top: 8px; }
+
+/* 그룹 상세는 그룹 설명과 공지를 같은 얇은 컨텍스트 표면 안에 배치한다. */
+body[data-screen="group-detail"] .group-room-header { grid-template-columns: 58px minmax(0, 1fr) minmax(240px, .48fr); gap: 16px; padding: 17px 20px; border-radius: 22px; }
+body[data-screen="group-detail"] .group-room-logo { width: 52px; height: 52px; }
+body[data-screen="group-detail"] .group-room-header h2 { margin-top: 5px; font-size: 21px; }
+body[data-screen="group-detail"] .group-room-header p { margin-top: 4px; }
+body[data-screen="group-detail"] .group-room-header aside { padding: 11px 15px; }
+body[data-screen="group-detail"] .group-room-tabs { margin-top: 10px; }
+
+/* 학원은 기능 원장 카드가 아니라 오늘 할 일 중심의 실제 학생 작업 화면으로 구성한다. */
+.academy-page { max-width: 1360px; }
+.academy-context { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 18px 22px; background: white; border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow-card); }
+.academy-mark { display: grid; place-items: center; width: 54px; height: 54px; color: white; background: var(--dark); border-radius: 18px; font-weight: 900; }
+.academy-context h2 { margin-top: 3px; font-size: 22px; }
+.academy-context p { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.academy-context__status { display: flex; align-items: stretch; }
+.academy-context__status span { display: grid; gap: 4px; min-width: 112px; padding: 7px 18px; border-left: 1px solid var(--line); }
+.academy-context__status small { color: var(--muted); font-size: 8px; }
+.academy-context__status b { font-size: 12px; }
+.academy-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr); gap: 10px; margin-top: 10px; }
+.academy-tasks, .academy-timetable { padding: 22px; background: white; border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow-card); }
+.academy-task-list { display: grid; margin-top: 14px; border-top: 1px solid var(--line); }
+.academy-task-list button { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 72px; padding: 12px 4px; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); }
+.academy-task-list button.is-done { opacity: .58; }
+.academy-task-time { color: var(--muted); font-size: 9px; font-weight: 800; }
+.academy-task-list button > span:nth-child(2) { display: grid; gap: 4px; }
+.academy-task-list small, .academy-task-list em { color: var(--muted); font-size: 9px; font-style: normal; }
+.academy-task-list button > em { color: var(--ink); font-weight: 800; }
+.academy-class-list { display: grid; gap: 8px; margin-top: 14px; }
+.academy-class-list > span { display: grid; grid-template-columns: 38px 1fr; gap: 2px 10px; padding: 13px; background: var(--surface-muted); border-radius: 16px; }
+.academy-class-list i { grid-row: 1 / 3; display: grid; place-items: center; width: 34px; height: 34px; background: white; border-radius: 11px; font-size: 10px; font-style: normal; font-weight: 900; }
+.academy-class-list small { color: var(--muted); font-size: 8px; }
+.academy-class-list .is-next { color: white; background: var(--dark); }
+.academy-class-list .is-next i { color: var(--ink); }
+.academy-records { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 10px; overflow: hidden; background: white; border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow-card); }
+.academy-records button { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 3px 10px; min-height: 68px; padding: 12px 16px; text-align: left; background: transparent; border: 0; border-left: 1px solid var(--line); }
+.academy-records button:first-child { border-left: 0; }
+.academy-records button > span { grid-row: 1 / 3; display: grid; place-items: center; width: 34px; height: 34px; background: var(--surface-muted); border-radius: 11px; }
+.academy-records small { color: var(--muted); font-size: 8px; }
+.academy-records i { grid-row: 1 / 3; grid-column: 3; font-style: normal; }
+
+/* 마켓 검색·필터는 중복 카드 없이 하나의 도구와 결과 목록으로 합친다. */
+.market-page { max-width: 1280px; }
+.market-search { display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-card); }
+.market-search .course-search-field { flex: 1; }
+.market-filters { display: flex; gap: 5px; overflow-x: auto; }
+.market-filters button { min-height: 36px; padding: 0 12px; white-space: nowrap; background: var(--surface-muted); border: 1px solid var(--line); border-radius: 999px; font-size: 9px; font-weight: 800; }
+.market-filters button.is-selected { color: white; background: var(--dark); border-color: var(--dark); }
+.market-results { margin-top: 10px; padding: 22px; background: white; border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow-card); }
+.market-list { display: grid; margin-top: 14px; border-top: 1px solid var(--line); }
+.market-item { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 76px; padding: 10px 4px; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); }
+.market-item__icon { display: grid; place-items: center; width: 42px; height: 42px; background: var(--surface-muted); border: 1px solid var(--line); border-radius: 14px; }
+.market-item > span:nth-child(2) { display: grid; gap: 3px; }
+.market-item small, .market-item em { color: var(--muted); font-size: 8px; font-style: normal; }
+.market-item.is-featured { margin-top: 8px; padding-inline: 12px; color: white; background: var(--dark); border-radius: 16px; }
+.market-item.is-featured .market-item__icon { color: var(--ink); background: white; }
+
+/* 첫 진입·경쟁 화면은 장식보다 시작 행동이 빨리 보이도록 높이를 줄인다. */
+body[data-screen="level-test"] .level-hero { grid-template-columns: minmax(0, 1fr) 300px; min-height: 330px; }
+body[data-screen="level-test"] .level-hero-copy { padding: 42px; }
+body[data-screen="level-test"] .level-hero h1 { font-size: clamp(50px, 5.5vw, 76px); }
+body[data-screen="level-test"] .level-hero-copy > p { margin-top: 18px; }
+body[data-screen="level-test"] .level-intro { padding-block: 45px 24px; }
+body[data-screen="level-test"] .level-process-card { min-height: 240px; }
+body[data-screen="arena"] .arena-overview { grid-template-columns: minmax(0, .9fr) minmax(360px, 1.1fr); min-height: 320px; }
+body[data-screen="arena"] .arena-overview-copy { padding: 38px; }
+body[data-screen="arena"] .arena-overview-copy h2 { font-size: clamp(42px, 4.4vw, 60px); }
+body[data-screen="arena"] .arena-player-card { margin: 20px; }
+
+/* 회원가입은 각 단계의 폼이 안내 카드보다 먼저 읽히도록 설명 면적을 줄인다. */
+body[data-screen="signup"] .signup-head { align-items: center; margin-bottom: 16px; }
+body[data-screen="signup"] .signup-head h1 { font-size: clamp(34px, 4vw, 50px); }
+body[data-screen="signup"] .signup-progress { padding: 12px 18px; }
+body[data-screen="signup"] .signup-stage { grid-template-columns: minmax(250px, .55fr) minmax(500px, 1.45fr); gap: 10px; margin-top: 10px; }
+body[data-screen="signup"] .signup-stage-copy,
+body[data-screen="signup"] .signup-form { padding: 28px; }
+body[data-screen="signup"] .signup-stage-copy h2 { font-size: clamp(28px, 3vw, 40px); }
+
+/* Flow는 PC에서 결과 요약을 위에 유지하고 모바일에서는 기존 분기 캔버스를 먼저 보여준다. */
+body[data-screen="flow"] .flow-page { display: flex; flex-direction: column; }
+body[data-screen="flow"] .page-head { order: 1; }
+body[data-screen="flow"] .flow-analysis-summary { order: 2; }
+body[data-screen="flow"] .flow-workspace { order: 3; }
+body[data-screen="flow"] .flow-page > .feature-ledger { order: 4; }
+body[data-screen="flow"] .flow-page > .endpoint-ledger { order: 5; }
+
+@media (max-width: 780px) {
+  body:not(.is-exam-mode):not(.is-solve-mode):not(.is-reader-mode) .page-head { margin-bottom: 12px; }
+  body:not(.is-exam-mode):not(.is-solve-mode):not(.is-reader-mode) .page-head h1 { font-size: 32px; }
+  body:not(.is-exam-mode):not(.is-solve-mode):not(.is-reader-mode) .page-head p { margin-top: 6px; font-size: 12px; }
+
+  body[data-screen="dashboard"] .hero { min-height: 148px; padding: 24px; border-radius: 24px; }
+  body[data-screen="dashboard"] .hero h1 { font-size: 38px; }
+  body[data-screen="dashboard"] .hero p { margin-top: 9px; font-size: 11px; }
+  body[data-screen="dashboard"] .learn-banner { min-height: 82px; padding: 17px 20px; }
+  body[data-screen="dashboard"] .learn-banner h2 { font-size: 26px; }
+  body[data-screen="dashboard"] .learn-banner p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body[data-screen="dashboard"] .home-learning > .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  body[data-screen="dashboard"] .home-status-button { min-height: 104px; padding: 14px; border-radius: 20px; }
+  body[data-screen="dashboard"] .home-status-button strong { font-size: 28px; }
+  body[data-screen="dashboard"] .home-status-button em { font-size: 9px; }
+  body[data-screen="dashboard"] .activity-strip { grid-template-columns: 1fr; }
+  body[data-screen="dashboard"] .rating-card,
+  body[data-screen="dashboard"] .arena-card { min-height: 0; padding: 20px; }
+
+  body[data-screen="courses"] .course-ovr-chip { display: flex; align-items: baseline; gap: 8px; min-height: 0; padding: 8px 12px; }
+  body[data-screen="courses"] .course-search-dock { padding: 8px; border-radius: 18px; }
+  body[data-screen="courses"] .course-filter-row button:nth-child(n+6) { display: none; }
+  body[data-screen="courses"] .course-recommend-main { min-height: 0; }
+  body[data-screen="courses"] .recommend-copy { padding: 22px; }
+  body[data-screen="courses"] .recommend-copy h2 { font-size: 31px; }
+  body[data-screen="courses"] .recommend-visual { min-height: 160px; }
+
+  body[data-screen="course-detail"] .page > .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body[data-screen="course-detail"] .page > .grid.four > .card { min-height: 86px; padding: 14px; border-top: 1px solid var(--line); }
+  body[data-screen="course-detail"] .page > .grid.four > .card:nth-child(-n+2) { border-top: 0; }
+  body[data-screen="course-detail"] .page > .grid.four > .card:nth-child(odd) { border-left: 0; }
+
+  body[data-screen="course-learning"] .learning-hero { display: grid; grid-template-columns: minmax(0, 1fr) 118px; min-height: 126px; border-radius: 22px; }
+  body[data-screen="course-learning"] .learning-hero-copy { padding: 17px; }
+  body[data-screen="course-learning"] .learning-hero-copy h2 { margin-top: 7px; font-size: 22px; }
+  body[data-screen="course-learning"] .learning-hero-copy > p,
+  body[data-screen="course-learning"] .learning-hero-copy .course-card-meta span:nth-child(n+3),
+  body[data-screen="course-learning"] .learning-overall .eyebrow,
+  body[data-screen="course-learning"] .learning-overall-meta { display: none; }
+  body[data-screen="course-learning"] .learning-overall { align-self: stretch; display: grid; align-content: center; padding: 15px; }
+  body[data-screen="course-learning"] .learning-overall > strong { font-size: 40px; }
+  body[data-screen="course-learning"] .learning-current { margin-top: 8px; }
+  body[data-screen="course-learning"] .learning-current-main { padding: 18px; }
+
+  body[data-screen="wrong-answers"] .review-hero { grid-template-columns: minmax(0, 1fr) 96px; min-height: 0; border-radius: 24px; }
+  body[data-screen="wrong-answers"] .review-hero__copy { padding: 22px 8px 18px 22px; }
+  body[data-screen="wrong-answers"] .review-hero__copy h2 { font-size: 34px; }
+  body[data-screen="wrong-answers"] .review-hero__copy h2 br { display: none; }
+  body[data-screen="wrong-answers"] .review-hero__copy p { display: none; }
+  body[data-screen="wrong-answers"] .review-hero__copy .actions .button.soft { display: none; }
+  body[data-screen="wrong-answers"] .review-ring { width: 82px; height: 82px; }
+  body[data-screen="wrong-answers"] .review-ring { padding: 0; }
+  body[data-screen="wrong-answers"] .review-ring > span { width: 72px; height: 72px; }
+  body[data-screen="wrong-answers"] .review-ring > span::before { width: 58px; height: 58px; }
+  body[data-screen="wrong-answers"] .review-ring strong { font-size: 30px; }
+  body[data-screen="wrong-answers"] .review-ring small { margin-top: 34px; font-size: 7px; }
+  body[data-screen="wrong-answers"] .review-hero__stats { grid-template-columns: repeat(3, 1fr); }
+  body[data-screen="wrong-answers"] .review-hero__stats > span { min-width: 0; padding: 10px 8px; }
+  body[data-screen="wrong-answers"] .review-hero__stats small { font-size: 7px; }
+  body[data-screen="wrong-answers"] .review-hero__stats b { font-size: 13px; }
+
+  body[data-screen="textbooks"] .bookbag-summary { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; min-height: 0; padding: 20px; }
+  body[data-screen="textbooks"] .bookbag-summary > div:first-child p { display: none; }
+  body[data-screen="textbooks"] .bookbag-summary-counts { grid-column: 1 / -1; justify-content: stretch; order: 3; }
+  body[data-screen="textbooks"] .bookbag-summary-counts span { flex: 1; min-width: 0; padding: 6px; }
+  body[data-screen="textbooks"] .bookbag-summary > .button { padding-inline: 14px; }
+  body[data-screen="textbooks"] .bag-item-grid { gap: 0; }
+
+  body[data-screen="friends"] .social-priority { grid-template-columns: 1fr; gap: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; }
+  body[data-screen="friends"] .social-priority > button { min-height: 66px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+  body[data-screen="friends"] .social-priority > button:last-of-type { border-bottom: 0; }
+
+  body[data-screen="group-detail"] .page-head .actions .button:nth-child(2) { display: none; }
+  body[data-screen="group-detail"] .group-room-header { grid-template-columns: 46px minmax(0, 1fr); gap: 10px; padding: 14px; }
+  body[data-screen="group-detail"] .group-room-logo { width: 44px; height: 44px; }
+  body[data-screen="group-detail"] .group-room-header h2 { font-size: 17px; }
+  body[data-screen="group-detail"] .group-room-header h2 br,
+  body[data-screen="group-detail"] .group-room-header p { display: none; }
+  body[data-screen="group-detail"] .group-room-header aside { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 10px 0 0; background: transparent; border-top: 1px solid var(--line); }
+  body[data-screen="group-detail"] .group-room-header aside .eyebrow { display: none; }
+  body[data-screen="group-detail"] .group-room-header aside small { flex: 1; }
+
+  .academy-context { grid-template-columns: 46px minmax(0, 1fr); gap: 10px; padding: 15px; }
+  .academy-mark { width: 44px; height: 44px; border-radius: 14px; }
+  .academy-context__status { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); }
+  .academy-context__status span { min-width: 0; padding: 10px 7px 2px; border-left: 1px solid var(--line); }
+  .academy-context__status span:first-child { border-left: 0; }
+  .academy-layout { grid-template-columns: 1fr; }
+  .academy-tasks, .academy-timetable { padding: 18px; }
+  .academy-task-list button { grid-template-columns: 58px minmax(0, 1fr); min-height: 68px; }
+  .academy-task-list button > em { grid-column: 2; }
+  .academy-records { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .academy-records button:nth-child(odd) { border-left: 0; }
+  .academy-records button:nth-child(n+3) { border-top: 1px solid var(--line); }
+
+  .market-search { display: grid; gap: 8px; padding: 8px; }
+  .market-filters button:nth-child(4),
+  .market-filters button:nth-child(5) { display: none; }
+  .market-results { padding: 18px; }
+
+  body[data-screen="level-test"] .level-hero { display: grid; grid-template-columns: minmax(0, 1fr) 120px; min-height: 230px; }
+  body[data-screen="level-test"] .level-hero-copy { padding: 24px 8px 24px 24px; }
+  body[data-screen="level-test"] .level-hero h1 { font-size: 46px; }
+  body[data-screen="level-test"] .level-hero-copy > p { margin-top: 12px; font-size: 11px; line-height: 1.5; }
+  body[data-screen="level-test"] .level-orbit { width: 118px; }
+  body[data-screen="level-test"] .level-hero-meta { right: 14px; bottom: 10px; left: 14px; display: grid; grid-template-columns: repeat(3, 1fr); }
+  body[data-screen="level-test"] .level-hero-meta > span { min-width: 0; padding: 8px; }
+  body[data-screen="level-test"] .level-intro { padding: 30px 4px 18px; }
+  body[data-screen="level-test"] .level-intro > p { display: none; }
+
+  body[data-screen="arena"] .arena-overview { grid-template-columns: 1fr; min-height: 0; }
+  body[data-screen="arena"] .arena-overview-copy { padding: 26px; }
+  body[data-screen="arena"] .arena-overview-copy h2 { font-size: 44px; }
+  body[data-screen="arena"] .arena-overview-copy > p { margin-top: 12px; }
+  body[data-screen="arena"] .arena-player-card { margin: 0 12px 12px; padding: 22px; }
+
+  body[data-screen="signup"] .signup-head { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  body[data-screen="signup"] .signup-head > div { grid-column: 1 / -1; }
+  body[data-screen="signup"] .signup-head h1 { font-size: 36px; }
+  body[data-screen="signup"] .signup-progress { grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 8px; }
+  body[data-screen="signup"] .signup-progress > i,
+  body[data-screen="signup"] .signup-progress button small { display: none; }
+  body[data-screen="signup"] .signup-progress button { grid-template-columns: 28px 1fr; }
+  body[data-screen="signup"] .signup-progress button > span { width: 28px; height: 28px; }
+  body[data-screen="signup"] .signup-stage { display: flex; flex-direction: column; margin-top: 8px; }
+  body[data-screen="signup"] .signup-stage-copy { order: 2; padding: 14px 18px; color: var(--ink); background: var(--surface-muted); }
+  body[data-screen="signup"] .signup-stage-copy .eyebrow,
+  body[data-screen="signup"] .signup-stage-copy p,
+  body[data-screen="signup"] .signup-summary,
+  body[data-screen="signup"] .signup-rules { display: none; }
+  body[data-screen="signup"] .signup-stage-copy h2 { font-size: 20px; }
+  body[data-screen="signup"] .signup-stage-copy h2 br { display: none; }
+  body[data-screen="signup"] .signup-form { order: 1; padding: 20px; }
+
+  body[data-screen="flow"] .flow-workspace { order: 2; }
+  body[data-screen="flow"] .flow-analysis-summary { order: 3; }
+  body[data-screen="flow"] .page-head .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  body[data-screen="flow"] .page-head .actions .button { width: auto; }
+  body[data-screen="flow"] .flow-canvas-panel { order: 1; }
+  body[data-screen="flow"] .flow-problem { order: 2; }
+  body[data-screen="flow"] .flow-detail { order: 3; }
+
+  body[data-screen="settings"] .settings-intro { grid-template-columns: 42px minmax(0, 1fr) auto; min-height: 82px; padding: 14px 16px; border-radius: 22px; }
+  body[data-screen="settings"] .settings-intro .feature-icon { width: 40px; height: 40px; }
+  body[data-screen="settings"] .settings-intro p { display: none; }
+  body[data-screen="settings"] .settings-intro > .pill { grid-column: auto; }
+}

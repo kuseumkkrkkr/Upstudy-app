@@ -44,6 +44,14 @@ const screens = {
 // 필요 변수: 액션 ID별 제목, 설명, 입력 필드, 연결 계약.
 // 작동 원리: 버튼 클릭 시 실제 네트워크 호출 없이 기능 요구사항과 연결 대상만 패널에 표시한다.
 const actions = {
+  'academy-info': { title: '학원 정보', kicker: 'ACADEMY', description: '소속 학원과 담당 교사, 연결된 그룹을 확인합니다.', contract: 'listAcademies + listAcademyGroups' },
+  'attendance-detail': { title: '출석 기록', kicker: 'ACADEMY', description: '오늘 입실 시각과 최근 출석 기록을 확인합니다.', contract: 'listAttendance → /academy/attendance' },
+  'academy-timetable': { title: '학생 시간표', kicker: 'ACADEMY', description: '학원 그룹별 수업 계획과 학생 시간표를 확인합니다.', contract: 'listTimetablePlans → /academy/timetable/plans/{groupId}' },
+  'academy-submissions': { title: '제출 기록', kicker: 'ACADEMY', description: '과제 제출 상태와 제출물을 확인합니다.', contract: 'listSubmissions → /academy/submissions' },
+  'academy-report': { title: '학습 보고서', kicker: 'ACADEMY', description: '제출 결과와 교사 피드백을 확인합니다.', contract: 'getSubmissionReport → /academy/submissions/{id}/report' },
+  'academy-snapshot': { title: '학습 스냅샷', kicker: 'ACADEMY', description: '학원에서 공유한 최근 학습 상태를 확인합니다.', contract: 'listSnapshots → /academy/snapshots' },
+  'academy-groups': { title: '학원 그룹', kicker: 'ACADEMY', description: '소속 학원의 수업 그룹을 확인합니다.', contract: 'listAcademyGroups → /academy/groups' },
+  'market-filter': { title: '마켓 필터', kicker: 'MARKET', description: '카테고리와 과정, 가격 조건으로 문제와 교재를 좁힙니다.', contract: 'searchQuests + listTextbooks' },
   'study-mode': { title: '학습하기', kicker: 'STUDY MODE', description: '시작할 학습 유형을 선택하세요.', contract: '이어하기 / 코스보기 / 복습 / 문제풀기 / 시험 / 교재보기' },
   'tool-note': { title: '노트패드', kicker: 'LEARNING TOOL · MODAL', description: '원본 삼성노트형 필기 캔버스와 우측 56px 도구막대를 모달 안에 유지합니다.', body: '<div class="notepad-shell"><main class="notepad-canvas has-lines"><span class="notepad-canvas-label">필기 캔버스 · 아래로 스크롤하면 자동 확장</span><svg viewBox="0 0 760 520" aria-label="저장된 필기 예시"><path d="M100 110 C165 86 220 91 286 117 S390 153 468 113"/><path d="M112 182 C206 157 300 161 382 187"/><path d="M425 226 L480 174 L532 238 L595 142"/><path class="note-highlight" d="M92 302 C205 289 318 293 441 306"/></svg></main><aside class="notepad-rail" aria-label="노트패드 도구"><button class="is-danger" type="button" title="나가기">×</button><i></i><button class="is-selected" type="button" title="펜">✎</button><button type="button" title="형광펜">▰</button><button type="button" title="색상"><span class="notepad-color"></span>◉</button><button type="button" title="굵기">≡</button><i></i><button type="button" title="지우개">◇</button><button class="is-selected" type="button" title="라인">▦</button><button type="button" title="실행 취소">↶</button><button type="button" title="모두 지우기">⌫</button></aside><span class="notepad-save-note">로컬 자동 저장 · 500ms</span></div>', contract: 'LocalDb[notepad_strokes_v2] · 필압 스트로크 · 500ms 지연 저장 · 1,400px→50,000px 캔버스 자동 확장 · 실행 취소' },
   'tool-timer': { title: '타이머', kicker: 'LEARNING TOOL · MODAL', description: '원본처럼 스톱워치가 기본이며 타이머로 전환하면 직접 입력과 시간 프리셋이 열립니다.', body: '<div class="timer-original"><div class="timer-mode-toggle" role="tablist"><button class="is-selected" type="button" data-timer-mode="stopwatch">◷ 스톱워치</button><button type="button" data-timer-mode="timer">◒ 타이머</button></div><section class="timer-display"><header><span><i></i> 대기 중</span><em id="timerModeLabel">경과 시간</em></header><strong id="timerDisplayValue">00:00</strong><p id="timerModeCopy">필요할 때 랩을 찍어 구간 시간을 확인합니다.</p><div class="timer-progress" hidden><span></span></div></section><section class="timer-setup" data-timer-setup hidden><div><h3>시간 설정</h3><p>직접 입력하거나 자주 쓰는 시간으로 바로 맞춥니다.</p></div><div class="timer-time-fields"><label><input class="field" value="00">시</label><label><input class="field" value="25">분</label><label><input class="field" value="00">초</label></div><div class="timer-preset-row"><button type="button">+10분</button><button type="button">+30분</button><button type="button">+1시간</button><button type="button">+2시간</button></div></section><div class="timer-controls"><button class="button soft" type="button">↻ 리셋</button><button class="button primary" type="button">▶ 시작</button><button class="button soft" type="button" id="timerThirdAction" disabled>⚑ 랩 추가</button></div></div>', contract: 'Timer.periodic(1초) · 스톱워치/타이머 전환 · 랩 기록 · +5분 · 시/분/초 직접 입력 · 완료 알림' },
@@ -409,7 +417,20 @@ function renderProfile() {
 // 필요 변수: 전체 알림 여부, 교재 페이지 모드와 앱 라이선스 정보.
 // 작동 원리: 실제 로컬 저장 항목 두 개만 즉시 토글하고 라이선스는 Flutter 라이선스 화면으로 연결한다.
 function renderSettings() {
-  return `<section class="page account-page settings-page">${pageHead('PREFERENCES', '설정', '실제로 저장되는 학습 환경만 간결하게 조정합니다.', button('프로필로 돌아가기', '', 'soft', 'profile'))}<section class="settings-intro"><span class="feature-icon">⚙</span><div><span class="eyebrow">LOCAL PREFERENCES</span><h2>이 기기의 학습 환경</h2><p>변경 내용은 즉시 UTF-8 기반 로컬 설정에 저장됩니다.</p></div><span class="pill">자동 저장</span></section><div class="settings-layout"><main><section class="settings-group"><header><span>01</span><div><h2>교재 보기</h2><p>본문을 연속 스크롤 또는 PDF형 페이지로 봅니다.</p></div></header><button class="setting-row" type="button" data-setting-toggle role="switch" aria-checked="false"><span class="setting-row-icon">▧</span><span><b>PDF형 페이지 보기</b><small data-setting-state>현재 연속 스크롤로 열립니다.</small></span><i><em></em></i></button></section><section class="settings-group"><header><span>02</span><div><h2>알림</h2><p>앱의 모든 알림을 한 번에 켜거나 끕니다.</p></div></header><button class="setting-row is-on" type="button" data-setting-toggle role="switch" aria-checked="true"><span class="setting-row-icon">◌</span><span><b>모든 알림</b><small data-setting-state>현재 모든 알림이 켜져 있습니다.</small></span><i><em></em></i></button><p class="settings-footnote">세부 알림 항목은 현재 구현되어 있지 않습니다.</p></section><section class="settings-group"><header><span>03</span><div><h2>앱 정보</h2><p>AIFlow에 포함된 오픈소스 라이선스를 확인합니다.</p></div></header><button class="setting-link" type="button" data-action="licenses"><span class="setting-row-icon">≡</span><span><b>오픈소스 라이선스</b><small>AIFlow 1.0.0 · Flutter 패키지 정보</small></span><strong>›</strong></button></section></main><aside class="settings-storage-card"><span class="eyebrow">STORAGE CONTRACT</span><h2>서버 요청 없이<br>바로 저장돼요.</h2><code>settings.notifications_enabled</code><code>textbook_reader.page_mode</code><p>설정 화면에서는 `/user/storage` API를 호출하지 않습니다.</p></aside></div>${ledger('settings')}</section>`;
+  return `<section class="page account-page settings-page">${pageHead('PREFERENCES', '설정', '실제로 저장되는 학습 환경만 간결하게 조정합니다.', button('프로필로 돌아가기', '', 'soft', 'profile'))}<section class="settings-intro"><span class="feature-icon">⚙</span><div><span class="eyebrow">LOCAL PREFERENCES</span><h2>이 기기의 학습 환경</h2><p>변경 내용은 즉시 UTF-8 기반 로컬 설정에 저장됩니다.</p></div><span class="pill">자동 저장</span></section><div class="settings-layout"><main><section class="settings-group"><header><span>01</span><div><h2>교재 보기</h2><p>본문을 연속 스크롤 또는 PDF형 페이지로 봅니다.</p></div></header><button class="setting-row" type="button" data-setting-toggle role="switch" aria-checked="false"><span class="setting-row-icon">▧</span><span><b>PDF형 페이지 보기</b><small data-setting-state>현재 연속 스크롤로 열립니다.</small></span><i><em></em></i></button></section><section class="settings-group"><header><span>02</span><div><h2>알림</h2><p>앱의 모든 알림을 한 번에 켜거나 끕니다.</p></div></header><button class="setting-row is-on" type="button" data-setting-toggle role="switch" aria-checked="true"><span class="setting-row-icon">◌</span><span><b>모든 알림</b><small data-setting-state>현재 모든 알림이 켜져 있습니다.</small></span><i><em></em></i></button><p class="settings-footnote">세부 알림 항목은 현재 구현되어 있지 않습니다.</p></section><section class="settings-group"><header><span>03</span><div><h2>앱 정보</h2><p>AIFlow에 포함된 오픈소스 라이선스를 확인합니다.</p></div></header><button class="setting-link" type="button" data-action="licenses"><span class="setting-row-icon">≡</span><span><b>오픈소스 라이선스</b><small>AIFlow 1.0.0 · Flutter 패키지 정보</small></span><strong>›</strong></button></section></main><aside class="settings-storage-card"><span class="eyebrow">STORAGE CONTRACT</span><h2>서버 요청 없이<br>바로 저장돼요.</h2><code>settings.notifications_enabled</code><code>textbook_reader.page_mode</code><p>설정 화면에서는 /user/storage API를 호출하지 않습니다.</p></aside></div>${ledger('settings')}</section>`;
+}
+
+// 필요 변수: 학원 소속, 오늘 출석, 과제, 시간표, 제출·보고서·스냅샷 상태.
+// 작동 원리: 기능 목록을 반복 카드로 나열하지 않고 학생이 오늘 처리할 학원 일정과 과제를 먼저 보여주며 나머지 기능은 간결한 상태 행으로 연결한다.
+function renderAcademy() {
+  return `<section class="page academy-page">${pageHead('ACADEMY', '학원', '오늘 수업과 과제를 한곳에서 확인합니다.', button('학원 정보', 'academy-info', 'soft'))}<section class="academy-context"><span class="academy-mark">A</span><div><span class="eyebrow">AIFLOW MATH ACADEMY</span><h2>AIFlow 수학학원</h2><p>중2 심화반 · 담당 김선생</p></div><div class="academy-context__status"><span><small>오늘 출석</small><b>출석 완료</b></span><span><small>다음 수업</small><b>목 19:30</b></span><span><small>남은 과제</small><b>2개</b></span></div></section><div class="academy-layout"><main class="academy-tasks"><div class="section-title"><div><span class="eyebrow">TODAY</span><h2>오늘 할 일</h2></div><span class="pill">2개 남음</span></div><div class="academy-task-list"><button type="button" data-nav="solve"><span class="academy-task-time">22:00</span><span><b>일차함수 12문제</b><small>과제 · 진행 4/12 · 오늘 마감</small></span><em>이어하기 ›</em></button><button type="button" data-nav="textbook-reader"><span class="academy-task-time">수업 전</span><span><b>교재 3장 읽기</b><small>최소 학습 8분 · 미시작</small></span><em>시작 ›</em></button><button class="is-done" type="button" data-action="attendance-detail"><span class="academy-task-time">18:54</span><span><b>출석 확인</b><small>학원 입실이 기록되었습니다.</small></span><em>완료</em></button></div></main><aside class="academy-timetable"><div class="section-title"><div><span class="eyebrow">TIMETABLE</span><h2>이번 주 수업</h2></div>${button('전체 시간표', 'academy-timetable', 'soft')}</div><div class="academy-class-list"><span><i>화</i><b>함수 심화</b><small>19:30–21:00 · 301호</small></span><span class="is-next"><i>목</i><b>문제 풀이</b><small>19:30–21:00 · 301호</small></span></div></aside></div><section class="academy-records"><button type="button" data-action="academy-submissions"><span>▤</span><b>제출 기록</b><small>최근 제출 4개</small><i>›</i></button><button type="button" data-action="academy-report"><span>⌁</span><b>학습 보고서</b><small>이번 달 1개</small><i>›</i></button><button type="button" data-action="academy-snapshot"><span>◉</span><b>학습 스냅샷</b><small>최근 업데이트 오늘</small><i>›</i></button><button type="button" data-action="academy-groups"><span>◎</span><b>학원 그룹</b><small>가입 그룹 2개</small><i>›</i></button></section>${ledger('academy')}</section>`;
+}
+
+// 필요 변수: 문제·교재 검색 결과, 카테고리와 내 교재 연결 상태.
+// 작동 원리: 중복된 검색 버튼과 빠른 필터 카드를 하나의 검색 도구로 합치고 결과 목록을 즉시 노출한다.
+function renderMarketplace() {
+  const marketItem = (kind, title, meta, action, featured = false) => `<button class="market-item ${featured ? 'is-featured' : ''}" type="button" data-nav="${action}"><span class="market-item__icon">${kind === '문제' ? '✎' : '▧'}</span><span><small>${kind}</small><b>${title}</b><em>${meta}</em></span><strong>보기 ›</strong></button>`;
+  return `<section class="page market-page">${pageHead('COMMUNITY', '마켓', '필요한 문제와 교재를 찾아 내 학습으로 연결합니다.')}<section class="market-search"><div class="course-search-field"><span>⌕</span><input value="" placeholder="문제·교재·태그 검색" aria-label="마켓 검색"><button type="button">검색</button></div><div class="market-filters"><button class="is-selected" type="button">전체</button><button type="button">문제</button><button type="button">교재</button><button type="button">무료</button><button type="button">내 과정</button><button type="button" data-action="market-filter">필터＋</button></div></section><section class="market-results"><div class="section-title"><div><span class="eyebrow">RECOMMENDED</span><h2>중학교 2학년 추천</h2></div><span class="pill">3개</span></div><div class="market-list">${marketItem('문제', '중2 함수 실전 100제', '평점 4.9 · 1,200 P', 'textbooks', true)}${marketItem('교재', '개념이 보이는 그래프', '무료 · 42쪽', 'textbook-reader')}${marketItem('문제', '확률 OX 문제 묶음', '800 P · 30문항', 'solve')}</div></section>${ledger('marketplace')}</section>`;
 }
 
 // 필요 변수: 아직 전용 템플릿이 없는 화면 ID.
@@ -436,7 +457,7 @@ function renderScreen(id) {
   if (kind === 'textbooks') return renderBookbag();
   if (kind === 'friends') return renderSocialHub();
   if (kind === 'groups') return renderGroups();
-  if (kind === 'market') return renderCollection(id);
+  if (kind === 'market') return renderMarketplace();
   if (kind === 'schedule') return renderSchedule();
   if (kind === 'arena') return renderArena();
   if (kind === 'group') return renderGroupSpace();
@@ -445,6 +466,7 @@ function renderScreen(id) {
   if (['tools', 'graph', 'flow'].includes(kind)) return renderTools(id);
   if (kind === 'profile') return renderProfile();
   if (kind === 'settings') return renderSettings();
+  if (kind === 'academy') return renderAcademy();
   if (kind === 'auth') return renderLogin();
   if (kind === 'signup') return renderSignup();
   return renderGeneric(id);
@@ -485,6 +507,7 @@ function renderNavigation() {
 function navigate(id) {
   if (!screens[id]) return;
   activeScreen = id;
+  document.body.dataset.screen = id;
   document.body.classList.toggle('is-exam-mode', id === 'exam-paper');
   document.body.classList.toggle('is-solve-mode', id === 'solve');
   document.body.classList.toggle('is-reader-mode', id === 'textbook-reader');
@@ -495,7 +518,7 @@ function navigate(id) {
     const workspace = screenHost.querySelector('.flow-workspace');
     if (heading) heading.textContent = 'Flow 분석';
     if (description) description.textContent = '제출 결과를 짧게 확인한 뒤 기존 분기형 Flow에서 틀린 단계와 정답 풀이를 분석합니다.';
-    workspace?.insertAdjacentHTML('beforebegin', flowAnalysisSummary());
+    workspace?.insertAdjacentHTML('afterend', flowAnalysisSummary());
   }
   renderNavigation();
   closePanel();
