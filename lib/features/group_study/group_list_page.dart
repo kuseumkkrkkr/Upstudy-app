@@ -156,8 +156,11 @@ class _GroupListPageState extends State<GroupListPage> {
     }
   }
 
+  /// 필요한 변수는 내 그룹·공개 그룹 상태와 현재 화면 폭이다.
+  /// 작동 원리는 모바일은 전폭 액션, PC는 HTML처럼 제목 오른쪽 액션과 52px 본문 여백을 적용하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 720;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
@@ -183,43 +186,49 @@ class _GroupListPageState extends State<GroupListPage> {
               child: RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                  padding: EdgeInsets.fromLTRB(
+                    compact ? 14 : 52,
+                    compact ? 24 : 52,
+                    compact ? 14 : 52,
+                    40,
+                  ),
                   children: [
-                    const Text(
-                      'GROUP STUDY',
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.7,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
+                    if (compact) ...[
+                      const _GroupListHeading(fontSize: 32),
+                      const SizedBox(height: 16),
+                      OutlinedButton(
+                        onPressed: _openFindSheet,
+                        child: const Text('그룹 찾기 · 코드 참가'),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '그룹 스터디',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
+                      const SizedBox(height: 8),
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF202022),
+                        ),
+                        onPressed: _openCreateDialog,
+                        child: const Text('그룹 만들기'),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '내 그룹의 새 학습과 대화를 먼저 확인하고, 필요할 때만 검색하거나 초대 코드로 참가하세요.',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: _openFindSheet,
-                      child: const Text('그룹 찾기 · 코드 참가'),
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF202022),
+                    ] else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Expanded(
+                            child: _GroupListHeading(fontSize: 54),
+                          ),
+                          OutlinedButton(
+                            onPressed: _openFindSheet,
+                            child: const Text('그룹 찾기 · 코드 참가'),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF202022),
+                            ),
+                            onPressed: _openCreateDialog,
+                            child: const Text('그룹 만들기'),
+                          ),
+                        ],
                       ),
-                      onPressed: _openCreateDialog,
-                      child: const Text('그룹 만들기'),
-                    ),
                     const SizedBox(height: 22),
                     const Text(
                       'CONTINUE TOGETHER',
@@ -262,6 +271,40 @@ class _GroupListPageState extends State<GroupListPage> {
       ),
     );
   }
+}
+
+class _GroupListHeading extends StatelessWidget {
+  const _GroupListHeading({required this.fontSize});
+
+  final double fontSize;
+
+  /// 필요한 변수는 반응형 제목 크기다.
+  /// 작동 원리는 그룹 영문 표식·제목·설명을 HTML과 같은 간격으로 하나의 소개 블록에 묶는 것이다.
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'GROUP STUDY',
+        style: TextStyle(
+          fontSize: 10,
+          letterSpacing: 1.7,
+          color: Colors.black54,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        '그룹 스터디',
+        style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 6),
+      const Text(
+        '내 그룹의 새 학습과 대화를 먼저 확인하고, 필요할 때만 검색하거나 초대 코드로 참가하세요.',
+        style: TextStyle(color: Colors.black45),
+      ),
+    ],
+  );
 }
 
 class _GroupFindSheet extends StatefulWidget {
@@ -645,25 +688,32 @@ class _GroupListCard extends StatelessWidget {
   /// 필요한 변수는 현재 사용자의 그룹 목록이다.
   /// 작동 원리는 최근 활동순 캡슐과 그룹 메타 행을 시안처럼 구분선 목록으로 렌더링하는 것이다.
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: const Color(0xFFDEDEE1)),
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 720;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+            width: compact ? double.infinity : null,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(color: const Color(0xFFDEDEE1)),
+            ),
+            child: const Text(
+              '최근 활동순',
+              style: TextStyle(fontSize: 10, color: Colors.black45),
+            ),
+          ),
         ),
-        child: const Text(
-          '최근 활동순',
-          style: TextStyle(fontSize: 10, color: Colors.black45),
-        ),
-      ),
-      for (var index = 0; index < groups.length; index++)
-        _GroupRow(group: groups[index], index: index),
-    ],
-  );
+        const SizedBox(height: 8),
+        for (var index = 0; index < groups.length; index++)
+          _GroupRow(group: groups[index], index: index),
+      ],
+    );
+  }
 }
 
 class _GroupRow extends StatelessWidget {
@@ -719,14 +769,28 @@ class _GroupRow extends StatelessWidget {
                   group.description ?? '함께 공부하는 그룹',
                   style: const TextStyle(fontSize: 11, color: Colors.black45),
                 ),
-                const SizedBox(height: 7),
-                Text(
-                  '${group.memberCount} / ${group.maxMembers == 0 ? '—' : group.maxMembers}명 · ${group.isPublic ? '공개' : '비공개'}',
-                  style: const TextStyle(fontSize: 9, color: Colors.black38),
-                ),
+                if (MediaQuery.sizeOf(context).width < 720) ...[
+                  const SizedBox(height: 7),
+                  Text(
+                    '${group.memberCount} / ${group.maxMembers == 0 ? '—' : group.maxMembers}명 · ${group.isPublic ? '공개' : '비공개'}',
+                    style: const TextStyle(fontSize: 9, color: Colors.black38),
+                  ),
+                ],
               ],
             ),
           ),
+          if (MediaQuery.sizeOf(context).width >= 720) ...[
+            _GroupMetaBadge(
+              '${group.memberCount} / ${group.maxMembers == 0 ? '—' : group.maxMembers}명',
+            ),
+            const SizedBox(width: 8),
+            _GroupMetaBadge(group.isPublic ? '공개' : '비공개'),
+            if (group.lockEnabled) ...[
+              const SizedBox(width: 8),
+              const _GroupMetaBadge('잠금 활동'),
+            ],
+            const SizedBox(width: 12),
+          ],
           if (index == 0)
             Container(
               width: 29,
@@ -749,6 +813,27 @@ class _GroupRow extends StatelessWidget {
             const Icon(Icons.chevron_right, color: Colors.black38),
         ],
       ),
+    ),
+  );
+}
+
+class _GroupMetaBadge extends StatelessWidget {
+  const _GroupMetaBadge(this.label);
+
+  final String label;
+
+  /// 필요한 변수는 그룹 인원·공개·잠금 상태 레이블이다.
+  /// 작동 원리는 PC 그룹 행의 우측 메타를 HTML과 같은 작은 흰 캡슐로 분리하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .7),
+      borderRadius: BorderRadius.circular(99),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(fontSize: 8, color: Colors.black54),
     ),
   );
 }
@@ -817,17 +902,13 @@ class _InviteCodeCardState extends State<_InviteCodeCard> {
   /// 필요한 변수는 초대 코드 입력과 확인 동작이다.
   /// 작동 원리는 HTML의 INVITE CODE 카드와 우측 검은 확인 버튼을 같은 높이로 배치하는 것이다.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0xFFE0E0E2)),
-    ),
-    child: Column(
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 720;
+    final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
+      mainAxisSize: MainAxisSize.min,
+      children: const [
+        Text(
           'INVITE CODE',
           style: TextStyle(
             fontSize: 10,
@@ -836,38 +917,57 @@ class _InviteCodeCardState extends State<_InviteCodeCard> {
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: 10),
-        const Text(
+        SizedBox(height: 10),
+        Text(
           '초대받은 그룹이 있나요?',
           style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 6),
-        const Text(
+        SizedBox(height: 6),
+        Text(
           '코드를 확인하면 그룹명·설명·인원을 먼저 보여줍니다.',
           style: TextStyle(fontSize: 11, color: Colors.black45),
         ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                decoration: const InputDecoration(hintText: 'AF-24K8'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF202022),
-              ),
-              onPressed: _checking ? null : _verify,
-              child: Text(_checking ? '확인 중…' : '코드 확인'),
-            ),
-          ],
+      ],
+    );
+    final codeField = Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            decoration: const InputDecoration(hintText: 'AF-24K8'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF202022),
+          ),
+          onPressed: _checking ? null : _verify,
+          child: Text(_checking ? '확인 중…' : '코드 확인'),
         ),
       ],
-    ),
-  );
+    );
+    return Container(
+      padding: EdgeInsets.all(compact ? 18 : 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE0E0E2)),
+      ),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [copy, const SizedBox(height: 20), codeField],
+            )
+          : Row(
+              children: [
+                Expanded(flex: 5, child: copy),
+                const SizedBox(width: 36),
+                Expanded(flex: 7, child: codeField),
+              ],
+            ),
+    );
+  }
 }
 
 class _InviteConfirmDialog extends StatefulWidget {

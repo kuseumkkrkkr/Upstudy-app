@@ -119,6 +119,7 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 720;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
@@ -137,7 +138,12 @@ class _SignupPageState extends State<SignupPage> {
               child: Form(
                 key: _formKey,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 48),
+                  padding: EdgeInsets.fromLTRB(
+                    compact ? 14 : 52,
+                    compact ? 24 : 52,
+                    compact ? 14 : 52,
+                    48,
+                  ),
                   children: [
                     _buildHeader(),
                     const SizedBox(height: 16),
@@ -163,10 +169,10 @@ class _SignupPageState extends State<SignupPage> {
 
   /// 필요한 변수는 현재 Navigator다.
   /// 작동 원리는 HTML과 같은 브랜드·제목·로그인 복귀 버튼을 한 헤더에 배치하는 것이다.
-  Widget _buildHeader() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const Row(
+  Widget _buildHeader() => LayoutBuilder(
+    builder: (context, constraints) {
+      const brand = Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           _SignupLogo(),
           SizedBox(width: 10),
@@ -175,32 +181,57 @@ class _SignupPageState extends State<SignupPage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
           ),
         ],
-      ),
-      const SizedBox(height: 14),
-      const Text(
-        'CREATE ACCOUNT',
-        style: TextStyle(
-          fontSize: 10,
-          letterSpacing: 1.6,
-          color: Colors.black54,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      const SizedBox(height: 26),
-      const Text(
-        '나에게 맞는 학습을\n설정해 볼까요?',
-        style: TextStyle(
-          fontSize: 36,
-          height: .98,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      const SizedBox(height: 28),
-      OutlinedButton(
+      );
+      const title = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CREATE ACCOUNT',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 1.6,
+              color: Colors.black54,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 26),
+          Text(
+            '나에게 맞는 학습을\n설정해 볼까요?',
+            style: TextStyle(
+              fontSize: 36,
+              height: .98,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      );
+      final login = OutlinedButton(
         onPressed: () => Navigator.of(context).maybePop(),
         child: const Text('로그인으로 돌아가기'),
-      ),
-    ],
+      );
+      if (constraints.maxWidth < 720) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Align(alignment: Alignment.centerLeft, child: brand),
+            const SizedBox(height: 14),
+            title,
+            const SizedBox(height: 28),
+            login,
+          ],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Expanded(child: brand),
+          const Expanded(flex: 2, child: title),
+          Expanded(
+            child: Align(alignment: Alignment.centerRight, child: login),
+          ),
+        ],
+      );
+    },
   );
 
   /// 필요한 변수는 이동할 단계 번호다.
@@ -215,10 +246,15 @@ class _SignupPageState extends State<SignupPage> {
     title: '먼저 학생 정보를\n알려주세요.',
     description: '과정과 학년은 커리큘럼 추천의 기준이 되며 프로필에서 언제든 수정할 수 있습니다.',
     summary: const ['필수  이름 · 과정 · 학년 · 학교', '선택  고등 과정의 과목'],
-    children: [
-      _signupField(_nameController, '이름', required: true),
-      const SizedBox(height: 14),
-      DropdownButtonFormField<String>(
+    children: [_buildProfileFields()],
+  );
+
+  /// 필요한 변수는 이름·과정·학년·과목·학교 입력값과 현재 폼 폭이다.
+  /// 작동 원리는 HTML처럼 PC에서는 기본 입력을 2열로, 모바일에서는 읽기 순서대로 1열로 배치하는 것이다.
+  Widget _buildProfileFields() => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact = constraints.maxWidth < 720;
+      final trackField = DropdownButtonFormField<String>(
         initialValue: _track,
         decoration: _signupDecoration('과정'),
         items: const [
@@ -226,11 +262,8 @@ class _SignupPageState extends State<SignupPage> {
           DropdownMenuItem(value: '고등학교', child: Text('고등학교')),
         ],
         onChanged: (value) => setState(() => _track = value ?? '중학교'),
-      ),
-      const SizedBox(height: 14),
-      _signupField(_gradeController, '학년', required: true),
-      const SizedBox(height: 14),
-      DropdownButtonFormField<String>(
+      );
+      final subjectField = DropdownButtonFormField<String>(
         initialValue: _subject,
         decoration: _signupDecoration('과목'),
         items: const [
@@ -239,17 +272,74 @@ class _SignupPageState extends State<SignupPage> {
           DropdownMenuItem(value: '미적분', child: Text('미적분')),
         ],
         onChanged: (value) => setState(() => _subject = value ?? '수학'),
-      ),
-      const SizedBox(height: 14),
-      _signupField(_schoolController, '학교', required: true),
-      const SizedBox(height: 6),
-      const Text(
-        '학교명을 입력하면 자동완성 결과를 확인합니다.',
-        style: TextStyle(fontSize: 11, color: Colors.black45),
-      ),
-      const SizedBox(height: 18),
-      _primaryButton('계정 정보 입력하기 →', () => _setStage(1)),
-    ],
+      );
+      final fields = <Widget>[
+        _signupField(_nameController, '이름', required: true),
+        trackField,
+        _signupField(_gradeController, '학년', required: true),
+        subjectField,
+      ];
+      final grid = compact
+          ? Column(
+              children: [
+                for (var index = 0; index < fields.length; index++) ...[
+                  fields[index],
+                  if (index != fields.length - 1) const SizedBox(height: 14),
+                ],
+              ],
+            )
+          : Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: fields[0]),
+                    const SizedBox(width: 14),
+                    Expanded(child: fields[1]),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(child: fields[2]),
+                    const SizedBox(width: 14),
+                    Expanded(child: fields[3]),
+                  ],
+                ),
+              ],
+            );
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          grid,
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _signupField(_schoolController, '학교', required: true),
+              ),
+              if (!compact) ...[
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 58,
+                  child: OutlinedButton(
+                    onPressed: () {},
+                    child: const Text('학교 찾기'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '학교명을 입력하면 자동완성 결과를 확인합니다.',
+            style: TextStyle(fontSize: 11, color: Colors.black45),
+          ),
+          const SizedBox(height: 18),
+          _primaryButton('계정 정보 입력하기 →', () => _setStage(1)),
+        ],
+      );
+    },
   );
 
   /// 필요한 변수는 계정 컨트롤러와 다음 단계 콜백이다.
@@ -425,9 +515,9 @@ class _SignupPageState extends State<SignupPage> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 5, child: buildCopy(compact: false)),
+              Expanded(flex: 4, child: buildCopy(compact: false)),
               const SizedBox(width: 10),
-              Expanded(flex: 9, child: form),
+              Expanded(flex: 10, child: form),
             ],
           );
         },

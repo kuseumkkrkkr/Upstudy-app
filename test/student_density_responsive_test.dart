@@ -248,7 +248,7 @@ void main() {
     expect(find.text('레벨 테스트 시작 →'), findsOneWidget);
   });
 
-  testWidgets('500px 문제 풀이는 HTML 집중 헤더와 2열 선택지를 유지한다', (tester) async {
+  testWidgets('500px 문제 풀이는 HTML 집중 헤더와 세로 선택지를 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -285,6 +285,10 @@ void main() {
     expect(find.text('SAVED'), findsOneWidget);
     expect(find.text('y = 2x + 1'), findsOneWidget);
     expect(find.text('y = 4x - 1'), findsOneWidget);
+    final firstChoice = tester.getTopLeft(find.text('y = 2x + 1'));
+    final secondChoice = tester.getTopLeft(find.text('y = x + 2'));
+    expect((firstChoice.dx - secondChoice.dx).abs(), lessThan(4));
+    expect(secondChoice.dy, greaterThan(firstChoice.dy));
     expect(find.byTooltip('펜'), findsOneWidget);
     expect(find.byTooltip('제출'), findsOneWidget);
   });
@@ -723,6 +727,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('STEP 03 · CONFIRM'), findsOneWidget);
     expect(find.text('가입하고 학습 시작하기'), findsOneWidget);
+  });
+
+  testWidgets('1280px 회원가입은 브랜드·제목·로그인을 3열로 배치한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: SignupPage(preview: true)));
+    await tester.pump();
+
+    final brand = tester.getTopLeft(find.text('AIFlow').last);
+    final title = tester.getTopLeft(find.text('CREATE ACCOUNT'));
+    final login = tester.getTopLeft(find.text('로그인으로 돌아가기'));
+    expect(brand.dx, lessThan(title.dx));
+    expect(title.dx, lessThan(login.dx));
+    expect(find.text('먼저 학생 정보를\n알려주세요.'), findsOneWidget);
   });
 
   testWidgets('500px 프로필은 HTML 학생 히어로와 학습 정보를 유지한다', (tester) async {

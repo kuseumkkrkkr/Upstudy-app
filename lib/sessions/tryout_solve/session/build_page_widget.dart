@@ -24,7 +24,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   static const Color _kGreen = Colors.black;
   static const Color _surfaceColor = Colors.white;
   static const Color _lineColor = Color(0xFFE1E6DF);
-  static const double _problemCardMaxWidth = 1380;
+  static const double _problemCardMaxWidth = 720;
   static const double _problemCardMinHeight = 108;
   static const double _noteLineStartY = 28;
   static const double _noteLineSpacing = 28;
@@ -1469,6 +1469,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     final fallbackBlocks = parseContentBlocks(_problemText);
     final displayBlocks = titleBlocks.isEmpty ? fallbackBlocks : titleBlocks;
     final optionBlocks = _currentQuestOptionBlocks();
+    final compact = MediaQuery.sizeOf(context).width < 720;
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -1563,13 +1564,26 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                               ],
                             ),
                           ),
+                          if (!compact)
+                            OutlinedButton(
+                              onPressed: _showSolveInfo,
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(68, 46),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                              ),
+                              child: const Text('힌트 2'),
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 18),
-                      OutlinedButton(
-                        onPressed: _showSolveInfo,
-                        child: const Text('힌트 2'),
-                      ),
+                      if (compact) ...[
+                        const SizedBox(height: 18),
+                        OutlinedButton(
+                          onPressed: _showSolveInfo,
+                          child: const Text('힌트 2'),
+                        ),
+                      ],
                       const Divider(height: 36),
                       _buildProblemPrompt(displayBlocks: displayBlocks),
                       if (optionBlocks.isNotEmpty) ...[
@@ -1723,16 +1737,24 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = math.min(constraints.maxWidth - 48, 1260.0);
-        return Container(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-          decoration: const BoxDecoration(
-            color: _surfaceColor,
-            border: Border(top: BorderSide(color: Color(0xFFD9D9DC))),
-          ),
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
           child: Center(
             child: Container(
               width: math.max(0.0, maxWidth),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFD9D9DC)),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: .05),
+                    blurRadius: 22,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,

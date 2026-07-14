@@ -191,7 +191,7 @@ class _PlacementHero extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(mobile ? 24 : 30),
       child: Container(
-        constraints: BoxConstraints(minHeight: mobile ? 230 : 330),
+        constraints: BoxConstraints(minHeight: mobile ? 230 : 430),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -245,8 +245,8 @@ class _PlacementHero extends StatelessWidget {
               ),
             ),
             Positioned(
-              right: mobile ? -8 : 52,
-              top: mobile ? 50 : 48,
+              right: mobile ? -8 : -80,
+              top: mobile ? 50 : 34,
               child: _OvrOrbit(mobile: mobile),
             ),
             Positioned(
@@ -274,27 +274,37 @@ class _OvrOrbit extends StatelessWidget {
   /// 측정 전 OVR을 두 개의 원형 궤도와 중앙 `--` 값으로 표현한다.
   @override
   Widget build(BuildContext context) => Container(
-    width: mobile ? 120 : 230,
-    height: mobile ? 120 : 230,
+    width: mobile ? 120 : 360,
+    height: mobile ? 120 : 360,
     decoration: BoxDecoration(
       shape: BoxShape.circle,
       border: Border.all(color: Colors.black26),
     ),
     alignment: Alignment.center,
     child: Container(
-      width: mobile ? 94 : 150,
-      height: mobile ? 94 : 150,
+      width: mobile ? 94 : 172,
+      height: mobile ? 94 : 172,
       decoration: BoxDecoration(
+        color: mobile ? Colors.transparent : const Color(0xFF202022),
         shape: BoxShape.circle,
         border: Border.all(color: Colors.black38),
+        boxShadow: mobile
+            ? const []
+            : const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 28,
+                  spreadRadius: 4,
+                ),
+              ],
       ),
-      child: const Column(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             'MY OVR',
             style: TextStyle(
-              color: Colors.black54,
+              color: mobile ? Colors.black54 : Colors.white54,
               fontSize: 8,
               letterSpacing: 1.2,
             ),
@@ -302,7 +312,7 @@ class _OvrOrbit extends StatelessWidget {
           Text(
             '--',
             style: TextStyle(
-              color: StudentDensityTokens.ink,
+              color: mobile ? StudentDensityTokens.ink : Colors.white,
               fontSize: 34,
               height: .9,
               fontWeight: FontWeight.w900,
@@ -310,7 +320,10 @@ class _OvrOrbit extends StatelessWidget {
           ),
           Text(
             'READY TO MEASURE',
-            style: TextStyle(color: Colors.black38, fontSize: 6),
+            style: TextStyle(
+              color: mobile ? Colors.black38 : Colors.white54,
+              fontSize: 6,
+            ),
           ),
         ],
       ),
@@ -388,13 +401,13 @@ class _PlacementIntro extends StatelessWidget {
     final mobile = isStudentDensityMobile(context);
     final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        StudentDensityEyebrow('HOW IT WORKS'),
-        SizedBox(height: 10),
+      children: [
+        const StudentDensityEyebrow('HOW IT WORKS'),
+        const SizedBox(height: 10),
         Text(
-          '점수가 아니라,\n학습의 출발점을 찾습니다.',
+          mobile ? '점수가 아니라,\n학습의 출발점을 찾습니다.' : '점수가 아니라,\n학습의 출발점을 찾습니\n다.',
           style: TextStyle(
-            fontSize: 34,
+            fontSize: mobile ? 34 : 54,
             height: 1,
             letterSpacing: -1.5,
             fontWeight: FontWeight.w900,
