@@ -1,9 +1,70 @@
 import 'package:flutter/material.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+
+import 'package:s11/sessions/course/ui/course_catalog_page.dart';
+import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
-/// 필요한 변수는 브라우저가 제공하는 현재 viewport다.
-/// 공용 학생 셸을 API 없이 실행해 390px·500px·1280px 검수 캡처에 사용한다.
+/// 필요한 변수는 HTML 코스 시안에 표시되는 상태·진행률·추천 정보다.
+/// 작동 원리: 네트워크 없이도 실제 코스 위젯이 밀도와 반응형을 동일하게 렌더하도록 고정 입력을 만든다.
+List<Course> _previewCourses() => const [
+  Course(
+    id: 'linear-active',
+    title: '일차함수 완성',
+    description: '그래프 해석과 기울기를 교재·문제·시험 흐름으로 보완합니다.',
+    level: '그래프 이해',
+    duration: '3주',
+    progress: 0.42,
+    status: 'in_progress',
+    lastAction: '그래프 이해 · 06번째 모듈',
+    lessons: 12,
+    targetOvr: 91,
+  ),
+  Course(
+    id: 'geometry-active',
+    title: '도형의 닮음',
+    description: '닮음 조건과 닮음비를 문제 중심으로 익힙니다.',
+    level: '닮음비',
+    duration: '2주',
+    progress: 0.18,
+    status: 'in_progress',
+    lastAction: '닮음비 · 03번째 모듈',
+    lessons: 9,
+    targetOvr: 84,
+  ),
+  Course(
+    id: 'probability',
+    title: '확률 실전',
+    description: '경우의 수를 정리하고 실전 문제로 연결합니다.',
+    level: '확률',
+    duration: '2주',
+    lessons: 8,
+    targetOvr: 78,
+  ),
+  Course(
+    id: 'foundation',
+    title: '수학 기초 회복',
+    description: '핵심 개념을 짧은 교재와 반복 문제로 다시 다집니다.',
+    level: '기초',
+    duration: '4주',
+    lessons: 16,
+    targetOvr: 72,
+  ),
+  Course(
+    id: 'completed',
+    title: '일차방정식 기초',
+    description: '완료한 코스의 교재와 문제를 다시 확인할 수 있습니다.',
+    level: '기초',
+    duration: '완료',
+    progress: 1,
+    status: 'completed',
+    lessons: 8,
+    targetOvr: 100,
+  ),
+];
+
+/// 필요한 변수는 브라우저 viewport와 선택적인 width/height 쿼리다.
+/// 작동 원리: 실제 학생 홈을 그대로 실행하고 논리 화면 크기만 고정해 HTML 시안과 같은 좌표계로 캡처한다.
 void main() {
   runApp(const StudentDensityPreviewApp());
 }
@@ -11,8 +72,8 @@ void main() {
 class StudentDensityPreviewApp extends StatelessWidget {
   const StudentDensityPreviewApp({super.key});
 
-  /// 필요한 변수는 공용 디자인 토큰과 현재 반응형 너비다.
-  /// 실제 학생 홈과 같은 상단 메뉴·카드·행동 구조를 고정 데이터로 렌더한다.
+  /// 필요한 변수는 캡처용 논리 크기와 실제 학생 홈 라우트다.
+  /// 작동 원리: API 실패가 화면 구조를 바꾸지 않도록 실제 홈의 빈 상태를 사용하고 디버그 배너를 숨긴다.
   @override
   Widget build(BuildContext context) {
     final previewWidth = double.tryParse(
@@ -21,6 +82,23 @@ class StudentDensityPreviewApp extends StatelessWidget {
     final previewHeight = double.tryParse(
       Uri.base.queryParameters['height'] ?? '',
     );
+    final screen = Uri.base.queryParameters['screen'] ?? 'dashboard';
+    final home = screen == 'courses'
+        ? CourseCatalogPage(
+            courseFeedLoader: ({required keyword, recommend}) async {
+              final courses = _previewCourses();
+              if (keyword.trim().isEmpty) return courses;
+              final query = keyword.trim().toLowerCase();
+              return courses
+                  .where(
+                    (course) =>
+                        course.title.toLowerCase().contains(query) ||
+                        course.description.toLowerCase().contains(query),
+                  )
+                  .toList(growable: false);
+            },
+          )
+        : const MainStudentPage(username: '김학생');
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
@@ -41,80 +119,29 @@ class StudentDensityPreviewApp extends StatelessWidget {
         );
       },
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: StudentDensityTokens.dark,
-          brightness: Brightness.light,
-        ),
+        useMaterial3: true,
         scaffoldBackgroundColor: StudentDensityTokens.background,
-        fontFamilyFallback: const ['Malgun Gothic', 'Arial'],
-      ),
-      home: Scaffold(
-        body: SafeArea(
-          child: Column(
-            children: [
-              Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                showLevelIndicator: false,
-                onMenu: () {},
-                items: const [
-                  Ios26NavItem(label: '학습터', active: true),
-                  Ios26NavItem(label: '책가방'),
-                  Ios26NavItem(label: '친구/소셜'),
-                  Ios26NavItem(label: '마켓플레이스'),
-                ],
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: StudentDensityPage(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const StudentDensityPageHeader(
-                          eyebrow: 'STUDENT HOME',
-                          title: '오늘의 학습',
-                          description: '현재 코스와 일일 퀘스트를 한눈에 확인합니다.',
-                        ),
-                        const SizedBox(height: 24),
-                        StudentDensitySurface(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const StudentDensityEyebrow('ACTIVE COURSE'),
-                              const SizedBox(height: 10),
-                              const Text(
-                                '중2 일차함수 집중 코스',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text('현재 단원 · 기울기와 그래프'),
-                              const SizedBox(height: 16),
-                              LinearProgressIndicator(
-                                value: 0.62,
-                                color: StudentDensityTokens.dark,
-                                backgroundColor: StudentDensityTokens.line,
-                              ),
-                              const SizedBox(height: 18),
-                              StudentDensityButton(
-                                label: '이어서 학습',
-                                primary: true,
-                                icon: Icons.play_arrow_rounded,
-                                onPressed: () {},
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        colorScheme: const ColorScheme.light(
+          primary: StudentDensityTokens.dark,
+          surface: StudentDensityTokens.surface,
+          onSurface: StudentDensityTokens.ink,
         ),
+        fontFamilyFallback: const [
+          'Pretendard',
+          'Noto Sans KR',
+          'Malgun Gothic',
+          'Arial',
+        ],
       ),
+      routes: {
+        '/profile': (_) => const Scaffold(body: SizedBox.shrink()),
+        '/study-center': (_) => const Scaffold(body: SizedBox.shrink()),
+        '/courses': (_) => const Scaffold(body: SizedBox.shrink()),
+        '/bookbag': (_) => const Scaffold(body: SizedBox.shrink()),
+        '/social': (_) => const Scaffold(body: SizedBox.shrink()),
+        '/marketplace': (_) => const Scaffold(body: SizedBox.shrink()),
+      },
+      home: home,
     );
   }
 }

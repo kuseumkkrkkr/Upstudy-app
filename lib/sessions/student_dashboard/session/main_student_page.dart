@@ -340,7 +340,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
       ...(_teacherTasksByDate[today] ?? const <String>[]),
       ...(_tasksByDate[today] ?? const <String>[]),
     ];
-    final heroExtent = mobile ? 210.0 : 270.0;
+    final heroExtent = mobile ? 210.0 : 294.0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -350,7 +350,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
         body: SafeArea(
           child: Column(
             children: [
-              _Header(),
+              _Header(displayName: _displayName),
               Expanded(
                 child: SingleChildScrollView(
                   controller: _scrollController,
@@ -440,6 +440,10 @@ class _CourseLoaderState extends State<_CourseLoader> {
 }
 
 class _Header extends StatelessWidget {
+  const _Header({required this.displayName});
+
+  final String? displayName;
+
   /// 필요한 변수는 현재 학생 화면 문맥과 활성 학습터 메뉴다.
   /// 공용 상단 내비게이션을 사용해 다섯 목적지의 이동 계약을 모든 PC 화면과 동일하게 유지한다.
   @override
@@ -447,8 +451,12 @@ class _Header extends StatelessWidget {
     return Ios26TopBar(
       brandColor: _green,
       onMenu: () => toggleAppDrawer(context),
-      trailing: const _AppBarLevelIndicator(),
       showLevelIndicator: false,
+      profileLabel: displayName?.trim().isNotEmpty == true
+          ? displayName!.trim()
+          : '김학생',
+      onNotifications: () => showSocialModal(context: context),
+      onProfile: () => Navigator.of(context).pushNamed('/profile'),
       items: studentTopNavItems(
         context,
         active: StudentTopDestination.learning,
@@ -557,18 +565,52 @@ class _HeroSection extends StatelessWidget {
     final name = username?.trim();
     final displayName = (name == null || name.isEmpty) ? '사용자' : name;
     final now = DateTime.now();
+    final mobile = isStudentDensityMobile(context);
     const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return SizedBox(
       height: height,
       child: StudentDensityPage(
-        padding: const EdgeInsets.fromLTRB(28, 36, 28, 20),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: StudentDensityPageHeader(
-            eyebrow:
-                '${weekdays[now.weekday - 1]}DAY · ${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}',
-            title: '$displayName님,\n오늘도 시작해 볼까요?',
-            description: '어제 멈춘 학습과 오늘 일정은 아래 학습 영역에서 이어집니다.',
+        padding: EdgeInsets.fromLTRB(
+          studentDensityHorizontalPadding(context),
+          studentDensityVerticalPadding(context),
+          studentDensityHorizontalPadding(context),
+          0,
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: mobile ? 24 : 38,
+            vertical: mobile ? 24 : 30,
+          ),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StudentDensityEyebrow(
+                  '${weekdays[now.weekday - 1]}DAY · ${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}',
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$displayName님,\n오늘도 시작해 볼까요?',
+                  style: TextStyle(
+                    color: StudentDensityTokens.ink,
+                    fontSize: mobile ? 38 : 56,
+                    height: 0.98,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: mobile ? -2 : -3.4,
+                  ),
+                ),
+                SizedBox(height: mobile ? 9 : 12),
+                Text(
+                  '어제 멈춘 학습과 오늘 일정은 아래 학습 영역에서 이어집니다.',
+                  style: TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: mobile ? 11 : 14,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1019,155 +1061,342 @@ class _LearningSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
+    final mobile = isStudentDensityMobile(context);
     final todayCount = todayTasks.length;
     final todaySummary = _formatTasksSummary(todayTasks);
     final progressPercent = activeCourse == null
         ? null
         : (activeCourse!.progress * 100).round();
-    final courseSummary = activeCourse == null
-        ? '시작할 과정을 선택하세요.'
+    final courseTitle = activeCourse?.title ?? '시작할 코스를 선택하세요';
+    final courseMeta = activeCourse == null
+        ? '코스 탐색 · 맞춤 추천'
         : activeCourse!.isDemo
-        ? '${activeCourse!.title}\n체험 전용 코스'
-        : '${activeCourse!.title}\n진행률 $progressPercent%';
+        ? '체험 전용 코스'
+        : '진행률 $progressPercent%';
 
-    return StudentDensityPage(
-      padding: EdgeInsets.fromLTRB(28 * scale, 0, 28 * scale, 16 * scale),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFEEEEF1),
-          borderRadius: BorderRadius.circular(32 * scale),
-          border: Border.all(color: StudentDensityTokens.line),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 20 * scale),
-        child: Column(
-          children: [
-            _LearnBanner(onTap: () => showStudyModeModal(context: context)),
-            Padding(
-              padding: EdgeInsets.only(
-                top: 16 * scale,
-                left: 14 * scale,
-                right: 14 * scale,
+    /// 필요한 변수는 도구별 이동 콜백이다.
+    /// 작동 원리: HTML 학습 도구 카드의 네 빠른 실행을 기존 기능 화면과 연결한다.
+    final tools = LearningToolsStrip(
+      onNotepad: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const NotepadPage())),
+      onTimer: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const TimerPage())),
+      onFocusMode: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const FocusModePage())),
+      onGraph: () {
+        unawaited(
+          ActivityStore.recordGraphPractice(
+            graphId: 'dashboard_graph_tool',
+            meta: const {'source': 'dashboard_tool'},
+          ),
+        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const JsxGraphPage()));
+      },
+    );
+
+    final toolCard = StudentDensitySurface(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '학습 도구',
+                style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
               ),
-              child: Row(
+              _DashboardPill('빠른 실행'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          tools,
+        ],
+      ),
+    );
+
+    final featureStack = Column(
+      children: [
+        _HomeFeatureCard(
+          icon: Icons.play_arrow_rounded,
+          title: '현재 코스',
+          description: '$courseTitle · $courseMeta',
+          onTap: onCourseTap,
+        ),
+        const SizedBox(height: 12),
+        ValueListenableBuilder<SocialNotificationSnapshot>(
+          valueListenable: SocialNotificationStore.notifier,
+          builder: (context, snapshot, _) => _HomeFeatureCard(
+            icon: Icons.notifications_none_rounded,
+            title: '알림',
+            description: _formatSocialNotice(snapshot),
+            onTap: () => showSocialModal(context: context),
+          ),
+        ),
+      ],
+    );
+
+    final moduleGrid = mobile
+        ? Column(children: [toolCard, const SizedBox(height: 12), featureStack])
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 13, child: toolCard),
+              const SizedBox(width: 12),
+              Expanded(flex: 7, child: featureStack),
+            ],
+          );
+
+    final statusCards = [
+      Expanded(child: _DailyQuestProgressCard(courseId: activeCourse?.id)),
+      Expanded(
+        child: _HomeStatusCard(
+          label: '오늘 할 일',
+          value: '$todayCount개',
+          meta: todaySummary.isEmpty
+              ? '개인 일정 없음 · 자세히 보기'
+              : '$todaySummary · 자세히 보기',
+          onTap: onTodayTasksTap,
+        ),
+      ),
+    ];
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: StudentDensityTokens.desktopMaxWidth,
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            studentDensityHorizontalPadding(context),
+            0,
+            studentDensityHorizontalPadding(context),
+            14,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: StudentDensityTokens.surfaceMuted,
+              borderRadius: BorderRadius.circular(34),
+              border: Border.all(color: StudentDensityTokens.line),
+            ),
+            child: Column(
+              children: [
+                _LearnBanner(onTap: () => showStudyModeModal(context: context)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    statusCards[0],
+                    SizedBox(width: mobile ? 8 : 12),
+                    statusCards[1],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                moduleGrid,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardPill extends StatelessWidget {
+  const _DashboardPill(this.label);
+
+  final String label;
+
+  /// 필요한 변수는 짧은 상태 문구다.
+  /// 작동 원리: HTML의 28px 회색 캡슐 배지를 동일한 경계와 굵기로 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 9),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: StudentDensityTokens.line),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: StudentDensityTokens.muted,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeStatusCard extends StatelessWidget {
+  const _HomeStatusCard({
+    required this.label,
+    required this.value,
+    required this.meta,
+    required this.onTap,
+    this.showBadge = false,
+  });
+
+  final String label;
+  final String value;
+  final String meta;
+  final VoidCallback? onTap;
+  final bool showBadge;
+
+  /// 필요한 변수는 상태 라벨·핵심 수치·보조 설명과 탭 콜백이다.
+  /// 작동 원리: HTML의 132px 홈 상태 버튼을 큰 수치 중심의 흰 카드로 재현한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return SizedBox(
+      width: double.infinity,
+      height: mobile ? 104 : 132,
+      child: Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.none,
+        children: [
+          StudentDensitySurface(
+            padding: EdgeInsets.zero,
+            radius: mobile ? 20 : StudentDensityTokens.radius,
+            onTap: onTap,
+            child: Padding(
+              padding: EdgeInsets.all(mobile ? 14 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: _DailyQuestProgressCard(courseId: activeCourse?.id),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: mobile ? 10 : 12,
+                    ),
                   ),
-                  SizedBox(width: 6 * scale),
-                  Expanded(
-                    child: _ProgressCard(
-                      title: '오늘 할 일 $todayCount개',
-                      subtitle: '자세히 보기',
-                      progressText: todaySummary,
-                      progressValue: null,
-                      showProgressBar: false,
-                      onTap: onTodayTasksTap,
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: mobile ? 28 : 42,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: mobile ? -1.7 : -2.5,
+                    ),
+                  ),
+                  Text(
+                    meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: mobile ? 9 : 12,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 6 * scale),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14 * scale),
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+          ),
+          if (showBadge)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE53935),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeFeatureCard extends StatelessWidget {
+  const _HomeFeatureCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback? onTap;
+
+  /// 필요한 변수는 기능 아이콘·제목·설명과 이동 콜백이다.
+  /// 작동 원리: HTML의 118px 기능 카드를 48px 아이콘과 우측 화살표의 3열 구조로 만든다.
+  @override
+  Widget build(BuildContext context) {
+    return StudentDensitySurface(
+      padding: EdgeInsets.zero,
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 118),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: StudentDensityTokens.surfaceMuted,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: StudentDensityTokens.line),
+                ),
+                child: Icon(icon, color: StudentDensityTokens.ink, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Container(
-                        decoration: _cardDeco(radius: 16 * scale),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12 * scale,
-                          vertical: 10 * scale,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '학습 도구',
-                              style: _ts(
-                                size: 18 * scale,
-                                weight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 16 * scale),
-                            LearningToolsStrip(
-                              onNotepad: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const NotepadPage(),
-                                  ),
-                                );
-                              },
-                              onTimer: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const TimerPage(),
-                                  ),
-                                );
-                              },
-                              onFocusMode: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const FocusModePage(),
-                                  ),
-                                );
-                              },
-                              onGraph: () {
-                                unawaited(
-                                  ActivityStore.recordGraphPractice(
-                                    graphId: 'dashboard_graph_tool',
-                                    meta: const {'source': 'dashboard_tool'},
-                                  ),
-                                );
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const JsxGraphPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    SizedBox(width: 6 * scale),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _ProgressCard(
-                            title: '코스',
-                            subtitle: '',
-                            progressText: courseSummary,
-                            progressValue: activeCourse?.progress,
-                            showProgressBar: activeCourse != null,
-                            onTap: onCourseTap,
-                          ),
-                          SizedBox(height: 6 * scale),
-                          ValueListenableBuilder<SocialNotificationSnapshot>(
-                            valueListenable: SocialNotificationStore.notifier,
-                            builder: (context, snapshot, _) {
-                              final noticeText = _formatSocialNotice(snapshot);
-                              return _ProgressCard(
-                                title: '알림',
-                                subtitle: '',
-                                progressText: noticeText,
-                                progressValue: null,
-                                showProgressBar: false,
-                                onTap: () => showSocialModal(context: context),
-                              );
-                            },
-                          ),
-                        ],
+                    const SizedBox(height: 5),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              const Text(
+                '›',
+                style: TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 22,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1228,25 +1457,23 @@ class _LearnBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
     final mobile = isStudentDensityMobile(context);
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(minHeight: (mobile ? 118 : 150) * scale),
-      margin: EdgeInsets.symmetric(horizontal: 14 * scale),
+      constraints: BoxConstraints(minHeight: mobile ? 118 : 150),
       decoration: BoxDecoration(
-        color: StudentDensityTokens.dark,
-        borderRadius: BorderRadius.circular(28 * scale),
+        color: StudentDensityTokens.darkSecondary,
+        borderRadius: BorderRadius.circular(30),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20 * scale),
+          borderRadius: BorderRadius.circular(30),
           onTap: onTap,
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: (mobile ? 22 : 30) * scale,
-              vertical: 22 * scale,
+              horizontal: mobile ? 20 : 28,
+              vertical: mobile ? 17 : 24,
             ),
             child: Row(
               children: [
@@ -1259,39 +1486,40 @@ class _LearnBanner extends StatelessWidget {
                         'LEARNING START',
                         color: Color(0xFF9B9BA3),
                       ),
-                      SizedBox(height: 8 * scale),
+                      const SizedBox(height: 3),
                       Text(
                         '학습하기',
-                        style: _ts(
-                          size: (mobile ? 27 : 34) * scale,
-                          weight: FontWeight.w900,
+                        style: TextStyle(
+                          fontSize: mobile ? 26 : 38,
+                          height: 1.1,
+                          fontWeight: FontWeight.w900,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 7 * scale),
+                      const SizedBox(height: 7),
                       Text(
                         '이어하기 · 코스보기 · 복습 · 문제풀기 · 시험 · 교재보기',
-                        style: _ts(
-                          size: 11 * scale,
-                          weight: FontWeight.w600,
-                          color: const Color(0xFFAFAFB6),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFAFAFB6),
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: 16 * scale),
+                const SizedBox(width: 18),
                 Container(
-                  width: 58 * scale,
-                  height: 58 * scale,
+                  width: mobile ? 56 : 58,
+                  height: mobile ? 56 : 58,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18 * scale),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.play_arrow_rounded,
                     color: StudentDensityTokens.dark,
-                    size: 34 * scale,
+                    size: 34,
                   ),
                 ),
               ],
@@ -1358,140 +1586,21 @@ class _DailyQuestProgressCardState extends State<_DailyQuestProgressCard> {
               item.claimable ||
               (item.status == 'completed' && !item.rewardClaimed),
         );
-        final progress = total == 0 ? 0.0 : (completed / total).clamp(0.0, 1.0);
         final loading = snapshot.connectionState == ConnectionState.waiting;
-        final progressText = widget.courseId?.trim().isNotEmpty == true
+        final meta = widget.courseId?.trim().isNotEmpty == true
             ? loading
                   ? '불러오는 중'
-                  : '완료 $completed / $total'
+                  : '오늘 진행 · 자세히 보기'
             : '활성 코스가 없습니다.';
 
-        return _ProgressCard(
-          title: '일일 퀘스트',
-          subtitle: '자세히 보기',
-          progressText: progressText,
-          progressValue: progress,
+        return _HomeStatusCard(
+          label: '일일 테스트',
+          value: '$completed / $total',
+          meta: meta,
           showBadge: claimable,
           onTap: _openDailyQuestModal,
         );
       },
-    );
-  }
-}
-
-class _ProgressCard extends StatelessWidget {
-  // ignore: unused_element_parameter
-  const _ProgressCard({
-    required this.title,
-    required this.subtitle,
-    required this.progressText,
-    required this.progressValue,
-    this.showProgressBar = true,
-    this.showBadge = false,
-    this.onTap,
-  });
-  final String title;
-  final String subtitle;
-  final String progressText;
-  final double? progressValue;
-  final bool showProgressBar;
-  final bool showBadge;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = _uiScale(context);
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 96,
-          decoration: _cardDeco(radius: 16 * scale),
-          padding: EdgeInsets.symmetric(horizontal: 18 * scale),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(top: 12 * scale),
-                    child: Text(
-                      title,
-                      style: _ts(size: 18 * scale, weight: FontWeight.bold),
-                    ),
-                  ),
-                  if (subtitle.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.only(top: 6 * scale),
-                      child: _InlineCta(
-                        label: subtitle,
-                        onTap: onTap,
-                        iconSize: 12 * scale,
-                        radius: 8 * scale,
-                        textStyle: _ts(
-                          size: 12 * scale,
-                          weight: FontWeight.bold,
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          vertical: 6 * scale,
-                          horizontal: 4 * scale,
-                        ),
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: 6 * scale,
-                        right: 6 * scale,
-                      ),
-                      child: _InlineCta(
-                        onTap: onTap,
-                        iconSize: 12 * scale,
-                        radius: 8 * scale,
-                        padding: EdgeInsets.all(6 * scale),
-                      ),
-                    ),
-                ],
-              ),
-              if (showProgressBar && progressValue != null) ...[
-                SizedBox(height: 6 * scale),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6 * scale),
-                  child: LinearProgressIndicator(
-                    value: progressValue,
-                    minHeight: 6 * scale,
-                    backgroundColor: const Color(0xFFDDDDDD),
-                    color: _lightGreen,
-                  ),
-                ),
-              ],
-              if (progressText.isNotEmpty)
-                Padding(
-                  padding: EdgeInsets.only(top: 6 * scale),
-                  child: Text(
-                    progressText,
-                    style: _ts(size: 10 * scale, weight: FontWeight.w600),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        if (showBadge)
-          Positioned(
-            top: -2,
-            right: -2,
-            child: Container(
-              width: 10 * scale,
-              height: 10 * scale,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE53935),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }
@@ -1685,9 +1794,7 @@ class _BottomSection extends StatelessWidget {
                 child: Container(
                   height: 190 * scale,
                   margin: EdgeInsets.only(top: 12 * scale),
-                  decoration: _cardDeco(
-                    radius: 16 * scale,
-                  ),
+                  decoration: _cardDeco(radius: 16 * scale),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.black45,

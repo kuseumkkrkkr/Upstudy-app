@@ -2,15 +2,22 @@ import 'package:flutter/material.dart';
 
 /// 학생 밀도 축소 시안에서 공통으로 사용하는 색상과 간격 토큰입니다.
 abstract final class StudentDensityTokens {
-  static const Color background = Color(0xFFF4F4F6);
+  static const Color background = Color(0xFFF2F2F4);
   static const Color surface = Colors.white;
-  static const Color ink = Color(0xFF202022);
-  static const Color muted = Color(0xFF85858E);
-  static const Color line = Color(0xFFDDDDE2);
-  static const Color dark = Color(0xFF232325);
-  static const double desktopMaxWidth = 1180;
+  static const Color surfaceMuted = Color(0xFFF6F6F8);
+  static const Color ink = Color(0xFF09090B);
+  static const Color muted = Color(0xFF71717A);
+  static const Color faint = Color(0xFFA1A1AA);
+  static const Color line = Color(0x1A09090B);
+  static const Color lineStrong = Color(0x2E09090B);
+  static const Color dark = Color(0xFF0A0A0B);
+  static const Color darkSecondary = Color(0xFF232326);
+  static const double desktopMaxWidth = 1500;
   static const double mobileBreakpoint = 780;
+  static const double radiusSmall = 14;
+  static const double radiusMedium = 20;
   static const double radius = 28;
+  static const double radiusExtraLarge = 38;
 }
 
 /// 필요 변수: 현재 화면 너비.
@@ -18,8 +25,26 @@ abstract final class StudentDensityTokens {
 bool isStudentDensityMobile(BuildContext context) =>
     MediaQuery.sizeOf(context).width <= StudentDensityTokens.mobileBreakpoint;
 
-/// 필요 변수: 페이지 본문과 선택적인 바깥 여백.
-/// 작동 원리: PC에서는 최대 1180px 중앙 정렬, 모바일에서는 20px 여백으로 본문 폭을 통일합니다.
+/// 필요한 변수는 현재 viewport 너비다.
+/// 작동 원리: HTML의 모바일 11/14px 및 데스크톱 `clamp(24px, 4vw, 54px)` 가로 여백을 반환한다.
+double studentDensityHorizontalPadding(BuildContext context) {
+  final width = MediaQuery.sizeOf(context).width;
+  if (width <= StudentDensityTokens.mobileBreakpoint) {
+    return width <= 390 ? 11 : 14;
+  }
+  return (width * 0.04).clamp(24, 54);
+}
+
+/// 필요한 변수는 현재 viewport 너비다.
+/// 작동 원리: 모바일 22px과 데스크톱 `clamp(24px, 4vw, 54px)` 세로 여백을 반환한다.
+double studentDensityVerticalPadding(BuildContext context) {
+  final width = MediaQuery.sizeOf(context).width;
+  if (width <= StudentDensityTokens.mobileBreakpoint) return 22;
+  return (width * 0.04).clamp(24, 54);
+}
+
+/// 필요 변수: 페이지 본문, 선택적인 바깥 여백과 현재 viewport 너비.
+/// 작동 원리: HTML의 `min(1500px, 100%)` 본문과 `clamp(24px, 4vw, 54px)` 여백을 Flutter 제약으로 재현합니다.
 class StudentDensityPage extends StatelessWidget {
   const StudentDensityPage({super.key, required this.child, this.padding});
 
@@ -28,7 +53,8 @@ class StudentDensityPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
+    final horizontalPadding = studentDensityHorizontalPadding(context);
+    final verticalPadding = studentDensityVerticalPadding(context);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(
@@ -38,8 +64,8 @@ class StudentDensityPage extends StatelessWidget {
           padding:
               padding ??
               EdgeInsets.symmetric(
-                horizontal: mobile ? 20 : 28,
-                vertical: mobile ? 24 : 36,
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
               ),
           child: child,
         ),
@@ -75,9 +101,9 @@ class StudentDensitySurface extends StatelessWidget {
         border: Border.all(color: StudentDensityTokens.line),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 22,
-            offset: Offset(0, 10),
+            color: Color(0x0F000000),
+            blurRadius: 44,
+            offset: Offset(0, 14),
           ),
         ],
       ),
@@ -108,9 +134,9 @@ class StudentDensityEyebrow extends StatelessWidget {
     text.toUpperCase(),
     style: TextStyle(
       color: color ?? StudentDensityTokens.muted,
-      fontSize: 11,
-      fontWeight: FontWeight.w800,
-      letterSpacing: 1.8,
+      fontSize: 10,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 1.3,
     ),
   );
 }
@@ -143,20 +169,20 @@ class StudentDensityPageHeader extends StatelessWidget {
           title,
           style: TextStyle(
             color: StudentDensityTokens.ink,
-            fontSize: mobile ? 36 : 52,
-            height: 0.98,
+            fontSize: mobile ? 32 : 52,
+            height: 1.03,
             fontWeight: FontWeight.w900,
-            letterSpacing: -2.2,
+            letterSpacing: mobile ? -1.8 : -2.8,
           ),
         ),
         if (description != null) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: mobile ? 6 : 8),
           Text(
             description!,
-            style: const TextStyle(
+            style: TextStyle(
               color: StudentDensityTokens.muted,
-              fontSize: 14,
-              height: 1.5,
+              fontSize: mobile ? 12 : 14,
+              height: 1.45,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -213,10 +239,10 @@ class StudentDensityButton extends StatelessWidget {
       side: BorderSide(
         color: primary ? StudentDensityTokens.dark : StudentDensityTokens.line,
       ),
-      minimumSize: const Size(0, 48),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      minimumSize: const Size(0, 44),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
     ),
   );
 }

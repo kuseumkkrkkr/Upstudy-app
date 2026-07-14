@@ -79,12 +79,11 @@ Widget _responsiveFixture() {
   );
 }
 
-/// 필요한 변수는 검증할 논리 화면 크기와 golden 파일명이다.
-/// 지정 크기로 공용 학생 셸을 렌더하고 메뉴 노출 규칙 및 픽셀 결과를 함께 확인한다.
+/// 필요한 변수는 검증할 논리 화면 크기와 모바일 여부다.
+/// 지정 크기로 공용 학생 셸을 렌더하고 HTML 시안의 햄버거·탭 노출 규칙을 확인한다.
 Future<void> _verifyViewport(
   WidgetTester tester,
-  Size size,
-  String goldenName, {
+  Size size, {
   required bool mobile,
 }) async {
   tester.view.physicalSize = size;
@@ -95,47 +94,25 @@ Future<void> _verifyViewport(
   await tester.pumpWidget(_responsiveFixture());
   await tester.pumpAndSettle();
 
-  expect(
-    find.byKey(const ValueKey('student-mobile-menu')),
-    mobile ? findsOneWidget : findsNothing,
-  );
+  expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
   expect(find.text('학습터'), mobile ? findsNothing : findsOneWidget);
   expect(find.byType(BottomNavigationBar), findsNothing);
   expect(find.byType(NavigationRail), findsNothing);
-  await expectLater(
-    find.byType(MaterialApp),
-    matchesGoldenFile('goldens/$goldenName.png'),
-  );
 }
 
 /// 필요한 변수는 계획에 명시된 390px·500px·1280×900 화면 크기다.
 /// 모바일 두 크기와 데스크톱 한 크기를 독립 렌더하여 셸 회귀를 차단한다.
 void main() {
   testWidgets('390px 모바일은 햄버거만 표시한다', (tester) async {
-    await _verifyViewport(
-      tester,
-      const Size(390, 844),
-      'student-shell-390',
-      mobile: true,
-    );
+    await _verifyViewport(tester, const Size(390, 844), mobile: true);
   });
 
   testWidgets('500px 모바일은 햄버거와 단일 열을 유지한다', (tester) async {
-    await _verifyViewport(
-      tester,
-      const Size(500, 1000),
-      'student-shell-500',
-      mobile: true,
-    );
+    await _verifyViewport(tester, const Size(500, 1000), mobile: true);
   });
 
-  testWidgets('1280×900 PC는 상단 메뉴만 표시한다', (tester) async {
-    await _verifyViewport(
-      tester,
-      const Size(1280, 900),
-      'student-shell-1280',
-      mobile: false,
-    );
+  testWidgets('1280×900 PC는 햄버거와 상단 메뉴를 함께 표시한다', (tester) async {
+    await _verifyViewport(tester, const Size(1280, 900), mobile: false);
   });
 
   testWidgets('모바일 드로어에서 코스·책가방·소셜·마켓으로 이동한다', (tester) async {

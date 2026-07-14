@@ -332,8 +332,9 @@ void main() {
 
     Navigator.of(tester.element(find.byType(CourseLearningPage))).pop();
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('완료한 코스 보기'));
-    await tester.tap(find.text('완료한 코스 보기'));
+    final completedFilter = find.widgetWithText(ChoiceChip, '완료 코스');
+    await tester.ensureVisible(completedFilter);
+    await tester.tap(completedFilter);
     await tester.pumpAndSettle();
     final completedCard = find.byWidgetPredicate(
       (widget) => widget is CourseCard && widget.course.isCompleted,

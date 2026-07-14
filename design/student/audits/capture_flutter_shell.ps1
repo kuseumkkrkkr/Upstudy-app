@@ -1,18 +1,22 @@
-param([switch]$SkipBuild)
+param(
+  [switch]$SkipBuild,
+  [string]$Screen = 'dashboard'
+)
 
 $ErrorActionPreference = 'Stop'
 
 # 필요 변수: 저장소 루트, Flutter Web 출력 경로, Edge 실행 파일과 캡처 대상 크기.
 # 작동 원리: API 없는 공용 셸을 빌드한 뒤 로컬 서버에서 세 viewport를 실제 브라우저 PNG로 저장한다.
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
-$webRoot = Join-Path $root 'build\student-density-preview'
+$webRoot = Join-Path $root 'build\web'
 $captureRoot = Join-Path $root 'design\student\previews\flutter-implementation'
 $edge = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
 $port = 8976
+$prefix = if ($Screen -eq 'dashboard') { 'student-shell' } else { $Screen }
 $sizes = @(
-  @{ Name = 'student-shell-390'; Width = 390; Height = 844 },
-  @{ Name = 'student-shell-500'; Width = 500; Height = 1000 },
-  @{ Name = 'student-shell-1280'; Width = 1280; Height = 900 }
+  @{ Name = "$prefix-390"; Width = 390; Height = 844 },
+  @{ Name = "$prefix-500"; Width = 500; Height = 1000 },
+  @{ Name = "$prefix-1280"; Width = 1280; Height = 900 }
 )
 
 if (-not (Test-Path -LiteralPath $edge -PathType Leaf)) {
@@ -45,13 +49,14 @@ try {
 
     foreach ($size in $sizes) {
       $output = Join-Path $captureRoot "$($size.Name).png"
-      $profile = Join-Path $webRoot "edge-profile-$($size.Name)-$([guid]::NewGuid().ToString('N'))"
+      # 브라우저 프로필은 Web 산출물 밖에 두어 assets 복사·폰트 로딩을 방해하지 않는다.
+      $profile = Join-Path $env:TEMP "aiflow-edge-$($size.Name)-$([guid]::NewGuid().ToString('N'))"
       $edgeProcess = Start-Process $edge -ArgumentList @(
         '--headless=new', '--disable-gpu', '--hide-scrollbars',
         '--run-all-compositor-stages-before-draw', '--virtual-time-budget=10000',
         "--user-data-dir=$profile",
         "--window-size=$($size.Width),$($size.Height)", "--screenshot=$output",
-        "http://127.0.0.1:$port/?width=$($size.Width)&height=$($size.Height)"
+        "http://127.0.0.1:$port/?width=$($size.Width)&height=$($size.Height)&screen=$Screen"
       ) -WindowStyle Hidden -Wait -PassThru
       $capture = Get-Item -LiteralPath $output -ErrorAction SilentlyContinue
       if (-not $capture -or $capture.Length -eq 0) {

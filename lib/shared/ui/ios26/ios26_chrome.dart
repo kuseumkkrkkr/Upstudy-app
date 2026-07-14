@@ -41,6 +41,11 @@ class Ios26TopBar extends StatelessWidget {
     this.trailingIcons = const <Ios26ActionIcon>[],
     this.trailing,
     this.showLevelIndicator = true,
+    this.showUtilityActions = true,
+    this.profileLabel = '김학생',
+    this.onSearch,
+    this.onNotifications,
+    this.onProfile,
     this.leftInset,
   });
 
@@ -54,16 +59,21 @@ class Ios26TopBar extends StatelessWidget {
   final List<Ios26ActionIcon> trailingIcons;
   final Widget? trailing;
   final bool showLevelIndicator;
+  final bool showUtilityActions;
+  final String profileLabel;
+  final VoidCallback? onSearch;
+  final VoidCallback? onNotifications;
+  final VoidCallback? onProfile;
   final double? leftInset;
 
   /// 필요 변수: 현재 화면 폭과 전달받은 메뉴·행동 목록.
-  /// 작동 원리: 데스크톱은 중앙 캡슐 메뉴, 모바일은 햄버거와 최소 행동만 표시합니다.
+  /// 작동 원리: HTML처럼 좌측 메뉴·브랜드, 중앙 캡슐 메뉴, 우측 검색·알림·프로필을 독립 정렬합니다.
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final compact = width < 980;
+    final compact = width <= StudentDensityTokens.mobileBreakpoint;
     final barHeight = compact ? 58.0 : 68.0;
-    final effectiveLeftInset = leftInset ?? (compact ? 18.0 : 24.0);
+    final effectiveLeftInset = leftInset ?? (compact ? 12.0 : 40.0);
 
     return ClipRRect(
       child: BackdropFilter(
@@ -72,108 +82,131 @@ class Ios26TopBar extends StatelessWidget {
           height: barHeight,
           padding: EdgeInsets.only(
             left: effectiveLeftInset,
-            right: compact ? 12 : 16,
+            right: compact ? 12 : 40,
           ),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.86),
+            color: StudentDensityTokens.background.withValues(alpha: 0.72),
             border: Border(
-              bottom: BorderSide(color: Colors.black.withValues(alpha: 0.07)),
+              bottom: BorderSide(color: StudentDensityTokens.line),
             ),
           ),
-          child: Row(
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              if (onBack != null) ...[
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: brandColor,
-                  ),
-                  onPressed: onBack,
-                ),
-                const SizedBox(width: 2),
-              ] else if (compact) ...[
-                IconButton(
-                  key: const ValueKey('student-mobile-menu'),
-                  icon: Icon(Icons.menu_rounded, color: brandColor),
-                  onPressed: onMenu,
-                ),
-                const SizedBox(width: 6),
-              ],
-              GestureDetector(
-                onTap: onTitleTap,
+              Align(
+                alignment: Alignment.centerLeft,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: StudentDensityTokens.dark,
-                        borderRadius: BorderRadius.circular(10),
+                    if (onBack != null)
+                      _TopCircleButton(
+                        icon: Icons.arrow_back_ios_new_rounded,
+                        tooltip: '뒤로가기',
+                        onTap: onBack,
+                      )
+                    else if (onMenu != null)
+                      _TopCircleButton(
+                        key: const ValueKey('student-mobile-menu'),
+                        icon: Icons.menu_rounded,
+                        tooltip: '전체 메뉴',
+                        onTap: onMenu,
                       ),
-                      child: const Text(
-                        'A',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 9),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: StudentDensityTokens.ink,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.6,
+                    if (onBack != null || onMenu != null)
+                      SizedBox(width: compact ? 7 : 10),
+                    GestureDetector(
+                      onTap: onTitleTap,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: compact ? 31 : 34,
+                            height: compact ? 31 : 34,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: StudentDensityTokens.dark,
+                              borderRadius: BorderRadius.circular(
+                                compact ? 10 : 12,
+                              ),
+                            ),
+                            child: const Text(
+                              'A',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 9),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: StudentDensityTokens.ink,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
               if (items.isNotEmpty && !compact)
-                Flexible(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          for (final item in items)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8),
-                              child: _NavChip(
-                                item: item,
-                                brandColor: brandColor,
-                              ),
-                            ),
-                        ],
-                      ),
+                Transform.translate(
+                  offset: const Offset(-22, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.68),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: StudentDensityTokens.line),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final item in items) _NavChip(item: item),
+                      ],
                     ),
                   ),
                 ),
-              if (trailing != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 10),
-                  child: trailing!,
-                ),
-              if (showLevelIndicator)
-                Padding(
-                  padding: const EdgeInsets.only(left: 10),
-                  child: _Ios26LevelIndicator(
-                    brandColor: brandColor,
-                    compact: compact,
-                  ),
-                ),
-              if ((trailingIcons.isNotEmpty || actionIcons.isNotEmpty))
-                Row(
+              Align(
+                alignment: Alignment.centerRight,
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (showUtilityActions) ...[
+                      _TopCircleButton(
+                        icon: Icons.search_rounded,
+                        tooltip: '검색',
+                        onTap: onSearch,
+                      ),
+                      const SizedBox(width: 8),
+                      _TopCircleButton(
+                        icon: Icons.notifications_none_rounded,
+                        tooltip: '알림',
+                        showBadge: true,
+                        onTap: onNotifications,
+                      ),
+                      if (!compact) ...[
+                        const SizedBox(width: 8),
+                        _CompactProfile(label: profileLabel, onTap: onProfile),
+                      ],
+                    ],
+                    if (trailing != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: trailing!,
+                      ),
+                    if (showLevelIndicator)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: _Ios26LevelIndicator(
+                          brandColor: brandColor,
+                          compact: compact,
+                        ),
+                      ),
                     for (final item
                         in (trailingIcons.isNotEmpty
                             ? trailingIcons
@@ -184,6 +217,7 @@ class Ios26TopBar extends StatelessWidget {
                       ),
                   ],
                 ),
+              ),
             ],
           ),
         ),
@@ -309,10 +343,9 @@ class _Ios26LevelIndicatorState extends State<_Ios26LevelIndicator> {
 }
 
 class _NavChip extends StatelessWidget {
-  const _NavChip({required this.item, required this.brandColor});
+  const _NavChip({required this.item});
 
   final Ios26NavItem item;
-  final Color brandColor;
 
   @override
   Widget build(BuildContext context) {
@@ -320,7 +353,8 @@ class _NavChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       onTap: item.onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        constraints: const BoxConstraints(minHeight: 34),
+        padding: const EdgeInsets.symmetric(horizontal: 15),
         decoration: BoxDecoration(
           color: item.active ? StudentDensityTokens.dark : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
@@ -329,9 +363,120 @@ class _NavChip extends StatelessWidget {
           item.label,
           style: TextStyle(
             color: item.active ? Colors.white : StudentDensityTokens.muted,
-            fontSize: 13,
-            fontWeight: item.active ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopCircleButton extends StatelessWidget {
+  const _TopCircleButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    this.onTap,
+    this.showBadge = false,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final bool showBadge;
+
+  /// 필요한 변수는 아이콘·툴팁·선택 콜백과 알림 배지 여부다.
+  /// 작동 원리: HTML의 38px 원형 상단 행동 버튼과 우측 상단 상태점을 그린다.
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.76),
+                shape: BoxShape.circle,
+                border: Border.all(color: StudentDensityTokens.line),
+              ),
+              child: Icon(icon, size: 18, color: StudentDensityTokens.ink),
+            ),
+            if (showBadge)
+              Positioned(
+                top: 5,
+                right: 4,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: StudentDensityTokens.dark,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CompactProfile extends StatelessWidget {
+  const _CompactProfile({required this.label, this.onTap});
+
+  final String label;
+  final VoidCallback? onTap;
+
+  /// 필요한 변수는 사용자 표시명과 프로필 이동 콜백이다.
+  /// 작동 원리: HTML의 원형 아바타와 이름이 결합된 40px 캡슐을 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    final initial = label.trim().isEmpty ? '학' : label.trim().characters.first;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 40),
+        padding: const EdgeInsets.fromLTRB(4, 3, 11, 3),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.76),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: StudentDensityTokens.line),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: StudentDensityTokens.dark,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+            ),
+          ],
         ),
       ),
     );
