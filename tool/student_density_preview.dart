@@ -4,6 +4,7 @@ import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
@@ -159,6 +160,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
         course: _previewDetailCourse(courses.first),
       ),
       'course-learning' => CourseLearningPage(course: courses.first),
+      'wrong-answers' => const WrongAnswerListPage(),
       _ => const MainStudentPage(username: '김학생'),
     };
     return MaterialApp(
