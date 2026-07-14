@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 
@@ -60,9 +60,9 @@ class _GroupListPageState extends State<GroupListPage> {
       await _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create group: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to create group: $e')));
     }
   }
 
@@ -72,65 +72,64 @@ class _GroupListPageState extends State<GroupListPage> {
       appBar: AppBar(
         title: const Text('Study Groups'),
         actions: [
-          IconButton(
-            onPressed: _openCreateDialog,
-            icon: const Icon(Icons.add),
-          ),
+          IconButton(onPressed: _openCreateDialog, icon: const Icon(Icons.add)),
         ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.builder(
-                    itemCount: _groups.length,
-                    itemBuilder: (context, index) {
-                      final group = _groups[index];
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: _parseBorderColor(group.styleBorderColor),
-                            width: 1.1,
-                          ),
-                        ),
-                        child: ListTile(
-                          title: Row(
-                            children: [
-                              Expanded(child: Text(group.name)),
-                              if ((group.styleBadgeText ?? '').isNotEmpty)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primaryContainer,
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    group.styleBadgeText!,
-                                    style: const TextStyle(fontSize: 11),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          subtitle: Text(group.subject ?? '-'),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/group/detail',
-                              arguments: group.groupId,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
+          ? Center(child: Text(_error!))
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.builder(
+                itemCount: _groups.length,
+                itemBuilder: (context, index) {
+                  final group = _groups[index];
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: _parseBorderColor(group.styleBorderColor),
+                        width: 1.1,
+                      ),
+                    ),
+                    child: ListTile(
+                      title: Row(
+                        children: [
+                          Expanded(child: Text(group.name)),
+                          if ((group.styleBadgeText ?? '').isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                group.styleBadgeText!,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                            ),
+                        ],
+                      ),
+                      subtitle: Text(group.subject ?? '-'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/group/detail',
+                          arguments: group.groupId,
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }
@@ -202,7 +201,9 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
             ),
             TextField(
               controller: _subject,
-              decoration: const InputDecoration(labelText: 'Subject (optional)'),
+              decoration: const InputDecoration(
+                labelText: 'Subject (optional)',
+              ),
             ),
           ],
         ),
@@ -223,7 +224,9 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                 academyId: _academyId.text.trim(),
                 name: _name.text.trim(),
                 grade: _grade.text.trim().isEmpty ? null : _grade.text.trim(),
-                subject: _subject.text.trim().isEmpty ? null : _subject.text.trim(),
+                subject: _subject.text.trim().isEmpty
+                    ? null
+                    : _subject.text.trim(),
               ),
             );
           },

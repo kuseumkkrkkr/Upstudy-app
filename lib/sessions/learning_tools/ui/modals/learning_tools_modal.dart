@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:s11/shared/ui/modal/modal_shell.dart';
 import 'package:flutter/material.dart';
 
 Future<T?> showLearningToolsModal<T>({required BuildContext context}) {
@@ -54,10 +53,7 @@ class LearningToolsModal extends StatelessWidget {
           ),
           const Padding(
             padding: EdgeInsetsDirectional.fromSTEB(24, 0, 24, 12),
-            child: Text(
-              '자주 쓰는 도구를 빠르게 실행하세요.',
-              style: TextStyle(fontSize: 15),
-            ),
+            child: Text('자주 쓰는 도구를 빠르게 실행하세요.', style: TextStyle(fontSize: 15)),
           ),
           Expanded(
             child: GridView.count(

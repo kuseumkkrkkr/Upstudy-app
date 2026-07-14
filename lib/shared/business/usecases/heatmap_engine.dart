@@ -52,10 +52,7 @@ class HeatmapStroke {
 }
 
 class HeatmapEraserStroke {
-  const HeatmapEraserStroke({
-    required this.points,
-    required this.order,
-  });
+  const HeatmapEraserStroke({required this.points, required this.order});
 
   final List<Offset> points;
   final double order;
@@ -185,10 +182,7 @@ class HeatmapResult {
             },
           )
           .toList(),
-      'size': {
-        'width': size.width,
-        'height': size.height,
-      },
+      'size': {'width': size.width, 'height': size.height},
     };
   }
 
@@ -218,10 +212,7 @@ class HeatmapResult {
         final cellWidth = math.min(gridSize.toDouble(), width - left);
         final cellHeight = math.min(gridSize.toDouble(), height - top);
         if (cellWidth <= 0 || cellHeight <= 0) continue;
-        canvas.drawRect(
-          Rect.fromLTWH(left, top, cellWidth, cellHeight),
-          paint,
-        );
+        canvas.drawRect(Rect.fromLTWH(left, top, cellWidth, cellHeight), paint);
       }
     }
   }
@@ -243,10 +234,7 @@ class HeatmapResult {
     return total;
   }
 
-  static int _sumOverlap(
-    List<List<int>> countsA,
-    List<List<int>> countsB,
-  ) {
+  static int _sumOverlap(List<List<int>> countsA, List<List<int>> countsB) {
     var total = 0;
     final rows = math.min(countsA.length, countsB.length);
     final cols = rows == 0 ? 0 : math.min(countsA[0].length, countsB[0].length);
@@ -300,23 +288,25 @@ class HeatmapEngine {
             break;
           }
           if (undoCounter >= config.undoHighlightThreshold) {
-            _addHighlight(highlightReasons, stroke.key, 'undo>=${config.undoHighlightThreshold}');
+            _addHighlight(
+              highlightReasons,
+              stroke.key,
+              'undo>=${config.undoHighlightThreshold}',
+            );
             undoCounter = 0;
           }
           final centroid = stroke.centroid;
           if (centroid != null && lastCentroid != null) {
-            final distCells =
-            (centroid - lastCentroid!).distance / gridSize;
+            final distCells = (centroid - lastCentroid).distance / gridSize;
             if (distCells > config.jumpThresholdCells) {
               if (lastStrokeKey != null) {
-                _addHighlight(highlightReasons, lastStrokeKey!, 'jump_out');
+                _addHighlight(highlightReasons, lastStrokeKey, 'jump_out');
               }
               _addHighlight(highlightReasons, stroke.key, 'jump_out');
               jumpOrigin = lastCentroid;
               jumpActive = true;
             } else if (jumpActive && jumpOrigin != null) {
-              final backDist =
-                  (centroid - jumpOrigin!).distance / gridSize;
+              final backDist = (centroid - jumpOrigin).distance / gridSize;
               if (backDist <= config.jumpThresholdCells) {
                 _addHighlight(highlightReasons, stroke.key, 'jump_back');
                 jumpActive = false;
@@ -328,12 +318,7 @@ class HeatmapEngine {
             lastCentroid = centroid;
             lastStrokeKey = stroke.key;
           }
-          _recordPenCounts(
-            penCounts,
-            stroke.points,
-            origin,
-            gridSize,
-          );
+          _recordPenCounts(penCounts, stroke.points, origin, gridSize);
           break;
         case HeatmapEventType.eraserStroke:
           final eraser = event.eraser;

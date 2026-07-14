@@ -11,7 +11,8 @@ class AcademyDashboardPage extends StatefulWidget {
   State<AcademyDashboardPage> createState() => _AcademyDashboardPageState();
 }
 
-class _AcademyDashboardPageState extends State<AcademyDashboardPage> with SingleTickerProviderStateMixin {
+class _AcademyDashboardPageState extends State<AcademyDashboardPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   Academy? _academy;
   List<AcademyGroup> _groups = [];
@@ -37,14 +38,26 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage> with Single
 
   Future<void> _loadData() async {
     try {
-      setState(() { _loading = true; _error = null; });
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
 
       final academyRes = await ApiClient.instance.getAcademy(widget.academyId);
-      final groupsRes = await ApiClient.instance.listAcademyGroups(academyId: widget.academyId);
+      final groupsRes = await ApiClient.instance.listAcademyGroups(
+        academyId: widget.academyId,
+      );
       final attendanceRes = await ApiClient.instance.listAttendance();
-      final tuitionRes = await ApiClient.instance.listTuitionPayments(academyId: widget.academyId);
-      final consultRes = await ApiClient.instance.listConsultNotes(academyId: widget.academyId);
-      final snapshotsRes = await ApiClient.instance.listSnapshots(academyId: widget.academyId, limit: 100);
+      final tuitionRes = await ApiClient.instance.listTuitionPayments(
+        academyId: widget.academyId,
+      );
+      final consultRes = await ApiClient.instance.listConsultNotes(
+        academyId: widget.academyId,
+      );
+      final snapshotsRes = await ApiClient.instance.listSnapshots(
+        academyId: widget.academyId,
+        limit: 100,
+      );
 
       setState(() {
         _academy = academyRes.data;
@@ -56,7 +69,10 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage> with Single
         _loading = false;
       });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -67,17 +83,29 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage> with Single
     });
 
     final today = DateTime.now();
-    final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-    final todayAttendance = _attendanceLogs.where((log) => log.date == todayStr);
-    final presentCount = todayAttendance.where((log) => log.status == 'present').length;
+    final todayStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final todayAttendance = _attendanceLogs.where(
+      (log) => log.date == todayStr,
+    );
+    final presentCount = todayAttendance
+        .where((log) => log.status == 'present')
+        .length;
     final totalToday = todayAttendance.length;
-    final attendanceRate = totalToday > 0 ? (presentCount / totalToday * 100) : 0.0;
+    final attendanceRate = totalToday > 0
+        ? (presentCount / totalToday * 100)
+        : 0.0;
 
-    final monthLabel = '${today.year}-${today.month.toString().padLeft(2, '0')}';
-    final monthTuition = _tuitionPayments.where((t) => t.monthLabel == monthLabel).toList();
+    final monthLabel =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}';
+    final monthTuition = _tuitionPayments
+        .where((t) => t.monthLabel == monthLabel)
+        .toList();
     final paidCount = monthTuition.length;
     final totalTuition = _groups.length * 10; // Approximate
-    final tuitionRate = totalTuition > 0 ? (paidCount / totalTuition * 100) : 0.0;
+    final tuitionRate = totalTuition > 0
+        ? (paidCount / totalTuition * 100)
+        : 0.0;
 
     return {
       'totalStudents': totalStudents,
@@ -107,50 +135,50 @@ class _AcademyDashboardPageState extends State<AcademyDashboardPage> with Single
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('오류: $_error'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadData,
+                    child: const Text('다시 시도'),
+                  ),
+                ],
+              ),
+            )
+          : Column(
+              children: [
+                _SummaryCards(stats: stats),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
                     children: [
-                      Text('오류: $_error'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadData,
-                        child: const Text('다시 시도'),
+                      _AttendanceTab(
+                        logs: _attendanceLogs,
+                        groups: _groups,
+                        onRefresh: _loadData,
+                      ),
+                      _TuitionTab(
+                        payments: _tuitionPayments,
+                        academyId: widget.academyId,
+                        onRefresh: _loadData,
+                      ),
+                      _ConsultTab(
+                        notes: _consultNotes,
+                        academyId: widget.academyId,
+                        onRefresh: _loadData,
+                      ),
+                      _StudentSummaryTab(
+                        snapshots: _snapshots,
+                        onRefresh: _loadData,
                       ),
                     ],
                   ),
-                )
-              : Column(
-                  children: [
-                    _SummaryCards(stats: stats),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _AttendanceTab(
-                            logs: _attendanceLogs,
-                            groups: _groups,
-                            onRefresh: _loadData,
-                          ),
-                          _TuitionTab(
-                            payments: _tuitionPayments,
-                            academyId: widget.academyId,
-                            onRefresh: _loadData,
-                          ),
-                          _ConsultTab(
-                            notes: _consultNotes,
-                            academyId: widget.academyId,
-                            onRefresh: _loadData,
-                          ),
-                          _StudentSummaryTab(
-                            snapshots: _snapshots,
-                            onRefresh: _loadData,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
+              ],
+            ),
     );
   }
 }
@@ -229,9 +257,9 @@ class _StatCard extends StatelessWidget {
             ),
             Text(
               title,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
             ),
           ],
         ),
@@ -262,7 +290,8 @@ class _AttendanceTabState extends State<_AttendanceTab> {
   @override
   Widget build(BuildContext context) {
     final filteredLogs = widget.logs.where((log) {
-      if (_selectedGroupId != null && log.groupId != _selectedGroupId) return false;
+      if (_selectedGroupId != null && log.groupId != _selectedGroupId)
+        return false;
       if (_selectedDate != null && log.date != _selectedDate) return false;
       return true;
     }).toList();
@@ -282,10 +311,12 @@ class _AttendanceTabState extends State<_AttendanceTab> {
                   ),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('전체 그룹')),
-                    ...widget.groups.map((g) => DropdownMenuItem(
-                      value: g.groupId,
-                      child: Text(g.name),
-                    )),
+                    ...widget.groups.map(
+                      (g) => DropdownMenuItem(
+                        value: g.groupId,
+                        child: Text(g.name),
+                      ),
+                    ),
                   ],
                   onChanged: (v) => setState(() => _selectedGroupId = v),
                 ),
@@ -297,7 +328,8 @@ class _AttendanceTabState extends State<_AttendanceTab> {
                     labelText: '날짜 (YYYY-MM-DD)',
                     border: OutlineInputBorder(),
                   ),
-                  onChanged: (v) => setState(() => _selectedDate = v.isEmpty ? null : v),
+                  onChanged: (v) =>
+                      setState(() => _selectedDate = v.isEmpty ? null : v),
                 ),
               ),
             ],
@@ -329,7 +361,9 @@ class _AttendanceTabState extends State<_AttendanceTab> {
                         cells: [
                           DataCell(Text(log.date)),
                           DataCell(Text(group.name)),
-                          DataCell(Text('User ${log.userId.substring(0, 8)}...')),
+                          DataCell(
+                            Text('User ${log.userId.substring(0, 8)}...'),
+                          ),
                           DataCell(_StatusChip(status: log.status)),
                           DataCell(Text(log.note ?? '-')),
                         ],
@@ -377,7 +411,11 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -427,10 +465,9 @@ class _TuitionTabState extends State<_TuitionTab> {
                   ),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('전체')),
-                    ...monthGroups.keys.map((m) => DropdownMenuItem(
-                      value: m,
-                      child: Text(m),
-                    )),
+                    ...monthGroups.keys.map(
+                      (m) => DropdownMenuItem(value: m, child: Text(m)),
+                    ),
                   ],
                   onChanged: (v) => setState(() => _selectedMonth = v),
                 ),
@@ -454,7 +491,9 @@ class _TuitionTabState extends State<_TuitionTab> {
                     return ListTile(
                       leading: const Icon(Icons.payment, color: Colors.green),
                       title: Text('User ${payment.userId.substring(0, 8)}...'),
-                      subtitle: Text('${payment.monthLabel} • ${payment.method ?? '현금'}'),
+                      subtitle: Text(
+                        '${payment.monthLabel} • ${payment.method ?? '현금'}',
+                      ),
                       trailing: Text(
                         '${payment.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}원',
                         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -484,15 +523,15 @@ class _TuitionTabState extends State<_TuitionTab> {
       );
       widget.onRefresh();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('수납이 등록되었습니다')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('수납이 등록되었습니다')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('등록 실패: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('등록 실패: $e')));
       }
     }
   }
@@ -552,7 +591,10 @@ class _AddPaymentDialogState extends State<_AddPaymentDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            if (_userIdCtrl.text.isEmpty || _amountCtrl.text.isEmpty || _monthCtrl.text.isEmpty) return;
+            if (_userIdCtrl.text.isEmpty ||
+                _amountCtrl.text.isEmpty ||
+                _monthCtrl.text.isEmpty)
+              return;
             Navigator.pop(context, {
               'user_id': _userIdCtrl.text,
               'amount': _amountCtrl.text,
@@ -613,18 +655,30 @@ class _ConsultTabState extends State<_ConsultTab> {
                   itemBuilder: (context, index) {
                     final note = widget.notes[index];
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
                       child: ListTile(
-                        leading: const Icon(Icons.chat_bubble, color: Colors.blue),
+                        leading: const Icon(
+                          Icons.chat_bubble,
+                          color: Colors.blue,
+                        ),
                         title: Text(note.topic ?? '상담'),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('학생: User ${note.studentUserId.substring(0, 8)}...'),
+                            Text(
+                              '학생: User ${note.studentUserId.substring(0, 8)}...',
+                            ),
                             if (note.parentName != null)
                               Text('학부모: ${note.parentName}'),
                             if (note.content != null)
-                              Text(note.content!, maxLines: 2, overflow: TextOverflow.ellipsis),
+                              Text(
+                                note.content!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                           ],
                         ),
                         isThreeLine: true,
@@ -655,15 +709,15 @@ class _ConsultTabState extends State<_ConsultTab> {
       );
       widget.onRefresh();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('상담이 등록되었습니다')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('상담이 등록되었습니다')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('등록 실패: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('등록 실패: $e')));
       }
     }
   }
@@ -727,10 +781,14 @@ class _AddConsultDialogState extends State<_AddConsultDialog> {
             if (_studentIdCtrl.text.isEmpty) return;
             Navigator.pop(context, {
               'student_user_id': _studentIdCtrl.text,
-              'parent_name': _parentNameCtrl.text.isEmpty ? null : _parentNameCtrl.text,
+              'parent_name': _parentNameCtrl.text.isEmpty
+                  ? null
+                  : _parentNameCtrl.text,
               'topic': _topicCtrl.text.isEmpty ? null : _topicCtrl.text,
               'content': _contentCtrl.text.isEmpty ? null : _contentCtrl.text,
-              'follow_up_date': _followUpCtrl.text.isEmpty ? null : _followUpCtrl.text,
+              'follow_up_date': _followUpCtrl.text.isEmpty
+                  ? null
+                  : _followUpCtrl.text,
             });
           },
           child: const Text('등록'),
@@ -744,10 +802,7 @@ class _StudentSummaryTab extends StatelessWidget {
   final List<StudentOverviewSnapshot> snapshots;
   final VoidCallback onRefresh;
 
-  const _StudentSummaryTab({
-    required this.snapshots,
-    required this.onRefresh,
-  });
+  const _StudentSummaryTab({required this.snapshots, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -779,20 +834,27 @@ class _StudentSummaryTab extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final snapshot = snapshots[index];
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
                       child: ExpansionTile(
-                        title: Text('User ${snapshot.userId.substring(0, 8)}...'),
+                        title: Text(
+                          'User ${snapshot.userId.substring(0, 8)}...',
+                        ),
                         subtitle: Row(
                           children: [
                             if (snapshot.overallScore != null)
                               _SummaryChip(
-                                label: '점수: ${snapshot.overallScore!.toStringAsFixed(1)}',
+                                label:
+                                    '점수: ${snapshot.overallScore!.toStringAsFixed(1)}',
                                 color: Colors.blue,
                               ),
                             if (snapshot.attendanceRate != null) ...[
                               const SizedBox(width: 8),
                               _SummaryChip(
-                                label: '출석: ${snapshot.attendanceRate!.toStringAsFixed(1)}%',
+                                label:
+                                    '출석: ${snapshot.attendanceRate!.toStringAsFixed(1)}%',
                                 color: Colors.green,
                               ),
                             ],
@@ -829,15 +891,15 @@ class _StudentSummaryTab extends StatelessWidget {
       );
       onRefresh();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('학생 요약이 생성되었습니다')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('학생 요약이 생성되었습니다')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('생성 실패: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('생성 실패: $e')));
       }
     }
   }
@@ -859,7 +921,11 @@ class _SummaryChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -895,9 +961,7 @@ class _BuildSnapshotDialogState extends State<_BuildSnapshotDialog> {
             ),
             TextField(
               controller: _groupIdCtrl,
-              decoration: const InputDecoration(
-                labelText: '그룹 ID (선택)',
-              ),
+              decoration: const InputDecoration(labelText: '그룹 ID (선택)'),
             ),
           ],
         ),

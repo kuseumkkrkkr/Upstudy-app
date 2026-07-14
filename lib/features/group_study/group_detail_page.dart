@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
 class GroupDetailPage extends StatefulWidget {
@@ -28,7 +28,9 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     });
     try {
       final groupRes = await ApiClient.instance.getAcademyGroup(widget.groupId);
-      final membersRes = await ApiClient.instance.listGroupMembers(widget.groupId);
+      final membersRes = await ApiClient.instance.listGroupMembers(
+        widget.groupId,
+      );
       if (!mounted) return;
       setState(() {
         _group = groupRes.data;
@@ -51,18 +53,18 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
-              : ListView.builder(
-                  itemCount: _members.length,
-                  itemBuilder: (context, index) {
-                    final m = _members[index];
-                    return ListTile(
-                      leading: const Icon(Icons.person_outline),
-                      title: Text(m.userId),
-                      subtitle: Text(m.role),
-                    );
-                  },
-                ),
+          ? Center(child: Text(_error!))
+          : ListView.builder(
+              itemCount: _members.length,
+              itemBuilder: (context, index) {
+                final m = _members[index];
+                return ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: Text(m.userId),
+                  subtitle: Text(m.role),
+                );
+              },
+            ),
     );
   }
 }

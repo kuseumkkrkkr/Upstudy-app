@@ -362,8 +362,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
     vsync: this,
   );
 
-  final TextEditingController _codebaseCtrl = TextEditingController();
-  final TextEditingController _seedCtrl = TextEditingController();
   final TextEditingController _chatCtrl = TextEditingController();
   final TextEditingController _flowTagFilterCtrl = TextEditingController();
   final TextEditingController _flowUserFilterCtrl = TextEditingController();
@@ -374,7 +372,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   List<String> _flowTagSelected = [];
   final ScrollController _chatScroll = ScrollController();
 
-  List<GroupSharedProblem> _problems = [];
   List<GroupSharedExam> _exams = [];
   List<ExamPaperEntry> _myExamPapers = [];
   String? _selectedExamId;
@@ -386,11 +383,9 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   bool _sharingSelected = false;
   final Set<String> _historyPicks = {};
 
-  bool _loadingProblems = false;
   bool _loadingExams = false;
   bool _loadingFlows = false;
   bool _loadingHistory = false;
-  bool _sharingProblem = false;
   bool _sharingExam = false;
 
   bool _chatLoading = false;
@@ -617,8 +612,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   @override
   void dispose() {
     _tabController.dispose();
-    _codebaseCtrl.dispose();
-    _seedCtrl.dispose();
     _chatCtrl.dispose();
     _flowTagFilterCtrl.dispose();
     _flowUserFilterCtrl.dispose();
@@ -628,7 +621,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
 
   Future<void> _bootstrap() async {
     await Future.wait([
-      _loadProblems(),
       _loadExams(),
       _loadFlows(),
       _loadMessages(),
@@ -654,23 +646,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
       );
     } catch (_) {
       // ignore
-    }
-  }
-
-  Future<void> _loadProblems() async {
-    if (_loadingProblems) return;
-    setState(() => _loadingProblems = true);
-    try {
-      final items = await ApiClient.instance.listGroupSharedProblems(
-        widget.group.id,
-        limit: 30,
-      );
-      if (!mounted) return;
-      setState(() => _problems = items);
-    } catch (_) {
-      // Silent failure; the UI will show empty state.
-    } finally {
-      if (mounted) setState(() => _loadingProblems = false);
     }
   }
 
@@ -720,44 +695,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
       // silent
     } finally {
       if (mounted) setState(() => _loadingFlows = false);
-    }
-  }
-
-  Future<void> _shareProblem() async {
-    final codebaseId = int.tryParse(_codebaseCtrl.text.trim());
-    final seed = int.tryParse(_seedCtrl.text.trim());
-    if (codebaseId == null || seed == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('코드베이스와 시드를 올바르게 입력하세요')));
-      return;
-    }
-    setState(() => _sharingProblem = true);
-    try {
-      final shared = await ApiClient.instance.shareGroupProblem(
-        groupId: widget.group.id,
-        codebaseId: codebaseId,
-        seed: seed,
-      );
-      if (!mounted) return;
-      setState(() {
-        _problems.insert(0, shared);
-        if (_problems.length > 30) _problems.removeLast();
-      });
-      _codebaseCtrl.clear();
-      _seedCtrl.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('문제를 공유했어요')));
-      }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('공유에 실패했어요')));
-    } finally {
-      if (mounted) setState(() => _sharingProblem = false);
     }
   }
 

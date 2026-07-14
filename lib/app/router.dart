@@ -171,7 +171,7 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     if (args is String) {
       return MaterialPageRoute(
         settings: settings,
-        builder: (_) => AcademyDashboardPage(academyId: args),
+        builder: (_) => StudentAcademyPage(academyId: args),
       );
     }
     return _badArgumentsRoute(settings, expected: 'String (academyId)');
