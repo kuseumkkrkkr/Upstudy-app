@@ -753,6 +753,11 @@ mixin _ExamPaperGradingMixin
   Future<void> _openGradingReport({required bool passed}) async {
     if (_gradeResults.isEmpty) return;
 
+    final courseId = widget.courseId?.trim() ?? '';
+    final moduleId = widget.moduleId?.trim() ?? '';
+    final requiresModuleSubmission =
+        passed && courseId.isNotEmpty && moduleId.isNotEmpty;
+
     final results = _gradeResults.values.toList()
       ..sort((a, b) => a.itemIndex.compareTo(b.itemIndex));
 
@@ -766,6 +771,15 @@ mixin _ExamPaperGradingMixin
           examId: widget.examId,
           passRate: widget.passRate.clamp(0, 100),
           passed: passed,
+          moduleSubmissionRequired: requiresModuleSubmission,
+          moduleSubmissionSucceeded:
+              !requiresModuleSubmission || _courseModuleCompletionSubmitted,
+          onRetryModuleSubmission: requiresModuleSubmission
+              ? () async {
+                  await _completeCourseModuleIfPassed();
+                  return _courseModuleCompletionSubmitted;
+                }
+              : null,
         ),
       ),
     );

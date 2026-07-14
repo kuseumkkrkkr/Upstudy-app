@@ -6,6 +6,9 @@ class _ExamGradingReportPage extends StatelessWidget {
     required this.totalQuestions,
     required this.passRate,
     required this.passed,
+    required this.moduleSubmissionRequired,
+    required this.moduleSubmissionSucceeded,
+    this.onRetryModuleSubmission,
     this.examId,
   });
 
@@ -13,6 +16,9 @@ class _ExamGradingReportPage extends StatelessWidget {
   final int totalQuestions;
   final int passRate;
   final bool passed;
+  final bool moduleSubmissionRequired;
+  final bool moduleSubmissionSucceeded;
+  final Future<bool> Function()? onRetryModuleSubmission;
   final String? examId;
 
   /// 채점 결과를 성취도와 문항별 검토 흐름으로 묶어 보여줍니다.
@@ -98,21 +104,12 @@ class _ExamGradingReportPage extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: passed
-                        ? () => Navigator.of(context).pop(true)
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(0xFFE3E8E3),
-                      disabledForegroundColor: Colors.black38,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: Text(passed ? '완료' : '통과 후 완료할 수 있어요'),
-                  ),
+                _ModuleSubmissionFooter(
+                  passed: passed,
+                  submissionRequired: moduleSubmissionRequired,
+                  initialSubmissionSucceeded: moduleSubmissionSucceeded,
+                  onRetry: onRetryModuleSubmission,
+                  onComplete: () => Navigator.of(context).pop(true),
                 ),
               ],
             ),
@@ -451,6 +448,102 @@ class _ExamGradingReportPage extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+class _ModuleSubmissionFooter extends StatefulWidget {
+  const _ModuleSubmissionFooter({
+    required this.passed,
+    required this.submissionRequired,
+    required this.initialSubmissionSucceeded,
+    required this.onComplete,
+    this.onRetry,
+  });
+
+  final bool passed;
+  final bool submissionRequired;
+  final bool initialSubmissionSucceeded;
+  final VoidCallback onComplete;
+  final Future<bool> Function()? onRetry;
+
+  @override
+  State<_ModuleSubmissionFooter> createState() =>
+      _ModuleSubmissionFooterState();
+}
+
+class _ModuleSubmissionFooterState extends State<_ModuleSubmissionFooter> {
+  late bool _submissionSucceeded = widget.initialSubmissionSucceeded;
+  bool _retrying = false;
+
+  /// 필요한 변수는 재시도 콜백과 현재 제출 상태다.
+  /// 중복 탭을 막고 서버 응답 성공 시에만 완료 버튼을 활성화한다.
+  Future<void> _retrySubmission() async {
+    final retry = widget.onRetry;
+    if (retry == null || _retrying) return;
+    setState(() => _retrying = true);
+    final succeeded = await retry();
+    if (!mounted) return;
+    setState(() {
+      _submissionSucceeded = succeeded;
+      _retrying = false;
+    });
+  }
+
+  /// 필요한 변수는 시험 통과 여부와 코스 제출 성공 여부다.
+  /// 제출 실패 시 재시도 안내를 먼저 노출하고 성공 후에만 학습 화면 복귀를 허용한다.
+  @override
+  Widget build(BuildContext context) {
+    final blockedBySubmission =
+        widget.passed && widget.submissionRequired && !_submissionSucceeded;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (blockedBySubmission) ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF4E5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              '시험 결과는 저장됐지만 코스 진도 제출에 실패했습니다. 다시 제출해 주세요.',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _retrying ? null : _retrySubmission,
+            icon: _retrying
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_rounded),
+            label: Text(_retrying ? '다시 제출 중' : '코스 진도 다시 제출'),
+          ),
+          const SizedBox(height: 10),
+        ],
+        ElevatedButton(
+          onPressed: widget.passed && !blockedBySubmission
+              ? widget.onComplete
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFFE3E8E3),
+            disabledForegroundColor: Colors.black38,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+          child: Text(
+            widget.passed
+                ? blockedBySubmission
+                      ? '진도 제출이 필요해요'
+                      : '완료'
+                : '통과 후 완료할 수 있어요',
+          ),
+        ),
+      ],
     );
   }
 }

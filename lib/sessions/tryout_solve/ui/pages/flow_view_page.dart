@@ -58,7 +58,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
 
   Future<void> _bookmarkProblem() async {
     final questData = widget.quest['data'] as Map<String, dynamic>? ?? {};
-    final title = _blocksToPlainText(parseContentBlocks(questData['quest_title']));
+    final title = _blocksToPlainText(
+      parseContentBlocks(questData['quest_title']),
+    );
     final item = ProblemBookmarkItem(
       id: 'pb_${DateTime.now().microsecondsSinceEpoch}',
       title: title.isEmpty ? '제목 없는 문제' : title,
@@ -75,9 +77,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
         snapshot.serverItems.length >= ProblemBookmarkStore.maxServerBookmarks;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          isOverflow ? '문제 북마크(로컬)에 저장했습니다.' : '문제 북마크에 저장했습니다.',
-        ),
+        content: Text(isOverflow ? '문제 북마크(로컬)에 저장했습니다.' : '문제 북마크에 저장했습니다.'),
       ),
     );
   }
@@ -102,10 +102,14 @@ class _FlowViewPageState extends State<FlowViewPage> {
         ? questData['seed'] as int
         : int.tryParse(questData['seed']?.toString() ?? '') ?? 0;
     final questId = questData['quest_id']?.toString();
-    final questTitle = _blocksToPlainText(parseContentBlocks(questData['quest_title']));
+    final questTitle = _blocksToPlainText(
+      parseContentBlocks(questData['quest_title']),
+    );
     final statusJson = _buildStatusJson(questData);
     final allFormulas = questData['all_formulas']?.toString() ?? '';
-    final answerRiddle = _blocksToPlainText(parseContentBlocks(questData['answer_riddle']));
+    final answerRiddle = _blocksToPlainText(
+      parseContentBlocks(questData['answer_riddle']),
+    );
     final rawTags = questData['hash_tag'];
     final tags = rawTags is List
         ? rawTags.map((e) => e.toString()).toList()
@@ -130,9 +134,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
     }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('그룹 ${groups.length}곳에 공유했습니다.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('그룹 ${groups.length}곳에 공유했습니다.')));
   }
 
   Future<List<Map<String, String>>> _pickGroups() async {
@@ -142,55 +146,62 @@ class _FlowViewPageState extends State<FlowViewPage> {
       context: context,
       builder: (ctx) {
         final selected = <String>{};
-        return StatefulBuilder(builder: (context, setState) {
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Text('공유할 그룹 선택', style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
-                  SizedBox(
-                    height: 360,
-                    child: ListView(
-                      children: groups
-                          .map(
-                            (g) => CheckboxListTile(
-                              title: Text(g.name),
-                              subtitle: Text(g.description ?? ''),
-                              value: selected.contains(g.groupId),
-                              onChanged: (v) => setState(() {
-                                if (v == true) {
-                                  selected.add(g.groupId);
-                                } else {
-                                  selected.remove(g.groupId);
-                                }
-                              }),
-                            ),
-                          )
-                          .toList(),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text(
+                        '공유할 그룹 선택',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(
-                        groups
-                            .where((g) => selected.contains(g.groupId))
-                            .map((g) => {'group_id': g.groupId, 'name': g.name})
+                    SizedBox(
+                      height: 360,
+                      child: ListView(
+                        children: groups
+                            .map(
+                              (g) => CheckboxListTile(
+                                title: Text(g.name),
+                                subtitle: Text(g.description ?? ''),
+                                value: selected.contains(g.groupId),
+                                onChanged: (v) => setState(() {
+                                  if (v == true) {
+                                    selected.add(g.groupId);
+                                  } else {
+                                    selected.remove(g.groupId);
+                                  }
+                                }),
+                              ),
+                            )
                             .toList(),
                       ),
-                      child: const Text('공유'),
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(
+                          groups
+                              .where((g) => selected.contains(g.groupId))
+                              .map(
+                                (g) => {'group_id': g.groupId, 'name': g.name},
+                              )
+                              .toList(),
+                        ),
+                        child: const Text('공유'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     ).then((value) => value ?? []);
   }
@@ -211,9 +222,12 @@ class _FlowViewPageState extends State<FlowViewPage> {
               children: [
                 SolveHeader(
                   title: widget.title,
-                  onInfo: widget.sharedMode ? _toggleFormulaModal : _shareToGroupStudy,
-                  infoIcon:
-                      widget.sharedMode ? Icons.info_outline : Icons.share_outlined,
+                  onInfo: widget.sharedMode
+                      ? _toggleFormulaModal
+                      : _shareToGroupStudy,
+                  infoIcon: widget.sharedMode
+                      ? Icons.info_outline
+                      : Icons.share_outlined,
                 ),
                 Expanded(
                   child: LayoutBuilder(
@@ -231,10 +245,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
                                 questAnswerRiddle,
                               ),
                             ),
-                            Expanded(
-                              flex: 5,
-                              child: _buildCanvasPanel(),
-                            ),
+                            Expanded(flex: 5, child: _buildCanvasPanel()),
                             Expanded(
                               flex: _chatActive ? 2 : 3,
                               child: _buildDetailPanel(),
@@ -243,16 +254,18 @@ class _FlowViewPageState extends State<FlowViewPage> {
                         );
                       }
 
+                      // 필요한 변수는 좁은 화면 폭과 그래프·제출 요약 패널이다.
+                      // 모바일에서는 핵심 학습 흐름인 그래프를 먼저 보여주고 제출 요약을 아래로 보낸다.
                       return ListView(
                         padding: const EdgeInsets.all(10),
                         children: [
+                          _buildCanvasPanel(height: 520),
+                          const SizedBox(height: 10),
                           _buildLeftPanel(
                             questTitleBlocks,
                             questAnswerBlocks,
                             questAnswerRiddle,
                           ),
-                          const SizedBox(height: 10),
-                          _buildCanvasPanel(height: 520),
                           const SizedBox(height: 10),
                           _buildDetailPanel(),
                         ],
@@ -365,8 +378,8 @@ class _FlowViewPageState extends State<FlowViewPage> {
                       questTitleBlocks,
                       showAnswer
                           ? (questAnswerBlocks.isNotEmpty
-                              ? questAnswerBlocks
-                              : questAnswerRiddle)
+                                ? questAnswerBlocks
+                                : questAnswerRiddle)
                           : <ContentBlock>[],
                       questData['all_formulas'],
                     ),
@@ -380,16 +393,13 @@ class _FlowViewPageState extends State<FlowViewPage> {
                     ),
                     icon: const Icon(Icons.chat_bubble_outline),
                     label: Text(
-                      showAnswer
-                          ? '질문하기 (AI 채팅 열기)'
-                          : '질문하기 (정답 비공개)',
+                      showAnswer ? '질문하기 (AI 채팅 열기)' : '질문하기 (정답 비공개)',
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   )
                 else ...[
                   ElevatedButton.icon(
-                    onPressed: () =>
-                        setState(() => _showSharedAnalysis = true),
+                    onPressed: () => setState(() => _showSharedAnalysis = true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1B402B),
                       foregroundColor: Colors.white,
@@ -439,18 +449,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
                   spacing: 10,
                   runSpacing: 6,
                   children: const [
-                    _LegendChip(
-                      label: '정답',
-                      color: Color(0xFF2D6BFF),
-                    ),
-                    _LegendChip(
-                      label: '오답',
-                      color: Color(0xFFE53935),
-                    ),
-                    _LegendChip(
-                      label: '이후 단계',
-                      color: Color(0xFF9E9E9E),
-                    ),
+                    _LegendChip(label: '정답', color: Color(0xFF2D6BFF)),
+                    _LegendChip(label: '오답', color: Color(0xFFE53935)),
+                    _LegendChip(label: '이후 단계', color: Color(0xFF9E9E9E)),
                   ],
                 ),
               ),
@@ -459,10 +460,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
                 padding: const EdgeInsets.all(10),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    color: Colors.white,
-                    child: content,
-                  ),
+                  child: Container(color: Colors.white, child: content),
                 ),
               ),
             ),
@@ -493,7 +491,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
                   children: [
                     const Text(
                       '노드 상세 정보',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildDetailRow('노드 요약', node.flow),
@@ -529,10 +530,8 @@ class _FlowViewPageState extends State<FlowViewPage> {
           initialMode: 'chat',
           ephemeral: true,
         ),
-        transitionsBuilder: (_, anim, __, child) => FadeTransition(
-          opacity: anim,
-          child: child,
-        ),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
       ),
     );
     if (mounted) {
@@ -546,8 +545,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
 
   Widget _buildSharedAnalysisCard(Map<String, dynamic> questData) {
     final allFormulas = questData['all_formulas']?.toString() ?? '';
-    final answerRiddleBlocks =
-        parseContentBlocks(questData['answer_riddle'] ?? '');
+    final answerRiddleBlocks = parseContentBlocks(
+      questData['answer_riddle'] ?? '',
+    );
     final answerText = _blocksToPlainText(answerRiddleBlocks).toLowerCase();
     final studentLines = allFormulas
         .split(RegExp(r'\r?\n'))
@@ -576,8 +576,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('분석 결과',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const Text(
+              '분석 결과',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 8),
             Text(verdict, style: const TextStyle(fontSize: 14)),
             if (!allMatched) ...[
@@ -590,8 +592,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
                       (f) => Chip(
                         label: Text(f),
                         backgroundColor: const Color(0xFFFFF0ED),
-                        labelStyle:
-                            const TextStyle(color: Color(0xFFD84315)),
+                        labelStyle: const TextStyle(color: Color(0xFFD84315)),
                       ),
                     )
                     .toList(),
@@ -606,8 +607,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
               latexStyle: const TextStyle(fontSize: 14, height: 1.4),
             ),
             const SizedBox(height: 12),
-            const Text('제출한 공식 (all_formulas)',
-                style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text(
+              '제출한 공식 (all_formulas)',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 6),
             ContentBlocksView(
               blocks: [ContentBlock(type: 'text', content: allFormulas)],
@@ -657,8 +660,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
             children: tags
                 .map(
                   (tag) => Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF7F8FB),
                       borderRadius: BorderRadius.circular(14),
@@ -681,9 +686,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
       padding: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('개념 상세보기로 넘어가기')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('개념 상세보기로 넘어가기')));
         },
         child: Container(
           width: double.infinity,
@@ -767,8 +772,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
   }
 
   Widget _buildSharedMetaCard(SharedMeta meta) {
-    final tagsLabel =
-        meta.tags.isEmpty ? '태그 없음' : meta.tags.map((e) => '#$e').join(' ');
+    final tagsLabel = meta.tags.isEmpty
+        ? '태그 없음'
+        : meta.tags.map((e) => '#$e').join(' ');
     final difficultyLabel = () {
       switch (meta.difficulty) {
         case 5:
@@ -826,8 +832,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
                 OutlinedButton(
                   onPressed: () async {
                     try {
-                      await ApiClient.instance
-                          .deleteSharedFlow(meta.shareId);
+                      await ApiClient.instance.deleteSharedFlow(meta.shareId);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('공유를 취소했어요.')),
@@ -836,9 +841,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
                       }
                     } catch (e) {
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('취소 실패: $e')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('취소 실패: $e')));
                       }
                     }
                   },
@@ -856,12 +861,16 @@ class _FlowViewPageState extends State<FlowViewPage> {
   }
 
   String _buildStatusJson(Map<String, dynamic> questData) {
-    final statusRaw = widget.stepCorrectness ??
-        (questData['status'] as List<dynamic>?)?.map((e) {
-          if (e is Map<String, dynamic>) return e;
-          if (e is Map) return Map<String, dynamic>.from(e);
-          return null;
-        }).whereType<Map<String, dynamic>>().toList() ??
+    final statusRaw =
+        widget.stepCorrectness ??
+        (questData['status'] as List<dynamic>?)
+            ?.map((e) {
+              if (e is Map<String, dynamic>) return e;
+              if (e is Map) return Map<String, dynamic>.from(e);
+              return null;
+            })
+            .whereType<Map<String, dynamic>>()
+            .toList() ??
         [];
     final inPanic = questData['in_panic'] ?? [];
     final aiOpinion = questData['ai_opinion'] ?? '';
@@ -899,8 +908,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
         }
         continue;
       }
-      if (i < stepCorrectness.length &&
-          stepCorrectness[i]['correct'] == true) {
+      if (i < stepCorrectness.length && stepCorrectness[i]['correct'] == true) {
         states[node.id] = _FlowNodeState.correct;
       }
     }
@@ -962,7 +970,8 @@ class _FlowCanvas extends StatelessWidget {
               if (position == null) {
                 return const SizedBox.shrink();
               }
-              final nodeSize = graph.nodeSizes[node.id] ??
+              final nodeSize =
+                  graph.nodeSizes[node.id] ??
                   const Size(
                     _FlowGraphBuilder.nodeWidth,
                     _FlowGraphBuilder.nodeMinHeight,
@@ -1148,12 +1157,14 @@ class _FlowEdgePainter extends CustomPainter {
       if (from == null || to == null) {
         continue;
       }
-      final fromSize = nodeSizes[edge.fromId] ??
+      final fromSize =
+          nodeSizes[edge.fromId] ??
           const Size(
             _FlowGraphBuilder.nodeWidth,
             _FlowGraphBuilder.nodeMinHeight,
           );
-      final toSize = nodeSizes[edge.toId] ??
+      final toSize =
+          nodeSizes[edge.toId] ??
           const Size(
             _FlowGraphBuilder.nodeWidth,
             _FlowGraphBuilder.nodeMinHeight,
@@ -1209,7 +1220,11 @@ class _FormulaModal extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(color: Color(0x22000000), blurRadius: 10, offset: Offset(0, 6)),
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 10,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       child: Column(
@@ -1220,12 +1235,14 @@ class _FormulaModal extends StatelessWidget {
               const Icon(Icons.functions, color: Color(0xFF1B402B)),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text('풀이 내역',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                      color: Color(0xFF1B402B),
-                    )),
+                child: Text(
+                  '풀이 내역',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: Color(0xFF1B402B),
+                  ),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close),
@@ -1357,16 +1374,17 @@ class _FlowGraphBuilder {
     }
 
     final columnCount = metrics.maxCol - metrics.minCol + 1;
-    final width = columnCount * nodeWidth +
+    final width =
+        columnCount * nodeWidth +
         (columnCount - 1) * horizontalGap +
         canvasPadding * 2;
-    final totalRowHeight =
-        rowHeights.values.fold(0.0, (sum, height) => sum + height);
+    final totalRowHeight = rowHeights.values.fold(
+      0.0,
+      (sum, height) => sum + height,
+    );
     final height =
         totalRowHeight + (rowCount - 1) * verticalGap + canvasPadding * 2;
-    final nodeSizes = {
-      for (final node in allNodes.values) node.id: node.size,
-    };
+    final nodeSizes = {for (final node in allNodes.values) node.id: node.size};
     return _FlowGraph(
       nodes: allNodes,
       positions: positions,
@@ -1376,7 +1394,10 @@ class _FlowGraphBuilder {
     );
   }
 
-  List<_FlowNode> _buildNodes(List<dynamic> rawList, {required bool sequential}) {
+  List<_FlowNode> _buildNodes(
+    List<dynamic> rawList, {
+    required bool sequential,
+  }) {
     final nodes = <_FlowNode>[];
     for (final entry in rawList) {
       final decoded = _decodeValue(entry);
@@ -1417,7 +1438,9 @@ class _FlowGraphBuilder {
       size: nodeSize,
       hashTags: hashTags,
       hintRiddle: normalizeFlowBlocks(parseContentBlocks(raw['hint_riddle'])),
-      answerRiddle: normalizeFlowBlocks(parseContentBlocks(raw['answer_riddle'])),
+      answerRiddle: normalizeFlowBlocks(
+        parseContentBlocks(raw['answer_riddle']),
+      ),
       rawBranches: _buildNodes(branches, sequential: false),
     );
   }
@@ -1467,7 +1490,8 @@ class _FlowGraphBuilder {
       return decoded.map(_decodeValue).toList();
     }
     if (decoded is Map<String, dynamic>) {
-      final inner = decoded['branches'] ?? decoded['solves'] ?? decoded['steps'];
+      final inner =
+          decoded['branches'] ?? decoded['solves'] ?? decoded['steps'];
       if (inner is List<dynamic>) {
         return inner.map(_decodeValue).toList();
       }
@@ -1545,8 +1569,13 @@ class _FlowGraphBuilder {
       final offsets = _branchOffsets(node.branchLanes.length);
       for (var i = 0; i < node.branchLanes.length; i++) {
         final branch = node.branchLanes[i];
-        final branchRow =
-            _layout(branch, startRow, col + offsets[i], positions, metrics);
+        final branchRow = _layout(
+          branch,
+          startRow,
+          col + offsets[i],
+          positions,
+          metrics,
+        );
         if (branchRow > maxRow) {
           maxRow = branchRow;
         }
@@ -1565,8 +1594,10 @@ class _FlowGraphBuilder {
     }
     const spread = 2;
     final start = -((count - 1) * spread) ~/ 2;
-    final offsets =
-        List<int>.generate(count, (index) => start + index * spread);
+    final offsets = List<int>.generate(
+      count,
+      (index) => start + index * spread,
+    );
     if (count.isOdd) {
       for (var i = 0; i < offsets.length; i++) {
         offsets[i] = offsets[i] + 1;
