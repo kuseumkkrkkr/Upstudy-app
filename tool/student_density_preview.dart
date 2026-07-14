@@ -323,7 +323,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
       'tools' => const StudentLearningToolsPage(),
       'graph' => const JsxGraphPage(embedEnabled: false),
       'chat' => const StudentDirectChatPage(peerUsername: '이수학', preview: true),
-      'textbooks' => const BookWidget(),
+      'textbooks' => const BookWidget(previewMode: true),
       'textbook-reader' => TeacherCourseTextbookReaderPage(
         courseId: 'preview-course',
         moduleId: 'preview-module',

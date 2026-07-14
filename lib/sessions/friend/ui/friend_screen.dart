@@ -343,6 +343,16 @@ class _SoWidgetState extends State<SoWidget> {
       ];
       _unreadThreads.add('이수학');
       _unreadMessages = 3;
+      _friendRanks = const [
+        _FriendRank(rank: 1, name: '이수학', ovr: 19.8, delta: 4),
+        _FriendRank(rank: 2, name: '박함수', ovr: 19.1, delta: 2),
+        _FriendRank(rank: 3, name: '김학생 · 나', ovr: 18.6, delta: 3, isMe: true),
+      ];
+      _tagRatings = const {
+        '일차함수': TagRating(tag: '일차함수', rating: 19.2, delta: 0.4, attempts: 18),
+        '기하': TagRating(tag: '기하', rating: 16.4, delta: -0.2, attempts: 12),
+      };
+      _loadingRatingSummary = false;
       return;
     }
     unawaited(ActivityStore.load().catchError((_) => ActivitySnapshot.empty()));
@@ -2345,6 +2355,8 @@ class _SoWidgetState extends State<SoWidget> {
                     _buildSocialSummary(),
                     const SizedBox(height: 16),
                     _buildSocialDirectory(),
+                    const SizedBox(height: 16),
+                    _buildSocialRatingOverview(),
                   ],
                 ),
               ),
@@ -2429,6 +2441,209 @@ class _SoWidgetState extends State<SoWidget> {
       ],
     ),
   );
+
+  /// 필요한 변수는 친구 OVR 순위와 내 태그 레이팅 변화다.
+  /// 작동 원리는 HTML 하단처럼 흰 랭킹 카드와 검은 MY RATING 카드를 연속 배치하고 상세 모달로 연결하는 것이다.
+  Widget _buildSocialRatingOverview() {
+    final ranks = _friendRanks.isEmpty
+        ? const [
+            _FriendRank(rank: 1, name: '이수학', ovr: 19.8),
+            _FriendRank(rank: 2, name: '박함수', ovr: 19.1),
+            _FriendRank(rank: 3, name: '김학생 · 나', ovr: 18.6, isMe: true),
+          ]
+        : _friendRanks.take(3).toList(growable: false);
+    final rising = _tagRatings.values.where((item) => item.delta >= 0).toList()
+      ..sort((a, b) => b.delta.compareTo(a.delta));
+    final falling = _tagRatings.values.where((item) => item.delta < 0).toList()
+      ..sort((a, b) => a.delta.compareTo(b.delta));
+    final strong = rising.isEmpty ? null : rising.first;
+    final weak = falling.isEmpty ? null : falling.first;
+    final myRank = ranks.where((item) => item.isMe).firstOrNull;
+    final myOvr = myRank?.ovr ?? 18.6;
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: _socialCardDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'FRIEND OVR RANKING',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.7,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '친구 OVR 랭킹',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 14),
+              for (final rank in ranks)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: rank.isMe
+                        ? const Color(0xFFF0F0F2)
+                        : const Color(0xFFFAFAFB),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 28,
+                        child: Text(
+                          '${rank.rank}',
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      CircleAvatar(
+                        radius: 21,
+                        backgroundColor: const Color(0xFF202022),
+                        foregroundColor: Colors.white,
+                        child: Text(
+                          rank.name.isEmpty ? 'F' : rank.name.substring(0, 1),
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              rank.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Text(
+                              'B Tier · ${rank.ovr.toStringAsFixed(1)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.black45,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        rank.delta == 0 ? '—' : '+${rank.delta / 10}',
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF171719),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'MY RATING',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 10,
+                  letterSpacing: 1.7,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      myOvr.toStringAsFixed(1),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 46,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 62,
+                    height: 62,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 3),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Text(
+                      'B',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Text(
+                'B Tier · 전날 대비 +0.3',
+                style: TextStyle(color: Colors.white54),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _SocialRatingMetric(
+                          label: '강점',
+                          value: strong == null
+                              ? '#일차함수 19.2'
+                              : '#${strong.tag} ${strong.rating.toStringAsFixed(1)}',
+                        ),
+                        _SocialRatingMetric(
+                          label: '약점',
+                          value: weak == null
+                              ? '#기하 16.4'
+                              : '#${weak.tag} ${weak.rating.toStringAsFixed(1)}',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Expanded(
+                    child: Column(
+                      children: [
+                        _SocialRatingMetric(label: '상승', value: '#그래프 +0.8'),
+                        _SocialRatingMetric(label: '하락', value: '#확률 -0.2'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: () => showRatingDetailModal(context: context),
+                child: const Text('내 평점 상세'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   /// 필요한 변수는 없으며 소셜 카드가 공유할 표면 규칙을 만든다.
   /// 작동 원리는 흰 배경·22px 모서리·어두운 테두리로 HTML 카드 외곽을 고정하는 것이다.
@@ -3237,4 +3452,39 @@ class _SoWidgetState extends State<SoWidget> {
       ),
     );
   }
+}
+
+class _SocialRatingMetric extends StatelessWidget {
+  const _SocialRatingMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  /// 필요한 변수는 레이팅 지표 라벨과 값이다.
+  /// 작동 원리는 검은 MY RATING 카드 안에서 얇은 테두리와 흰 텍스트로 강점·약점을 나란히 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(border: Border.all(color: Colors.white24)),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white54, fontSize: 11),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    ),
+  );
 }

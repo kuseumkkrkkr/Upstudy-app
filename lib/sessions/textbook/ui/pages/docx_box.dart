@@ -59,7 +59,9 @@ class BigSectionItem {
 }
 
 class BookWidget extends StatefulWidget {
-  const BookWidget({super.key});
+  const BookWidget({super.key, this.previewMode = false});
+
+  final bool previewMode;
 
   static const Color primaryGreen = Colors.black;
   static const Color brightGreen = Color(0xFF707075);
@@ -108,6 +110,39 @@ class _BookWidgetState extends State<BookWidget> {
   @override
   void initState() {
     super.initState();
+    if (widget.previewMode) {
+      _recentItems = const [
+        BigSectionItem(
+          id: 'preview-book-1',
+          title: '중2 일차함수 개념서',
+          subtitle: '교재 · 42쪽',
+          color: Color(0xFFECECEF),
+          type: BigItemType.textbook,
+        ),
+        BigSectionItem(
+          id: 'preview-exam-1',
+          title: '함수 형성평가',
+          subtitle: '시험지 · 4/20',
+          color: Color(0xFFECECEF),
+          type: BigItemType.exam,
+        ),
+        BigSectionItem(
+          id: 'preview-bookmark-1',
+          title: '기울기는 변화의 비율',
+          subtitle: '책 북마크',
+          color: Color(0xFF202024),
+          type: BigItemType.bookBookmark,
+        ),
+        BigSectionItem(
+          id: 'preview-problem-1',
+          title: '그래프 해석 문제',
+          subtitle: '문제 북마크',
+          color: Color(0xFF202024),
+          type: BigItemType.problemBookmark,
+        ),
+      ];
+      return;
+    }
     unawaited(ExamPaperStore.load());
     unawaited(_loadLibraryBooks());
     _loadPinnedBook();
@@ -116,6 +151,15 @@ class _BookWidgetState extends State<BookWidget> {
     unawaited(_loadBookmarks());
     unawaited(_loadRecentItems());
   }
+
+  /// 필요한 변수는 감사 프리뷰 여부와 실제 저장소 항목 수다.
+  /// 작동 원리는 운영 화면은 실제 개수를 쓰고 프리뷰만 HTML 시안의 자료 수치를 고정해 시각 비교를 안정화하는 것이다.
+  int get _bookCount => widget.previewMode ? 14 : _libraryBooks.length;
+  int get _examCount =>
+      widget.previewMode ? 6 : ExamPaperStore.notifier.value.length;
+  int get _bookBookmarkCount => widget.previewMode ? 18 : _bookBookmarks.length;
+  int get _problemBookmarkCount =>
+      widget.previewMode ? 27 : _problemBookmarks.allItems.length;
 
   @override
   void dispose() {
@@ -419,22 +463,19 @@ class _BookWidgetState extends State<BookWidget> {
                     builder: (_, exams, __) => Row(
                       children: [
                         Expanded(
-                          child: _LibraryStat(
-                            value: _libraryBooks.length,
-                            label: '교재',
-                          ),
+                          child: _LibraryStat(value: _bookCount, label: '교재'),
                         ),
                         Expanded(
                           child: _LibraryStat(
-                            value: exams.length,
+                            value: widget.previewMode
+                                ? _examCount
+                                : exams.length,
                             label: '시험지',
                           ),
                         ),
                         Expanded(
                           child: _LibraryStat(
-                            value:
-                                _bookBookmarks.length +
-                                _problemBookmarks.allItems.length,
+                            value: _bookBookmarkCount + _problemBookmarkCount,
                             label: '북마크',
                           ),
                         ),
@@ -463,9 +504,36 @@ class _BookWidgetState extends State<BookWidget> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    '최근 방문',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '최근 방문',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F3F5),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFE0E0E2)),
+                        ),
+                        child: Text(
+                          '${_recentItems.length}개',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   _buildBigSection(isCompact: vertical),
@@ -608,12 +676,11 @@ class _BookWidgetState extends State<BookWidget> {
     return GestureDetector(
       onTap: () => _openBigItem(item),
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFDCE7E2)),
+          border: Border(bottom: BorderSide(color: Color(0xFFE0E0E2))),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         child: Row(
           children: [
             Container(
@@ -738,7 +805,7 @@ class _BookWidgetState extends State<BookWidget> {
                     icon: Icons.menu_book_outlined,
                     label: '교재',
                     detail: '최근 읽은 교재 ${_libraryBooks.take(2).length}개',
-                    count: _libraryBooks.length,
+                    count: _bookCount,
                     onTap: () => _toggleLibrarySection('books'),
                   ),
                   if (_expandedLibrarySection == 'books')
@@ -749,7 +816,7 @@ class _BookWidgetState extends State<BookWidget> {
                       icon: Icons.description_outlined,
                       label: '시험지',
                       detail: '미응시 시험지 ${exams.take(2).length}개',
-                      count: exams.length,
+                      count: widget.previewMode ? _examCount : exams.length,
                       onTap: () => _toggleLibrarySection('exams'),
                     ),
                   ),
@@ -759,7 +826,7 @@ class _BookWidgetState extends State<BookWidget> {
                     icon: Icons.bookmark_outline_rounded,
                     label: '책 북마크',
                     detail: '고정된 위치 ${_pinnedBookBookmarkId == null ? 0 : 1}개',
-                    count: _bookBookmarks.length,
+                    count: _bookBookmarkCount,
                     onTap: () => _toggleLibrarySection('bookmarks'),
                   ),
                   if (_expandedLibrarySection == 'bookmarks')
@@ -768,7 +835,7 @@ class _BookWidgetState extends State<BookWidget> {
                     icon: Icons.edit_outlined,
                     label: '문제 북마크',
                     detail: '저장된 문제 모음',
-                    count: _problemBookmarks.allItems.length,
+                    count: _problemBookmarkCount,
                     onTap: () => _toggleLibrarySection('problems'),
                   ),
                   if (_expandedLibrarySection == 'problems')

@@ -327,31 +327,30 @@ class _SignupPageState extends State<SignupPage> {
     required String description,
     List<String> summary = const [],
     required List<Widget> children,
-  }) => Material(
-    key: key,
-    color: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(28),
-      side: const BorderSide(color: Color(0xFFE4E4E6)),
-    ),
-    child: Padding(
+  }) {
+    Widget buildCopy({required bool compact}) => Container(
       padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: compact ? const Color(0xFFF0F0F2) : const Color(0xFF202022),
+        borderRadius: BorderRadius.circular(28),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             eyebrow,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               letterSpacing: 1.5,
-              color: Colors.black54,
+              color: compact ? Colors.black54 : Colors.white54,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 10),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
+              color: compact ? Colors.black : Colors.white,
               fontSize: 28,
               height: 1.02,
               fontWeight: FontWeight.w900,
@@ -360,9 +359,9 @@ class _SignupPageState extends State<SignupPage> {
           const SizedBox(height: 10),
           Text(
             description,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.black45,
+              color: compact ? Colors.black45 : Colors.white54,
               height: 1.45,
             ),
           ),
@@ -392,12 +391,49 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
           ],
-          const SizedBox(height: 20),
-          ...children,
         ],
       ),
-    ),
-  );
+    );
+    final form = Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: const BorderSide(color: Color(0xFFE4E4E6)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        ),
+      ),
+    );
+    return KeyedSubtree(
+      key: key,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 720) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                form,
+                const SizedBox(height: 10),
+                buildCopy(compact: true),
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: buildCopy(compact: false)),
+              const SizedBox(width: 10),
+              Expanded(flex: 9, child: form),
+            ],
+          );
+        },
+      ),
+    );
+  }
 
   /// 필요한 변수는 버튼 레이블과 선택적 콜백이다.
   /// 작동 원리는 회원가입의 주요 행동을 50px 검은 전폭 버튼으로 통일하는 것이다.

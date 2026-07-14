@@ -1472,108 +1472,119 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: _problemCardMaxWidth,
-          minHeight: _problemCardMinHeight,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _lineColor),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+        constraints: const BoxConstraints(maxWidth: _problemCardMaxWidth),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
               children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    _SolveMetaPill(
-                      '${(_currentProblemIndex + 1).toString().padLeft(2, '0')} / ${_problemCount.toString().padLeft(2, '0')}',
-                      dark: true,
-                    ),
-                    for (final tag in _hashTags.take(2))
-                      _SolveMetaPill('#${tag.replaceFirst('#', '')}'),
-                    _SolveMetaPill('난이도 $_maxDifficultyTier'),
-                  ],
+                _SolveMetaPill(
+                  '${(_currentProblemIndex + 1).toString().padLeft(2, '0')} / ${_problemCount.toString().padLeft(2, '0')}',
+                  dark: true,
                 ),
-                const SizedBox(height: 18),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(
-                        (_currentProblemIndex + 1).toString().padLeft(2, '0'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
+                for (final tag in _hashTags.take(2))
+                  _SolveMetaPill('#${tag.replaceFirst('#', '')}'),
+                _SolveMetaPill('난이도 $_maxDifficultyTier'),
+              ],
+            ),
+            const SizedBox(height: 18),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: _lineColor),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: _problemCardMinHeight,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'MULTIPLE CHOICE',
-                            style: TextStyle(
-                              color: Colors.black45,
-                              fontSize: 8,
-                              letterSpacing: 1,
-                              fontWeight: FontWeight.w900,
+                          Container(
+                            width: 48,
+                            height: 48,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Text(
+                              (_currentProblemIndex + 1).toString().padLeft(
+                                2,
+                                '0',
+                              ),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _hashTags.isEmpty
-                                ? '오늘의 문제'
-                                : _hashTags.first.replaceFirst('#', ''),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'MULTIPLE CHOICE',
+                                  style: TextStyle(
+                                    color: Colors.black45,
+                                    fontSize: 8,
+                                    letterSpacing: 1,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _hashTags.isEmpty
+                                      ? '오늘의 문제'
+                                      : _hashTags.first.replaceFirst('#', ''),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    OutlinedButton(
-                      onPressed: _showSolveInfo,
-                      child: const Text('힌트 2'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                _buildProblemPrompt(displayBlocks: displayBlocks),
-                if (optionBlocks.isNotEmpty) ...[
-                  const SizedBox(height: 18),
-                  _buildOptionPreview(
-                    optionBlocks,
-                    selectedIndex: _currentSelectedChoice(),
+                      const SizedBox(height: 18),
+                      OutlinedButton(
+                        onPressed: _showSolveInfo,
+                        child: const Text('힌트 2'),
+                      ),
+                      const Divider(height: 36),
+                      _buildProblemPrompt(displayBlocks: displayBlocks),
+                      if (optionBlocks.isNotEmpty) ...[
+                        const SizedBox(height: 22),
+                        _buildOptionPreview(
+                          optionBlocks,
+                          selectedIndex: _currentSelectedChoice(),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -1616,7 +1627,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   /// 필요한 변수는 선택지 블록과 현재 선택 번호다.
-  /// 작동 원리는 HTML 시안처럼 선택지를 2열 카드로 배치하고 탭한 답을 검정 테두리로 강조하는 것이다.
+  /// 작동 원리는 모바일은 HTML처럼 세로 1열, 넓은 화면은 2열로 배치하고 선택 답을 검정 테두리로 강조하는 것이다.
   Widget _buildOptionPreview(
     List<List<ContentBlock>> options, {
     required int? selectedIndex,
@@ -1624,7 +1635,10 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     const activeColor = Colors.black;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final itemWidth = (constraints.maxWidth - 10) / 2;
+        final compact = MediaQuery.sizeOf(context).width < 720;
+        final itemWidth = compact
+            ? constraints.maxWidth
+            : (constraints.maxWidth - 10) / 2;
         return Wrap(
           spacing: 10,
           runSpacing: 10,

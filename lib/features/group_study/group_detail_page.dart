@@ -21,7 +21,7 @@ class GroupDetailPage extends StatefulWidget {
   });
 
   final String groupId;
-  final AcademyGroup? initialGroup;
+  final Object? initialGroup;
   final List<AcademyGroupMember>? initialMembers;
   final List<SolveHistoryItem>? initialShareHistory;
   final List<ExamPaperEntry>? initialShareExams;
@@ -32,11 +32,17 @@ class GroupDetailPage extends StatefulWidget {
 }
 
 class _GroupDetailPageState extends State<GroupDetailPage> {
-  AcademyGroup? _group;
+  StudyGroup? _group;
   List<AcademyGroupMember> _members = const [];
+  List<SharedFlowItem> _sharedFlows = const [];
+  List<GroupSharedExam> _sharedExams = const [];
+  bool _loadingResources = false;
   bool _loading = true;
   String? _error;
   bool _showExamPapers = false;
+  List<String> _flowTags = const [];
+  String _flowUserId = '';
+  int? _flowRecentDays;
 
   /// 필요한 변수는 선택적 그룹·멤버 초기값이다.
   /// 작동 원리는 초기값이 있으면 즉시 렌더하고 실제 진입은 그룹과 멤버 GET을 병렬 실행하는 것이다.
@@ -44,12 +50,66 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   void initState() {
     super.initState();
     if (widget.initialGroup != null) {
-      _group = widget.initialGroup;
+      _group = _coerceGroup(widget.initialGroup!);
       _members = widget.initialMembers ?? const [];
+      _sharedFlows = [
+        SharedFlowItem(
+          id: 'preview-flow-1',
+          groupId: widget.groupId,
+          senderId: '김학생',
+          kind: 'flow',
+          refId: 'preview-quest-1',
+          title: '두 점을 지나는 일차함수',
+          createdAt: DateTime(2026, 7, 15, 14, 32),
+        ),
+        SharedFlowItem(
+          id: 'preview-flow-2',
+          groupId: widget.groupId,
+          senderId: '이수학',
+          kind: 'flow',
+          refId: 'preview-quest-2',
+          title: '그래프의 평행이동',
+          createdAt: DateTime(2026, 7, 14, 19, 10),
+        ),
+        SharedFlowItem(
+          id: 'preview-flow-3',
+          groupId: widget.groupId,
+          senderId: '최도형',
+          kind: 'flow',
+          refId: 'preview-quest-3',
+          title: '두 직선의 교점',
+          createdAt: DateTime(2026, 7, 12, 17, 40),
+        ),
+      ];
+      _sharedExams = const [
+        GroupSharedExam(
+          id: 'preview-exam-1',
+          shareId: 'preview-share-1',
+          examId: 'preview-exam-1',
+          title: '일차함수 주간 테스트',
+          senderName: '김학생',
+          createdAt: '2026-07-15 14:32',
+        ),
+      ];
       _loading = false;
     } else {
       unawaited(_load());
     }
+  }
+
+  /// 필요한 변수는 과거 AcademyGroup 또는 실제 StudyGroup 초기값이다.
+  /// 작동 원리는 미리보기 호환 입력을 소셜 그룹 모델로 변환해 운영·감사 화면이 같은 UI를 사용하게 하는 것이다.
+  StudyGroup _coerceGroup(Object value) {
+    if (value is StudyGroup) return value;
+    final group = value as AcademyGroup;
+    return StudyGroup(
+      id: group.groupId,
+      name: group.name,
+      description: group.subject,
+      memberCount: 0,
+      maxMembers: group.maxMembers,
+      isPublic: group.searchable,
+    );
   }
 
   /// 필요한 변수는 그룹 ID다.
@@ -60,22 +120,81 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       _error = null;
     });
     try {
-      final responses = await Future.wait([
-        ApiClient.instance.getAcademyGroup(widget.groupId),
+      final responses = await Future.wait<Object>([
+        ApiClient.instance.listStudyGroups(),
         ApiClient.instance.listGroupMembers(widget.groupId),
       ]);
       if (!mounted) return;
+      final groups = responses[0] as List<StudyGroup>;
+      final membersResponse =
+          responses[1] as ApiResponse<List<AcademyGroupMember>>;
       setState(() {
-        _group = responses[0].data as AcademyGroup?;
-        _members = (responses[1].data as List<AcademyGroupMember>?) ?? const [];
+        _group = groups.where((item) => item.id == widget.groupId).firstOrNull;
+        _members = membersResponse.data ?? const [];
         _loading = false;
       });
+      unawaited(_loadResources());
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _error = '그룹 정보를 불러오지 못했습니다.';
         _loading = false;
       });
+    }
+  }
+
+  /// 필요한 변수는 그룹 ID와 현재 자료 탭이다.
+  /// 작동 원리는 Flow·시험지 GET을 병렬 실행하고 한 번의 setState로 공유 자료 카드를 갱신하는 것이다.
+  Future<void> _loadResources() async {
+    if (_loadingResources) return;
+    setState(() => _loadingResources = true);
+    try {
+      final now = DateTime.now();
+      final from = _flowRecentDays == null
+          ? null
+          : now
+                .subtract(Duration(days: _flowRecentDays!))
+                .toUtc()
+                .toIso8601String();
+      final responses = await Future.wait<Object>([
+        ApiClient.instance.listSharedFlows(
+          widget.groupId,
+          limit: 30,
+          tags: _flowTags,
+          userId: _flowUserId,
+          from: from,
+          to: _flowRecentDays == null ? null : now.toUtc().toIso8601String(),
+        ),
+        ApiClient.instance.listGroupSharedExams(widget.groupId, limit: 30),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _sharedFlows = responses[0] as List<SharedFlowItem>;
+        _sharedExams = responses[1] as List<GroupSharedExam>;
+      });
+    } catch (_) {
+      // 본문 진입은 유지하고 사용자가 새로고침할 때 다시 조회한다.
+    } finally {
+      if (mounted) setState(() => _loadingResources = false);
+    }
+  }
+
+  /// 필요한 변수는 소유한 공유 Flow ID다.
+  /// 작동 원리는 서버 삭제 성공 뒤 현재 목록에서 해당 항목만 제거해 불필요한 전체 재조회 요청을 피하는 것이다.
+  Future<void> _deleteFlow(String shareId) async {
+    try {
+      await ApiClient.instance.deleteSharedFlow(shareId);
+      if (!mounted) return;
+      setState(() {
+        _sharedFlows = _sharedFlows
+            .where((item) => item.id != shareId)
+            .toList(growable: false);
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('공유를 취소하지 못했습니다: $error')));
     }
   }
 
@@ -126,49 +245,82 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
 
   /// 필요한 변수는 현재 자료 탭이다.
   /// 작동 원리는 Flow에서는 태그·공유자·기간을, 시험지에서는 제목·공유자를 입력하는 HTML 필터 시트를 연다.
-  void _openResourceFilter() {
-    showModalBottomSheet<void>(
+  Future<void> _openResourceFilter() async {
+    final tagsController = TextEditingController(text: _flowTags.join(' '));
+    final userController = TextEditingController(text: _flowUserId);
+    var recentDays = _flowRecentDays;
+    final applied = await showModalBottomSheet<bool>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => _GroupActionSheet(
-        kicker: _showExamPapers ? 'GROUP EXAM FILTER' : 'GROUP FLOW FILTER',
-        title: _showExamPapers ? '공유 시험지 필터' : '공유 Flow 필터',
-        description: '태그, 공유자, 날짜 범위를 함께 적용해 그룹 자료를 찾습니다.',
-        children: [
-          const TextField(
-            decoration: InputDecoration(
-              labelText: '태그',
-              hintText: '#일차함수 #기울기',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => _GroupActionSheet(
+          kicker: _showExamPapers ? 'GROUP EXAM FILTER' : 'GROUP FLOW FILTER',
+          title: _showExamPapers ? '공유 시험지 필터' : '공유 Flow 필터',
+          description: _showExamPapers
+              ? '시험지 제목과 공유자를 화면에서 빠르게 확인합니다.'
+              : '태그, 공유자, 날짜 범위를 함께 적용해 그룹 Flow를 찾습니다.',
+          children: [
+            TextField(
+              controller: tagsController,
+              enabled: !_showExamPapers,
+              decoration: const InputDecoration(
+                labelText: '태그',
+                hintText: '#일차함수 #기울기',
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          const TextField(
-            decoration: InputDecoration(labelText: '공유자', hintText: '이수학'),
-          ),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<String>(
-            initialValue: '최근 7일',
-            decoration: const InputDecoration(labelText: '기간'),
-            items: const ['최근 7일', '최근 30일', '전체 기간']
-                .map(
-                  (value) => DropdownMenuItem(value: value, child: Text(value)),
-                )
-                .toList(growable: false),
-            onChanged: (_) {},
-          ),
-          const SizedBox(height: 14),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF202022),
-              minimumSize: const Size.fromHeight(48),
+            const SizedBox(height: 10),
+            TextField(
+              controller: userController,
+              enabled: !_showExamPapers,
+              decoration: const InputDecoration(
+                labelText: '공유자 ID',
+                hintText: 'student-01',
+              ),
             ),
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('필터 적용'),
-          ),
-        ],
+            const SizedBox(height: 10),
+            DropdownButtonFormField<int?>(
+              initialValue: recentDays,
+              decoration: const InputDecoration(labelText: '기간'),
+              items: const [
+                DropdownMenuItem(value: 7, child: Text('최근 7일')),
+                DropdownMenuItem(value: 30, child: Text('최근 30일')),
+                DropdownMenuItem(value: null, child: Text('전체 기간')),
+              ],
+              onChanged: _showExamPapers
+                  ? null
+                  : (value) => setSheetState(() => recentDays = value),
+            ),
+            const SizedBox(height: 14),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF202022),
+                minimumSize: const Size.fromHeight(48),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('필터 적용'),
+            ),
+          ],
+        ),
       ),
     );
+    final tagsText = tagsController.text;
+    final userId = userController.text.trim();
+    tagsController.dispose();
+    userController.dispose();
+    if (applied != true || !mounted || _showExamPapers) return;
+    final tags = tagsText
+        .split(RegExp(r'[\s,]+'))
+        .map((tag) => tag.trim().replaceFirst('#', ''))
+        .where((tag) => tag.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    setState(() {
+      _flowTags = tags;
+      _flowUserId = userId;
+      _flowRecentDays = recentDays;
+    });
+    await _loadResources();
   }
 
   /// 필요한 변수는 그룹 ID와 현재 자료 탭이다.
@@ -263,14 +415,20 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                           const SizedBox(height: 12),
                           _ResourceSwitch(
                             showExamPapers: _showExamPapers,
+                            flowCount: _sharedFlows.length,
+                            examCount: _sharedExams.length,
                             onChanged: (value) =>
                                 setState(() => _showExamPapers = value),
                           ),
                           const SizedBox(height: 12),
                           _SharedResourcesCard(
                             showExamPapers: _showExamPapers,
+                            loading: _loadingResources,
+                            flows: _sharedFlows,
+                            exams: _sharedExams,
                             onFilter: _openResourceFilter,
                             onShare: _openShareResource,
+                            onDeleteFlow: _deleteFlow,
                           ),
                         ],
                       ),
@@ -289,7 +447,7 @@ class _GroupHero extends StatelessWidget {
     required this.memberCount,
     required this.onMembers,
   });
-  final AcademyGroup? group;
+  final StudyGroup? group;
   final int memberCount;
   final VoidCallback onMembers;
 
@@ -333,17 +491,21 @@ class _GroupHero extends StatelessWidget {
                     spacing: 6,
                     children: [
                       _MetaPill(
-                        label: group?.searchable == true ? '공개 그룹' : '비공개 그룹',
+                        label: group?.isPublic == true ? '공개 그룹' : '비공개 그룹',
                       ),
                       _MetaPill(
                         label: '$memberCount / ${group?.maxMembers ?? 20}명',
                       ),
-                      _MetaPill(label: group?.grade ?? '그룹장 이수학'),
+                      _MetaPill(
+                        label: group?.isTeacherGroup == true
+                            ? '교사 그룹'
+                            : '그룹장 이수학',
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    group?.subject ?? '함수와 도형을 함께 공부하는 중학교 스터디',
+                    group?.description ?? '함수와 도형을 함께 공부하는 중학교 스터디',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -385,9 +547,13 @@ class _GroupHero extends StatelessWidget {
 class _ResourceSwitch extends StatelessWidget {
   const _ResourceSwitch({
     required this.showExamPapers,
+    required this.flowCount,
+    required this.examCount,
     required this.onChanged,
   });
   final bool showExamPapers;
+  final int flowCount;
+  final int examCount;
   final ValueChanged<bool> onChanged;
 
   /// 필요한 변수는 시험지 탭 선택 여부다.
@@ -404,13 +570,13 @@ class _ResourceSwitch extends StatelessWidget {
       children: [
         _ResourceButton(
           label: '그룹 문제풀기',
-          subtitle: '공유 Flow 8',
+          subtitle: '공유 Flow $flowCount',
           selected: !showExamPapers,
           onTap: () => onChanged(false),
         ),
         _ResourceButton(
           label: '그룹 시험지',
-          subtitle: '공유 3',
+          subtitle: '공유 $examCount',
           selected: showExamPapers,
           onTap: () => onChanged(true),
         ),
@@ -472,12 +638,51 @@ class _ResourceButton extends StatelessWidget {
 class _SharedResourcesCard extends StatelessWidget {
   const _SharedResourcesCard({
     required this.showExamPapers,
+    required this.loading,
+    required this.flows,
+    required this.exams,
     required this.onFilter,
     required this.onShare,
+    required this.onDeleteFlow,
   });
   final bool showExamPapers;
+  final bool loading;
+  final List<SharedFlowItem> flows;
+  final List<GroupSharedExam> exams;
   final VoidCallback onFilter;
   final VoidCallback onShare;
+  final Future<void> Function(String shareId) onDeleteFlow;
+
+  /// 필요한 변수는 선택 공유 Flow와 현재 문맥이다.
+  /// 작동 원리는 서버 원문을 조회한 뒤 문제 제목·공유자·공유 ID를 읽기 전용 상세 모달로 표시하는 것이다.
+  Future<void> _openFlow(BuildContext context, SharedFlowItem flow) async {
+    try {
+      final detail = flow.id.isEmpty
+          ? flow
+          : await ApiClient.instance.getSharedFlow(flow.id);
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(detail.title ?? '공유 Flow'),
+          content: Text(
+            '공유자 ${detail.senderId.isEmpty ? '그룹 멤버' : detail.senderId}\n문제 ${detail.refId}\n공유 ID ${detail.id}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('닫기'),
+            ),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Flow를 열지 못했습니다: $error')));
+    }
+  }
 
   /// 필요한 변수는 현재 선택 자료 탭이다.
   /// 작동 원리는 공유 풀이 또는 시험지의 대표 항목을 필터·공유 버튼과 함께 큰 콘텐츠 카드로 표시하는 것이다.
@@ -527,42 +732,117 @@ class _SharedResourcesCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 18),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFAFAFB),
-            border: Border.all(color: const Color(0xFFE0E0E2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        if (!showExamPapers) ...[
+          const SizedBox(height: 8),
+          const Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: [
-              Text(
-                showExamPapers ? '일차함수 주간 테스트' : '두 점을 지나는 일차함수',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '#일차함수   #기울기',
-                style: TextStyle(fontSize: 10, color: Colors.black45),
-              ),
-              const Divider(height: 28),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '김학생 · 오늘 14:32',
-                    style: TextStyle(fontSize: 10, color: Colors.black45),
-                  ),
-                  Text('열람 ›', style: TextStyle(fontWeight: FontWeight.w800)),
-                ],
-              ),
+              _MetaPill(label: '#일차함수 ×'),
+              _MetaPill(label: '최근 7일 ×'),
+              _MetaPill(label: '전체 해제'),
             ],
           ),
+        ],
+        const SizedBox(height: 18),
+        if (loading)
+          const Center(child: CircularProgressIndicator())
+        else if ((showExamPapers && exams.isEmpty) ||
+            (!showExamPapers && flows.isEmpty))
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: Text('공유된 자료가 없습니다.')),
+          )
+        else if (showExamPapers)
+          for (final exam in exams)
+            _SharedResourceTile(
+              title: exam.title.isEmpty ? '그룹 시험지' : exam.title,
+              tags: '답안 제외 · ${exam.examId}',
+              sender: exam.senderName,
+              createdAt: exam.createdAt,
+              onOpen: () => showDialog<void>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(exam.title),
+                  content: Text(
+                    '공유자 ${exam.senderName}\n시험지 ID ${exam.examId}',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('닫기'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+        else
+          for (final flow in flows)
+            _SharedResourceTile(
+              title: flow.title ?? '공유 Flow',
+              tags: '#일차함수   #기울기',
+              sender: flow.senderId.isEmpty ? '그룹 멤버' : flow.senderId,
+              createdAt: flow.createdAt?.toIso8601String() ?? '',
+              onDelete: flow.id.isEmpty ? null : () => onDeleteFlow(flow.id),
+              onOpen: () => _openFlow(context, flow),
+            ),
+      ],
+    ),
+  );
+}
+
+class _SharedResourceTile extends StatelessWidget {
+  const _SharedResourceTile({
+    required this.title,
+    required this.tags,
+    required this.sender,
+    required this.createdAt,
+    required this.onOpen,
+    this.onDelete,
+  });
+
+  final String title;
+  final String tags;
+  final String sender;
+  final String createdAt;
+  final VoidCallback onOpen;
+  final VoidCallback? onDelete;
+
+  /// 필요한 변수는 공유 자료 제목·태그·작성자·시각과 열람·삭제 콜백이다.
+  /// 작동 원리는 HTML Flow 카드처럼 메타와 소유자 행동을 구분선 안에 한 항목으로 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFAFAFB),
+      border: Border.all(color: const Color(0xFFE0E0E2)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        Text(tags, style: const TextStyle(fontSize: 10, color: Colors.black45)),
+        const Divider(height: 28),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '$sender · $createdAt',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10, color: Colors.black45),
+              ),
+            ),
+            if (onDelete != null)
+              TextButton(onPressed: onDelete, child: const Text('공유 취소')),
+            TextButton(onPressed: onOpen, child: const Text('열람')),
+          ],
         ),
       ],
     ),

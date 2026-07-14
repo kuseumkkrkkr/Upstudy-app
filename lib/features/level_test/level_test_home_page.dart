@@ -435,6 +435,7 @@ class _PlacementProcess extends StatelessWidget {
     ];
     if (isStudentDensityMobile(context)) {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           cards[0],
           const SizedBox(height: 10),
