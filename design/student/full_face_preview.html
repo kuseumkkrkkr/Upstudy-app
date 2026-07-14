@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>AIFlow Student — Full App Concept</title>
+  <link rel="stylesheet" href="student-app.css">
+</head>
+<body>
+  <div class="prototype-note" id="prototypeNote">
+    <span>STUDENT APP CONCEPT</span>
+    <strong>HTML 시안 · 실제 API 호출 없음</strong>
+    <button type="button" data-dismiss-note aria-label="안내 닫기">×</button>
+  </div>
+
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" aria-label="학생용 메뉴">
+      <button class="brand" type="button" data-nav="dashboard" aria-label="학생 홈">
+        <span class="brand-mark">A</span>
+        <span><b>AIFlow</b><small>STUDENT</small></span>
+      </button>
+      <button class="drawer-close icon-button" type="button" data-close-menu aria-label="메뉴 닫기">×</button>
+      <nav id="primaryNav"></nav>
+      <button class="student-chip" type="button" data-nav="profile">
+        <span class="avatar">김</span>
+        <span><b>김학생</b><small>OVR 18.6 · B Tier</small></span>
+        <span>›</span>
+      </button>
+    </aside>
+
+    <main class="main-stage" id="mainStage" tabindex="-1">
+      <header class="topbar">
+        <div class="topbar-leading">
+          <button class="icon-button menu-trigger" type="button" data-toggle-menu aria-label="전체 메뉴">☰</button>
+          <button class="topbar-brand" type="button" data-nav="dashboard"><span class="brand-mark">A</span><b>AIFlow</b></button>
+        </div>
+        <nav class="top-tabs" aria-label="학생 핵심 메뉴">
+          <button type="button" data-nav="dashboard">학습터</button>
+          <button type="button" data-nav="courses">코스</button>
+          <button type="button" data-nav="textbooks">책가방</button>
+          <button type="button" data-nav="friends">친구/소셜</button>
+          <button type="button" data-nav="marketplace">마켓플레이스</button>
+        </nav>
+        <div class="top-actions">
+          <button class="icon-button" type="button" data-action="search" aria-label="검색">⌕</button>
+          <button class="icon-button has-badge" type="button" data-action="notifications" aria-label="알림">◌</button>
+          <button class="compact-profile" type="button" data-nav="profile"><span class="avatar">김</span><span>김학생</span></button>
+        </div>
+      </header>
+      <div class="screen-host" id="screenHost"></div>
+    </main>
+
+    <nav class="mobile-nav" id="mobileNav" aria-label="모바일 핵심 메뉴"></nav>
+  </div>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="action-panel" id="actionPanel" aria-hidden="true" aria-label="기능 상세 패널">
+    <header>
+      <div><span class="eyebrow" id="actionKicker">ACTION</span><h2 id="actionTitle">기능 상세</h2></div>
+      <button class="icon-button" type="button" data-close-panel aria-label="닫기">×</button>
+    </header>
+    <div class="action-body" id="actionBody"></div>
+    <footer id="actionFooter"></footer>
+  </aside>
+
+  <script src="student-app.js"></script>
+</body>
+</html>
