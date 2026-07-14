@@ -369,9 +369,10 @@ def include_api_routers() -> None:
     # 필요 변수: 독립 대결장 라우터 모듈.
     # 작동 원리: 아레나 장애가 기존 소셜·학습 라우터 등록을 막지 않도록 분리해 로드한다.
     try:
-        from arena import router as arena_router
+        from arena import router as arena_router, ws_router as arena_ws_router
 
         _safe_include_router(arena_router, name="arena")
+        _safe_include_router(arena_ws_router, name="arena.websocket")
     except Exception as exc:
         logger.error("failed to load arena router: %s", exc)
 

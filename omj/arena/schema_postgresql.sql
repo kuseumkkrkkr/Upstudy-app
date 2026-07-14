@@ -21,8 +21,11 @@ CREATE TABLE IF NOT EXISTS arena_match (
     started_at TIMESTAMPTZ NOT NULL,
     finished_at TIMESTAMPTZ,
     winner_team SMALLINT,
-    idempotency_key TEXT UNIQUE NOT NULL
+    idempotency_key TEXT UNIQUE NOT NULL,
+    result_json JSONB
 );
+
+ALTER TABLE arena_match ADD COLUMN IF NOT EXISTS result_json JSONB;
 
 CREATE TABLE IF NOT EXISTS arena_participant (
     match_id UUID NOT NULL REFERENCES arena_match(match_id),

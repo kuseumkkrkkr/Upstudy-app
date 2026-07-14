@@ -62,7 +62,7 @@ class _ArenaPageState extends State<ArenaPage> {
       } else {
         _matchPoller?.cancel();
         _matchPoller = Timer.periodic(const Duration(seconds: 2), (_) async {
-          final summary = await ArenaApi.instance.summary();
+          final summary = await ArenaApi.instance.summary(forceRefresh: true);
           final active = summary['active_match_id']?.toString();
           if (active != null && active.isNotEmpty && mounted) {
             _matchPoller?.cancel();
@@ -310,20 +310,76 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
   final _answer = TextEditingController();
   final _chat = TextEditingController();
   Timer? _timer;
+  ArenaSocket? _socket;
+  StreamSubscription<Map<String, dynamic>>? _socketSubscription;
   String? _feedback;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _connect();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _socketSubscription?.cancel();
+    _socket?.close();
     _answer.dispose();
     _chat.dispose();
     super.dispose();
+  }
+
+  /// 필요한 변수는 경기 ID와 인증 토큰이다.
+  /// WebSocket 상태 이벤트를 화면에 반영하고 연결 실패 때만 REST 조회로 복구한다.
+  Future<void> _connect() async {
+    try {
+      final socket = await ArenaApi.instance.connect(matchId: widget.matchId);
+      if (!mounted) {
+        await socket.close();
+        return;
+      }
+      _socket = socket;
+      _socketSubscription = socket.events.listen(
+        _handleSocketEvent,
+        onError: (_) => _load(),
+      );
+    } catch (_) {
+      await _load();
+    }
+  }
+
+  /// 필요한 변수는 서버 이벤트 유형과 data 본문이다.
+  /// 경기 상태·답안 결과·종료를 각각 기존 화면 상태와 피드백으로 연결한다.
+  void _handleSocketEvent(Map<String, dynamic> event) {
+    if (!mounted) return;
+    final type = event['type']?.toString();
+    final rawData = event['data'];
+    if (type == 'match_state' && rawData is Map) {
+      final value = Map<String, dynamic>.from(rawData);
+      setState(() {
+        _state = value;
+        _remaining = (value['remaining_seconds'] as num?)?.toInt() ?? 0;
+      });
+      _startLocalTimer();
+    } else if (type == 'answer_result' && rawData is Map) {
+      final result = Map<String, dynamic>.from(rawData);
+      setState(() {
+        _feedback = result['correct'] == true
+            ? '정답입니다!'
+            : '오답 · ${result['attempts_remaining']}회 남음';
+        _answer.clear();
+      });
+    } else if (type == 'error') {
+      setState(() => _feedback = event['message']?.toString());
+    }
+  }
+
+  /// 필요한 변수는 현재 남은 시간이다. 서버 상태 사이 구간만 1초 단위로 보간한다.
+  void _startLocalTimer() {
+    _timer ??= Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && _remaining > 0) setState(() => _remaining--);
+    });
   }
 
   Future<void> _load() async {
@@ -333,9 +389,7 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
       _state = value;
       _remaining = value['remaining_seconds'] as int? ?? 0;
     });
-    _timer ??= Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && _remaining > 0) setState(() => _remaining--);
-    });
+    _startLocalTimer();
   }
 
   Future<void> _submit(String answer) async {
@@ -343,6 +397,17 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
     if (questions.isEmpty) return;
     final question = Map<String, dynamic>.from(questions[_index] as Map);
     try {
+      final socket = _socket;
+      if (socket != null) {
+        socket.send({
+          'type': 'submit_answer',
+          'question_id': question['id'].toString(),
+          'answer': answer,
+          'idempotency_key':
+              '${DateTime.now().microsecondsSinceEpoch}-${question['id']}',
+        });
+        return;
+      }
       final result = await ArenaApi.instance.submit(
         widget.matchId,
         question['id'].toString(),
