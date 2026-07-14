@@ -1,34 +1,61 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
-import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 class StudentAcademyPage extends StatefulWidget {
-  const StudentAcademyPage({super.key, required this.academyId});
+  const StudentAcademyPage({
+    super.key,
+    required this.academyId,
+    this.initialAcademy,
+    this.initialTasks,
+    this.initialSchedule,
+    this.initialAttendancePresent,
+  });
 
   final String academyId;
+  final Map<String, dynamic>? initialAcademy;
+  final List<Map<String, dynamic>>? initialTasks;
+  final List<Map<String, dynamic>>? initialSchedule;
+  final bool? initialAttendancePresent;
 
   @override
   State<StudentAcademyPage> createState() => _StudentAcademyPageState();
 }
 
 class _StudentAcademyPageState extends State<StudentAcademyPage> {
-  Academy? _academy;
-  List<StudentAssignmentTask> _assignments = const [];
-  List<AttendanceLog> _attendance = const [];
+  _AcademyView? _academy;
+  List<_AcademyTask> _tasks = const [];
   List<Map<String, dynamic>> _schedule = const [];
+  bool _attendancePresent = false;
   bool _loading = true;
   String? _error;
 
+  /// 필요한 변수는 선택적 학원·과제·시간표·출석 초기값이다.
+  /// 작동 원리는 모든 초기값이 있으면 즉시 렌더하고 실제 진입은 서버 데이터를 병렬 조회하는 것이다.
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.initialAcademy != null) {
+      _academy = _AcademyView.fromMap(widget.initialAcademy!);
+      _tasks = (widget.initialTasks ?? const [])
+          .map(_AcademyTask.fromMap)
+          .toList(growable: false);
+      _schedule = widget.initialSchedule ?? const [];
+      _attendancePresent = widget.initialAttendancePresent ?? false;
+      _loading = false;
+    } else {
+      unawaited(_load());
+    }
   }
 
   /// 필요한 변수는 학원 ID·현재 사용자·첫 수강 코스다.
-  /// 작동 원리: 오늘 과제와 출석을 병렬 조회하고 코스 런타임 일정은 별도로 합쳐 학생용 작업 화면을 만든다.
+  /// 작동 원리는 학원·과제·출석·코스를 병렬 조회하고 첫 코스 일정만 후속 1회 조회해 학생 작업 화면을 만든다.
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -36,18 +63,18 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
     });
     try {
       final profile = await ApiClient.instance.getMyProfile();
-      final now = DateTime.now();
-      final today = _dateKey(now);
+      final today = _dateKey(DateTime.now());
       final responses = await Future.wait<dynamic>([
         ApiClient.instance.getAcademy(widget.academyId),
         ApiClient.instance.listMyAssignments(),
         ApiClient.instance.listAttendance(userId: profile.userId, date: today),
         CourseService.fetchMyCourses(),
       ]);
-      final academy = responses[0] as ApiResponse<Academy>;
-      final assignments =
+      final academyResponse = responses[0] as ApiResponse<Academy>;
+      final assignmentResponse =
           responses[1] as ApiResponse<List<StudentAssignmentTask>>;
-      final attendance = responses[2] as ApiResponse<List<AttendanceLog>>;
+      final attendanceResponse =
+          responses[2] as ApiResponse<List<AttendanceLog>>;
       final courses = responses[3] as List;
       var schedule = const <Map<String, dynamic>>[];
       if (courses.isNotEmpty) {
@@ -62,221 +89,505 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
       }
       if (!mounted) return;
       setState(() {
-        _academy = academy.data;
-        _assignments = assignments.data ?? const [];
-        _attendance = attendance.data ?? const [];
+        final academy = academyResponse.data;
+        _academy = academy == null
+            ? null
+            : _AcademyView(
+                name: academy.name,
+                subtitle: academy.address ?? '중2 심화반',
+                teacher: academy.adminUserId ?? '담당 선생님',
+              );
+        _tasks = (assignmentResponse.data ?? const [])
+            .map(_AcademyTask.fromServer)
+            .toList(growable: false);
+        _attendancePresent = (attendanceResponse.data ?? const []).any(
+          (log) => log.status == 'present',
+        );
         _schedule = schedule;
         _loading = false;
       });
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = error.toString();
+        _error = '학원 정보를 불러오지 못했습니다.';
         _loading = false;
       });
     }
   }
 
-  /// 필요한 변수는 날짜다. 서버 조회 계약과 같은 `YYYY-MM-DD` 문자열로 변환한다.
+  /// 필요한 변수는 날짜다.
+  /// 작동 원리는 서버 조회 계약과 같은 YYYY-MM-DD 문자열로 변환하는 것이다.
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-  /// 필요한 변수는 과제 마감일과 제출 상태다. 오늘 또는 미제출 과제를 우선 노출한다.
-  List<StudentAssignmentTask> get _todayAssignments {
-    final today = _dateKey(DateTime.now());
-    final pending = _assignments
-        .where((task) {
-          final due = task.assignment.dueDate?.trim() ?? '';
-          return due == today || task.submission.status != 'submitted';
-        })
-        .toList(growable: false);
-    return pending.take(5).toList(growable: false);
-  }
-
-  /// 필요한 변수는 로딩·오류·과제·출석·시간표 상태다.
-  /// 작동 원리: 모바일 한 열과 PC 3열에서 오늘 해야 할 행동을 통계보다 먼저 보여준다.
+  /// 필요한 변수는 현재 학원·과제·출석·시간표 상태다.
+  /// 작동 원리는 HTML의 학원 정보, 오늘 할 일, 이번 주 수업 순서로 한 개 학생 작업 스크롤을 구성하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final academy = _academy;
     return Scaffold(
-      appBar: AppBar(title: Text(_academy?.name ?? '학원')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: FilledButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('다시 불러오기'),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                children: [
-                  StudentDensityPage(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const StudentDensityPageHeader(
-                          eyebrow: 'TODAY AT ACADEMY',
-                          title: '오늘 학원에서 할 일',
-                          description: '과제, 출석, 수업 일정을 한 번에 확인하세요.',
-                        ),
-                        const SizedBox(height: 18),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final cards = [
-                              _AssignmentCard(tasks: _todayAssignments),
-                              _AttendanceCard(logs: _attendance),
-                              _ScheduleCard(schedule: _schedule),
-                            ];
-                            if (constraints.maxWidth < 780) {
-                              return Column(
-                                children: cards
-                                    .map(
-                                      (card) => Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 12,
-                                        ),
-                                        child: card,
-                                      ),
-                                    )
-                                    .toList(growable: false),
-                              );
-                            }
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children:
-                                  cards
-                                      .map((card) => Expanded(child: card))
-                                      .expand(
-                                        (card) => [
-                                          card,
-                                          const SizedBox(width: 12),
-                                        ],
-                                      )
-                                      .toList(growable: false)
-                                    ..removeLast(),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      backgroundColor: const Color(0xFFF4F4F6),
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Builder(
+              builder: (context) => Ios26TopBar(
+                brandColor: Colors.black,
+                showLevelIndicator: false,
+                onMenu: () => toggleAppDrawer(context),
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.social,
+                ),
               ),
             ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                  ? Center(
+                      child: FilledButton(
+                        onPressed: _load,
+                        child: const Text('다시 불러오기'),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                        children: [
+                          const Text(
+                            'ACADEMY',
+                            style: TextStyle(
+                              fontSize: 10,
+                              letterSpacing: 1.7,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '학원',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            '오늘 수업과 과제를 한곳에서 확인합니다.',
+                            style: TextStyle(color: Colors.black45),
+                          ),
+                          const SizedBox(height: 16),
+                          OutlinedButton(
+                            onPressed: () {},
+                            child: const Text('학원 정보'),
+                          ),
+                          const SizedBox(height: 12),
+                          _AcademyInfoCard(
+                            academy: academy,
+                            attendancePresent: _attendancePresent,
+                            remainingTasks: _tasks
+                                .where((task) => !task.completed)
+                                .length,
+                            nextClass: _schedule.isEmpty
+                                ? '목 19:30'
+                                : _schedule.first['time']?.toString() ??
+                                      '목 19:30',
+                          ),
+                          const SizedBox(height: 12),
+                          _TodayAcademyCard(
+                            tasks: _tasks,
+                            attendancePresent: _attendancePresent,
+                          ),
+                          const SizedBox(height: 12),
+                          _AcademyTimetableCard(schedule: _schedule),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class _AssignmentCard extends StatelessWidget {
-  const _AssignmentCard({required this.tasks});
+class _AcademyInfoCard extends StatelessWidget {
+  const _AcademyInfoCard({
+    required this.academy,
+    required this.attendancePresent,
+    required this.remainingTasks,
+    required this.nextClass,
+  });
+  final _AcademyView? academy;
+  final bool attendancePresent;
+  final int remainingTasks;
+  final String nextClass;
 
-  final List<StudentAssignmentTask> tasks;
-
+  /// 필요한 변수는 학원 메타·출석·다음 수업·남은 과제다.
+  /// 작동 원리는 학원 로고와 세 핵심 상태를 HTML 상단 카드의 3열 통계로 표시하는 것이다.
   @override
-  Widget build(BuildContext context) => StudentDensitySurface(
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: _academyCardDecoration(),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle(icon: Icons.assignment_outlined, title: '오늘 과제'),
-        const SizedBox(height: 12),
-        if (tasks.isEmpty)
-          const Text('남은 과제가 없습니다.')
-        else
-          ...tasks.map(
-            (task) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(task.assignment.title ?? task.assignment.kind),
-              subtitle: Text(task.assignment.dueDate ?? '기한 없음'),
-              trailing: Text(
-                task.submission.status == 'submitted' ? '제출' : '진행 전',
+        const Text(
+          'AIFLOW MATH ACADEMY',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.6,
+            color: Colors.black54,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFF202022),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Text(
+                'A',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    academy?.name ?? 'AIFlow 수학학원',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '${academy?.subtitle ?? '중2 심화반'} · ${academy?.teacher ?? '담당 김선생'}',
+                    style: const TextStyle(fontSize: 10, color: Colors.black45),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const Divider(height: 32, color: Color(0xFFE0E0E2)),
+        Row(
+          children: [
+            _AcademyMetric(
+              label: '오늘 출석',
+              value: attendancePresent ? '출석 완료' : '확인 전',
+            ),
+            _AcademyMetric(label: '다음 수업', value: nextClass),
+            _AcademyMetric(label: '남은 과제', value: '$remainingTasks개'),
+          ],
+        ),
       ],
     ),
   );
 }
 
-class _AttendanceCard extends StatelessWidget {
-  const _AttendanceCard({required this.logs});
+class _AcademyMetric extends StatelessWidget {
+  const _AcademyMetric({required this.label, required this.value});
+  final String label;
+  final String value;
 
-  final List<AttendanceLog> logs;
+  /// 필요한 변수는 상태 레이블과 값이다.
+  /// 작동 원리는 세 통계를 동일 너비로 정렬해 빠르게 비교하게 하는 것이다.
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 9, color: Colors.black45)),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
+}
 
+class _TodayAcademyCard extends StatelessWidget {
+  const _TodayAcademyCard({
+    required this.tasks,
+    required this.attendancePresent,
+  });
+  final List<_AcademyTask> tasks;
+  final bool attendancePresent;
+
+  /// 필요한 변수는 오늘 과제와 출석 상태다.
+  /// 작동 원리는 미완료 과제와 출석 확인을 시간순 구분선 행으로 최대 세 개 표시하는 것이다.
   @override
   Widget build(BuildContext context) {
-    final present = logs.any((log) => log.status == 'present');
-    return StudentDensitySurface(
+    final visible = tasks.take(2).toList(growable: false);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _academyCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(icon: Icons.how_to_reg_outlined, title: '오늘 출석'),
-          const SizedBox(height: 20),
-          Text(
-            present ? '출석 완료' : '출석 확인 전',
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+          Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'TODAY',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.6,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '오늘 할 일',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _SmallBadge(
+                label: '${tasks.where((task) => !task.completed).length}개 남음',
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(present ? '오늘 출석이 정상 반영됐습니다.' : '학원 도착 후 출석 상태를 확인하세요.'),
+          const SizedBox(height: 24),
+          for (final task in visible) _AcademyTaskRow(task: task),
+          _AcademyTaskRow(
+            task: _AcademyTask(
+              title: '출석 확인',
+              detail: attendancePresent
+                  ? '학원 입실이 기록되었습니다.'
+                  : '학원 도착 후 출석을 확인하세요.',
+              time: attendancePresent ? '18:54' : '수업 전',
+              action: attendancePresent ? '완료' : '확인',
+              completed: attendancePresent,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard({required this.schedule});
+class _AcademyTaskRow extends StatelessWidget {
+  const _AcademyTaskRow({required this.task});
+  final _AcademyTask task;
 
-  final List<Map<String, dynamic>> schedule;
-
+  /// 필요한 변수는 과제 시간·제목·설명·행동이다.
+  /// 작동 원리는 HTML 오늘 할 일 카드의 시간 열과 본문 열을 구분선 행으로 구성하는 것이다.
   @override
-  Widget build(BuildContext context) => StudentDensitySurface(
-    child: Column(
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 14),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: Color(0xFFE2E2E4))),
+    ),
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle(
-          icon: Icons.calendar_today_outlined,
-          title: '학습 시간표',
+        SizedBox(
+          width: 72,
+          child: Text(
+            task.time,
+            style: const TextStyle(fontSize: 10, color: Colors.black45),
+          ),
         ),
-        const SizedBox(height: 12),
-        if (schedule.isEmpty)
-          const Text('등록된 일정이 없습니다.')
-        else
-          ...schedule
-              .take(4)
-              .map(
-                (item) => ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    (item['title'] ?? item['module_id'] ?? '학습').toString(),
-                  ),
-                  subtitle: Text((item['due_date'] ?? '기한 없음').toString()),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                task.title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: task.completed ? Colors.black38 : Colors.black,
                 ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                task.detail,
+                style: const TextStyle(fontSize: 10, color: Colors.black45),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '${task.action} ›',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     ),
   );
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.icon, required this.title});
+class _AcademyTimetableCard extends StatelessWidget {
+  const _AcademyTimetableCard({required this.schedule});
+  final List<Map<String, dynamic>> schedule;
 
-  final IconData icon;
-  final String title;
-
+  /// 필요한 변수는 코스 런타임 시간표다.
+  /// 작동 원리는 이번 주 수업 제목과 첫 세 일정을 시안의 회색 수업 행으로 표시하는 것이다.
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Icon(icon, size: 20),
-      const SizedBox(width: 8),
-      Text(
-        title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-      ),
-    ],
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: _academyCardDecoration(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'TIMETABLE',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.6,
+            color: Colors.black54,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '이번 주 수업',
+          style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 20),
+        for (final item in schedule.take(3))
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F7F8),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: Text('학'),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item['title']?.toString() ?? '함수 심화',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+                Text(
+                  item['time']?.toString() ?? '목 19:30',
+                  style: const TextStyle(fontSize: 10, color: Colors.black45),
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
   );
 }
+
+class _SmallBadge extends StatelessWidget {
+  const _SmallBadge({required this.label});
+  final String label;
+
+  /// 필요한 변수는 짧은 상태 문구다.
+  /// 작동 원리는 회색 캡슐로 남은 과제 수를 제목 옆에 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF5F5F6),
+      borderRadius: BorderRadius.circular(99),
+      border: Border.all(color: const Color(0xFFE0E0E2)),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+    ),
+  );
+}
+
+class _AcademyView {
+  const _AcademyView({
+    required this.name,
+    required this.subtitle,
+    required this.teacher,
+  });
+  final String name;
+  final String subtitle;
+  final String teacher;
+
+  /// 필요한 변수는 미리보기 학원 맵이다.
+  /// 작동 원리는 이름·반·담당자 값을 안전하게 화면 모델로 변환하는 것이다.
+  factory _AcademyView.fromMap(Map<String, dynamic> map) => _AcademyView(
+    name: map['name']?.toString() ?? 'AIFlow 수학학원',
+    subtitle: map['subtitle']?.toString() ?? '중2 심화반',
+    teacher: map['teacher']?.toString() ?? '담당 김선생',
+  );
+}
+
+class _AcademyTask {
+  const _AcademyTask({
+    required this.title,
+    required this.detail,
+    required this.time,
+    required this.action,
+    required this.completed,
+  });
+  final String title;
+  final String detail;
+  final String time;
+  final String action;
+  final bool completed;
+
+  /// 필요한 변수는 미리보기 과제 맵이다.
+  /// 작동 원리는 화면에 필요한 다섯 필드를 기본값과 함께 읽는 것이다.
+  factory _AcademyTask.fromMap(Map<String, dynamic> map) => _AcademyTask(
+    title: map['title']?.toString() ?? '학원 과제',
+    detail: map['detail']?.toString() ?? '',
+    time: map['time']?.toString() ?? '오늘',
+    action: map['action']?.toString() ?? '시작',
+    completed: map['completed'] == true,
+  );
+
+  /// 필요한 변수는 서버 과제·제출 상태다.
+  /// 작동 원리는 과제 제목·메시지·마감일과 제출 여부를 학생 작업 행으로 변환하는 것이다.
+  factory _AcademyTask.fromServer(StudentAssignmentTask task) => _AcademyTask(
+    title: task.assignment.title ?? '학원 과제',
+    detail: task.assignment.message ?? task.assignment.kind,
+    time: task.assignment.dueDate ?? '오늘 마감',
+    action: task.submission.status == 'submitted' ? '완료' : '이어하기',
+    completed: task.submission.status == 'submitted',
+  );
+}
+
+/// 필요한 변수는 없다.
+/// 작동 원리는 학원 섹션에 동일한 흰 표면·모서리·테두리를 적용하는 것이다.
+BoxDecoration _academyCardDecoration() => BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(22),
+  border: Border.all(color: const Color(0xFFE0E0E2)),
+);

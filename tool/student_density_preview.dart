@@ -14,6 +14,10 @@ import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/features/arena/arena_page.dart';
+import 'package:s11/features/student_schedule/schedule_page.dart';
+import 'package:s11/features/group_study/group_list_page.dart';
+import 'package:s11/features/group_study/group_detail_page.dart';
+import 'package:s11/features/group_study/student_academy_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/data/models/textbook.dart';
@@ -288,6 +292,113 @@ class StudentDensityPreviewApp extends StatelessWidget {
             'subtitle': '800P · 30문항',
           },
         ],
+      ),
+      'schedule' => SchedulePage(
+        initialDate: DateTime(2026, 7, 16),
+        initialSchedule: const [
+          {
+            'time': '16:00',
+            'type': '교재',
+            'title': '교재 3장 읽기',
+            'detail': '최소 학습 8분',
+            'status': '미시작',
+            'completed': false,
+          },
+          {
+            'time': '19:30',
+            'type': '개인',
+            'title': '개인 복습',
+            'detail': '기울기와 그래프 · 20분',
+            'status': '예정',
+            'completed': true,
+          },
+          {
+            'time': '22:00',
+            'type': '과제',
+            'title': '일차함수 12문제',
+            'detail': '진행 4/12 · 오늘 마감',
+            'status': '진행 중',
+            'completed': false,
+          },
+        ],
+      ),
+      'groups' => GroupListPage(
+        initialGroups: [
+          AcademyGroup(
+            groupId: 'group-1',
+            academyId: 'academy-1',
+            name: '중2 심화 스터디',
+            subject: '함수와 도형을 함께 공부하는 2학년 스터디',
+            searchable: true,
+            maxMembers: 20,
+          ),
+          AcademyGroup(
+            groupId: 'group-2',
+            academyId: 'academy-1',
+            name: '수학 아레나 팀',
+            subject: '매주 화·목 팀 대결을 준비합니다.',
+            maxMembers: 4,
+          ),
+          AcademyGroup(
+            groupId: 'group-3',
+            academyId: 'academy-1',
+            name: 'AIFlow 학교 그룹',
+            subject: '선생님 과제와 공지를 확인하는 학교 그룹',
+            maxMembers: 86,
+          ),
+        ],
+      ),
+      'group-detail' => GroupDetailPage(
+        groupId: 'group-1',
+        initialGroup: AcademyGroup(
+          groupId: 'group-1',
+          academyId: 'academy-1',
+          name: '중2 심화 스터디',
+          subject: '함수와 도형을 함께 공부하는 중학교 2학년 스터디',
+          grade: '그룹장 이수학',
+          searchable: true,
+          maxMembers: 20,
+        ),
+        initialMembers: [
+          AcademyGroupMember(
+            memberId: 'member-1',
+            groupId: 'group-1',
+            userId: '이수학',
+            role: 'leader',
+          ),
+          AcademyGroupMember(
+            memberId: 'member-2',
+            groupId: 'group-1',
+            userId: '김학생',
+          ),
+          AcademyGroupMember(
+            memberId: 'member-3',
+            groupId: 'group-1',
+            userId: '박함수',
+          ),
+        ],
+      ),
+      'academy' => const StudentAcademyPage(
+        academyId: 'academy-1',
+        initialAcademy: {
+          'name': 'AIFlow 수학학원',
+          'subtitle': '중2 심화반',
+          'teacher': '담당 김선생',
+        },
+        initialTasks: [
+          {
+            'title': '일차함수 실전 12문제',
+            'detail': '오늘 22:00 마감',
+            'completed': false,
+          },
+          {'title': '그래프 개념 교재 3장', 'detail': '최소 학습 8분', 'completed': false},
+        ],
+        initialSchedule: [
+          {'day': '목', 'time': '목 19:30', 'title': '함수 심화 수업'},
+          {'day': '목', 'time': '19:30', 'title': '도형과 그래프'},
+          {'day': '토', 'time': '14:00', 'title': '주간 테스트'},
+        ],
+        initialAttendancePresent: true,
       ),
       _ => const MainStudentPage(username: '김학생'),
     };

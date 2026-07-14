@@ -13,6 +13,10 @@ import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
+import 'package:s11/features/student_schedule/schedule_page.dart';
+import 'package:s11/features/group_study/group_list_page.dart';
+import 'package:s11/features/group_study/group_detail_page.dart';
+import 'package:s11/features/group_study/student_academy_page.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -434,5 +438,120 @@ void main() {
     await tester.tap(find.text('개념이 보이는 그래프'));
     await tester.pumpAndSettle();
     expect(find.text('확인'), findsOneWidget);
+  });
+
+  testWidgets('500px 일정은 HTML 주간 타임라인과 월간 전환을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SchedulePage(
+          initialDate: DateTime(2026, 7, 16),
+          initialSchedule: const [
+            {
+              'time': '16:00',
+              'type': '교재',
+              'title': '교재 3장 읽기',
+              'detail': '최소 학습 8분',
+              'status': '미시작',
+              'completed': false,
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('JULY 2026'), findsOneWidget);
+    expect(find.text('교재 3장 읽기'), findsOneWidget);
+    await tester.tap(find.text('월간'));
+    await tester.pump();
+    expect(find.text('July 2026'), findsOneWidget);
+  });
+
+  testWidgets('500px 그룹 허브와 상세는 탐색·채팅 상호작을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final group = AcademyGroup(
+      groupId: 'g1',
+      academyId: 'a1',
+      name: '중2 심화 스터디',
+      subject: '함수와 도형을 함께 공부합니다.',
+      maxMembers: 20,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: GroupListPage(initialGroups: [group])),
+    );
+    await tester.pump();
+    expect(find.text('GROUP STUDY'), findsOneWidget);
+    expect(find.text('중2 심화 스터디'), findsOneWidget);
+    await tester.tap(find.text('그룹 찾기 · 코드 참가'));
+    await tester.pumpAndSettle();
+    expect(find.text('그룹 찾기'), findsWidgets);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GroupDetailPage(
+          groupId: 'g1',
+          initialGroup: group,
+          initialMembers: [
+            AcademyGroupMember(
+              memberId: 'm1',
+              groupId: 'g1',
+              userId: '이수학',
+              role: 'leader',
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('GROUP SPACE'), findsOneWidget);
+    await tester.tap(find.textContaining('채팅 열기'));
+    await tester.pumpAndSettle();
+    expect(find.text('중2 심화 스터디 채팅'), findsOneWidget);
+  });
+
+  testWidgets('500px 학원은 HTML 정보·오늘 할 일·시간표 구조를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: StudentAcademyPage(
+          academyId: 'a1',
+          initialAcademy: {
+            'name': 'AIFlow 수학학원',
+            'subtitle': '중2 심화반',
+            'teacher': '담당 김선생',
+          },
+          initialTasks: [
+            {
+              'title': '일차함수 실전 12문제',
+              'detail': '오늘 22:00 마감',
+              'completed': false,
+            },
+          ],
+          initialSchedule: [
+            {'day': '목', 'time': '19:30', 'title': '함수 심화 수업'},
+          ],
+          initialAttendancePresent: true,
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('ACADEMY'), findsOneWidget);
+    expect(find.text('AIFlow 수학학원'), findsOneWidget);
+    expect(find.text('오늘 할 일'), findsOneWidget);
+    expect(find.text('이번 주 수업'), findsOneWidget);
   });
 }
