@@ -722,6 +722,13 @@ class _CurrentLearning extends StatelessWidget {
     final mission = unit == null || unit.missions.isEmpty
         ? null
         : unit.missions.first;
+    final detail = unit?.detail;
+    final rawDescription = detail is Map
+        ? detail['description']?.toString().trim()
+        : null;
+    final description = rawDescription == null || rawDescription.isEmpty
+        ? '두 점의 변화량을 비교해 직선의 기울기를 이해합니다. 중단한 위치부터 이어집니다.'
+        : rawDescription;
     final main = Padding(
       padding: EdgeInsets.all(mobile ? 18 : 30),
       child: Row(
@@ -761,16 +768,17 @@ class _CurrentLearning extends StatelessWidget {
                     letterSpacing: -1,
                   ),
                 ),
-                if (!mobile) ...[
-                  const SizedBox(height: 20),
-                  const Text(
-                    '두 점의 변화량을 비교해 직선의 기울기를 이해합니다. 중단한 위치부터 이어집니다.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: StudentDensityTokens.muted,
-                    ),
+                SizedBox(height: mobile ? 12 : 20),
+                Text(
+                  description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: mobile ? 10 : 12,
+                    height: 1.5,
+                    color: StudentDensityTokens.muted,
                   ),
-                ],
+                ),
               ],
             ),
           ),
