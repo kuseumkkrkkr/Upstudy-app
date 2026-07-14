@@ -104,7 +104,7 @@ class _ExamGradingReportPage extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(height: 20),
-                _ModuleSubmissionFooter(
+                ModuleSubmissionFooter(
                   passed: passed,
                   submissionRequired: moduleSubmissionRequired,
                   initialSubmissionSucceeded: moduleSubmissionSucceeded,
@@ -452,8 +452,9 @@ class _ExamGradingReportPage extends StatelessWidget {
   }
 }
 
-class _ModuleSubmissionFooter extends StatefulWidget {
-  const _ModuleSubmissionFooter({
+class ModuleSubmissionFooter extends StatefulWidget {
+  const ModuleSubmissionFooter({
+    super.key,
     required this.passed,
     required this.submissionRequired,
     required this.initialSubmissionSucceeded,
@@ -468,11 +469,10 @@ class _ModuleSubmissionFooter extends StatefulWidget {
   final Future<bool> Function()? onRetry;
 
   @override
-  State<_ModuleSubmissionFooter> createState() =>
-      _ModuleSubmissionFooterState();
+  State<ModuleSubmissionFooter> createState() => _ModuleSubmissionFooterState();
 }
 
-class _ModuleSubmissionFooterState extends State<_ModuleSubmissionFooter> {
+class _ModuleSubmissionFooterState extends State<ModuleSubmissionFooter> {
   late bool _submissionSucceeded = widget.initialSubmissionSucceeded;
   bool _retrying = false;
 

@@ -32,17 +32,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
       ..scaleByDouble(scale, scale, 1, 1);
   }
 
-  void _centerOnPage(int index) {
-    final viewport = _viewportSize;
-    if (viewport == null) return;
-    final scale = _currentScale <= 0 ? 1.0 : _currentScale;
-    final pageTop = _pageOffsetY(index) * scale;
-    final contentWidth = _paperWidth * scale;
-    final dx = (viewport.width - contentWidth) / 2;
-    final dy = (viewport.height - _paperHeight * scale) / 2 - pageTop;
-    _panOffset = Offset(dx, dy);
-  }
-
   void _clampPanOffset({bool bounce = false}) {
     final viewport = _viewportSize;
     if (viewport == null) return;
@@ -205,31 +194,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _paintVersion.value = _paintVersion.value + 1;
   }
 
-  void _setToolMode(_ToolMode mode) {
-    if (_toolMode == mode) return;
-
-    setState(() {
-      _toolMode = mode;
-    });
-  }
-
-  void _toggleScroll() {
-    if (!_scrollEnabled) {
-      if (_toolMode == _ToolMode.pen && _currentStroke != null) {
-        _finishStroke();
-      } else if (_toolMode == _ToolMode.eraser && _eraserActive) {
-        _finishEraser();
-      }
-    }
-    setState(() {
-      _scrollEnabled = !_scrollEnabled;
-      _scrollAccumulator = 0.0;
-      _scrollDirection = 0;
-      _lastScrollSwitchAt = null;
-      _hasCentered = false;
-    });
-  }
-
   void _setZoom(double value) {
     final next = value.clamp(_zoomMin, _zoomMax);
     if (next == _zoomScale) return;
@@ -238,12 +202,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _centerInViewport();
     _updateViewMatrix();
   }
-
-  void _zoomIn() => _setZoom(_zoomScale + 0.1);
-
-  void _zoomOut() => _setZoom(_zoomScale - 0.1);
-
-  void _resetZoom() => _setZoom(1.0);
 
   void _handleScaleStart(ScaleStartDetails details) {
     if (details.pointerCount < 2) return;
@@ -431,6 +389,7 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     return value.toString();
   }
 
+  // ignore: unused_element
   Future<void> _openPenSettings() async {
     final result = await showModalBottomSheet<_PenSettings>(
       context: context,
@@ -574,38 +533,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _bumpPaint();
   }
 
-  void _clearAll() {
-    if (_strokes.isEmpty && _currentStroke == null) return;
-
-    final removed = <_Stroke>[
-      ..._strokes,
-
-      if (_currentStroke != null) _currentStroke!,
-    ];
-
-    _strokes.clear();
-
-    _currentStroke = null;
-
-    if (removed.isNotEmpty) {
-      _undoStack.add(_RemoveAction(removed));
-    }
-
-    _bumpPaint();
-  }
-
-  double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
-    final width = MediaQuery.of(context).size.width;
-
-    final scale = width / 1100;
-
-    if (scale < min) return min;
-
-    if (scale > max) return max;
-
-    return scale;
-  }
-
   bool _isPanPointer(PointerEvent event) {
     // In pan mode, any pointer is used for navigation.
     // In stroke mode, single pointers are reserved for writing; panning happens only via pinch/zoom gestures.
@@ -642,7 +569,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
 
     if (_isPanPointer(event)) {
       _activePointer = event.pointer;
-      _resetScrollAccumulator();
       return;
     }
 
@@ -721,7 +647,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     if (_activePointer != event.pointer) return;
 
     if (_isPanPointer(event)) {
-      _resetScrollAccumulator();
       _activePointer = null;
       return;
     }
@@ -739,7 +664,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     if (_activePointer != event.pointer) return;
 
     if (_isPanPointer(event)) {
-      _resetScrollAccumulator();
       _activePointer = null;
       return;
     }
@@ -751,11 +675,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     }
 
     _activePointer = null;
-  }
-
-  void _resetScrollAccumulator() {
-    _scrollAccumulator = 0.0;
-    _scrollDirection = 0;
   }
 
   void _handleScrollDelta(double delta, {bool allowWhenDisabled = false}) {
@@ -776,20 +695,7 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _panOffset = Offset(_panOffset.dx, nextY);
     _lastFastScrollAt = DateTime.now();
     _updateViewMatrix();
-    _resetScrollAccumulator();
     _syncCurrentPageToViewport();
-  }
-
-  void _switchPageByScroll(int direction) {
-    if (direction > 0) {
-      if (_currentPageIndex >= _pageCount - 1) return;
-      _setCurrentPage(_currentPageIndex + 1);
-      return;
-    }
-    if (direction < 0) {
-      if (_currentPageIndex <= 0) return;
-      _setCurrentPage(_currentPageIndex - 1);
-    }
   }
 
   void _startStroke(Offset position, double pressure) {

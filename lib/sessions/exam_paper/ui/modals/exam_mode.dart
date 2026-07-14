@@ -1,8 +1,9 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/concept_tag.dart';
-import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart' as exam_page;
+import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart'
+    as exam_page;
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/exam_paper_store.dart';
@@ -46,6 +47,8 @@ VoidCallback buildExamAction(BuildContext context) {
   return () {
     final navigator = Navigator.of(context, rootNavigator: true);
     navigator.pop();
+    // 닫힌 모달 대신 유지되는 루트 Navigator context로 다음 흐름을 예약한다.
+    // ignore: use_build_context_synchronously
     Future.microtask(() => startExamFlow(navigator.context));
   };
 }
@@ -66,6 +69,7 @@ class _ExamBuildModal extends StatefulWidget {
 }
 
 enum _SelectionState { selected, unselected, partial }
+
 enum _ExamPaperType { csat, aiflow }
 
 class _TagTreeNode {
@@ -76,16 +80,11 @@ class _TagTreeNode {
 }
 
 class _ExamBuildModalState extends State<_ExamBuildModal> {
-  static const List<String> _difficultyLabels = [
-    '하',
-    '중하',
-    '중',
-    '중상',
-    '상',
-  ];
+  static const List<String> _difficultyLabels = ['하', '중하', '중', '중상', '상'];
 
-  final TextEditingController _questionCountController =
-      TextEditingController(text: _defaultExamQuestionCount.toString());
+  final TextEditingController _questionCountController = TextEditingController(
+    text: _defaultExamQuestionCount.toString(),
+  );
   final TextEditingController _tagSearchController = TextEditingController();
   late final List<ConceptTag> _tagTree;
   ConceptTag? _commonSubjectOne;
@@ -201,8 +200,9 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
     }
     final results = <_TagTreeNode>[];
     for (final tag in source) {
-      final matches =
-          _normalizeSearch(tag.displayName).contains(_normalizeSearch(_tagQuery));
+      final matches = _normalizeSearch(
+        tag.displayName,
+      ).contains(_normalizeSearch(_tagQuery));
       final children = _filteredNodes(tag.children);
       if (matches || children.isNotEmpty) {
         results.add(_TagTreeNode(tag, children));
@@ -348,8 +348,10 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
   int _parseQuestionCount() {
     final parsed = int.tryParse(_questionCountController.text.trim());
     if (parsed == null) {
-      return _defaultExamQuestionCount
-          .clamp(_minExamQuestionCount, _maxExamQuestionCount);
+      return _defaultExamQuestionCount.clamp(
+        _minExamQuestionCount,
+        _maxExamQuestionCount,
+      );
     }
     return parsed.clamp(_minExamQuestionCount, _maxExamQuestionCount);
   }
@@ -429,12 +431,10 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
           _showMessage('문서고 저장에 실패했습니다.');
         }
       }
-      Navigator.of(context).pop(
-        ExamBuildResult(
-          examId: examId,
-          questionCount: questionCount,
-        ),
-      );
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pop(ExamBuildResult(examId: examId, questionCount: questionCount));
     } catch (_) {
       _showMessage('시험지 생성에 실패했습니다.');
     } finally {
@@ -445,9 +445,9 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _buildTree(List<_TagTreeNode> nodes, {int depth = 0}) {
@@ -480,8 +480,8 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                     value: selectionState == _SelectionState.selected
                         ? true
                         : selectionState == _SelectionState.unselected
-                            ? false
-                            : null,
+                        ? false
+                        : null,
                     tristate: true,
                     onChanged: _isCsat ? null : (_) => _toggleTagSelection(tag),
                   ),
@@ -540,7 +540,7 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                     onPressed: _submitting
                         ? null
                         : _isCsat
-                            ? null
+                        ? null
                         : () {
                             final value = _parseQuestionCount();
                             if (value <= _minExamQuestionCount) return;
@@ -575,7 +575,7 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                     onPressed: _submitting
                         ? null
                         : _isCsat
-                            ? null
+                        ? null
                         : () {
                             final value = _parseQuestionCount();
                             if (value >= _maxExamQuestionCount) return;
@@ -585,7 +585,7 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${_minExamQuestionCount}~${_maxExamQuestionCount}',
+                    '$_minExamQuestionCount~$_maxExamQuestionCount',
                     style: const TextStyle(
                       fontSize: 12,
                       color: Colors.black54,
@@ -610,8 +610,9 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                       style: TextStyle(
                         fontSize: 12,
                         color: selected ? Colors.white : Colors.black87,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
                     ),
                     selected: selected,
@@ -651,7 +652,10 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: difficultyLabels
-                    .map((label) => Text(label, style: const TextStyle(fontSize: 12)))
+                    .map(
+                      (label) =>
+                          Text(label, style: const TextStyle(fontSize: 12)),
+                    )
                     .toList(),
               ),
               const SizedBox(height: 6),
@@ -672,7 +676,7 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                     onChanged: _submitting
                         ? null
                         : (value) => setState(() => _saveToLibrary = value),
-                    activeColor: const Color(0xFF1B402B),
+                    activeThumbColor: const Color(0xFF1B402B),
                   ),
                 ],
               ),
@@ -703,8 +707,9 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                         style: TextStyle(
                           fontSize: 12,
                           color: selected ? Colors.white : Colors.black87,
-                          fontWeight:
-                              selected ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
                       ),
                       selected: selected,
@@ -755,8 +760,9 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed:
-                        _submitting ? null : () => Navigator.of(context).pop(),
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('취소'),
                   ),
                   const SizedBox(width: 12),

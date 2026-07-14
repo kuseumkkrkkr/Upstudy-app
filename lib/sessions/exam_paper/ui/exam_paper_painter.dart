@@ -76,7 +76,7 @@ class _StrokePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.clipRect(Offset.zero & logicalSize);
-    if (backgroundColor.alpha > 0) {
+    if (backgroundColor.a > 0) {
       canvas.drawRect(
         Offset.zero & logicalSize,
         Paint()..color = backgroundColor,
@@ -106,39 +106,8 @@ class _StrokePainter extends CustomPainter {
   }
 }
 
-ui.Picture paintStrokesToPicture(
-  List<_Stroke> strokes, {
-  _Stroke? currentStroke,
-  required Size size,
-}) {
-  final recorder = ui.PictureRecorder();
-  final canvas = Canvas(recorder);
-  _StrokePainter.drawStrokes(canvas, strokes, currentStroke: currentStroke);
-  return recorder.endRecording();
-}
-
-class _PicturePainter extends CustomPainter {
-  _PicturePainter(this.picture);
-  final ui.Picture? picture;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (picture != null) {
-      canvas.drawPicture(picture!);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _PicturePainter oldDelegate) {
-    return oldDelegate.picture != picture;
-  }
-}
-
 class _GradingGridPainter extends CustomPainter {
-  _GradingGridPainter({
-    required this.regions,
-    required this.activeItemIndex,
-  });
+  _GradingGridPainter({required this.regions, required this.activeItemIndex});
 
   final List<_QuestionRegion> regions;
   final int? activeItemIndex;
@@ -168,5 +137,3 @@ class _GradingGridPainter extends CustomPainter {
         oldDelegate.regions.length != regions.length;
   }
 }
-
-

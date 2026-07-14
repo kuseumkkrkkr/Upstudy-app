@@ -66,16 +66,15 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
   }
 
   Future<void> _openPdf({required bool inline}) async {
-    final url = await ApiClient.instance
-        .examPdfUrl(widget.examId, inline: inline);
+    final url = ApiClient.instance.examPdfUrl(widget.examId, inline: inline);
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to open PDF.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to open PDF.')));
     }
   }
 
@@ -86,10 +85,7 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
       appBar: AppBar(
         title: const Text('Exam Preview'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchStatus,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchStatus),
           IconButton(
             icon: const Icon(Icons.print),
             onPressed: () => _openPdf(inline: true),
@@ -103,10 +99,10 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
-              : status == null
-                  ? const Center(child: Text('No data.'))
-                  : _buildPreview(status.items),
+          ? Center(child: Text(_error!))
+          : status == null
+          ? const Center(child: Text('No data.'))
+          : _buildPreview(status.items),
     );
   }
 
@@ -155,13 +151,13 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final topLineY = constraints.maxHeight *
+        final topLineY =
+            constraints.maxHeight *
             (isFirstPage ? topLineRatioFirst : topLineRatioRest);
         final bottomReserved = constraints.maxHeight * bottomReservedRatio;
         final contentTop = topLineY + verticalOffset + doubleLineGap;
-        final gridHeight =
-            (constraints.maxHeight - contentTop - bottomReserved)
-                .clamp(120.0, constraints.maxHeight);
+        final gridHeight = (constraints.maxHeight - contentTop - bottomReserved)
+            .clamp(120.0, constraints.maxHeight);
         final columnWidth = constraints.maxWidth / 2;
         final rowHeight = gridHeight / 2;
 
@@ -217,10 +213,7 @@ class _ExamPreviewPageState extends State<ExamPreviewPage> {
               bottom: bottomReserved * 0.45,
               child: Text(
                 '$pageNumber / $totalPages',
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.black54,
-                ),
+                style: const TextStyle(fontSize: 10, color: Colors.black54),
               ),
             ),
           ],
@@ -289,10 +282,7 @@ class _PageLayout {
   final List<_LayoutEntry> entries;
   final List<bool> columnSpans;
 
-  _PageLayout({
-    required this.entries,
-    required this.columnSpans,
-  });
+  _PageLayout({required this.entries, required this.columnSpans});
 }
 
 class _ExamPageDecorPainter extends CustomPainter {
@@ -375,7 +365,9 @@ class _ExamPageDecorPainter extends CustomPainter {
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: size.width - inset * 2);
-    final footerY = size.height - bottomReserved +
+    final footerY =
+        size.height -
+        bottomReserved +
         (bottomReserved - footerPainter.height) / 2;
     footerPainter.paint(
       canvas,
@@ -482,14 +474,7 @@ List<_PageLayout> _layoutItems(List<ExamItem> items) {
         flush();
         column = findFreeColumn() ?? 0;
       }
-      entries.add(
-        _LayoutEntry(
-          item,
-          column: column,
-          row: 0,
-          rowSpan: 2,
-        ),
-      );
+      entries.add(_LayoutEntry(item, column: column, row: 0, rowSpan: 2));
       columnSpans[column] = true;
       occupied[column][0] = true;
       occupied[column][1] = true;
@@ -501,14 +486,7 @@ List<_PageLayout> _layoutItems(List<ExamItem> items) {
       flush();
       slot = findFreeSlot() ?? [0, 0];
     }
-    entries.add(
-      _LayoutEntry(
-        item,
-        column: slot[0],
-        row: slot[1],
-        rowSpan: 1,
-      ),
-    );
+    entries.add(_LayoutEntry(item, column: slot[0], row: slot[1], rowSpan: 1));
     occupied[slot[0]][slot[1]] = true;
   }
 

@@ -463,7 +463,7 @@ mixin _ExamPaperUiMixin
             onOptionSelected: _handleOptionSelection,
             optionHitRegionKeyFor: _optionHitRegionKey,
             onOptionHitRegionChanged: _updateOptionHitRegion,
-            lowDetail: _fastScrollActiveSafe,
+            lowDetail: _fastScrollActive,
           ),
         ),
       ),
@@ -936,9 +936,6 @@ mixin _ExamPaperUiMixin
     _updateViewMatrix();
   }
 
-  // Local safe accessors to avoid analyzer complaints when other mixins are reordered.
-  bool get _fastScrollActiveSafe => (this as dynamic)._fastScrollActive == true;
-
   bool _colorPickerOpen = false;
   bool _widthPickerOpen = false;
   final GlobalKey _mainStackKey = GlobalKey();
@@ -959,6 +956,7 @@ mixin _ExamPaperUiMixin
     });
   }
 
+  @override
   void _centerCurrentPage() {
     final viewport = _viewportSize;
     if (viewport == null) return;
@@ -1008,7 +1006,7 @@ mixin _ExamPaperUiMixin
                   onOptionSelected: _handleOptionSelection,
                   optionHitRegionKeyFor: _optionHitRegionKey,
                   onOptionHitRegionChanged: _updateOptionHitRegion,
-                  lowDetail: _fastScrollActiveSafe,
+                  lowDetail: _fastScrollActive,
                 ),
               ),
             ),
@@ -1199,14 +1197,6 @@ mixin _ExamPaperUiMixin
       ],
     );
   }
-
-  static const double _railTop = 80.0;
-  static const double _railButtonHeight =
-      54.0; // icon 22 + padding 10*2 + outer padding 6*2
-  static const double _railButtonWidth = 42.0; // icon 22 + padding 10*2
-  static const double _railSpacing = _railButtonHeight;
-  static const int _railIndexPen = 1;
-  static const int _railIndexPalette = 4;
 
   Widget _buildColorPickerOverlay() {
     final rect = _buttonRect(_paletteButtonKey);

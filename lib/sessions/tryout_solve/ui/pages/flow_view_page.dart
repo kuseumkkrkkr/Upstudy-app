@@ -317,7 +317,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
       elevation: 4,
       margin: const EdgeInsets.all(10),
       color: Colors.white,
-      shadowColor: Colors.black.withOpacity(0.08),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -435,7 +435,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
       elevation: 6,
       margin: const EdgeInsets.all(10),
       color: Colors.white,
-      shadowColor: Colors.black.withOpacity(0.12),
+      shadowColor: Colors.black.withValues(alpha: 0.12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: SizedBox(
         height: height,
@@ -479,7 +479,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
       elevation: 5,
       margin: const EdgeInsets.all(10),
       color: Colors.white,
-      shadowColor: Colors.black.withOpacity(0.08),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -489,6 +489,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (widget.sharedMeta != null) ...[
+                      _buildSharedMetaCard(widget.sharedMeta!),
+                      const SizedBox(height: 12),
+                    ],
                     const Text(
                       '노드 상세 정보',
                       style: TextStyle(
@@ -569,7 +573,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
       elevation: 3,
       margin: EdgeInsets.zero,
       color: Colors.white,
-      shadowColor: Colors.black.withOpacity(0.08),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -1106,9 +1110,9 @@ class _LegendChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.6)),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

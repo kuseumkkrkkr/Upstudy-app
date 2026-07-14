@@ -4,7 +4,6 @@ enum _ToolMode { pen, eraser, pan }
 
 const double _paperWidth = 794;
 const double _paperHeight = _paperWidth * 297 / 210;
-const double _expandedHeight = 2600;
 const double _eraserRadius = 26;
 const double _minPointDistance = 0.6;
 const Color _kGreen = Color(0xFF1B402B);
@@ -108,9 +107,6 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   double _penWidth = 3;
 
   bool _scrollEnabled = true;
-  double _scrollAccumulator = 0.0;
-  int _scrollDirection = 0;
-  DateTime? _lastScrollSwitchAt;
 
   Offset? _eraserPosition;
   int? _eraserPageIndex;
@@ -205,7 +201,7 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
         'strokes': strokes
             .map(
               (stroke) => {
-                'color': stroke.color.value,
+                'color': stroke.color.toARGB32(),
                 'width': stroke.baseWidth,
                 'order': stroke.order,
                 'points': stroke.points
@@ -241,7 +237,8 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
       for (final raw in strokesRaw) {
         if (raw is! Map) continue;
         final colorValue =
-            int.tryParse(raw['color']?.toString() ?? '') ?? Colors.black.value;
+            int.tryParse(raw['color']?.toString() ?? '') ??
+            Colors.black.toARGB32();
         final width = (raw['width'] as num?)?.toDouble() ?? _penWidths.first;
         final order = (raw['order'] as num?)?.toInt() ?? 0;
         final stroke = _Stroke(
