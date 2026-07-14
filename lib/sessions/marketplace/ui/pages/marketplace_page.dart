@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:s11/sessions/friend/friend.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    as study_center;
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 class MarketplacePage extends StatelessWidget {
   const MarketplacePage({super.key});
@@ -99,6 +97,8 @@ class MarketplacePage extends StatelessWidget {
     );
   }
 
+  /// 필요한 변수는 현재 마켓 화면 문맥이다.
+  /// 공용 학생 메뉴에서 마켓을 활성화하고 책가방을 포함한 다른 목적지를 항상 명시적으로 연결한다.
   Widget _buildHeader(BuildContext context) {
     return Ios26TopBar(
       brandColor: _brand,
@@ -108,29 +108,10 @@ class MarketplacePage extends StatelessWidget {
         MaterialPageRoute(builder: (_) => const MainStudentPage()),
         (Route<dynamic> route) => false,
       ),
-      items: <Ios26NavItem>[
-        Ios26NavItem(
-          label: '학습터',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const study_center.SoWidget()),
-          ),
-        ),
-        Ios26NavItem(
-          label: '책가방',
-          onTap: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            }
-          },
-        ),
-        Ios26NavItem(
-          label: '친구/소셜',
-          onTap: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const SoWidget())),
-        ),
-        const Ios26NavItem(label: '마켓플레이스', active: true),
-      ],
+      items: studentTopNavItems(
+        context,
+        active: StudentTopDestination.marketplace,
+      ),
     );
   }
 }

@@ -6,21 +6,18 @@ import 'package:s11/sessions/textbook/ui/pages/book_page.dart' as book_page;
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart'
     as exam_page;
 import 'package:s11/shared/business/repositories/exam_paper_store.dart';
 import 'package:s11/shared/services/storage/local_db.dart';
 import 'package:s11/shared/business/repositories/textbook_store.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    as study_center;
 import 'package:s11/shared/business/repositories/bookmark_store.dart';
 import 'package:s11/shared/business/repositories/problem_bookmark_store.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/data/models/course.dart';
-import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 
 void main() => runApp(const MyApp());
@@ -352,6 +349,8 @@ class _BookWidgetState extends State<BookWidget> {
   // ══════════════════════════════════════════════════════════
   //  HEADER
   // ══════════════════════════════════════════════════════════
+  /// 필요한 변수는 현재 책가방 화면 문맥이다.
+  /// 공용 학생 메뉴에서 책가방을 활성화하고 다른 네 목적지는 명명 라우트로 연결한다.
   Widget _buildHeader(BuildContext context) {
     return Ios26TopBar(
       brandColor: BookWidget.primaryGreen,
@@ -360,27 +359,7 @@ class _BookWidgetState extends State<BookWidget> {
         MaterialPageRoute(builder: (_) => const MainStudentPage()),
         (route) => false,
       ),
-      items: [
-        Ios26NavItem(
-          label: '학습터',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const study_center.SoWidget()),
-          ),
-        ),
-        const Ios26NavItem(label: '책가방', active: true),
-        Ios26NavItem(
-          label: '친구/소셜',
-          onTap: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const SoWidget())),
-        ),
-        Ios26NavItem(
-          label: '마켓플레이스',
-          onTap: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const MarketplacePage())),
-        ),
-      ],
+      items: studentTopNavItems(context, active: StudentTopDestination.bookbag),
     );
   }
 

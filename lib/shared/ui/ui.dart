@@ -18,3 +18,4 @@ export 'graphs/rational_graph.dart';
 export 'modal/modal_shell.dart';
 export 'modal/level_detail_modal.dart';
 export 'student_density/student_density.dart';
+export 'student_density/student_top_navigation.dart';

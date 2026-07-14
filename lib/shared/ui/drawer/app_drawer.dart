@@ -14,6 +14,16 @@ class AppDrawer extends StatelessWidget {
   static const Color _drawerBg = Colors.white;
   static const Color _surface = Color(0xFFF5F7F1);
 
+  /// 필요한 변수는 현재 화면 문맥과 학생 목적지 경로다.
+  /// 드로어를 먼저 닫고 루트 내비게이터의 명명 라우트로 이동해 모바일에서도 모든 상단 메뉴를 제공한다.
+  void _openRoute(BuildContext context, String route) {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    Navigator.of(context).pop();
+    navigator.pushNamed(route);
+  }
+
+  /// 필요한 변수는 인증된 학생 문맥과 공용 명명 라우트다.
+  /// 핵심 학습·소셜 메뉴는 스크롤 영역에 두고 로그아웃은 하단에 고정한다.
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -73,60 +83,109 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
             const Divider(height: 1),
-            const SizedBox(height: 14),
-            _DrawerItem(
-              icon: Icons.smart_toy_outlined,
-              title: 'AI 챗봇',
-              subtitle: '짧게 묻고 바로 답을 받습니다',
-              onTap: () {
-                final navigator = Navigator.of(context, rootNavigator: true);
-                Navigator.of(context).pop();
-                navigator.push(
-                  PageRouteBuilder(
-                    opaque: false,
-                    barrierDismissible: true,
-                    barrierLabel: '닫기',
-                    barrierColor: Colors.transparent,
-                    pageBuilder: (_, __, ___) => const ServerChatPage(),
-                    transitionsBuilder: (_, animation, __, child) {
-                      return FadeTransition(opacity: animation, child: child);
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                children: [
+                  _DrawerItem(
+                    icon: Icons.home_outlined,
+                    title: '학습터',
+                    subtitle: '오늘 학습과 학습 도구',
+                    onTap: () => _openRoute(context, '/study-center'),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.route_outlined,
+                    title: '코스',
+                    subtitle: '수강 코스와 새 코스 탐색',
+                    onTap: () => _openRoute(context, '/courses'),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.menu_book_outlined,
+                    title: '책가방',
+                    subtitle: '교재와 시험지 모아보기',
+                    onTap: () => _openRoute(context, '/bookbag'),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.people_outline_rounded,
+                    title: '친구/소셜',
+                    subtitle: '친구, 그룹, 학원 커뮤니티',
+                    onTap: () => _openRoute(context, '/social'),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.storefront_outlined,
+                    title: '마켓플레이스',
+                    subtitle: '검색과 필터로 상품 찾기',
+                    onTap: () => _openRoute(context, '/marketplace'),
+                  ),
+                  const Divider(height: 22, indent: 24, endIndent: 24),
+                  _DrawerItem(
+                    icon: Icons.smart_toy_outlined,
+                    title: 'AI 챗봇',
+                    subtitle: '짧게 묻고 바로 답을 받습니다',
+                    onTap: () {
+                      final navigator = Navigator.of(
+                        context,
+                        rootNavigator: true,
+                      );
+                      Navigator.of(context).pop();
+                      navigator.push(
+                        PageRouteBuilder(
+                          opaque: false,
+                          barrierDismissible: true,
+                          barrierLabel: '닫기',
+                          barrierColor: Colors.transparent,
+                          pageBuilder: (_, __, ___) => const ServerChatPage(),
+                          transitionsBuilder: (_, animation, __, child) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                        ),
+                      );
                     },
                   ),
-                );
-              },
+                  _DrawerItem(
+                    icon: Icons.person_outline_rounded,
+                    title: '프로필',
+                    subtitle: '회원정보 수정, ID/PW 변경',
+                    onTap: () {
+                      final navigator = Navigator.of(
+                        context,
+                        rootNavigator: true,
+                      );
+                      Navigator.of(context).pop();
+                      navigator.push(
+                        MaterialPageRoute(builder: (_) => const ProfilePage()),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.settings_outlined,
+                    title: '설정',
+                    subtitle: '알림과 라이선스를 정리합니다',
+                    onTap: () {
+                      final navigator = Navigator.of(
+                        context,
+                        rootNavigator: true,
+                      );
+                      Navigator.of(context).pop();
+                      navigator.push(
+                        MaterialPageRoute(builder: (_) => const SettingsPage()),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-            _DrawerItem(
-              icon: Icons.person_outline_rounded,
-              title: '프로필',
-              subtitle: '회원정보 수정, ID/PW 변경',
-              onTap: () {
-                final navigator = Navigator.of(context, rootNavigator: true);
-                Navigator.of(context).pop();
-                navigator.push(
-                  MaterialPageRoute(builder: (_) => const ProfilePage()),
-                );
-              },
-            ),
-            _DrawerItem(
-              icon: Icons.settings_outlined,
-              title: '설정',
-              subtitle: '알림과 라이선스를 정리합니다',
-              onTap: () {
-                final navigator = Navigator.of(context, rootNavigator: true);
-                Navigator.of(context).pop();
-                navigator.push(
-                  MaterialPageRoute(builder: (_) => const SettingsPage()),
-                );
-              },
-            ),
-            const Spacer(),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _surface,
+              child: Material(
+                color: _surface,
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFE2E7DE)),
+                  side: const BorderSide(color: Color(0xFFE2E7DE)),
                 ),
                 child: ListTile(
                   leading: const Icon(

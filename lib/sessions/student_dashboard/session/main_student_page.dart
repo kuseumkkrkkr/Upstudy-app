@@ -6,10 +6,6 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/features/level_test/level_test.dart';
-import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
-import 'package:s11/sessions/friend/friend.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    as study_center;
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/curriculum_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
@@ -30,6 +26,7 @@ import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/modal/level_detail_modal.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/data/models/course.dart';
@@ -443,6 +440,8 @@ class _CourseLoaderState extends State<_CourseLoader> {
 }
 
 class _Header extends StatelessWidget {
+  /// 필요한 변수는 현재 학생 화면 문맥과 활성 학습터 메뉴다.
+  /// 공용 상단 내비게이션을 사용해 다섯 목적지의 이동 계약을 모든 PC 화면과 동일하게 유지한다.
   @override
   Widget build(BuildContext context) {
     return Ios26TopBar(
@@ -450,34 +449,10 @@ class _Header extends StatelessWidget {
       onMenu: () => toggleAppDrawer(context),
       trailing: const _AppBarLevelIndicator(),
       showLevelIndicator: false,
-      items: [
-        Ios26NavItem(
-          label: '학습터',
-          active: true,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const study_center.SoWidget()),
-            );
-          },
-        ),
-        Ios26NavItem(
-          label: '책가방',
-          onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const docx.BookWidget()));
-          },
-        ),
-        Ios26NavItem(
-          label: '친구/소셜',
-          onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const SoWidget()));
-          },
-        ),
-        const Ios26NavItem(label: '마켓플레이스'),
-      ],
+      items: studentTopNavItems(
+        context,
+        active: StudentTopDestination.learning,
+      ),
     );
   }
 }
@@ -1712,12 +1687,6 @@ class _BottomSection extends StatelessWidget {
                   margin: EdgeInsets.only(top: 12 * scale),
                   decoration: _cardDeco(
                     radius: 16 * scale,
-                    image: const DecorationImage(
-                      fit: BoxFit.cover,
-                      image: NetworkImage(
-                        'https://images.unsplash.com/photo-1676302440263-c6b4cea29567?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHw3fHwlRUMlODglOTglRUQlOTUlOTl8ZW58MHx8fHwxNzcwODcxODUyfDA&ixlib=rb-4.1.0&q=80&w=1080',
-                      ),
-                    ),
                   ),
                   child: Container(
                     decoration: BoxDecoration(
@@ -1827,12 +1796,10 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
     _future = _loadNotices();
   }
 
+  /// 필요한 변수는 전역 시스템 공지와 갱신 시각이다.
+  /// 홈에서는 그룹 커뮤니티를 조회하지 않고 전역 공지만 최신순으로 정렬해 API 호출과 노출 범위를 줄인다.
   Future<List<StudyGroupNotice>> _loadNotices() async {
-    final results = await Future.wait([
-      ApiClient.instance.listGlobalSystemNotices(limit: 20),
-      ApiClient.instance.listMySystemGroupNotices(limit: 20),
-    ]);
-    final notices = <StudyGroupNotice>[...results[0], ...results[1]];
+    final notices = await ApiClient.instance.listGlobalSystemNotices(limit: 20);
     notices.sort((a, b) {
       final ad =
           DateTime.tryParse(a.updatedAt) ??

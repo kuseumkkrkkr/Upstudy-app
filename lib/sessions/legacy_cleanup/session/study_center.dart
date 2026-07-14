@@ -9,6 +9,7 @@ import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/components/tag_picker_dialog.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/shared/data/models/concept_textbooks.dart';
 import 'package:s11/sessions/exam_paper/ui/modals/exam_mode.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
@@ -195,6 +196,8 @@ class StudyCenterNavBar extends StatelessWidget {
   /// 작동 원리: 콜백이 있으면 메뉴 대신 뒤로가기 버튼을 표시하고, 없으면 기존 메뉴를 유지한다.
   final VoidCallback? onBack;
 
+  /// 필요한 변수는 화면 문맥·선택적 뒤로가기 콜백·활성 학습터 메뉴다.
+  /// 하위 학습 화면은 뒤로가기를, 최상위 화면은 드로어와 공용 다섯 메뉴를 표시한다.
   @override
   Widget build(BuildContext context) {
     return Ios26TopBar(
@@ -207,26 +210,10 @@ class StudyCenterNavBar extends StatelessWidget {
           (route) => false,
         );
       },
-      items: [
-        const Ios26NavItem(label: '학습터', active: true),
-        Ios26NavItem(
-          label: '책가방',
-          onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const docx.BookWidget()));
-          },
-        ),
-        Ios26NavItem(
-          label: '친구/소셜',
-          onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const friend.SoWidget()));
-          },
-        ),
-        const Ios26NavItem(label: '마켓플레이스'),
-      ],
+      items: studentTopNavItems(
+        context,
+        active: StudentTopDestination.learning,
+      ),
     );
   }
 }

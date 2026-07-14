@@ -7,13 +7,10 @@ import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
-import 'package:s11/sessions/friend/friend.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    as study_center;
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
-import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'shared.dart';
 
 enum CourseEntryTarget { learning, detail }
@@ -143,6 +140,8 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     );
   }
 
+  /// 필요한 변수는 코스 목록 비동기 결과·검색 상태·현재 화면 폭이다.
+  /// 공용 코스 메뉴와 밀도 축소 목록을 조합하고 완료 코스는 선택 시 읽기 전용 상세로 보낸다.
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
@@ -172,31 +171,10 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                       ),
                       (route) => false,
                     ),
-                    items: [
-                      Ios26NavItem(
-                        label: '학습터',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const study_center.SoWidget(),
-                          ),
-                        ),
-                      ),
-                      Ios26NavItem(
-                        label: '책가방',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const docx.BookWidget(),
-                          ),
-                        ),
-                      ),
-                      Ios26NavItem(
-                        label: '친구/소셜',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SoWidget()),
-                        ),
-                      ),
-                      const Ios26NavItem(label: '코스', active: true),
-                    ],
+                    items: studentTopNavItems(
+                      context,
+                      active: StudentTopDestination.courses,
+                    ),
                   ),
                   _CatalogHero(
                     scale: scale,

@@ -16,6 +16,13 @@ import 'package:s11/features/wrong_answer/wrong_answer.dart';
 import 'package:s11/features/group_study/group_study.dart';
 import 'package:s11/features/course_runtime/course_runtime_page.dart';
 import 'package:s11/features/flow_access/flow_access_page.dart';
+import 'package:s11/features/arena/arena_page.dart';
+import 'package:s11/sessions/course/ui/course_catalog_page.dart';
+import 'package:s11/sessions/friend/friend.dart';
+import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
+    as study_center;
+import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
+import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
 
 /// Central route constants and route table for the AIFlow app.
 class AppRoutes {
@@ -33,6 +40,12 @@ class AppRoutes {
   static const String landingAbout = LandingAboutPage.routeName;
   static const String app = '/app';
   static const String studentDashboard = '/student/dashboard';
+  static const String studyCenter = '/study-center';
+  static const String courses = '/courses';
+  static const String bookbag = '/bookbag';
+  static const String social = '/social';
+  static const String marketplace = '/marketplace';
+  static const String arena = '/arena';
 
   // ─── Learning ───
   static const String studentRuntime = StudentRuntimePage.routeName;
@@ -63,6 +76,7 @@ class AppRoutes {
 /// Only routes that do **not** require constructor arguments should be
 /// registered here. Argument-bearing pages are handled by
 /// [onGenerateAppRoute].
+/// 필요한 변수는 인증 여부이며, 작동 원리는 모바일 드로어와 PC 상단 메뉴가 같은 명명 라우트를 공유하는 것이다.
 Map<String, WidgetBuilder> appRoutes(
   BuildContext context, {
   required bool isAuthenticated,
@@ -85,6 +99,12 @@ Map<String, WidgetBuilder> appRoutes(
     AppRoutes.landingAbout: (_) => const LandingAboutPage(),
     AppRoutes.app: authedStudentDashboard(),
     AppRoutes.studentDashboard: authedStudentDashboard(),
+    AppRoutes.studyCenter: (_) => const study_center.SoWidget(),
+    AppRoutes.courses: (_) => const CourseCatalogPage(),
+    AppRoutes.bookbag: (_) => const docx.BookWidget(),
+    AppRoutes.social: (_) => const SoWidget(),
+    AppRoutes.marketplace: (_) => const MarketplacePage(),
+    AppRoutes.arena: (_) => const ArenaPage(),
 
     // Learning
     AppRoutes.studentRuntime: (_) => const StudentRuntimePage(),

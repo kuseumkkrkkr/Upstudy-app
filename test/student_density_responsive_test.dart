@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -134,5 +136,73 @@ void main() {
       'student-shell-1280',
       mobile: false,
     );
+  });
+
+  testWidgets('모바일 드로어에서 코스·책가방·소셜·마켓으로 이동한다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/marketplace': (_) => const Scaffold(body: Text('마켓 도착'))},
+        home: Scaffold(
+          drawer: const AppDrawer(),
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              child: const Text('메뉴 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('메뉴 열기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('학습터'), findsOneWidget);
+    expect(find.text('코스'), findsOneWidget);
+    expect(find.text('책가방'), findsOneWidget);
+    expect(find.text('친구/소셜'), findsOneWidget);
+    expect(find.text('마켓플레이스'), findsOneWidget);
+
+    await tester.tap(find.text('마켓플레이스'));
+    await tester.pumpAndSettle();
+    expect(find.text('마켓 도착'), findsOneWidget);
+  });
+
+  testWidgets('PC 공용 상단 메뉴는 다섯 목적지와 명명 라우트를 공유한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/marketplace': (_) => const Scaffold(body: Text('상단 마켓 도착'))},
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Ios26TopBar(
+              brandColor: StudentDensityTokens.dark,
+              showLevelIndicator: false,
+              items: studentTopNavItems(
+                context,
+                active: StudentTopDestination.learning,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('학습터'), findsOneWidget);
+    expect(find.text('코스'), findsOneWidget);
+    expect(find.text('책가방'), findsOneWidget);
+    expect(find.text('친구/소셜'), findsOneWidget);
+    expect(find.text('마켓플레이스'), findsOneWidget);
+    await tester.tap(find.text('마켓플레이스'));
+    await tester.pumpAndSettle();
+    expect(find.text('상단 마켓 도착'), findsOneWidget);
   });
 }

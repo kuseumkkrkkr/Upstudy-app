@@ -5,15 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/course_service.dart';
-import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
-import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    as study_center;
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'shared.dart';
 
 /// 코스 상세 + 유닛 목록 화면. 수강 신청/진행도를 처리한다.
@@ -95,6 +92,8 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
     );
   }
 
+  /// 필요한 변수는 최신 코스 상세·진행률·완료 여부다.
+  /// 완료 코스의 행동을 비활성화하고 공용 코스 메뉴 아래에 읽기 전용 기록과 구성을 표시한다.
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
@@ -130,31 +129,10 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                             ),
                             (route) => false,
                           ),
-                      items: [
-                        Ios26NavItem(
-                          label: '학습터',
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const study_center.SoWidget(),
-                            ),
-                          ),
-                        ),
-                        Ios26NavItem(
-                          label: '책가방',
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const docx.BookWidget(),
-                            ),
-                          ),
-                        ),
-                        Ios26NavItem(
-                          label: '친구/소셜',
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const SoWidget()),
-                          ),
-                        ),
-                        const Ios26NavItem(label: '코스', active: true),
-                      ],
+                      items: studentTopNavItems(
+                        context,
+                        active: StudentTopDestination.courses,
+                      ),
                     ),
                     StudentDensityPage(
                       padding: EdgeInsets.fromLTRB(

@@ -2028,6 +2028,8 @@ class _SoWidgetState extends State<SoWidget> {
   // ══════════════════════════════════════════════════════════════
   // BUILD
   // ══════════════════════════════════════════════════════════════
+  /// 필요한 변수는 친구·그룹 상태와 현재 학생 화면 문맥이다.
+  /// 소셜 본문 위에 공용 다섯 메뉴를 배치하고 친구/소셜 목적지만 활성화한다.
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -2064,26 +2066,10 @@ class _SoWidgetState extends State<SoWidget> {
                     MaterialPageRoute(builder: (_) => const MainStudentPage()),
                     (route) => false,
                   ),
-                  items: [
-                    Ios26NavItem(
-                      label: '학습터',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const study_center.SoWidget(),
-                        ),
-                      ),
-                    ),
-                    Ios26NavItem(
-                      label: '책가방',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const docx.BookWidget(),
-                        ),
-                      ),
-                    ),
-                    const Ios26NavItem(label: '친구/소셜', active: true),
-                    const Ios26NavItem(label: '마켓플레이스'),
-                  ],
+                  items: studentTopNavItems(
+                    context,
+                    active: StudentTopDestination.social,
+                  ),
                 ),
 
                 // ────────────────────────────────────────────────────
