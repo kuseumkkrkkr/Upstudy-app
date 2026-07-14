@@ -13,6 +13,7 @@ import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
     show StudyCenterNavBar;
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'teacher_course_textbook_reader_page.dart';
 
 const _green = Color(0xFF1B402B);
@@ -375,7 +376,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
     final isDemo = course.isDemo;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: StudentDensityTokens.background,
       body: SafeArea(
         child: _loadingCourse
             ? const Center(child: CircularProgressIndicator())
@@ -390,7 +391,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
                       progressPercent: progressPercent,
                       isDemo: isDemo,
                     ),
-                    Padding(
+                    StudentDensityPage(
                       padding: EdgeInsets.fromLTRB(
                         30 * scale,
                         24 * scale,
@@ -400,20 +401,23 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const StudentDensityEyebrow('COURSE ROUTE'),
+                          SizedBox(height: 10 * scale),
                           Text(
                             '코스 진행 경로',
                             style: GoogleFonts.inter(
-                              fontSize: 28 * scale,
-                              fontWeight: FontWeight.w700,
-                              color: _green,
+                              fontSize: 30 * scale,
+                              fontWeight: FontWeight.w900,
+                              color: StudentDensityTokens.ink,
+                              letterSpacing: -1.2,
                             ),
                           ),
                           SizedBox(height: 10 * scale),
                           Text(
-                            '유닛을 펼쳐 상세 미션을 확인하고 차례대로 수강하세요.',
+                            '현재 단원은 자동으로 펼쳐집니다. 단원을 눌러 미션을 확인하세요.',
                             style: GoogleFonts.inter(
                               fontSize: 14 * scale,
-                              color: Colors.black54,
+                              color: StudentDensityTokens.muted,
                             ),
                           ),
                           SizedBox(height: 18 * scale),
@@ -452,178 +456,213 @@ class _LearningHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 900;
-        final heroHeight = isNarrow ? 420 * scale : 320 * scale;
-        final detailBlock = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              course.title,
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 38 * scale,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 10 * scale),
-            Text(
-              course.description,
-              style: GoogleFonts.inter(
-                color: Colors.white70,
-                fontSize: 16 * scale,
-                height: 1.4,
-              ),
-            ),
-            SizedBox(height: 18 * scale),
-            Wrap(
-              spacing: 8 * scale,
-              runSpacing: 6 * scale,
-              children: course.focusTags
-                  .map(
-                    (tag) => Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10 * scale,
-                        vertical: 4 * scale,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(16 * scale),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Text(
-                        tag,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 11 * scale,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+    final mobile = isStudentDensityMobile(context);
+    final tags = course.focusTags.take(mobile ? 2 : 4).toList(growable: false);
+    return StudentDensityPage(
+      padding: EdgeInsets.fromLTRB(30 * scale, 32 * scale, 30 * scale, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          StudentDensityPageHeader(
+            eyebrow: 'ACTIVE COURSE',
+            title: course.title,
+            description: '현재 학습 위치에서 이어가고 단원별 잠금 조건을 순서대로 확인하세요.',
+          ),
+          SizedBox(height: 22 * scale),
+          StudentDensitySurface(
+            padding: EdgeInsets.all((mobile ? 20 : 28) * scale),
+            child: mobile
+                ? _LearningHeroMobile(
+                    course: course,
+                    tags: tags,
+                    progressPercent: progressPercent,
+                    scale: scale,
+                    isDemo: isDemo,
                   )
-                  .toList(),
-            ),
-          ],
-        );
-        final progressCard = Container(
-          width: isNarrow ? double.infinity : 240 * scale,
-          padding: EdgeInsets.all(18 * scale),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18 * scale),
-            boxShadow: const [_shadow],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '전체 진행률',
-                style: GoogleFonts.inter(
-                  fontSize: 16 * scale,
-                  fontWeight: FontWeight.w600,
-                  color: _green,
-                ),
-              ),
-              SizedBox(height: 12 * scale),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8 * scale),
-                child: LinearProgressIndicator(
-                  value: course.progress,
-                  minHeight: 10 * scale,
-                  backgroundColor: const Color(0xFFE4E4E4),
-                  color: _lightGreen,
-                ),
-              ),
-              SizedBox(height: 8 * scale),
-              Text(
-                '$progressPercent% 완료',
-                style: GoogleFonts.inter(
-                  fontSize: 12 * scale,
-                  color: Colors.black54,
-                ),
-              ),
-              SizedBox(height: 16 * scale),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12 * scale,
-                  vertical: 11 * scale,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F7F2),
-                  borderRadius: BorderRadius.circular(12 * scale),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isDemo ? Icons.visibility_outlined : Icons.bolt_rounded,
-                      size: 18 * scale,
-                      color: _green,
-                    ),
-                    SizedBox(width: 8 * scale),
-                    Expanded(
-                      child: Text(
-                        isDemo ? '체험 모드 · 기록되지 않음' : '현재 학습 위치가 아래에 열려 있어요',
-                        style: GoogleFonts.inter(
-                          fontSize: 12 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: _green,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-
-        return SizedBox(
-          height: heroHeight,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF183D2B), Color(0xFF2A6B4B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                : _LearningHeroDesktop(
+                    course: course,
+                    tags: tags,
+                    progressPercent: progressPercent,
+                    scale: scale,
+                    isDemo: isDemo,
                   ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30 * scale),
-                child: isNarrow
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          detailBlock,
-                          SizedBox(height: 20 * scale),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: 420 * scale),
-                            child: progressCard,
-                          ),
-                        ],
-                      )
-                    : Row(
-                        children: [
-                          Expanded(child: detailBlock),
-                          SizedBox(width: 20 * scale),
-                          progressCard,
-                        ],
-                      ),
-              ),
-            ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
+}
+
+/// 필요 변수: 코스 설명·태그·진행률과 데모 여부.
+/// 작동 원리: 데스크톱에서 코스 문맥과 진행률을 좌우 두 영역으로 압축해 표시합니다.
+class _LearningHeroDesktop extends StatelessWidget {
+  const _LearningHeroDesktop({
+    required this.course,
+    required this.tags,
+    required this.progressPercent,
+    required this.scale,
+    required this.isDemo,
+  });
+
+  final Course course;
+  final List<String> tags;
+  final int progressPercent;
+  final double scale;
+  final bool isDemo;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: _LearningHeroCopy(course: course, tags: tags, scale: scale),
+      ),
+      SizedBox(width: 32 * scale),
+      SizedBox(
+        width: 250 * scale,
+        child: _LearningProgress(
+          course: course,
+          progressPercent: progressPercent,
+          scale: scale,
+          isDemo: isDemo,
+        ),
+      ),
+    ],
+  );
+}
+
+/// 필요 변수: 코스 설명·태그·진행률과 데모 여부.
+/// 작동 원리: 모바일에서는 설명 아래에 진행률을 배치해 가로 압축을 피합니다.
+class _LearningHeroMobile extends StatelessWidget {
+  const _LearningHeroMobile({
+    required this.course,
+    required this.tags,
+    required this.progressPercent,
+    required this.scale,
+    required this.isDemo,
+  });
+
+  final Course course;
+  final List<String> tags;
+  final int progressPercent;
+  final double scale;
+  final bool isDemo;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _LearningHeroCopy(course: course, tags: tags, scale: scale),
+      SizedBox(height: 22 * scale),
+      _LearningProgress(
+        course: course,
+        progressPercent: progressPercent,
+        scale: scale,
+        isDemo: isDemo,
+      ),
+    ],
+  );
+}
+
+/// 필요 변수: 코스 설명과 표시할 태그.
+/// 작동 원리: 반복 지표를 제거하고 학습 범위와 핵심 태그만 보여줍니다.
+class _LearningHeroCopy extends StatelessWidget {
+  const _LearningHeroCopy({
+    required this.course,
+    required this.tags,
+    required this.scale,
+  });
+
+  final Course course;
+  final List<String> tags;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Wrap(
+        spacing: 8 * scale,
+        runSpacing: 8 * scale,
+        children: tags
+            .map(
+              (tag) => Chip(
+                label: Text(tag),
+                side: BorderSide.none,
+                backgroundColor: StudentDensityTokens.background,
+                labelStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            )
+            .toList(growable: false),
+      ),
+      SizedBox(height: 16 * scale),
+      Text(
+        course.description,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.inter(
+          color: StudentDensityTokens.ink,
+          fontSize: 22 * scale,
+          height: 1.28,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ],
+  );
+}
+
+/// 필요 변수: 전체 진행률과 데모 여부.
+/// 작동 원리: 숫자·막대·현재 상태를 하나의 진행 영역으로 묶습니다.
+class _LearningProgress extends StatelessWidget {
+  const _LearningProgress({
+    required this.course,
+    required this.progressPercent,
+    required this.scale,
+    required this.isDemo,
+  });
+
+  final Course course;
+  final int progressPercent;
+  final double scale;
+  final bool isDemo;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const StudentDensityEyebrow('COURSE PROGRESS'),
+      SizedBox(height: 8 * scale),
+      Text(
+        '$progressPercent%',
+        style: GoogleFonts.inter(
+          color: StudentDensityTokens.ink,
+          fontSize: 48 * scale,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -2,
+        ),
+      ),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(999),
+        child: LinearProgressIndicator(
+          value: course.progress,
+          minHeight: 8 * scale,
+          color: StudentDensityTokens.dark,
+          backgroundColor: StudentDensityTokens.line,
+        ),
+      ),
+      SizedBox(height: 12 * scale),
+      Text(
+        isDemo ? '체험 모드 · 기록되지 않음' : '현재 학습 위치가 아래에 열려 있어요.',
+        style: GoogleFonts.inter(
+          color: StudentDensityTokens.muted,
+          fontSize: 12 * scale,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ],
+  );
 }
 
 class _LearningUnitCard extends StatelessWidget {

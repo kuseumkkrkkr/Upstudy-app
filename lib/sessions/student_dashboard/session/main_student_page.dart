@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,6 +29,7 @@ import 'package:s11/shared/business/repositories/attendance_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/modal/level_detail_modal.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/data/models/course.dart';
@@ -40,7 +40,6 @@ import 'package:s11/sessions/course/session/course_learning_page.dart';
 const _green = Color(0xFF1B402B);
 const _lightGreen = Color(0xFF45BF63);
 const _grey = Color(0xFFC9C9C9);
-const _bgGrey = Color(0xFFF7F7F7);
 
 const List<Color> _activityTileColors = [
   Color(0xFFE6E6E6),
@@ -243,7 +242,6 @@ class MainStudentPage extends StatefulWidget {
 
 class _MainStudentPageState extends State<MainStudentPage> {
   final ScrollController _scrollController = ScrollController();
-  final ValueNotifier<double> _scrollOffsetNotifier = ValueNotifier<double>(0);
   Map<DateTime, List<String>> _tasksByDate = {};
   Map<DateTime, List<String>> _teacherTasksByDate = {};
   String? _displayName;
@@ -254,7 +252,6 @@ class _MainStudentPageState extends State<MainStudentPage> {
     super.initState();
     _displayName = widget.username?.trim();
     unawaited(_refreshDisplayName());
-    _scrollController.addListener(_handleScroll);
     unawaited(ActivityStore.load().catchError((_) => ActivitySnapshot.empty()));
     unawaited(
       AttendanceStore.ensureDailyAttendance().catchError(
@@ -289,12 +286,6 @@ class _MainStudentPageState extends State<MainStudentPage> {
     if (candidate != null && candidate != _displayName) {
       setState(() => _displayName = candidate);
     }
-  }
-
-  void _handleScroll() {
-    final offset = _scrollController.offset;
-    if (offset == _scrollOffsetNotifier.value) return;
-    _scrollOffsetNotifier.value = offset;
   }
 
   void _handleTasksChanged(Map<DateTime, List<String>> updated) {
@@ -340,34 +331,24 @@ class _MainStudentPageState extends State<MainStudentPage> {
 
   @override
   void dispose() {
-    _scrollController.removeListener(_handleScroll);
-    _scrollOffsetNotifier.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
-    final media = MediaQuery.of(context);
-    final safeHeight =
-        media.size.height - media.padding.top - media.padding.bottom;
-    final headerHeight = 72 * scale;
-    final heroHeight = math.max(360 * scale, safeHeight - headerHeight);
+    final mobile = isStudentDensityMobile(context);
     final today = _dateOnly(DateTime.now());
     final todayTasks = [
       ...(_teacherTasksByDate[today] ?? const <String>[]),
       ...(_tasksByDate[today] ?? const <String>[]),
     ];
-    final displayNameCandidate = _displayName?.trim();
-    final isLongName = (displayNameCandidate?.length ?? 0) > 12;
-    final heroBaseHeight = 360 * scale + (isLongName ? 28 * scale : 0);
-    final heroExtent = math.max(heroBaseHeight, heroHeight);
+    final heroExtent = mobile ? 210.0 : 270.0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: StudentDensityTokens.background,
         drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
@@ -376,32 +357,11 @@ class _MainStudentPageState extends State<MainStudentPage> {
               Expanded(
                 child: SingleChildScrollView(
                   controller: _scrollController,
-                  physics: _HeroScrollPhysics(
-                    heroExtent: heroExtent,
-                    multiplier: 4.4,
-                  ),
+                  physics: const BouncingScrollPhysics(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _FadingHeroSection(
-                        scrollOffsetListenable: _scrollOffsetNotifier,
-                        fadeDistance: heroHeight,
-                        child: _HeroSection(
-                          username: _displayName,
-                          height: heroExtent,
-                          onScrollDown: () {
-                            final target = math.min(
-                              heroHeight,
-                              _scrollController.position.maxScrollExtent,
-                            );
-                            _scrollController.animateTo(
-                              target,
-                              duration: const Duration(milliseconds: 380),
-                              curve: Curves.easeOut,
-                            );
-                          },
-                        ),
-                      ),
+                      _HeroSection(username: _displayName, height: heroExtent),
                       _CourseLoader(
                         key: _courseLoaderKey,
                         builder: (course) => _LearningSection(
@@ -610,139 +570,34 @@ class _AppBarLevelIndicatorState extends State<_AppBarLevelIndicator> {
   }
 }
 
-class _FadingHeroSection extends StatelessWidget {
-  const _FadingHeroSection({
-    required this.scrollOffsetListenable,
-    required this.fadeDistance,
-    required this.child,
-  });
-
-  final ValueListenable<double> scrollOffsetListenable;
-  final double fadeDistance;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<double>(
-      valueListenable: scrollOffsetListenable,
-      child: RepaintBoundary(child: child),
-      builder: (context, scrollOffset, child) {
-        final opacity = fadeDistance <= 0
-            ? 1.0
-            : (1 - (scrollOffset / fadeDistance)).clamp(0.0, 1.0);
-        return Opacity(opacity: opacity, child: child);
-      },
-    );
-  }
-}
-
 class _HeroSection extends StatelessWidget {
-  const _HeroSection({
-    required this.username,
-    required this.height,
-    required this.onScrollDown,
-  });
+  const _HeroSection({required this.username, required this.height});
   final String? username;
   final double? height;
-  final VoidCallback onScrollDown;
 
+  /// 필요 변수: 로그인 사용자 이름과 화면 폭.
+  /// 작동 원리: 배경 사진과 통계 회전을 제거하고 최신 시안의 짧은 인사 문맥만 먼저 표시합니다.
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
     final name = username?.trim();
     final displayName = (name == null || name.isEmpty) ? '사용자' : name;
-    final isLongName = displayName.length > 12;
-    final titleFontSize = isLongName ? 30.0 : 36.0;
-    final titleHeight = isLongName ? 1.18 : 1.1;
-
+    final now = DateTime.now();
+    const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return SizedBox(
       height: height,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final heroHeight = constraints.maxHeight.isFinite
-              ? constraints.maxHeight
-              : height ?? 360 * scale;
-          final baseHeroHeight = 360 * scale;
-          final desiredContentScale = (heroHeight / baseHeroHeight)
-              .clamp(1.0, 1.35)
-              .toDouble();
-          final bottomReserve = 56 * scale;
-          final contentHeightBudget = math.max(
-            180 * scale,
-            heroHeight - bottomReserve,
-          );
-          final maxContentScale = (contentHeightBudget / (300 * scale))
-              .clamp(0.75, 1.35)
-              .toDouble();
-          final contentScale = math.min(desiredContentScale, maxContentScale);
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.network(
-                'https://images.unsplash.com/photo-1495465798138-718f86d1a4bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8c3R1ZHl8ZW58MHx8fHwxNzcwNDE0OTExfDA&ixlib=rb-4.1.0&q=80&w=1080',
-                fit: BoxFit.cover,
-              ),
-              Container(color: const Color(0xAA000000)),
-              Align(
-                alignment: Alignment.center,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: bottomReserve * 0.35),
-                  child: StatPager(
-                    displayName: displayName,
-                    titleFontSize: titleFontSize,
-                    titleHeight: titleHeight,
-                    isLongName: isLongName,
-                    contentScale: contentScale,
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 16 * scale),
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: onScrollDown,
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: Colors.white70,
-                      size: 36 * scale,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+      child: StudentDensityPage(
+        padding: const EdgeInsets.fromLTRB(28, 36, 28, 20),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: StudentDensityPageHeader(
+            eyebrow:
+                '${weekdays[now.weekday - 1]}DAY · ${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}',
+            title: '$displayName님,\n오늘도 시작해 볼까요?',
+            description: '어제 멈춘 학습과 오늘 일정은 아래 학습 영역에서 이어집니다.',
+          ),
+        ),
       ),
     );
-  }
-}
-
-class _HeroScrollPhysics extends ScrollPhysics {
-  const _HeroScrollPhysics({
-    required this.heroExtent,
-    this.multiplier = 1.6,
-    super.parent,
-  });
-  final double heroExtent;
-  final double multiplier;
-
-  @override
-  _HeroScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return _HeroScrollPhysics(
-      heroExtent: heroExtent,
-      multiplier: multiplier,
-      parent: buildParent(ancestor),
-    );
-  }
-
-  @override
-  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
-    final base = parent?.applyPhysicsToUserOffset(position, offset) ?? offset;
-    if (position.pixels < heroExtent) return base * multiplier;
-    return base;
   }
 }
 
@@ -1201,13 +1056,13 @@ class _LearningSection extends StatelessWidget {
         ? '${activeCourse!.title}\n체험 전용 코스'
         : '${activeCourse!.title}\n진행률 $progressPercent%';
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20 * scale, 20 * scale, 20 * scale, 0),
+    return StudentDensityPage(
+      padding: EdgeInsets.fromLTRB(28 * scale, 0, 28 * scale, 16 * scale),
       child: Container(
         decoration: BoxDecoration(
-          color: _bgGrey,
-          borderRadius: BorderRadius.circular(20 * scale),
-          boxShadow: const [_shadow],
+          color: const Color(0xFFEEEEF1),
+          borderRadius: BorderRadius.circular(32 * scale),
+          border: Border.all(color: StudentDensityTokens.line),
         ),
         padding: EdgeInsets.symmetric(vertical: 20 * scale),
         child: Column(
@@ -1399,34 +1254,73 @@ class _LearnBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
+    final mobile = isStudentDensityMobile(context);
     return Container(
       width: double.infinity,
-      height: 56 * scale,
+      constraints: BoxConstraints(minHeight: (mobile ? 118 : 150) * scale),
       margin: EdgeInsets.symmetric(horizontal: 14 * scale),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20 * scale),
-        boxShadow: const [_shadow],
-        border: Border.all(color: _green, width: 2),
+        color: StudentDensityTokens.dark,
+        borderRadius: BorderRadius.circular(28 * scale),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20 * scale),
           onTap: onTap,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.play_arrow, color: _green, size: 32 * scale),
-              Text(
-                '학습하기',
-                style: _ts(
-                  size: 28 * scale,
-                  weight: FontWeight.w900,
-                  color: _green,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: (mobile ? 22 : 30) * scale,
+              vertical: 22 * scale,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const StudentDensityEyebrow(
+                        'LEARNING START',
+                        color: Color(0xFF9B9BA3),
+                      ),
+                      SizedBox(height: 8 * scale),
+                      Text(
+                        '학습하기',
+                        style: _ts(
+                          size: (mobile ? 27 : 34) * scale,
+                          weight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 7 * scale),
+                      Text(
+                        '이어하기 · 코스보기 · 복습 · 문제풀기 · 시험 · 교재보기',
+                        style: _ts(
+                          size: 11 * scale,
+                          weight: FontWeight.w600,
+                          color: const Color(0xFFAFAFB6),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(width: 16 * scale),
+                Container(
+                  width: 58 * scale,
+                  height: 58 * scale,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18 * scale),
+                  ),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: StudentDensityTokens.dark,
+                    size: 34 * scale,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
