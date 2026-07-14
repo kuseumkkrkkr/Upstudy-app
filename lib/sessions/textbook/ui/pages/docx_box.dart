@@ -61,10 +61,10 @@ class BigSectionItem {
 class BookWidget extends StatefulWidget {
   const BookWidget({super.key});
 
-  static const Color primaryGreen = Color(0xFF1B402B);
-  static const Color brightGreen = Color(0xFF39D276);
-  static const Color darkGreen = Color(0xFF134D23);
-  static const Color mediumGreen = Color(0xFF25B04C);
+  static const Color primaryGreen = Colors.black;
+  static const Color brightGreen = Color(0xFF707075);
+  static const Color darkGreen = Color(0xFF202024);
+  static const Color mediumGreen = Color(0xFF4B4B50);
   static const Color borderColor = Color(0xFFE0E3E7);
   static const Color bgColor = Color(0xFFF8F8F8);
 
@@ -86,6 +86,7 @@ class _BookWidgetState extends State<BookWidget> {
   final ValueNotifier<String> _globalSearchQuery = ValueNotifier<String>('');
   final TextEditingController _bookSearchController = TextEditingController();
   final TextEditingController _globalSearchController = TextEditingController();
+  String? _expandedLibrarySection;
 
   // ── state ─────────────────────────────────────────────────
   BookData? _pinnedBook;
@@ -123,13 +124,6 @@ class _BookWidgetState extends State<BookWidget> {
     _bookSearchQuery.dispose();
     _globalSearchQuery.dispose();
     super.dispose();
-  }
-
-  // ── responsive scale ──────────────────────────────────────
-  double _uiScale(BuildContext context, {double min = 0.6, double max = 1.05}) {
-    final width = MediaQuery.of(context).size.width;
-    final scale = width / 1100;
-    return scale.clamp(min, max);
   }
 
   // ── data loading ──────────────────────────────────────────
@@ -366,10 +360,11 @@ class _BookWidgetState extends State<BookWidget> {
   // ══════════════════════════════════════════════════════════
   //  HERO SECTION
   // ══════════════════════════════════════════════════════════
+  /// 필요한 변수는 교재·시험지·북마크 수와 최근 방문 목록이다.
+  /// 작동 원리는 HTML 책가방의 소개 카드, 3열 통계, 최근 방문 목록을 하나의 반응형 흐름으로 구성하는 것이다.
   Widget _buildHeroSection(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 980;
-    final scale = _uiScale(context, min: 0.7, max: 1.0);
     final vertical = width < 860;
 
     return Padding(
@@ -379,49 +374,106 @@ class _BookWidgetState extends State<BookWidget> {
         16,
         isCompact ? 10 : 12,
       ),
-      child: _buildSectionCard(
-        title: '책가방',
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            isCompact ? 12 : 16 * scale,
-            10,
-            isCompact ? 12 : 16 * scale,
-            14,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '교재와 시험지, 북마크를 빠르게 열고 이어서 학습합니다.',
-                style: TextStyle(
-                  color: const Color(0xFF2F4138),
-                  fontSize: isCompact ? 13 : 14,
-                  height: 1.45,
-                  fontWeight: FontWeight.w600,
-                ),
+      child: Column(
+        children: [
+          _buildSectionCard(
+            title: '',
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isCompact ? 20 : 30,
+                isCompact ? 20 : 28,
+                isCompact ? 20 : 30,
+                20,
               ),
-              SizedBox(height: 12 * scale),
-              _buildSearchBar(isCompact: isCompact),
-              SizedBox(height: 12 * scale),
-              Wrap(
-                spacing: 8 * scale,
-                runSpacing: 8 * scale,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _heroStatChip('교재 ${_libraryBooks.length}'),
+                  const Text(
+                    'MY LEARNING MATERIALS',
+                    style: TextStyle(
+                      color: Colors.black45,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '책가방',
+                          style: TextStyle(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.8,
+                          ),
+                        ),
+                      ),
+                      _buildSearchBar(isCompact: isCompact),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
                   ValueListenableBuilder<List<ExamPaperEntry>>(
                     valueListenable: ExamPaperStore.notifier,
-                    builder: (_, items, __) =>
-                        _heroStatChip('시험지 ${items.length}'),
+                    builder: (_, exams, __) => Row(
+                      children: [
+                        Expanded(
+                          child: _LibraryStat(
+                            value: _libraryBooks.length,
+                            label: '교재',
+                          ),
+                        ),
+                        Expanded(
+                          child: _LibraryStat(
+                            value: exams.length,
+                            label: '시험지',
+                          ),
+                        ),
+                        Expanded(
+                          child: _LibraryStat(
+                            value:
+                                _bookBookmarks.length +
+                                _problemBookmarks.allItems.length,
+                            label: '북마크',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  _heroStatChip('책 북마크 ${_bookBookmarks.length}'),
-                  _heroStatChip('문제 북마크 ${_problemBookmarks.allItems.length}'),
                 ],
               ),
-              SizedBox(height: 14 * scale),
-              _buildBigSection(isCompact: vertical),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 12),
+          _buildSectionCard(
+            title: '',
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'RECENT',
+                    style: TextStyle(
+                      color: Colors.black45,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    '최근 방문',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildBigSection(isCompact: vertical),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -431,38 +483,10 @@ class _BookWidgetState extends State<BookWidget> {
   // ─────────────────────────────────────────────────────────
   Widget _buildBigSection({required bool isCompact}) {
     final pinnedItems = _buildPinnedItems();
-    if (isCompact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _bigColumn(label: '최근 방문', items: _recentItems, isPinnedCol: false),
-          const SizedBox(height: 10),
-          _bigColumn(label: '고정됨', items: pinnedItems, isPinnedCol: true),
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 최근 방문
-        Expanded(
-          child: _bigColumn(
-            label: '최근 방문',
-            items: _recentItems,
-            isPinnedCol: false,
-          ),
-        ),
-        SizedBox(width: isCompact ? 10 : 16),
-        // 고정됨
-        Expanded(
-          child: _bigColumn(
-            label: '고정됨',
-            items: pinnedItems,
-            isPinnedCol: true,
-          ),
-        ),
-      ],
+    return _bigColumn(
+      label: 'RECENT',
+      items: [..._recentItems, ...pinnedItems],
+      isPinnedCol: false,
     );
   }
 
@@ -681,82 +705,104 @@ class _BookWidgetState extends State<BookWidget> {
   // ══════════════════════════════════════════════════════════
   //  BOTTOM SECTION
   // ══════════════════════════════════════════════════════════
+  /// 필요한 변수는 교재·시험지·책 북마크·문제 북마크 개수와 펼침 상태다.
+  /// 작동 원리는 HTML의 MY LIBRARY 단일 카드에서 네 자료 종류를 행으로 보여주고 선택한 종류만 미리보기를 펼치는 것이다.
   Widget _buildBottomSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
       child: Column(
         children: [
-          // ── 교재보기 / 시험지보기 ──────────────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _buildSectionCard(
-                  title: '교재보기',
-                  onArrowTap: () => _showTextbookModal(context),
-                  child: _buildCompactTextbookPreview(),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildSectionCard(
-                  title: '시험지보기',
-                  onArrowTap: () => _showExamModal(context),
-                  child: _buildCompactExamPreview(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // ── 책 북마크 / 문제 북마크 ───────────────────────
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 600;
-              if (isNarrow) {
-                return Column(
-                  children: [
-                    _buildSectionCard(
-                      title: '책 북마크',
-                      onArrowTap: () => _showBookmarkDetailModal(isBook: true),
-                      child: _buildBookmarkPanelContent(isBook: true),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildSectionCard(
-                      title: '문제 북마크',
-                      onArrowTap: () => _showBookmarkDetailModal(isBook: false),
-                      child: _buildBookmarkPanelContent(isBook: false),
-                    ),
-                  ],
-                );
-              }
-              return Row(
+          _buildSectionCard(
+            title: '',
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _buildSectionCard(
-                      title: '책 북마크',
-                      onArrowTap: () => _showBookmarkDetailModal(isBook: true),
-                      child: _buildBookmarkPanelContent(isBook: true),
+                  const Text(
+                    'MY LIBRARY',
+                    style: TextStyle(
+                      color: Colors.black45,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.4,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildSectionCard(
-                      title: '문제 북마크',
-                      onArrowTap: () => _showBookmarkDetailModal(isBook: false),
-                      child: _buildBookmarkPanelContent(isBook: false),
+                  const SizedBox(height: 10),
+                  const Text(
+                    '내 자료',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 14),
+                  _LibraryLinkRow(
+                    icon: Icons.menu_book_outlined,
+                    label: '교재',
+                    detail: '최근 읽은 교재 ${_libraryBooks.take(2).length}개',
+                    count: _libraryBooks.length,
+                    onTap: () => _toggleLibrarySection('books'),
+                  ),
+                  if (_expandedLibrarySection == 'books')
+                    _buildCompactTextbookPreview(),
+                  ValueListenableBuilder<List<ExamPaperEntry>>(
+                    valueListenable: ExamPaperStore.notifier,
+                    builder: (_, exams, __) => _LibraryLinkRow(
+                      icon: Icons.description_outlined,
+                      label: '시험지',
+                      detail: '미응시 시험지 ${exams.take(2).length}개',
+                      count: exams.length,
+                      onTap: () => _toggleLibrarySection('exams'),
                     ),
                   ),
+                  if (_expandedLibrarySection == 'exams')
+                    _buildCompactExamPreview(),
+                  _LibraryLinkRow(
+                    icon: Icons.bookmark_outline_rounded,
+                    label: '책 북마크',
+                    detail: '고정된 위치 ${_pinnedBookBookmarkId == null ? 0 : 1}개',
+                    count: _bookBookmarks.length,
+                    onTap: () => _toggleLibrarySection('bookmarks'),
+                  ),
+                  if (_expandedLibrarySection == 'bookmarks')
+                    _buildBookmarkPanelContent(isBook: true),
+                  _LibraryLinkRow(
+                    icon: Icons.edit_outlined,
+                    label: '문제 북마크',
+                    detail: '저장된 문제 모음',
+                    count: _problemBookmarks.allItems.length,
+                    onTap: () => _toggleLibrarySection('problems'),
+                  ),
+                  if (_expandedLibrarySection == 'problems')
+                    _buildBookmarkPanelContent(isBook: false),
                 ],
-              );
-            },
+              ),
+            ),
           ),
           const SizedBox(height: 10),
-          // ── 진행중인 코스 ─────────────────────────────────
           _buildSectionCard(title: '진행중인 코스', child: _buildCourseSection()),
         ],
       ),
     );
+  }
+
+  /// 필요한 변수는 선택한 자료 구역 ID와 현재 펼침 ID다.
+  /// 작동 원리는 같은 행을 다시 누르면 닫고 다른 행을 누르면 해당 실제 자료 미리보기만 펼치는 것이다.
+  void _toggleLibrarySection(String section) {
+    if (_expandedLibrarySection == section) {
+      switch (section) {
+        case 'books':
+          _showTextbookModal(context);
+        case 'exams':
+          _showExamModal(context);
+        case 'bookmarks':
+          _showBookmarkDetailModal(isBook: true);
+        case 'problems':
+          _showBookmarkDetailModal(isBook: false);
+      }
+      return;
+    }
+    setState(() {
+      _expandedLibrarySection = section;
+    });
   }
 
   // ─────────────────────────────────────────────────────────
@@ -1169,62 +1215,45 @@ class _BookWidgetState extends State<BookWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 13, 8, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (onArrowTap != null)
-                  InkWell(
-                    borderRadius: BorderRadius.circular(7),
-                    onTap: onArrowTap,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 18,
-                        color: Colors.grey,
-                      ),
+          if (title.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 12, 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
                     ),
-                  )
-                else
-                  const SizedBox(width: 8),
-              ],
+                  ),
+                  if (onArrowTap != null)
+                    InkWell(
+                      borderRadius: BorderRadius.circular(7),
+                      onTap: onArrowTap,
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 8),
+                ],
+              ),
             ),
-          ),
           child,
         ],
       ),
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  //  HERO HELPERS
-  // ══════════════════════════════════════════════════════════
-  Widget _heroStatChip(String text) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: BookWidget.primaryGreen.withValues(alpha: 0.2)),
-    ),
-    child: _LatexLine(
-      text,
-      style: const TextStyle(
-        color: BookWidget.primaryGreen,
-        fontWeight: FontWeight.w700,
-        fontSize: 13,
-      ),
-    ),
-  );
-
+  /// 필요한 변수는 모바일 여부와 전체 검색 모달 콜백이다.
+  /// 작동 원리는 HTML 히어로 우측의 검정 캡슐 버튼으로 모든 학습 자료 검색을 여는 것이다.
   Widget _buildSearchBar({bool isCompact = false}) {
     return Material(
       color: Colors.transparent,
@@ -1232,47 +1261,20 @@ class _BookWidgetState extends State<BookWidget> {
         borderRadius: BorderRadius.circular(14),
         onTap: () => _showGlobalSearch(context),
         child: Container(
-          width: isCompact ? 300 : 480,
-          height: 52,
+          width: isCompact ? 88 : 120,
+          height: 46,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: BookWidget.primaryGreen.withValues(alpha: 0.2),
-            ),
-            boxShadow: const [
-              BoxShadow(
-                blurRadius: 10,
-                color: Color(0x15000000),
-                offset: Offset(0, 5),
-              ),
-            ],
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(999),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.search_sharp,
-                size: 22,
-                color: Color(0xFF4F6057),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '교재, 시험지, 자료 전체 검색',
-                  style: TextStyle(
-                    color: const Color(0xFF4F6057),
-                    fontSize: isCompact ? 15 : 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 15,
-                color: Color(0xFF4F6057),
-              ),
-            ],
+          alignment: Alignment.center,
+          child: const Text(
+            '전체 검색',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ),
@@ -2190,6 +2192,105 @@ class _DocGhostCard extends StatelessWidget {
 }
 
 enum _TrackNode { done, current, next }
+
+class _LibraryStat extends StatelessWidget {
+  const _LibraryStat({required this.value, required this.label});
+
+  final int value;
+  final String label;
+
+  /// 필요한 변수는 자료 개수와 종류 이름이다.
+  /// 작동 원리는 HTML 책가방 히어로의 3열 통계 셀로 교재·시험지·북마크 수를 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    decoration: const BoxDecoration(
+      border: Border(left: BorderSide(color: Color(0xFFE0E0E3))),
+    ),
+    child: Column(
+      children: [
+        Text(
+          '$value',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.black45, fontSize: 10),
+        ),
+      ],
+    ),
+  );
+}
+
+class _LibraryLinkRow extends StatelessWidget {
+  const _LibraryLinkRow({
+    required this.icon,
+    required this.label,
+    required this.detail,
+    required this.count,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String detail;
+  final int count;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 자료 아이콘·이름·요약·개수·열기 콜백이다.
+  /// 작동 원리는 HTML MY LIBRARY의 구분선 행을 만들고 선택한 실제 자료 목록으로 연결하는 것이다.
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE0E0E3))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFDCDCE0)),
+            ),
+            child: Icon(icon, color: Colors.black, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  detail,
+                  style: const TextStyle(color: Colors.black45, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '$count',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right_rounded, color: Colors.black45),
+        ],
+      ),
+    ),
+  );
+}
 
 enum _ArchiveType { exam, textbook }
 

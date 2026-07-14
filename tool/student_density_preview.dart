@@ -7,6 +7,7 @@ import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
+import 'package:s11/sessions/textbook/ui/pages/docx_box.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
@@ -191,6 +192,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
       'wrong-answers' => const WrongAnswerListPage(),
       'level-test' => const LevelTestHomePage(),
       'solve' => BuildpageWidget(config: _previewSolveConfig()),
+      'textbooks' => const BookWidget(),
       _ => const MainStudentPage(username: '김학생'),
     };
     final action = Uri.base.queryParameters['action'] ?? '';
