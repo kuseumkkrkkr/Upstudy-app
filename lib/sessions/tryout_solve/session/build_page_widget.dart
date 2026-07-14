@@ -21,10 +21,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   static const double _scrollbarThickness = 12;
   static const double _eraserRadius = 26;
   static const double _minPointDistance = 0.6;
-  static const Color _kGreen = Color(0xFF1B402B);
+  static const Color _kGreen = Colors.black;
   static const Color _surfaceColor = Colors.white;
   static const Color _lineColor = Color(0xFFE1E6DF);
-  static const double _problemCardMinWidth = 920;
   static const double _problemCardMaxWidth = 1380;
   static const double _problemCardMinHeight = 108;
   static const double _noteLineStartY = 28;
@@ -418,12 +417,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _solveTimer = Timer(delay, _scheduleSolveTimerTick);
   }
 
-  String _solveTimerLabel() {
-    final recommended = _recommendedMinutesForCurrentQuest();
-    final recommendedText = recommended == null ? '--' : '$recommended분';
-    return '권장 시간 $recommendedText / 현재 풀이 시간 ${_formatSolveElapsed(_timerDisplaySeconds)}';
-  }
-
+  /// 필요한 변수는 누적 풀이 초다.
+  /// 작동 원리는 5분 전에는 분·초, 이후에는 분 단위로 집중 헤더의 시간을 간결하게 표시하는 것이다.
   String _formatSolveElapsed(int seconds) {
     final clamped = seconds.clamp(0, 40 * 60).toInt();
     if (clamped < 5 * 60) {
@@ -433,47 +428,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       return '$minutes분 ${remain.toString().padLeft(2, '0')}초';
     }
     return '${clamped ~/ 60}분';
-  }
-
-  int? _recommendedMinutesForCurrentQuest() {
-    final quest = _currentQuest;
-    if (quest == null) return null;
-    for (final sectionName in const ['info', 'data', 'header']) {
-      final section = quest[sectionName];
-      if (section is! Map) continue;
-      final minutes = _readPositiveInt(section, const [
-        'recommended_minutes',
-        'recommend_minutes',
-        'recommended_time_minutes',
-        'recommended_solve_minutes',
-        'estimated_minutes',
-        'expected_minutes',
-        'solve_minutes',
-        'time_limit_minutes',
-        'duration_minutes',
-      ]);
-      if (minutes != null) return minutes;
-      final seconds = _readPositiveInt(section, const [
-        'recommended_seconds',
-        'recommended_time_seconds',
-        'recommended_solve_seconds',
-        'time_limit_seconds',
-        'solve_seconds',
-      ]);
-      if (seconds != null) return (seconds / 60).ceil();
-    }
-    return null;
-  }
-
-  int? _readPositiveInt(Map<dynamic, dynamic> source, List<String> keys) {
-    for (final key in keys) {
-      final raw = source[key];
-      final value = raw is num
-          ? raw.toInt()
-          : int.tryParse(raw?.toString() ?? '');
-      if (value != null && value > 0) return value;
-    }
-    return null;
   }
 
   void _saveCurrentProblem() {
@@ -663,14 +617,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       _undoStack.add(_RemoveAction(removed));
     }
     _bumpPaint();
-  }
-
-  double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
-    final width = MediaQuery.of(context).size.width;
-    final scale = width / 1100;
-    if (scale < min) return min;
-    if (scale > max) return max;
-    return scale;
   }
 
   void _handlePointerDown(PointerDownEvent event, double scale) {
@@ -1306,78 +1252,82 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     );
   }
 
+  /// 필요한 변수는 현재 문제 번호·풀이 시간·자동 저장 상태다.
+  /// 작동 원리는 HTML 집중 풀이 헤더처럼 나가기, 세션 제목, 상태 지표를 한 행에 놓고 아래에 진행 막대를 표시하는 것이다.
   Widget _buildHeader() {
-    final scale = _uiScale(context);
+    final compact = MediaQuery.sizeOf(context).width < 720;
+    final progress = (_currentProblemIndex + 1) / math.max(1, _problemCount);
     return Container(
       color: Colors.white,
-      height: 72 * scale,
-      child: Stack(
-        alignment: Alignment.center,
+      child: Column(
         children: [
-          Positioned.fill(
-            child: Center(
-              child: IgnorePointer(
-                child: Text(
-                  'AIFlow',
-                  style: TextStyle(
-                    fontSize: 36 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: _kGreen,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 16 * scale,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: IconButton(
-                iconSize: 28 * scale,
-                icon: const Icon(Icons.arrow_back, color: _kGreen),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 8 * scale,
-            top: 0,
-            bottom: 0,
-            child: Center(
+          SizedBox(
+            height: compact ? 74 : 84,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 24),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildAppBarTimer(scale),
-                  SizedBox(width: 12 * scale),
-                  IconButton(
-                    iconSize: 28 * scale,
-                    icon: const Icon(Icons.info_outline, color: _kGreen),
+                  IconButton.outlined(
+                    tooltip: '문제 풀이 나가기',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.chevron_left_rounded),
+                  ),
+                  SizedBox(width: compact ? 8 : 16),
+                  const Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'PROBLEM SESSION',
+                          style: TextStyle(
+                            color: Colors.black45,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          '오늘의 문제',
+                          style: TextStyle(
+                            fontSize: 20,
+                            height: 1,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _SolveHeaderStatus(
+                    label: '진행 시간',
+                    value: _formatSolveElapsed(_timerDisplaySeconds),
+                    compact: compact,
+                  ),
+                  SizedBox(width: compact ? 8 : 20),
+                  _SolveHeaderStatus(
+                    label: compact ? '저장' : '자동 저장',
+                    value: 'SAVED',
+                    compact: compact,
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.outlined(
+                    tooltip: '문제 풀이 안내',
                     onPressed: _showSolveInfo,
+                    icon: const Icon(Icons.info_outline_rounded),
                   ),
                 ],
               ),
             ),
           ),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 4,
+            color: Colors.black,
+            backgroundColor: const Color(0xFFE5E5E7),
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAppBarTimer(double scale) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: 360 * scale),
-      child: Text(
-        _solveTimerLabel(),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.right,
-        style: TextStyle(
-          color: _kGreen,
-          fontSize: 13 * scale,
-          fontWeight: FontWeight.w700,
-          height: 1.1,
-        ),
       ),
     );
   }
@@ -1444,29 +1394,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                   top: topOffset,
                   width: displayWidth,
                   height: displayHeight,
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(color: Colors.transparent),
-                    child: ClipRect(
-                      child: Transform.scale(
-                        alignment: Alignment.topLeft,
-                        scale: scale,
-                        child: RepaintBoundary(
-                          key: _problemBoundaryKey,
-                          child: SizedBox(
-                            width: _baseWidth,
-                            height: _logicalHeight,
-                            child: _buildProblemContent(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: leftOffset,
-                  top: topOffset,
-                  width: displayWidth,
-                  height: displayHeight,
                   child: RepaintBoundary(
                     child: Listener(
                       behavior: HitTestBehavior.opaque,
@@ -1499,6 +1426,15 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                     ),
                   ),
                 ),
+                Positioned(
+                  left: 20,
+                  right: 20 + rightPadding,
+                  top: 16,
+                  child: RepaintBoundary(
+                    key: _problemBoundaryKey,
+                    child: _buildProblemContent(),
+                  ),
+                ),
               ],
             ),
           );
@@ -1526,60 +1462,120 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     );
   }
 
+  /// 필요한 변수는 현재 문제 지문·선택지·번호·태그다.
+  /// 작동 원리는 필기 논리 좌표와 분리된 실제 viewport 폭으로 HTML 문제 카드를 렌더해 이중 축소와 클릭 차단을 막는 것이다.
   Widget _buildProblemContent() {
     final titleBlocks = _currentQuestTitleBlocks();
     final fallbackBlocks = parseContentBlocks(_problemText);
     final displayBlocks = titleBlocks.isEmpty ? fallbackBlocks : titleBlocks;
     final optionBlocks = _currentQuestOptionBlocks();
-    return Stack(
-      children: [
-        Positioned(
-          left: 150,
-          right: 150,
-          top: 42,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minWidth: _problemCardMinWidth,
-                maxWidth: _problemCardMaxWidth,
-                minHeight: _problemCardMinHeight,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: _problemCardMaxWidth,
+          minHeight: _problemCardMinHeight,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: _lineColor),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: _lineColor),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _SolveMetaPill(
+                      '${(_currentProblemIndex + 1).toString().padLeft(2, '0')} / ${_problemCount.toString().padLeft(2, '0')}',
+                      dark: true,
+                    ),
+                    for (final tag in _hashTags.take(2))
+                      _SolveMetaPill('#${tag.replaceFirst('#', '')}'),
+                    _SolveMetaPill('난이도 $_maxDifficultyTier'),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        (_currentProblemIndex + 1).toString().padLeft(2, '0'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'MULTIPLE CHOICE',
+                            style: TextStyle(
+                              color: Colors.black45,
+                              fontSize: 8,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _hashTags.isEmpty
+                                ? '오늘의 문제'
+                                : _hashTags.first.replaceFirst('#', ''),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: _showSolveInfo,
+                      child: const Text('힌트 2'),
                     ),
                   ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(34, 24, 34, 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildProblemPrompt(displayBlocks: displayBlocks),
-                      if (optionBlocks.isNotEmpty) ...[
-                        const SizedBox(height: 18),
-                        _buildOptionPreview(
-                          optionBlocks,
-                          selectedIndex: _currentSelectedChoice(),
-                        ),
-                      ],
-                    ],
+                const SizedBox(height: 18),
+                _buildProblemPrompt(displayBlocks: displayBlocks),
+                if (optionBlocks.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  _buildOptionPreview(
+                    optionBlocks,
+                    selectedIndex: _currentSelectedChoice(),
                   ),
-                ),
-              ),
+                ],
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -1619,59 +1615,78 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     );
   }
 
+  /// 필요한 변수는 선택지 블록과 현재 선택 번호다.
+  /// 작동 원리는 HTML 시안처럼 선택지를 2열 카드로 배치하고 탭한 답을 검정 테두리로 강조하는 것이다.
   Widget _buildOptionPreview(
     List<List<ContentBlock>> options, {
     required int? selectedIndex,
   }) {
-    const activeColor = Color(0xFF1B402B);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(options.length, (index) {
-        final isSelected = selectedIndex == index;
-        final textColor = isSelected ? activeColor : const Color(0xFF242924);
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () => _toggleChoice(index),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildOptionCircle(_optionLabel(index), isSelected),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ContentBlocksView(
-                        blocks: options[index],
-                        textStyle: TextStyle(
-                          fontSize: 16,
-                          height: 1.4,
-                          color: textColor,
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                        ),
-                        latexStyle: TextStyle(
-                          fontSize: 16,
-                          height: 1.4,
-                          color: textColor,
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                        ),
-                        inline: true,
-                      ),
+    const activeColor = Colors.black;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - 10) / 2;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: List.generate(options.length, (index) {
+            final isSelected = selectedIndex == index;
+            final textColor = isSelected
+                ? activeColor
+                : const Color(0xFF242424);
+            return SizedBox(
+              width: itemWidth,
+              child: Material(
+                color: isSelected ? const Color(0xFFF3F3F4) : Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: isSelected ? Colors.black : const Color(0xFFDADADD),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => _toggleChoice(index),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
                     ),
-                  ],
+                    child: Row(
+                      children: [
+                        _buildOptionCircle(_optionLabel(index), isSelected),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ContentBlocksView(
+                            blocks: options[index],
+                            textStyle: TextStyle(
+                              fontSize: 15,
+                              height: 1.35,
+                              color: textColor,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                            ),
+                            latexStyle: TextStyle(
+                              fontSize: 15,
+                              height: 1.35,
+                              color: textColor,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                            ),
+                            inline: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          }),
         );
-      }),
+      },
     );
   }
 
@@ -1684,7 +1699,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   Widget _buildToolbar() {
-    final activeColor = const Color(0xFF1B402B);
+    final activeColor = Colors.black;
     final inactiveColor = const Color(0xFF6B6B6B);
     final optionBlocks = _currentQuestOptionBlocks();
     final hasOptions = optionBlocks.isNotEmpty;
@@ -1695,30 +1710,21 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       builder: (context, constraints) {
         final maxWidth = math.min(constraints.maxWidth - 48, 1260.0);
         return Container(
-          color: _surfaceColor,
-          padding: const EdgeInsets.fromLTRB(24, 10, 24, 16),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+          decoration: const BoxDecoration(
+            color: _surfaceColor,
+            border: Border(top: BorderSide(color: Color(0xFFD9D9DC))),
+          ),
           child: Center(
             child: Container(
               width: math.max(0.0, maxWidth),
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.96),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _lineColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.07),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Wrap(
-                    spacing: 14,
+                    spacing: 4,
                     runSpacing: 4,
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -2413,6 +2419,70 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     image.dispose();
     return bytes?.buffer.asUint8List() ?? Uint8List(0);
   }
+}
+
+class _SolveMetaPill extends StatelessWidget {
+  const _SolveMetaPill(this.label, {this.dark = false});
+
+  final String label;
+  final bool dark;
+
+  /// 필요한 변수는 메타 문구와 강조 여부다.
+  /// 작동 원리는 문제 번호·태그·난이도를 HTML 문제 카드의 작은 캡슐로 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+    decoration: BoxDecoration(
+      color: dark ? Colors.black : const Color(0xFFF2F2F4),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        color: dark ? Colors.white : Colors.black54,
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
+}
+
+class _SolveHeaderStatus extends StatelessWidget {
+  const _SolveHeaderStatus({
+    required this.label,
+    required this.value,
+    required this.compact,
+  });
+
+  final String label;
+  final String value;
+  final bool compact;
+
+  /// 필요한 변수는 상태 이름·값·모바일 여부다.
+  /// 작동 원리는 풀이 시간과 저장 상태를 HTML 헤더의 작은 2단 지표로 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          color: Colors.black45,
+          fontSize: compact ? 7 : 8,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 3),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: compact ? 12 : 14,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ],
+  );
 }
 
 class _NotebookPaperPainter extends CustomPainter {

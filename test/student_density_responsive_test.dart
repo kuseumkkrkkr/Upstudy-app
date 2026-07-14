@@ -4,6 +4,7 @@ import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 
@@ -212,5 +213,46 @@ void main() {
     expect(find.text('처음 만나는\n나의 실력.'), findsOneWidget);
     expect(find.text('50'), findsWidgets);
     expect(find.text('레벨 테스트 시작 →'), findsOneWidget);
+  });
+
+  testWidgets('500px 문제 풀이는 HTML 집중 헤더와 2열 선택지를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BuildpageWidget(
+          config: ProblemSolveConfig(
+            hashTags: ['일차함수'],
+            ratingEnabled: false,
+            quests: [
+              {
+                'header': {'quest_id': 'responsive-solve'},
+                'data': {
+                  'quest_title': '두 점을 지나는 일차함수의 식을 구하세요.',
+                  'quest_options': [
+                    'y = 2x + 1',
+                    'y = x + 2',
+                    'y = 3x',
+                    'y = 4x - 1',
+                  ],
+                },
+              },
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('PROBLEM SESSION'), findsOneWidget);
+    expect(find.text('오늘의 문제'), findsOneWidget);
+    expect(find.text('SAVED'), findsOneWidget);
+    expect(find.text('y = 2x + 1'), findsOneWidget);
+    expect(find.text('y = 4x - 1'), findsOneWidget);
+    expect(find.byTooltip('펜'), findsOneWidget);
+    expect(find.byTooltip('제출'), findsOneWidget);
   });
 }

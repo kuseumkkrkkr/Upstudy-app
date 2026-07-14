@@ -9,6 +9,7 @@ import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
+import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
@@ -125,6 +126,28 @@ Course _previewDetailCourse(Course source) => Course(
   units: source.units,
 );
 
+/// 필요한 변수는 HTML 문제 풀이 화면의 지문·선택지·태그다.
+/// 작동 원리는 서버 요청 없이 실제 필기 캔버스와 답안 도구가 즉시 렌더되도록 한 문제 설정을 만든다.
+ProblemSolveConfig _previewSolveConfig() => const ProblemSolveConfig(
+  questionCount: 1,
+  hashTags: ['일차함수'],
+  gradeImmediately: true,
+  ratingEnabled: false,
+  quests: [
+    {
+      'header': {'quest_id': 'preview-linear-04'},
+      'info': {
+        'hash_tag': ['일차함수'],
+        'difficulty_tier': 3,
+      },
+      'data': {
+        'quest_title': '두 점 (1, 3), (3, 7)을 지나는 일차함수의 식을 구하세요.',
+        'quest_options': ['y = 2x + 1', 'y = x + 2', 'y = 3x', 'y = 4x - 1'],
+      },
+    },
+  ],
+);
+
 /// 필요한 변수는 브라우저 viewport와 선택적인 width/height 쿼리다.
 /// 작동 원리: 실제 학생 홈을 그대로 실행하고 논리 화면 크기만 고정해 HTML 시안과 같은 좌표계로 캡처한다.
 void main() {
@@ -166,6 +189,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
       'course-learning' => CourseLearningPage(course: courses.first),
       'wrong-answers' => const WrongAnswerListPage(),
       'level-test' => const LevelTestHomePage(),
+      'solve' => BuildpageWidget(config: _previewSolveConfig()),
       _ => const MainStudentPage(username: '김학생'),
     };
     final action = Uri.base.queryParameters['action'] ?? '';
