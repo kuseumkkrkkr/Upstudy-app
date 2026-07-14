@@ -4,8 +4,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:s11/shared/business/repositories/bookmark_store.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/sessions/course/session/course_textbook_annotation_canvas.dart';
 
 class TeacherCourseTextbookReaderPage extends StatefulWidget {
   const TeacherCourseTextbookReaderPage({
@@ -55,6 +57,8 @@ class _TeacherCourseTextbookReaderPageState
   bool _showTableOfContents = true;
   bool _runtimeCompleted = false;
   bool _allowPop = false;
+  bool _bookmarkBusy = false;
+  List<BookmarkItem> _bookmarks = const <BookmarkItem>[];
 
   int get _pageFrom => max(1, widget.pageFrom);
 
@@ -100,6 +104,7 @@ class _TeacherCourseTextbookReaderPageState
     super.dispose();
   }
 
+  // 필요 변수: 코스 런타임과 교재 응답. 작동 원리: 런타임을 먼저 연 뒤 페이지·북마크를 복원하고 heartbeat를 시작한다.
   Future<void> _load() async {
     try {
       final runtime = await ApiClient.instance.startCourseTextbookRuntime(
@@ -131,6 +136,7 @@ class _TeacherCourseTextbookReaderPageState
         _currentPage = _pages.first.number;
         _loading = false;
       });
+      unawaited(_loadBookmarks());
       _heartbeatTimer = Timer.periodic(
         const Duration(seconds: 10),
         (_) => _sendHeartbeat(),
@@ -142,6 +148,59 @@ class _TeacherCourseTextbookReaderPageState
         _loading = false;
       });
     }
+  }
+
+  // 필요 변수: 공용 BookmarkStore. 작동 원리: 현재 사용자 로컬 북마크를 한 번 읽어 페이지별 활성 상태를 계산한다.
+  Future<void> _loadBookmarks() async {
+    final bookmarks = await BookmarkStore.load();
+    if (!mounted) return;
+    setState(() => _bookmarks = bookmarks);
+  }
+
+  // 필요 변수: textbookId와 현재 페이지. 작동 원리: 동일 교재·페이지에 저장된 항목 존재 여부를 반환한다.
+  bool get _isCurrentPageBookmarked => _bookmarks.any(
+    (item) =>
+        item.bookId == widget.textbookId && item.entryIndex == _currentPage,
+  );
+
+  // 필요 변수: 현재 페이지, 교재 제목, 북마크 저장 상태. 작동 원리: 같은 버튼으로 현재 페이지 북마크를 추가하거나 제거한다.
+  Future<void> _toggleBookmark() async {
+    if (_bookmarkBusy) return;
+    _bookmarkBusy = true;
+    try {
+      final current = _bookmarks.where(
+        (item) =>
+            item.bookId == widget.textbookId && item.entryIndex == _currentPage,
+      );
+      final List<BookmarkItem> updated;
+      if (current.isNotEmpty) {
+        updated = await BookmarkStore.remove(current.first.id);
+      } else {
+        final now = DateTime.now().microsecondsSinceEpoch;
+        updated = await BookmarkStore.add(
+          BookmarkItem(
+            id: now.toString(),
+            bookId: widget.textbookId,
+            bookTitle: _book?.title ?? '코스 교재',
+            entryIndex: _currentPage,
+            entryTitle: _pages
+                .firstWhere((page) => page.number == _currentPage)
+                .title,
+            createdAt: now,
+          ),
+        );
+      }
+      if (!mounted) return;
+      setState(() => _bookmarks = updated);
+    } finally {
+      _bookmarkBusy = false;
+    }
+  }
+
+  // 필요 변수: 코스·모듈·교재·페이지 식별자. 작동 원리: 다른 학습 범위와 충돌하지 않는 페이지별 로컬 필기 키를 만든다.
+  String _annotationStorageKey(int pageNumber) {
+    return 'course_textbook_annotation_v1:${widget.courseId}:'
+        '${widget.moduleId}:${widget.textbookId}:$pageNumber';
   }
 
   Map<String, dynamic> _extractBookPayload(Map<String, dynamic> payload) {
@@ -333,6 +392,7 @@ class _TeacherCourseTextbookReaderPageState
     );
   }
 
+  // 필요 변수: 교재 제목, 현재 페이지, 목차 표시 여부. 작동 원리: 진행 상태와 북마크·보기 모드를 한 행에서 제어한다.
   Widget _buildTopBar(BookData? book, {required bool showTocToggle}) {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
@@ -373,6 +433,16 @@ class _TeacherCourseTextbookReaderPageState
           ),
           _ProgressBadge(label: '이수율', value: _completion),
           const SizedBox(width: 8),
+          IconButton(
+            key: const ValueKey('course-textbook-bookmark'),
+            tooltip: _isCurrentPageBookmarked ? '북마크 해제' : '북마크 추가',
+            onPressed: _bookmarkBusy ? null : _toggleBookmark,
+            icon: Icon(
+              _isCurrentPageBookmarked
+                  ? Icons.bookmark_rounded
+                  : Icons.bookmark_border_rounded,
+            ),
+          ),
           if (showTocToggle) ...[
             IconButton(
               tooltip: _showTableOfContents ? '목차 닫기' : '목차 열기',
@@ -416,6 +486,7 @@ class _TeacherCourseTextbookReaderPageState
     );
   }
 
+  // 필요 변수: 페이지 목록과 PageController. 작동 원리: 좌우 페이지 이동 시 위치를 heartbeat에 반영하고 페이지별 필기 캔버스를 유지한다.
   Widget _buildPageReader() {
     return PageView.builder(
       controller: _pageController,
@@ -428,13 +499,20 @@ class _TeacherCourseTextbookReaderPageState
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
-            child: _PaperPage(page: _pages[index]),
+            child: CourseTextbookAnnotationCanvas(
+              key: ValueKey(
+                'course-textbook-annotation-${_pages[index].number}',
+              ),
+              storageKey: _annotationStorageKey(_pages[index].number),
+              child: _PaperPage(page: _pages[index]),
+            ),
           ),
         );
       },
     );
   }
 
+  // 필요 변수: 페이지 목록. 작동 원리: 세로 읽기에서도 각 종이에 독립 필기 저장 키를 부여한다.
   Widget _buildScrollReader() {
     return ListView.separated(
       padding: const EdgeInsets.only(bottom: 24),
@@ -445,9 +523,13 @@ class _TeacherCourseTextbookReaderPageState
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
-            child: _PaperPage(
-              page: page,
-              onVisible: () => _currentPage = page.number,
+            child: CourseTextbookAnnotationCanvas(
+              key: ValueKey('course-textbook-annotation-${page.number}'),
+              storageKey: _annotationStorageKey(page.number),
+              child: _PaperPage(
+                page: page,
+                onVisible: () => _currentPage = page.number,
+              ),
             ),
           ),
         );
