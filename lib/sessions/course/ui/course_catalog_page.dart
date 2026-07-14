@@ -16,6 +16,15 @@ import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'shared.dart';
 
+enum CourseEntryTarget { learning, detail }
+
+/// 필요한 변수는 선택 코스의 등록·완료 상태다.
+/// 작동 원리: 진행 중 등록 코스만 학습으로 직행하고 완료·미등록 코스는 읽기 가능한 상세로 보낸다.
+CourseEntryTarget courseEntryTarget(Course course) =>
+    course.isEnrolled && !course.isCompleted
+    ? CourseEntryTarget.learning
+    : CourseEntryTarget.detail;
+
 typedef CourseFeedLoader =
     Future<List<Course>> Function({required String keyword, double? recommend});
 
@@ -115,7 +124,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
   /// 필요 변수: 선택한 [course]의 수강 여부를 사용한다.
   /// 작동 원리: 수강 중이면 현재 진도 화면으로 직행하고, 미수강이면 상세/신청 화면을 연다.
   void _openCourse(Course course) {
-    final page = course.isEnrolled && !course.isCompleted
+    final page = courseEntryTarget(course) == CourseEntryTarget.learning
         ? CourseLearningPage(course: course)
         : CourseDetailPage(course: course);
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));

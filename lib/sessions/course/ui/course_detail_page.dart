@@ -13,6 +13,7 @@ import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'shared.dart';
 
 /// 코스 상세 + 유닛 목록 화면. 수강 신청/진행도를 처리한다.
@@ -111,7 +112,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
     final canStartCourse = !course.isDemo && !course.isCompleted;
 
     return Scaffold(
-      backgroundColor: kCourseBgGrey,
+      backgroundColor: StudentDensityTokens.background,
       body: SafeArea(
         child: _loadingCourse
             ? const Center(child: CircularProgressIndicator())
@@ -155,20 +156,28 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                         const Ios26NavItem(label: '코스', active: true),
                       ],
                     ),
-                    _DetailHero(
-                      course: course,
-                      descriptionText: descriptionText,
-                      scale: scale,
-                      progressPercent: progressPercent,
-                      primaryActionLabel: primaryActionLabel,
-                      onPrimary: canStartCourse ? _enrollAndGo : null,
-                      enrolling: _enrolling,
-                    ),
-                    Padding(
+                    StudentDensityPage(
                       padding: EdgeInsets.fromLTRB(
-                        30 * scale,
-                        24 * scale,
-                        30 * scale,
+                        20 * scale,
+                        22 * scale,
+                        20 * scale,
+                        0,
+                      ),
+                      child: _DetailHero(
+                        course: course,
+                        descriptionText: descriptionText,
+                        scale: scale,
+                        progressPercent: progressPercent,
+                        primaryActionLabel: primaryActionLabel,
+                        onPrimary: canStartCourse ? _enrollAndGo : null,
+                        enrolling: _enrolling,
+                      ),
+                    ),
+                    StudentDensityPage(
+                      padding: EdgeInsets.fromLTRB(
+                        20 * scale,
+                        16 * scale,
+                        20 * scale,
                         40 * scale,
                       ),
                       child: Column(

@@ -25,12 +25,6 @@ class AppShell extends StatelessWidget {
         route: '/student/runtime',
       ),
       _NavItem(
-        icon: Icons.emoji_events,
-        label: '기출 문제',
-        color: Colors.orange,
-        route: '/challenges',
-      ),
-      _NavItem(
         icon: Icons.speed,
         label: '레벨 테스트',
         color: Colors.green,

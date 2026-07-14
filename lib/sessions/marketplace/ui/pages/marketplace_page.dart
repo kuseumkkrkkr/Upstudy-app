@@ -89,37 +89,7 @@ class MarketplacePage extends StatelessWidget {
                     compact ? 16 : 28,
                     28,
                   ),
-                  child: Column(
-                    children: <Widget>[
-                      _HeroPanel(compact: compact),
-                      const SizedBox(height: 18),
-                      compact
-                          ? Column(
-                              children: <Widget>[
-                                _OwnedStatusCard(plan: _plans.last),
-                                const SizedBox(height: 18),
-                                _PlanGrid(plans: _plans, compact: compact),
-                              ],
-                            )
-                          : Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Expanded(
-                                  flex: 4,
-                                  child: _PlanGrid(
-                                    plans: _plans,
-                                    compact: compact,
-                                  ),
-                                ),
-                                const SizedBox(width: 18),
-                                Expanded(
-                                  flex: 2,
-                                  child: _OwnedStatusCard(plan: _plans.last),
-                                ),
-                              ],
-                            ),
-                    ],
-                  ),
+                  child: _MarketplaceCatalog(plans: _plans, compact: compact),
                 ),
               ),
             ],
@@ -160,6 +130,140 @@ class MarketplacePage extends StatelessWidget {
           ).push(MaterialPageRoute(builder: (_) => const SoWidget())),
         ),
         const Ios26NavItem(label: '마켓플레이스', active: true),
+      ],
+    );
+  }
+}
+
+class _MarketplaceCatalog extends StatefulWidget {
+  const _MarketplaceCatalog({required this.plans, required this.compact});
+
+  final List<_PlanTier> plans;
+  final bool compact;
+
+  @override
+  State<_MarketplaceCatalog> createState() => _MarketplaceCatalogState();
+}
+
+class _MarketplaceCatalogState extends State<_MarketplaceCatalog> {
+  String _query = '';
+  String _filter = '전체';
+
+  /// 필요한 변수는 검색어·가격 필터·요금제 원장이다.
+  /// 입력 즉시 이름과 기능을 검색하고 선택 가격대에 맞는 결과만 계산한다.
+  List<_PlanTier> get _filteredPlans {
+    final normalized = _query.trim().toLowerCase();
+    return widget.plans
+        .where((plan) {
+          final price = int.tryParse(plan.price.replaceAll(',', '')) ?? 0;
+          final matchesFilter = switch (_filter) {
+            '3만원 이하' => price <= 30000,
+            '프리미엄' => price > 30000,
+            '보유 중' => plan.isOwned,
+            _ => true,
+          };
+          final searchable = <String>[
+            plan.name,
+            plan.caption,
+            plan.summary,
+            ...plan.features,
+          ].join(' ').toLowerCase();
+          return matchesFilter &&
+              (normalized.isEmpty || searchable.contains(normalized));
+        })
+        .toList(growable: false);
+  }
+
+  /// 필요한 변수는 화면 폭과 현재 검색 결과다.
+  /// 큰 장식 대신 검색·필터·결과 수를 첫 화면에 두고 보유 상태는 결과 옆에 유지한다.
+  @override
+  Widget build(BuildContext context) {
+    final plans = _filteredPlans;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'MARKET',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '학습 플랜 찾기',
+                    style: GoogleFonts.oswald(
+                      fontSize: widget.compact ? 34 : 44,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text('${plans.length}개 결과'),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          onChanged: (value) => setState(() => _query = value),
+          decoration: InputDecoration(
+            hintText: '플랜 이름이나 기능 검색',
+            prefixIcon: const Icon(Icons.search_rounded),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: MarketplacePage._line),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: ['전체', '3만원 이하', '프리미엄', '보유 중']
+                .map(
+                  (filter) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(filter),
+                      selected: _filter == filter,
+                      onSelected: (_) => setState(() => _filter = filter),
+                      selectedColor: Colors.black,
+                      labelStyle: TextStyle(
+                        color: _filter == filter ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ),
+        const SizedBox(height: 18),
+        if (widget.compact) ...[
+          _OwnedStatusCard(plan: widget.plans.last),
+          const SizedBox(height: 14),
+          _PlanGrid(plans: plans, compact: true),
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 4, child: _PlanGrid(plans: plans, compact: false)),
+              const SizedBox(width: 18),
+              Expanded(
+                flex: 2,
+                child: _OwnedStatusCard(plan: widget.plans.last),
+              ),
+            ],
+          ),
       ],
     );
   }
@@ -219,6 +323,8 @@ class _MarketplaceCoinBalanceState extends State<_MarketplaceCoinBalance> {
   }
 }
 
+// TODO(student-density): 이전 장식 히어로는 캡처 비교가 끝나면 파일에서 완전히 제거한다.
+// ignore: unused_element
 class _HeroPanel extends StatelessWidget {
   const _HeroPanel({required this.compact});
 

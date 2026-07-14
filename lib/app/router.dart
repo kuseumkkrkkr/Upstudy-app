@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:s11/shared/data/models/course_module_config.dart';
-
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
@@ -11,7 +9,6 @@ import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 
-import 'package:s11/features/challenges/challenges.dart';
 import 'package:s11/features/student_runtime/student_runtime.dart';
 import 'package:s11/features/level_test/level_test.dart';
 import 'package:s11/features/student_schedule/student_schedule.dart';
@@ -41,10 +38,6 @@ class AppRoutes {
   static const String studentRuntime = StudentRuntimePage.routeName;
   static const String courseRuntime = CourseRuntimePage.routeName;
   static const String flowAccess = FlowAccessPage.routeName;
-
-  // ─── Challenges ───
-  static const String challenges = ChallengeListPage.routeName;
-  static const String challengeDetail = '/challenge_detail';
 
   // ─── Level Test ───
   static const String levelTest = LevelTestHomePage.routeName;
@@ -98,9 +91,6 @@ Map<String, WidgetBuilder> appRoutes(
     AppRoutes.courseRuntime: (_) => const CourseRuntimePage(),
     AppRoutes.flowAccess: (_) => const FlowAccessPage(),
 
-    // Challenges
-    AppRoutes.challenges: (_) => const ChallengeListPage(),
-
     // Level Test
     AppRoutes.levelTest: (_) => const LevelTestHomePage(),
 
@@ -130,18 +120,6 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
       settings: settings,
       builder: (_) => GroupJoinPage(inviteCode: code),
     );
-  }
-
-  // Challenge detail (needs ChallengeGroupConfig)
-  if (name == AppRoutes.challengeDetail) {
-    final args = settings.arguments;
-    if (args is ChallengeGroupConfig) {
-      return MaterialPageRoute(
-        settings: settings,
-        builder: (_) => ChallengeDetailPage(config: args),
-      );
-    }
-    return _badArgumentsRoute(settings, expected: 'ChallengeGroupConfig');
   }
 
   // Level test result (needs correctCount, totalCount, passed)

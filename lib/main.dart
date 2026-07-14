@@ -4,7 +4,7 @@ import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:s11/app/router.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
-import 'package:s11/shared/theme/app_colors.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,10 +94,7 @@ class AIFlowApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AIFlow',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: AppColors.primaryLight,
-      ),
+      theme: _studentDensityTheme(),
       initialRoute: initialToken.isNotEmpty
           ? AppRoutes.studentDashboard
           : AppRoutes.landing,
@@ -105,4 +102,74 @@ class AIFlowApp extends StatelessWidget {
       onGenerateRoute: onGenerateAppRoute,
     );
   }
+}
+
+/// 필요한 변수는 공용 학생 밀도 토큰이다.
+/// 작동 원리: 아직 개별 리디자인되지 않은 학생 화면도 동일한 흑백 카드·필드·모달 규칙을 상속한다.
+ThemeData _studentDensityTheme() {
+  final scheme = ColorScheme.fromSeed(
+    seedColor: StudentDensityTokens.dark,
+    brightness: Brightness.light,
+    surface: StudentDensityTokens.surface,
+  );
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: scheme,
+    scaffoldBackgroundColor: StudentDensityTokens.background,
+    dividerColor: StudentDensityTokens.line,
+    appBarTheme: const AppBarTheme(
+      elevation: 0,
+      centerTitle: false,
+      backgroundColor: StudentDensityTokens.surface,
+      foregroundColor: StudentDensityTokens.ink,
+      surfaceTintColor: Colors.transparent,
+    ),
+    cardTheme: CardThemeData(
+      color: StudentDensityTokens.surface,
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(StudentDensityTokens.radius),
+        side: const BorderSide(color: StudentDensityTokens.line),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: StudentDensityTokens.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: StudentDensityTokens.line),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: StudentDensityTokens.line),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: StudentDensityTokens.dark,
+          width: 1.5,
+        ),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: StudentDensityTokens.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: StudentDensityTokens.surface,
+      selectedColor: StudentDensityTokens.dark,
+      side: const BorderSide(color: StudentDensityTokens.line),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: StudentDensityTokens.dark,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    ),
+  );
 }
