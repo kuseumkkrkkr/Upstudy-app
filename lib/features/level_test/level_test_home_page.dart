@@ -184,22 +184,30 @@ class _PlacementHero extends StatelessWidget {
   const _PlacementHero();
 
   /// 필요한 변수는 화면 폭과 고정 배치 테스트 메타다.
-  /// 검은 히어로 안에 소개 문구·OVR 궤도·50문항 지표를 반응형으로 배치한다.
+  /// HTML 시안의 밝은 그라데이션 안에 소개 문구·OVR 궤도·50문항 지표를 반응형으로 배치한다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(mobile ? 24 : 30),
       child: Container(
-        color: StudentDensityTokens.dark,
+        constraints: BoxConstraints(minHeight: mobile ? 230 : 330),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.white, Color(0xFFF6F6F8), Color(0xFFE9E9ED)],
+            stops: [0, .55, 1],
+          ),
+        ),
         child: Stack(
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(
                 mobile ? 24 : 42,
                 mobile ? 24 : 42,
-                mobile ? 8 : 330,
-                mobile ? 92 : 94,
+                mobile ? 118 : 330,
+                mobile ? 68 : 94,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +215,7 @@ class _PlacementHero extends StatelessWidget {
                   const Text(
                     'FIRST STEP · OVR PLACEMENT',
                     style: TextStyle(
-                      color: Colors.white54,
+                      color: StudentDensityTokens.muted,
                       fontSize: 10,
                       letterSpacing: 1.5,
                       fontWeight: FontWeight.w900,
@@ -217,7 +225,7 @@ class _PlacementHero extends StatelessWidget {
                   Text(
                     '처음 만나는\n나의 실력.',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: StudentDensityTokens.ink,
                       fontSize: mobile ? 46 : 70,
                       height: .9,
                       letterSpacing: -3,
@@ -228,7 +236,7 @@ class _PlacementHero extends StatelessWidget {
                   Text(
                     '50개의 문제로 지금의 학습 위치를 찾습니다.\n첫 OVR은 앞으로의 코스와 난이도를 결정합니다.',
                     style: TextStyle(
-                      color: Colors.white60,
+                      color: StudentDensityTokens.muted,
                       fontSize: mobile ? 11 : 13,
                       height: 1.55,
                     ),
@@ -237,15 +245,18 @@ class _PlacementHero extends StatelessWidget {
               ),
             ),
             Positioned(
-              right: mobile ? -12 : 52,
-              top: mobile ? 52 : 34,
+              right: mobile ? -8 : 52,
+              top: mobile ? 50 : 48,
               child: _OvrOrbit(mobile: mobile),
             ),
-            const Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _PlacementMeta(),
+            Positioned(
+              left: mobile ? 14 : null,
+              right: mobile ? 14 : 28,
+              bottom: mobile ? 10 : 24,
+              child: SizedBox(
+                width: mobile ? null : 360,
+                child: const _PlacementMeta(),
+              ),
             ),
           ],
         ),
@@ -267,7 +278,7 @@ class _OvrOrbit extends StatelessWidget {
     height: mobile ? 120 : 230,
     decoration: BoxDecoration(
       shape: BoxShape.circle,
-      border: Border.all(color: Colors.white24),
+      border: Border.all(color: Colors.black26),
     ),
     alignment: Alignment.center,
     child: Container(
@@ -275,7 +286,7 @@ class _OvrOrbit extends StatelessWidget {
       height: mobile ? 94 : 150,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white38),
+        border: Border.all(color: Colors.black38),
       ),
       child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -283,7 +294,7 @@ class _OvrOrbit extends StatelessWidget {
           Text(
             'MY OVR',
             style: TextStyle(
-              color: Colors.white54,
+              color: Colors.black54,
               fontSize: 8,
               letterSpacing: 1.2,
             ),
@@ -291,7 +302,7 @@ class _OvrOrbit extends StatelessWidget {
           Text(
             '--',
             style: TextStyle(
-              color: Colors.white,
+              color: StudentDensityTokens.ink,
               fontSize: 34,
               height: .9,
               fontWeight: FontWeight.w900,
@@ -299,7 +310,7 @@ class _OvrOrbit extends StatelessWidget {
           ),
           Text(
             'READY TO MEASURE',
-            style: TextStyle(color: Colors.white38, fontSize: 6),
+            style: TextStyle(color: Colors.black38, fontSize: 6),
           ),
         ],
       ),
@@ -311,19 +322,17 @@ class _PlacementMeta extends StatelessWidget {
   const _PlacementMeta();
 
   /// 필요한 변수는 문항 수·난이도·결과 유형이다.
-  /// 히어로 하단을 3열 지표로 나누어 테스트 범위를 표시한다.
+  /// 히어로 하단에 반투명 3열 지표를 띄워 테스트 범위를 표시한다.
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: const BoxDecoration(
-      border: Border(top: BorderSide(color: Colors.white12)),
-    ),
-    child: const Row(
-      children: [
-        Expanded(child: _MetaCell('QUESTIONS', '50')),
-        Expanded(child: _MetaCell('DIFFICULTY', '중상–상')),
-        Expanded(child: _MetaCell('RESULT', 'OVR + 태그')),
-      ],
-    ),
+  Widget build(BuildContext context) => const Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Expanded(child: _MetaCell('QUESTIONS', '50')),
+      SizedBox(width: 8),
+      Expanded(child: _MetaCell('DIFFICULTY', '중상–상')),
+      SizedBox(width: 8),
+      Expanded(child: _MetaCell('RESULT', 'OVR + 태그')),
+    ],
   );
 }
 
@@ -334,20 +343,33 @@ class _MetaCell extends StatelessWidget {
   final String value;
 
   /// 필요한 변수는 지표 이름과 값이다.
-  /// 동일 너비 셀 안에 작은 영문 이름과 굵은 값을 표시한다.
+  /// 동일 너비의 반투명 셀 안에 작은 영문 이름과 굵은 값을 표시한다.
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .72),
+      border: Border.all(color: StudentDensityTokens.line),
+      borderRadius: BorderRadius.circular(14),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 7)),
-        const SizedBox(height: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 7,
+            fontWeight: FontWeight.w900,
+            letterSpacing: .8,
+          ),
+        ),
+        const SizedBox(height: 3),
         Text(
           value,
           style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
+            color: StudentDensityTokens.ink,
+            fontSize: 12,
             fontWeight: FontWeight.w900,
           ),
         ),
