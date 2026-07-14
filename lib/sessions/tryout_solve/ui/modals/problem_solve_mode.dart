@@ -1,23 +1,24 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:s11/shared/data/models/concept_tag.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 
+// 필요 변수: 현재 Navigator와 선택 설정. 작동 원리: 기존 모달을 닫고 설정 모달 결과를 학습 화면으로 연결한다.
 VoidCallback buildProblemSolveAction(BuildContext context) {
   return () {
     final navigator = Navigator.of(context, rootNavigator: true);
     navigator.pop();
     Future.microtask(() async {
+      if (!navigator.mounted) return;
       final config = await showProblemSolveModal(context: navigator.context);
       if (config == null) return;
       try {
         await ActivityStore.recordProblemSession(config: config.toJson());
       } catch (_) {}
+      if (!navigator.mounted) return;
       navigator.push(
-        MaterialPageRoute(
-          builder: (_) => BuildpageWidget(config: config),
-        ),
+        MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
       );
     });
   };
@@ -52,16 +53,11 @@ class _ProblemSolveModal extends StatefulWidget {
 class _ProblemSolveModalState extends State<_ProblemSolveModal> {
   static const int _minCount = 1;
   static const int _maxCount = 20;
-  static const List<String> _difficultyLabels = [
-    '하',
-    '중하',
-    '중',
-    '중상',
-    '상',
-  ];
+  static const List<String> _difficultyLabels = ['하', '중하', '중', '중상', '상'];
 
-  final TextEditingController _countController =
-      TextEditingController(text: '1');
+  final TextEditingController _countController = TextEditingController(
+    text: '1',
+  );
   final TextEditingController _tagSearchController = TextEditingController();
   late final List<ConceptTag> _tagTree;
   String _tagQuery = '';
@@ -165,8 +161,9 @@ class _ProblemSolveModalState extends State<_ProblemSolveModal> {
     }
     final results = <_TagTreeNode>[];
     for (final tag in source) {
-      final matches =
-          _normalizeSearch(tag.displayName).contains(_normalizeSearch(_tagQuery));
+      final matches = _normalizeSearch(
+        tag.displayName,
+      ).contains(_normalizeSearch(_tagQuery));
       final children = _filteredNodes(tag.children);
       if (matches || children.isNotEmpty) {
         results.add(_TagTreeNode(tag, children));
@@ -270,8 +267,8 @@ class _ProblemSolveModalState extends State<_ProblemSolveModal> {
                     value: selectionState == _SelectionState.selected
                         ? true
                         : selectionState == _SelectionState.unselected
-                            ? false
-                            : null,
+                        ? false
+                        : null,
                     tristate: true,
                     onChanged: (_) => _toggleTagSelection(tag),
                   ),
@@ -300,8 +297,12 @@ class _ProblemSolveModalState extends State<_ProblemSolveModal> {
     final maxTier = _difficultyRange.end.round();
     final resolvedMaxTier = minTier > maxTier ? minTier : maxTier;
     final minRequired = _minTagCountForTier(resolvedMaxTier);
-    final insufficientTags = _isInsufficientTags(selectedCount, resolvedMaxTier);
-    final narrowRange = !insufficientTags && _isNarrowRange(selectedCount, resolvedMaxTier);
+    final insufficientTags = _isInsufficientTags(
+      selectedCount,
+      resolvedMaxTier,
+    );
+    final narrowRange =
+        !insufficientTags && _isNarrowRange(selectedCount, resolvedMaxTier);
 
     return Dialog(
       backgroundColor: Colors.white,
@@ -407,13 +408,13 @@ class _ProblemSolveModalState extends State<_ProblemSolveModal> {
               ),
               const SizedBox(height: 6),
               Text(
-                '문제가 1문제인데 너무 많은 양의 해시태그를 추가할 경우 원하는 범위가 아닐 수 있음\n현재 해시태그 갯수 ${selectedCount}개',
+                '문제가 1문제인데 너무 많은 양의 해시태그를 추가할 경우 원하는 범위가 아닐 수 있음\n현재 해시태그 갯수 $selectedCount개',
                 style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
               if (insufficientTags) ...[
                 const SizedBox(height: 6),
                 Text(
-                  '${_difficultyLabelFor(resolvedMaxTier)} 난이도의 최소 선택 개념 갯수는 ${minRequired}개입니다.',
+                  '${_difficultyLabelFor(resolvedMaxTier)} 난이도의 최소 선택 개념 갯수는 $minRequired개입니다.',
                   style: const TextStyle(fontSize: 12, color: Colors.red),
                 ),
               ] else if (narrowRange) ...[

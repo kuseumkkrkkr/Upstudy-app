@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
@@ -110,9 +110,7 @@ class _SharedFlowViewPageState extends State<SharedFlowViewPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (_error != null || _flow == null) {
       return Scaffold(
@@ -123,10 +121,7 @@ class _SharedFlowViewPageState extends State<SharedFlowViewPage> {
             children: [
               Text(_error ?? '플로우를 불러올 수 없습니다.'),
               const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: _load,
-                child: const Text('다시 시도'),
-              ),
+              ElevatedButton(onPressed: _load, child: const Text('다시 시도')),
             ],
           ),
         ),
@@ -142,10 +137,7 @@ class _SharedFlowViewPageState extends State<SharedFlowViewPage> {
             children: [
               const Text('문제 원본을 불러오지 못했습니다.'),
               const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: _load,
-                child: const Text('다시 시도'),
-              ),
+              ElevatedButton(onPressed: _load, child: const Text('다시 시도')),
             ],
           ),
         ),

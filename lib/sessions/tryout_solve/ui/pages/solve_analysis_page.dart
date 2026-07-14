@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/app_bar/solve_header.dart';
@@ -31,9 +31,7 @@ class SolveAnalysisPage extends StatelessWidget {
     if (solves is! List) return steps;
 
     void visit(Map<String, dynamic> step) {
-      steps.add(
-        normalizeFlowBlocks(parseContentBlocks(step['answer_riddle'])),
-      );
+      steps.add(normalizeFlowBlocks(parseContentBlocks(step['answer_riddle'])));
       final branches = step['branches'];
       if (branches is List) {
         for (final branch in branches) {
@@ -70,6 +68,7 @@ class SolveAnalysisPage extends StatelessWidget {
   }
 
   @override
+  // 필요 변수: 채점 결과와 단계별 피드백. 작동 원리: 상태 색상을 저채도 배경·테두리로 변환해 결과 카드를 표시한다.
   Widget build(BuildContext context) {
     final questData = quest == null
         ? null
@@ -109,9 +108,11 @@ class SolveAnalysisPage extends StatelessWidget {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.08),
+                        color: statusColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: statusColor.withOpacity(0.6)),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.6),
+                        ),
                       ),
                       child: Row(
                         children: [

@@ -39,17 +39,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   static const Color _penBlue = Color(0xFF1E88E5);
   static const List<Color> _penColors = [Colors.black, _penBlue, _penRed];
   static const List<double> _penWidths = [1, 3, 5, 8];
-  static const Map<int, _TierParams> _tierParams = {
-    1: _TierParams(solvesCount: 2, strategyLevel: 1, branchConditions: 0),
-    2: _TierParams(solvesCount: 3, strategyLevel: 1, branchConditions: 0),
-    3: _TierParams(solvesCount: 4, strategyLevel: 2, branchConditions: 1),
-    4: _TierParams(solvesCount: 5, strategyLevel: 2, branchConditions: 1),
-    5: _TierParams(solvesCount: 6, strategyLevel: 3, branchConditions: 2),
-  };
 
   static const String _problemText = '''''';
-
-  final math.Random _rng = math.Random();
 
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
@@ -239,47 +230,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     return value.round().clamp(1, 5).toInt();
   }
 
-  int _tagCountForTier(int tier) {
-    switch (tier.clamp(1, 5)) {
-      case 1:
-        return 1;
-      case 2:
-        return 1 + _rng.nextInt(3);
-      case 3:
-        return 3;
-      case 4:
-        return 3 + _rng.nextInt(3);
-      case 5:
-        return 5;
-    }
-    return 3;
-  }
-
-  int _maxTagCountForTier(int tier) {
-    switch (tier.clamp(1, 5)) {
-      case 1:
-        return 1;
-      case 2:
-        return 3;
-      case 3:
-        return 3;
-      case 4:
-        return 5;
-      case 5:
-        return 5;
-    }
-    return 3;
-  }
-
-  List<String> _pickRandomTags(List<String> source, int count) {
-    if (source.isEmpty) return const [];
-    if (count <= 0) return const [];
-    if (source.length <= count) return List<String>.from(source);
-    final pool = List<String>.from(source);
-    pool.shuffle(_rng);
-    return pool.take(count).toList();
-  }
-
   Map<String, dynamic>? get _currentQuest {
     if (_quests.isEmpty || _currentProblemIndex >= _quests.length) {
       return null;
@@ -287,26 +237,29 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     return _quests[_currentProblemIndex];
   }
 
+  // 필요 변수: 문제 데이터와 목록 위치. 작동 원리: 서버 식별자가 있으면 안정적인 키를 만들고 없으면 목록 번호를 사용한다.
   String _problemFingerprint(Map<String, dynamic>? quest, int index) {
     final data = quest == null ? null : quest['data'] as Map<String, dynamic>?;
     final codebaseId = data?['codebase_id'];
     final seedValue = data?['seed'];
     if (codebaseId != null && seedValue != null) {
-      return 'cb${codebaseId}_s${seedValue}';
+      return 'cb${codebaseId}_s$seedValue';
     }
     final questId = (quest?['header']?['quest_id'] ?? '').toString().trim();
     if (questId.isNotEmpty) return questId;
     return (index + 1).toString();
   }
 
+  // 필요 변수: 문제 헤더와 생성 메타데이터. 작동 원리: 활동 기록에 필요한 값만 선택해 전송 맵을 만든다.
   Map<String, dynamic> _problemMeta(Map<String, dynamic>? quest) {
     final data = quest == null ? null : quest['data'] as Map<String, dynamic>?;
     final questId = (quest?['header']?['quest_id'] ?? '').toString().trim();
     final meta = <String, dynamic>{};
     if (questId.isNotEmpty) meta['quest_id'] = questId;
     if (data != null) {
-      if (data['codebase_id'] != null)
+      if (data['codebase_id'] != null) {
         meta['codebase_id'] = data['codebase_id'];
+      }
       if (data['seed'] != null) meta['seed'] = data['seed'];
     }
     return meta;
@@ -317,26 +270,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     if (quest == null) return '';
     final header = quest['header'] as Map<String, dynamic>? ?? {};
     return header['quest_id']?.toString() ?? '';
-  }
-
-  int _currentDifficultyTier() {
-    final quest = _currentQuest;
-    if (quest != null) {
-      final info = quest['info'] as Map<String, dynamic>? ?? {};
-      final raw =
-          info['difficulty_tier'] ??
-          info['difficulty'] ??
-          info['tier'] ??
-          info['level'];
-      if (raw is num) {
-        return raw.toInt().clamp(1, 5);
-      }
-      final parsed = int.tryParse(raw?.toString() ?? '');
-      if (parsed != null) {
-        return parsed.clamp(1, 5);
-      }
-    }
-    return _tierForProblemIndex(_currentProblemIndex).clamp(1, 5);
   }
 
   List<String> _currentQuestModels() {
@@ -441,38 +374,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         _questError = error.toString().replaceFirst('Exception: ', '');
       });
     }
-  }
-
-  Future<List<Map<String, dynamic>>> _searchQuestsByTags(
-    List<String> tags,
-  ) async {
-    if (tags.isEmpty) return [];
-    final primary = tags.first;
-    final results = await ApiClient.instance.searchQuests(
-      hashTag: primary,
-      pageSize: 200,
-    );
-    return results.where((quest) => _questHasAllTags(quest, tags)).toList();
-  }
-
-  bool _questHasAllTags(Map<String, dynamic> quest, List<String> tags) {
-    final info = quest['info'] as Map<String, dynamic>? ?? {};
-    final questTags = (info['hash_tag'] as List<dynamic>? ?? [])
-        .map((tag) => _normalizeTag(tag.toString()))
-        .where((tag) => tag.isNotEmpty)
-        .toSet();
-    for (final tag in tags) {
-      final normalized = _normalizeTag(tag);
-      if (normalized.isEmpty) continue;
-      if (!questTags.contains(normalized)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  String _normalizeTag(String tag) {
-    return tag.trim().toLowerCase().replaceFirst('#', '');
   }
 
   void _ensureClockRunning() {
@@ -1156,12 +1057,13 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     }
   }
 
+  // 필요 변수: 현재 펜 획 목록. 작동 원리: 이어하기 API가 저장할 수 있는 JSON 호환 좌표 배열로 변환한다.
   List<Map<String, dynamic>> _serializeStrokes(List<_Stroke> strokes) {
     return strokes
         .map(
           (stroke) => {
             'id': stroke.id,
-            'color': stroke.color.value,
+            'color': stroke.color.toARGB32(),
             'width': stroke.baseWidth,
             'order': stroke.order,
             'start': stroke.startTime,
@@ -1180,13 +1082,15 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         .toList();
   }
 
+  // 필요 변수: 이어하기 API의 획 배열. 작동 원리: 유효한 색상·굵기·좌표를 런타임 획 객체로 복원한다.
   void _applyStrokes(List<dynamic> payload) {
     final restored = <_Stroke>[];
     for (final raw in payload) {
       if (raw is! Map) continue;
       final id = (raw['id'] ?? 'restored').toString();
       final colorValue =
-          int.tryParse(raw['color']?.toString() ?? '') ?? Colors.black.value;
+          int.tryParse(raw['color']?.toString() ?? '') ??
+          Colors.black.toARGB32();
       final width = (raw['width'] as num?)?.toDouble() ?? 3.0;
       final order = (raw['order'] as num?)?.toInt() ?? 0;
       final start =
@@ -2077,6 +1981,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     );
   }
 
+  // 필요 변수: 현재 객관식 선택값과 정답 데이터. 작동 원리: 즉시 채점·활동 기록 후 다음 문제 또는 완료 콜백을 연다.
   Future<void> _handleObjectiveGrade() async {
     final selectedIndex = _currentSelectedChoice();
     if (selectedIndex == null) {
@@ -2145,7 +2050,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         context: context,
         builder: (_) => AlertDialog(
           title: Text(isCorrect ? '정답' : '오답'),
-          content: Text('풀이 시간 ${elapsed}초'),
+          content: Text('풀이 시간 $elapsed초'),
           actions: [
             TextButton(
               onPressed: () {
@@ -2168,6 +2073,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     }
   }
 
+  // 필요 변수: 채점 수, 정답 수, passRate. 작동 원리: 모든 문제 채점이 끝난 한 번만 코스 모듈 결과를 전달한다.
   void _completeCourseModuleIfNeeded() {
     if (_completionReported || _passRate <= 0 || _gradedCount < _problemCount) {
       return;
@@ -2187,7 +2093,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(passed ? '통과' : '미통과'),
-        content: Text('정답률 $achieved% (요구 $_passRate%)\n풀이 시간 ${elapsed}초'),
+        content: Text('정답률 $achieved% (요구 $_passRate%)\n풀이 시간 $elapsed초'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -2198,6 +2104,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     );
   }
 
+  // 필요 변수: 현재 문제와 필기 획. 작동 원리: 채점 화면을 표시한 뒤 분석 응답으로 결과 화면을 교체한다.
   Future<void> _handleGrade() async {
     if (_analysisBusy) return;
     if (_toolMode == _ToolMode.pen && _currentStroke != null) {
@@ -2219,7 +2126,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     setState(() => _analysisBusy = true);
     final navigator = Navigator.of(context);
     var gradingShown = false;
-    navigator.push(MaterialPageRoute(builder: (_) => const _GradingScreen()));
+    unawaited(
+      navigator.push(MaterialPageRoute(builder: (_) => const _GradingScreen())),
+    );
     gradingShown = true;
     try {
       final studentWorkImage = await _renderStrokesToPng();
@@ -2355,9 +2264,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
           debugSnapshot: debugSnapshot,
         ),
       );
-      final action = gradingShown
-          ? await navigator.pushReplacement(route)
-          : await navigator.push(route);
+      final action = await navigator.pushReplacement(route);
       gradingShown = false;
       if (!mounted) return;
       if (action == SolveAnalysisAction.exit) {
@@ -2414,25 +2321,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     };
   }
 
-  List<Map<String, dynamic>> _buildReferenceStepsPayload(
-    List<_ReferenceSolveStep> steps,
-  ) {
-    final flattened = _flattenReferenceSteps(steps);
-    final results = <Map<String, dynamic>>[];
-    for (var i = 0; i < flattened.length; i++) {
-      final step = flattened[i];
-      results.add({
-        'step_id': i + 1,
-        'flow_text': step.flowText,
-        'hint_text': step.hintText,
-        'answer_text': step.answerText,
-        'hash_tags': step.hashTags,
-        'enter_huddle': step.enterHuddle,
-      });
-    }
-    return results;
-  }
-
   HeatmapResult _buildHeatmapResult() {
     final events = <HeatmapEvent>[];
     for (final stroke in _strokeHistory) {
@@ -2468,32 +2356,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       events: events,
       config: _heatmapConfig,
     );
-  }
-
-  Map<String, dynamic> _buildHeatmapMeta(HeatmapResult result) {
-    final meta = result.toMetaJson();
-    if (result.highlightReasons.isEmpty) return meta;
-    final boundsMap = <String, Rect>{};
-    for (final stroke in _strokeHistory) {
-      final bounds = stroke.resolvedBounds;
-      if (bounds != null) {
-        boundsMap[stroke.id] = bounds;
-      }
-    }
-    final highlightBounds = <Map<String, dynamic>>[];
-    result.highlightReasons.forEach((key, reasons) {
-      final bounds = boundsMap[key];
-      if (bounds == null) return;
-      highlightBounds.add({
-        'stroke_key': key,
-        'bounds': _rectToList(bounds),
-        'reasons': reasons.toList(),
-      });
-    });
-    if (highlightBounds.isNotEmpty) {
-      meta['highlight_bounds'] = highlightBounds;
-    }
-    return meta;
   }
 
   Future<void> _submitRatingUpdate({
@@ -2551,23 +2413,6 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     image.dispose();
     return bytes?.buffer.asUint8List() ?? Uint8List(0);
   }
-
-  List<_ReferenceSolveStep> _flattenReferenceSteps(
-    List<_ReferenceSolveStep> steps,
-  ) {
-    final flattened = <_ReferenceSolveStep>[];
-    void visit(_ReferenceSolveStep step) {
-      flattened.add(step);
-      for (final branch in step.branches) {
-        visit(branch);
-      }
-    }
-
-    for (final step in steps) {
-      visit(step);
-    }
-    return flattened;
-  }
 }
 
 class _NotebookPaperPainter extends CustomPainter {
@@ -2608,16 +2453,4 @@ class _NotebookPaperPainter extends CustomPainter {
         oldDelegate.lineSpacing != lineSpacing ||
         oldDelegate.leftMargin != leftMargin;
   }
-}
-
-class _TierParams {
-  final int solvesCount;
-  final int strategyLevel;
-  final int branchConditions;
-
-  const _TierParams({
-    required this.solvesCount,
-    required this.strategyLevel,
-    required this.branchConditions,
-  });
 }

@@ -13,6 +13,7 @@ import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/components/tag_picker_dialog.dart';
 
+// 필요 변수: 현재 Navigator와 복귀 콜백. 작동 원리: 기존 학습 모달을 닫고 같은 Navigator 문맥에서 약점 복습을 연다.
 VoidCallback buildWeaknessReviewAction(
   BuildContext context, {
   VoidCallback? reopenStudyModal,
@@ -20,15 +21,17 @@ VoidCallback buildWeaknessReviewAction(
   return () {
     final navigator = Navigator.of(context, rootNavigator: true);
     navigator.pop();
-    Future.microtask(
-      () => showWeaknessReviewModal(
+    Future.microtask(() {
+      if (!navigator.mounted) return;
+      showWeaknessReviewModal(
         context: navigator.context,
         onBackToStudyModal: reopenStudyModal,
-      ),
-    );
+      );
+    });
   };
 }
 
+// 필요 변수: 대화상자 context와 복귀 콜백. 작동 원리: 투명 배경 위에 약점 복습 화면을 표시한다.
 Future<T?> showWeaknessReviewModal<T>({
   required BuildContext context,
   VoidCallback? onBackToStudyModal,
@@ -44,7 +47,7 @@ Future<T?> showWeaknessReviewModal<T>({
           children: [
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
             Center(
               child: WeaknessReviewModal(
@@ -59,10 +62,7 @@ Future<T?> showWeaknessReviewModal<T>({
 }
 
 class WeaknessReviewModal extends StatefulWidget {
-  const WeaknessReviewModal({
-    super.key,
-    this.onBackToStudyModal,
-  });
+  const WeaknessReviewModal({super.key, this.onBackToStudyModal});
   final VoidCallback? onBackToStudyModal;
 
   @override
@@ -72,10 +72,7 @@ class WeaknessReviewModal extends StatefulWidget {
 enum _ReviewSection { problemRedo, concept, oxQuiz }
 
 class _ReviewActionEntry {
-  const _ReviewActionEntry({
-    required this.section,
-    required this.label,
-  });
+  const _ReviewActionEntry({required this.section, required this.label});
   final _ReviewSection section;
   final String label;
 }
@@ -106,10 +103,12 @@ List<ContentBlock> _parseBlocks(String? raw) {
     final list = decoded['blocks'] as List<dynamic>? ?? [];
     return list
         .whereType<Map>()
-        .map((b) => ContentBlock(
-              type: b['type']?.toString() ?? 'text',
-              content: b['content']?.toString() ?? '',
-            ))
+        .map(
+          (b) => ContentBlock(
+            type: b['type']?.toString() ?? 'text',
+            content: b['content']?.toString() ?? '',
+          ),
+        )
         .toList();
   } catch (_) {
     return [ContentBlock(type: 'text', content: raw)];
@@ -130,10 +129,7 @@ class _Flashcard {
 }
 
 class _ChatMessage {
-  const _ChatMessage({
-    required this.sender,
-    required this.text,
-  });
+  const _ChatMessage({required this.sender, required this.text});
   final String sender;
   final String text;
 }
@@ -154,18 +150,9 @@ class _OxQuestion {
 
 class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   static const _actions = [
-    _ReviewActionEntry(
-      section: _ReviewSection.problemRedo,
-      label: '문제 다시풀기',
-    ),
-    _ReviewActionEntry(
-      section: _ReviewSection.concept,
-      label: '개념 다시보기',
-    ),
-    _ReviewActionEntry(
-      section: _ReviewSection.oxQuiz,
-      label: 'OX퀴즈 풀기',
-    ),
+    _ReviewActionEntry(section: _ReviewSection.problemRedo, label: '문제 다시풀기'),
+    _ReviewActionEntry(section: _ReviewSection.concept, label: '개념 다시보기'),
+    _ReviewActionEntry(section: _ReviewSection.oxQuiz, label: 'OX퀴즈 풀기'),
   ];
 
   bool _loading = true;
@@ -233,14 +220,8 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   final Set<String> _selectedAttemptKeys = {};
   bool _chatSending = false;
   final List<_ChatMessage> _chatMessages = [
-    _ChatMessage(
-      sender: 'Tutor',
-      text: '틀린 문제의 핵심 개념을 짧게 리마인드해 드릴게요.',
-    ),
-    _ChatMessage(
-      sender: 'Student',
-      text: '적분의 평균값 정리를 자꾸 헷갈려요.',
-    ),
+    _ChatMessage(sender: 'Tutor', text: '틀린 문제의 핵심 개념을 짧게 리마인드해 드릴게요.'),
+    _ChatMessage(sender: 'Student', text: '적분의 평균값 정리를 자꾸 헷갈려요.'),
     _ChatMessage(
       sender: 'Tutor',
       text: '먼저 함수 연속성과 도함수 존재 조건을 체크하고, 평균값 정리의 가정이 맞는지 확인해 보세요.',
@@ -374,10 +355,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                           padding: EdgeInsets.symmetric(
                             horizontal: horizontalPadding,
                           ),
-                          child: _buildSectionBody(
-                            scale: scale,
-                            gap: gap,
-                          ),
+                          child: _buildSectionBody(scale: scale, gap: gap),
                         ),
                       ),
                       SizedBox(height: 12 * scale),
@@ -399,10 +377,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   }
 
   // ✅ FIX 2: _buildRecordPanel을 클래스 내부 메서드로 올바르게 위치
-  Widget _buildSectionBody({
-    required double scale,
-    required double gap,
-  }) {
+  Widget _buildSectionBody({required double scale, required double gap}) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -410,10 +385,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
       return Center(
         child: Text(
           _errorMessage!,
-          style: TextStyle(
-            fontSize: 14 * scale,
-            color: Colors.redAccent,
-          ),
+          style: TextStyle(fontSize: 14 * scale, color: Colors.redAccent),
         ),
       );
     }
@@ -433,10 +405,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     );
   }
 
-  Widget _buildProblemRedoBody({
-    required double scale,
-    required double gap,
-  }) {
+  Widget _buildProblemRedoBody({required double scale, required double gap}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -477,7 +446,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
           bottomRight: Radius.circular(modalRadius),
         ),
       ),
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 4 * scale),
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: 4 * scale,
+      ),
       child: Row(
         children: [
           for (var i = 0; i < _actions.length; i++) ...[
@@ -549,12 +521,12 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
 
   List<_ProblemAttempt> get _filteredAttempts {
     final now = DateTime.now();
-    final thresholdDays =
-        _selectedDays;
+    final thresholdDays = _selectedDays;
     final query = _hashtagController.text.trim().toLowerCase();
     return _attempts.where((attempt) {
       final within = now.difference(attempt.updatedAt).inDays <= thresholdDays;
-      final matches = query.isEmpty ||
+      final matches =
+          query.isEmpty ||
           attempt.tags.any(
             (t) => t.toLowerCase().contains(query.replaceAll('#', '')),
           );
@@ -565,6 +537,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   String _attemptKey(_ProblemAttempt attempt) =>
       '${attempt.codebaseId}-${attempt.seed}';
 
+  // 필요 변수: 화면 배율과 필터된 풀이 기록. 작동 원리: 선택·태그·재시도 상태를 밀도 높은 기록 카드로 표시한다.
   Widget _buildRecordPanel(double scale) {
     const green = Color(0xFF1B402B);
     final attempts = _filteredAttempts;
@@ -594,7 +567,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                   vertical: 2 * scale,
                 ),
                 decoration: BoxDecoration(
-                  color: green.withOpacity(0.1),
+                  color: green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20 * scale),
                 ),
                 child: Text(
@@ -616,14 +589,20 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                 ? Center(
                     child: Text(
                       _historyError!,
-                      style: TextStyle(fontSize: 13 * scale, color: Colors.redAccent),
+                      style: TextStyle(
+                        fontSize: 13 * scale,
+                        color: Colors.redAccent,
+                      ),
                     ),
                   )
                 : attempts.isEmpty
                 ? Center(
                     child: Text(
                       '조건에 맞는 풀이 내역이 없습니다.',
-                      style: TextStyle(fontSize: 13 * scale, color: Colors.grey.shade500),
+                      style: TextStyle(
+                        fontSize: 13 * scale,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
                   )
                 : ListView.separated(
@@ -638,7 +617,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                         children: [
                           if (_selectMode)
                             Padding(
-                              padding: EdgeInsets.only(top: 4 * scale, right: 4 * scale),
+                              padding: EdgeInsets.only(
+                                top: 4 * scale,
+                                right: 4 * scale,
+                              ),
                               child: Checkbox(
                                 value: selected,
                                 activeColor: green,
@@ -661,7 +643,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                                 borderRadius: BorderRadius.circular(10 * scale),
                                 border: Border.all(
                                   color: selected
-                                      ? green.withOpacity(0.5)
+                                      ? green.withValues(alpha: 0.5)
                                       : const Color(0xFFE8E8E8),
                                 ),
                               ),
@@ -670,7 +652,8 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                                 children: [
                                   // 태그 + 날짜 행
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
                                       if (item.tags.isNotEmpty) ...[
                                         Expanded(
@@ -679,24 +662,35 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                                             runSpacing: 4 * scale,
                                             children: item.tags
                                                 .take(3)
-                                                .map((t) => Container(
-                                                      padding: EdgeInsets.symmetric(
-                                                        horizontal: 7 * scale,
-                                                        vertical: 3 * scale,
-                                                      ),
-                                                      decoration: BoxDecoration(
-                                                        color: green.withOpacity(0.08),
-                                                        borderRadius: BorderRadius.circular(6 * scale),
-                                                      ),
-                                                      child: Text(
-                                                        t.startsWith('#') ? t : '#$t',
-                                                        style: TextStyle(
-                                                          fontSize: 11 * scale,
-                                                          fontWeight: FontWeight.w600,
-                                                          color: green,
+                                                .map(
+                                                  (t) => Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: 7 * scale,
+                                                          vertical: 3 * scale,
                                                         ),
+                                                    decoration: BoxDecoration(
+                                                      color: green.withValues(
+                                                        alpha: 0.08,
                                                       ),
-                                                    ))
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            6 * scale,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      t.startsWith('#')
+                                                          ? t
+                                                          : '#$t',
+                                                      style: TextStyle(
+                                                        fontSize: 11 * scale,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: green,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
                                                 .toList(),
                                           ),
                                         ),
@@ -748,8 +742,12 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                                             vertical: 3 * scale,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.orange.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(6 * scale),
+                                            color: Colors.orange.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              6 * scale,
+                                            ),
                                           ),
                                           child: Text(
                                             '${item.retryCount}회 시도',
@@ -763,10 +761,15 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                                       const Spacer(),
                                       TextButton.icon(
                                         onPressed: () => _replayAttempt(item),
-                                        icon: Icon(Icons.replay_rounded, size: 15 * scale),
+                                        icon: Icon(
+                                          Icons.replay_rounded,
+                                          size: 15 * scale,
+                                        ),
                                         label: Text(
                                           '다시풀기',
-                                          style: TextStyle(fontSize: 12 * scale),
+                                          style: TextStyle(
+                                            fontSize: 12 * scale,
+                                          ),
                                         ),
                                         style: TextButton.styleFrom(
                                           foregroundColor: green,
@@ -793,9 +796,9 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   }
 
   void _replayAttempt(_ProblemAttempt attempt) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('문제를 불러오는 중...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('문제를 불러오는 중...')));
     ApiClient.instance
         .replayProblemHabit(
           codebaseId: attempt.codebaseId,
@@ -803,25 +806,26 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
           questId: attempt.questId,
         )
         .then((quest) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      final config = ProblemSolveConfig(quests: [quest]);
-      Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
-      );
-    }).catchError((error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('불러오기 실패: $error')),
-      );
-    });
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          final config = ProblemSolveConfig(quests: [quest]);
+          Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
+          );
+        })
+        .catchError((error) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('불러오기 실패: $error')));
+        });
   }
 
   void _replayBatch(List<_ProblemAttempt> attempts) async {
     if (attempts.isEmpty) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${attempts.length}문제 불러오는 중...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${attempts.length}문제 불러오는 중...')));
     final quests = <Map<String, dynamic>>[];
     for (final item in attempts) {
       try {
@@ -837,29 +841,38 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     }
     if (!mounted) return;
     if (quests.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('불러올 수 있는 문제가 없어요')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('불러올 수 있는 문제가 없어요')));
       return;
     }
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     final config = ProblemSolveConfig(quests: quests);
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
-    );
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push(MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)));
   }
 
+  // 별도 플래시카드 화면으로 이관하기 전까지 사용자 복습 화면에서는 호출하지 않는다.
+  // ignore: unused_element
   Widget _buildFlashcardPanel(double scale) {
     final query = _flashcardSearchController.text.trim().toLowerCase();
     final onlyWeak = _onlyWeakFlashcards;
-    final cards = _flashcards
-        .where((c) =>
-            (query.isEmpty ||
-                c.tag.toLowerCase().contains(query.replaceAll('#', ''))) &&
-            (!onlyWeak || c.weaknessCount > 0))
-        .toList()
-      ..sort((a, b) =>
-          onlyWeak ? b.weaknessCount.compareTo(a.weaknessCount) : 0);
+    final cards =
+        _flashcards
+            .where(
+              (c) =>
+                  (query.isEmpty ||
+                      c.tag.toLowerCase().contains(
+                        query.replaceAll('#', ''),
+                      )) &&
+                  (!onlyWeak || c.weaknessCount > 0),
+            )
+            .toList()
+          ..sort(
+            (a, b) => onlyWeak ? b.weaknessCount.compareTo(a.weaknessCount) : 0,
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -946,10 +959,12 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                                   vertical: 4 * scale,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1B402B)
-                                      .withOpacity(0.08),
-                                  borderRadius:
-                                      BorderRadius.circular(8 * scale),
+                                  color: const Color(
+                                    0xFF1B402B,
+                                  ).withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(
+                                    8 * scale,
+                                  ),
                                 ),
                                 child: Text(
                                   card.tag,
@@ -998,16 +1013,19 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     );
   }
 
+  // 필요 변수: 플래시카드 목록과 과목 필터. 작동 원리: 약점 빈도를 원형 크기와 흑백 대비로 보여준다.
   void _showWeaknessReport(double scale) {
     final subjects = _flashcards.map((c) => c.subject).toSet().toList()..sort();
     showModalBottomSheet(
       context: context,
       builder: (context) {
         final filtered = _flashcards
-            .where((c) =>
-                c.weaknessCount > 0 &&
-                (_reportSubjectFilter == null ||
-                    _reportSubjectFilter == c.subject))
+            .where(
+              (c) =>
+                  c.weaknessCount > 0 &&
+                  (_reportSubjectFilter == null ||
+                      _reportSubjectFilter == c.subject),
+            )
             .toList();
         final total = filtered.fold<int>(0, (sum, c) => sum + c.weaknessCount);
         return Padding(
@@ -1029,7 +1047,8 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                   DropdownButton<String?>(
                     value: _reportSubjectFilter,
                     hint: const Text('과목 필터'),
-                    onChanged: (value) => setState(() => _reportSubjectFilter = value),
+                    onChanged: (value) =>
+                        setState(() => _reportSubjectFilter = value),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('전체')),
                       ...subjects.map(
@@ -1044,9 +1063,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                 spacing: 8 * scale,
                 runSpacing: 8 * scale,
                 children: filtered.map((c) {
-                  final size =
-                      (40 + math.min(c.weaknessCount, 30) * 3).toDouble();
-                  final active = _reportSubjectFilter == null ||
+                  final size = (40 + math.min(c.weaknessCount, 30) * 3)
+                      .toDouble();
+                  final active =
+                      _reportSubjectFilter == null ||
                       _reportSubjectFilter == c.subject;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
@@ -1054,7 +1074,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                     height: size,
                     decoration: BoxDecoration(
                       color: active
-                          ? const Color(0xFF1B402B).withOpacity(0.12)
+                          ? const Color(0xFF1B402B).withValues(alpha: 0.12)
                           : Colors.grey.shade300,
                       shape: BoxShape.circle,
                       border: Border.all(
@@ -1097,10 +1117,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                     children: [
                       SizedBox(
                         width: 120 * scale,
-                        child: Text(
-                          s,
-                          style: TextStyle(fontSize: 12 * scale),
-                        ),
+                        child: Text(s, style: TextStyle(fontSize: 12 * scale)),
                       ),
                       Expanded(
                         child: LinearProgressIndicator(
@@ -1146,10 +1163,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
         SizedBox(height: 10 * scale),
         Text(
           '계층형 태그를 선택하면 태그당 2~3문항을 DB에서 무작위로 불러옵니다. 퀴즈를 생성한 뒤 시작 버튼으로 별도 화면에서 풉니다.',
-          style: TextStyle(
-            fontSize: 12 * scale,
-            color: Colors.grey.shade700,
-          ),
+          style: TextStyle(fontSize: 12 * scale, color: Colors.grey.shade700),
         ),
         SizedBox(height: 10 * scale),
         Row(
@@ -1188,8 +1202,9 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
         Row(
           children: [
             ElevatedButton.icon(
-              onPressed:
-                  _oxLoading || _oxSelectedTags.isEmpty ? null : _generateOxQuiz,
+              onPressed: _oxLoading || _oxSelectedTags.isEmpty
+                  ? null
+                  : _generateOxQuiz,
               icon: _oxLoading
                   ? const SizedBox(
                       width: 16,
@@ -1314,20 +1329,24 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
       _oxScore = null;
     });
     try {
-      final items = await ApiClient.instance
-          .generateOxQuiz(tags: _oxSelectedTags.toList(), perTag: perTag);
+      final items = await ApiClient.instance.generateOxQuiz(
+        tags: _oxSelectedTags.toList(),
+        perTag: perTag,
+      );
       if (!mounted) return;
       setState(() {
         _oxQuestions
           ..clear()
-          ..addAll(items.map(
-            (item) => _OxQuestion(
-              id: item.id,
-              tag: item.tag,
-              question: item.question,
-              answer: item.answer,
-            )..userAnswer = null,
-          ));
+          ..addAll(
+            items.map(
+              (item) => _OxQuestion(
+                id: item.id,
+                tag: item.tag,
+                question: item.question,
+                answer: item.answer,
+              )..userAnswer = null,
+            ),
+          );
         _oxLoading = false;
         _lastOxPerTag = perTag;
       });
@@ -1336,9 +1355,9 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
       setState(() {
         _oxLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('퀴즈 생성 실패: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('퀴즈 생성 실패: $error')));
     }
   }
 
@@ -1372,9 +1391,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     final text = _chatController.text.trim();
     if (text.isEmpty || _chatSending) return;
     _chatController.clear();
-    await _appendChatMessage(
-      _ChatMessage(sender: 'Student', text: text),
-    );
+    await _appendChatMessage(_ChatMessage(sender: 'Student', text: text));
     setState(() => _chatSending = true);
     // 간단한 모의 튜터 응답
     await Future<void>.delayed(const Duration(milliseconds: 420));
@@ -1382,13 +1399,15 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     await _appendChatMessage(
       _ChatMessage(
         sender: 'Tutor',
-        text: '이 부분은 베타 버전입니다. 곧 실시간 튜터 응답이 연결됩니다.\n지금은 먼저 핵심 정의와 대표 예제를 3분 안에 복습해 보세요.',
+        text:
+            '이 부분은 베타 버전입니다. 곧 실시간 튜터 응답이 연결됩니다.\n지금은 먼저 핵심 정의와 대표 예제를 3분 안에 복습해 보세요.',
       ),
     );
     if (!mounted) return;
     setState(() => _chatSending = false);
   }
 
+  // 필요 변수: 조회 기간·선택 문제·화면 배율. 작동 원리: 기간 필터와 일괄 다시 풀기 동작을 한 패널로 구성한다.
   Widget _buildFilterPanel(double scale) {
     const green = Color(0xFF1B402B);
     final filtered = _filteredAttempts;
@@ -1435,7 +1454,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        '${day}일',
+                        '$day일',
                         style: TextStyle(
                           fontSize: 12 * scale,
                           fontWeight: FontWeight.w600,
@@ -1526,10 +1545,14 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                   onPressed: _selectedAttemptKeys.isEmpty
                       ? null
                       : () => _replayBatch(
-                            filtered
-                                .where((a) => _selectedAttemptKeys.contains(_attemptKey(a)))
-                                .toList(),
-                          ),
+                          filtered
+                              .where(
+                                (a) => _selectedAttemptKeys.contains(
+                                  _attemptKey(a),
+                                ),
+                              )
+                              .toList(),
+                        ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: green,
                     foregroundColor: Colors.white,
@@ -1549,6 +1572,8 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     );
   }
 
+  // 베타 채팅은 실제 서버 계약이 연결되기 전까지 사용자 복습 화면에서는 호출하지 않는다.
+  // ignore: unused_element
   Widget _buildChatPanel(double scale) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1584,8 +1609,9 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                 final text = message.text;
                 final isTutor = sender == 'Tutor';
                 return Align(
-                  alignment:
-                      isTutor ? Alignment.centerLeft : Alignment.centerRight,
+                  alignment: isTutor
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
                   child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 12 * scale,
@@ -1594,18 +1620,15 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                     decoration: BoxDecoration(
                       color: isTutor
                           ? Colors.white
-                          : const Color(0xFF1B402B).withOpacity(0.1),
+                          : const Color(0xFF1B402B).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10 * scale),
                       border: Border.all(
                         color: isTutor
                             ? const Color(0xFFE5E7EB)
-                            : const Color(0xFF1B402B).withOpacity(0.4),
+                            : const Color(0xFF1B402B).withValues(alpha: 0.4),
                       ),
                     ),
-                    child: Text(
-                      text,
-                      style: TextStyle(fontSize: 13 * scale),
-                    ),
+                    child: Text(text, style: TextStyle(fontSize: 13 * scale)),
                   ),
                 );
               },
@@ -1687,7 +1710,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
             child: Center(
               child: Text(
                 '약점 태그 데이터가 없습니다.',
-                style: TextStyle(fontSize: 13 * scale, color: Colors.grey.shade600),
+                style: TextStyle(
+                  fontSize: 13 * scale,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ),
           )
@@ -1737,11 +1763,17 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                 setState(() => _selectedWeakTags.addAll(top));
               },
               icon: const Icon(Icons.auto_awesome),
-              label: Text('자동선택 (상위10)', style: TextStyle(fontSize: 12 * scale)),
+              label: Text(
+                '자동선택 (상위10)',
+                style: TextStyle(fontSize: 12 * scale),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B402B),
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12 * scale,
+                  vertical: 8 * scale,
+                ),
               ),
             ),
             OutlinedButton.icon(
@@ -1751,35 +1783,47 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF1B402B),
                 side: const BorderSide(color: Color(0xFF1B402B)),
-                padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12 * scale,
+                  vertical: 8 * scale,
+                ),
               ),
             ),
             OutlinedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('미구현 기능입니다.')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('미구현 기능입니다.')));
               },
               icon: const Icon(Icons.access_time_filled),
               label: Text('방금 틀린 개념', style: TextStyle(fontSize: 12 * scale)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.redAccent,
                 side: const BorderSide(color: Colors.redAccent),
-                padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12 * scale,
+                  vertical: 8 * scale,
+                ),
               ),
             ),
             OutlinedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('미구현 기능입니다.')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('미구현 기능입니다.')));
               },
               icon: const Icon(Icons.history),
-              label: Text('최근30개 틀린 개념', style: TextStyle(fontSize: 12 * scale)),
+              label: Text(
+                '최근30개 틀린 개념',
+                style: TextStyle(fontSize: 12 * scale),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.redAccent,
                 side: const BorderSide(color: Colors.redAccent),
-                padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12 * scale,
+                  vertical: 8 * scale,
+                ),
               ),
             ),
           ],
@@ -1794,17 +1838,13 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
                     final sel = selected.toList();
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => BookWidget(
-                          book: buildConceptBook(sel),
-                        ),
+                        builder: (_) => BookWidget(book: buildConceptBook(sel)),
                       ),
                     );
                   },
             icon: Icon(Icons.play_arrow, size: 20 * scale),
             label: Text(
-              selected.isEmpty
-                  ? '태그를 선택하세요'
-                  : '선택 개 개념학습하기',
+              selected.isEmpty ? '태그를 선택하세요' : '선택 개 개념학습하기',
               style: TextStyle(fontSize: 14 * scale),
             ),
             style: ElevatedButton.styleFrom(
@@ -1823,7 +1863,6 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
       ],
     );
   }
-
 } // ← _WeaknessReviewModalState 닫는 중괄호
 
 class _ReviewActionTile extends StatelessWidget {
@@ -1856,7 +1895,10 @@ class _ReviewActionTile extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6 * scale),
         ),
-        padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 2 * scale),
+        padding: EdgeInsets.symmetric(
+          horizontal: 6 * scale,
+          vertical: 2 * scale,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,

@@ -6,7 +6,8 @@ class VariantProblemStudioPage extends StatefulWidget {
   const VariantProblemStudioPage({super.key});
 
   @override
-  State<VariantProblemStudioPage> createState() => _VariantProblemStudioPageState();
+  State<VariantProblemStudioPage> createState() =>
+      _VariantProblemStudioPageState();
 }
 
 class _VariantProblemStudioPageState extends State<VariantProblemStudioPage> {
@@ -29,7 +30,8 @@ class _VariantProblemStudioPageState extends State<VariantProblemStudioPage> {
     });
     try {
       final baseRef = {
-        if (_baseQuestCtrl.text.trim().isNotEmpty) 'quest_id': _baseQuestCtrl.text.trim(),
+        if (_baseQuestCtrl.text.trim().isNotEmpty)
+          'quest_id': _baseQuestCtrl.text.trim(),
       };
       Map<String, dynamic> res;
       if (_mode == 'flow_draft') {
@@ -38,7 +40,12 @@ class _VariantProblemStudioPageState extends State<VariantProblemStudioPage> {
             'variant_input_mode': 'flow_draft',
             'base_quest_ref': baseRef,
             'flow_draft': [
-              {'node_id': 'n1', 'text': _promptCtrl.text.trim(), 'hash_tags': tags, 'branches': []}
+              {
+                'node_id': 'n1',
+                'text': _promptCtrl.text.trim(),
+                'hash_tags': tags,
+                'branches': [],
+              },
             ],
             'tags': tags,
             'prompt': _promptCtrl.text.trim(),
@@ -51,7 +58,7 @@ class _VariantProblemStudioPageState extends State<VariantProblemStudioPage> {
             'base_quest_ref': baseRef,
             'prompt': _promptCtrl.text.trim(),
             'note_blocks': [
-              {'type': 'memo', 'text': _promptCtrl.text.trim()}
+              {'type': 'memo', 'text': _promptCtrl.text.trim()},
             ],
             'tags': tags,
           },
@@ -96,6 +103,7 @@ class _VariantProblemStudioPageState extends State<VariantProblemStudioPage> {
   }
 
   @override
+  // 필요 변수: 변형 모드와 기준 문제 ID. 작동 원리: 현재 모드를 초기 선택값으로 표시하고 생성 요청 폼을 구성한다.
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Variant Studio')),
@@ -103,11 +111,17 @@ class _VariantProblemStudioPageState extends State<VariantProblemStudioPage> {
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<String>(
-            value: _mode,
-          items: const [
-            DropdownMenuItem(value: 'prompt_note', child: Text('Prompt + Note (2-2)')),
-            DropdownMenuItem(value: 'flow_draft', child: Text('Flow Draft (2-1)')),
-          ],
+            initialValue: _mode,
+            items: const [
+              DropdownMenuItem(
+                value: 'prompt_note',
+                child: Text('Prompt + Note (2-2)'),
+              ),
+              DropdownMenuItem(
+                value: 'flow_draft',
+                child: Text('Flow Draft (2-1)'),
+              ),
+            ],
             onChanged: (v) => setState(() => _mode = v ?? 'prompt_note'),
           ),
           const SizedBox(height: 8),

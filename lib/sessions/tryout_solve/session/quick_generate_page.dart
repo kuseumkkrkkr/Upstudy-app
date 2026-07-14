@@ -36,7 +36,6 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
   bool _loading = false;
   String _statusMessage = '문제를 생성 중입니다';
   Timer? _statusTimer;
-  String? _requestId;
   Map<String, dynamic>? _quest;
   String? _error;
   bool _cubicLoading = false;
@@ -115,6 +114,7 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
     };
   }
 
+  // 필요 변수: 태그·난이도·생성 옵션. 작동 원리: 요청 ID를 지역 변수로만 유지하며 상태 polling과 문제 생성을 함께 시작한다.
   Future<void> _generateQuest() async {
     if (_loading) {
       return;
@@ -130,7 +130,6 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
       _error = null;
     });
     final requestId = _buildRequestId();
-    _requestId = requestId;
     _startStatusPolling(requestId);
     try {
       final quest = await ApiClient.instance.generateQuest(

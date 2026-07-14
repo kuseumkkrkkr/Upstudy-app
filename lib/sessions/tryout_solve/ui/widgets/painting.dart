@@ -1,4 +1,4 @@
-﻿part of 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
+part of 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 
 class _Stroke {
   _Stroke({
@@ -124,6 +124,7 @@ class _StrokePoint {
 class _StrokePainter extends CustomPainter {
   static const double _pressureMinFactor = 0.35;
 
+  // 필요 변수: 획·지우개·배율·논리 크기. 작동 원리: repaint 신호를 상위 CustomPainter에 직접 전달한다.
   _StrokePainter({
     required this.strokes,
     required this.currentStroke,
@@ -132,8 +133,8 @@ class _StrokePainter extends CustomPainter {
     required this.scale,
     required this.logicalSize,
     required this.backgroundColor,
-    Listenable? repaint,
-  }) : super(repaint: repaint);
+    super.repaint,
+  });
 
   final List<_Stroke> strokes;
   final _Stroke? currentStroke;
