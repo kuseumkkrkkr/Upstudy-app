@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
@@ -56,7 +56,8 @@ class SocialModal extends StatelessWidget {
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   itemCount: items.length,
-                  itemBuilder: (context, index) => _SocialItem(text: items[index]),
+                  itemBuilder: (context, index) =>
+                      _SocialItem(text: items[index]),
                 );
               },
             ),

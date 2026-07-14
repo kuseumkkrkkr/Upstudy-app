@@ -15,6 +15,7 @@ import 'package:s11/shared/business/repositories/textbook_store.dart';
 import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/ui/graphs/graph_selector.dart';
 
+// 필요 변수: 교재 목록·선택 태그·카테고리. 작동 원리: 블러 배경 위에 필터된 교재함 모달을 연다.
 Future<T?> showBookLibraryModal<T>({
   required BuildContext context,
   String headerTitle = '교재보기',
@@ -35,7 +36,7 @@ Future<T?> showBookLibraryModal<T>({
           children: [
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
             Center(
               child: BookLibraryModal(
@@ -1158,9 +1159,10 @@ class _BookWidgetState extends State<BookWidget> {
     await LocalDb.instance.setString(key, payload);
   }
 
+  // 필요 변수: 필기 획의 색상·굵기·좌표. 작동 원리: 로컬 DB에 저장할 JSON 호환 맵으로 직렬화한다.
   Map<String, dynamic> _strokeToJson(_Stroke stroke) {
     return {
-      'color': stroke.color.value,
+      'color': stroke.color.toARGB32(),
       'width': stroke.width,
       'points': stroke.points
           .map((point) => [point.dx, point.dy])
@@ -1168,8 +1170,10 @@ class _BookWidgetState extends State<BookWidget> {
     };
   }
 
+  // 필요 변수: 저장된 필기 JSON. 작동 원리: 색상과 좌표를 검증해 화면 획 객체로 복원한다.
   _Stroke _strokeFromJson(Map<String, dynamic> json) {
-    final colorValue = (json['color'] as num?)?.toInt() ?? Colors.black.value;
+    final colorValue =
+        (json['color'] as num?)?.toInt() ?? Colors.black.toARGB32();
     final width = (json['width'] as num?)?.toDouble() ?? 3.0;
     final stroke = _Stroke(color: Color(colorValue), width: width);
     final points = json['points'];
@@ -1794,10 +1798,11 @@ class _BookWidgetState extends State<BookWidget> {
     stroke.addPoint(position);
   }
 
+  // 필요 변수: 시작 위치와 형광펜 설정. 작동 원리: 반투명 직선 획을 현재 입력으로 만든다.
   void _startHighlighter(Offset position) {
     _highlighterStart = position;
     _currentStroke = _Stroke(
-      color: _highlighterColor.withOpacity(0.45),
+      color: _highlighterColor.withValues(alpha: 0.45),
       width: _highlighterWidth,
     )..setLine(position, position);
   }
@@ -2811,6 +2816,7 @@ class _AnnotationPainter extends CustomPainter {
   static const double _topPadding = 20.0;
 
   @override
+  // 필요 변수: 필기 획·지우개 위치·스크롤 값. 작동 원리: 현재 뷰 좌표로 변환해 획과 지우개 표시를 그린다.
   void paint(Canvas canvas, Size size) {
     canvas.translate(_leftPadding, _topPadding - scrollOffset);
 
@@ -2843,10 +2849,10 @@ class _AnnotationPainter extends CustomPainter {
 
     if (eraserPosition != null) {
       final fillPaint = Paint()
-        ..color = Colors.black.withOpacity(0.08)
+        ..color = Colors.black.withValues(alpha: 0.08)
         ..style = PaintingStyle.fill;
       final borderPaint = Paint()
-        ..color = Colors.black.withOpacity(0.4)
+        ..color = Colors.black.withValues(alpha: 0.4)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
       canvas.drawCircle(eraserPosition!, eraserRadius, fillPaint);

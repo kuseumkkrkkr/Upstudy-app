@@ -459,6 +459,7 @@ class _SoWidgetState extends State<SoWidget> {
     if (type == 'friend_request_accepted') unawaited(_refreshFriends());
   }
 
+  // 필요 변수: 친구 정보와 스낵바를 표시할 context. 작동 원리: 중복을 막고 API 성공·실패를 살아 있는 화면에만 알린다.
   Future<void> _sendFriendRequest({
     required _FriendInfo friend,
     required BuildContext rootContext,
@@ -480,7 +481,7 @@ class _SoWidgetState extends State<SoWidget> {
         username: friend.name,
         message: friend.status,
       );
-      if (!mounted) return;
+      if (!mounted || !rootContext.mounted) return;
       setState(() {
         _friendRequests.add(_FriendRequest.fromApi(created));
       });
@@ -489,7 +490,7 @@ class _SoWidgetState extends State<SoWidget> {
         rootContext,
       ).showSnackBar(const SnackBar(content: Text('Friend request sent.')));
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || !rootContext.mounted) return;
       ScaffoldMessenger.of(rootContext).showSnackBar(
         const SnackBar(content: Text('Failed to send friend request.')),
       );
@@ -722,7 +723,7 @@ class _SoWidgetState extends State<SoWidget> {
     }
     return CircleAvatar(
       radius: 14,
-      backgroundColor: color.withOpacity(0.15),
+      backgroundColor: color.withValues(alpha: 0.15),
       foregroundColor: color,
       child: Icon(icon, size: 16),
     );
@@ -776,7 +777,7 @@ class _SoWidgetState extends State<SoWidget> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: (textColor ?? primaryColor).withOpacity(0.75),
+                color: (textColor ?? primaryColor).withValues(alpha: 0.75),
               ),
             ),
           ],
@@ -983,7 +984,7 @@ class _SoWidgetState extends State<SoWidget> {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: primaryColor.withOpacity(0.15),
+            backgroundColor: primaryColor.withValues(alpha: 0.15),
             child: Text(
               name.isNotEmpty ? name.substring(0, 1) : '?',
               style: const TextStyle(
@@ -1091,7 +1092,7 @@ class _SoWidgetState extends State<SoWidget> {
       context: context,
       barrierLabel: 'dialog',
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.18),
+      barrierColor: Colors.black.withValues(alpha: 0.18),
       transitionDuration: const Duration(milliseconds: 160),
       pageBuilder: (_, __, ___) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
@@ -1162,6 +1163,7 @@ class _SoWidgetState extends State<SoWidget> {
         title: '친구 추가',
         child: StatefulBuilder(
           builder: (context, setModalState) {
+            // 필요 변수: 친구 검색어와 모달 상태. 작동 원리: API·OVR 결과를 합치고 살아 있는 모달에만 결과를 반영한다.
             Future<void> performSearch() async {
               final keyword = query.trim();
               if (keyword.isEmpty) {
@@ -1202,8 +1204,9 @@ class _SoWidgetState extends State<SoWidget> {
                   errorMessage = '검색에 실패했어요';
                 });
               } finally {
-                if (!context.mounted) return;
-                setModalState(() => isSearching = false);
+                if (context.mounted) {
+                  setModalState(() => isSearching = false);
+                }
               }
             }
 
@@ -1313,8 +1316,8 @@ class _SoWidgetState extends State<SoWidget> {
                                 children: [
                                   CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: primaryColor.withOpacity(
-                                      0.12,
+                                    backgroundColor: primaryColor.withValues(
+                                      alpha: 0.12,
                                     ),
                                     child: Text(
                                       friend.name.substring(0, 1),
@@ -1423,7 +1426,9 @@ class _SoWidgetState extends State<SoWidget> {
                         children: [
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: primaryColor.withOpacity(0.12),
+                            backgroundColor: primaryColor.withValues(
+                              alpha: 0.12,
+                            ),
                             child: Text(
                               message.name.substring(0, 1),
                               style: const TextStyle(
@@ -1604,6 +1609,7 @@ class _SoWidgetState extends State<SoWidget> {
         width: 620,
         child: StatefulBuilder(
           builder: (context, setModalState) {
+            // 필요 변수: 그룹 검색어와 모달 상태. 작동 원리: 공개 그룹 검색 결과를 현재 모달 카드 모델로 변환한다.
             Future<void> performSearch() async {
               final keyword = query.trim();
               if (keyword.isEmpty) {
@@ -1647,11 +1653,13 @@ class _SoWidgetState extends State<SoWidget> {
                 if (!context.mounted) return;
                 setModalState(() => errorMessage = '검색에 실패했어요');
               } finally {
-                if (!context.mounted) return;
-                setModalState(() => isSearching = false);
+                if (context.mounted) {
+                  setModalState(() => isSearching = false);
+                }
               }
             }
 
+            // 필요 변수: 선택 그룹과 모달 상태. 작동 원리: 참여 API 성공 시 로컬 그룹 목록을 중복 없이 갱신한다.
             Future<void> joinGroup(_GroupInfo group) async {
               setModalState(() => joiningId = group.id);
               try {
@@ -1672,11 +1680,13 @@ class _SoWidgetState extends State<SoWidget> {
                   context,
                 ).showSnackBar(const SnackBar(content: Text('참여에 실패했어요')));
               } finally {
-                if (!context.mounted) return;
-                setModalState(() => joiningId = null);
+                if (context.mounted) {
+                  setModalState(() => joiningId = null);
+                }
               }
             }
 
+            // 필요 변수: 초대 코드와 모달 상태. 작동 원리: 코드 참여 결과를 로컬 목록에 반영하고 성공 시 모달을 닫는다.
             Future<void> joinGroupByCode() async {
               final code = inviteCode.trim();
               if (code.isEmpty) {
@@ -1716,8 +1726,9 @@ class _SoWidgetState extends State<SoWidget> {
                 if (!context.mounted) return;
                 setModalState(() => errorMessage = '참여코드를 확인해 주세요');
               } finally {
-                if (!context.mounted) return;
-                setModalState(() => isJoiningByCode = false);
+                if (context.mounted) {
+                  setModalState(() => isJoiningByCode = false);
+                }
               }
             }
 
@@ -1895,7 +1906,9 @@ class _SoWidgetState extends State<SoWidget> {
                                 children: [
                                   CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: color.withOpacity(0.15),
+                                    backgroundColor: color.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     child: Icon(icon, color: color, size: 16),
                                   ),
                                   const SizedBox(width: 10),
@@ -2513,8 +2526,9 @@ class _SoWidgetState extends State<SoWidget> {
                                                                 radius: 15,
                                                                 backgroundColor:
                                                                     primaryColor
-                                                                        .withOpacity(
-                                                                          0.12,
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.12,
                                                                         ),
                                                                 child: Text(
                                                                   message.name
@@ -2725,8 +2739,8 @@ class _SoWidgetState extends State<SoWidget> {
                                                         CircleAvatar(
                                                           radius: 16,
                                                           backgroundColor: color
-                                                              .withOpacity(
-                                                                0.15,
+                                                              .withValues(
+                                                                alpha: 0.15,
                                                               ),
                                                           child: Icon(
                                                             icon,

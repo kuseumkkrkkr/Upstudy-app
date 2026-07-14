@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/concept_tag.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
+// 필요 변수: 현재 context. 작동 원리: 반투명 블러 배경 위에 레이팅 상세 모달을 표시한다.
 Future<T?> showRatingDetailModal<T>({required BuildContext context}) {
   return showDialog<T>(
     context: context,
@@ -18,7 +19,7 @@ Future<T?> showRatingDetailModal<T>({required BuildContext context}) {
           children: [
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
             const Center(child: RatingDetailModal()),
           ],
@@ -122,9 +123,7 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
     if (query.isEmpty) {
       return _allTags;
     }
-    return _allTags
-        .where((tag) => _normalize(tag).contains(query))
-        .toList();
+    return _allTags.where((tag) => _normalize(tag).contains(query)).toList();
   }
 
   String _labelForTag(String tag) {
@@ -147,6 +146,7 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
         visit(child);
       }
     }
+
     visit(tag);
     return result;
   }
@@ -184,7 +184,10 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
       ..sort((a, b) => b.rating.compareTo(a.rating));
     return items
         .take(5)
-        .map((item) => _TagScore(label: _labelForTag(item.tag), score: item.rating))
+        .map(
+          (item) =>
+              _TagScore(label: _labelForTag(item.tag), score: item.rating),
+        )
         .toList();
   }
 
@@ -193,7 +196,10 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
       ..sort((a, b) => a.rating.compareTo(b.rating));
     return items
         .take(5)
-        .map((item) => _TagScore(label: _labelForTag(item.tag), score: item.rating))
+        .map(
+          (item) =>
+              _TagScore(label: _labelForTag(item.tag), score: item.rating),
+        )
         .toList();
   }
 
@@ -204,10 +210,9 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
     final stats = <_RadarStat>[];
     final roots = conceptTagData.take(4).toList();
     for (final root in roots) {
-      final tags = _flattenTagsUnder(root)
-          .map((tag) => _normalize(tag))
-          .where((tag) => tag.isNotEmpty)
-          .toList();
+      final tags = _flattenTagsUnder(
+        root,
+      ).map((tag) => _normalize(tag)).where((tag) => tag.isNotEmpty).toList();
       final ratings = tags
           .map((tag) => _tagRatings[tag]?.rating)
           .whereType<double>()
@@ -217,10 +222,7 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
           ? 0.0
           : ovrs.reduce((a, b) => a + b) / ovrs.length;
       stats.add(
-        _RadarStat(
-          label: root.displayName.replaceAll('#', ''),
-          score: avg,
-        ),
+        _RadarStat(label: root.displayName.replaceAll('#', ''), score: avg),
       );
     }
     return stats;
@@ -278,8 +280,9 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
                                   scale: scale,
                                   controller: _searchController,
                                   focusNode: _searchFocusNode,
-                                  selectedTags:
-                                      _selectedTags(_searchController.text),
+                                  selectedTags: _selectedTags(
+                                    _searchController.text,
+                                  ),
                                   suggestions: _filteredTags(),
                                   tagRatings: _tagRatings,
                                   isLoading: _loadingRatings,
@@ -342,10 +345,7 @@ class _ModalHeader extends StatelessWidget {
           SizedBox(width: 8 * scale),
           Text(
             isSearchMode ? '세부 해시태그 검색' : '레이팅 상세',
-            style: TextStyle(
-              fontSize: 22 * scale,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w700),
           ),
           const Spacer(),
         ],
@@ -435,11 +435,7 @@ class _OverviewBody extends StatelessWidget {
                       onTap: onSearchTap,
                     ),
                     SizedBox(height: 12 * scale),
-                    _ActionButton(
-                      scale: scale,
-                      label: '보고서 보기',
-                      onTap: () {},
-                    ),
+                    _ActionButton(scale: scale, label: '보고서 보기', onTap: () {}),
                   ],
                 ),
               ),
@@ -460,10 +456,7 @@ class _OverviewBody extends StatelessWidget {
 }
 
 class _OverviewActions extends StatelessWidget {
-  const _OverviewActions({
-    required this.scale,
-    required this.onSearchTap,
-  });
+  const _OverviewActions({required this.scale, required this.onSearchTap});
 
   final double scale;
   final VoidCallback onSearchTap;
@@ -473,17 +466,9 @@ class _OverviewActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ActionButton(
-          scale: scale,
-          label: '세부 해시태그 검색',
-          onTap: onSearchTap,
-        ),
+        _ActionButton(scale: scale, label: '세부 해시태그 검색', onTap: onSearchTap),
         SizedBox(height: 12 * scale),
-        _ActionButton(
-          scale: scale,
-          label: '보고서 보기',
-          onTap: () {},
-        ),
+        _ActionButton(scale: scale, label: '보고서 보기', onTap: () {}),
       ],
     );
   }
@@ -517,10 +502,7 @@ class _SearchBody extends StatelessWidget {
       children: [
         Text(
           '해시태그를 입력하면 해당 개념의 점수를 조회합니다. #을 추가하면 새로운 해시태그로 인식됩니다.',
-          style: TextStyle(
-            fontSize: 12 * scale,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontSize: 12 * scale, color: Colors.black54),
         ),
         SizedBox(height: 10 * scale),
         TextField(
@@ -565,35 +547,34 @@ class _SearchBody extends StatelessWidget {
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : suggestions.isEmpty
-                    ? Center(
-                        child: Text(
-                          '검색 결과가 없습니다.',
-                          style: TextStyle(
-                            fontSize: 14 * scale,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: suggestions.length,
-                        separatorBuilder: (_, __) =>
-                            Divider(height: 1 * scale),
-                        itemBuilder: (context, index) {
-                          final tag = suggestions[index];
-                          final key = _normalize(tag);
-                          final rating = tagRatings[key]?.rating;
-                          return ListTile(
-                            title: Text(tag),
-                            trailing: rating == null
-                                ? const SizedBox(width: 40, height: 40)
-                                : _TagRatingProgressBar(
-                                    rating: rating,
-                                    size: 36 * scale,
-                                    strokeWidth: 4 * scale,
-                                  ),
-                          );
-                        },
+                ? Center(
+                    child: Text(
+                      '검색 결과가 없습니다.',
+                      style: TextStyle(
+                        fontSize: 14 * scale,
+                        color: Colors.black54,
                       ),
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: suggestions.length,
+                    separatorBuilder: (_, __) => Divider(height: 1 * scale),
+                    itemBuilder: (context, index) {
+                      final tag = suggestions[index];
+                      final key = _normalize(tag);
+                      final rating = tagRatings[key]?.rating;
+                      return ListTile(
+                        title: Text(tag),
+                        trailing: rating == null
+                            ? const SizedBox(width: 40, height: 40)
+                            : _TagRatingProgressBar(
+                                rating: rating,
+                                size: 36 * scale,
+                                strokeWidth: 4 * scale,
+                              ),
+                      );
+                    },
+                  ),
           ),
         ),
       ],
@@ -673,11 +654,7 @@ class _TagDeltaCard extends StatelessWidget {
             ],
           );
 
-    return _CardShell(
-      scale: scale,
-      title: '급상승/급하락 태그',
-      child: content,
-    );
+    return _CardShell(scale: scale, title: '급상승/급하락 태그', child: content);
   }
 }
 
@@ -701,10 +678,7 @@ class _TagDeltaColumn extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
-            fontSize: 14 * scale,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.w700),
         ),
         SizedBox(height: 12 * scale),
         if (items.isEmpty)
@@ -763,10 +737,7 @@ class _TagScoreColumn extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
-            fontSize: 14 * scale,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.w700),
         ),
         SizedBox(height: 12 * scale),
         if (items.isEmpty)
@@ -835,13 +806,10 @@ class _OvrRadarCard extends StatelessWidget {
             child: isLoading
                 ? const CircularProgressIndicator()
                 : data.isEmpty
-                    ? const Text('No data')
-                    : canExpand
-                        ? chart
-                        : SizedBox(
-                            height: 260 * scale,
-                            child: chart,
-                          ),
+                ? const Text('No data')
+                : canExpand
+                ? chart
+                : SizedBox(height: 260 * scale, child: chart),
           ),
         );
       },
@@ -882,10 +850,7 @@ class _CardShell extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 15 * scale,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 15 * scale, fontWeight: FontWeight.w700),
           ),
           SizedBox(height: 14 * scale),
           if (expandChild) Expanded(child: child) else child,
@@ -1228,10 +1193,7 @@ class _TagRatingProgressBarState extends State<_TagRatingProgressBar> {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          Positioned(
-            left: -(widget.size),
-            child: bubble,
-          ),
+          Positioned(left: -(widget.size), child: bubble),
           Container(
             width: 50,
             height: widget.strokeWidth * 1.3,

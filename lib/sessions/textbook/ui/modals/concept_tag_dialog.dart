@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/concept_tag.dart';
 
 class ConceptTagDialog extends StatefulWidget {
@@ -95,7 +95,9 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
 
   _SelectionState _getSelectionState(ConceptTag tag) {
     if (tag.children.isEmpty) {
-      return tag.isSelected ? _SelectionState.selected : _SelectionState.unselected;
+      return tag.isSelected
+          ? _SelectionState.selected
+          : _SelectionState.unselected;
     }
     bool hasSelected = false;
     bool hasUnselected = false;
@@ -137,12 +139,13 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
   }
 
   @override
+  // 필요 변수: 태그 목록과 화면 크기. 작동 원리: 검색된 태그를 화면 비율에 맞춘 대화상자에 배치한다.
   Widget build(BuildContext context) {
     final filteredTags = _getFilteredTags(tags);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
+      child: SizedBox(
         width: MediaQuery.of(context).size.width * 0.85,
         height: MediaQuery.of(context).size.height * 0.8,
         child: Column(
@@ -314,8 +317,8 @@ class _ConceptTagDialogState extends State<ConceptTagDialog> {
                     value: selectionState == _SelectionState.selected
                         ? true
                         : selectionState == _SelectionState.unselected
-                            ? false
-                            : null,
+                        ? false
+                        : null,
                     tristate: true,
                     onChanged: (_) => _toggleTagSelection(tag),
                   ),

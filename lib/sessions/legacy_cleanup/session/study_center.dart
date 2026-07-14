@@ -42,9 +42,11 @@ double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
   return scale;
 }
 
+// 필요 변수: 현재 context와 선택 태그. 작동 원리: 태그 선택 후 살아 있는 Navigator에서 개념 교재를 연다.
 Future<void> openConceptStudy(BuildContext context) async {
   final navigator = Navigator.of(context, rootNavigator: true);
   final tags = await showTagPickerDialog(context: navigator.context);
+  if (!context.mounted || !navigator.mounted) return;
   if (tags == null) return;
   if (tags.isEmpty) {
     ScaffoldMessenger.of(
@@ -52,7 +54,7 @@ Future<void> openConceptStudy(BuildContext context) async {
     ).showSnackBar(const SnackBar(content: Text('해시태그를 선택해주세요.')));
     return;
   }
-  await Navigator.of(context).push(
+  await navigator.push(
     MaterialPageRoute(
       builder: (_) => book_page.BookWidget(book: buildConceptBook(tags)),
     ),

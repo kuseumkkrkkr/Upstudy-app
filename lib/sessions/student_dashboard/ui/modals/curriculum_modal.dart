@@ -127,6 +127,7 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
   }
 
   @override
+  // 필요 변수: 코스 목록·편집 상태·화면 제약. 작동 원리: 편집 모드에서는 최신 reorder 콜백으로 코스 순서를 갱신한다.
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -189,7 +190,7 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                         padding: EdgeInsets.all(12 * scale),
                         child: ReorderableListView.builder(
                           itemCount: _courses.length,
-                          onReorder: _handleReorder,
+                          onReorderItem: _handleReorder,
                           buildDefaultDragHandles: false,
                           itemBuilder: (context, index) {
                             final course = _courses[index];

@@ -7,6 +7,7 @@ const _lightGreen = Color(0xFF45BF63);
 const _dividerColor = Color(0xFFE4E4E4);
 const _chipGrey = Color(0xFFF2F2F2);
 
+// 필요 변수: 날짜별 과제·잠금 과제·변경 콜백. 작동 원리: 편집 가능한 오늘 과제 모달을 블러 배경 위에 연다.
 Future<T?> showTodayTasksModal<T>({
   required BuildContext context,
   required Map<DateTime, List<String>> tasksByDate,
@@ -24,7 +25,7 @@ Future<T?> showTodayTasksModal<T>({
           children: [
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
             Center(
               child: TodayTasksModal(
@@ -92,7 +93,10 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
   }
 
   void _changeMonth(int delta) {
-    final targetMonth = DateTime(_visibleMonth.year, _visibleMonth.month + delta);
+    final targetMonth = DateTime(
+      _visibleMonth.year,
+      _visibleMonth.month + delta,
+    );
     final currentMonth = DateTime(_today.year, _today.month);
     if (targetMonth.isBefore(currentMonth)) return;
 
@@ -103,7 +107,11 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
     final selectedDay = _selectedDate.day > daysInMonth
         ? daysInMonth
         : _selectedDate.day;
-    final candidate = DateTime(targetMonth.year, targetMonth.month, selectedDay);
+    final candidate = DateTime(
+      targetMonth.year,
+      targetMonth.month,
+      selectedDay,
+    );
 
     setState(() {
       _visibleMonth = targetMonth;
@@ -309,10 +317,7 @@ class _TaskPanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
-                  '추가',
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: const Text('추가', style: TextStyle(color: Colors.white)),
               ),
             ),
           ],
@@ -393,8 +398,10 @@ class _CalendarPanel extends StatelessWidget {
       visibleMonth.month,
     );
     final leadingEmpty = monthStart.weekday % 7;
-    final canGoPrev = !DateTime(visibleMonth.year, visibleMonth.month - 1)
-        .isBefore(DateTime(today.year, today.month));
+    final canGoPrev = !DateTime(
+      visibleMonth.year,
+      visibleMonth.month - 1,
+    ).isBefore(DateTime(today.year, today.month));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,7 +462,8 @@ class _CalendarPanel extends StatelessWidget {
               final isDisabled = dateOnly.isBefore(today);
               final isSelected = _isSameDay(dateOnly, selectedDate);
               final isToday = _isSameDay(dateOnly, today);
-              final hasTasks = (tasksByDate[dateOnly]?.isNotEmpty ?? false) ||
+              final hasTasks =
+                  (tasksByDate[dateOnly]?.isNotEmpty ?? false) ||
                   (lockedTasksByDate[dateOnly]?.isNotEmpty ?? false);
 
               return _CalendarDayCell(
@@ -539,10 +547,7 @@ class _CalendarDayCell extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              '$day',
-              style: TextStyle(fontSize: 14, color: textColor),
-            ),
+            Text('$day', style: TextStyle(fontSize: 14, color: textColor)),
             const SizedBox(height: 4),
             if (hasTasks)
               Container(
@@ -562,7 +567,8 @@ class _CalendarDayCell extends StatelessWidget {
   }
 }
 
-DateTime _dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
 
 bool _isSameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
@@ -573,9 +579,7 @@ String _formatDate(DateTime date) {
   return '${date.year}-$month-$day';
 }
 
-Map<DateTime, List<String>> _cloneTasks(
-  Map<DateTime, List<String>> source,
-) {
+Map<DateTime, List<String>> _cloneTasks(Map<DateTime, List<String>> source) {
   return {
     for (final entry in source.entries)
       _dateOnly(entry.key): List<String>.from(entry.value),
