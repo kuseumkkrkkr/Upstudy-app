@@ -10,28 +10,21 @@ import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/sessions/course/ui/widgets/level_test_widget.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    show StudyCenterNavBar;
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'teacher_course_textbook_reader_page.dart';
 
-const _green = Color(0xFF1B402B);
-const _lightGreen = Color(0xFF45BF63);
-const _bgGrey = Color(0xFFF7F7F7);
+const _green = StudentDensityTokens.ink;
+const _lightGreen = StudentDensityTokens.dark;
+const _bgGrey = StudentDensityTokens.surfaceMuted;
 const _shadow = BoxShadow(
   blurRadius: 6,
   color: Color(0x1A000000),
   offset: Offset(0, 3),
 );
-
-double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
-  final width = MediaQuery.of(context).size.width;
-  final scale = width / 1100;
-  if (scale < min) return min;
-  if (scale > max) return max;
-  return scale;
-}
 
 int _courseNumber(Course course) => course.id.hashCode & 0xFFFF;
 
@@ -368,71 +361,520 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
     );
   }
 
+  /// 필요한 변수는 최신 코스·펼친 단원·화면 폭이다.
+  /// HTML 순서인 제목, 전체 진행, 현재 학습, 코스 경로를 유지하면서 기존 미션 라우팅을 연결한다.
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
     final course = _course;
-    final progressPercent = (course.progress * 100).round();
-    final isDemo = course.isDemo;
-
     return Scaffold(
+      key: const ValueKey('course-learning-screen'),
       backgroundColor: StudentDensityTokens.background,
+      drawer: const AppDrawer(),
       body: SafeArea(
-        child: _loadingCourse
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
+        child: Column(
+          children: [
+            Builder(
+              builder: (context) => Ios26TopBar(
+                brandColor: StudentDensityTokens.dark,
+                onMenu: () => Scaffold.of(context).openDrawer(),
+                showLevelIndicator: false,
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.courses,
+                ),
+              ),
+            ),
+            Expanded(
+              child: _loadingCourse
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      child: StudentDensityPage(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _LearningHeading(course: course, onBack: _goBack),
+                            const SizedBox(height: 16),
+                            _LearningHero(course: course),
+                            const SizedBox(height: 10),
+                            _CurrentLearning(
+                              course: course,
+                              onMissionTap: _handleMissionTap,
+                            ),
+                            const SizedBox(height: 42),
+                            const StudentDensityEyebrow('COURSE ROUTE'),
+                            const SizedBox(height: 10),
+                            const Text(
+                              '코스 진행 경로',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            const Text(
+                              '현재 단원은 자동으로 펼쳐집니다. 단원을 눌러 미션을 확인하세요.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: StudentDensityTokens.muted,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            _RouteLegend(),
+                            const SizedBox(height: 12),
+                            for (
+                              var index = 0;
+                              index < course.units.length;
+                              index++
+                            )
+                              _LearningUnitCard(
+                                unit: course.units[index],
+                                scale: 1,
+                                isExpanded: _expandedUnits.contains(index),
+                                onToggle: () => _toggleUnit(index),
+                                onMissionTap: (mission) => _handleMissionTap(
+                                  course.units[index],
+                                  mission,
+                                ),
+                              ),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LearningHero extends StatelessWidget {
+  const _LearningHero({required this.course});
+
+  final Course course;
+
+  /// 필요한 변수는 코스 설명·태그·전체 진행률과 화면 폭이다.
+  /// 데스크톱은 1fr/300px, 모바일은 본문/118px 비율로 HTML 진행 히어로를 구성한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final tags = course.focusTags.isEmpty
+        ? const ['중학교 2학년', '수학', '#일차함수', '#그래프']
+        : ['중학교 2학년', '수학', ...course.focusTags];
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(mobile ? 22 : 28),
+      child: Container(
+        height: mobile ? 130 : 252,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x10000000),
+              blurRadius: 28,
+              offset: Offset(0, 14),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(mobile ? 17 : 30),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final tag in tags.take(mobile ? 2 : 4))
+                          _LearningPill(tag),
+                      ],
+                    ),
+                    SizedBox(height: mobile ? 9 : 16),
+                    Text(
+                      '일차함수의 개념부터\n그래프 실전까지',
+                      style: TextStyle(
+                        fontSize: mobile ? 22 : 40,
+                        height: .98,
+                        letterSpacing: -1.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    if (!mobile) ...[
+                      const SizedBox(height: 28),
+                      const Text(
+                        '교재, 문제, 레벨 테스트와 시험을 정해진 학습 순서로 이어갑니다.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: StudentDensityTokens.muted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              width: mobile ? 118 : 300,
+              child: _LearningProgress(course: course, mobile: mobile),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LearningHeading extends StatelessWidget {
+  const _LearningHeading({required this.course, required this.onBack});
+
+  final Course course;
+  final VoidCallback onBack;
+
+  /// 필요한 변수는 코스 제목과 목록 복귀 콜백이다.
+  /// HTML 페이지 헤더에서 모바일 버튼은 아래 전체 폭, 데스크톱 버튼은 우측에 배치한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final copy = StudentDensityPageHeader(
+      eyebrow: 'ACTIVE COURSE',
+      title: course.title,
+      description: '현재 학습 위치에서 이어가고, 단원별 미션과 잠금 조건을 원래 흐름대로 확인하세요.',
+    );
+    final button = OutlinedButton(
+      onPressed: onBack,
+      style: OutlinedButton.styleFrom(
+        minimumSize: Size(mobile ? double.infinity : 88, 44),
+        foregroundColor: StudentDensityTokens.ink,
+        side: const BorderSide(color: StudentDensityTokens.line),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      child: const Text('코스 목록', style: TextStyle(fontWeight: FontWeight.w800)),
+    );
+    if (mobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [copy, const SizedBox(height: 16), button],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(child: copy),
+        button,
+      ],
+    );
+  }
+}
+
+class _LearningProgress extends StatelessWidget {
+  const _LearningProgress({required this.course, required this.mobile});
+
+  final Course course;
+  final bool mobile;
+
+  /// 필요한 변수는 전체 진행률·유닛 상태·모바일 여부다.
+  /// 진행률 숫자와 막대를 표시하고 PC에서만 완료 미션·현재 단원·OVR 지표를 추가한다.
+  @override
+  Widget build(BuildContext context) {
+    final percent = (course.progress * 100).round();
+    final completed = course.units
+        .where((unit) => unit.status == CourseUnitStatus.completed)
+        .length;
+    final active = course.units.indexWhere(
+      (unit) => unit.status == CourseUnitStatus.active,
+    );
+    return Container(
+      padding: EdgeInsets.all(mobile ? 15 : 24),
+      color: StudentDensityTokens.surfaceMuted,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!mobile) const StudentDensityEyebrow('COURSE PROGRESS'),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$percent',
+                  style: TextStyle(
+                    fontSize: mobile ? 40 : 58,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -3,
+                  ),
+                ),
+                TextSpan(
+                  text: '%',
+                  style: TextStyle(
+                    fontSize: mobile ? 18 : 22,
+                    color: StudentDensityTokens.muted,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: course.progress,
+              minHeight: 7,
+              backgroundColor: StudentDensityTokens.line,
+              color: StudentDensityTokens.dark,
+            ),
+          ),
+          if (!mobile) ...[
+            const SizedBox(height: 24),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _ProgressMeta(
+                    '$completed / ${course.units.length}',
+                    '완료 미션',
+                  ),
+                ),
+                Expanded(
+                  child: _ProgressMeta(
+                    '${(active < 0 ? 0 : active + 1).toString().padLeft(2, '0')} / ${course.units.length.toString().padLeft(2, '0')}',
+                    '현재 단원',
+                  ),
+                ),
+                const Expanded(child: _ProgressMeta('18.6', 'MY OVR')),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressMeta extends StatelessWidget {
+  const _ProgressMeta(this.value, this.label);
+
+  final String value;
+  final String label;
+
+  /// 필요한 변수는 진행 지표 값과 이름이다.
+  /// PC 히어로 하단의 세 가지 소형 지표를 동일한 열로 표시한다.
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        value,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 5),
+      Text(
+        label,
+        style: const TextStyle(fontSize: 8, color: StudentDensityTokens.muted),
+      ),
+    ],
+  );
+}
+
+class _LearningPill extends StatelessWidget {
+  const _LearningPill(this.label);
+
+  final String label;
+
+  /// 필요한 변수는 학년·과목·태그 문구다.
+  /// HTML 학습 히어로의 작은 연회색 캡슐로 표시한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    decoration: BoxDecoration(
+      color: StudentDensityTokens.surfaceMuted,
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
+    ),
+  );
+}
+
+class _CurrentLearning extends StatelessWidget {
+  const _CurrentLearning({required this.course, required this.onMissionTap});
+
+  final Course course;
+  final Future<void> Function(CourseUnit, CourseUnitMission) onMissionTap;
+
+  /// 필요한 변수는 활성 유닛·첫 미션·미션 이동 콜백이다.
+  /// 현재 학습의 제목·행동과 학습 시간을 PC 가로, 모바일 세로 카드로 재배치한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final activeIndex = course.units.indexWhere(
+      (unit) => unit.status == CourseUnitStatus.active,
+    );
+    final index = activeIndex < 0 ? 0 : activeIndex;
+    final unit = course.units.isEmpty ? null : course.units[index];
+    final mission = unit == null || unit.missions.isEmpty
+        ? null
+        : unit.missions.first;
+    final main = Padding(
+      padding: EdgeInsets.all(mobile ? 18 : 30),
+      child: Row(
+        children: [
+          Container(
+            width: mobile ? 54 : 78,
+            height: mobile ? 54 : 78,
+            decoration: BoxDecoration(
+              color: StudentDensityTokens.dark,
+              borderRadius: BorderRadius.circular(mobile ? 18 : 24),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '현재 학습 · ${(index + 1).toString().padLeft(2, '0')}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 9,
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 22),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StudentDensityEyebrow(
+                  'UNIT ${(index + 1).toString().padLeft(2, '0')} · 그래프 이해',
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  unit?.title ?? '기울기의 의미',
+                  style: TextStyle(
+                    fontSize: mobile ? 24 : 34,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
+                  ),
+                ),
+                if (!mobile) ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    '두 점의 변화량을 비교해 직선의 기울기를 이해합니다. 중단한 위치부터 이어집니다.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: StudentDensityTokens.muted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (!mobile) ...[
+            FilledButton(
+              onPressed: mission == null
+                  ? null
+                  : () => onMissionTap(unit!, mission),
+              style: FilledButton.styleFrom(
+                backgroundColor: StudentDensityTokens.dark,
+                minimumSize: const Size(108, 44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              child: const Text(
+                '교재 이어보기',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton(onPressed: () {}, child: const Text('완료 조건')),
+          ],
+        ],
+      ),
+    );
+    final time = Container(
+      width: mobile ? double.infinity : 280,
+      padding: EdgeInsets.all(mobile ? 18 : 26),
+      color: StudentDensityTokens.surfaceMuted,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '학습 시간',
+            style: TextStyle(
+              fontSize: 10,
+              color: StudentDensityTokens.muted,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 9),
+          const Text(
+            '05:12',
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          const LinearProgressIndicator(
+            value: .62,
+            minHeight: 7,
+            color: StudentDensityTokens.dark,
+            backgroundColor: StudentDensityTokens.line,
+          ),
+          const SizedBox(height: 9),
+          const Text(
+            '중단해도 마지막 위치와 시간이 보존됩니다.',
+            style: TextStyle(fontSize: 9, color: StudentDensityTokens.muted),
+          ),
+        ],
+      ),
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(mobile ? 22 : 28),
+      child: Container(
+        color: Colors.white,
+        child: mobile
+            ? Column(
+                children: [
+                  main,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        FilledButton(
+                          onPressed: mission == null
+                              ? null
+                              : () => onMissionTap(unit!, mission),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: StudentDensityTokens.dark,
+                            minimumSize: const Size.fromHeight(44),
+                          ),
+                          child: const Text('교재 이어보기'),
+                        ),
+                        const SizedBox(height: 8),
+                        OutlinedButton(
+                          onPressed: () {},
+                          child: const Text('완료 조건'),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  time,
+                ],
+              )
+            : SizedBox(
+                height: 190,
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    StudyCenterNavBar(onBack: _goBack),
-                    _LearningHero(
-                      course: course,
-                      scale: scale,
-                      progressPercent: progressPercent,
-                      isDemo: isDemo,
-                    ),
-                    StudentDensityPage(
-                      padding: EdgeInsets.fromLTRB(
-                        30 * scale,
-                        24 * scale,
-                        30 * scale,
-                        40 * scale,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const StudentDensityEyebrow('COURSE ROUTE'),
-                          SizedBox(height: 10 * scale),
-                          Text(
-                            '코스 진행 경로',
-                            style: GoogleFonts.inter(
-                              fontSize: 30 * scale,
-                              fontWeight: FontWeight.w900,
-                              color: StudentDensityTokens.ink,
-                              letterSpacing: -1.2,
-                            ),
-                          ),
-                          SizedBox(height: 10 * scale),
-                          Text(
-                            '현재 단원은 자동으로 펼쳐집니다. 단원을 눌러 미션을 확인하세요.',
-                            style: GoogleFonts.inter(
-                              fontSize: 14 * scale,
-                              color: StudentDensityTokens.muted,
-                            ),
-                          ),
-                          SizedBox(height: 18 * scale),
-                          for (var i = 0; i < course.units.length; i++)
-                            _LearningUnitCard(
-                              unit: course.units[i],
-                              scale: scale,
-                              isExpanded: _expandedUnits.contains(i),
-                              onToggle: () => _toggleUnit(i),
-                              onMissionTap: (mission) =>
-                                  _handleMissionTap(course.units[i], mission),
-                            ),
-                        ],
-                      ),
-                    ),
+                    Expanded(child: main),
+                    time,
                   ],
                 ),
               ),
@@ -441,225 +883,44 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   }
 }
 
-class _LearningHero extends StatelessWidget {
-  const _LearningHero({
-    required this.course,
-    required this.scale,
-    required this.progressPercent,
-    required this.isDemo,
-  });
-
-  final Course course;
-  final double scale;
-  final int progressPercent;
-  final bool isDemo;
-
+class _RouteLegend extends StatelessWidget {
+  /// 필요한 변수는 고정된 완료·진행·잠금 상태다.
+  /// 코스 경로 위에 HTML과 동일한 세 점 범례를 오른쪽 정렬한다.
   @override
-  Widget build(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
-    final tags = course.focusTags.take(mobile ? 2 : 4).toList(growable: false);
-    return StudentDensityPage(
-      padding: EdgeInsets.fromLTRB(30 * scale, 32 * scale, 30 * scale, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          StudentDensityPageHeader(
-            eyebrow: 'ACTIVE COURSE',
-            title: course.title,
-            description: '현재 학습 위치에서 이어가고 단원별 잠금 조건을 순서대로 확인하세요.',
-          ),
-          SizedBox(height: 22 * scale),
-          StudentDensitySurface(
-            padding: EdgeInsets.all((mobile ? 20 : 28) * scale),
-            child: mobile
-                ? _LearningHeroMobile(
-                    course: course,
-                    tags: tags,
-                    progressPercent: progressPercent,
-                    scale: scale,
-                    isDemo: isDemo,
-                  )
-                : _LearningHeroDesktop(
-                    course: course,
-                    tags: tags,
-                    progressPercent: progressPercent,
-                    scale: scale,
-                    isDemo: isDemo,
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerRight,
+    child: Wrap(
+      spacing: 12,
+      children: const [
+        _LegendDot(Color(0xFF8A8A90), '완료'),
+        _LegendDot(StudentDensityTokens.dark, '진행'),
+        _LegendDot(Color(0xFFD4D4D8), '잠금'),
+      ],
+    ),
+  );
 }
 
-/// 필요 변수: 코스 설명·태그·진행률과 데모 여부.
-/// 작동 원리: 데스크톱에서 코스 문맥과 진행률을 좌우 두 영역으로 압축해 표시합니다.
-class _LearningHeroDesktop extends StatelessWidget {
-  const _LearningHeroDesktop({
-    required this.course,
-    required this.tags,
-    required this.progressPercent,
-    required this.scale,
-    required this.isDemo,
-  });
+class _LegendDot extends StatelessWidget {
+  const _LegendDot(this.color, this.label);
 
-  final Course course;
-  final List<String> tags;
-  final int progressPercent;
-  final double scale;
-  final bool isDemo;
+  final Color color;
+  final String label;
 
+  /// 필요한 변수는 상태 색상과 이름이다.
+  /// 8px 원과 짧은 상태 문구를 한 행으로 표시한다.
   @override
   Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
     children: [
-      Expanded(
-        child: _LearningHeroCopy(course: course, tags: tags, scale: scale),
+      Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
-      SizedBox(width: 32 * scale),
-      SizedBox(
-        width: 250 * scale,
-        child: _LearningProgress(
-          course: course,
-          progressPercent: progressPercent,
-          scale: scale,
-          isDemo: isDemo,
-        ),
-      ),
-    ],
-  );
-}
-
-/// 필요 변수: 코스 설명·태그·진행률과 데모 여부.
-/// 작동 원리: 모바일에서는 설명 아래에 진행률을 배치해 가로 압축을 피합니다.
-class _LearningHeroMobile extends StatelessWidget {
-  const _LearningHeroMobile({
-    required this.course,
-    required this.tags,
-    required this.progressPercent,
-    required this.scale,
-    required this.isDemo,
-  });
-
-  final Course course;
-  final List<String> tags;
-  final int progressPercent;
-  final double scale;
-  final bool isDemo;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _LearningHeroCopy(course: course, tags: tags, scale: scale),
-      SizedBox(height: 22 * scale),
-      _LearningProgress(
-        course: course,
-        progressPercent: progressPercent,
-        scale: scale,
-        isDemo: isDemo,
-      ),
-    ],
-  );
-}
-
-/// 필요 변수: 코스 설명과 표시할 태그.
-/// 작동 원리: 반복 지표를 제거하고 학습 범위와 핵심 태그만 보여줍니다.
-class _LearningHeroCopy extends StatelessWidget {
-  const _LearningHeroCopy({
-    required this.course,
-    required this.tags,
-    required this.scale,
-  });
-
-  final Course course;
-  final List<String> tags;
-  final double scale;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Wrap(
-        spacing: 8 * scale,
-        runSpacing: 8 * scale,
-        children: tags
-            .map(
-              (tag) => Chip(
-                label: Text(tag),
-                side: BorderSide.none,
-                backgroundColor: StudentDensityTokens.background,
-                labelStyle: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            )
-            .toList(growable: false),
-      ),
-      SizedBox(height: 16 * scale),
+      const SizedBox(width: 4),
       Text(
-        course.description,
-        maxLines: 3,
-        overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.inter(
-          color: StudentDensityTokens.ink,
-          fontSize: 22 * scale,
-          height: 1.28,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    ],
-  );
-}
-
-/// 필요 변수: 전체 진행률과 데모 여부.
-/// 작동 원리: 숫자·막대·현재 상태를 하나의 진행 영역으로 묶습니다.
-class _LearningProgress extends StatelessWidget {
-  const _LearningProgress({
-    required this.course,
-    required this.progressPercent,
-    required this.scale,
-    required this.isDemo,
-  });
-
-  final Course course;
-  final int progressPercent;
-  final double scale;
-  final bool isDemo;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const StudentDensityEyebrow('COURSE PROGRESS'),
-      SizedBox(height: 8 * scale),
-      Text(
-        '$progressPercent%',
-        style: GoogleFonts.inter(
-          color: StudentDensityTokens.ink,
-          fontSize: 48 * scale,
-          fontWeight: FontWeight.w900,
-          letterSpacing: -2,
-        ),
-      ),
-      ClipRRect(
-        borderRadius: BorderRadius.circular(999),
-        child: LinearProgressIndicator(
-          value: course.progress,
-          minHeight: 8 * scale,
-          color: StudentDensityTokens.dark,
-          backgroundColor: StudentDensityTokens.line,
-        ),
-      ),
-      SizedBox(height: 12 * scale),
-      Text(
-        isDemo ? '체험 모드 · 기록되지 않음' : '현재 학습 위치가 아래에 열려 있어요.',
-        style: GoogleFonts.inter(
-          color: StudentDensityTokens.muted,
-          fontSize: 12 * scale,
-          fontWeight: FontWeight.w600,
-        ),
+        label,
+        style: const TextStyle(fontSize: 9, color: StudentDensityTokens.muted),
       ),
     ],
   );
@@ -999,13 +1260,13 @@ _StatusData _statusFor(CourseUnitStatus status) {
     case CourseUnitStatus.completed:
       return const _StatusData(
         label: '완료',
-        badgeColor: Color(0xFF2EAD62),
+        badgeColor: Color(0xFF8A8A90),
         icon: Icons.check_circle,
       );
     case CourseUnitStatus.active:
       return const _StatusData(
         label: '진행 중',
-        badgeColor: Color(0xFFF3A43A),
+        badgeColor: StudentDensityTokens.dark,
         icon: Icons.play_circle_fill,
       );
     case CourseUnitStatus.locked:

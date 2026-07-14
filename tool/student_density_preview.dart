@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
+import 'package:s11/sessions/course/ui/course_detail_page.dart';
+import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
@@ -19,6 +21,47 @@ List<Course> _previewCourses() => const [
     lastAction: '그래프 이해 · 06번째 모듈',
     lessons: 12,
     targetOvr: 91,
+    focusTags: ['#일차함수', '#그래프', '#기울기', '#서술형'],
+    units: [
+      CourseUnit(
+        title: '함수의 기초',
+        type: 'textbook_view',
+        detail: {'type': 'textbook_view', 'min_minutes': 8},
+        status: CourseUnitStatus.completed,
+        missions: [
+          CourseUnitMission(
+            title: '함수의 뜻',
+            detail: {'type': 'textbook_view'},
+            actionLabel: '복습',
+          ),
+        ],
+      ),
+      CourseUnit(
+        title: '기울기의 의미',
+        type: 'textbook_view',
+        detail: {'type': 'textbook_view', 'min_minutes': 8},
+        status: CourseUnitStatus.active,
+        progress: .42,
+        missions: [
+          CourseUnitMission(
+            title: '기울기 교재 이어보기',
+            detail: {'type': 'textbook_view'},
+          ),
+        ],
+      ),
+      CourseUnit(
+        title: '좌표와 그래프',
+        type: 'problem_solve',
+        detail: {'type': 'problem_solve', 'question_count': 10},
+        status: CourseUnitStatus.locked,
+      ),
+      CourseUnit(
+        title: '일차함수 실전',
+        type: 'exam_solve',
+        detail: {'type': 'exam_solve', 'question_count': 20},
+        status: CourseUnitStatus.locked,
+      ),
+    ],
   ),
   Course(
     id: 'geometry-active',
@@ -63,6 +106,20 @@ List<Course> _previewCourses() => const [
   ),
 ];
 
+/// 필요한 변수는 학습 중인 미리보기 코스다.
+/// 작동 원리: 동일 메타와 유닛을 사용하되 등록 상태만 제거해 HTML 상세 화면의 등록 전 행동을 재현한다.
+Course _previewDetailCourse(Course source) => Course(
+  id: '${source.id}-detail',
+  title: source.title,
+  description: source.description,
+  level: source.level,
+  duration: source.duration,
+  focusTags: source.focusTags,
+  lessons: source.lessons,
+  targetOvr: source.targetOvr,
+  units: source.units,
+);
+
 /// 필요한 변수는 브라우저 viewport와 선택적인 width/height 쿼리다.
 /// 작동 원리: 실제 학생 홈을 그대로 실행하고 논리 화면 크기만 고정해 HTML 시안과 같은 좌표계로 캡처한다.
 void main() {
@@ -83,22 +140,27 @@ class StudentDensityPreviewApp extends StatelessWidget {
       Uri.base.queryParameters['height'] ?? '',
     );
     final screen = Uri.base.queryParameters['screen'] ?? 'dashboard';
-    final home = screen == 'courses'
-        ? CourseCatalogPage(
-            courseFeedLoader: ({required keyword, recommend}) async {
-              final courses = _previewCourses();
-              if (keyword.trim().isEmpty) return courses;
-              final query = keyword.trim().toLowerCase();
-              return courses
-                  .where(
-                    (course) =>
-                        course.title.toLowerCase().contains(query) ||
-                        course.description.toLowerCase().contains(query),
-                  )
-                  .toList(growable: false);
-            },
-          )
-        : const MainStudentPage(username: '김학생');
+    final courses = _previewCourses();
+    final home = switch (screen) {
+      'courses' => CourseCatalogPage(
+        courseFeedLoader: ({required keyword, recommend}) async {
+          if (keyword.trim().isEmpty) return courses;
+          final query = keyword.trim().toLowerCase();
+          return courses
+              .where(
+                (course) =>
+                    course.title.toLowerCase().contains(query) ||
+                    course.description.toLowerCase().contains(query),
+              )
+              .toList(growable: false);
+        },
+      ),
+      'course-detail' => CourseDetailPage(
+        course: _previewDetailCourse(courses.first),
+      ),
+      'course-learning' => CourseLearningPage(course: courses.first),
+      _ => const MainStudentPage(username: '김학생'),
+    };
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
