@@ -40,13 +40,225 @@ const TextStyle _bodyMdMuted = TextStyle(
 
 // ══════════════════════════════════════════════════════════════
 class SoWidget extends StatefulWidget {
-  const SoWidget({super.key});
+  const SoWidget({super.key, this.preview = false});
+
+  final bool preview;
 
   static String routeName = 'so';
   static String routePath = '/so';
 
   @override
   State<SoWidget> createState() => _SoWidgetState();
+}
+
+class _SocialNoticeRow extends StatelessWidget {
+  const _SocialNoticeRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.count,
+    this.onTap,
+    this.last = false,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final int count;
+  final VoidCallback? onTap;
+  final bool last;
+
+  /// 필요한 변수는 소식 아이콘·문구·개수·선택 콜백이다.
+  /// 작동 원리는 아이콘과 숫자를 검은 원형으로 대응시켜 새 소식 우선순위를 드러내는 것이다.
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: BoxDecoration(
+        border: last
+            ? null
+            : const Border(bottom: BorderSide(color: Color(0xFFE6E6E8))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF202022),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 10, color: Colors.black45),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: Color(0xFF202022),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _SocialSectionHeader extends StatelessWidget {
+  const _SocialSectionHeader({
+    required this.eyebrow,
+    required this.title,
+    required this.trailing,
+  });
+  final String eyebrow;
+  final String title;
+  final String trailing;
+
+  /// 필요한 변수는 영문 섹션명·한글 제목·요약 문구다.
+  /// 작동 원리는 위치를 고정한 요약을 제목 오른쪽에 놓아 HTML 카드 헤더를 재현하는 것이다.
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(18, 22, 18, 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                eyebrow,
+                style: const TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            Text(
+              trailing,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+        const SizedBox(height: 9),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
+}
+
+class _SocialPersonRow extends StatelessWidget {
+  const _SocialPersonRow({
+    required this.name,
+    required this.subtitle,
+    required this.trailing,
+    required this.onTap,
+  });
+  final String name;
+  final String subtitle;
+  final String trailing;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 사용자명·상태·오른쪽 표시·선택 콜백이다.
+  /// 작동 원리는 초성 아바타와 두 줄 정보를 구분선 행으로 정렬해 대화·친구 진입을 공유하는 것이다.
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      height: 68,
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE6E6E8))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF343438),
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: const [
+                BoxShadow(color: Color(0x33000000), blurRadius: 8),
+              ],
+            ),
+            child: Text(
+              name.isEmpty ? '?' : name.characters.first,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10, color: Colors.black45),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            trailing,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _SoWidgetState extends State<SoWidget> {
@@ -102,6 +314,37 @@ class _SoWidgetState extends State<SoWidget> {
   @override
   void initState() {
     super.initState();
+    if (widget.preview) {
+      _friends = const [
+        _FriendInfo(name: '이수학', status: '학습 중 · B Tier', ovr: 76),
+        _FriendInfo(name: '박함수', status: '접속 중 · A Tier', ovr: 84),
+        _FriendInfo(name: '최도형', status: '오프라인 · B Tier', ovr: 72),
+      ];
+      _messages = const [
+        _MessageInfo(name: '이수학', lastMessage: '오늘 챌린지 같이 할래?', timeAgo: '방금'),
+        _MessageInfo(
+          name: '박함수',
+          lastMessage: 'Flow를 공유했습니다.',
+          timeAgo: '18분 전',
+        ),
+        _MessageInfo(name: '최도형', lastMessage: '고마워!', timeAgo: '어제'),
+      ];
+      _friendRequests = [
+        _FriendRequest(
+          id: 'preview-1',
+          username: '김그래프',
+          direction: _FriendRequestDirection.incoming,
+        ),
+        _FriendRequest(
+          id: 'preview-2',
+          username: '박기울기',
+          direction: _FriendRequestDirection.incoming,
+        ),
+      ];
+      _unreadThreads.add('이수학');
+      _unreadMessages = 3;
+      return;
+    }
     unawaited(ActivityStore.load().catchError((_) => ActivitySnapshot.empty()));
     unawaited(_refreshPageData());
     SocialMessageHub.addListener(_handleIncomingDirectMessage);
@@ -2039,12 +2282,175 @@ class _SoWidgetState extends State<SoWidget> {
   );
 
   // ══════════════════════════════════════════════════════════════
+  /// 필요한 변수는 친구·요청·안 읽은 대화 상태와 학생 내비게이션이다.
+  /// 작동 원리는 HTML의 소셜 요약, 최근 대화, 친구 상태 순서로 한 개 스크롤을 구성하는 것이다.
+  Widget _buildHtmlSocial(BuildContext context) => GestureDetector(
+    onTap: () => FocusScope.of(context).unfocus(),
+    child: Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: const Color(0xFFF4F4F6),
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Ios26TopBar(
+              brandColor: Colors.black,
+              showLevelIndicator: false,
+              onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+              items: studentTopNavItems(
+                context,
+                active: StudentTopDestination.social,
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refreshPageData,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                  children: [
+                    const Text(
+                      'FRIENDS & SOCIAL',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.7,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '친구/소셜',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      '새 소식을 먼저 처리하고 친구·그룹 학습으로 자연스럽게 이어집니다.',
+                      style: TextStyle(color: Colors.black45),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        backgroundColor: const Color(0xFF202022),
+                      ),
+                      onPressed: _openAddFriendModal,
+                      child: const Text('친구 추가'),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSocialSummary(),
+                    const SizedBox(height: 16),
+                    _buildSocialDirectory(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  /// 필요한 변수는 받은 요청, 안 읽은 쪽지, 그룹 소식 개수다.
+  /// 작동 원리는 새 소식을 세 행으로 표시하고 기존 요청·대화 동작에 연결하는 것이다.
+  Widget _buildSocialSummary() => Container(
+    clipBehavior: Clip.antiAlias,
+    decoration: _socialCardDecoration(),
+    child: Column(
+      children: [
+        _SocialNoticeRow(
+          icon: Icons.person_add_alt_1_outlined,
+          title: '친구 요청',
+          subtitle: '받은 요청 ${_pendingIncomingRequests.length} · 보낸 요청 1',
+          count: _pendingIncomingRequests.length,
+          onTap: _openAddFriendModal,
+        ),
+        _SocialNoticeRow(
+          icon: Icons.circle_outlined,
+          title: '안 읽은 쪽지',
+          subtitle: _messages.isEmpty
+              ? '새 쪽지 없음'
+              : '${_messages.first.name} 외 ${(_messages.length - 1).clamp(0, 99)}명',
+          count: _unreadMessages,
+          onTap: _messages.isEmpty
+              ? null
+              : () => _openMessageThread(_messages.first),
+        ),
+        _SocialNoticeRow(
+          icon: Icons.album_outlined,
+          title: '그룹 새 소식',
+          subtitle: '공지 2 · 메시지 3',
+          count: 5,
+          last: true,
+          onTap: () => Navigator.of(context).pushNamed('/groups'),
+        ),
+      ],
+    ),
+  );
+
+  /// 필요한 변수는 최근 대화와 친구 목록이다.
+  /// 작동 원리는 각 목록을 선택 가능한 행으로 표시해 대화·친구 메뉴를 기존 로직으로 연다.
+  Widget _buildSocialDirectory() => Container(
+    clipBehavior: Clip.antiAlias,
+    decoration: _socialCardDecoration(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SocialSectionHeader(
+          eyebrow: 'MESSAGE INBOX',
+          title: '최근 대화',
+          trailing: '${_messages.length}',
+        ),
+        for (final message in _messages.take(3))
+          _SocialPersonRow(
+            name: message.name,
+            subtitle: '${message.lastMessage} · ${message.timeAgo}',
+            trailing: _unreadThreads.contains(message.name) ? '2' : '›',
+            onTap: () => _openMessageThread(message),
+          ),
+        const Divider(height: 1),
+        _SocialSectionHeader(
+          eyebrow: 'FRIENDS',
+          title: '친구 상태',
+          trailing:
+              '온라인 ${_friends.where((friend) => friend.status.contains('중')).length}',
+        ),
+        for (final friend in _friends.take(4))
+          _SocialPersonRow(
+            name: friend.name,
+            subtitle: friend.status,
+            trailing: '쪽지 ›',
+            onTap: () => _openFriendActionModal(friend),
+          ),
+      ],
+    ),
+  );
+
+  /// 필요한 변수는 없으며 소셜 카드가 공유할 표면 규칙을 만든다.
+  /// 작동 원리는 흰 배경·22px 모서리·어두운 테두리로 HTML 카드 외곽을 고정하는 것이다.
+  BoxDecoration _socialCardDecoration() => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(22),
+    border: Border.all(color: const Color(0xFFE0E0E2)),
+  );
+
   // BUILD
   // ══════════════════════════════════════════════════════════════
   /// 필요한 변수는 친구·그룹 상태와 현재 학생 화면 문맥이다.
-  /// 소셜 본문 위에 공용 다섯 메뉴를 배치하고 친구/소셜 목적지만 활성화한다.
+  /// 작동 원리는 HTML 소셜 구조를 기본으로 쓰고 환경 플래그에서만 구형 화면을 여는 것이다.
   @override
   Widget build(BuildContext context) {
+    if (!const bool.fromEnvironment('USE_LEGACY_SOCIAL')) {
+      return _buildHtmlSocial(context);
+    }
+    return _buildLegacySocial(context);
+  }
+
+  /// 필요한 변수는 기존 친구·그룹·레이팅 상태이다.
+  /// 작동 원리는 회귀 비교 환경에서만 기존 복합 화면을 구성하는 것이다.
+  Widget _buildLegacySocial(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final baseWidth = screenWidth < 1900 ? screenWidth : 1900.0;
     final contentWidth = baseWidth > 20 ? baseWidth - 20 : 0.0;

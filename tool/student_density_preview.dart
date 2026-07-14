@@ -11,6 +11,7 @@ import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart'
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
+import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/features/arena/arena_page.dart';
@@ -400,6 +401,7 @@ class StudentDensityPreviewApp extends StatelessWidget {
         ],
         initialAttendancePresent: true,
       ),
+      'friends' => const SoWidget(preview: true),
       _ => const MainStudentPage(username: '김학생'),
     };
     final action = Uri.base.queryParameters['action'] ?? '';

@@ -17,6 +17,7 @@ import 'package:s11/features/student_schedule/schedule_page.dart';
 import 'package:s11/features/group_study/group_list_page.dart';
 import 'package:s11/features/group_study/group_detail_page.dart';
 import 'package:s11/features/group_study/student_academy_page.dart';
+import 'package:s11/sessions/friend/friend.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -553,5 +554,22 @@ void main() {
     expect(find.text('AIFlow 수학학원'), findsOneWidget);
     expect(find.text('오늘 할 일'), findsOneWidget);
     expect(find.text('이번 주 수업'), findsOneWidget);
+  });
+
+  testWidgets('500px 친구/소셜은 HTML 소식·대화·친구 순서를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: SoWidget(preview: true)));
+    await tester.pump();
+    expect(find.text('FRIENDS & SOCIAL'), findsOneWidget);
+    expect(find.text('친구 요청'), findsOneWidget);
+    expect(find.text('최근 대화'), findsOneWidget);
+    expect(find.text('이수학'), findsWidgets);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -650));
+    await tester.pump();
+    expect(find.text('친구 상태'), findsOneWidget);
   });
 }
