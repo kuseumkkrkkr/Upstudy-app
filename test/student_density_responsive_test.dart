@@ -5,6 +5,7 @@ import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
+import 'package:s11/features/level_test/level_test_home_page.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -197,5 +198,19 @@ void main() {
     expect(find.text('두 직선의 교점 구하기'), findsOneWidget);
     expect(find.text('해설 보기'), findsWidgets);
     expect(find.text('다시 풀기'), findsWidgets);
+  });
+
+  testWidgets('레벨 테스트는 390px에서 OVR 히어로와 시작 행동을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: LevelTestHomePage()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('처음 만나는\n나의 실력.'), findsOneWidget);
+    expect(find.text('50'), findsWidgets);
+    expect(find.text('레벨 테스트 시작 →'), findsOneWidget);
   });
 }
