@@ -266,6 +266,8 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
 
 class _ExamPaperPageState extends _ExamPaperStateBase
     with _ExamPaperInteractionMixin, _ExamPaperGradingMixin, _ExamPaperUiMixin {
+  /// 필요한 변수는 제한 시간·페이지 수 힌트·초기 페이지다.
+  /// 작동 원리는 타이머와 캔버스 버퍼를 먼저 만든 뒤 서버 시험지가 있으면 비동기 상태 갱신을 시작하는 것이다.
   @override
   void initState() {
     super.initState();
@@ -286,6 +288,7 @@ class _ExamPaperPageState extends _ExamPaperStateBase
     }
 
     _ensurePageBuffers(_pageCount);
+    _currentPageIndex = widget.initialPageIndex.clamp(0, _pageCount - 1);
 
     unawaited(_loadContinueStrokesIfAny());
 

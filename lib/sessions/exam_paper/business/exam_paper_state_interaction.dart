@@ -1,7 +1,10 @@
 part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
 mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
-  int get _pageCount => math.max(1, _pageLayouts.length);
+  /// 필요한 변수는 서버 페이지 수와 선택적 페이지 수 힌트다.
+  /// 작동 원리는 서버 결과가 없을 때도 미리보기·로컬 시험지의 연속 페이지 캔버스를 같은 방식으로 구성하는 것이다.
+  int get _pageCount =>
+      math.max(1, math.max(_pageLayouts.length, widget.pageCountHint));
 
   List<_Stroke> get _strokes => _pageStrokes[_currentPageIndex];
 
@@ -172,7 +175,9 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     final contentWidth = _paperWidth * scale;
     final dx = (viewport.width - contentWidth) / 2;
     final pageTop = _pageOffsetY(_currentPageIndex) * scale;
-    final dy = (viewport.height - _paperHeight * scale) / 2 - pageTop;
+    final dy = _isPortrait
+        ? 72 - pageTop
+        : (viewport.height - _paperHeight * scale) / 2 - pageTop;
     _panOffset = Offset(dx, dy);
   }
 
@@ -260,9 +265,11 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     }
   }
 
+  /// 필요한 변수는 현재 viewport·기준 배율·페이지 위치다.
+  /// 작동 원리는 종이를 모바일 가로 폭에 맞춘 1배 기준으로 초기화한 뒤 현재 페이지를 상단에 배치하는 것이다.
   void _focusCurrentPage() {
     if (_viewportSize == null) return;
-    _setZoom(_zoomMin);
+    _setZoom(1);
     _centerCurrentPage();
     _updateViewMatrix();
     _hasCentered = true;

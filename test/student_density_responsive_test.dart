@@ -10,6 +10,7 @@ import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart'
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
+import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -312,5 +313,34 @@ void main() {
     await tester.tap(find.text('일정 달력에서 보기'));
     await tester.pump();
     expect(find.text('${today.year}년 ${today.month}월'), findsOneWidget);
+  });
+
+  testWidgets('500px 시험지는 HTML 페이지 배지와 통합 도구 레일을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: ExamPaperPage(
+          pageCountHint: 5,
+          initialPageIndex: 1,
+          timeLimitMinutes: 43,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('2 / 5'), findsOneWidget);
+    expect(find.byTooltip('펜'), findsOneWidget);
+    expect(find.byTooltip('지우개'), findsOneWidget);
+    expect(find.byTooltip('이동'), findsOneWidget);
+    expect(find.byTooltip('팔레트'), findsOneWidget);
+    expect(find.byTooltip('시험 종료'), findsOneWidget);
+
+    await tester.tap(find.text('2 / 5'));
+    await tester.pumpAndSettle();
+    expect(find.text('페이지 미리보기'), findsOneWidget);
   });
 }

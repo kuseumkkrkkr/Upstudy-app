@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -38,6 +38,8 @@ class ExamPaperPage extends StatefulWidget {
     this.passRate = 100,
     this.expectedQuestionCount,
     this.timeLimitMinutes,
+    this.pageCountHint = 0,
+    this.initialPageIndex = 0,
   });
 
   final String? examId;
@@ -46,6 +48,8 @@ class ExamPaperPage extends StatefulWidget {
   final int passRate;
   final int? expectedQuestionCount;
   final int? timeLimitMinutes;
+  final int pageCountHint;
+  final int initialPageIndex;
 
   @override
   State<ExamPaperPage> createState() => _ExamPaperPageState();

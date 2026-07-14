@@ -81,7 +81,7 @@ mixin _ExamPaperUiMixin
               child: GestureDetector(
                 onTap: () => FocusScope.of(context).unfocus(),
                 child: Scaffold(
-                  backgroundColor: Colors.white,
+                  backgroundColor: const Color(0xFFF1F1F1),
                   body: SafeArea(
                     child: Row(
                       children: [
@@ -105,6 +105,8 @@ mixin _ExamPaperUiMixin
     );
   }
 
+  /// 필요한 변수는 화면 폭·모바일 여부·시험 생성 상태다.
+  /// 작동 원리는 종이 캔버스 위에 HTML형 상단 상태바·도구 레일·진행 오버레이를 계층별로 배치하는 것이다.
   Widget _buildMainPanel({required double maxWidth, required bool isCompact}) {
     final showGeneratingOverlay = _isGenerating;
     return Stack(
@@ -112,6 +114,20 @@ mixin _ExamPaperUiMixin
       clipBehavior: Clip.none,
       children: [
         Positioned.fill(child: _buildCanvasArea()),
+        Positioned(
+          left: 0,
+          top: 0,
+          right: 0,
+          height: 72,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F4),
+              border: Border(
+                bottom: BorderSide(color: Colors.black.withValues(alpha: 0.04)),
+              ),
+            ),
+          ),
+        ),
         if (_remainingSeconds != null)
           Positioned(
             top: 16,
@@ -161,6 +177,8 @@ mixin _ExamPaperUiMixin
 
   // header removed
 
+  /// 필요한 변수는 현재 페이지와 전체 페이지 수다.
+  /// 작동 원리는 HTML의 좌측 상단 페이지 배지를 누르면 기존 썸네일 바텀시트를 여는 것이다.
   Widget _buildCompactThumbnailButton() {
     return Positioned(
       top: 16,
@@ -173,11 +191,23 @@ mixin _ExamPaperUiMixin
         elevation: 4,
 
         borderRadius: BorderRadius.circular(12),
-
-        child: IconButton(
-          icon: const Icon(Icons.view_sidebar, color: _kGreen),
-
-          onPressed: _openThumbnailsSheet,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: _openThumbnailsSheet,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.description_outlined, size: 19),
+                const SizedBox(width: 8),
+                Text(
+                  '${_currentPageIndex + 1} / $_pageCount',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -931,7 +961,7 @@ mixin _ExamPaperUiMixin
   }
 
   void _resetViewToCenter() {
-    _setZoom(_zoomMin);
+    _setZoom(1);
     _centerCurrentPage();
     _updateViewMatrix();
   }
@@ -964,7 +994,9 @@ mixin _ExamPaperUiMixin
     final contentWidth = _paperWidth * scale;
     final dx = (viewport.width - contentWidth) / 2;
     final pageTop = _pageOffsetY(_currentPageIndex) * scale;
-    final dy = (viewport.height - _paperHeight * scale) / 2 - pageTop;
+    final dy = _isPortrait
+        ? 72 - pageTop
+        : (viewport.height - _paperHeight * scale) / 2 - pageTop;
     _panOffset = Offset(dx, dy);
   }
 
@@ -1096,8 +1128,10 @@ mixin _ExamPaperUiMixin
     );
   }
 
+  /// 필요한 변수는 현재 필기 도구·완료 가능 상태·모바일 여부다.
+  /// 작동 원리는 모든 시험 조작을 하나의 흰색 세로 캡슐 안에 유지하고 선택 도구만 검게 강조하는 것이다.
   Widget _buildIconRail({required bool isCompact}) {
-    final active = const Color(0xFF1B402B);
+    final active = Colors.black;
     final inactive = const Color(0xFF6B6B6B);
     final canFinish =
         !_examFinished && !_isGenerating && _pageLayouts.isNotEmpty;
@@ -1124,77 +1158,95 @@ mixin _ExamPaperUiMixin
 
     Widget railButton(
       IconData icon, {
+      required String tooltip,
       required VoidCallback? onTap,
       bool selected = false,
       Key? key,
     }) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Material(
-          color: Colors.white.withValues(alpha: selected ? 0.95 : 0.8),
-          elevation: selected ? 4 : 1,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Icon(
-                icon,
-                key: key,
-                size: 22,
-                color: selected ? active : inactive,
-              ),
+      return Tooltip(
+        message: tooltip,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: selected ? active : Colors.transparent,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              icon,
+              key: key,
+              size: 20,
+              color: selected ? Colors.white : inactive,
             ),
           ),
         ),
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        railButton(
-          Icons.view_sidebar_outlined,
-          onTap: () => setState(() => _sidebarVisible = !_sidebarVisible),
-          selected: _sidebarVisible,
+    return Material(
+      color: Colors.white.withValues(alpha: 0.96),
+      elevation: 3,
+      borderRadius: BorderRadius.circular(24),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            railButton(
+              Icons.view_sidebar_outlined,
+              tooltip: '페이지 목록',
+              onTap: () => setState(() => _sidebarVisible = !_sidebarVisible),
+              selected: _sidebarVisible,
+            ),
+            railButton(
+              Icons.edit_outlined,
+              tooltip: '펜',
+              onTap: () => selectTool(_ToolMode.pen),
+              selected: _toolMode == _ToolMode.pen,
+              key: _penButtonKey,
+            ),
+            railButton(
+              Icons.cleaning_services_outlined,
+              tooltip: '지우개',
+              onTap: () => selectTool(_ToolMode.eraser),
+              selected: _toolMode == _ToolMode.eraser,
+            ),
+            railButton(
+              Icons.pan_tool_alt,
+              tooltip: '이동',
+              onTap: () => selectTool(_ToolMode.pan),
+              selected: _toolMode == _ToolMode.pan,
+            ),
+            railButton(
+              Icons.color_lens_outlined,
+              tooltip: '팔레트',
+              onTap: _toggleColorPicker,
+              key: _paletteButtonKey,
+            ),
+            railButton(
+              Icons.undo_outlined,
+              tooltip: '실행 취소',
+              onTap: _undoStack.isEmpty ? null : _undo,
+              selected: false,
+            ),
+            railButton(
+              _examFinished ? Icons.flag : Icons.flag_outlined,
+              tooltip: '시험 종료',
+              onTap: canFinish ? _confirmFinishExam : null,
+              selected: false,
+            ),
+            railButton(
+              Icons.exit_to_app,
+              tooltip: '나가기',
+              onTap: () => Navigator.of(context).maybePop(),
+            ),
+          ],
         ),
-        railButton(
-          Icons.edit_outlined,
-          onTap: () => selectTool(_ToolMode.pen),
-          selected: _toolMode == _ToolMode.pen,
-          key: _penButtonKey,
-        ),
-        railButton(
-          Icons.cleaning_services_outlined,
-          onTap: () => selectTool(_ToolMode.eraser),
-          selected: _toolMode == _ToolMode.eraser,
-        ),
-        railButton(
-          Icons.pan_tool_alt,
-          onTap: () => selectTool(_ToolMode.pan),
-          selected: _toolMode == _ToolMode.pan,
-        ),
-        railButton(
-          Icons.color_lens_outlined,
-          onTap: _toggleColorPicker,
-          key: _paletteButtonKey,
-        ),
-        railButton(
-          Icons.undo_outlined,
-          onTap: _undoStack.isEmpty ? null : _undo,
-          selected: false,
-        ),
-        railButton(
-          _examFinished ? Icons.flag : Icons.flag_outlined,
-          onTap: canFinish ? _confirmFinishExam : null,
-          selected: false,
-        ),
-        railButton(
-          Icons.exit_to_app,
-          onTap: () => Navigator.of(context).maybePop(),
-        ),
-      ],
+      ),
     );
   }
 
