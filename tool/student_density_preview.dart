@@ -9,6 +9,7 @@ import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart';
+import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
@@ -266,6 +267,28 @@ class StudentDensityPreviewApp extends StatelessWidget {
         initialPageIndex: 1,
       ),
       'arena' => ArenaPage(initialSummary: _previewArenaSummary()),
+      'marketplace' => const MarketplacePage(
+        initialData: [
+          {
+            'id': 'market-quest-1',
+            'type': 'quest',
+            'title': '중2 함수 실전 100제',
+            'subtitle': '평점 4.9 · 1,200P',
+          },
+          {
+            'id': 'market-book-1',
+            'type': 'textbook',
+            'title': '개념이 보이는 그래프',
+            'subtitle': '무료 · 42쪽',
+          },
+          {
+            'id': 'market-quest-2',
+            'type': 'quest',
+            'title': '확률 OX 문제 묶음',
+            'subtitle': '800P · 30문항',
+          },
+        ],
+      ),
       _ => const MainStudentPage(username: '김학생'),
     };
     final action = Uri.base.queryParameters['action'] ?? '';

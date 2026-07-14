@@ -12,6 +12,7 @@ import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/features/arena/arena_page.dart';
+import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 
 /// 필요한 변수는 공용 상단 바와 밀도 축소 카드에 표시할 고정 검증 데이터다.
 /// 네트워크 상태와 무관한 동일 화면을 만들어 해상도별 반응형 결과를 비교한다.
@@ -393,5 +394,45 @@ void main() {
     expect(find.text('대결 방식 선택'), findsOneWidget);
     expect(find.text('1v1 시험 대결'), findsOneWidget);
     expect(find.text('2v2 OX 대결'), findsOneWidget);
+  });
+
+  testWidgets('500px 마켓은 HTML 검색·필터·추천 상세 흐름을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MarketplacePage(
+          initialData: [
+            {
+              'id': 'q1',
+              'type': 'quest',
+              'title': '중2 함수 실전 100제',
+              'subtitle': '평점 4.9 · 1,200P',
+            },
+            {
+              'id': 'b1',
+              'type': 'textbook',
+              'title': '개념이 보이는 그래프',
+              'subtitle': '무료 · 42쪽',
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('COMMUNITY'), findsOneWidget);
+    expect(find.text('마켓'), findsOneWidget);
+    expect(find.text('문제 · 교재 · 태그 검색'), findsOneWidget);
+    expect(find.text('중2 함수 실전 100제'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, '교재'));
+    await tester.pump();
+    expect(find.text('중2 함수 실전 100제'), findsNothing);
+    await tester.tap(find.text('개념이 보이는 그래프'));
+    await tester.pumpAndSettle();
+    expect(find.text('확인'), findsOneWidget);
   });
 }
