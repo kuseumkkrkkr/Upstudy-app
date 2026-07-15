@@ -8,6 +8,7 @@ import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
@@ -42,6 +43,7 @@ Widget _responsiveFixture() {
               showLevelIndicator: false,
               onMenu: () {},
               items: const [
+                Ios26NavItem(label: '홈'),
                 Ios26NavItem(label: '학습터', active: true),
                 Ios26NavItem(label: '책가방'),
                 Ios26NavItem(label: '친구/소셜'),
@@ -135,6 +137,7 @@ Future<void> _verifyViewport(
   await tester.pumpAndSettle();
 
   expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+  expect(find.text('홈'), mobile ? findsNothing : findsOneWidget);
   expect(find.text('학습터'), mobile ? findsNothing : findsOneWidget);
   expect(find.byType(BottomNavigationBar), findsNothing);
   expect(find.byType(NavigationRail), findsNothing);
@@ -178,18 +181,21 @@ void main() {
     await tester.tap(find.text('메뉴 열기'));
     await tester.pumpAndSettle();
 
+    expect(find.text('홈'), findsOneWidget);
     expect(find.text('학습터'), findsOneWidget);
     expect(find.text('코스'), findsOneWidget);
     expect(find.text('책가방'), findsOneWidget);
     expect(find.text('친구/소셜'), findsOneWidget);
     expect(find.text('마켓플레이스'), findsOneWidget);
 
+    await tester.drag(find.byType(ListView), const Offset(0, -180));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('마켓플레이스'));
     await tester.pumpAndSettle();
     expect(find.text('마켓 도착'), findsOneWidget);
   });
 
-  testWidgets('PC 공용 상단 메뉴는 다섯 목적지와 명명 라우트를 공유한다', (tester) async {
+  testWidgets('PC 공용 상단 메뉴는 여섯 목적지와 명명 라우트를 공유한다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -213,11 +219,15 @@ void main() {
       ),
     );
 
+    expect(find.text('홈'), findsOneWidget);
     expect(find.text('학습터'), findsOneWidget);
     expect(find.text('코스'), findsOneWidget);
     expect(find.text('책가방'), findsOneWidget);
     expect(find.text('친구/소셜'), findsOneWidget);
     expect(find.text('마켓플레이스'), findsOneWidget);
+
+    final activeNavChip = find.byKey(const ValueKey('student-top-nav-학습터'));
+    expect(tester.getSize(activeNavChip).height, 30);
 
     await tester.tap(find.byTooltip('검색'));
     await tester.pumpAndSettle();
@@ -237,6 +247,50 @@ void main() {
     await tester.tap(find.text('마켓플레이스'));
     await tester.pumpAndSettle();
     expect(find.text('상단 마켓 도착'), findsOneWidget);
+  });
+
+  testWidgets('PC 상단 홈과 학습터는 서로 다른 경로로 이동한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    Widget navigation({required StudentTopDestination active}) {
+      return Builder(
+        builder: (context) => Scaffold(
+          body: Ios26TopBar(
+            brandColor: StudentDensityTokens.dark,
+            showLevelIndicator: false,
+            showUtilityActions: false,
+            items: studentTopNavItems(context, active: active),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(
+      MaterialApp(
+        key: const ValueKey('home-active-navigation'),
+        routes: {'/study-center': (_) => const Scaffold(body: Text('학습터 도착'))},
+        home: navigation(active: StudentTopDestination.home),
+      ),
+    );
+    await tester.tap(find.text('학습터'));
+    await tester.pumpAndSettle();
+    expect(find.text('학습터 도착'), findsOneWidget);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        key: const ValueKey('learning-active-navigation'),
+        routes: {
+          '/student/dashboard': (_) => const Scaffold(body: Text('홈 도착')),
+        },
+        home: navigation(active: StudentTopDestination.learning),
+      ),
+    );
+    await tester.tap(find.text('홈'));
+    await tester.pumpAndSettle();
+    expect(find.text('홈 도착'), findsOneWidget);
   });
 
   testWidgets('복습 화면은 500px에서 히어로와 문제 행동을 세로 배치한다', (tester) async {
@@ -804,6 +858,14 @@ void main() {
             subject: '수학',
             school: 'AIFlow 중학교',
           ),
+          initialRating: const UserRating(
+            rating: 1800,
+            ovr: 3580.8,
+            ovrDelta: 0,
+            recentAccuracy: 0.8,
+            loseStreak: 0,
+          ),
+          initialTotalSolvedCount: 246,
         ),
       ),
     );
@@ -811,6 +873,10 @@ void main() {
     expect(find.text('MY ACCOUNT'), findsOneWidget);
     expect(find.text('STUDENT PROFILE'), findsOneWidget);
     expect(find.text('18.6'), findsOneWidget);
+    expect(find.text('B'), findsOneWidget);
+    expect(find.text('246'), findsOneWidget);
+    expect(find.text('@student01 · AIFlow 중학교 2학년'), findsOneWidget);
+    expect(find.text('중학교   수학'), findsOneWidget);
     expect(find.text('LEARNING PROFILE'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -720));
     await tester.pumpAndSettle();
@@ -1028,5 +1094,50 @@ void main() {
         )
         .first;
     expect(tester.getTopLeft(panel).dx, 0);
+  });
+
+  testWidgets('1280px 레이팅 상세는 HTML 요약·개념·레이더 구조를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final ratings = {
+      '공통수학1': const TagRating(
+        tag: '공통수학1',
+        rating: 3657.6,
+        delta: 102.4,
+        attempts: 42,
+      ),
+      '공통수학2': const TagRating(
+        tag: '공통수학2',
+        rating: 3516.8,
+        delta: 38.4,
+        attempts: 35,
+      ),
+      '대수': const TagRating(
+        tag: '대수',
+        rating: 3427.2,
+        delta: 12.8,
+        attempts: 29,
+      ),
+      '미적분Ⅰ': const TagRating(
+        tag: '미적분Ⅰ',
+        rating: 3363.2,
+        delta: -25.6,
+        attempts: 22,
+      ),
+    };
+    await tester.pumpWidget(
+      MaterialApp(home: RatingDetailModal(initialRatings: ratings)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('OVR DETAIL'), findsOneWidget);
+    expect(find.text('현재 OVR'), findsOneWidget);
+    expect(find.text('개념 변화'), findsOneWidget);
+    expect(find.text('과목별 OVR 레이더 차트'), findsOneWidget);
+    expect(find.text('MAX 25.0'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

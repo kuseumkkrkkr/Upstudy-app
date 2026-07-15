@@ -7,7 +7,10 @@ import 'package:s11/shared/data/models/concept_tag.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
 // 필요 변수: 현재 context. 작동 원리: 반투명 블러 배경 위에 레이팅 상세 모달을 표시한다.
-Future<T?> showRatingDetailModal<T>({required BuildContext context}) {
+Future<T?> showRatingDetailModal<T>({
+  required BuildContext context,
+  Map<String, TagRating>? initialRatings,
+}) {
   return showDialog<T>(
     context: context,
     barrierDismissible: true,
@@ -21,7 +24,7 @@ Future<T?> showRatingDetailModal<T>({required BuildContext context}) {
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
               child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
-            const Center(child: RatingDetailModal()),
+            Center(child: RatingDetailModal(initialRatings: initialRatings)),
           ],
         ),
       );
@@ -30,7 +33,9 @@ Future<T?> showRatingDetailModal<T>({required BuildContext context}) {
 }
 
 class RatingDetailModal extends StatefulWidget {
-  const RatingDetailModal({super.key});
+  const RatingDetailModal({super.key, this.initialRatings});
+
+  final Map<String, TagRating>? initialRatings;
 
   @override
   State<RatingDetailModal> createState() => _RatingDetailModalState();
@@ -50,7 +55,15 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
   @override
   void initState() {
     super.initState();
-    _loadTagRatings();
+    final initialRatings = widget.initialRatings;
+    if (initialRatings == null) {
+      _loadTagRatings();
+    } else {
+      _tagRatings = initialRatings.map(
+        (key, value) => MapEntry(_normalize(key), _normalizeTagRating(value)),
+      );
+      _loadingRatings = false;
+    }
   }
 
   Future<void> _loadTagRatings() async {
@@ -322,8 +335,8 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
         final maxH = constraints.maxHeight.isFinite
             ? constraints.maxHeight
             : 720.0;
-        const baseWidth = 1200.0;
-        const baseHeight = 680.0;
+        const baseWidth = 1120.0;
+        const baseHeight = 760.0;
         final width = math.min(baseWidth, maxW * 0.96);
         final height = math.min(baseHeight, maxH * 0.96);
         final scale = (width / baseWidth).clamp(0.6, 1.0);
@@ -339,8 +352,16 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
                   width: width,
                   height: height,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20 * scale),
+                    color: const Color(0xFFF5F5F7),
+                    borderRadius: BorderRadius.circular(28 * scale),
+                    border: Border.all(color: const Color(0xFFD8D8DC)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x26000000),
+                        blurRadius: 42,
+                        offset: Offset(0, 20),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -349,7 +370,10 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
                         isSearchMode: _isSearchMode,
                         onClose: _handleClose,
                       ),
-                      Divider(height: 1 * scale),
+                      Divider(
+                        height: 1 * scale,
+                        color: const Color(0xFFD8D8DC),
+                      ),
                       Expanded(
                         child: Padding(
                           padding: EdgeInsets.all(20 * scale),
@@ -405,28 +429,68 @@ class _ModalHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16 * scale,
-        right: 24 * scale,
-        top: 8 * scale,
-        bottom: 8 * scale,
+      padding: EdgeInsets.fromLTRB(
+        28 * scale,
+        22 * scale,
+        24 * scale,
+        20 * scale,
       ),
       child: Row(
         children: [
-          IconButton(
-            iconSize: 30 * scale,
-            icon: Icon(
-              isSearchMode ? Icons.arrow_back : Icons.close,
-              color: Colors.black,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isSearchMode ? 'CONCEPT SEARCH' : 'OVR DETAIL',
+                  style: TextStyle(
+                    color: const Color(0xFF77777F),
+                    fontSize: 10 * scale,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.6,
+                  ),
+                ),
+                SizedBox(height: 7 * scale),
+                Text(
+                  isSearchMode ? '세부 해시태그 검색' : '레이팅 상세',
+                  style: TextStyle(
+                    fontSize: 30 * scale,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1.2,
+                  ),
+                ),
+                if (!isSearchMode) ...[
+                  SizedBox(height: 5 * scale),
+                  Text(
+                    '현재 실력과 개념별 변화를 한눈에 확인하세요.',
+                    style: TextStyle(
+                      color: const Color(0xFF77777F),
+                      fontSize: 12 * scale,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            onPressed: onClose,
           ),
-          SizedBox(width: 8 * scale),
-          Text(
-            isSearchMode ? '세부 해시태그 검색' : '레이팅 상세',
-            style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w700),
+          Material(
+            color: Colors.white,
+            shape: const CircleBorder(
+              side: BorderSide(color: Color(0xFFD8D8DC)),
+            ),
+            child: IconButton(
+              tooltip: isSearchMode ? '뒤로가기' : '닫기',
+              icon: Text(
+                isSearchMode ? '←' : '×',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 24 * scale,
+                  height: 1,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onPressed: onClose,
+            ),
           ),
-          const Spacer(),
         ],
       ),
     );
@@ -459,11 +523,32 @@ class _OverviewBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.of(context).size.width < 920;
+    final radarAverage = radarStats.isEmpty
+        ? 0.0
+        : radarStats.map((item) => item.ovr).reduce((a, b) => a + b) /
+              radarStats.length;
+    final solvedConcepts = strong.length + weak.length;
+    final tier = radarAverage >= 22
+        ? 'A'
+        : radarAverage >= 17
+        ? 'B'
+        : radarAverage >= 12
+        ? 'C'
+        : '-';
+    final summary = _RatingSummaryStrip(
+      scale: scale,
+      ovr: radarAverage,
+      solvedConcepts: solvedConcepts,
+      tier: tier,
+      isLoading: isLoading,
+    );
 
     if (isCompact) {
       return SingleChildScrollView(
         child: Column(
           children: [
+            summary,
+            SizedBox(height: 12 * scale),
             _TagDeltaCard(
               scale: scale,
               rising: rising,
@@ -496,50 +581,178 @@ class _OverviewBody extends StatelessWidget {
             : 520.0 * scale;
         return SizedBox(
           height: height,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Column(
             children: [
+              summary,
+              SizedBox(height: 12 * scale),
               Expanded(
-                child: Column(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
-                      child: _TagDeltaCard(
+                      flex: 9,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _TagDeltaCard(
+                              scale: scale,
+                              rising: rising,
+                              falling: falling,
+                              strong: strong,
+                              weak: weak,
+                              isLoading: isLoading,
+                            ),
+                          ),
+                          SizedBox(height: 10 * scale),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _ActionButton(
+                                  scale: scale,
+                                  label: '세부 해시태그 검색',
+                                  onTap: onSearchTap,
+                                ),
+                              ),
+                              SizedBox(width: 8 * scale),
+                              Expanded(
+                                child: _ActionButton(
+                                  scale: scale,
+                                  label: '보고서 보기',
+                                  onTap: onReportTap,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Expanded(
+                      flex: 11,
+                      child: _OvrRadarCard(
                         scale: scale,
-                        rising: rising,
-                        falling: falling,
-                        strong: strong,
-                        weak: weak,
+                        stats: radarStats,
                         isLoading: isLoading,
                       ),
                     ),
-                    SizedBox(height: 12 * scale),
-                    _ActionButton(
-                      scale: scale,
-                      label: '세부 해시태그 검색',
-                      onTap: onSearchTap,
-                    ),
-                    SizedBox(height: 12 * scale),
-                    _ActionButton(
-                      scale: scale,
-                      label: '보고서 보기',
-                      onTap: onReportTap,
-                    ),
                   ],
-                ),
-              ),
-              SizedBox(width: 16 * scale),
-              Expanded(
-                child: _OvrRadarCard(
-                  scale: scale,
-                  stats: radarStats,
-                  isLoading: isLoading,
                 ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _RatingSummaryStrip extends StatelessWidget {
+  const _RatingSummaryStrip({
+    required this.scale,
+    required this.ovr,
+    required this.solvedConcepts,
+    required this.tier,
+    required this.isLoading,
+  });
+
+  final double scale;
+  final double ovr;
+  final int solvedConcepts;
+  final String tier;
+  final bool isLoading;
+
+  /// 필요한 변수는 평균 OVR·분석 개념 수·티어다.
+  /// 작동 원리: HTML의 3칸 요약표처럼 첫 지표를 반전하고 나머지를 동일 시각 위계로 연결한다.
+  @override
+  Widget build(BuildContext context) {
+    final values = <({String label, String value, String detail, bool dark})>[
+      (
+        label: '현재 OVR',
+        value: isLoading || ovr == 0 ? '--' : ovr.toStringAsFixed(1),
+        detail: '최근 30일 개념 평균',
+        dark: true,
+      ),
+      (
+        label: '분석 개념',
+        value: isLoading ? '--' : '$solvedConcepts',
+        detail: '레이팅 신뢰 구간',
+        dark: false,
+      ),
+      (
+        label: '현재 티어',
+        value: isLoading ? '--' : tier,
+        detail: '다음 티어까지 진행 중',
+        dark: false,
+      ),
+    ];
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22 * scale),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFD8D8DC)),
+          borderRadius: BorderRadius.circular(22 * scale),
+        ),
+        child: Row(
+          children: [
+            for (var index = 0; index < values.length; index++)
+              Expanded(
+                child: Container(
+                  constraints: BoxConstraints(minHeight: 104 * scale),
+                  padding: EdgeInsets.all(18 * scale),
+                  decoration: BoxDecoration(
+                    color: values[index].dark
+                        ? const Color(0xFF111113)
+                        : Colors.white,
+                    border: index == 0
+                        ? null
+                        : const Border(
+                            left: BorderSide(color: Color(0xFFD8D8DC)),
+                          ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        values[index].label,
+                        style: TextStyle(
+                          color: values[index].dark
+                              ? Colors.white60
+                              : const Color(0xFF77777F),
+                          fontSize: 10 * scale,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 6 * scale),
+                      Text(
+                        values[index].value,
+                        style: TextStyle(
+                          color: values[index].dark
+                              ? Colors.white
+                              : const Color(0xFF111113),
+                          fontSize: 29 * scale,
+                          height: 1,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(height: 6 * scale),
+                      Text(
+                        values[index].detail,
+                        style: TextStyle(
+                          color: values[index].dark
+                              ? Colors.white54
+                              : const Color(0xFF77777F),
+                          fontSize: 9 * scale,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -697,167 +910,130 @@ class _TagDeltaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = isLoading
         ? const Center(child: CircularProgressIndicator())
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        : GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 1.62,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _TagDeltaColumn(
-                      scale: scale,
-                      title: '급상승 TOP5',
-                      items: rising,
-                      highlight: const Color(0xFF1B402B),
-                    ),
-                  ),
-                  SizedBox(width: 12 * scale),
-                  Expanded(
-                    child: _TagDeltaColumn(
-                      scale: scale,
-                      title: '급하락 TOP5',
-                      items: falling,
-                      highlight: const Color(0xFFB44747),
-                    ),
-                  ),
-                ],
+              _RatingMetricTile(
+                scale: scale,
+                label: '상승',
+                tag: rising.isEmpty ? '아직 데이터 없음' : rising.first.label,
+                value: rising.isEmpty
+                    ? '--'
+                    : '+${rising.first.delta.toStringAsFixed(1)}',
+                progress: rising.isEmpty ? 0 : .82,
               ),
-              SizedBox(height: 14 * scale),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _TagScoreColumn(
-                      scale: scale,
-                      title: '잘 푸는 개념 TOP5',
-                      items: strong,
-                      highlight: const Color(0xFF1B402B),
-                    ),
-                  ),
-                  SizedBox(width: 12 * scale),
-                  Expanded(
-                    child: _TagScoreColumn(
-                      scale: scale,
-                      title: '잘 못 푸는 개념 TOP5',
-                      items: weak,
-                      highlight: const Color(0xFFB44747),
-                    ),
-                  ),
-                ],
+              _RatingMetricTile(
+                scale: scale,
+                label: '하락',
+                tag: falling.isEmpty ? '아직 데이터 없음' : falling.first.label,
+                value: falling.isEmpty
+                    ? '--'
+                    : falling.first.delta.toStringAsFixed(1),
+                progress: falling.isEmpty ? 0 : .28,
+              ),
+              _RatingMetricTile(
+                scale: scale,
+                label: '강점',
+                tag: strong.isEmpty ? '아직 데이터 없음' : strong.first.label,
+                value: strong.isEmpty
+                    ? '--'
+                    : _tagOvrValue(strong.first.score).toStringAsFixed(1),
+                progress: strong.isEmpty
+                    ? 0
+                    : (_tagOvrValue(strong.first.score) / 25).clamp(0, 1),
+              ),
+              _RatingMetricTile(
+                scale: scale,
+                label: '보완',
+                tag: weak.isEmpty ? '아직 데이터 없음' : weak.first.label,
+                value: weak.isEmpty
+                    ? '--'
+                    : _tagOvrValue(weak.first.score).toStringAsFixed(1),
+                progress: weak.isEmpty
+                    ? 0
+                    : (_tagOvrValue(weak.first.score) / 25).clamp(0, 1),
               ),
             ],
           );
 
-    return _CardShell(scale: scale, title: '급상승/급하락 태그', child: content);
+    return _CardShell(scale: scale, title: '개념 변화', child: content);
   }
 }
 
-class _TagDeltaColumn extends StatelessWidget {
-  const _TagDeltaColumn({
+class _RatingMetricTile extends StatelessWidget {
+  const _RatingMetricTile({
     required this.scale,
-    required this.title,
-    required this.items,
-    required this.highlight,
+    required this.label,
+    required this.tag,
+    required this.value,
+    required this.progress,
   });
 
   final double scale;
-  final String title;
-  final List<_TagDelta> items;
-  final Color highlight;
+  final String label;
+  final String tag;
+  final String value;
+  final double progress;
 
+  /// 필요한 변수는 지표 종류·태그·값·상대 진행률이다.
+  /// 작동 원리: HTML 태그 2×2 그리드를 얇은 테두리와 하단 진행선으로 재현한다.
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.all(15 * scale),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: const Color(0xFFD8D8DC)),
+    ),
+    child: Stack(
       children: [
-        Text(
-          title,
-          style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.w700),
-        ),
-        SizedBox(height: 12 * scale),
-        if (items.isEmpty)
-          Text(
-            'No data',
-            style: TextStyle(fontSize: 12 * scale, color: Colors.black54),
-          )
-        else
-          ...items.map(
-            (item) => Padding(
-              padding: EdgeInsets.only(bottom: 10 * scale),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.label,
-                      style: TextStyle(fontSize: 13 * scale),
-                    ),
-                  ),
-                  Text(
-                    item.delta > 0
-                        ? '+${item.delta.toStringAsFixed(1)}'
-                        : item.delta.toStringAsFixed(1),
-                    style: TextStyle(
-                      fontSize: 12 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: highlight,
-                    ),
-                  ),
-                ],
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: const Color(0xFF77777F),
+                fontSize: 9 * scale,
+                fontWeight: FontWeight.w800,
               ),
             ),
-          ),
-      ],
-    );
-  }
-}
-
-class _TagScoreColumn extends StatelessWidget {
-  const _TagScoreColumn({
-    required this.scale,
-    required this.title,
-    required this.items,
-    required this.highlight,
-  });
-
-  final double scale;
-  final String title;
-  final List<_TagScore> items;
-  final Color highlight;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.w700),
-        ),
-        SizedBox(height: 12 * scale),
-        if (items.isEmpty)
-          Text(
-            'No data',
-            style: TextStyle(fontSize: 12 * scale, color: Colors.black54),
-          )
-        else
-          ...items.map(
-            (item) => Padding(
-              padding: EdgeInsets.only(bottom: 10 * scale),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.label,
-                      style: TextStyle(fontSize: 13 * scale),
-                    ),
-                  ),
-                ],
+            SizedBox(height: 7 * scale),
+            Text(
+              tag,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13 * scale,
+                fontWeight: FontWeight.w900,
               ),
             ),
+            const Spacer(),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 15 * scale,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        Positioned(
+          left: -15 * scale,
+          right: -15 * scale,
+          bottom: -15 * scale,
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 3 * scale,
+            color: const Color(0xFF111113),
+            backgroundColor: Colors.transparent,
           ),
+        ),
       ],
-    );
-  }
+    ),
+  );
 }
 
 class _OvrRadarCard extends StatelessWidget {
@@ -884,26 +1060,102 @@ class _OvrRadarCard extends StatelessWidget {
             painter: _RadarChartPainter(
               data: data,
               gridCount: 4,
-              lineColor: const Color(0xFF1B402B),
-              fillColor: const Color(0x331B402B),
-              labelColor: Colors.black87,
-              maxValue: _tagOvrMax,
+              lineColor: const Color(0xFF111113),
+              fillColor: const Color(0x24111113),
+              labelColor: const Color(0xFF27272A),
+              maxValue: 25,
             ),
           ),
         );
 
-        return _CardShell(
-          scale: scale,
-          title: '과목별 OVR 레이더 차트',
-          expandChild: canExpand,
-          child: Center(
-            child: isLoading
-                ? const CircularProgressIndicator()
-                : data.isEmpty
-                ? const Text('No data')
-                : canExpand
-                ? chart
-                : SizedBox(height: 260 * scale, child: chart),
+        return Container(
+          padding: EdgeInsets.all(20 * scale),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24 * scale),
+            border: Border.all(color: const Color(0xFFD8D8DC)),
+            boxShadow: const [
+              BoxShadow(
+                blurRadius: 24,
+                color: Color(0x10000000),
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SUBJECT BALANCE',
+                          style: TextStyle(
+                            color: const Color(0xFF77777F),
+                            fontSize: 9 * scale,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.3,
+                          ),
+                        ),
+                        SizedBox(height: 6 * scale),
+                        Text(
+                          '과목별 OVR 레이더 차트',
+                          style: TextStyle(
+                            fontSize: 18 * scale,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10 * scale,
+                      vertical: 7 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F7),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFD8D8DC)),
+                    ),
+                    child: Text(
+                      'MAX 25.0',
+                      style: TextStyle(
+                        color: const Color(0xFF77777F),
+                        fontSize: 9 * scale,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10 * scale),
+              if (canExpand)
+                Expanded(
+                  child: Center(
+                    child: isLoading
+                        ? const CircularProgressIndicator()
+                        : data.isEmpty
+                        ? const Text('아직 분석할 레이팅이 없어요.')
+                        : chart,
+                  ),
+                )
+              else
+                Center(
+                  child: isLoading
+                      ? const CircularProgressIndicator()
+                      : data.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 80),
+                          child: Text('아직 분석할 레이팅이 없어요.'),
+                        )
+                      : SizedBox(height: 300 * scale, child: chart),
+                ),
+            ],
           ),
         );
       },
@@ -916,13 +1168,11 @@ class _CardShell extends StatelessWidget {
     required this.scale,
     required this.title,
     required this.child,
-    this.expandChild = false,
   });
 
   final double scale;
   final String title;
   final Widget child;
-  final bool expandChild;
 
   @override
   Widget build(BuildContext context) {
@@ -947,7 +1197,7 @@ class _CardShell extends StatelessWidget {
             style: TextStyle(fontSize: 15 * scale, fontWeight: FontWeight.w700),
           ),
           SizedBox(height: 14 * scale),
-          if (expandChild) Expanded(child: child) else child,
+          child,
         ],
       ),
     );
@@ -1083,18 +1333,18 @@ class _RadarChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (data.isEmpty) return;
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) * 0.34;
+    final radius = math.min(size.width, size.height) * 0.31;
     final count = data.length;
     final angleStep = (math.pi * 2) / count;
     final scaleMax = maxValue <= 0 ? 1 : maxValue;
 
     final gridPaint = Paint()
-      ..color = Colors.black12
+      ..color = const Color(0x2409090B)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
     final axisPaint = Paint()
-      ..color = Colors.black26
+      ..color = const Color(0x3309090B)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -1115,6 +1365,22 @@ class _RadarChartPainter extends CustomPainter {
       }
       path.close();
       canvas.drawPath(path, gridPaint);
+
+      final levelPainter = TextPainter(
+        text: TextSpan(
+          text: (scaleMax * level / gridCount).toStringAsFixed(1),
+          style: const TextStyle(
+            color: Color(0xFF9A9AA1),
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      levelPainter.paint(
+        canvas,
+        Offset(center.dx + 5, center.dy - r - levelPainter.height / 2),
+      );
     }
 
     for (var i = 0; i < count; i++) {
@@ -1149,7 +1415,8 @@ class _RadarChartPainter extends CustomPainter {
     final linePaint = Paint()
       ..color = lineColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 2.5
+      ..strokeJoin = StrokeJoin.round;
 
     canvas.drawPath(dataPath, fillPaint);
     canvas.drawPath(dataPath, linePaint);
@@ -1157,6 +1424,10 @@ class _RadarChartPainter extends CustomPainter {
     final pointPaint = Paint()
       ..color = lineColor
       ..style = PaintingStyle.fill;
+    final pointBorderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
 
     for (var i = 0; i < count; i++) {
       final angle = -math.pi / 2 + angleStep * i;
@@ -1166,23 +1437,36 @@ class _RadarChartPainter extends CustomPainter {
         center.dx + r * math.cos(angle),
         center.dy + r * math.sin(angle),
       );
-      canvas.drawCircle(point, 3.5, pointPaint);
+      canvas.drawCircle(point, 5, pointPaint);
+      canvas.drawCircle(point, 5, pointBorderPaint);
     }
 
     for (var i = 0; i < count; i++) {
       final angle = -math.pi / 2 + angleStep * i;
       final labelOffset = Offset(
-        center.dx + (radius + 20) * math.cos(angle),
-        center.dy + (radius + 20) * math.sin(angle),
+        center.dx + (radius + 34) * math.cos(angle),
+        center.dy + (radius + 34) * math.sin(angle),
       );
       final textPainter = TextPainter(
         text: TextSpan(
-          text: '${data[i].label}\n${data[i].ovr.toStringAsFixed(1)}',
-          style: TextStyle(
-            color: labelColor,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-          ),
+          children: [
+            TextSpan(
+              text: '${data[i].label}\n',
+              style: TextStyle(
+                color: labelColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            TextSpan(
+              text: data[i].ovr.toStringAsFixed(1),
+              style: const TextStyle(
+                color: Color(0xFF77777F),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
         textAlign: TextAlign.center,
         textDirection: TextDirection.ltr,
@@ -1196,7 +1480,11 @@ class _RadarChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _RadarChartPainter oldDelegate) =>
+      oldDelegate.data != data ||
+      oldDelegate.maxValue != maxValue ||
+      oldDelegate.lineColor != lineColor ||
+      oldDelegate.fillColor != fillColor;
 }
 
 List<String> _flattenConceptTags(List<ConceptTag> tags) {
@@ -1227,7 +1515,6 @@ String _normalize(String value) {
 const double _tagRatingFloor = 1200;
 const double _tagDisplayMax = 32767;
 const double _tagOvrDivider = 128;
-const double _tagOvrMax = _tagDisplayMax / _tagOvrDivider;
 
 double _normalizedTagRatingValue(double rating) {
   return math.max(rating, _tagRatingFloor);

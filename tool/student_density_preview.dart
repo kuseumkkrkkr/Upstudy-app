@@ -658,7 +658,10 @@ class _PreviewActionLauncherState extends State<_PreviewActionLauncher> {
       case 'social-home':
         await showSocialModal<void>(context: context);
       case 'rating-detail':
-        await showRatingDetailModal<void>(context: context);
+        await showRatingDetailModal<void>(
+          context: context,
+          initialRatings: _previewTagRatings(),
+        );
       case 'achievements':
         showActivityBadgeDialog(
           context: context,
@@ -741,4 +744,28 @@ class _PreviewActionLauncherState extends State<_PreviewActionLauncher> {
   /// 필요한 변수는 감사 대상 실제 화면이다. 작동 원리는 모달의 배경으로 원래 화면을 그대로 유지한다.
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// 필요한 변수는 HTML 레이팅 상세 시안의 4개 축과 변화 태그다.
+/// 작동 원리: 브라우저 감사에서만 고정 레이팅을 주입해 API 없이도 그래프·태그 시각 품질을 반복 캡처한다.
+Map<String, TagRating> _previewTagRatings() {
+  TagRating rating(String tag, double ovr, double deltaOvr, int attempts) {
+    return TagRating(
+      tag: tag,
+      rating: 1200 + ovr * 128,
+      delta: deltaOvr * 128,
+      attempts: attempts,
+    );
+  }
+
+  return {
+    '공통수학1': rating('공통수학1', 19.2, .8, 42),
+    '공통수학2': rating('공통수학2', 18.1, .3, 35),
+    '대수': rating('대수', 17.4, .1, 29),
+    '미적분Ⅰ': rating('미적분Ⅰ', 16.9, -.2, 22),
+    '그래프': rating('그래프', 19.4, .8, 18),
+    '확률': rating('확률', 15.8, -.4, 13),
+    '일차함수': rating('일차함수', 19.6, .5, 24),
+    '기하': rating('기하', 16.4, -.1, 15),
+  };
 }
