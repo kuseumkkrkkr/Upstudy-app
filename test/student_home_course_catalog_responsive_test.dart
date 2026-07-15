@@ -95,4 +95,27 @@ void main() {
       expect(tester.takeException(), isNull);
     }
   });
+
+  testWidgets('HTML 시안의 홈 하단 그리드가 PC·태블릿·모바일 분기를 유지한다', (tester) async {
+    const cases = <(double, String)>[
+      (1280, 'student-home-footer-desktop'),
+      (900, 'student-home-footer-tablet'),
+      (500, 'student-home-footer-mobile'),
+    ];
+
+    for (final (width, layoutKey) in cases) {
+      await _pumpAt(
+        tester,
+        Size(width, 3200),
+        const MainStudentPage(username: '김학생'),
+      );
+      await tester.pump();
+
+      expect(find.byKey(ValueKey(layoutKey)), findsOneWidget);
+      expect(find.text('일정 달력'), findsOneWidget);
+      expect(find.text('도전과제 / 업적'), findsOneWidget);
+      expect(find.text('공지사항'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    }
+  });
 }

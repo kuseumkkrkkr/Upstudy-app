@@ -115,12 +115,16 @@ double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
   return scale;
 }
 
-/// 필요한 값은 모바일 여부와 하단 카드 위젯이다.
-/// 스크롤 내부 모바일 Column에는 flex 자식을 두지 않고, PC에서만 남은 가로 폭을 동등하게 나눈다.
-Widget _bottomResponsiveChild({required bool mobile, required Widget child}) {
+/// 필요한 값은 모바일 여부와 HTML 그리드의 비율이다.
+/// 작동 원리: 스크롤 내부 모바일 Column은 전체 폭을 쓰고, PC Row는 시안의 열 비율로 남은 폭을 나눈다.
+Widget _bottomResponsiveChild({
+  required bool mobile,
+  required Widget child,
+  int flex = 1,
+}) {
   return mobile
       ? SizedBox(width: double.infinity, child: child)
-      : Expanded(child: child);
+      : Expanded(flex: flex, child: child);
 }
 
 DateTime _dateOnly(DateTime value) =>
@@ -1646,6 +1650,7 @@ class _BottomSection extends StatelessWidget {
             children: [
               _bottomResponsiveChild(
                 mobile: mobile,
+                flex: 85,
                 child: ValueListenableBuilder<ActivitySnapshot>(
                   valueListenable: ActivityStore.notifier,
                   builder: (context, activitySnapshot, __) {
@@ -1812,6 +1817,7 @@ class _BottomSection extends StatelessWidget {
               ),
               _bottomResponsiveChild(
                 mobile: mobile,
+                flex: 115,
                 child: Container(
                   width: double.infinity,
                   height: 190 * scale,
@@ -1869,8 +1875,6 @@ class _BottomSection extends StatelessWidget {
           ),
           SizedBox(height: 12 * scale),
           const _ActivityRewardsRow(),
-          SizedBox(height: 12 * scale),
-          const _SystemNoticeCard(),
         ],
       ),
     );
@@ -1880,28 +1884,54 @@ class _BottomSection extends StatelessWidget {
 class _ActivityRewardsRow extends StatelessWidget {
   const _ActivityRewardsRow();
 
+  /// 필요한 변수는 하단 영역의 실제 가로 폭이다.
+  /// 작동 원리: HTML `home-footer-grid`처럼 PC는 1.35:.72:.9, 태블릿은 달력 전체 폭 후 1.2:.8, 모바일은 세로로 배치한다.
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 720;
-        if (isNarrow) {
+        final width = constraints.maxWidth;
+        if (width <= 780) {
           return Column(
+            key: const ValueKey('student-home-footer-mobile'),
             children: [
               _ActivityHistoryCard(),
               SizedBox(height: 10 * scale),
               const _ChallengeAchievementCard(),
+              SizedBox(height: 10 * scale),
+              const _SystemNoticeCard(),
+            ],
+          );
+        }
+
+        if (width <= 1180) {
+          return Column(
+            key: const ValueKey('student-home-footer-tablet'),
+            children: [
+              _ActivityHistoryCard(),
+              SizedBox(height: 12 * scale),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(flex: 12, child: _ChallengeAchievementCard()),
+                  SizedBox(width: 12 * scale),
+                  const Expanded(flex: 8, child: _SystemNoticeCard()),
+                ],
+              ),
             ],
           );
         }
 
         return Row(
+          key: const ValueKey('student-home-footer-desktop'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _ActivityHistoryCard()),
+            Expanded(flex: 135, child: _ActivityHistoryCard()),
             SizedBox(width: 12 * scale),
-            const Expanded(child: _ChallengeAchievementCard()),
+            const Expanded(flex: 72, child: _ChallengeAchievementCard()),
+            SizedBox(width: 12 * scale),
+            const Expanded(flex: 90, child: _SystemNoticeCard()),
           ],
         );
       },
@@ -2258,81 +2288,91 @@ class _ChallengeAchievementCard extends StatelessWidget {
           valueListenable: ActivityStore.accountSummaryNotifier,
           builder: (context, account, __) {
             final accountLevel = account?.level ?? 0;
-            return StudentDensitySurface(
-              padding: const EdgeInsets.all(20),
-              radius: 26,
-              child: SizedBox(
-                height: 210,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                // 필요한 변수는 HTML 3열 배치에서 할당된 업적 카드 폭이다.
+                // 작동 원리: 좁은 PC 열에서 제목이 2줄이 되면 내용 높이를 늘려 오버플로를 방지한다.
+                final contentHeight = constraints.maxWidth < 360
+                    ? 260.0
+                    : 210.0;
+                return StudentDensitySurface(
+                  padding: const EdgeInsets.all(20),
+                  radius: 26,
+                  child: SizedBox(
+                    height: contentHeight,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              StudentDensityEyebrow('ACHIEVEMENT'),
-                              SizedBox(height: 8),
-                              Text(
-                                '도전과제 / 업적',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.8,
-                                ),
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  StudentDensityEyebrow('ACHIEVEMENT'),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    '도전과제 / 업적',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.8,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+                            const _DashboardPill('8 / 24'),
+                          ],
+                        ),
+                        const SizedBox(height: 22),
+                        Row(
+                          children: [
+                            _AchievementGem(
+                              label: accountLevel > 0 ? '$accountLevel' : '7',
+                              dark: true,
+                            ),
+                            const SizedBox(width: 10),
+                            _AchievementGem(
+                              label:
+                                  '${snapshot.totalSolvedCount.clamp(0, 99)}',
+                            ),
+                            const SizedBox(width: 10),
+                            const _AchievementGem(label: 'B'),
+                          ],
+                        ),
+                        const Spacer(),
+                        const Text(
+                          '다음: 30일 연속 학습 · 12/30',
+                          style: TextStyle(
+                            color: StudentDensityTokens.muted,
+                            fontSize: 12,
                           ),
                         ),
-                        const _DashboardPill('8 / 24'),
+                        const SizedBox(height: 10),
+                        const LinearProgressIndicator(
+                          value: .4,
+                          minHeight: 6,
+                          color: StudentDensityTokens.dark,
+                          backgroundColor: Color(0xFFE4E4E7),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () => showActivityBadgeDialog(
+                              context: context,
+                              snapshot: snapshot,
+                              accountLevel: accountLevel,
+                            ),
+                            child: const Text('업적 보관함'),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 22),
-                    Row(
-                      children: [
-                        _AchievementGem(
-                          label: accountLevel > 0 ? '$accountLevel' : '7',
-                          dark: true,
-                        ),
-                        const SizedBox(width: 10),
-                        _AchievementGem(
-                          label: '${snapshot.totalSolvedCount.clamp(0, 99)}',
-                        ),
-                        const SizedBox(width: 10),
-                        const _AchievementGem(label: 'B'),
-                      ],
-                    ),
-                    const Spacer(),
-                    const Text(
-                      '다음: 30일 연속 학습 · 12/30',
-                      style: TextStyle(
-                        color: StudentDensityTokens.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const LinearProgressIndicator(
-                      value: .4,
-                      minHeight: 6,
-                      color: StudentDensityTokens.dark,
-                      backgroundColor: Color(0xFFE4E4E7),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => showActivityBadgeDialog(
-                          context: context,
-                          snapshot: snapshot,
-                          accountLevel: accountLevel,
-                        ),
-                        child: const Text('업적 보관함'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );

@@ -15,7 +15,7 @@ List<Ios26NavItem> studentTopNavItems(
         (
           destination: StudentTopDestination.learning,
           label: '학습터',
-          route: '/study-center',
+          route: '/student/dashboard',
         ),
         (
           destination: StudentTopDestination.courses,
