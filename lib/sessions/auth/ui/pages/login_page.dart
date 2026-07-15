@@ -5,8 +5,6 @@ import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:s11/shared/services/auth/kakao_login_service.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/auth/ui/pages/sign_up.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
 
 class LoginPage extends StatefulWidget {
@@ -426,32 +424,36 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
 
+    // 필요한 변수는 화면 크기와 로그인 폼이다.
+    // 작동 원리: 인증 전에는 데이터 조회용 앱 바·드로어를 만들지 않고,
+    // 세로 스크롤과 가로 제약으로 작은 화면의 RenderFlex 오버플로를 차단한다.
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      backgroundColor: AuthDesignTokens.canvas,
       body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
-                items: const [],
+        child: LayoutBuilder(
+          builder: (context, constraints) => ClipRect(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                isAuthMobile(context) ? 14 : 34,
+                isAuthMobile(context) ? 18 : 34,
+                isAuthMobile(context) ? 14 : 34,
+                40,
               ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  isAuthMobile(context) ? 14 : 34,
-                  isAuthMobile(context) ? 18 : 34,
-                  isAuthMobile(context) ? 14 : 34,
-                  40,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: AuthDesignTokens.contentMaxWidth,
+                    minWidth: 0,
+                    minHeight: (constraints.maxHeight - 58).clamp(
+                      0,
+                      double.infinity,
+                    ),
+                  ),
+                  child: _buildLoginLayout(context, form),
                 ),
-                children: [Center(child: _buildLoginLayout(context, form))],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

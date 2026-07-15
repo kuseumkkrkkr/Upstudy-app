@@ -733,6 +733,26 @@ void main() {
     expect(find.text('로그인'), findsWidgets);
   });
 
+  testWidgets('320px 인증 화면은 사용자 상단바 없이 가로 오버플로를 만들지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LoginPage(
+          initialUsername: 'student01',
+          initialPassword: 'password123',
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(Drawer), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('500px 회원가입은 HTML 세 단계와 학생 기본 폼을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;

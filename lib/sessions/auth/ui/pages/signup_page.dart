@@ -3,8 +3,6 @@ import "package:flutter/material.dart";
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 class SignupPage extends StatefulWidget {
   static const routeName = '/signup';
@@ -120,48 +118,43 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 720;
+    // 필요한 변수는 회원가입 단계와 화면 폭이다.
+    // 작동 원리: 인증 전용 스크롤 캔버스만 구성해 사용자·알림 상단바와
+    // 인증이 필요한 데이터 접근을 분리하고, 좁은 화면은 한 열로 안전하게 흐르게 한다.
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
       body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
-                items: const [],
-              ),
-            ),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    compact ? 14 : 52,
-                    compact ? 24 : 52,
-                    compact ? 14 : 52,
-                    48,
-                  ),
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 16),
-                    _SignupSteps(stage: _stage, onSelected: _setStage),
-                    const SizedBox(height: 12),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 180),
-                      child: switch (_stage) {
-                        0 => _buildProfileStage(),
-                        1 => _buildAccountStage(),
-                        _ => _buildConfirmStage(),
-                      },
-                    ),
-                  ],
+        child: LayoutBuilder(
+          builder: (context, constraints) => ClipRect(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 14 : 52,
+                  compact ? 24 : 52,
+                  compact ? 14 : 52,
+                  48,
                 ),
+                children: [
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                    child: _buildHeader(),
+                  ),
+                  const SizedBox(height: 16),
+                  _SignupSteps(stage: _stage, onSelected: _setStage),
+                  const SizedBox(height: 12),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: switch (_stage) {
+                      0 => _buildProfileStage(),
+                      1 => _buildAccountStage(),
+                      _ => _buildConfirmStage(),
+                    },
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
