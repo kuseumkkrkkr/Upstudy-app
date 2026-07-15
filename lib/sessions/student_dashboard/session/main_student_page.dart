@@ -1429,7 +1429,6 @@ class _InlineCta extends StatelessWidget {
     required this.onTap,
     this.label,
     this.textStyle,
-    this.iconColor = _green,
     this.iconSize = 12,
     this.padding = const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
     this.radius = 8,
@@ -1438,7 +1437,6 @@ class _InlineCta extends StatelessWidget {
   final VoidCallback? onTap;
   final String? label;
   final TextStyle? textStyle;
-  final Color iconColor;
   final double iconSize;
   final EdgeInsetsGeometry padding;
   final double radius;
@@ -1459,7 +1457,7 @@ class _InlineCta extends StatelessWidget {
                 Text(label!, style: textStyle),
                 SizedBox(width: iconSize * 0.5),
               ],
-              Icon(Icons.arrow_forward_ios, size: iconSize, color: iconColor),
+              Icon(Icons.arrow_forward_ios, size: iconSize, color: _green),
             ],
           ),
         ),
@@ -1638,10 +1636,18 @@ class _BottomSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
     final mobile = isStudentDensityMobile(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final horizontalPadding = mobile
+        ? 14.0
+        : (width * .04).clamp(24.0, 54.0).toDouble();
     return Padding(
-      padding: EdgeInsets.fromLTRB(20 * scale, 0, 20 * scale, 20 * scale),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        0,
+        horizontalPadding,
+        horizontalPadding,
+      ),
       child: Column(
         children: [
           Flex(
@@ -1686,23 +1692,24 @@ class _BottomSection extends StatelessWidget {
                             : '레벨테스트 풀러 가기';
 
                         return Container(
-                          height: isEligible ? 210 * scale : 190 * scale,
-                          margin: EdgeInsets.only(top: 12 * scale),
-                          decoration: _cardDeco(radius: 16 * scale),
-                          padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+                          height: 240,
+                          margin: const EdgeInsets.only(top: 14),
+                          decoration: _cardDeco(radius: 26),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding: EdgeInsets.only(
-                                  top: 12 * scale,
-                                  bottom: 6 * scale,
+                                padding: const EdgeInsets.only(
+                                  top: 20,
+                                  bottom: 8,
                                 ),
                                 child: Text(
                                   '나의 레이팅',
-                                  style: _ts(
-                                    size: 18 * scale,
-                                    weight: FontWeight.bold,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
                                   ),
                                 ),
                               ),
@@ -1713,11 +1720,11 @@ class _BottomSection extends StatelessWidget {
                                     Text(
                                       ovrText,
                                       style: _ts(
-                                        size: 40 * scale,
+                                        size: 36,
                                         weight: FontWeight.w900,
                                       ),
                                     ),
-                                    SizedBox(width: 8 * scale),
+                                    const SizedBox(width: 8),
                                     Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -1727,14 +1734,14 @@ class _BottomSection extends StatelessWidget {
                                         Text(
                                           deltaText,
                                           style: _ts(
-                                            size: 10 * scale,
+                                            size: 10,
                                             color: deltaColor,
                                           ),
                                         ),
                                         Text(
                                           percentText,
                                           style: _ts(
-                                            size: 10 * scale,
+                                            size: 10,
                                             color: Colors.black,
                                           ),
                                         ),
@@ -1742,12 +1749,12 @@ class _BottomSection extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 6 * scale),
+                                const SizedBox(height: 6),
                                 Center(
                                   child: Text(
                                     '전날 대비 OVR',
                                     style: _ts(
-                                      size: 11 * scale,
+                                      size: 11,
                                       weight: FontWeight.w600,
                                       color: Colors.black54,
                                     ),
@@ -1763,17 +1770,17 @@ class _BottomSection extends StatelessWidget {
                                         Text(
                                           '아직 문제를 다 풀지 않았어요',
                                           style: _ts(
-                                            size: 11 * scale,
+                                            size: 14,
                                             weight: FontWeight.w600,
                                             color: Colors.black54,
                                           ),
                                           textAlign: TextAlign.center,
                                         ),
-                                        SizedBox(height: 2 * scale),
+                                        const SizedBox(height: 4),
                                         Text(
                                           '레이팅 추정까지 $remainingCount문제 남았어요',
                                           style: _ts(
-                                            size: 11 * scale,
+                                            size: 14,
                                             weight: FontWeight.w600,
                                             color: Colors.black54,
                                           ),
@@ -1784,22 +1791,22 @@ class _BottomSection extends StatelessWidget {
                                   ),
                                 ),
                               ],
-                              Divider(thickness: 1, height: 16 * scale),
+                              const Divider(thickness: 1, height: 16),
                               Padding(
-                                padding: EdgeInsets.only(
-                                  top: 4 * scale,
-                                  bottom: 10 * scale,
+                                padding: const EdgeInsets.only(
+                                  top: 4,
+                                  bottom: 12,
                                 ),
                                 child: _InlineCta(
                                   label: ctaText,
                                   onTap: () =>
                                       _handleRatingTap(context, isEligible),
-                                  iconSize: 12 * scale,
-                                  radius: 8 * scale,
-                                  textStyle: _ts(size: 12 * scale),
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: 6 * scale,
-                                    horizontal: 4 * scale,
+                                  iconSize: 13,
+                                  radius: 8,
+                                  textStyle: _ts(size: 13),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                    horizontal: 4,
                                   ),
                                 ),
                               ),
@@ -1811,69 +1818,108 @@ class _BottomSection extends StatelessWidget {
                   },
                 ),
               ),
-              SizedBox(
-                width: mobile ? 0 : 12 * scale,
-                height: mobile ? 12 * scale : 0,
-              ),
+              SizedBox(width: mobile ? 0 : 14, height: mobile ? 14 : 0),
               _bottomResponsiveChild(
                 mobile: mobile,
                 flex: 115,
                 child: Container(
                   width: double.infinity,
-                  height: 190 * scale,
-                  margin: EdgeInsets.only(top: 12 * scale),
-                  decoration: _cardDeco(radius: 16 * scale),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black45,
-                      borderRadius: BorderRadius.circular(16 * scale),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '수학 대결장',
-                          style: _ts(
-                            size: 30 * scale,
-                            weight: FontWeight.w900,
-                            color: Colors.white,
+                  height: mobile ? 210 : 240,
+                  margin: const EdgeInsets.only(top: 14),
+                  decoration: _cardDeco(
+                    radius: 26,
+                    color: const Color(0xFFF0F0F3),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -20,
+                        bottom: -64,
+                        child: Container(
+                          width: 190,
+                          height: 190,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFD7D7DB)),
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 124,
+                              height: 124,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFFD7D7DB),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                        SizedBox(height: 6 * scale),
-                        Text(
-                          '1v1 · 2v2 실시간 실력 대결',
-                          textAlign: TextAlign.center,
-                          style: _ts(
-                            size: 10 * scale,
-                            weight: FontWeight.w700,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const StudentDensityEyebrow('REAL-TIME MATCH'),
+                            const SizedBox(height: 12),
+                            const Text(
+                              '수학 대결장',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            const Text(
+                              '1v1 · 2v2 실시간 실력 대결',
+                              style: TextStyle(
+                                color: StudentDensityTokens.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const Spacer(),
+                            FilledButton(
+                              onPressed: () => showArena(context),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: StudentDensityTokens.dark,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: const Text('대결장 입장 ›'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: 22,
+                        right: 24,
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: StudentDensityTokens.dark,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
                             color: Colors.white,
+                            size: 28,
                           ),
                         ),
-                        SizedBox(height: 2 * scale),
-                        _InlineCta(
-                          label: '대결장 입장',
-                          onTap: () => showArena(context),
-                          iconColor: Colors.white,
-                          iconSize: 12 * scale,
-                          radius: 8 * scale,
-                          textStyle: _ts(
-                            size: 10 * scale,
-                            weight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            vertical: 6 * scale,
-                            horizontal: 6 * scale,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12 * scale),
+          const SizedBox(height: 14),
           const _ActivityRewardsRow(),
         ],
       ),
@@ -1891,8 +1937,8 @@ class _ActivityRewardsRow extends StatelessWidget {
     final scale = _uiScale(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        if (width <= 780) {
+        final viewportWidth = MediaQuery.sizeOf(context).width;
+        if (viewportWidth <= 780) {
           return Column(
             key: const ValueKey('student-home-footer-mobile'),
             children: [
@@ -1905,7 +1951,7 @@ class _ActivityRewardsRow extends StatelessWidget {
           );
         }
 
-        if (width <= 1180) {
+        if (viewportWidth <= 1180) {
           return Column(
             key: const ValueKey('student-home-footer-tablet'),
             children: [

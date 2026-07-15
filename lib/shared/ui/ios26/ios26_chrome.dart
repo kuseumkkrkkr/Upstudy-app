@@ -75,8 +75,8 @@ class Ios26TopBar extends StatelessWidget {
     final barHeight = compact ? 58.0 : 68.0;
     final effectiveLeftInset = leftInset ?? (compact ? 12.0 : 40.0);
     final showBackButton = onBack != null;
-    final showMobileMenuButton = compact && onMenu != null && !showBackButton;
-    final hasLeadingControl = showBackButton || showMobileMenuButton;
+    final showMenuButton = onMenu != null && !showBackButton;
+    final hasLeadingControl = showBackButton || showMenuButton;
 
     return ClipRRect(
       child: BackdropFilter(
@@ -107,7 +107,7 @@ class Ios26TopBar extends StatelessWidget {
                         tooltip: '뒤로가기',
                         onTap: onBack,
                       )
-                    else if (showMobileMenuButton)
+                    else if (showMenuButton)
                       _TopCircleButton(
                         key: const ValueKey('student-mobile-menu'),
                         icon: Icons.menu_rounded,

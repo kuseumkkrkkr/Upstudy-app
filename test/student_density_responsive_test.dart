@@ -134,10 +134,7 @@ Future<void> _verifyViewport(
   await tester.pumpWidget(_responsiveFixture());
   await tester.pumpAndSettle();
 
-  expect(
-    find.byKey(const ValueKey('student-mobile-menu')),
-    mobile ? findsOneWidget : findsNothing,
-  );
+  expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
   expect(find.text('학습터'), mobile ? findsNothing : findsOneWidget);
   expect(find.byType(BottomNavigationBar), findsNothing);
   expect(find.byType(NavigationRail), findsNothing);
@@ -154,7 +151,7 @@ void main() {
     await _verifyViewport(tester, const Size(500, 1000), mobile: true);
   });
 
-  testWidgets('1280×900 PC는 햄버거 없이 중앙 상단 메뉴를 표시한다', (tester) async {
+  testWidgets('1280×900 PC는 HTML처럼 햄버거와 중앙 상단 메뉴를 표시한다', (tester) async {
     await _verifyViewport(tester, const Size(1280, 900), mobile: false);
   });
 

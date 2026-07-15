@@ -216,7 +216,8 @@ def main() -> None:
     parser.add_argument("--scroll-y", type=int, default=-1)
     parser.add_argument("--click-scroll-steps", type=int, default=10)
     parser.add_argument("--click", action="append", default=[])
-    parser.add_argument("--wait-ms", type=int, default=2500)
+    # Flutter Web의 첫 렌더러와 한글 폰트가 안정화된 후 캡처해 빈 화면·글자 박스를 방지한다.
+    parser.add_argument("--wait-ms", type=int, default=10000)
     parser.add_argument("--click-wait-ms", type=int, default=2500)
     parser.add_argument("--port", type=int, default=8981)
     args = parser.parse_args()

@@ -60,7 +60,7 @@ foreach ($screen in $screens) {
 # 작동 원리: PC·모바일이 공유하는 다섯 목적지와 독립 챌린지 제거 상태를 정적으로 검증한다.
 $router = $utf8.GetString([System.IO.File]::ReadAllBytes((Join-Path $root 'lib/app/router.dart')))
 $navigation = $utf8.GetString([System.IO.File]::ReadAllBytes((Join-Path $root 'lib/shared/ui/student_density/student_top_navigation.dart')))
-foreach ($route in '/study-center', '/courses', '/bookbag', '/social', '/marketplace') {
+foreach ($route in '/student/dashboard', '/courses', '/bookbag', '/social', '/marketplace') {
   if ($router -notmatch [regex]::Escape($route) -or $navigation -notmatch [regex]::Escape($route)) {
     throw "Missing shared student route: $route"
   }
