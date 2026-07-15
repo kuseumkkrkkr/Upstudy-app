@@ -181,7 +181,7 @@ class Ios26TopBar extends StatelessWidget {
                         icon: Icons.search_rounded,
                         tooltip: '검색',
                         onTap:
-                            onSearch ?? () => _showStudentQuickSearch(context),
+                            onSearch ?? () => showStudentQuickSearch(context),
                       ),
                       const SizedBox(width: 8),
                       _TopCircleButton(
@@ -190,7 +190,7 @@ class Ios26TopBar extends StatelessWidget {
                         showBadge: true,
                         onTap:
                             onNotifications ??
-                            () => _showStudentNotifications(context),
+                            () => showStudentNotifications(context),
                       ),
                       if (!compact) ...[
                         const SizedBox(width: 8),
@@ -236,23 +236,54 @@ class Ios26TopBar extends StatelessWidget {
 
 /// 필요한 변수는 현재 Navigator 문맥이다.
 /// 작동 원리는 HTML QUICK FIND와 같은 검색 시트를 열고 코스·교재·친구·마켓 명명 라우트로 연결하는 것이다.
-void _showStudentQuickSearch(BuildContext context) {
-  showModalBottomSheet<void>(
+void showStudentQuickSearch(BuildContext context) {
+  _showStudentUtilityPanel(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (_) => const _StudentQuickSearchSheet(),
+    child: const _StudentQuickSearchSheet(),
   );
 }
 
 /// 필요한 변수는 현재 Navigator 문맥이다.
 /// 작동 원리는 시스템 공지와 친구 요청을 한 번에 조회하는 HTML 알림 센터 시트를 여는 것이다.
-void _showStudentNotifications(BuildContext context) {
-  showModalBottomSheet<void>(
+void showStudentNotifications(BuildContext context) {
+  _showStudentUtilityPanel(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (_) => const _StudentNotificationsSheet(),
+    child: const _StudentNotificationsSheet(),
+  );
+}
+
+/// 필요한 변수는 현재 Navigator 문맥과 검색·알림 패널 본문이다.
+/// 작동 원리: HTML처럼 PC에서는 오른쪽 560px, 모바일에서는 전체 화면 패널을 슬라이드 전환으로 연다.
+Future<void> _showStudentUtilityPanel({
+  required BuildContext context,
+  required Widget child,
+}) {
+  return showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: '닫기',
+    barrierColor: Colors.black.withValues(alpha: .28),
+    transitionDuration: const Duration(milliseconds: 220),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      final width = MediaQuery.sizeOf(context).width;
+      return Align(
+        alignment: Alignment.centerRight,
+        child: SizedBox(
+          width: width <= StudentDensityTokens.mobileBreakpoint ? width : 560,
+          height: double.infinity,
+          child: Material(color: const Color(0xFFFAFAFB), child: child),
+        ),
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
+        child: child,
+      );
+    },
   );
 }
 
@@ -440,39 +471,74 @@ class _StudentUtilitySheet extends StatelessWidget {
   /// 작동 원리는 HTML 공용 액션 모달의 여백·타이포·최대 높이를 모든 화면에서 동일하게 유지하는 것이다.
   @override
   Widget build(BuildContext context) => SafeArea(
-    child: Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        0,
-        20,
-        MediaQuery.viewInsetsOf(context).bottom + 24,
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 720),
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Text(
-              kicker,
-              style: const TextStyle(
-                fontSize: 10,
-                letterSpacing: 1.7,
-                color: Colors.black54,
-                fontWeight: FontWeight.w900,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 18, 20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      kicker,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.7,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 7),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 6),
-            Text(description, style: const TextStyle(color: Colors.black45)),
-            const SizedBox(height: 18),
-            ...children,
-          ],
+              IconButton.outlined(
+                tooltip: '닫기',
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
         ),
-      ),
+        const Divider(height: 1, color: Color(0xFFE4E4E6)),
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              28,
+              24,
+              MediaQuery.viewInsetsOf(context).bottom + 24,
+            ),
+            children: [
+              Text(description, style: const TextStyle(color: Colors.black45)),
+              const SizedBox(height: 18),
+              ...children,
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: Color(0xFFE4E4E6)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('닫기'),
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }

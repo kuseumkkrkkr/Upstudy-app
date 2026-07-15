@@ -151,11 +151,14 @@ class _DailyTestModalState extends State<DailyTestModal> {
     final percentLabel = '${(progress * 100).round()}%';
 
     final size = MediaQuery.sizeOf(context);
+    final mobile = size.width <= 780;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: SizedBox(
-        width: size.width > 760 ? 720 : size.width * .94,
-        height: size.height * .9,
+        width: mobile
+            ? size.width
+            : (size.width > 760 ? 720 : size.width * .94),
+        height: mobile ? size.height : size.height * .9,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -175,10 +178,11 @@ class _DailyTestModalState extends State<DailyTestModal> {
     String percentLabel,
     double progress,
   ) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(mobile ? 0 : 16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +226,7 @@ class _DailyTestModalState extends State<DailyTestModal> {
               ],
             ),
           ),
-          const Divider(height: 1),
+          const Divider(height: 1, color: Color(0xFFE4E4E6)),
           if (_loading)
             const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_error != null)
@@ -278,6 +282,17 @@ class _DailyTestModalState extends State<DailyTestModal> {
                     ),
             ),
           ],
+          const Divider(height: 1, color: Color(0xFFE4E4E6)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('닫기'),
+              ),
+            ),
+          ),
         ],
       ),
     );

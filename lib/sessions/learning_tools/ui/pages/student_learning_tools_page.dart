@@ -7,29 +7,40 @@ import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
+/// 필요한 변수는 현재 Navigator 문맥과 노트·타이머·집중 화면이다.
+/// 작동 원리: 모바일은 HTML 액션 패널처럼 전체 화면, PC는 최대 940px 모달로 도구를 연다.
+Future<void> showStudentToolModal(BuildContext context, Widget page) {
+  final size = MediaQuery.sizeOf(context);
+  final mobile = size.width <= StudentDensityTokens.mobileBreakpoint;
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: .42),
+    builder: (_) => Dialog(
+      insetPadding: mobile
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(horizontal: 40, vertical: 36),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(mobile ? 0 : 28),
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: mobile ? size.width : 940,
+          maxHeight: mobile ? size.height : 900,
+        ),
+        child: page,
+      ),
+    ),
+  );
+}
+
 class StudentLearningToolsPage extends StatelessWidget {
   const StudentLearningToolsPage({super.key});
 
   /// 필요한 변수는 현재 Navigator와 도구 화면이다.
   /// 작동 원리는 원래 페이지 기능을 유지하면서 모바일은 거의 전체 높이, PC는 940px 폭 모달로 연다.
   Future<void> _openTool(BuildContext context, Widget page) {
-    final size = MediaQuery.sizeOf(context);
-    return showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: .42),
-      builder: (_) => Dialog(
-        insetPadding: EdgeInsets.symmetric(
-          horizontal: size.width < 600 ? 12 : 40,
-          vertical: size.width < 600 ? 16 : 36,
-        ),
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 940, maxHeight: 900),
-          child: page,
-        ),
-      ),
-    );
+    return showStudentToolModal(context, page);
   }
 
   /// 필요한 변수는 화면 폭과 세 도구의 모달 콜백이다.

@@ -153,14 +153,17 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
     final selectedLabel = isToday ? '오늘' : _formatDate(_selectedDate);
 
     final size = MediaQuery.sizeOf(context);
+    final mobile = size.width <= 780;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Container(
-        width: size.width > 760 ? 720 : size.width * .94,
-        height: size.height * .9,
+        width: mobile
+            ? size.width
+            : (size.width > 760 ? 720 : size.width * .94),
+        height: mobile ? size.height : size.height * .9,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(mobile ? 0 : 28),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +207,7 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
                 ],
               ),
             ),
-            const Divider(height: 1),
+            const Divider(height: 1, color: Color(0xFFE4E4E6)),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 34, 24, 24),
@@ -221,6 +224,17 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
                         onOpenCalendar: () =>
                             setState(() => _showCalendar = true),
                       ),
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFE4E4E6)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('닫기'),
+                ),
               ),
             ),
           ],

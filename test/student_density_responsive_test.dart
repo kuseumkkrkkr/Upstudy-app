@@ -7,6 +7,7 @@ import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
@@ -801,5 +802,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('STORAGE CONTRACT'), findsOneWidget);
     expect(find.text('settings.notifications_enabled'), findsOneWidget);
+  });
+
+  testWidgets('500px 학습 액션은 HTML처럼 전체 화면 패널과 하단 닫기를 사용한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showStudyModeModal<void>(context: context),
+              child: const Text('학습 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('학습 열기'));
+    await tester.pumpAndSettle();
+
+    final panel = find.byType(StudypageCopyWidget);
+    expect(panel, findsOneWidget);
+    expect(tester.getTopLeft(panel), Offset.zero);
+    expect(tester.getSize(panel), const Size(500, 1000));
+    expect(find.text('닫기'), findsOneWidget);
   });
 }

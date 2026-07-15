@@ -8,6 +8,9 @@ import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/social_modal.dart';
+import 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
@@ -26,12 +29,17 @@ import 'package:s11/features/group_study/student_academy_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/flow_view_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/timer_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
 import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 /// 필요한 변수는 HTML 코스 시안에 표시되는 상태·진행률·추천 정보다.
 /// 작동 원리: 네트워크 없이도 실제 코스 위젯이 밀도와 반응형을 동일하게 렌더하도록 고정 입력을 만든다.
@@ -581,6 +589,28 @@ class _PreviewActionLauncherState extends State<_PreviewActionLauncher> {
   Future<void> _openAction() async {
     if (!mounted) return;
     switch (widget.action) {
+      case 'search':
+        showStudentQuickSearch(context);
+      case 'notifications':
+        showStudentNotifications(context);
+      case 'system-notices':
+        showStudentNotifications(context);
+      case 'social-home':
+        await showSocialModal<void>(context: context);
+      case 'rating-detail':
+        await showRatingDetailModal<void>(context: context);
+      case 'achievements':
+        showActivityBadgeDialog(
+          context: context,
+          snapshot: ActivityStore.notifier.value,
+          accountLevel: 7,
+        );
+      case 'tool-note':
+        await showStudentToolModal(context, const NotepadPage());
+      case 'tool-timer':
+        await showStudentToolModal(context, const TimerPage());
+      case 'tool-focus':
+        await showStudentToolModal(context, const FocusModePage());
       case 'study-mode':
         await showStudyModeModal<void>(context: context);
       case 'daily-test':

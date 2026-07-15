@@ -14,6 +14,7 @@ Future<T?> showStudyModeModal<T>({required BuildContext context}) {
     context: context,
     maxWidth: 720,
     maxHeight: 900,
+    mobileFullScreen: true,
     child: const StudypageCopyWidget(),
   );
 }
@@ -25,8 +26,9 @@ class StudypageCopyWidget extends StatelessWidget {
   /// 작동 원리는 HTML과 동일한 제목·설명·세로 목록을 만들고 각 행을 기존 학습 기능으로 연결하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(mobile ? 0 : 28),
       child: Material(
         color: const Color(0xFFF9F9FA),
         child: Column(
@@ -71,7 +73,7 @@ class StudypageCopyWidget extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1),
+            const Divider(height: 1, color: Color(0xFFE4E4E6)),
             const Padding(
               padding: EdgeInsets.fromLTRB(24, 38, 24, 20),
               child: Text(
@@ -93,6 +95,17 @@ class StudypageCopyWidget extends StatelessWidget {
                     onTap: _actionFor(context, mode.destination),
                   );
                 },
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFE4E4E6)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('닫기'),
+                ),
               ),
             ),
           ],
@@ -199,7 +212,7 @@ class _ModeCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
