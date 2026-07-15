@@ -4,7 +4,6 @@ enum _ToolMode { pen, eraser, pan }
 
 const double _paperWidth = 794;
 const double _paperHeight = _paperWidth * 297 / 210;
-const double _expandedHeight = 2600;
 const double _eraserRadius = 26;
 const double _minPointDistance = 0.6;
 const Color _kGreen = Color(0xFF1B402B);
@@ -108,9 +107,6 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   double _penWidth = 3;
 
   bool _scrollEnabled = true;
-  double _scrollAccumulator = 0.0;
-  int _scrollDirection = 0;
-  DateTime? _lastScrollSwitchAt;
 
   Offset? _eraserPosition;
   int? _eraserPageIndex;
@@ -205,7 +201,7 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
         'strokes': strokes
             .map(
               (stroke) => {
-                'color': stroke.color.value,
+                'color': stroke.color.toARGB32(),
                 'width': stroke.baseWidth,
                 'order': stroke.order,
                 'points': stroke.points
@@ -241,7 +237,8 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
       for (final raw in strokesRaw) {
         if (raw is! Map) continue;
         final colorValue =
-            int.tryParse(raw['color']?.toString() ?? '') ?? Colors.black.value;
+            int.tryParse(raw['color']?.toString() ?? '') ??
+            Colors.black.toARGB32();
         final width = (raw['width'] as num?)?.toDouble() ?? _penWidths.first;
         final order = (raw['order'] as num?)?.toInt() ?? 0;
         final stroke = _Stroke(
@@ -269,6 +266,8 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
 
 class _ExamPaperPageState extends _ExamPaperStateBase
     with _ExamPaperInteractionMixin, _ExamPaperGradingMixin, _ExamPaperUiMixin {
+  /// 필요한 변수는 제한 시간·페이지 수 힌트·초기 페이지다.
+  /// 작동 원리는 타이머와 캔버스 버퍼를 먼저 만든 뒤 서버 시험지가 있으면 비동기 상태 갱신을 시작하는 것이다.
   @override
   void initState() {
     super.initState();
@@ -289,6 +288,7 @@ class _ExamPaperPageState extends _ExamPaperStateBase
     }
 
     _ensurePageBuffers(_pageCount);
+    _currentPageIndex = widget.initialPageIndex.clamp(0, _pageCount - 1);
 
     unawaited(_loadContinueStrokesIfAny());
 

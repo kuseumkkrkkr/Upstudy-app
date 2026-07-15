@@ -96,7 +96,8 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
   AiFlowGraphSubjectCatalog(
     subject: '수학 상',
     overview: '다항식, 방정식, 부등식, 함수의 기본 그래프를 좌표평면 감각으로 연결하는 과목입니다.',
-    formulaSearchTip: r'추천 검색어: $y-y_1=m(x-x_1)$, $m=\frac{y_2-y_1}{x_2-x_1}$, $y=a(x-p)^2+q$, $y=|x-p|+q$, $\frac{-b\pm\sqrt{b^2-4ac}}{2a}$',
+    formulaSearchTip:
+        r'추천 검색어: $y-y_1=m(x-x_1)$, $m=\frac{y_2-y_1}{x_2-x_1}$, $y=a(x-p)^2+q$, $y=|x-p|+q$, $\frac{-b\pm\sqrt{b^2-4ac}}{2a}$',
     sourceLabel: '수학방 고등수학 (상), (하) 전체 목차 / 직선의 방정식',
     sourceUrl: 'https://mathbang.net/699',
     formulas: const [
@@ -146,49 +147,40 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
     examples: const [
       AiFlowGraphExample(
         id: 'upper-line',
-        subject: '수학 상',
-        unit: '직선의 방정식',
-        title: '점과 기울기로 만드는 직선',
-        summary: '점 A(0, 1)을 지나고 기울기가 3/4인 직선을 기본 형태로 불러옵니다.',
-        searchTerms: ['직선', '기울기', '점과 직선', 'A(x1,y1)'],
+        subject: '중학교 2학년 · 함수',
+        unit: '이차함수 · 직선 · 교점 2개',
+        title: '이차함수와 직선',
+        summary: '식과 매개변수를 바꾸며 그래프의 이동과 교점을 확인합니다.',
+        searchTerms: ['이차함수', '직선', '교점', '매개변수'],
         sourceLabel: '수학방 직선의 방정식 구하기',
         sourceUrl: 'https://mathbang.net/443',
         document: AiFlowGraphDocument(
           items: [
             AiFlowGraphItem(
+              id: 'quadratic',
+              type: AiFlowGraphItemType.function,
+              label: '이차함수',
+              colorHex: '#2F7CF6',
+              expression: 'a*(x-1)^2-2',
+            ),
+            AiFlowGraphItem(
               id: 'line',
               type: AiFlowGraphItemType.function,
-              label: 'y = m(x - x1) + y1',
-              colorHex: '#2F7CF6',
-              expression: 'm*(x-x1)+y1',
+              label: '직선',
+              colorHex: '#8A8D95',
+              expression: '2*x+1',
             ),
           ],
           settings: AiFlowGraphSettings(
             viewport: _defaultViewport,
             parameters: [
               AiFlowGraphParameter(
-                id: 'm',
-                label: '기울기',
-                value: 0.75,
-                min: -4,
-                max: 4,
-                step: 0.25,
-              ),
-              AiFlowGraphParameter(
-                id: 'x1',
-                label: '점의 x값',
-                value: 0,
-                min: -5,
-                max: 5,
-                step: 1,
-              ),
-              AiFlowGraphParameter(
-                id: 'y1',
-                label: '점의 y값',
+                id: 'a',
+                label: '실습',
                 value: 1,
-                min: -5,
-                max: 5,
-                step: 1,
+                min: -3,
+                max: 3,
+                step: 0.25,
               ),
             ],
           ),
@@ -341,7 +333,8 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
   AiFlowGraphSubjectCatalog(
     subject: '수학 하',
     overview: '도형의 방정식과 기본 함수 변형을 좌표평면에서 읽는 감각이 중심입니다.',
-    formulaSearchTip: r'추천 검색어: $x^2+y^2=r^2$, $(x-a)^2+(y-b)^2=r^2$, $y=\pm\sqrt{r^2-x^2}$, $\frac{|ax_1+by_1+c|}{\sqrt{a^2+b^2}}$, $y=\frac{a}{x-p}+q$',
+    formulaSearchTip:
+        r'추천 검색어: $x^2+y^2=r^2$, $(x-a)^2+(y-b)^2=r^2$, $y=\pm\sqrt{r^2-x^2}$, $\frac{|ax_1+by_1+c|}{\sqrt{a^2+b^2}}$, $y=\frac{a}{x-p}+q$',
     sourceLabel: '수학방 고등수학 (상), (하) 전체 목차 / 원의 방정식',
     sourceUrl: 'https://mathbang.net/454',
     formulas: const [
@@ -410,7 +403,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -4, right: 4, top: 4, bottom: -4),
+            viewport: AiFlowGraphViewport(
+              left: -4,
+              right: 4,
+              top: 4,
+              bottom: -4,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'r',
@@ -444,7 +442,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -6, right: 6, top: 6, bottom: -6),
+            viewport: AiFlowGraphViewport(
+              left: -6,
+              right: 6,
+              top: 6,
+              bottom: -6,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'a',
@@ -494,7 +497,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -4, right: 8, top: 6, bottom: -6),
+            viewport: AiFlowGraphViewport(
+              left: -4,
+              right: 8,
+              top: 6,
+              bottom: -6,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'a',
@@ -529,7 +537,8 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
   AiFlowGraphSubjectCatalog(
     subject: '수학 1',
     overview: '지수, 로그, 삼각함수, 수열처럼 변화 패턴을 식과 개형으로 읽는 과목입니다.',
-    formulaSearchTip: r'추천 검색어: $y=a^x$, $y=\log_a x$, $y=a\sin(bx+c)+d$, $a_n=a_1+(n-1)d$, $a_n=a_1r^{n-1}$',
+    formulaSearchTip:
+        r'추천 검색어: $y=a^x$, $y=\log_a x$, $y=a\sin(bx+c)+d$, $a_n=a_1+(n-1)d$, $a_n=a_1r^{n-1}$',
     sourceLabel: '수학방 고등학교 대수 전체 목차',
     sourceUrl: 'https://mathbang.net/724',
     formulas: const [
@@ -604,7 +613,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -3, right: 6, top: 6, bottom: -3),
+            viewport: AiFlowGraphViewport(
+              left: -3,
+              right: 6,
+              top: 6,
+              bottom: -3,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'a',
@@ -645,7 +659,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -7, right: 7, top: 2, bottom: -2),
+            viewport: AiFlowGraphViewport(
+              left: -7,
+              right: 7,
+              top: 2,
+              bottom: -2,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'A',
@@ -745,7 +764,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -4, right: 4, top: 6, bottom: -6),
+            viewport: AiFlowGraphViewport(
+              left: -4,
+              right: 4,
+              top: 6,
+              bottom: -6,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'a',
@@ -788,7 +812,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: 0, right: 7, top: 42, bottom: 0),
+            viewport: AiFlowGraphViewport(
+              left: 0,
+              right: 7,
+              top: 42,
+              bottom: 0,
+            ),
           ),
         ),
       ),
@@ -797,7 +826,8 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
   AiFlowGraphSubjectCatalog(
     subject: '수학 2',
     overview: '함수의 극한, 미분, 적분을 그래프 해석과 연결해 변화율과 넓이를 다루는 과목입니다.',
-    formulaSearchTip: "추천 검색어: \$\\lim_{x\\to a}f(x)\$, \$f''(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}\$, \$y=f(a)+f'(a)(x-a)\$, \$\\int_a^bf(x)\\,dx\$, \$\\frac{f(b)-f(a)}{b-a}\$",
+    formulaSearchTip:
+        "추천 검색어: \$\\lim_{x\\to a}f(x)\$, \$f''(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}\$, \$y=f(a)+f'(a)(x-a)\$, \$\\int_a^bf(x)\\,dx\$, \$\\frac{f(b)-f(a)}{b-a}\$",
     sourceLabel: '중·고등수학 자료방 수학2 총정리',
     sourceUrl: 'https://mathcloud.tistory.com/7',
     formulas: const [
@@ -908,7 +938,8 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
   AiFlowGraphSubjectCatalog(
     subject: '미적분',
     overview: '수열의 극한, 지수·로그·삼각함수의 미분, 적분을 더 깊게 그래프로 읽는 과목입니다.',
-    formulaSearchTip: r'추천 검색어: $\frac{d}{dx}\ln x=\frac1x$, $\frac{d}{dx}e^x=e^x$, $\frac{d}{dx}\sin x=\cos x$, $\sum_{k=1}^{n}a_k$, $\int f(x)\,dx$',
+    formulaSearchTip:
+        r'추천 검색어: $\frac{d}{dx}\ln x=\frac1x$, $\frac{d}{dx}e^x=e^x$, $\frac{d}{dx}\sin x=\cos x$, $\sum_{k=1}^{n}a_k$, $\int f(x)\,dx$',
     sourceLabel: '중·고등수학 자료방 미적분 개념 총정리',
     sourceUrl: 'https://mathcloud.tistory.com/12',
     formulas: const [
@@ -971,7 +1002,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -1, right: 8, top: 4, bottom: -4),
+            viewport: AiFlowGraphViewport(
+              left: -1,
+              right: 8,
+              top: 4,
+              bottom: -4,
+            ),
           ),
         ),
       ),
@@ -1024,7 +1060,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -4, right: 4, top: 8, bottom: -1),
+            viewport: AiFlowGraphViewport(
+              left: -4,
+              right: 4,
+              top: 8,
+              bottom: -1,
+            ),
           ),
         ),
       ),
@@ -1033,7 +1074,8 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
   AiFlowGraphSubjectCatalog(
     subject: '기하',
     overview: '이차곡선과 벡터를 좌표평면에서 해석하는 과목이라 표준형 방정식을 곧바로 그래프로 옮기기 좋습니다.',
-    formulaSearchTip: r'추천 검색어: $\frac{x^2}{a^2}+\frac{y^2}{b^2}=1$, $y^2=4px$, $\frac{x^2}{a^2}-\frac{y^2}{b^2}=1$, $y=\pm b\sqrt{\frac{x^2}{a^2}-1}$, $\vec{a}\cdot\vec{b}=|\vec{a}||\vec{b}|\cos\theta$',
+    formulaSearchTip:
+        r'추천 검색어: $\frac{x^2}{a^2}+\frac{y^2}{b^2}=1$, $y^2=4px$, $\frac{x^2}{a^2}-\frac{y^2}{b^2}=1$, $y=\pm b\sqrt{\frac{x^2}{a^2}-1}$, $\vec{a}\cdot\vec{b}=|\vec{a}||\vec{b}|\cos\theta$',
     sourceLabel: '중·고등수학 자료방 기하 개념 총정리',
     sourceUrl: 'https://mathcloud.tistory.com/14',
     formulas: const [
@@ -1096,7 +1138,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -4, right: 4, top: 3, bottom: -3),
+            viewport: AiFlowGraphViewport(
+              left: -4,
+              right: 4,
+              top: 3,
+              bottom: -3,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'a',
@@ -1167,7 +1214,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -6, right: 6, top: 6, bottom: -6),
+            viewport: AiFlowGraphViewport(
+              left: -6,
+              right: 6,
+              top: 6,
+              bottom: -6,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'a',
@@ -1194,7 +1246,8 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
   AiFlowGraphSubjectCatalog(
     subject: '확률과통계',
     overview: '경우의 수, 확률, 통계를 수치와 분포로 읽는 과목이라 산점도와 분포형 예제가 잘 맞습니다.',
-    formulaSearchTip: r'추천 검색어: $P(A)=\frac{n(A)}{n(S)}$, $E(X)=\sum xp(x)$, $V(X)=E(X^2)-\{E(X)\}^2$, $r=\frac{1}{n}\sum \left(\frac{x_i-\bar{x}}{s_x}\right)\left(\frac{y_i-\bar{y}}{s_y}\right)$, $z=\frac{x-\mu}{\sigma}$',
+    formulaSearchTip:
+        r'추천 검색어: $P(A)=\frac{n(A)}{n(S)}$, $E(X)=\sum xp(x)$, $V(X)=E(X^2)-\{E(X)\}^2$, $r=\frac{1}{n}\sum \left(\frac{x_i-\bar{x}}{s_x}\right)\left(\frac{y_i-\bar{y}}{s_y}\right)$, $z=\frac{x-\mu}{\sigma}$',
     sourceLabel: '중·고등수학 자료방 확률과 통계 개념 총정리',
     sourceUrl: 'https://mathcloud.tistory.com/13',
     formulas: const [
@@ -1219,7 +1272,8 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
       AiFlowGraphFormulaSummary(
         unit: '통계',
         title: '상관계수',
-        formula: r'r=\frac{1}{n}\sum \left(\frac{x_i-\bar{x}}{s_x}\right)\left(\frac{y_i-\bar{y}}{s_y}\right)',
+        formula:
+            r'r=\frac{1}{n}\sum \left(\frac{x_i-\bar{x}}{s_x}\right)\left(\frac{y_i-\bar{y}}{s_y}\right)',
         summary: '산점도의 선형 경향을 하나의 수로 요약하는 대표 지표입니다.',
       ),
       AiFlowGraphFormulaSummary(
@@ -1257,7 +1311,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: 0, right: 8, top: 90, bottom: 35),
+            viewport: AiFlowGraphViewport(
+              left: 0,
+              right: 8,
+              top: 90,
+              bottom: 35,
+            ),
           ),
         ),
       ),
@@ -1282,7 +1341,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: 5, right: 65, top: 13, bottom: 0),
+            viewport: AiFlowGraphViewport(
+              left: 5,
+              right: 65,
+              top: 13,
+              bottom: 0,
+            ),
           ),
         ),
       ),
@@ -1306,7 +1370,12 @@ final aiFlowGraphCatalog = <AiFlowGraphSubjectCatalog>[
             ),
           ],
           settings: AiFlowGraphSettings(
-            viewport: AiFlowGraphViewport(left: -8, right: 8, top: 1.5, bottom: -0.2),
+            viewport: AiFlowGraphViewport(
+              left: -8,
+              right: 8,
+              top: 1.5,
+              bottom: -0.2,
+            ),
             parameters: [
               AiFlowGraphParameter(
                 id: 'mu',

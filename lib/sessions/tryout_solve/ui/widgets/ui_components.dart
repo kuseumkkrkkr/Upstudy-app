@@ -1,4 +1,4 @@
-﻿part of 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
+part of 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 
 class _ToolbarIcon extends StatelessWidget {
   const _ToolbarIcon({
@@ -15,17 +15,36 @@ class _ToolbarIcon extends StatelessWidget {
   final Color color;
   final VoidCallback? onTap;
 
+  /// 필요한 변수는 도구 아이콘·이름·활성 색상·콜백이다.
+  /// 작동 원리는 HTML 하단 툴바처럼 아이콘 아래에 짧은 기능 이름을 함께 표시한다.
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
       child: SizedBox(
-        width: 40,
-        height: 40,
-        child: InkResponse(
+        width: 54,
+        height: 50,
+        child: InkWell(
           onTap: onTap,
-          radius: 22,
-          child: Icon(icon, size: size, color: color),
+          borderRadius: BorderRadius.circular(10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: size, color: color),
+              const SizedBox(height: 2),
+              Text(
+                tooltip,
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

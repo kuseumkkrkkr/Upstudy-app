@@ -2,6 +2,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
@@ -53,6 +54,17 @@ class AuthSecurityTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(auth.get_user_role(user_id), "student")
+
+    def test_signed_student_role_skips_database_lookup(self) -> None:
+        """필요 변수: 서명 검증을 마친 학생 payload. 권한 상승 없는 학생 역할은 DB 조회 없이 확정한다."""
+
+        with patch.object(auth, "get_user_role", side_effect=AssertionError("DB lookup")):
+            user = auth.resolve_token_payload_user(
+                {"sub": "load-student", "role": "student"}
+            )
+
+        self.assertEqual(user["user_id"], "load-student")
+        self.assertEqual(user["role"], "student")
 
     def test_persisted_teacher_role_allows_roleless_token(self) -> None:
         user_id = auth.register_teacher(

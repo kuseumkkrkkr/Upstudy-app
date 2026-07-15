@@ -19,10 +19,9 @@ class _MiniChooser extends StatelessWidget {
           child: Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: children
-                  .expand((w) => [w, const SizedBox(width: 6)])
-                  .toList()
-                ..removeLast(),
+              children:
+                  children.expand((w) => [w, const SizedBox(width: 6)]).toList()
+                    ..removeLast(),
             ),
           ),
         ),

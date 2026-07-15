@@ -29,7 +29,6 @@ class CourseService {
     return amount;
   }
 
-
   // URI 기반 GET 응답을 캐시 가능한 Map 형태로 변환해서 공통 정책으로 가져온다.
   // query 파라미터를 path+쿼리 key로 정규화해 _get 캐시 키와 동일한 방식으로 재사용한다.
   static Future<Map<String, dynamic>> _getCachedJson(
@@ -49,6 +48,7 @@ class CourseService {
     );
     return response.data ?? const <String, dynamic>{};
   }
+
   static Future<List<Course>> fetchCourses({
     String? keyword,
     String? tag,
@@ -94,7 +94,10 @@ class CourseService {
       ApiPaths.courses,
       query: legacyParams.isEmpty ? null : legacyParams,
     );
-    final resp = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 5));
+    final resp = await _getCachedJson(
+      uri,
+      cacheTtl: const Duration(minutes: 5),
+    );
     if (resp.isEmpty) {
       throw Exception('Failed to load courses.');
     }
@@ -113,7 +116,9 @@ class CourseService {
         cacheTtl: const Duration(minutes: 2),
       );
       final courses = (payload['courses'] as List<dynamic>? ?? [])
-          .map((item) => _courseFromJson(Map<String, dynamic>.from(item as Map)))
+          .map(
+            (item) => _courseFromJson(Map<String, dynamic>.from(item as Map)),
+          )
           .toList();
       if (courses.isEmpty) {
         final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
@@ -136,7 +141,9 @@ class CourseService {
     if (fromEnrollments.isNotEmpty) return fromEnrollments;
     final fromV2Runtime = await _fallbackMyCoursesFromV2Runtime(token);
     if (fromV2Runtime.isNotEmpty) return fromV2Runtime;
-    final fromAssignments = await _fallbackMyCoursesFromAcademyAssignments(token);
+    final fromAssignments = await _fallbackMyCoursesFromAcademyAssignments(
+      token,
+    );
     if (fromAssignments.isNotEmpty) return fromAssignments;
     final fromCourses = await _fallbackMyCoursesFromCourses(token);
     return fromCourses;
@@ -151,10 +158,7 @@ class CourseService {
     );
     Map<String, dynamic> payload;
     try {
-      payload = await _getCachedJson(
-        uri,
-        cacheTtl: const Duration(minutes: 5),
-      );
+      payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 5));
     } on ApiException {
       return const <Course>[];
     }
@@ -189,10 +193,15 @@ class CourseService {
     return courses;
   }
 
+  /// 필요한 변수는 등록할 코스 ID다.
+  /// v2 런타임을 우선 시작하고 성공한 경로와 레거시 경로 모두 관련 캐시를 즉시 비운다.
   static Future<Course> enroll(String courseId) async {
     final token = await ApiClient.instance.requireToken();
     final v2 = await _startV2Runtime(courseId, token);
-    if (v2 != null) return v2;
+    if (v2 != null) {
+      await ApiClient.instance.invalidateCachePath('/courses');
+      return v2;
+    }
 
     final uri = ApiContract.uri(ApiPaths.courseEnroll(courseId));
     final resp = await ApiClient.instance.authedPost(uri, token: token);
@@ -211,9 +220,11 @@ class CourseService {
       status: payload['status']?.toString(),
       lastAction: payload['last_action']?.toString(),
     );
+    await ApiClient.instance.invalidateCachePath('/courses');
     return enrolled;
   }
 
+  /// 필요한 변수는 등록 해제할 코스 ID다. 서버 반영 성공 후 내 코스·상세 캐시를 함께 비운다.
   static Future<void> unenroll(String courseId) async {
     final token = await ApiClient.instance.requireToken();
     final uri = ApiContract.uri(ApiPaths.courseUnenroll(courseId));
@@ -221,8 +232,10 @@ class CourseService {
     if (resp.statusCode != 200) {
       throw Exception('Failed to unenroll: ${resp.statusCode}');
     }
+    await ApiClient.instance.invalidateCachePath('/courses');
   }
 
+  /// 필요한 변수는 새 코스 ID 순서다. 정렬 저장 후 캐시를 제거해 다음 조회가 서버 순서를 받게 한다.
   static Future<void> reorderEnrollments(List<String> courseIds) async {
     final token = await ApiClient.instance.requireToken();
     final uri = ApiContract.uri(ApiPaths.coursesEnrollmentReorder);
@@ -235,6 +248,7 @@ class CourseService {
     if (resp.statusCode != 200) {
       throw Exception('Failed to reorder enrollments: ${resp.statusCode}');
     }
+    await ApiClient.instance.invalidateCachePath('/courses');
   }
 
   static Future<Course> fetchCourse(String courseId) async {
@@ -242,7 +256,10 @@ class CourseService {
     if (v2 != null) return v2;
 
     final uri = ApiContract.uri(ApiPaths.course(courseId));
-    final payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 10));
+    final payload = await _getCachedJson(
+      uri,
+      cacheTtl: const Duration(minutes: 10),
+    );
     if (payload.isEmpty) {
       throw Exception('Failed to load course');
     }
@@ -270,7 +287,10 @@ class CourseService {
     ];
 
     for (final uri in candidates) {
-      final payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 2));
+      final payload = await _getCachedJson(
+        uri,
+        cacheTtl: const Duration(minutes: 2),
+      );
       if (payload.isEmpty) {
         continue;
       }
@@ -308,6 +328,8 @@ class CourseService {
     };
   }
 
+  /// 필요한 변수는 코스 ID·진도 자료·비율·선택 마지막 동작이다.
+  /// 진행률 저장이 성공하면 목록과 런타임 캐시를 모두 무효화한다.
   static Future<void> updateProgress({
     required String courseId,
     required Map<String, dynamic> progress,
@@ -329,6 +351,7 @@ class CourseService {
     if (resp.statusCode != 200) {
       throw Exception('Failed to update progress: ${resp.statusCode}');
     }
+    await ApiClient.instance.invalidateCachePath('/courses');
   }
 
   static Future<Course?> _startV2Runtime(String courseId, String token) async {
@@ -387,10 +410,7 @@ class CourseService {
     final uri = ApiContract.uri(ApiPaths.coursesEnrolled);
     Map<String, dynamic> payload;
     try {
-      payload = await _getCachedJson(
-        uri,
-        cacheTtl: const Duration(minutes: 2),
-      );
+      payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 2));
     } on ApiException {
       return const <Course>[];
     }
@@ -434,10 +454,7 @@ class CourseService {
     );
     Map<String, dynamic> payload;
     try {
-      payload = await _getCachedJson(
-        uri,
-        cacheTtl: const Duration(minutes: 5),
-      );
+      payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 5));
     } on ApiException {
       return const <Course>[];
     }

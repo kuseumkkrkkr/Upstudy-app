@@ -209,7 +209,7 @@ class _GroupCreateDialogBodyState extends State<_GroupCreateDialogBody> {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isSelected ? primaryColor : Colors.transparent,
@@ -231,7 +231,7 @@ class _GroupCreateDialogBodyState extends State<_GroupCreateDialogBody> {
             const Spacer(),
             Switch(
               value: _lockEnabled,
-              activeColor: primaryColor,
+              activeThumbColor: primaryColor,
               onChanged: (value) {
                 setState(() {
                   _lockEnabled = value;
@@ -306,7 +306,9 @@ class _FriendTile extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: _SoWidgetState.primaryColor.withOpacity(0.12),
+              backgroundColor: _SoWidgetState.primaryColor.withValues(
+                alpha: 0.12,
+              ),
               child: Text(
                 friend.name.substring(0, 1),
                 style: const TextStyle(color: _SoWidgetState.primaryColor),
@@ -362,8 +364,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
     vsync: this,
   );
 
-  final TextEditingController _codebaseCtrl = TextEditingController();
-  final TextEditingController _seedCtrl = TextEditingController();
   final TextEditingController _chatCtrl = TextEditingController();
   final TextEditingController _flowTagFilterCtrl = TextEditingController();
   final TextEditingController _flowUserFilterCtrl = TextEditingController();
@@ -374,7 +374,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   List<String> _flowTagSelected = [];
   final ScrollController _chatScroll = ScrollController();
 
-  List<GroupSharedProblem> _problems = [];
   List<GroupSharedExam> _exams = [];
   List<ExamPaperEntry> _myExamPapers = [];
   String? _selectedExamId;
@@ -386,11 +385,9 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   bool _sharingSelected = false;
   final Set<String> _historyPicks = {};
 
-  bool _loadingProblems = false;
   bool _loadingExams = false;
   bool _loadingFlows = false;
   bool _loadingHistory = false;
-  bool _sharingProblem = false;
   bool _sharingExam = false;
 
   bool _chatLoading = false;
@@ -415,7 +412,7 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
       style: OutlinedButton.styleFrom(
         foregroundColor: activeCount > 0 ? Colors.white : _green,
         backgroundColor: activeCount > 0 ? _green : null,
-        side: BorderSide(color: _green.withOpacity(0.4)),
+        side: BorderSide(color: _green.withValues(alpha: 0.4)),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),
       icon: Icon(activeCount > 0 ? Icons.filter_list : Icons.search, size: 16),
@@ -471,9 +468,9 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: _green.withOpacity(0.08),
+        color: _green.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _green.withOpacity(0.25)),
+        border: Border.all(color: _green.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -534,7 +531,7 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: _green.withOpacity(0.08),
+                        color: _green.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -617,8 +614,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   @override
   void dispose() {
     _tabController.dispose();
-    _codebaseCtrl.dispose();
-    _seedCtrl.dispose();
     _chatCtrl.dispose();
     _flowTagFilterCtrl.dispose();
     _flowUserFilterCtrl.dispose();
@@ -628,7 +623,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
 
   Future<void> _bootstrap() async {
     await Future.wait([
-      _loadProblems(),
       _loadExams(),
       _loadFlows(),
       _loadMessages(),
@@ -654,23 +648,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
       );
     } catch (_) {
       // ignore
-    }
-  }
-
-  Future<void> _loadProblems() async {
-    if (_loadingProblems) return;
-    setState(() => _loadingProblems = true);
-    try {
-      final items = await ApiClient.instance.listGroupSharedProblems(
-        widget.group.id,
-        limit: 30,
-      );
-      if (!mounted) return;
-      setState(() => _problems = items);
-    } catch (_) {
-      // Silent failure; the UI will show empty state.
-    } finally {
-      if (mounted) setState(() => _loadingProblems = false);
     }
   }
 
@@ -720,44 +697,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
       // silent
     } finally {
       if (mounted) setState(() => _loadingFlows = false);
-    }
-  }
-
-  Future<void> _shareProblem() async {
-    final codebaseId = int.tryParse(_codebaseCtrl.text.trim());
-    final seed = int.tryParse(_seedCtrl.text.trim());
-    if (codebaseId == null || seed == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('코드베이스와 시드를 올바르게 입력하세요')));
-      return;
-    }
-    setState(() => _sharingProblem = true);
-    try {
-      final shared = await ApiClient.instance.shareGroupProblem(
-        groupId: widget.group.id,
-        codebaseId: codebaseId,
-        seed: seed,
-      );
-      if (!mounted) return;
-      setState(() {
-        _problems.insert(0, shared);
-        if (_problems.length > 30) _problems.removeLast();
-      });
-      _codebaseCtrl.clear();
-      _seedCtrl.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('문제를 공유했어요')));
-      }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('공유에 실패했어요')));
-    } finally {
-      if (mounted) setState(() => _sharingProblem = false);
     }
   }
 
@@ -953,7 +892,7 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
               onPressed: _openHistoryPicker,
               style: OutlinedButton.styleFrom(
                 foregroundColor: _green,
-                side: BorderSide(color: _green.withOpacity(0.5)),
+                side: BorderSide(color: _green.withValues(alpha: 0.5)),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 10,
@@ -1068,12 +1007,12 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                         ),
                         decoration: BoxDecoration(
                           color: checked
-                              ? _green.withOpacity(0.06)
+                              ? _green.withValues(alpha: 0.06)
                               : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: checked
-                                ? _green.withOpacity(0.35)
+                                ? _green.withValues(alpha: 0.35)
                                 : const Color(0xFFEEEEEE),
                           ),
                         ),
@@ -1125,7 +1064,9 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                                                     vertical: 2,
                                                   ),
                                               decoration: BoxDecoration(
-                                                color: _green.withOpacity(0.08),
+                                                color: _green.withValues(
+                                                  alpha: 0.08,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(5),
                                               ),
@@ -1197,7 +1138,7 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
           children: [
             Expanded(
               child: DropdownButtonFormField<String>(
-                value: _selectedExamId,
+                initialValue: _selectedExamId,
                 decoration: const InputDecoration(labelText: '내 시험지'),
                 hint: const Text('내가 푼 시험지 선택'),
                 items: _myExamPapers
@@ -1593,7 +1534,8 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _flowUserOptions.contains(_flowUserFilterCtrl.text)
+                initialValue:
+                    _flowUserOptions.contains(_flowUserFilterCtrl.text)
                     ? _flowUserFilterCtrl.text
                     : null,
                 items: _flowUserOptions
@@ -1614,7 +1556,7 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                 children: [
                   for (final days in const [1, 3, 7, 14, 30])
                     ChoiceChip(
-                      label: Text('${days}일'),
+                      label: Text('$days일'),
                       selected: _flowDaysPreset == days,
                       onSelected: (v) {
                         setState(() {
@@ -1728,7 +1670,7 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: _green.withOpacity(0.12),
+                backgroundColor: _green.withValues(alpha: 0.12),
                 child: Text(
                   group.name.isNotEmpty ? group.name.substring(0, 1) : '?',
                   style: const TextStyle(color: _green),
@@ -1810,7 +1752,7 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
         decoration: BoxDecoration(
           color: const Color(0xFFF2F8F3),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _green.withOpacity(0.35)),
+          border: Border.all(color: _green.withValues(alpha: 0.35)),
         ),
         child: Row(
           children: [
@@ -1871,7 +1813,9 @@ class _ChatMessage {
 class _MessengerDialog extends StatefulWidget {
   const _MessengerDialog({
     required this.info,
+    // ignore: unused_element_parameter
     this.onMessageSent,
+    // ignore: unused_element_parameter
     this.onDeleteThread,
   });
 
@@ -2194,7 +2138,7 @@ class _MessengerDialogState extends State<_MessengerDialog> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: _green.withOpacity(0.12),
+                backgroundColor: _green.withValues(alpha: 0.12),
                 child: Text(
                   widget.info.name.substring(0, 1),
                   style: const TextStyle(color: _green),

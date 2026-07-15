@@ -3,12 +3,15 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+/// 필요한 변수는 화면 문맥·모달 본문·최대 크기·모바일 전체 화면 여부다.
+/// 작동 원리: 데스크톱은 중앙 제한 크기, 모바일 액션 패널은 HTML처럼 viewport 전체 크기로 표시한다.
 Future<T?> showIos26Modal<T>({
   required BuildContext context,
   required Widget child,
   double maxWidth = 980,
   double maxHeight = 640,
   bool barrierDismissible = true,
+  bool mobileFullScreen = false,
 }) {
   return showDialog<T>(
     context: context,
@@ -25,8 +28,14 @@ Future<T?> showIos26Modal<T>({
           Center(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final width = math.min(maxWidth, constraints.maxWidth * 0.94);
-                final height = math.min(maxHeight, constraints.maxHeight * 0.9);
+                final fullScreen =
+                    mobileFullScreen && constraints.maxWidth <= 780;
+                final width = fullScreen
+                    ? constraints.maxWidth
+                    : math.min(maxWidth, constraints.maxWidth * 0.94);
+                final height = fullScreen
+                    ? constraints.maxHeight
+                    : math.min(maxHeight, constraints.maxHeight * 0.9);
                 return ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: width,

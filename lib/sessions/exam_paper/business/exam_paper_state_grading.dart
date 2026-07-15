@@ -753,6 +753,11 @@ mixin _ExamPaperGradingMixin
   Future<void> _openGradingReport({required bool passed}) async {
     if (_gradeResults.isEmpty) return;
 
+    final courseId = widget.courseId?.trim() ?? '';
+    final moduleId = widget.moduleId?.trim() ?? '';
+    final requiresModuleSubmission =
+        passed && courseId.isNotEmpty && moduleId.isNotEmpty;
+
     final results = _gradeResults.values.toList()
       ..sort((a, b) => a.itemIndex.compareTo(b.itemIndex));
 
@@ -766,6 +771,15 @@ mixin _ExamPaperGradingMixin
           examId: widget.examId,
           passRate: widget.passRate.clamp(0, 100),
           passed: passed,
+          moduleSubmissionRequired: requiresModuleSubmission,
+          moduleSubmissionSucceeded:
+              !requiresModuleSubmission || _courseModuleCompletionSubmitted,
+          onRetryModuleSubmission: requiresModuleSubmission
+              ? () async {
+                  await _completeCourseModuleIfPassed();
+                  return _courseModuleCompletionSubmitted;
+                }
+              : null,
         ),
       ),
     );
@@ -776,29 +790,33 @@ mixin _ExamPaperGradingMixin
 
   Future<void> _submitExamRatings() async {
     if (_gradeResults.isEmpty) return;
-    final items = <Map<String, dynamic>>[];
-    final examAttemptId =
-        '${widget.examId ?? 'local'}-${_examStartedAt.microsecondsSinceEpoch}';
-    final orderedResults = _gradeResults.values.toList()
-      ..sort((left, right) => left.itemIndex.compareTo(right.itemIndex));
-    for (final result in orderedResults) {
+    final futures = <Future<void>>[];
+    for (final result in _gradeResults.values) {
       if (result.quest == null) continue;
       if (result.isCorrect == null) continue;
       final quest = result.quest!;
       final header = quest['header'] as Map<String, dynamic>? ?? {};
+      final info = quest['info'] as Map<String, dynamic>? ?? {};
       final questId = header['quest_id']?.toString() ?? '';
       if (questId.isEmpty) continue;
-      items.add({
-        'quest_id': questId,
-        'is_correct': result.isCorrect ?? false,
-        'step_correctness': result.stepCorrectness,
-        'submission_id': 'exam:$examAttemptId:${result.itemIndex}:$questId',
-      });
+      final tags = (info['hash_tag'] as List<dynamic>? ?? [])
+          .map((tag) => tag.toString())
+          .toList();
+      futures.add(
+        ApiClient.instance
+            .submitRating(
+              questId: questId,
+              isCorrect: result.isCorrect ?? false,
+              tags: tags,
+              stepCorrectness: result.stepCorrectness,
+            )
+            .then(RatingStore.updateFromRating)
+            .catchError((_) {}),
+      );
     }
-    if (items.isEmpty) return;
+    if (futures.isEmpty) return;
     try {
-      final ratings = await ApiClient.instance.submitRatingBatch(items: items);
-      if (ratings.isNotEmpty) RatingStore.updateFromRating(ratings.last);
+      await Future.wait(futures);
     } catch (_) {}
   }
 }

@@ -18,20 +18,14 @@ class _PageLayout {
   final List<_LayoutEntry> entries;
   final List<bool> columnSpans;
 
-  _PageLayout({
-    required this.entries,
-    required this.columnSpans,
-  });
+  _PageLayout({required this.entries, required this.columnSpans});
 }
 
 class _QuestionRegion {
   final ExamItem item;
   final Rect rect;
 
-  const _QuestionRegion({
-    required this.item,
-    required this.rect,
-  });
+  const _QuestionRegion({required this.item, required this.rect});
 }
 
 class _GradeResult {
@@ -56,11 +50,7 @@ class _GradeResult {
   });
 
   factory _GradeResult.empty(int itemIndex, {Map<String, dynamic>? quest}) {
-    return _GradeResult._(
-      itemIndex: itemIndex,
-      empty: true,
-      quest: quest,
-    );
+    return _GradeResult._(itemIndex: itemIndex, empty: true, quest: quest);
   }
 
   factory _GradeResult.success(
@@ -86,19 +76,8 @@ class _GradeResult {
     String error, {
     Map<String, dynamic>? quest,
   }) {
-    return _GradeResult._(
-      itemIndex: itemIndex,
-      error: error,
-      quest: quest,
-    );
+    return _GradeResult._(itemIndex: itemIndex, error: error, quest: quest);
   }
-}
-
-class _OcrBlock {
-  final String text;
-  final Rect bbox;
-
-  const _OcrBlock({required this.text, required this.bbox});
 }
 
 class _ReferenceSolveStep {
@@ -254,5 +233,3 @@ class _StrokePoint {
   final Offset position;
   final double pressure;
 }
-
-

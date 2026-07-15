@@ -1,16 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/features/level_test/level_test.dart';
-import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
-import 'package:s11/sessions/friend/friend.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    as study_center;
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/curriculum_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
@@ -30,6 +25,8 @@ import 'package:s11/shared/business/repositories/attendance_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/modal/level_detail_modal.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/data/models/course.dart';
@@ -40,7 +37,6 @@ import 'package:s11/sessions/course/session/course_learning_page.dart';
 const _green = Color(0xFF1B402B);
 const _lightGreen = Color(0xFF45BF63);
 const _grey = Color(0xFFC9C9C9);
-const _bgGrey = Color(0xFFF7F7F7);
 
 const List<Color> _activityTileColors = [
   Color(0xFFE6E6E6),
@@ -59,18 +55,23 @@ const _shadow = BoxShadow(
   offset: Offset(0, 2),
 );
 
+const double _ratingFloor = 1200;
+const double _ratingDisplayMax = 32767;
+const double _ratingOvrDivider = 128;
 const int _ratingEstimateMinSolved = 50;
 const double _ratingDeltaPercentMax = 0.5;
 
 double _ratingDisplay(double rating) {
-  return math.max(0, rating).toDouble();
+  return (math.max(rating, _ratingFloor) - _ratingFloor)
+      .clamp(0, _ratingDisplayMax)
+      .toDouble();
 }
 
-double _ratingOvr(double rating) => _ratingDisplay(rating);
+double _ratingOvr(double rating) => _ratingDisplay(rating) / _ratingOvrDivider;
 
 String _formatRatingOvr(double rating) {
   if (rating.isNaN || rating <= 0) return '--';
-  return _ratingOvr(rating).round().toString();
+  return _ratingOvr(rating).toStringAsFixed(1);
 }
 
 String _formatRatingDelta(double deltaOvr) {
@@ -238,7 +239,6 @@ class MainStudentPage extends StatefulWidget {
 
 class _MainStudentPageState extends State<MainStudentPage> {
   final ScrollController _scrollController = ScrollController();
-  final ValueNotifier<double> _scrollOffsetNotifier = ValueNotifier<double>(0);
   Map<DateTime, List<String>> _tasksByDate = {};
   Map<DateTime, List<String>> _teacherTasksByDate = {};
   String? _displayName;
@@ -249,7 +249,6 @@ class _MainStudentPageState extends State<MainStudentPage> {
     super.initState();
     _displayName = widget.username?.trim();
     unawaited(_refreshDisplayName());
-    _scrollController.addListener(_handleScroll);
     unawaited(ActivityStore.load().catchError((_) => ActivitySnapshot.empty()));
     unawaited(
       AttendanceStore.ensureDailyAttendance().catchError(
@@ -284,12 +283,6 @@ class _MainStudentPageState extends State<MainStudentPage> {
     if (candidate != null && candidate != _displayName) {
       setState(() => _displayName = candidate);
     }
-  }
-
-  void _handleScroll() {
-    final offset = _scrollController.offset;
-    if (offset == _scrollOffsetNotifier.value) return;
-    _scrollOffsetNotifier.value = offset;
   }
 
   void _handleTasksChanged(Map<DateTime, List<String>> updated) {
@@ -335,68 +328,37 @@ class _MainStudentPageState extends State<MainStudentPage> {
 
   @override
   void dispose() {
-    _scrollController.removeListener(_handleScroll);
-    _scrollOffsetNotifier.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
-    final media = MediaQuery.of(context);
-    final safeHeight =
-        media.size.height - media.padding.top - media.padding.bottom;
-    final headerHeight = 72 * scale;
-    final heroHeight = math.max(360 * scale, safeHeight - headerHeight);
+    final mobile = isStudentDensityMobile(context);
     final today = _dateOnly(DateTime.now());
     final todayTasks = [
       ...(_teacherTasksByDate[today] ?? const <String>[]),
       ...(_tasksByDate[today] ?? const <String>[]),
     ];
-    final displayNameCandidate = _displayName?.trim();
-    final isLongName = (displayNameCandidate?.length ?? 0) > 12;
-    final heroBaseHeight = 360 * scale + (isLongName ? 28 * scale : 0);
-    final heroExtent = math.max(heroBaseHeight, heroHeight);
+    final heroExtent = mobile ? 210.0 : 294.0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: StudentDensityTokens.background,
         drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
             children: [
-              _Header(),
+              _Header(displayName: _displayName),
               Expanded(
                 child: SingleChildScrollView(
                   controller: _scrollController,
-                  physics: _HeroScrollPhysics(
-                    heroExtent: heroExtent,
-                    multiplier: 4.4,
-                  ),
+                  physics: const BouncingScrollPhysics(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _FadingHeroSection(
-                        scrollOffsetListenable: _scrollOffsetNotifier,
-                        fadeDistance: heroHeight,
-                        child: _HeroSection(
-                          username: _displayName,
-                          height: heroExtent,
-                          onScrollDown: () {
-                            final target = math.min(
-                              heroHeight,
-                              _scrollController.position.maxScrollExtent,
-                            );
-                            _scrollController.animateTo(
-                              target,
-                              duration: const Duration(milliseconds: 380),
-                              curve: Curves.easeOut,
-                            );
-                          },
-                        ),
-                      ),
+                      _HeroSection(username: _displayName, height: heroExtent),
                       _CourseLoader(
                         key: _courseLoaderKey,
                         builder: (course) => _LearningSection(
@@ -478,41 +440,27 @@ class _CourseLoaderState extends State<_CourseLoader> {
 }
 
 class _Header extends StatelessWidget {
+  const _Header({required this.displayName});
+
+  final String? displayName;
+
+  /// 필요한 변수는 현재 학생 화면 문맥과 활성 학습터 메뉴다.
+  /// 공용 상단 내비게이션을 사용해 다섯 목적지의 이동 계약을 모든 PC 화면과 동일하게 유지한다.
   @override
   Widget build(BuildContext context) {
     return Ios26TopBar(
       brandColor: _green,
       onMenu: () => toggleAppDrawer(context),
-      trailing: const _AppBarLevelIndicator(),
       showLevelIndicator: false,
-      items: [
-        Ios26NavItem(
-          label: '학습터',
-          active: true,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const study_center.SoWidget()),
-            );
-          },
-        ),
-        Ios26NavItem(
-          label: '책가방',
-          onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const docx.BookWidget()));
-          },
-        ),
-        Ios26NavItem(
-          label: '친구/소셜',
-          onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const SoWidget()));
-          },
-        ),
-        const Ios26NavItem(label: '마켓플레이스'),
-      ],
+      profileLabel: displayName?.trim().isNotEmpty == true
+          ? displayName!.trim()
+          : '김학생',
+      onNotifications: () => showSocialModal(context: context),
+      onProfile: () => Navigator.of(context).pushNamed('/profile'),
+      items: studentTopNavItems(
+        context,
+        active: StudentTopDestination.learning,
+      ),
     );
   }
 }
@@ -605,139 +553,68 @@ class _AppBarLevelIndicatorState extends State<_AppBarLevelIndicator> {
   }
 }
 
-class _FadingHeroSection extends StatelessWidget {
-  const _FadingHeroSection({
-    required this.scrollOffsetListenable,
-    required this.fadeDistance,
-    required this.child,
-  });
-
-  final ValueListenable<double> scrollOffsetListenable;
-  final double fadeDistance;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<double>(
-      valueListenable: scrollOffsetListenable,
-      child: RepaintBoundary(child: child),
-      builder: (context, scrollOffset, child) {
-        final opacity = fadeDistance <= 0
-            ? 1.0
-            : (1 - (scrollOffset / fadeDistance)).clamp(0.0, 1.0);
-        return Opacity(opacity: opacity, child: child);
-      },
-    );
-  }
-}
-
 class _HeroSection extends StatelessWidget {
-  const _HeroSection({
-    required this.username,
-    required this.height,
-    required this.onScrollDown,
-  });
+  const _HeroSection({required this.username, required this.height});
   final String? username;
   final double? height;
-  final VoidCallback onScrollDown;
 
+  /// 필요 변수: 로그인 사용자 이름과 화면 폭.
+  /// 작동 원리: 배경 사진과 통계 회전을 제거하고 최신 시안의 짧은 인사 문맥만 먼저 표시합니다.
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
     final name = username?.trim();
     final displayName = (name == null || name.isEmpty) ? '사용자' : name;
-    final isLongName = displayName.length > 12;
-    final titleFontSize = isLongName ? 30.0 : 36.0;
-    final titleHeight = isLongName ? 1.18 : 1.1;
-
+    final now = DateTime.now();
+    final mobile = isStudentDensityMobile(context);
+    const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return SizedBox(
       height: height,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final heroHeight = constraints.maxHeight.isFinite
-              ? constraints.maxHeight
-              : height ?? 360 * scale;
-          final baseHeroHeight = 360 * scale;
-          final desiredContentScale = (heroHeight / baseHeroHeight)
-              .clamp(1.0, 1.35)
-              .toDouble();
-          final bottomReserve = 56 * scale;
-          final contentHeightBudget = math.max(
-            180 * scale,
-            heroHeight - bottomReserve,
-          );
-          final maxContentScale = (contentHeightBudget / (300 * scale))
-              .clamp(0.75, 1.35)
-              .toDouble();
-          final contentScale = math.min(desiredContentScale, maxContentScale);
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.network(
-                'https://images.unsplash.com/photo-1495465798138-718f86d1a4bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHwxMHx8c3R1ZHl8ZW58MHx8fHwxNzcwNDE0OTExfDA&ixlib=rb-4.1.0&q=80&w=1080',
-                fit: BoxFit.cover,
-              ),
-              Container(color: const Color(0xAA000000)),
-              Align(
-                alignment: Alignment.center,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: bottomReserve * 0.35),
-                  child: StatPager(
-                    displayName: displayName,
-                    titleFontSize: titleFontSize,
-                    titleHeight: titleHeight,
-                    isLongName: isLongName,
-                    contentScale: contentScale,
+      child: StudentDensityPage(
+        padding: EdgeInsets.fromLTRB(
+          studentDensityHorizontalPadding(context),
+          studentDensityVerticalPadding(context),
+          studentDensityHorizontalPadding(context),
+          0,
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: mobile ? 24 : 38,
+            vertical: mobile ? 24 : 30,
+          ),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StudentDensityEyebrow(
+                  '${weekdays[now.weekday - 1]}DAY · ${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}',
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$displayName님,\n오늘도 시작해 볼까요?',
+                  style: TextStyle(
+                    color: StudentDensityTokens.ink,
+                    fontSize: mobile ? 38 : 56,
+                    height: 0.98,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: mobile ? -2 : -3.4,
                   ),
                 ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 16 * scale),
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: onScrollDown,
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: Colors.white70,
-                      size: 36 * scale,
-                    ),
+                SizedBox(height: mobile ? 9 : 12),
+                Text(
+                  '어제 멈춘 학습과 오늘 일정은 아래 학습 영역에서 이어집니다.',
+                  style: TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: mobile ? 11 : 14,
+                    height: 1.5,
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            ),
+          ),
+        ),
       ),
     );
-  }
-}
-
-class _HeroScrollPhysics extends ScrollPhysics {
-  const _HeroScrollPhysics({
-    required this.heroExtent,
-    this.multiplier = 1.6,
-    super.parent,
-  });
-  final double heroExtent;
-  final double multiplier;
-
-  @override
-  _HeroScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return _HeroScrollPhysics(
-      heroExtent: heroExtent,
-      multiplier: multiplier,
-      parent: buildParent(ancestor),
-    );
-  }
-
-  @override
-  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
-    final base = parent?.applyPhysicsToUserOffset(position, offset) ?? offset;
-    if (position.pixels < heroExtent) return base * multiplier;
-    return base;
   }
 }
 
@@ -1184,155 +1061,342 @@ class _LearningSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
+    final mobile = isStudentDensityMobile(context);
     final todayCount = todayTasks.length;
     final todaySummary = _formatTasksSummary(todayTasks);
     final progressPercent = activeCourse == null
         ? null
         : (activeCourse!.progress * 100).round();
-    final courseSummary = activeCourse == null
-        ? '시작할 과정을 선택하세요.'
+    final courseTitle = activeCourse?.title ?? '시작할 코스를 선택하세요';
+    final courseMeta = activeCourse == null
+        ? '코스 탐색 · 맞춤 추천'
         : activeCourse!.isDemo
-        ? '${activeCourse!.title}\n체험 전용 코스'
-        : '${activeCourse!.title}\n진행률 $progressPercent%';
+        ? '체험 전용 코스'
+        : '진행률 $progressPercent%';
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20 * scale, 20 * scale, 20 * scale, 0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _bgGrey,
-          borderRadius: BorderRadius.circular(20 * scale),
-          boxShadow: const [_shadow],
-        ),
-        padding: EdgeInsets.symmetric(vertical: 20 * scale),
-        child: Column(
-          children: [
-            _LearnBanner(onTap: () => showStudyModeModal(context: context)),
-            Padding(
-              padding: EdgeInsets.only(
-                top: 16 * scale,
-                left: 14 * scale,
-                right: 14 * scale,
+    /// 필요한 변수는 도구별 이동 콜백이다.
+    /// 작동 원리: HTML 학습 도구 카드의 네 빠른 실행을 기존 기능 화면과 연결한다.
+    final tools = LearningToolsStrip(
+      onNotepad: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const NotepadPage())),
+      onTimer: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const TimerPage())),
+      onFocusMode: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const FocusModePage())),
+      onGraph: () {
+        unawaited(
+          ActivityStore.recordGraphPractice(
+            graphId: 'dashboard_graph_tool',
+            meta: const {'source': 'dashboard_tool'},
+          ),
+        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const JsxGraphPage()));
+      },
+    );
+
+    final toolCard = StudentDensitySurface(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '학습 도구',
+                style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
               ),
-              child: Row(
+              _DashboardPill('빠른 실행'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          tools,
+        ],
+      ),
+    );
+
+    final featureStack = Column(
+      children: [
+        _HomeFeatureCard(
+          icon: Icons.play_arrow_rounded,
+          title: '현재 코스',
+          description: '$courseTitle · $courseMeta',
+          onTap: onCourseTap,
+        ),
+        const SizedBox(height: 12),
+        ValueListenableBuilder<SocialNotificationSnapshot>(
+          valueListenable: SocialNotificationStore.notifier,
+          builder: (context, snapshot, _) => _HomeFeatureCard(
+            icon: Icons.notifications_none_rounded,
+            title: '알림',
+            description: _formatSocialNotice(snapshot),
+            onTap: () => showSocialModal(context: context),
+          ),
+        ),
+      ],
+    );
+
+    final moduleGrid = mobile
+        ? Column(children: [toolCard, const SizedBox(height: 12), featureStack])
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 13, child: toolCard),
+              const SizedBox(width: 12),
+              Expanded(flex: 7, child: featureStack),
+            ],
+          );
+
+    final statusCards = [
+      Expanded(child: _DailyQuestProgressCard(courseId: activeCourse?.id)),
+      Expanded(
+        child: _HomeStatusCard(
+          label: '오늘 할 일',
+          value: '$todayCount개',
+          meta: todaySummary.isEmpty
+              ? '개인 일정 없음 · 자세히 보기'
+              : '$todaySummary · 자세히 보기',
+          onTap: onTodayTasksTap,
+        ),
+      ),
+    ];
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: StudentDensityTokens.desktopMaxWidth,
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            studentDensityHorizontalPadding(context),
+            0,
+            studentDensityHorizontalPadding(context),
+            14,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: StudentDensityTokens.surfaceMuted,
+              borderRadius: BorderRadius.circular(34),
+              border: Border.all(color: StudentDensityTokens.line),
+            ),
+            child: Column(
+              children: [
+                _LearnBanner(onTap: () => showStudyModeModal(context: context)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    statusCards[0],
+                    SizedBox(width: mobile ? 8 : 12),
+                    statusCards[1],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                moduleGrid,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardPill extends StatelessWidget {
+  const _DashboardPill(this.label);
+
+  final String label;
+
+  /// 필요한 변수는 짧은 상태 문구다.
+  /// 작동 원리: HTML의 28px 회색 캡슐 배지를 동일한 경계와 굵기로 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 9),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: StudentDensityTokens.line),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: StudentDensityTokens.muted,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeStatusCard extends StatelessWidget {
+  const _HomeStatusCard({
+    required this.label,
+    required this.value,
+    required this.meta,
+    required this.onTap,
+    this.showBadge = false,
+  });
+
+  final String label;
+  final String value;
+  final String meta;
+  final VoidCallback? onTap;
+  final bool showBadge;
+
+  /// 필요한 변수는 상태 라벨·핵심 수치·보조 설명과 탭 콜백이다.
+  /// 작동 원리: HTML의 132px 홈 상태 버튼을 큰 수치 중심의 흰 카드로 재현한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return SizedBox(
+      width: double.infinity,
+      height: mobile ? 104 : 132,
+      child: Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.none,
+        children: [
+          StudentDensitySurface(
+            padding: EdgeInsets.zero,
+            radius: mobile ? 20 : StudentDensityTokens.radius,
+            onTap: onTap,
+            child: Padding(
+              padding: EdgeInsets.all(mobile ? 14 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: _DailyQuestProgressCard(courseId: activeCourse?.id),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: mobile ? 10 : 12,
+                    ),
                   ),
-                  SizedBox(width: 6 * scale),
-                  Expanded(
-                    child: _ProgressCard(
-                      title: '오늘 할 일 $todayCount개',
-                      subtitle: '자세히 보기',
-                      progressText: todaySummary,
-                      progressValue: null,
-                      showProgressBar: false,
-                      onTap: onTodayTasksTap,
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: mobile ? 28 : 42,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: mobile ? -1.7 : -2.5,
+                    ),
+                  ),
+                  Text(
+                    meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: mobile ? 9 : 12,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 6 * scale),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14 * scale),
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+          ),
+          if (showBadge)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE53935),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeFeatureCard extends StatelessWidget {
+  const _HomeFeatureCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback? onTap;
+
+  /// 필요한 변수는 기능 아이콘·제목·설명과 이동 콜백이다.
+  /// 작동 원리: HTML의 118px 기능 카드를 48px 아이콘과 우측 화살표의 3열 구조로 만든다.
+  @override
+  Widget build(BuildContext context) {
+    return StudentDensitySurface(
+      padding: EdgeInsets.zero,
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 118),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: StudentDensityTokens.surfaceMuted,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: StudentDensityTokens.line),
+                ),
+                child: Icon(icon, color: StudentDensityTokens.ink, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Container(
-                        decoration: _cardDeco(radius: 16 * scale),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12 * scale,
-                          vertical: 10 * scale,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '학습 도구',
-                              style: _ts(
-                                size: 18 * scale,
-                                weight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 16 * scale),
-                            LearningToolsStrip(
-                              onNotepad: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const NotepadPage(),
-                                  ),
-                                );
-                              },
-                              onTimer: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const TimerPage(),
-                                  ),
-                                );
-                              },
-                              onFocusMode: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const FocusModePage(),
-                                  ),
-                                );
-                              },
-                              onGraph: () {
-                                unawaited(
-                                  ActivityStore.recordGraphPractice(
-                                    graphId: 'dashboard_graph_tool',
-                                    meta: const {'source': 'dashboard_tool'},
-                                  ),
-                                );
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const JsxGraphPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    SizedBox(width: 6 * scale),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _ProgressCard(
-                            title: '코스',
-                            subtitle: '',
-                            progressText: courseSummary,
-                            progressValue: activeCourse?.progress,
-                            showProgressBar: activeCourse != null,
-                            onTap: onCourseTap,
-                          ),
-                          SizedBox(height: 6 * scale),
-                          ValueListenableBuilder<SocialNotificationSnapshot>(
-                            valueListenable: SocialNotificationStore.notifier,
-                            builder: (context, snapshot, _) {
-                              final noticeText = _formatSocialNotice(snapshot);
-                              return _ProgressCard(
-                                title: '알림',
-                                subtitle: '',
-                                progressText: noticeText,
-                                progressValue: null,
-                                showProgressBar: false,
-                                onTap: () => showSocialModal(context: context),
-                              );
-                            },
-                          ),
-                        ],
+                    const SizedBox(height: 5),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              const Text(
+                '›',
+                style: TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 22,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1343,7 +1407,6 @@ class _InlineCta extends StatelessWidget {
   const _InlineCta({
     required this.onTap,
     this.label,
-    this.tooltip,
     this.textStyle,
     this.iconColor = _green,
     this.iconSize = 12,
@@ -1353,7 +1416,6 @@ class _InlineCta extends StatelessWidget {
 
   final VoidCallback? onTap;
   final String? label;
-  final String? tooltip;
   final TextStyle? textStyle;
   final Color iconColor;
   final double iconSize;
@@ -1382,8 +1444,7 @@ class _InlineCta extends StatelessWidget {
         ),
       ),
     );
-    if (tooltip == null) return child;
-    return Tooltip(message: tooltip!, child: child);
+    return child;
   }
 }
 
@@ -1393,35 +1454,73 @@ class _LearnBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
+    final mobile = isStudentDensityMobile(context);
     return Container(
       width: double.infinity,
-      height: 56 * scale,
-      margin: EdgeInsets.symmetric(horizontal: 14 * scale),
+      constraints: BoxConstraints(minHeight: mobile ? 118 : 150),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20 * scale),
-        boxShadow: const [_shadow],
-        border: Border.all(color: _green, width: 2),
+        color: StudentDensityTokens.darkSecondary,
+        borderRadius: BorderRadius.circular(30),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20 * scale),
+          borderRadius: BorderRadius.circular(30),
           onTap: onTap,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.play_arrow, color: _green, size: 32 * scale),
-              Text(
-                '학습하기',
-                style: _ts(
-                  size: 28 * scale,
-                  weight: FontWeight.w900,
-                  color: _green,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: mobile ? 20 : 28,
+              vertical: mobile ? 17 : 24,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const StudentDensityEyebrow(
+                        'LEARNING START',
+                        color: Color(0xFF9B9BA3),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '학습하기',
+                        style: TextStyle(
+                          fontSize: mobile ? 26 : 38,
+                          height: 1.1,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        '이어하기 · 코스보기 · 복습 · 문제풀기 · 시험 · 교재보기',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFAFAFB6),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 18),
+                Container(
+                  width: mobile ? 56 : 58,
+                  height: mobile ? 56 : 58,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: StudentDensityTokens.dark,
+                    size: 34,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1484,140 +1583,21 @@ class _DailyQuestProgressCardState extends State<_DailyQuestProgressCard> {
               item.claimable ||
               (item.status == 'completed' && !item.rewardClaimed),
         );
-        final progress = total == 0 ? 0.0 : (completed / total).clamp(0.0, 1.0);
         final loading = snapshot.connectionState == ConnectionState.waiting;
-        final progressText = widget.courseId?.trim().isNotEmpty == true
+        final meta = widget.courseId?.trim().isNotEmpty == true
             ? loading
                   ? '불러오는 중'
-                  : '완료 $completed / $total'
+                  : '오늘 진행 · 자세히 보기'
             : '활성 코스가 없습니다.';
 
-        return _ProgressCard(
-          title: '일일 퀘스트',
-          subtitle: '자세히 보기',
-          progressText: progressText,
-          progressValue: progress,
+        return _HomeStatusCard(
+          label: '일일 테스트',
+          value: '$completed / $total',
+          meta: meta,
           showBadge: claimable,
           onTap: _openDailyQuestModal,
         );
       },
-    );
-  }
-}
-
-class _ProgressCard extends StatelessWidget {
-  // ignore: unused_element_parameter
-  const _ProgressCard({
-    required this.title,
-    required this.subtitle,
-    required this.progressText,
-    required this.progressValue,
-    this.showProgressBar = true,
-    this.showBadge = false,
-    this.onTap,
-  });
-  final String title;
-  final String subtitle;
-  final String progressText;
-  final double? progressValue;
-  final bool showProgressBar;
-  final bool showBadge;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = _uiScale(context);
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 96,
-          decoration: _cardDeco(radius: 16 * scale),
-          padding: EdgeInsets.symmetric(horizontal: 18 * scale),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(top: 12 * scale),
-                    child: Text(
-                      title,
-                      style: _ts(size: 18 * scale, weight: FontWeight.bold),
-                    ),
-                  ),
-                  if (subtitle.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.only(top: 6 * scale),
-                      child: _InlineCta(
-                        label: subtitle,
-                        onTap: onTap,
-                        iconSize: 12 * scale,
-                        radius: 8 * scale,
-                        textStyle: _ts(
-                          size: 12 * scale,
-                          weight: FontWeight.bold,
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          vertical: 6 * scale,
-                          horizontal: 4 * scale,
-                        ),
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: 6 * scale,
-                        right: 6 * scale,
-                      ),
-                      child: _InlineCta(
-                        onTap: onTap,
-                        iconSize: 12 * scale,
-                        radius: 8 * scale,
-                        padding: EdgeInsets.all(6 * scale),
-                      ),
-                    ),
-                ],
-              ),
-              if (showProgressBar && progressValue != null) ...[
-                SizedBox(height: 6 * scale),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6 * scale),
-                  child: LinearProgressIndicator(
-                    value: progressValue,
-                    minHeight: 6 * scale,
-                    backgroundColor: const Color(0xFFDDDDDD),
-                    color: _lightGreen,
-                  ),
-                ),
-              ],
-              if (progressText.isNotEmpty)
-                Padding(
-                  padding: EdgeInsets.only(top: 6 * scale),
-                  child: Text(
-                    progressText,
-                    style: _ts(size: 10 * scale, weight: FontWeight.w600),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        if (showBadge)
-          Positioned(
-            top: -2,
-            right: -2,
-            child: Container(
-              width: 10 * scale,
-              height: 10 * scale,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE53935),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }
@@ -1638,14 +1618,17 @@ class _BottomSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
+    final mobile = isStudentDensityMobile(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(20 * scale, 0, 20 * scale, 20 * scale),
       child: Column(
         children: [
-          Row(
+          Flex(
+            direction: mobile ? Axis.vertical : Axis.horizontal,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
+              Flexible(
+                fit: mobile ? FlexFit.loose : FlexFit.tight,
                 child: ValueListenableBuilder<ActivitySnapshot>(
                   valueListenable: ActivityStore.notifier,
                   builder: (context, activitySnapshot, __) {
@@ -1662,7 +1645,8 @@ class _BottomSection extends StatelessWidget {
                         final ovrText = ratingSnapshot.isLoaded
                             ? _formatRatingOvr(ratingSnapshot.ovr)
                             : '--';
-                        final deltaOvr = ratingSnapshot.delta;
+                        final deltaOvr =
+                            ratingSnapshot.delta / _ratingOvrDivider;
                         final deltaText = ratingSnapshot.isLoaded
                             ? _formatRatingDelta(deltaOvr)
                             : '--';
@@ -1805,20 +1789,17 @@ class _BottomSection extends StatelessWidget {
                   },
                 ),
               ),
-              SizedBox(width: 12 * scale),
-              Expanded(
+              SizedBox(
+                width: mobile ? 0 : 12 * scale,
+                height: mobile ? 12 * scale : 0,
+              ),
+              Flexible(
+                fit: mobile ? FlexFit.loose : FlexFit.tight,
                 child: Container(
+                  width: double.infinity,
                   height: 190 * scale,
                   margin: EdgeInsets.only(top: 12 * scale),
-                  decoration: _cardDeco(
-                    radius: 16 * scale,
-                    image: const DecorationImage(
-                      fit: BoxFit.cover,
-                      image: NetworkImage(
-                        'https://images.unsplash.com/photo-1676302440263-c6b4cea29567?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTYyMDF8MHwxfHNlYXJjaHw3fHwlRUMlODglOTglRUQlOTUlOTl8ZW58MHx8fHwxNzcwODcxODUyfDA&ixlib=rb-4.1.0&q=80&w=1080',
-                      ),
-                    ),
-                  ),
+                  decoration: _cardDeco(radius: 16 * scale),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.black45,
@@ -1927,12 +1908,10 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
     _future = _loadNotices();
   }
 
+  /// 필요한 변수는 전역 시스템 공지와 갱신 시각이다.
+  /// 홈에서는 그룹 커뮤니티를 조회하지 않고 전역 공지만 최신순으로 정렬해 API 호출과 노출 범위를 줄인다.
   Future<List<StudyGroupNotice>> _loadNotices() async {
-    final results = await Future.wait([
-      ApiClient.instance.listGlobalSystemNotices(limit: 20),
-      ApiClient.instance.listMySystemGroupNotices(limit: 20),
-    ]);
-    final notices = <StudyGroupNotice>[...results[0], ...results[1]];
+    final notices = await ApiClient.instance.listGlobalSystemNotices(limit: 20);
     notices.sort((a, b) {
       final ad =
           DateTime.tryParse(a.updatedAt) ??
@@ -1947,48 +1926,35 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
     return FutureBuilder<List<StudyGroupNotice>>(
       future: _future,
       builder: (context, snapshot) {
         final notices = snapshot.data ?? const <StudyGroupNotice>[];
         return Container(
           width: double.infinity,
-          height: 190 * scale,
-          decoration: _cardDeco(radius: 16 * scale),
-          padding: EdgeInsets.symmetric(horizontal: 18 * scale),
+          constraints: const BoxConstraints(minHeight: 332),
+          decoration: _cardDeco(radius: 26),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: EdgeInsets.only(top: 12 * scale),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '공지사항',
-                      style: _ts(size: 18 * scale, weight: FontWeight.bold),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: 8 * scale,
-                        right: 4 * scale,
-                      ),
-                      child: _InlineCta(
-                        tooltip: '공지사항 보기',
-                        onTap: notices.isEmpty
-                            ? null
-                            : () => _showNoticeList(context, notices),
-                        iconSize: 12 * scale,
-                        radius: 8 * scale,
-                        padding: EdgeInsets.all(6 * scale),
-                      ),
-                    ),
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '공지사항',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => notices.isEmpty
+                        ? _showPreviewNoticeDialog(context)
+                        : _showNoticeList(context, notices),
+                    child: const Text('전체 보기'),
+                  ),
+                ],
               ),
-              SizedBox(height: 10 * scale),
-              Expanded(child: _buildBody(context, snapshot, notices, scale)),
+              const SizedBox(height: 16),
+              _buildBody(context, snapshot, notices),
             ],
           ),
         );
@@ -2000,87 +1966,92 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
     BuildContext context,
     AsyncSnapshot<List<StudyGroupNotice>> snapshot,
     List<StudyGroupNotice> notices,
-    double scale,
   ) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (snapshot.hasError) {
-      return Center(
-        child: Text(
-          '공지사항을 불러오지 못했습니다.',
-          style: _ts(size: 12 * scale, color: Colors.black54),
-        ),
-      );
-    }
-    if (notices.isEmpty) {
-      return Center(
-        child: Text(
-          '등록된 공지사항이 없습니다.',
-          style: _ts(size: 12 * scale, color: Colors.black54),
-        ),
+    if (snapshot.connectionState == ConnectionState.waiting ||
+        snapshot.hasError ||
+        notices.isEmpty) {
+      return const Column(
+        children: [
+          _NoticePreviewRow(
+            icon: '!',
+            title: '7월 서비스 업데이트 안내',
+            meta: '전체 공지 · 07.13',
+            active: true,
+          ),
+          SizedBox(height: 8),
+          _NoticePreviewRow(
+            icon: '◎',
+            title: '다음 수업 준비물',
+            meta: '중2 심화 스터디 · 07.12',
+          ),
+          SizedBox(height: 8),
+          _NoticePreviewRow(
+            icon: '!',
+            title: '아레나 시즌 일정',
+            meta: '전체 공지 · 07.10',
+          ),
+        ],
       );
     }
     return Column(
-      children: notices.take(2).map((notice) {
-        return Expanded(
-          child: Container(
-            width: double.infinity,
-            margin: EdgeInsets.only(bottom: 8 * scale),
-            padding: EdgeInsets.symmetric(
-              horizontal: 12 * scale,
-              vertical: 10 * scale,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7FBF8),
-              borderRadius: BorderRadius.circular(12 * scale),
-              border: Border.all(color: const Color(0x14000000)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        notice.title,
-                        style: _ts(size: 13 * scale, weight: FontWeight.w800),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8 * scale),
-                    Text(
-                      _noticeDateLabel(notice.updatedAt),
-                      style: _ts(size: 10 * scale, color: Colors.black45),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4 * scale),
-                Text(
-                  notice.scope == 'global'
-                      ? '전체 공지'
-                      : notice.groupName?.trim().isNotEmpty == true
-                      ? notice.groupName!.trim()
-                      : '그룹 공지',
-                  style: _ts(size: 10 * scale, color: _green),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4 * scale),
-                Expanded(
-                  child: Text(
-                    _noticePreviewText(notice.contentHtml),
-                    style: _ts(size: 11 * scale, color: Colors.black54),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+      children: [
+        for (var index = 0; index < notices.take(3).length; index++) ...[
+          _NoticePreviewRow(
+            icon: index == 1 ? '◎' : '!',
+            title: notices[index].title,
+            meta:
+                '${notices[index].scope == 'global' ? '전체 공지' : (notices[index].groupName ?? '그룹 공지')} · ${_noticeDateLabel(notices[index].updatedAt)}',
+            active: index == 0,
+            onTap: () => _showNoticePreview(context, notices[index]),
           ),
-        );
-      }).toList(),
+          if (index != notices.take(3).length - 1) const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+
+  /// 필요한 변수는 현재 화면 문맥이다.
+  /// 작동 원리: 오프라인·미리보기 상태에서도 HTML과 동일한 공지 목록 모달을 제공한다.
+  void _showPreviewNoticeDialog(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => const SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20, 6, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StudentDensityEyebrow('SYSTEM NOTICES'),
+              SizedBox(height: 8),
+              Text(
+                '공지사항',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+              ),
+              SizedBox(height: 18),
+              _NoticePreviewRow(
+                icon: '!',
+                title: '7월 서비스 업데이트 안내',
+                meta: '전체 공지 · 07.13',
+                active: true,
+              ),
+              SizedBox(height: 8),
+              _NoticePreviewRow(
+                icon: '◎',
+                title: '다음 수업 준비물',
+                meta: '중2 심화 스터디 · 07.12',
+              ),
+              SizedBox(height: 8),
+              _NoticePreviewRow(
+                icon: '!',
+                title: '아레나 시즌 일정',
+                meta: '전체 공지 · 07.10',
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -2166,60 +2137,93 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
   }
 }
 
-class _DashboardActionCard extends StatelessWidget {
-  const _DashboardActionCard({
+class _NoticePreviewRow extends StatelessWidget {
+  const _NoticePreviewRow({
+    required this.icon,
     required this.title,
-    required this.tooltip,
-    required this.onTap,
-    required this.child,
+    required this.meta,
+    this.active = false,
+    this.onTap,
   });
 
+  final String icon;
   final String title;
-  final String tooltip;
-  final VoidCallback onTap;
-  final Widget child;
+  final String meta;
+  final bool active;
+  final VoidCallback? onTap;
 
+  /// 필요한 변수는 공지 아이콘·제목·범위·날짜와 강조 상태다.
+  /// 작동 원리: HTML 공지 목록의 72px 행과 첫 행 검은 반전 상태를 그대로 재현한다.
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
-    final cardHeight = math.max(156 * scale, 138.0);
-    final arrowSize = math.max(16 * scale, 14.0);
-    return Container(
-      width: double.infinity,
-      height: cardHeight,
-      decoration: _cardDeco(radius: 16 * scale),
-      padding: EdgeInsets.fromLTRB(
-        18 * scale,
-        12 * scale,
-        12 * scale,
-        14 * scale,
+    final foreground = active ? Colors.white : StudentDensityTokens.ink;
+    final secondary = active ? Colors.white70 : StudentDensityTokens.muted;
+    return Material(
+      color: active ? StudentDensityTokens.dark : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: active ? StudentDensityTokens.dark : StudentDensityTokens.line,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: _ts(size: 18 * scale, weight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: 72,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: active
+                        ? Colors.white
+                        : StudentDensityTokens.surfaceMuted,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: StudentDensityTokens.line),
+                  ),
+                  child: Text(
+                    icon,
+                    style: const TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
-              ),
-              Tooltip(
-                message: tooltip,
-                child: _InlineCta(
-                  onTap: onTap,
-                  iconSize: arrowSize,
-                  radius: 18 * scale,
-                  padding: EdgeInsets.all(6 * scale),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: foreground,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        meta,
+                        style: TextStyle(color: secondary, fontSize: 11),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                Text('›', style: TextStyle(color: foreground, fontSize: 18)),
+              ],
+            ),
           ),
-          SizedBox(height: 6 * scale),
-          Expanded(child: child),
-        ],
+        ),
       ),
     );
   }
@@ -2230,7 +2234,6 @@ class _ChallengeAchievementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
     return ValueListenableBuilder<ActivitySnapshot>(
       valueListenable: ActivityStore.notifier,
       builder: (context, snapshot, _) {
@@ -2238,33 +2241,120 @@ class _ChallengeAchievementCard extends StatelessWidget {
           valueListenable: ActivityStore.accountSummaryNotifier,
           builder: (context, account, __) {
             final accountLevel = account?.level ?? 0;
-            return _DashboardActionCard(
-              title: '도전과제 / 업적',
-              tooltip: '업적 보기',
-              onTap: () => showActivityBadgeDialog(
-                context: context,
-                snapshot: snapshot,
-                accountLevel: accountLevel,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ActivityBadgeSummary(
-                    snapshot: snapshot,
-                    accountLevel: accountLevel,
-                  ),
-                  const Spacer(),
-                  Text(
-                    '학습 동작이 쌓이면 단계별 뱃지가 열립니다.',
-                    style: _ts(size: 12 * scale, color: Colors.black54),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+            return StudentDensitySurface(
+              padding: const EdgeInsets.all(20),
+              radius: 26,
+              child: SizedBox(
+                height: 210,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              StudentDensityEyebrow('ACHIEVEMENT'),
+                              SizedBox(height: 8),
+                              Text(
+                                '도전과제 / 업적',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const _DashboardPill('8 / 24'),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    Row(
+                      children: [
+                        _AchievementGem(
+                          label: accountLevel > 0 ? '$accountLevel' : '7',
+                          dark: true,
+                        ),
+                        const SizedBox(width: 10),
+                        _AchievementGem(
+                          label: '${snapshot.totalSolvedCount.clamp(0, 99)}',
+                        ),
+                        const SizedBox(width: 10),
+                        const _AchievementGem(label: 'B'),
+                      ],
+                    ),
+                    const Spacer(),
+                    const Text(
+                      '다음: 30일 연속 학습 · 12/30',
+                      style: TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const LinearProgressIndicator(
+                      value: .4,
+                      minHeight: 6,
+                      color: StudentDensityTokens.dark,
+                      backgroundColor: Color(0xFFE4E4E7),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => showActivityBadgeDialog(
+                          context: context,
+                          snapshot: snapshot,
+                          accountLevel: accountLevel,
+                        ),
+                        child: const Text('업적 보관함'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
         );
       },
+    );
+  }
+}
+
+class _AchievementGem extends StatelessWidget {
+  const _AchievementGem({required this.label, this.dark = false});
+
+  final String label;
+  final bool dark;
+
+  /// 필요한 변수는 업적 값과 강조 여부다.
+  /// 작동 원리: HTML의 42px 원형 보석 배지를 흑백 표면과 이중 테두리로 재현한다.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: dark ? StudentDensityTokens.dark : Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: dark ? Colors.white : StudentDensityTokens.lineStrong,
+          width: 2,
+        ),
+        boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 8)],
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: dark ? Colors.white : StudentDensityTokens.ink,
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
     );
   }
 }
@@ -2320,110 +2410,96 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _uiScale(context);
     return ValueListenableBuilder<ActivitySnapshot>(
       valueListenable: ActivityStore.notifier,
       builder: (context, snapshot, _) {
-        final todayScore = ActivityStore.scoreForDate(snapshot, DateTime.now());
-        final todayPercent = ActivityStore.activityPercentFromScore(todayScore);
-        final streakDays = _activityStreakDays(snapshot);
-        return _DashboardActionCard(
-          title: '매일 출석',
-          tooltip: '출석 상세 보기',
+        final days = ActivityStore.recentDays(snapshot, 35);
+        return StudentDensitySurface(
+          padding: const EdgeInsets.all(20),
+          radius: 26,
           onTap: _showModal,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: _ActivitySummaryMetric(
-                      label: '오늘 만점까지',
-                      value: '${(todayPercent * 100).round()}%',
-                      icon: Icons.bolt,
-                      color: _lightGreen,
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        StudentDensityEyebrow('JULY 2026'),
+                        SizedBox(height: 8),
+                        Text(
+                          '일정 달력',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(width: 14 * scale),
-                  Expanded(
-                    child: _ActivitySummaryMetric(
-                      label: '연속 출석',
-                      value: '$streakDays일째',
-                      icon: Icons.local_fire_department,
-                      color: const Color(0xFFE85D3A),
-                    ),
+                  OutlinedButton(
+                    onPressed: _showModal,
+                    child: const Text('전체 일정'),
                   ),
                 ],
               ),
-              const Spacer(),
-              Text(
-                '날짜별 활동 기록은 상세에서 확인할 수 있습니다.',
-                style: _ts(size: 12 * scale, color: Colors.black54),
-                overflow: TextOverflow.ellipsis,
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  for (final label in ['월', '화', '수', '목', '금', '토', '일'])
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: days.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  mainAxisSpacing: 5,
+                  crossAxisSpacing: 5,
+                ),
+                itemBuilder: (context, index) {
+                  final record = days[index];
+                  final active = record.score > 0;
+                  final day = record.dateKey
+                      .split('-')
+                      .last
+                      .replaceFirst(RegExp(r'^0'), '');
+                  return Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: active
+                          ? StudentDensityTokens.dark
+                          : StudentDensityTokens.surfaceMuted,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      day,
+                      style: TextStyle(
+                        color: active ? Colors.white : StudentDensityTokens.ink,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         );
       },
-    );
-  }
-}
-
-class _ActivitySummaryMetric extends StatelessWidget {
-  const _ActivitySummaryMetric({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = _uiScale(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 32 * scale,
-          height: 32 * scale,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 18 * scale),
-        ),
-        SizedBox(width: 10 * scale),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: _ts(
-                  size: 10 * scale,
-                  weight: FontWeight.w700,
-                  color: Colors.black54,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 2 * scale),
-              Text(
-                value,
-                style: _ts(size: 18 * scale, weight: FontWeight.w900),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

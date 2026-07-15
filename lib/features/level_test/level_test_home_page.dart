@@ -3,7 +3,10 @@ import 'package:s11/features/level_test/level_test_result_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/theme/app_colors.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 class LevelTestHomePage extends StatefulWidget {
   const LevelTestHomePage({super.key});
@@ -15,10 +18,6 @@ class LevelTestHomePage extends StatefulWidget {
 }
 
 class _LevelTestHomePageState extends State<LevelTestHomePage> {
-  static const int _questionCount = 50;
-  static const String _difficultyLabel = '기초~최상';
-  static const String _durationLabel = '약 60~90분';
-
   bool _loading = false;
   String? _error;
 
@@ -129,234 +128,519 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
         .toList();
   }
 
+  /// 필요한 변수는 배치 테스트 로딩·오류 상태와 화면 폭이다.
+  /// 실제 제출 로직 위에 HTML의 OVR 히어로, 측정 과정, 시작 전 확인 영역을 순서대로 배치한다.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        title: const Text(
-          '레벨 테스트',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1A000000),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.assignment_outlined,
-                          color: AppColors.primary,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '레이팅 추정 레벨테스트',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              '직접 검수한 전용 정적 50문항으로 현재 실력을 추정합니다.',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Divider(height: 1),
-                  const SizedBox(height: 18),
-                  const Row(
-                    children: [
-                      Expanded(
-                        child: _LevelTestInfoTile(
-                          icon: Icons.format_list_numbered_rounded,
-                          label: '문항 수',
-                          value: '$_questionCount문항',
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: _LevelTestInfoTile(
-                          icon: Icons.speed_rounded,
-                          label: '난이도',
-                          value: _difficultyLabel,
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: _LevelTestInfoTile(
-                          icon: Icons.schedule_rounded,
-                          label: '예상 소요시간',
-                          value: _durationLabel,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F7F7),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: const Text(
-                      '이것은 추정 레이팅이며, 변동 가능성이 있습니다.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  ElevatedButton(
-                    onPressed: _loading ? null : _startPlacement,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _loading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            '레벨테스트 시작',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                  ),
-                  if (_loading) ...[
-                    const SizedBox(height: 12),
-                    const Text(
-                      '레벨테스트 준비 중',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                  ],
-                  if (_error != null) ...[
-                    const SizedBox(height: 14),
-                    Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
+      key: const ValueKey('level-test-screen'),
+      backgroundColor: StudentDensityTokens.background,
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Builder(
+              builder: (context) => Ios26TopBar(
+                brandColor: StudentDensityTokens.dark,
+                onMenu: () => Scaffold.of(context).openDrawer(),
+                showLevelIndicator: false,
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.learning,
+                ),
               ),
             ),
-          ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: StudentDensityPage(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _PlacementHero(),
+                      const SizedBox(height: 34),
+                      const _PlacementIntro(),
+                      const SizedBox(height: 18),
+                      const _PlacementProcess(),
+                      const SizedBox(height: 14),
+                      _PlacementReady(
+                        loading: _loading,
+                        error: _error,
+                        onStart: _startPlacement,
+                      ),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _LevelTestInfoTile extends StatelessWidget {
-  const _LevelTestInfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+class _PlacementHero extends StatelessWidget {
+  const _PlacementHero();
 
-  final IconData icon;
-  final String label;
-  final String value;
-
+  /// 필요한 변수는 화면 폭과 고정 배치 테스트 메타다.
+  /// HTML 시안의 밝은 그라데이션 안에 소개 문구·OVR 궤도·50문항 지표를 반응형으로 배치한다.
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: AppColors.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+    final mobile = isStudentDensityMobile(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(mobile ? 24 : 30),
+      child: Container(
+        constraints: BoxConstraints(minHeight: mobile ? 230 : 430),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.white, Color(0xFFF6F6F8), Color(0xFFE9E9ED)],
+            stops: [0, .55, 1],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                mobile ? 24 : 42,
+                mobile ? 24 : 42,
+                mobile ? 118 : 330,
+                mobile ? 68 : 94,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'FIRST STEP · OVR PLACEMENT',
+                    style: TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: 10,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
+                  const SizedBox(height: 18),
+                  Text(
+                    '처음 만나는\n나의 실력.',
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: mobile ? 46 : 70,
+                      height: .9,
+                      letterSpacing: -3,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    '50개의 문제로 지금의 학습 위치를 찾습니다.\n첫 OVR은 앞으로의 코스와 난이도를 결정합니다.',
+                    style: TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: mobile ? 11 : 13,
+                      height: 1.55,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: mobile ? -8 : -80,
+              top: mobile ? 50 : 34,
+              child: _OvrOrbit(mobile: mobile),
+            ),
+            Positioned(
+              left: mobile ? 14 : null,
+              right: mobile ? 14 : 28,
+              bottom: mobile ? 10 : 24,
+              child: SizedBox(
+                width: mobile ? null : 360,
+                child: const _PlacementMeta(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OvrOrbit extends StatelessWidget {
+  const _OvrOrbit({required this.mobile});
+
+  final bool mobile;
+
+  /// 필요한 변수는 모바일 여부다.
+  /// 측정 전 OVR을 두 개의 원형 궤도와 중앙 `--` 값으로 표현한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: mobile ? 120 : 360,
+    height: mobile ? 120 : 360,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.black26),
+    ),
+    alignment: Alignment.center,
+    child: Container(
+      width: mobile ? 94 : 172,
+      height: mobile ? 94 : 172,
+      decoration: BoxDecoration(
+        color: mobile ? Colors.transparent : const Color(0xFF202022),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.black38),
+        boxShadow: mobile
+            ? const []
+            : const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 28,
+                  spreadRadius: 4,
                 ),
               ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'MY OVR',
+            style: TextStyle(
+              color: mobile ? Colors.black54 : Colors.white54,
+              fontSize: 8,
+              letterSpacing: 1.2,
+            ),
+          ),
+          Text(
+            '--',
+            style: TextStyle(
+              color: mobile ? StudentDensityTokens.ink : Colors.white,
+              fontSize: 34,
+              height: .9,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            'READY TO MEASURE',
+            style: TextStyle(
+              color: mobile ? Colors.black38 : Colors.white54,
+              fontSize: 6,
             ),
           ),
         ],
       ),
+    ),
+  );
+}
+
+class _PlacementMeta extends StatelessWidget {
+  const _PlacementMeta();
+
+  /// 필요한 변수는 문항 수·난이도·결과 유형이다.
+  /// 히어로 하단에 반투명 3열 지표를 띄워 테스트 범위를 표시한다.
+  @override
+  Widget build(BuildContext context) => const Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Expanded(child: _MetaCell('QUESTIONS', '50')),
+      SizedBox(width: 8),
+      Expanded(child: _MetaCell('DIFFICULTY', '중상–상')),
+      SizedBox(width: 8),
+      Expanded(child: _MetaCell('RESULT', 'OVR + 태그')),
+    ],
+  );
+}
+
+class _MetaCell extends StatelessWidget {
+  const _MetaCell(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  /// 필요한 변수는 지표 이름과 값이다.
+  /// 동일 너비의 반투명 셀 안에 작은 영문 이름과 굵은 값을 표시한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .72),
+      border: Border.all(color: StudentDensityTokens.line),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 7,
+            fontWeight: FontWeight.w900,
+            letterSpacing: .8,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          style: const TextStyle(
+            color: StudentDensityTokens.ink,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _PlacementIntro extends StatelessWidget {
+  const _PlacementIntro();
+
+  /// 필요한 변수는 화면 폭이다.
+  /// 측정 목적 제목과 설명을 PC 2열, 모바일 단일 열로 배치한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final title = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const StudentDensityEyebrow('HOW IT WORKS'),
+        const SizedBox(height: 10),
+        Text(
+          mobile ? '점수가 아니라,\n학습의 출발점을 찾습니다.' : '점수가 아니라,\n학습의 출발점을 찾습니\n다.',
+          style: TextStyle(
+            fontSize: mobile ? 34 : 54,
+            height: 1,
+            letterSpacing: -1.5,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
+    const copy = Text(
+      '모든 답은 개념 태그와 풀이 시간으로 함께 분석됩니다. 맞힌 개수만 세지 않고 어떤 영역에서 빠르고 정확한지 확인합니다.',
+      style: TextStyle(
+        fontSize: 13,
+        height: 1.6,
+        color: StudentDensityTokens.muted,
+      ),
+    );
+    if (mobile) return title;
+    return Row(
+      children: [
+        Expanded(child: title),
+        const SizedBox(width: 40),
+        const Expanded(child: copy),
+      ],
     );
   }
+}
+
+class _PlacementProcess extends StatelessWidget {
+  const _PlacementProcess();
+
+  /// 필요한 변수는 화면 폭과 세 측정 단계다.
+  /// 모바일은 세로, PC는 3열 카드로 배치 테스트 과정을 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    const cards = [
+      _ProcessCard('01', '50', '폭넓게 확인', '선별된 50문항으로 주요 개념을 고르게 확인합니다.'),
+      _ProcessCard('02', '⌁', '풀이 패턴 분석', '정오답, 풀이 시간과 사고 흐름을 문항마다 누적합니다.'),
+      _ProcessCard('03', 'OVR', '첫 기준점 생성', '첫 OVR과 신뢰도, 강한 태그와 보완 태그를 제공합니다.'),
+    ];
+    if (isStudentDensityMobile(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          cards[0],
+          const SizedBox(height: 10),
+          cards[1],
+          const SizedBox(height: 10),
+          cards[2],
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 10),
+        Expanded(child: cards[1]),
+        const SizedBox(width: 10),
+        Expanded(child: cards[2]),
+      ],
+    );
+  }
+}
+
+class _ProcessCard extends StatelessWidget {
+  const _ProcessCard(this.number, this.mark, this.title, this.copy);
+
+  final String number;
+  final String mark;
+  final String title;
+  final String copy;
+
+  /// 필요한 변수는 단계 번호·표식·제목·설명이다.
+  /// 흰 카드 안에 큰 측정 표식과 설명을 동일한 최소 높이로 표시한다.
+  @override
+  Widget build(BuildContext context) => StudentDensitySurface(
+    radius: 24,
+    padding: const EdgeInsets.all(22),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          number,
+          style: const TextStyle(
+            fontSize: 9,
+            color: StudentDensityTokens.muted,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          mark,
+          style: const TextStyle(
+            fontSize: 42,
+            height: 1,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          copy,
+          style: const TextStyle(
+            fontSize: 11,
+            height: 1.5,
+            color: StudentDensityTokens.muted,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _PlacementReady extends StatelessWidget {
+  const _PlacementReady({
+    required this.loading,
+    required this.error,
+    required this.onStart,
+  });
+
+  final bool loading;
+  final String? error;
+  final VoidCallback onStart;
+
+  /// 필요한 변수는 API 준비 상태·오류·시작 콜백과 화면 폭이다.
+  /// 준비 체크와 실제 시작 행동을 흑백 2열 또는 모바일 세로 카드로 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final copy = Padding(
+      padding: const EdgeInsets.all(26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          StudentDensityEyebrow('BEFORE YOU START'),
+          SizedBox(height: 10),
+          Text(
+            '준비되었나요?',
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+          ),
+          SizedBox(height: 16),
+          _ReadyCheck('50문항 · 약 60–90분'),
+          _ReadyCheck('중간 진행 자동 저장'),
+          _ReadyCheck('정답은 제출 후 분석'),
+          _ReadyCheck('최초 OVR은 이후 학습으로 계속 보정'),
+        ],
+      ),
+    );
+    final action = Container(
+      color: StudentDensityTokens.dark,
+      padding: const EdgeInsets.all(26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const StudentDensityEyebrow('YOUR BASELINE', color: Colors.white54),
+          const SizedBox(height: 12),
+          const Text(
+            '첫 번째\n기준점을 만들 시간',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              height: 1.05,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: loading ? null : onStart,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: StudentDensityTokens.ink,
+              minimumSize: const Size.fromHeight(48),
+            ),
+            child: loading
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text(
+                    '레벨 테스트 시작 →',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+          ),
+          if (error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              error!,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+            ),
+          ],
+        ],
+      ),
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        color: Colors.white,
+        child: mobile
+            ? Column(children: [copy, action])
+            : Row(
+                children: [
+                  Expanded(child: copy),
+                  Expanded(child: action),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _ReadyCheck extends StatelessWidget {
+  const _ReadyCheck(this.label);
+
+  final String label;
+
+  /// 필요한 변수는 시작 전 확인 문구다.
+  /// 체크 아이콘과 안내 문구를 한 행으로 표시한다.
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(
+      children: [
+        const Icon(Icons.check_circle, size: 17),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+        ),
+      ],
+    ),
+  );
 }

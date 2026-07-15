@@ -1,4 +1,4 @@
-﻿// Barrel file for exam_paper session – public API exports.
+// Barrel file for exam_paper session – public API exports.
 // Use: import 'package:s11/sessions/exam_paper/exam_paper.dart';
 
 // Only export non-part files. All other files are part of exam_paper_page.dart.

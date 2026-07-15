@@ -19,7 +19,6 @@ part '../session/build_page_widget.dart';
 part '../ui/widgets/ui_components.dart';
 part '../ui/widgets/painting.dart';
 part '../business/analysis.dart';
-part '../business/solution_analysis.dart';
 
 // Legacy aliases for backward compatibility
 typedef SharedFlowConfig = ProblemSolveConfig;

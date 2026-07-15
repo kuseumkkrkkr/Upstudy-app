@@ -1,125 +1,192 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:s11/sessions/friend/friend.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    as study_center;
+
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
-class MarketplacePage extends StatelessWidget {
-  const MarketplacePage({super.key});
+class MarketplacePage extends StatefulWidget {
+  const MarketplacePage({super.key, this.initialData});
 
-  static const List<_PlanTier> _plans = <_PlanTier>[
-    _PlanTier(
-      name: 'Go',
-      price: '9,900',
-      caption: 'Entry Access',
-      summary: '가벼운 학습 루틴과 기본 AI 학습 흐름용.',
-      features: <String>['일일 학습 루틴', '기본 문제 흐름', '책가방 동기화'],
-    ),
-    _PlanTier(
-      name: 'Basic',
-      price: '19,000',
-      caption: 'Core Track',
-      summary: '개인 학습 관리와 기본 진도 추적 중심.',
-      features: <String>['루틴 리포트', '북마크 확장', '기본 복습 큐'],
-    ),
-    _PlanTier(
-      name: 'Standard',
-      price: '39,000',
-      caption: 'Balanced Suite',
-      summary: '교재, 시험지, 학습 흐름을 균형 있게 묶은 구성.',
-      features: <String>['심화 진도 분석', '시험지 워크스페이스', '복습 추천'],
-    ),
-    _PlanTier(
-      name: 'Elite',
-      price: '69,000',
-      caption: 'Performance Deck',
-      summary: '대량 학습과 고강도 피드백을 위한 상위 구성.',
-      features: <String>['우선 처리 큐', '심화 성취 추적', '확장 학습 보드'],
-    ),
-    _PlanTier(
-      name: 'Prime',
-      price: '99,000',
-      caption: 'Full Access',
-      summary: '현재 테스트 빌드 기본 보유 상태. 전체 상점 디자인 기준 요금제.',
-      features: <String>['전체 프리미엄 해금', '실험 기능 우선 접근', '최상위 학습 대시보드'],
-      isOwned: true,
-      isFeatured: true,
-    ),
-  ];
-
-  static const Color _brand = Color(0xFF1B402B);
-  static const Color _bg = Color(0xFFF6F6F3);
-  static const Color _panel = Color(0xFFFFFFFF);
-  static const Color _panelSoft = Color(0xFFF0F0EC);
-  static const Color _line = Color(0xFFD8D9D2);
-  static const Color _lineStrong = Color(0xFF171717);
-  static const Color _text = Color(0xFF111111);
-  static const Color _textSoft = Color(0xFF4F4F4A);
-  static const Color _textMuted = Color(0xFF75756E);
+  final List<Map<String, dynamic>>? initialData;
 
   @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final compact = width < 920;
+  State<MarketplacePage> createState() => _MarketplacePageState();
+}
 
-    return Scaffold(
-      backgroundColor: _bg,
-      drawer: const AppDrawer(),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[Color(0xFFF9F9F6), Color(0xFFF1F1EC)],
-          ),
+class _MarketplacePageState extends State<MarketplacePage> {
+  final TextEditingController _queryController = TextEditingController();
+  List<_MarketItem> _items = const <_MarketItem>[];
+  String _filter = '전체';
+  String _courseFilter = '전체 과정';
+  String _priceFilter = '전체 가격';
+  bool _loading = false;
+  String? _error;
+
+  /// 필요한 변수는 선택적 미리보기 데이터다.
+  /// 작동 원리는 고정 데이터가 있으면 네트워크를 건너뛰고, 실제 화면은 문제·교재를 한 번씩 병렬 조회하는 것이다.
+  @override
+  void initState() {
+    super.initState();
+    final initialData = widget.initialData;
+    if (initialData != null) {
+      _items = initialData.map(_MarketItem.fromMap).toList(growable: false);
+    } else {
+      unawaited(_search());
+    }
+  }
+
+  /// 필요한 변수는 검색 컨트롤러다.
+  /// 작동 원리는 화면 종료 시 입력 리소스를 해제하는 것이다.
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  /// 필요한 변수는 검색어와 문제·교재 API다.
+  /// 작동 원리는 버튼을 누른 시점에 두 GET을 병렬 실행하고 교재는 클라이언트에서 제목·태그를 한 번 필터링하는 것이다.
+  Future<void> _search() async {
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final query = _queryController.text.trim();
+    try {
+      final results = await Future.wait<Object>([
+        ApiClient.instance.searchQuests(
+          text: query.isEmpty ? null : query,
+          pageSize: 12,
         ),
-        child: SafeArea(
+        ApiClient.instance.listTextbooks(),
+      ]);
+      final quests = results[0] as List<Map<String, dynamic>>;
+      final textbooks = results[1] as List<Map<String, dynamic>>;
+      final normalized = query.toLowerCase();
+      final items = <_MarketItem>[
+        ...quests.map((item) => _MarketItem.fromQuest(item)),
+        ...textbooks
+            .map((item) => _MarketItem.fromTextbook(item))
+            .where(
+              (item) =>
+                  normalized.isEmpty || item.searchText.contains(normalized),
+            ),
+      ];
+      if (!mounted) return;
+      setState(() => _items = items);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = '마켓 자료를 불러오지 못했습니다.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  List<_MarketItem> get _filteredItems {
+    return _items
+        .where((item) {
+          return switch (_filter) {
+            '문제' => item.type == _MarketItemType.quest,
+            '교재' => item.type == _MarketItemType.textbook,
+            _ => true,
+          };
+        })
+        .where(
+          (item) =>
+              _courseFilter == '전체 과정' ||
+              item.searchText.contains(_courseFilter.toLowerCase()),
+        )
+        .where((item) {
+          if (_priceFilter == '무료') {
+            return item.subtitle.contains('무료') || item.subtitle.contains('0P');
+          }
+          if (_priceFilter == '유료') {
+            return !item.subtitle.contains('무료') &&
+                !item.subtitle.contains('0P');
+          }
+          return true;
+        })
+        .toList(growable: false);
+  }
+
+  /// 필요한 변수는 현재 유형·과정·가격 필터다.
+  /// 작동 원리는 HTML의 필터+ 바텀시트에서 조건을 임시 선택한 뒤 적용 시 한 번만 목록 상태를 갱신한다.
+  Future<void> _openMarketFilter() async {
+    final result = await showModalBottomSheet<(String, String, String)>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (_) => _MarketFilterSheet(
+        type: _filter,
+        course: _courseFilter,
+        price: _priceFilter,
+      ),
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _filter = result.$1;
+      _courseFilter = result.$2;
+      _priceFilter = result.$3;
+    });
+  }
+
+  /// 필요한 변수는 검색 패널이 전달한 기본 필터명이다.
+  /// 작동 원리는 필터+만 상세 시트를 열고 나머지 유형은 즉시 로컬 전환한다.
+  void _handleFilterChanged(String value) {
+    if (value == '필터+') {
+      unawaited(_openMarketFilter());
+      return;
+    }
+    setState(() => _filter = value);
+  }
+
+  /// 필요한 변수는 현재 항목의 제목·유형·설명·가격이다.
+  /// 작동 원리는 상세 버튼에서 같은 데이터를 바텀시트로 확장해 목록 위치를 잃지 않게 하는 것이다.
+  void _openItem(_MarketItem item) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 4, 22, 26),
           child: Column(
-            children: <Widget>[
-              _buildHeader(context),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    compact ? 16 : 28,
-                    18,
-                    compact ? 16 : 28,
-                    28,
-                  ),
-                  child: Column(
-                    children: <Widget>[
-                      _HeroPanel(compact: compact),
-                      const SizedBox(height: 18),
-                      compact
-                          ? Column(
-                              children: <Widget>[
-                                _OwnedStatusCard(plan: _plans.last),
-                                const SizedBox(height: 18),
-                                _PlanGrid(plans: _plans, compact: compact),
-                              ],
-                            )
-                          : Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Expanded(
-                                  flex: 4,
-                                  child: _PlanGrid(
-                                    plans: _plans,
-                                    compact: compact,
-                                  ),
-                                ),
-                                const SizedBox(width: 18),
-                                Expanded(
-                                  flex: 2,
-                                  child: _OwnedStatusCard(plan: _plans.last),
-                                ),
-                              ],
-                            ),
-                    ],
-                  ),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.typeLabel.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black45,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                item.title,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                item.subtitle,
+                style: const TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.black),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('확인'),
                 ),
               ),
             ],
@@ -129,581 +196,596 @@ class MarketplacePage extends StatelessWidget {
     );
   }
 
+  /// 필요한 변수는 현재 화면 문맥이다.
+  /// 작동 원리는 PC 공용 메뉴에서 마켓을 활성화하고 모바일에서는 같은 AppDrawer를 여는 것이다.
   Widget _buildHeader(BuildContext context) {
     return Ios26TopBar(
-      brandColor: _brand,
+      brandColor: Colors.black,
+      showLevelIndicator: false,
       onMenu: () => toggleAppDrawer(context),
-      trailing: const _MarketplaceCoinBalance(),
       onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainStudentPage()),
-        (Route<dynamic> route) => false,
+        (route) => false,
       ),
-      items: <Ios26NavItem>[
-        Ios26NavItem(
-          label: '학습터',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const study_center.SoWidget()),
-          ),
-        ),
-        Ios26NavItem(
-          label: '책가방',
-          onTap: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            }
-          },
-        ),
-        Ios26NavItem(
-          label: '친구/소셜',
-          onTap: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const SoWidget())),
-        ),
-        const Ios26NavItem(label: '마켓플레이스', active: true),
-      ],
+      items: studentTopNavItems(
+        context,
+        active: StudentTopDestination.marketplace,
+      ),
     );
   }
-}
 
-class _MarketplaceCoinBalance extends StatefulWidget {
-  const _MarketplaceCoinBalance();
-
-  @override
-  State<_MarketplaceCoinBalance> createState() =>
-      _MarketplaceCoinBalanceState();
-}
-
-class _MarketplaceCoinBalanceState extends State<_MarketplaceCoinBalance> {
-  late final Future<AccountSummary> _summary = ApiClient.instance
-      .fetchAccountSummary();
-
+  /// 필요한 변수는 검색·필터·추천 결과 상태다.
+  /// 작동 원리는 HTML 마켓의 제목, 검색 카드, 필터 캡슐, 추천 행을 같은 순서와 여백으로 렌더링하는 것이다.
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<AccountSummary>(
-      future: _summary,
-      builder: (context, snapshot) {
-        final account = snapshot.data;
-        if (account == null) {
-          return const SizedBox.shrink();
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF4D7),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFD59B19)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.monetization_on_rounded,
-                color: Color(0xFFD59B19),
-                size: 18,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${account.totalPoints}',
-                style: GoogleFonts.spaceGrotesk(
-                  color: MarketplacePage._text,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+    final items = _filteredItems;
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F4F6),
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Builder(builder: _buildHeader),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _search,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                  children: [
+                    const Text(
+                      'COMMUNITY',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.7,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '마켓',
+                      style: TextStyle(
+                        fontSize: 32,
+                        letterSpacing: -1.4,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      '필요한 문제와 교재를 찾아 내 학습으로 연결합니다.',
+                      style: TextStyle(color: Colors.black45),
+                    ),
+                    const SizedBox(height: 28),
+                    _SearchPanel(
+                      controller: _queryController,
+                      loading: _loading,
+                      filter: _filter,
+                      onFilterChanged: _handleFilterChanged,
+                      onSearch: _search,
+                    ),
+                    const SizedBox(height: 12),
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    _RecommendationCard(
+                      items: items.take(3).toList(),
+                      onOpen: _openItem,
+                    ),
+                    if (items.length > 3) ...[
+                      const SizedBox(height: 12),
+                      _MoreResultsCard(
+                        items: items.skip(3).toList(),
+                        onOpen: _openItem,
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _HeroPanel extends StatelessWidget {
-  const _HeroPanel({required this.compact});
-
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(compact ? 18 : 28),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF0F0EB)],
-        ),
-        border: Border.all(color: MarketplacePage._lineStrong, width: 1.2),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 24,
-            offset: Offset(0, 14),
-          ),
-          BoxShadow(
-            color: Color(0xFFFFFFFF),
-            blurRadius: 2,
-            spreadRadius: -1,
-            offset: Offset(-2, -2),
-          ),
-        ],
-      ),
-      child: compact
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _HeroCopy(compact: compact),
-                const SizedBox(height: 18),
-                const _HeroDial(),
-              ],
-            )
-          : Row(
-              children: <Widget>[
-                Expanded(child: _HeroCopy(compact: compact)),
-                const SizedBox(width: 24),
-                const _HeroDial(),
-              ],
             ),
-    );
-  }
-}
-
-class _HeroCopy extends StatelessWidget {
-  const _HeroCopy({required this.compact});
-
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            'BLACK EDITION STORE',
-            style: GoogleFonts.spaceGrotesk(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.6,
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        Text(
-          'Marketplace',
-          style: GoogleFonts.oswald(
-            color: MarketplacePage._text,
-            fontSize: compact ? 40 : 56,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.2,
-            height: 1,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          '검은 금속 패널 감성으로 정리한 테스트 전용 상점 화면입니다. 현재는 Prime 요금제가 항상 활성화된 상태로 표시됩니다.',
-          style: GoogleFonts.spaceGrotesk(
-            color: MarketplacePage._textSoft,
-            fontSize: compact ? 14 : 15,
-            height: 1.6,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HeroDial extends StatelessWidget {
-  const _HeroDial();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      height: 220,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFFFFFFFF), Color(0xFFE6E6E1)],
-        ),
-        border: Border.all(color: MarketplacePage._lineStrong, width: 1.4),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x26000000),
-            blurRadius: 20,
-            offset: Offset(0, 14),
-          ),
-          BoxShadow(
-            color: Color(0xFFFFFFFF),
-            blurRadius: 3,
-            spreadRadius: -1,
-            offset: Offset(-4, -4),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Container(
-          width: 154,
-          height: 154,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF101010),
-            border: Border.all(color: const Color(0xFF000000)),
-          ),
-          child: Center(
-            child: Text(
-              'PRIME\nACTIVE',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.oswald(
-                color: Colors.white,
-                fontSize: 28,
-                height: 1.1,
-                letterSpacing: 1.8,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PlanGrid extends StatelessWidget {
-  const _PlanGrid({required this.plans, required this.compact});
-
-  final List<_PlanTier> plans;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: plans
-          .map(
-            (plan) => SizedBox(
-              width: compact ? double.infinity : 290,
-              child: _PlanCard(plan: plan),
-            ),
-          )
-          .toList(),
-    );
-  }
-}
-
-class _PlanCard extends StatelessWidget {
-  const _PlanCard({required this.plan});
-
-  final _PlanTier plan;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color frame = plan.isOwned
-        ? const Color(0xFFECECEC)
-        : Colors.white.withValues(alpha: 0.12);
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            plan.isFeatured ? const Color(0xFFFFFFFF) : const Color(0xFFF8F8F4),
-            const Color(0xFFEFEFEA),
           ],
         ),
-        border: Border.all(
-          color: plan.isOwned ? MarketplacePage._lineStrong : frame,
-          width: plan.isOwned ? 1.4 : 1,
-        ),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x1F000000),
-            blurRadius: 18,
-            offset: Offset(0, 12),
-          ),
-          BoxShadow(
-            color: Color(0xFFFFFFFF),
-            blurRadius: 2,
-            spreadRadius: -1,
-            offset: Offset(-2, -2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  plan.name,
-                  style: GoogleFonts.oswald(
-                    color: MarketplacePage._text,
-                    fontSize: 32,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: plan.isOwned ? Colors.black : const Color(0xFFE9E9E3),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFF161616)),
-                ),
-                child: Text(
-                  plan.isOwned ? 'OWNED' : plan.caption,
-                  style: GoogleFonts.spaceGrotesk(
-                    color: plan.isOwned ? Colors.white : MarketplacePage._text,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'KRW ${plan.price}',
-            style: GoogleFonts.spaceGrotesk(
-              color: MarketplacePage._text,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '/ month',
-            style: GoogleFonts.spaceGrotesk(
-              color: MarketplacePage._textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            plan.summary,
-            style: GoogleFonts.spaceGrotesk(
-              color: MarketplacePage._textSoft,
-              fontSize: 13,
-              height: 1.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 18),
-          for (final feature in plan.features) ...<Widget>[
-            _FeatureRow(label: feature),
-            const SizedBox(height: 10),
-          ],
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                gradient: LinearGradient(
-                  colors: plan.isOwned
-                      ? const <Color>[Color(0xFF101010), Color(0xFF232323)]
-                      : const <Color>[Color(0xFF191919), Color(0xFF2B2B2B)],
-                ),
-                boxShadow: const <BoxShadow>[
-                  BoxShadow(
-                    color: Color(0x22000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Text(
-                  plan.isOwned ? 'Prime 사용 중' : '준비 중',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.spaceGrotesk(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
 }
 
-class _OwnedStatusCard extends StatelessWidget {
-  const _OwnedStatusCard({required this.plan});
-
-  final _PlanTier plan;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        color: MarketplacePage._panel,
-        border: Border.all(color: MarketplacePage._lineStrong, width: 1.2),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x1F000000),
-            blurRadius: 20,
-            offset: Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'TEST STATUS',
-            style: GoogleFonts.spaceGrotesk(
-              color: MarketplacePage._textMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.4,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: MarketplacePage._panelSoft,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: MarketplacePage._line),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  plan.name,
-                  style: GoogleFonts.oswald(
-                    color: MarketplacePage._text,
-                    fontSize: 34,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '현재 테스트 조건상 항상 보유 처리됩니다.',
-                  style: GoogleFonts.spaceGrotesk(
-                    color: MarketplacePage._textSoft,
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _statusLine('상태', 'ACTIVE'),
-                const SizedBox(height: 10),
-                _statusLine('권한', 'FULL MARKET ACCESS'),
-                const SizedBox(height: 10),
-                _statusLine('빌드', 'TEST MODE'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statusLine(String label, String value) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Text(
-            label,
-            style: GoogleFonts.spaceGrotesk(
-              color: MarketplacePage._textMuted,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.spaceGrotesk(
-            color: MarketplacePage._text,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FeatureRow extends StatelessWidget {
-  const _FeatureRow({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Container(
-          width: 8,
-          height: 8,
-          decoration: const BoxDecoration(
-            color: Colors.black,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: GoogleFonts.spaceGrotesk(
-              color: MarketplacePage._text,
-              fontSize: 13,
-              height: 1.4,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PlanTier {
-  const _PlanTier({
-    required this.name,
-    required this.price,
-    required this.caption,
-    required this.summary,
-    required this.features,
-    this.isOwned = false,
-    this.isFeatured = false,
+class _SearchPanel extends StatelessWidget {
+  const _SearchPanel({
+    required this.controller,
+    required this.loading,
+    required this.filter,
+    required this.onFilterChanged,
+    required this.onSearch,
   });
 
-  final String name;
+  final TextEditingController controller;
+  final bool loading;
+  final String filter;
+  final ValueChanged<String> onFilterChanged;
+  final VoidCallback onSearch;
+
+  /// 필요한 변수는 검색어·필터·로딩 상태다.
+  /// 작동 원리는 한 개 입력과 명시적 검색 버튼으로 요청 수를 제한하고 세 유형 필터는 로컬 결과만 전환하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE0E0E2)),
+      ),
+      child: Column(
+        children: [
+          TextField(
+            controller: controller,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => onSearch(),
+            decoration: InputDecoration(
+              hintText: '문제 · 교재 · 태그 검색',
+              prefixIcon: const Icon(Icons.search_rounded),
+              filled: true,
+              fillColor: const Color(0xFFF7F7F8),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFDEDEE1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Colors.black, width: 1.2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF202022),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: loading ? null : onSearch,
+              child: Text(loading ? '검색 중' : '검색'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              children: ['전체', '문제', '교재', '필터+']
+                  .map(
+                    (label) => ChoiceChip(
+                      label: Text(label),
+                      selected: filter == label,
+                      showCheckmark: false,
+                      selectedColor: Colors.black,
+                      side: BorderSide(
+                        color: filter == label
+                            ? Colors.black
+                            : const Color(0xFFDEDEE1),
+                      ),
+                      labelStyle: TextStyle(
+                        color: filter == label ? Colors.white : Colors.black,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      onSelected: (_) => onFilterChanged(label),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecommendationCard extends StatelessWidget {
+  const _RecommendationCard({required this.items, required this.onOpen});
+  final List<_MarketItem> items;
+  final ValueChanged<_MarketItem> onOpen;
+
+  /// 필요한 변수는 최대 세 추천 자료다.
+  /// 작동 원리는 HTML의 RECOMMENDED 제목과 구분선 행을 한 카드 안에 구성하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE0E0E2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'RECOMMENDED',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.6,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '중학교 2학년 추천',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _CountBadge(count: items.length),
+            ],
+          ),
+          const SizedBox(height: 28),
+          if (items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: Text('검색 결과가 없습니다.')),
+            )
+          else
+            for (var index = 0; index < items.length; index++) ...[
+              _MarketRow(
+                item: items[index],
+                featured: index == 0,
+                onOpen: onOpen,
+              ),
+              if (index != items.length - 1)
+                const Divider(height: 1, color: Color(0xFFE3E3E5)),
+            ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MoreResultsCard extends StatelessWidget {
+  const _MoreResultsCard({required this.items, required this.onOpen});
+  final List<_MarketItem> items;
+  final ValueChanged<_MarketItem> onOpen;
+
+  /// 필요한 변수는 추천 이후의 나머지 자료다.
+  /// 작동 원리는 동일한 행 컴포넌트를 재사용해 추가 API 없이 전체 결과를 이어서 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: const Color(0xFFE0E0E2)),
+    ),
+    child: Column(
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          _MarketRow(item: items[index], featured: false, onOpen: onOpen),
+          if (index != items.length - 1)
+            const Divider(height: 1, color: Color(0xFFE3E3E5)),
+        ],
+      ],
+    ),
+  );
+}
+
+class _MarketRow extends StatelessWidget {
+  const _MarketRow({
+    required this.item,
+    required this.featured,
+    required this.onOpen,
+  });
+  final _MarketItem item;
+  final bool featured;
+  final ValueChanged<_MarketItem> onOpen;
+
+  /// 필요한 변수는 자료 정보와 대표 강조 여부다.
+  /// 작동 원리는 첫 추천만 검은 배경으로 강조하고 나머지는 같은 높이의 흰 행으로 정렬하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final foreground = featured ? Colors.white : Colors.black;
+    return Material(
+      color: featured ? const Color(0xFF202022) : Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => onOpen(item),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: featured ? Colors.white : const Color(0xFFF5F5F6),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE0E0E2)),
+                ),
+                child: Icon(item.icon, size: 18, color: Colors.black),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.typeLabel,
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: foreground.withValues(alpha: .5),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: foreground,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      item.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: foreground.withValues(alpha: .5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '보기 ›',
+                style: TextStyle(
+                  color: foreground,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count});
+  final int count;
+
+  /// 필요한 변수는 결과 개수다.
+  /// 작동 원리는 작은 회색 캡슐로 현재 추천 행 수를 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF5F5F6),
+      borderRadius: BorderRadius.circular(99),
+      border: Border.all(color: const Color(0xFFE0E0E2)),
+    ),
+    child: Text(
+      '$count개',
+      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+    ),
+  );
+}
+
+class _MarketFilterSheet extends StatefulWidget {
+  const _MarketFilterSheet({
+    required this.type,
+    required this.course,
+    required this.price,
+  });
+
+  final String type;
+  final String course;
   final String price;
-  final String caption;
-  final String summary;
-  final List<String> features;
-  final bool isOwned;
-  final bool isFeatured;
+
+  @override
+  State<_MarketFilterSheet> createState() => _MarketFilterSheetState();
+}
+
+class _MarketFilterSheetState extends State<_MarketFilterSheet> {
+  late String _type = widget.type == '필터+' ? '전체' : widget.type;
+  late String _course = widget.course;
+  late String _price = widget.price;
+
+  /// 필요한 변수는 유형·과정·가격 임시 선택값이다.
+  /// 작동 원리는 HTML 필터 모달처럼 세 조건을 독립 칩으로 고르고 적용 시 부모 목록에 한 번 반환한다.
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'MARKET FILTER',
+              style: TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.7,
+                color: Colors.black54,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 7),
+            const Text(
+              '마켓 필터',
+              style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              '카테고리와 과정, 가격 조건으로 문제와 교재를 좁힙니다.',
+              style: TextStyle(color: Colors.black45),
+            ),
+            const SizedBox(height: 18),
+            _FilterGroup(
+              label: '카테고리',
+              values: const ['전체', '문제', '교재'],
+              selected: _type,
+              onSelected: (value) => setState(() => _type = value),
+            ),
+            _FilterGroup(
+              label: '과정',
+              values: const ['전체 과정', '중학교', '고등학교'],
+              selected: _course,
+              onSelected: (value) => setState(() => _course = value),
+            ),
+            _FilterGroup(
+              label: '가격',
+              values: const ['전체 가격', '무료', '유료'],
+              selected: _price,
+              onSelected: (value) => setState(() => _price = value),
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF202022),
+                minimumSize: const Size.fromHeight(50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              onPressed: () =>
+                  Navigator.of(context).pop((_type, _course, _price)),
+              child: const Text('필터 적용'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterGroup extends StatelessWidget {
+  const _FilterGroup({
+    required this.label,
+    required this.values,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final List<String> values;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  /// 필요한 변수는 그룹명·선택지·현재 선택·변경 콜백이다.
+  /// 작동 원리는 한 필터 그룹의 단일 선택 상태를 흑백 ChoiceChip으로 표시한다.
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final value in values)
+              ChoiceChip(
+                label: Text(value),
+                selected: selected == value,
+                showCheckmark: false,
+                selectedColor: const Color(0xFF202022),
+                labelStyle: TextStyle(
+                  color: selected == value ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w800,
+                ),
+                onSelected: (_) => onSelected(value),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+enum _MarketItemType { quest, textbook }
+
+class _MarketItem {
+  const _MarketItem({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String id;
+  final _MarketItemType type;
+  final String title;
+  final String subtitle;
+
+  String get typeLabel => type == _MarketItemType.quest ? '문제' : '교재';
+  IconData get icon => type == _MarketItemType.quest
+      ? Icons.edit_outlined
+      : Icons.menu_book_outlined;
+  String get searchText => '$title $subtitle'.toLowerCase();
+
+  /// 필요한 변수는 서버 문제 응답이다.
+  /// 작동 원리는 헤더·정보·본문에서 식별자·제목·태그를 안전하게 추출하는 것이다.
+  factory _MarketItem.fromQuest(Map<String, dynamic> json) {
+    final header = Map<String, dynamic>.from(
+      json['header'] as Map? ?? const {},
+    );
+    final info = Map<String, dynamic>.from(json['info'] as Map? ?? const {});
+    final data = Map<String, dynamic>.from(json['data'] as Map? ?? const {});
+    final tags = (info['hash_tag'] as List? ?? const []).join(' · ');
+    return _MarketItem(
+      id: header['quest_id']?.toString() ?? json['quest_id']?.toString() ?? '',
+      type: _MarketItemType.quest,
+      title:
+          data['quest_title']?.toString() ??
+          info['title']?.toString() ??
+          '수학 문제',
+      subtitle: tags.isEmpty ? '문제 자료' : tags,
+    );
+  }
+
+  /// 필요한 변수는 서버 교재 응답이다.
+  /// 작동 원리는 교재 식별자·제목·부제목을 목록 행 모델로 변환하는 것이다.
+  factory _MarketItem.fromTextbook(Map<String, dynamic> json) => _MarketItem(
+    id: json['textbook_id']?.toString() ?? json['id']?.toString() ?? '',
+    type: _MarketItemType.textbook,
+    title: json['title']?.toString() ?? '수학 교재',
+    subtitle: json['subtitle']?.toString() ?? '교재 자료',
+  );
+
+  /// 필요한 변수는 캡처·테스트용 일반 맵이다.
+  /// 작동 원리는 type 값에 따라 문제·교재를 구분하고 나머지 표시 필드를 그대로 읽는 것이다.
+  factory _MarketItem.fromMap(Map<String, dynamic> json) => _MarketItem(
+    id: json['id']?.toString() ?? '',
+    type: json['type'] == 'textbook'
+        ? _MarketItemType.textbook
+        : _MarketItemType.quest,
+    title: json['title']?.toString() ?? '학습 자료',
+    subtitle: json['subtitle']?.toString() ?? '',
+  );
 }

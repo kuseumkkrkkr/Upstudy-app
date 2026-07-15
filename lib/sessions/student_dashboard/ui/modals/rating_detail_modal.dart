@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/concept_tag.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
+// 필요 변수: 현재 context. 작동 원리: 반투명 블러 배경 위에 레이팅 상세 모달을 표시한다.
 Future<T?> showRatingDetailModal<T>({required BuildContext context}) {
   return showDialog<T>(
     context: context,
@@ -18,7 +19,7 @@ Future<T?> showRatingDetailModal<T>({required BuildContext context}) {
           children: [
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
             const Center(child: RatingDetailModal()),
           ],
@@ -94,6 +95,84 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
     } else {
       Navigator.of(context).pop();
     }
+  }
+
+  /// 필요한 변수는 상승·하락·강점·약점 태그와 현재 로딩 상태다.
+  /// 작동 원리는 현재 레이팅 데이터를 HTML 학습 보고서 모달의 요약·강점·보완 카드로 변환한다.
+  void _openReport() {
+    final rising = _buildRising();
+    final falling = _buildFalling();
+    final strong = _buildStrong();
+    final weak = _buildWeak();
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('학습 레이팅 보고서'),
+        content: SizedBox(
+          width: 560,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'RATING REPORT',
+                  style: TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 1.5,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ReportSection(
+                  title: '상승 개념',
+                  values: rising
+                      .map(
+                        (item) =>
+                            '${item.label}  +${item.delta.toStringAsFixed(1)}',
+                      )
+                      .toList(),
+                ),
+                _ReportSection(
+                  title: '보완 개념',
+                  values: falling
+                      .map(
+                        (item) =>
+                            '${item.label}  ${item.delta.toStringAsFixed(1)}',
+                      )
+                      .toList(),
+                ),
+                _ReportSection(
+                  title: '현재 강점',
+                  values: strong
+                      .map(
+                        (item) =>
+                            '${item.label}  ${item.score.toStringAsFixed(1)}',
+                      )
+                      .toList(),
+                ),
+                _ReportSection(
+                  title: '우선 복습',
+                  values: weak
+                      .map(
+                        (item) =>
+                            '${item.label}  ${item.score.toStringAsFixed(1)}',
+                      )
+                      .toList(),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
   }
 
   String _currentQuery(String text) {
@@ -290,6 +369,7 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
                               : _OverviewBody(
                                   scale: scale,
                                   onSearchTap: _enterSearchMode,
+                                  onReportTap: _openReport,
                                   rising: rising,
                                   falling: falling,
                                   strong: strong,
@@ -357,6 +437,7 @@ class _OverviewBody extends StatelessWidget {
   const _OverviewBody({
     required this.scale,
     required this.onSearchTap,
+    required this.onReportTap,
     required this.rising,
     required this.falling,
     required this.strong,
@@ -367,6 +448,7 @@ class _OverviewBody extends StatelessWidget {
 
   final double scale;
   final VoidCallback onSearchTap;
+  final VoidCallback onReportTap;
   final List<_TagDelta> rising;
   final List<_TagDelta> falling;
   final List<_TagScore> strong;
@@ -391,7 +473,11 @@ class _OverviewBody extends StatelessWidget {
               isLoading: isLoading,
             ),
             SizedBox(height: 16 * scale),
-            _OverviewActions(scale: scale, onSearchTap: onSearchTap),
+            _OverviewActions(
+              scale: scale,
+              onSearchTap: onSearchTap,
+              onReportTap: onReportTap,
+            ),
             SizedBox(height: 16 * scale),
             _OvrRadarCard(
               scale: scale,
@@ -434,7 +520,11 @@ class _OverviewBody extends StatelessWidget {
                       onTap: onSearchTap,
                     ),
                     SizedBox(height: 12 * scale),
-                    _ActionButton(scale: scale, label: '보고서 보기', onTap: () {}),
+                    _ActionButton(
+                      scale: scale,
+                      label: '보고서 보기',
+                      onTap: onReportTap,
+                    ),
                   ],
                 ),
               ),
@@ -455,10 +545,15 @@ class _OverviewBody extends StatelessWidget {
 }
 
 class _OverviewActions extends StatelessWidget {
-  const _OverviewActions({required this.scale, required this.onSearchTap});
+  const _OverviewActions({
+    required this.scale,
+    required this.onSearchTap,
+    required this.onReportTap,
+  });
 
   final double scale;
   final VoidCallback onSearchTap;
+  final VoidCallback onReportTap;
 
   @override
   Widget build(BuildContext context) {
@@ -467,7 +562,7 @@ class _OverviewActions extends StatelessWidget {
       children: [
         _ActionButton(scale: scale, label: '세부 해시태그 검색', onTap: onSearchTap),
         SizedBox(height: 12 * scale),
-        _ActionButton(scale: scale, label: '보고서 보기', onTap: () {}),
+        _ActionButton(scale: scale, label: '보고서 보기', onTap: onReportTap),
       ],
     );
   }
@@ -909,6 +1004,43 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
+class _ReportSection extends StatelessWidget {
+  const _ReportSection({required this.title, required this.values});
+  final String title;
+  final List<String> values;
+
+  /// 필요한 변수는 보고서 구역 제목과 태그 값 목록이다.
+  /// 작동 원리는 빈 데이터와 실제 레이팅 데이터를 같은 흑백 보고서 카드로 표시한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 9),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF5F5F7),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 7),
+        if (values.isEmpty)
+          const Text(
+            '아직 분석할 기록이 없습니다.',
+            style: TextStyle(color: Colors.black45),
+          )
+        else
+          for (final value in values)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(value),
+            ),
+      ],
+    ),
+  );
+}
+
 class _TagDelta {
   const _TagDelta({required this.label, required this.delta});
   final String label;
@@ -1092,27 +1224,32 @@ String _normalize(String value) {
   return value.replaceAll('#', '').toLowerCase().trim();
 }
 
-const double _tagOvrMax = 1800;
+const double _tagRatingFloor = 1200;
+const double _tagDisplayMax = 32767;
+const double _tagOvrDivider = 128;
+const double _tagOvrMax = _tagDisplayMax / _tagOvrDivider;
 
 double _normalizedTagRatingValue(double rating) {
-  return rating.clamp(0, _tagOvrMax).toDouble();
+  return math.max(rating, _tagRatingFloor);
 }
 
 TagRating _normalizeTagRating(TagRating item) {
   return TagRating(
     tag: item.tag,
-    rating: item.rating,
+    rating: _normalizedTagRatingValue(item.rating),
     delta: item.delta,
     attempts: item.attempts,
   );
 }
 
 double _tagDisplayValue(double rating) {
-  return _normalizedTagRatingValue(rating);
+  return (_normalizedTagRatingValue(rating) - _tagRatingFloor)
+      .clamp(0, _tagDisplayMax)
+      .toDouble();
 }
 
 double _tagOvrValue(double rating) {
-  return _tagDisplayValue(rating);
+  return _tagDisplayValue(rating) / _tagOvrDivider;
 }
 
 double _visibleDelta(double rating, double delta) {
@@ -1159,8 +1296,8 @@ class _TagRatingProgressBarState extends State<_TagRatingProgressBar> {
   @override
   Widget build(BuildContext context) {
     final display = _tagDisplayValue(widget.rating);
-    final progress = (display / _tagOvrMax).clamp(0.0, 1.0);
-    final ovrText = widget.rating > 0 ? widget.rating.round().toString() : '--';
+    final progress = (display / _tagDisplayMax).clamp(0.0, 1.0);
+    final ovrText = _tagOvrValue(widget.rating).toStringAsFixed(1);
     final bubble = AnimatedOpacity(
       opacity: _showBubble ? 1 : 0,
       duration: const Duration(milliseconds: 140),

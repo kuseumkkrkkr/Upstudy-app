@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
@@ -91,17 +91,15 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('풀이보기'),
-      ),
+      appBar: AppBar(title: const Text('풀이보기')),
       body: Column(
         children: [
           Padding(
@@ -143,13 +141,9 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
             ),
           ),
           if (_loading)
-            const Expanded(
-              child: Center(child: CircularProgressIndicator()),
-            )
+            const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_error != null)
-            Expanded(
-              child: Center(child: Text(_error!)),
-            )
+            Expanded(child: Center(child: Text(_error!)))
           else
             Expanded(
               child: _results.isEmpty
@@ -158,14 +152,24 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
                       itemCount: _results.length,
                       itemBuilder: (context, index) {
                         final quest = _results[index];
-                        final header = quest['header'] as Map<String, dynamic>? ?? {};
-                        final info = quest['info'] as Map<String, dynamic>? ?? {};
-                        final data = quest['data'] as Map<String, dynamic>? ?? {};
-                        final questId = header['quest_id']?.toString() ?? 'unknown';
-                        final titleBlocks =
-                            parseContentBlocks(data['quest_title']);
+                        final header =
+                            quest['header'] as Map<String, dynamic>? ?? {};
+                        final info =
+                            quest['info'] as Map<String, dynamic>? ?? {};
+                        final data =
+                            quest['data'] as Map<String, dynamic>? ?? {};
+                        final questId =
+                            header['quest_id']?.toString() ?? 'unknown';
+                        final titleBlocks = parseContentBlocks(
+                          data['quest_title'],
+                        );
                         final displayTitleBlocks = titleBlocks.isEmpty
-                            ? [const ContentBlock(type: 'text', content: 'untitled')]
+                            ? [
+                                const ContentBlock(
+                                  type: 'text',
+                                  content: 'untitled',
+                                ),
+                              ]
                             : titleBlocks;
                         final tags = (info['hash_tag'] as List<dynamic>? ?? [])
                             .map((tag) => tag.toString())
@@ -203,9 +207,8 @@ class _SolutionViewPageState extends State<SolutionViewPage> {
                                   onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => FlowViewPage(
-                                          quest: quest,
-                                        ),
+                                        builder: (_) =>
+                                            FlowViewPage(quest: quest),
                                       ),
                                     );
                                   },

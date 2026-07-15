@@ -1,44 +1,5 @@
 part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
-class _ToolbarIcon extends StatelessWidget {
-  const _ToolbarIcon({
-    required this.icon,
-    this.size = 32,
-    this.color = Colors.black,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final double size;
-  final Color color;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkResponse(
-      onTap: onTap,
-      radius: size * 0.8,
-      child: Icon(icon, size: size, color: color),
-    );
-  }
-}
-
-class _ZoomIcon extends StatelessWidget {
-  const _ZoomIcon({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkResponse(
-      onTap: onTap,
-      radius: 18,
-      child: Icon(icon, size: 20, color: const Color(0xFF1B402B)),
-    );
-  }
-}
-
 class _ColorChip extends StatelessWidget {
   const _ColorChip({
     required this.color,
@@ -107,5 +68,3 @@ class _WidthChip extends StatelessWidget {
     );
   }
 }
-
-

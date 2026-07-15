@@ -5,7 +5,6 @@ import 'concept_tag_dialog.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/sessions/exam_paper/ui/exam_preview_page.dart';
 
-
 class BuildboxWidget extends StatefulWidget {
   final String title;
   final int? fixedQuestionCount;
@@ -139,9 +138,7 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
       }
       Navigator.of(context).pop();
       Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute(
-          builder: (_) => ExamPreviewPage(examId: examId),
-        ),
+        MaterialPageRoute(builder: (_) => ExamPreviewPage(examId: examId)),
       );
     } catch (error) {
       _showMessage('Failed to create exam.');
@@ -153,8 +150,26 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// 필요한 변수는 안내 제목과 설명 문장이다.
+  /// 작동 원리는 HTML 정보 버튼처럼 현재 입력을 유지한 채 작은 설명 모달만 겹쳐 표시하는 것이다.
+  void _showInfo(String title, String description) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(description),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -174,7 +189,10 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
               IconButton(
                 icon: const Icon(Icons.info_outline, color: Color(0xFF6D6D6D)),
                 iconSize: 30,
-                onPressed: () {},
+                onPressed: () => _showInfo(
+                  '난이도 설정',
+                  '다섯 단계의 평균 난이도를 정합니다. 실제 문제는 선택 단계 주변에서 고르게 구성됩니다.',
+                ),
               ),
             ],
           ),
@@ -275,14 +293,16 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
               IconButton(
                 icon: const Icon(Icons.info_outline, color: Color(0xFF6D6D6D)),
                 iconSize: 30,
-                onPressed: () {},
+                onPressed: () => _showInfo(
+                  '포함할 범위',
+                  '범위 카드를 눌러 개념 태그를 선택합니다. 비어 있는 범위는 시험 생성에서 제외됩니다.',
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 27),
-        ..._rangeItems
-            .map((item) => _buildRangeItem(item['id'], item['tags'])),
+        ..._rangeItems.map((item) => _buildRangeItem(item['id'], item['tags'])),
       ],
     );
   }
@@ -400,7 +420,10 @@ class _BuildboxWidgetState extends State<BuildboxWidget> {
               IconButton(
                 icon: const Icon(Icons.info_outline, color: Color(0xFF6D6D6D)),
                 iconSize: 30,
-                onPressed: () {},
+                onPressed: () => _showInfo(
+                  '문제 수 설정',
+                  '시험지는 최소 3문제, 최대 40문제로 생성합니다. 고정 시험은 이 값을 변경할 수 없습니다.',
+                ),
               ),
             ],
           ),

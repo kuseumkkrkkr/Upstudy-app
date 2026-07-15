@@ -2,11 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-const _accentGreen = Color(0xFF1B402B);
-const _lightGreen = Color(0xFF45BF63);
+const _accentGreen = Colors.black;
+const _lightGreen = Color(0xFF8B8B90);
 const _dividerColor = Color(0xFFE4E4E4);
 const _chipGrey = Color(0xFFF2F2F2);
 
+// 필요 변수: 날짜별 과제·잠금 과제·변경 콜백. 작동 원리: 편집 가능한 오늘 과제 모달을 블러 배경 위에 연다.
 Future<T?> showTodayTasksModal<T>({
   required BuildContext context,
   required Map<DateTime, List<String>> tasksByDate,
@@ -24,7 +25,7 @@ Future<T?> showTodayTasksModal<T>({
           children: [
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
             Center(
               child: TodayTasksModal(
@@ -63,6 +64,7 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
   late DateTime _visibleMonth;
   late Map<DateTime, List<String>> _tasksByDate;
   late Map<DateTime, List<String>> _lockedTasksByDate;
+  bool _showCalendar = false;
 
   @override
   void initState() {
@@ -92,7 +94,10 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
   }
 
   void _changeMonth(int delta) {
-    final targetMonth = DateTime(_visibleMonth.year, _visibleMonth.month + delta);
+    final targetMonth = DateTime(
+      _visibleMonth.year,
+      _visibleMonth.month + delta,
+    );
     final currentMonth = DateTime(_today.year, _today.month);
     if (targetMonth.isBefore(currentMonth)) return;
 
@@ -103,7 +108,11 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
     final selectedDay = _selectedDate.day > daysInMonth
         ? daysInMonth
         : _selectedDate.day;
-    final candidate = DateTime(targetMonth.year, targetMonth.month, selectedDay);
+    final candidate = DateTime(
+      targetMonth.year,
+      targetMonth.month,
+      selectedDay,
+    );
 
     setState(() {
       _visibleMonth = targetMonth;
@@ -134,6 +143,8 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
     _notifyChange();
   }
 
+  /// 필요한 변수는 선택 날짜의 교사 과제·개인 일정·달력 표시 상태다.
+  /// 작동 원리는 HTML의 오늘 할 일 요약을 먼저 보여주고 요청할 때만 편집 가능한 달력 작업공간으로 전환하는 것이다.
   @override
   Widget build(BuildContext context) {
     final tasks = _tasksByDate[_selectedDate] ?? const <String>[];
@@ -141,71 +152,88 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
     final isToday = _isSameDay(_selectedDate, _today);
     final selectedLabel = isToday ? '오늘' : _formatDate(_selectedDate);
 
+    final size = MediaQuery.sizeOf(context);
+    final mobile = size.width <= 780;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Container(
-        width: 1040,
-        height: 580,
+        width: mobile
+            ? size.width
+            : (size.width > 760 ? 720 : size.width * .94),
+        height: mobile ? size.height : size.height * .9,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(mobile ? 0 : 28),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: IconButton(
-                    icon: const Icon(Icons.close, size: 26),
-                    onPressed: () => Navigator.of(context).pop(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 22, 18, 20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TODAY TASKS',
+                          style: TextStyle(
+                            color: Colors.black45,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.4,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          '오늘 할 일',
+                          style: TextStyle(
+                            fontSize: 30,
+                            height: 1,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.2,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 4),
-                  child: Text('오늘 할일', style: TextStyle(fontSize: 22)),
-                ),
-              ],
-            ),
-            const Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(24, 2, 24, 0),
-              child: Text(
-                '선택한 날짜의 일정을 추가하거나 삭제할 수 있습니다.',
-                style: TextStyle(fontSize: 16),
+                  IconButton.outlined(
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const Divider(height: 1, color: Color(0xFFE4E4E6)),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _TaskPanel(
-                        dateLabel: selectedLabel,
+                padding: const EdgeInsets.fromLTRB(24, 34, 24, 24),
+                child: _showCalendar
+                    ? _buildCalendarWorkspace(
+                        compact: size.width < 700,
+                        selectedLabel: selectedLabel,
                         tasks: tasks,
                         lockedTasks: lockedTasks,
-                        onAdd: _addTask,
-                        onDelete: _deleteTask,
-                        controller: _taskController,
+                      )
+                    : _TodayTaskSummary(
+                        tasks: tasks,
+                        lockedTasks: lockedTasks,
+                        onOpenCalendar: () =>
+                            setState(() => _showCalendar = true),
                       ),
-                    ),
-                    const SizedBox(width: 18),
-                    Container(width: 1, color: _dividerColor),
-                    const SizedBox(width: 18),
-                    Expanded(
-                      child: _CalendarPanel(
-                        today: _today,
-                        selectedDate: _selectedDate,
-                        visibleMonth: _visibleMonth,
-                        tasksByDate: _tasksByDate,
-                        lockedTasksByDate: _lockedTasksByDate,
-                        onSelectDate: _selectDate,
-                        onChangeMonth: _changeMonth,
-                      ),
-                    ),
-                  ],
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFE4E4E6)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('닫기'),
                 ),
               ),
             ),
@@ -214,6 +242,166 @@ class _TodayTasksModalState extends State<TodayTasksModal> {
       ),
     );
   }
+
+  /// 필요한 변수는 모바일 여부·선택 날짜·과제 목록이다.
+  /// 작동 원리는 기존 일정 추가·삭제와 달력 탐색 기능을 보존하되 작은 화면에서는 위아래로 배치하는 것이다.
+  Widget _buildCalendarWorkspace({
+    required bool compact,
+    required String selectedLabel,
+    required List<String> tasks,
+    required List<String> lockedTasks,
+  }) {
+    final taskPanel = _TaskPanel(
+      dateLabel: selectedLabel,
+      tasks: tasks,
+      lockedTasks: lockedTasks,
+      onAdd: _addTask,
+      onDelete: _deleteTask,
+      controller: _taskController,
+    );
+    final calendar = _CalendarPanel(
+      today: _today,
+      selectedDate: _selectedDate,
+      visibleMonth: _visibleMonth,
+      tasksByDate: _tasksByDate,
+      lockedTasksByDate: _lockedTasksByDate,
+      onSelectDate: _selectDate,
+      onChangeMonth: _changeMonth,
+    );
+    if (compact) {
+      return Column(
+        children: [
+          Expanded(child: calendar),
+          const SizedBox(height: 16),
+          SizedBox(height: 220, child: taskPanel),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: taskPanel),
+        const SizedBox(width: 18),
+        Container(width: 1, color: _dividerColor),
+        const SizedBox(width: 18),
+        Expanded(child: calendar),
+      ],
+    );
+  }
+}
+
+class _TodayTaskSummary extends StatelessWidget {
+  const _TodayTaskSummary({
+    required this.tasks,
+    required this.lockedTasks,
+    required this.onOpenCalendar,
+  });
+
+  final List<String> tasks;
+  final List<String> lockedTasks;
+  final VoidCallback onOpenCalendar;
+
+  /// 필요한 변수는 교사 과제·개인 일정·달력 전환 콜백이다.
+  /// 작동 원리는 HTML 시안처럼 오늘의 항목을 세로 행으로 요약하고 아래 버튼에서 상세 달력을 연다.
+  @override
+  Widget build(BuildContext context) {
+    final entries =
+        <({String title, String subtitle, IconData icon, bool active})>[
+          for (var index = 0; index < lockedTasks.length; index++)
+            (
+              title: lockedTasks[index],
+              subtitle: index == 0
+                  ? '교사 과제 · 오늘 22:00 · 진행 상태 확인'
+                  : '교사 과제 · 최소 학습 시간 확인',
+              icon: index == 0 ? Icons.check_rounded : Icons.menu_book_outlined,
+              active: index == 0,
+            ),
+          for (final task in tasks)
+            (
+              title: task,
+              subtitle: '학생 일정 · 완료 체크와 편집 가능',
+              icon: Icons.add_rounded,
+              active: false,
+            ),
+        ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '별도 페이지를 열지 않고 홈에서 교사 과제와 개인 일정을 확인합니다.',
+          style: TextStyle(color: Colors.black54, fontSize: 14),
+        ),
+        const SizedBox(height: 22),
+        for (var index = 0; index < entries.length; index++) ...[
+          _TodayTaskRow(entry: entries[index]),
+          if (index < entries.length - 1) const SizedBox(height: 10),
+        ],
+        const SizedBox(height: 16),
+        OutlinedButton(
+          onPressed: onOpenCalendar,
+          child: const Text('일정 달력에서 보기'),
+        ),
+      ],
+    );
+  }
+}
+
+class _TodayTaskRow extends StatelessWidget {
+  const _TodayTaskRow({required this.entry});
+
+  final ({String title, String subtitle, IconData icon, bool active}) entry;
+
+  /// 필요한 변수는 오늘 일정의 제목·설명·아이콘·강조 상태다.
+  /// 작동 원리는 첫 진행 과제를 검정으로, 나머지를 흰색 테두리 행으로 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: entry.active ? Colors.black : Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(
+        color: entry.active ? Colors.black : const Color(0xFFDCDCE0),
+      ),
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: entry.active ? Colors.white : const Color(0xFFF4F4F6),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFDCDCE0)),
+          ),
+          child: Icon(entry.icon, color: Colors.black),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                entry.title,
+                style: TextStyle(
+                  color: entry.active ? Colors.white : Colors.black,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                entry.subtitle,
+                style: TextStyle(
+                  color: entry.active ? Colors.white70 : Colors.black54,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _TaskPanel extends StatelessWidget {
@@ -309,10 +497,7 @@ class _TaskPanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
-                  '추가',
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: const Text('추가', style: TextStyle(color: Colors.white)),
               ),
             ),
           ],
@@ -393,8 +578,10 @@ class _CalendarPanel extends StatelessWidget {
       visibleMonth.month,
     );
     final leadingEmpty = monthStart.weekday % 7;
-    final canGoPrev = !DateTime(visibleMonth.year, visibleMonth.month - 1)
-        .isBefore(DateTime(today.year, today.month));
+    final canGoPrev = !DateTime(
+      visibleMonth.year,
+      visibleMonth.month - 1,
+    ).isBefore(DateTime(today.year, today.month));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,7 +642,8 @@ class _CalendarPanel extends StatelessWidget {
               final isDisabled = dateOnly.isBefore(today);
               final isSelected = _isSameDay(dateOnly, selectedDate);
               final isToday = _isSameDay(dateOnly, today);
-              final hasTasks = (tasksByDate[dateOnly]?.isNotEmpty ?? false) ||
+              final hasTasks =
+                  (tasksByDate[dateOnly]?.isNotEmpty ?? false) ||
                   (lockedTasksByDate[dateOnly]?.isNotEmpty ?? false);
 
               return _CalendarDayCell(
@@ -539,10 +727,7 @@ class _CalendarDayCell extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              '$day',
-              style: TextStyle(fontSize: 14, color: textColor),
-            ),
+            Text('$day', style: TextStyle(fontSize: 14, color: textColor)),
             const SizedBox(height: 4),
             if (hasTasks)
               Container(
@@ -562,7 +747,8 @@ class _CalendarDayCell extends StatelessWidget {
   }
 }
 
-DateTime _dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
 
 bool _isSameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
@@ -573,9 +759,7 @@ String _formatDate(DateTime date) {
   return '${date.year}-$month-$day';
 }
 
-Map<DateTime, List<String>> _cloneTasks(
-  Map<DateTime, List<String>> source,
-) {
+Map<DateTime, List<String>> _cloneTasks(Map<DateTime, List<String>> source) {
   return {
     for (final entry in source.entries)
       _dateOnly(entry.key): List<String>.from(entry.value),

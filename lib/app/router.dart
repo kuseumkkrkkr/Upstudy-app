@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:s11/shared/data/models/course_module_config.dart';
-
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
@@ -11,7 +9,6 @@ import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 
-import 'package:s11/features/challenges/challenges.dart';
 import 'package:s11/features/student_runtime/student_runtime.dart';
 import 'package:s11/features/level_test/level_test.dart';
 import 'package:s11/features/student_schedule/student_schedule.dart';
@@ -19,6 +16,14 @@ import 'package:s11/features/wrong_answer/wrong_answer.dart';
 import 'package:s11/features/group_study/group_study.dart';
 import 'package:s11/features/course_runtime/course_runtime_page.dart';
 import 'package:s11/features/flow_access/flow_access_page.dart';
+import 'package:s11/features/arena/arena_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
+import 'package:s11/sessions/course/ui/course_catalog_page.dart';
+import 'package:s11/sessions/friend/friend.dart';
+import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
+    as study_center;
+import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
+import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
 
 /// Central route constants and route table for the AIFlow app.
 class AppRoutes {
@@ -36,15 +41,18 @@ class AppRoutes {
   static const String landingAbout = LandingAboutPage.routeName;
   static const String app = '/app';
   static const String studentDashboard = '/student/dashboard';
+  static const String studyCenter = '/study-center';
+  static const String courses = '/courses';
+  static const String bookbag = '/bookbag';
+  static const String social = '/social';
+  static const String marketplace = '/marketplace';
+  static const String arena = '/arena';
+  static const String tools = '/tools';
 
   // ─── Learning ───
   static const String studentRuntime = StudentRuntimePage.routeName;
   static const String courseRuntime = CourseRuntimePage.routeName;
   static const String flowAccess = FlowAccessPage.routeName;
-
-  // ─── Challenges ───
-  static const String challenges = ChallengeListPage.routeName;
-  static const String challengeDetail = '/challenge_detail';
 
   // ─── Level Test ───
   static const String levelTest = LevelTestHomePage.routeName;
@@ -70,6 +78,7 @@ class AppRoutes {
 /// Only routes that do **not** require constructor arguments should be
 /// registered here. Argument-bearing pages are handled by
 /// [onGenerateAppRoute].
+/// 필요한 변수는 인증 여부이며, 작동 원리는 모바일 드로어와 PC 상단 메뉴가 같은 명명 라우트를 공유하는 것이다.
 Map<String, WidgetBuilder> appRoutes(
   BuildContext context, {
   required bool isAuthenticated,
@@ -92,14 +101,18 @@ Map<String, WidgetBuilder> appRoutes(
     AppRoutes.landingAbout: (_) => const LandingAboutPage(),
     AppRoutes.app: authedStudentDashboard(),
     AppRoutes.studentDashboard: authedStudentDashboard(),
+    AppRoutes.studyCenter: (_) => const study_center.SoWidget(),
+    AppRoutes.courses: (_) => const CourseCatalogPage(),
+    AppRoutes.bookbag: (_) => const docx.BookWidget(),
+    AppRoutes.social: (_) => const SoWidget(),
+    AppRoutes.marketplace: (_) => const MarketplacePage(),
+    AppRoutes.arena: (_) => const ArenaPage(),
+    AppRoutes.tools: (_) => const StudentLearningToolsPage(),
 
     // Learning
     AppRoutes.studentRuntime: (_) => const StudentRuntimePage(),
     AppRoutes.courseRuntime: (_) => const CourseRuntimePage(),
     AppRoutes.flowAccess: (_) => const FlowAccessPage(),
-
-    // Challenges
-    AppRoutes.challenges: (_) => const ChallengeListPage(),
 
     // Level Test
     AppRoutes.levelTest: (_) => const LevelTestHomePage(),
@@ -130,18 +143,6 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
       settings: settings,
       builder: (_) => GroupJoinPage(inviteCode: code),
     );
-  }
-
-  // Challenge detail (needs ChallengeGroupConfig)
-  if (name == AppRoutes.challengeDetail) {
-    final args = settings.arguments;
-    if (args is ChallengeGroupConfig) {
-      return MaterialPageRoute(
-        settings: settings,
-        builder: (_) => ChallengeDetailPage(config: args),
-      );
-    }
-    return _badArgumentsRoute(settings, expected: 'ChallengeGroupConfig');
   }
 
   // Level test result (needs correctCount, totalCount, passed)
@@ -193,7 +194,7 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     if (args is String) {
       return MaterialPageRoute(
         settings: settings,
-        builder: (_) => AcademyDashboardPage(academyId: args),
+        builder: (_) => StudentAcademyPage(academyId: args),
       );
     }
     return _badArgumentsRoute(settings, expected: 'String (academyId)');

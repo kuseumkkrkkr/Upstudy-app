@@ -1,5 +1,6 @@
-﻿import 'package:s11/shared/services/api/auth_service.dart';
+import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:flutter/material.dart';
+// ignore_for_file: unused_import
 import 'package:percent_indicator/percent_indicator.dart';
 
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
@@ -65,9 +66,7 @@ class _BuildpageCopyCopyWidgetState extends State<BuildpageCopyCopyWidget>
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => MainStudentPage(
-          username: widget.draft.displayName,
-        ),
+        builder: (_) => MainStudentPage(username: widget.draft.displayName),
       ),
       (route) => false,
     );
@@ -106,8 +105,10 @@ class _BuildpageCopyCopyWidgetState extends State<BuildpageCopyCopyWidget>
                   child: Text(
                     '거의 다 되었습니다\n조금만 기다려주세요',
                     textAlign: TextAlign.center,
-                    style:
-                        TextStyle(fontSize: 100, fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      fontSize: 100,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),

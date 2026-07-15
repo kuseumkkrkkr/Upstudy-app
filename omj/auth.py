@@ -126,9 +126,15 @@ def decode_token(token: str) -> Optional[dict]:
 
 
 def resolve_token_payload_user(payload: dict) -> Dict[str, str]:
+    """필요 변수: 검증된 JWT payload. 명시된 학생 역할은 즉시 확정하고 상위 권한은 DB에서 재검증한다."""
+
     user_id = str(payload.get("sub") or "").strip()
-    db_role = str(get_user_role(user_id) or "").strip().lower()
-    role = db_role if db_role in ELEVATED_ROLES else "student"
+    claimed_role = str(payload.get("role") or "").strip().lower()
+    if claimed_role == "student":
+        role = "student"
+    else:
+        db_role = str(get_user_role(user_id) or "").strip().lower()
+        role = db_role if db_role in ELEVATED_ROLES else "student"
     return {
         "user_id": user_id,
         "username": str(payload.get("username") or user_id),

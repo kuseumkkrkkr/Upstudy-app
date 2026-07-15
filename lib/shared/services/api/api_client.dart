@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/shared/services/api/api_contract.dart';
@@ -243,12 +245,13 @@ class SharedFlowItem {
 
   factory SharedFlowItem.fromJson(Map<String, dynamic> json) {
     return SharedFlowItem(
-      id: json['id'] ?? json['flow_id'] ?? '',
+      id: json['share_id'] ?? json['id'] ?? json['flow_id'] ?? '',
       groupId: json['group_id'] ?? '',
-      senderId: json['sender_id'] ?? json['sender_user_id'] ?? '',
-      kind: json['kind'] ?? '',
-      refId: json['ref_id'] ?? '',
-      title: json['title'],
+      senderId:
+          json['user_id'] ?? json['sender_id'] ?? json['sender_user_id'] ?? '',
+      kind: json['kind'] ?? 'flow',
+      refId: json['quest_id'] ?? json['ref_id'] ?? '',
+      title: json['quest_title'] ?? json['title'],
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : null,
@@ -1236,9 +1239,10 @@ class ApiClient {
   }
 
   String? _token;
+  http.Client _httpClient = http.Client();
   static final Map<String, _CachedApiResponse> _memoryCache = {};
-  static final Map<String, Future<ApiResponse<dynamic>>>
-  _inflightCacheRequests = {};
+  static final Map<String, Future<http.Response>> _inflightCacheRequests = {};
+  int _cacheGeneration = 0;
 
   Future<String> _ensureToken() async {
     if (_token != null) return _token!;
@@ -1249,7 +1253,12 @@ class ApiClient {
     throw ApiException(statusCode: 401, message: 'Missing auth token');
   }
 
+  /// 필요한 변수는 새 인증 토큰과 선택 사용자명이다.
+  /// 기존 사용자와 토큰이 달라지면 이전 네임스페이스를 먼저 비워 계정 간 응답 혼입을 막는다.
   Future<void> setToken(String token, {String? username}) async {
+    if (_token != null && _token != token) {
+      await clearUserCache(token: _token);
+    }
     _token = token;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('jwt_token', token);
@@ -1259,7 +1268,10 @@ class ApiClient {
     await AuthStorage.instance.saveToken(token, username: username);
   }
 
+  /// 현재 토큰을 변수로 사용해 해당 사용자의 메모리·영속 캐시와 진행 GET을 정리한다.
+  /// 캐시 세대를 올린 뒤 인증 정보를 지워, 늦게 끝난 요청이 로그아웃 후 캐시를 되살리지 못하게 한다.
   Future<void> clearToken() async {
+    await clearUserCache(token: _token);
     _token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
@@ -1336,12 +1348,6 @@ class ApiClient {
       return _parseCachedBody<T>(cached, parser);
     }
 
-    if (_inflightCacheRequests.containsKey(key)) {
-      return _inflightCacheRequests[key]!.then(
-        (value) => value as ApiResponse<T>,
-      );
-    }
-
     final requestHeaders = <String, String>{
       ..._headers,
       if (cached?.etag != null && cached!.etag!.isNotEmpty)
@@ -1350,24 +1356,30 @@ class ApiClient {
         'If-Modified-Since': cached.lastModified,
     };
 
-    final request = () async {
+    final requestGeneration = _cacheGeneration;
+
+    /// 필요한 변수는 캐시 키·조건부 요청 헤더·현재 캐시 세대다.
+    /// 네트워크에서는 원시 응답만 합치고, 각 호출자는 자신의 parser로 별도 변환한다.
+    Future<http.Response> requestRaw() async {
       final logSuffix = cached == null
           ? 'network'
-          : (cached.etag != null && cached!.etag!.isNotEmpty) ||
+          : (cached.etag != null && cached.etag!.isNotEmpty) ||
                 cached.lastModified.isNotEmpty
           ? 'revalidate'
           : 'network';
       log('GET $uri ($logSuffix)', name: 'ApiClient');
 
-      final res = await http.get(uri, headers: requestHeaders);
+      final res = await _httpClient.get(uri, headers: requestHeaders);
       await _clearTokenOnUnauthorized(res);
 
       if (useCache && res.statusCode == 304 && cached != null) {
-        return _parseCachedBody<T>(cached, parser);
+        return _cachedHttpResponse(cached);
       }
 
-      final parsed = _parse(res, parser);
-      if (useCache && res.statusCode >= 200 && res.statusCode < 300) {
+      if (useCache &&
+          res.statusCode >= 200 &&
+          res.statusCode < 300 &&
+          requestGeneration == _cacheGeneration) {
         await _saveCache(
           key,
           keyBody: res.body,
@@ -1377,18 +1389,22 @@ class ApiClient {
           lastModified: res.headers['last-modified'],
         );
       }
-      return parsed;
-    };
+      return res;
+    }
 
-    final future = request();
-    _inflightCacheRequests[key] = future;
+    final future = _inflightCacheRequests.putIfAbsent(key, requestRaw);
     try {
-      return await future;
+      final response = await future;
+      return _parse(response, parser);
     } finally {
-      _inflightCacheRequests.remove(key);
+      if (identical(_inflightCacheRequests[key], future)) {
+        _inflightCacheRequests.remove(key);
+      }
     }
   }
 
+  /// 필요한 변수는 요청 경로·정렬된 쿼리·현재 토큰이다.
+  /// 토큰 전체를 SHA-256으로 단방향 변환해 사용자별 키를 만들고 원문 노출을 피한다.
   String _cacheKey(String path, Map<String, String>? query) {
     final sortedPairs =
         query == null ? <MapEntry<String, String>>[] : query.entries.toList()
@@ -1402,11 +1418,75 @@ class ApiClient {
     final normalizedPath = normalizedQuery.isEmpty
         ? path
         : '$path?$normalizedQuery';
-    final userTag = _token == null
-        ? 'anonymous'
-        : (_token!.length <= 12 ? _token! : _token!.substring(0, 12));
+    final userTag = _userCacheTag(_token);
     return '${userTag}_$normalizedPath';
   }
+
+  /// 필요한 변수는 선택 토큰이며, UTF-8 바이트를 SHA-256으로 해시한다.
+  /// 토큰이 없을 때만 고정 anonymous 네임스페이스를 반환한다.
+  String _userCacheTag(String? token) {
+    if (token == null || token.isEmpty) return 'anonymous';
+    return sha256.convert(utf8.encode(token)).toString();
+  }
+
+  /// 필요한 변수는 무효화할 API 경로와 현재 사용자 태그다.
+  /// 쿼리 유무와 관계없이 동일 경로로 시작하는 메모리·영속 캐시 및 진행 요청을 제거한다.
+  Future<void> invalidateCachePath(String path) async {
+    final prefix = '${_userCacheTag(_token)}_$path';
+    _memoryCache.removeWhere((key, _) => key.startsWith(prefix));
+    _inflightCacheRequests.removeWhere((key, _) => key.startsWith(prefix));
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs
+        .getKeys()
+        .where((key) => key.startsWith('$_cacheNamespace$prefix'))
+        .toList(growable: false);
+    await Future.wait(keys.map(prefs.remove));
+  }
+
+  /// 필요한 변수는 정리 대상 토큰이며 생략 시 현재 토큰을 사용한다.
+  /// 사용자 해시로 시작하는 모든 캐시를 제거하고 세대를 증가시켜 지연 응답의 저장을 차단한다.
+  Future<void> clearUserCache({String? token}) async {
+    final prefix = '${_userCacheTag(token ?? _token)}_';
+    _cacheGeneration += 1;
+    _memoryCache.removeWhere((key, _) => key.startsWith(prefix));
+    _inflightCacheRequests.removeWhere((key, _) => key.startsWith(prefix));
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs
+        .getKeys()
+        .where((key) => key.startsWith('$_cacheNamespace$prefix'))
+        .toList(growable: false);
+    await Future.wait(keys.map(prefs.remove));
+  }
+
+  /// 필요한 변수는 테스트용 HTTP 클라이언트다.
+  /// 실제 네트워크 없이 동시 GET 병합과 parser 분리를 검증할 때만 전송 계층을 교체한다.
+  @visibleForTesting
+  void setHttpClientForTest(http.Client client) {
+    _httpClient.close();
+    _httpClient = client;
+  }
+
+  /// 필요한 변수는 확인할 토큰이다. 테스트에서 SHA-256 사용자 격리 값을 직접 검증한다.
+  @visibleForTesting
+  String userCacheTagForTest(String token) => _userCacheTag(token);
+
+  /// 필요한 변수는 경로·원시 JSON·TTL이다. 네트워크 없이 현재 사용자 캐시를 준비한다.
+  @visibleForTesting
+  Future<void> seedCacheForTest(
+    String path,
+    String body, {
+    Duration ttl = const Duration(minutes: 5),
+  }) => _saveCache(
+    _cacheKey(path, null),
+    keyBody: body,
+    ttl: ttl,
+    statusCode: 200,
+  );
+
+  /// 필요한 변수는 경로다. 현재 사용자 메모리 캐시 존재 여부를 테스트에 반환한다.
+  @visibleForTesting
+  bool hasMemoryCacheForTest(String path) =>
+      _memoryCache.containsKey(_cacheKey(path, null));
 
   Future<_CachedApiResponse?> _readCache(String key) async {
     if (_memoryCache.containsKey(key)) {
@@ -1458,7 +1538,13 @@ class ApiClient {
     _CachedApiResponse cached,
     T Function(dynamic)? parser,
   ) {
-    final response = http.Response(
+    return _parse(_cachedHttpResponse(cached), parser);
+  }
+
+  /// 필요한 변수는 저장된 원시 본문·상태 코드다.
+  /// 캐시 데이터도 네트워크 응답과 같은 객체로 복원해 parser 적용 지점을 하나로 유지한다.
+  http.Response _cachedHttpResponse(_CachedApiResponse cached) {
+    return http.Response(
       cached.body,
       cached.statusCode,
       headers: const {
@@ -1466,9 +1552,10 @@ class ApiClient {
         'from-cache': '1',
       },
     );
-    return _parse(response, parser);
   }
 
+  /// 필요한 변수는 POST 경로·JSON 본문·선택 parser와 교체 가능한 HTTP 클라이언트다.
+  /// 인증 헤더를 붙여 동일 전송 계층으로 보내므로 런타임 API도 네트워크 없이 계약 테스트할 수 있다.
   Future<ApiResponse<T>> _post<T>(
     String path,
     Map<String, dynamic> body, {
@@ -1477,7 +1564,11 @@ class ApiClient {
     await _ensureToken();
     final uri = ApiContract.uri(path);
     log('POST $uri', name: 'ApiClient');
-    final res = await http.post(uri, headers: _headers, body: jsonEncode(body));
+    final res = await _httpClient.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode(body),
+    );
     await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }
@@ -2113,6 +2204,8 @@ class ApiClient {
     return res.data ?? const <String, dynamic>{};
   }
 
+  /// 필요한 변수는 코스·모듈·정오답 수·소요 시간이다.
+  /// 모듈 제출 성공 후 코스 목록·상세·런타임 캐시를 한 경로 기준으로 비운다.
   Future<Map<String, dynamic>> submitCourseRuntimeModule({
     required String courseId,
     required String moduleId,
@@ -2131,6 +2224,7 @@ class ApiClient {
           if (perProblemElapsedSeconds != null)
             'per_problem_elapsed_seconds': perProblemElapsedSeconds,
         }, parser: (d) => Map<String, dynamic>.from(d as Map));
+    await invalidateCachePath('/courses');
     return res.data ?? const <String, dynamic>{};
   }
 
@@ -3824,16 +3918,13 @@ extension ApiClientLegacyCompat on ApiClient {
     int? rating,
     String? questId,
     bool? isCorrect,
+    List<String>? tags,
     List<Map<String, dynamic>>? stepCorrectness,
     num? answerTime,
-    required String submissionId,
+    String? submissionId,
   }) async {
     final id = questId?.trim();
-    final stableSubmissionId = submissionId.trim();
-    if (id == null ||
-        id.isEmpty ||
-        isCorrect == null ||
-        stableSubmissionId.isEmpty) {
+    if (id == null || id.isEmpty || isCorrect == null) {
       return const UserRating(
         rating: 0,
         ovr: 0,
@@ -3845,27 +3936,13 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _post<Map<String, dynamic>>('/rating/submit', {
       'quest_id': id,
       'is_correct': isCorrect,
+      'tags': tags ?? const <String>[],
       if (answerTime != null) 'answer_time': answerTime,
       'step_correctness': stepCorrectness ?? const <Map<String, dynamic>>[],
-      'submission_id': stableSubmissionId,
+      if (submissionId != null && submissionId.trim().isNotEmpty)
+        'submission_id': submissionId.trim(),
     }, parser: (d) => Map<String, dynamic>.from(d as Map));
     return UserRating.fromJson(res.data ?? const {});
-  }
-
-  /// 필요 변수: 문제별 필수 submission_id가 포함된 채점 목록.
-  /// 작동 원리: 시험지 전체를 한 요청으로 보내 서버의 단일 PostgreSQL 트랜잭션에서 순서대로 반영한다.
-  Future<List<UserRating>> submitRatingBatch({
-    required List<Map<String, dynamic>> items,
-  }) async {
-    if (items.isEmpty) return const <UserRating>[];
-    final res = await _post<List<dynamic>>('/rating/submit-batch', {
-      'items': items,
-    }, parser: (d) => List<dynamic>.from(d as List));
-    return (res.data ?? const <dynamic>[])
-        .map(
-          (item) => UserRating.fromJson(Map<String, dynamic>.from(item as Map)),
-        )
-        .toList(growable: false);
   }
 
   Future<LevelTestPlacementSession> startLevelTestPlacement() async {
@@ -4166,6 +4243,8 @@ extension ApiClientLegacyCompat on ApiClient {
     return res.data ?? <String, dynamic>{};
   }
 
+  /// 필요한 변수는 코스·모듈·교재·현재 페이지와 선택 범위다.
+  /// 최소 체류 검증 완료 응답을 받은 뒤 관련 코스 캐시를 즉시 무효화한다.
   Future<Map<String, dynamic>> completeCourseTextbookRuntime({
     required String courseId,
     required String moduleId,
@@ -4186,6 +4265,7 @@ extension ApiClientLegacyCompat on ApiClient {
       },
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
+    await invalidateCachePath('/courses');
     return res.data ?? <String, dynamic>{};
   }
 
@@ -4193,6 +4273,8 @@ extension ApiClientLegacyCompat on ApiClient {
     return listStudyGroups();
   }
 
+  /// 필요한 변수는 그룹 ID와 풀이를 재현할 문제·분석 데이터다.
+  /// 작동 원리는 서버 공유 API에 원문을 POST하고 성공 직후 그룹 Flow GET 캐시를 비우는 것이다.
   Future<SharedFlowItem> shareFlowToGroup({
     required String groupId,
     required String questId,
@@ -4205,28 +4287,58 @@ extension ApiClientLegacyCompat on ApiClient {
     List<String> tags = const [],
     int? difficulty,
   }) async {
-    return SharedFlowItem(
-      id: '',
-      groupId: groupId,
-      senderId: '',
-      kind: 'flow',
-      refId: questId,
-      title: questTitle,
-      createdAt: DateTime.now(),
+    final response = await _post(
+      '/social/study-groups/$groupId/shared-flows',
+      {
+        'codebase_id': codebaseId,
+        'seed': seed,
+        if (questId.trim().isNotEmpty) 'quest_id': questId.trim(),
+        if (questTitle != null && questTitle.trim().isNotEmpty)
+          'quest_title': questTitle.trim(),
+        'status_json': statusJson,
+        'all_formulas': allFormulas,
+        'answer_riddle': answerRiddle,
+        'tags': tags,
+        if (difficulty != null) 'difficulty': difficulty,
+      },
+      parser: (data) =>
+          SharedFlowItem.fromJson(Map<String, dynamic>.from(data as Map)),
     );
+    await invalidateCachePath('/social/study-groups/$groupId/shared-flows');
+    return response.data ??
+        SharedFlowItem(
+          id: '',
+          groupId: groupId,
+          senderId: '',
+          kind: 'flow',
+          refId: questId,
+          title: questTitle,
+        );
   }
 
-  Future<void> deleteSharedFlow(String shareId) async {}
+  /// 필요한 변수는 공유 ID다.
+  /// 작동 원리는 소유권 검증이 포함된 서버 DELETE를 실행하고 모든 그룹 Flow 캐시를 제거하는 것이다.
+  Future<void> deleteSharedFlow(String shareId) async {
+    await _delete('/social/study-groups/shared-flows/${shareId.trim()}');
+    await invalidateCachePath('/social/study-groups');
+  }
 
+  /// 필요한 변수는 공유 ID다.
+  /// 작동 원리는 서버에서 필기·수식이 포함된 공유 Flow 원문을 조회해 화면 모델로 변환하는 것이다.
   Future<SharedFlowItem> getSharedFlow(String shareId) async {
-    return SharedFlowItem(
-      id: shareId,
-      groupId: '',
-      senderId: '',
-      kind: 'flow',
-      refId: '',
-      createdAt: DateTime.now(),
+    final response = await _get(
+      '/social/study-groups/shared-flows/${shareId.trim()}',
+      parser: (data) =>
+          SharedFlowItem.fromJson(Map<String, dynamic>.from(data as Map)),
     );
+    return response.data ??
+        SharedFlowItem(
+          id: shareId,
+          groupId: '',
+          senderId: '',
+          kind: 'flow',
+          refId: '',
+        );
   }
 
   Future<QuestSearchResult> fetchQuestPage({

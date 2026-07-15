@@ -53,14 +53,7 @@ List<_PageLayout> _layoutItems(List<ExamItem> items) {
         flush();
         column = findFreeColumn() ?? 0;
       }
-      entries.add(
-        _LayoutEntry(
-          item,
-          column: column,
-          row: 0,
-          rowSpan: 2,
-        ),
-      );
+      entries.add(_LayoutEntry(item, column: column, row: 0, rowSpan: 2));
       columnSpans[column] = true;
       occupied[column][0] = true;
       occupied[column][1] = true;
@@ -72,14 +65,7 @@ List<_PageLayout> _layoutItems(List<ExamItem> items) {
       flush();
       slot = findFreeSlot() ?? [0, 0];
     }
-    entries.add(
-      _LayoutEntry(
-        item,
-        column: slot[0],
-        row: slot[1],
-        rowSpan: 1,
-      ),
-    );
+    entries.add(_LayoutEntry(item, column: slot[0], row: slot[1], rowSpan: 1));
     occupied[slot[0]][slot[1]] = true;
   }
 
@@ -89,5 +75,3 @@ List<_PageLayout> _layoutItems(List<ExamItem> items) {
 
   return pages;
 }
-
-

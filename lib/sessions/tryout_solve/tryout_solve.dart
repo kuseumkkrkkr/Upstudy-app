@@ -1,4 +1,4 @@
-﻿// Barrel file for tryout_solve session - exports all public APIs
+// Barrel file for tryout_solve session - exports all public APIs
 
 // Legacy entry (mother file; sub-files are part of it and must NOT be exported directly)
 export 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';

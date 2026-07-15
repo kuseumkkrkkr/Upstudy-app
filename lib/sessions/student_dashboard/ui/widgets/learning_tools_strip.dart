@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-const _toolAccentColor = Color(0xFF1B402B);
+const _toolInk = Color(0xFF09090B);
+const _toolLine = Color(0x2E09090B);
 
 class LearningToolsStrip extends StatelessWidget {
   const LearningToolsStrip({
@@ -18,6 +19,7 @@ class LearningToolsStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width <= 780;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -25,93 +27,119 @@ class LearningToolsStrip extends StatelessWidget {
           icon: Icons.edit_note_rounded,
           label: '노트패드',
           onTap: onNotepad,
-          accentColor: _toolAccentColor,
+          shape: _ToolShape.note,
+          compact: compact,
         ),
         _ToolItem(
           icon: Icons.timer_rounded,
           label: '타이머',
           onTap: onTimer,
-          accentColor: _toolAccentColor,
+          shape: _ToolShape.timer,
+          compact: compact,
         ),
         _ToolItem(
           icon: Icons.center_focus_strong_rounded,
           label: '집중 모드',
           onTap: onFocusMode,
-          accentColor: _toolAccentColor,
+          shape: _ToolShape.focus,
+          compact: compact,
         ),
         _ToolItem(
           icon: Icons.stacked_line_chart_rounded,
           label: '그래프 그리기',
           onTap: onGraph,
-          accentColor: _toolAccentColor,
+          shape: _ToolShape.graph,
+          compact: compact,
         ),
       ],
     );
   }
 }
 
+enum _ToolShape { note, timer, focus, graph }
+
 class _ToolItem extends StatelessWidget {
   const _ToolItem({
     required this.icon,
     required this.label,
     required this.onTap,
-    required this.accentColor,
+    required this.shape,
+    required this.compact,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color accentColor;
+  final _ToolShape shape;
+  final bool compact;
 
+  /// 필요한 변수는 도구 종류와 현재 화면 폭이다.
+  /// 작동 원리: HTML의 사각 노트·원형 타이머·중첩 집중·회전 그래프 도형을 흑백으로 재현한다.
   @override
   Widget build(BuildContext context) {
-    final softColor = Color.lerp(accentColor, Colors.white, 0.88)!;
+    final size = compact ? 52.0 : 68.0;
+    final isDark = shape == _ToolShape.note;
+    final isCircle = shape == _ToolShape.timer;
+    final isGraph = shape == _ToolShape.graph;
+    final radius = isCircle
+        ? size / 2
+        : (shape == _ToolShape.focus ? 24.0 : 20.0);
 
     return Expanded(
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+            padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
             child: Column(
               children: [
-                Container(
-                  width: 62,
-                  height: 62,
-                  decoration: BoxDecoration(
-                    color: softColor,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: accentColor.withValues(alpha: 0.18),
+                Transform.rotate(
+                  angle: isGraph ? 0.785398 : 0,
+                  child: Container(
+                    width: size,
+                    height: size,
+                    decoration: BoxDecoration(
+                      color: isDark ? _toolInk : Colors.white,
+                      borderRadius: BorderRadius.circular(radius),
+                      border: Border.all(color: _toolLine),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x14000000),
+                          blurRadius: 22,
+                          offset: Offset(0, 9),
+                        ),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accentColor.withValues(alpha: 0.13),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.86),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(icon, color: accentColor, size: 27),
-                    ),
+                    child: shape == _ToolShape.focus
+                        ? Container(
+                            margin: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: _toolInk, width: 8),
+                              borderRadius: BorderRadius.circular(17),
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.circle_outlined, size: 18),
+                            ),
+                          )
+                        : Transform.rotate(
+                            angle: isGraph ? -0.785398 : 0,
+                            child: Icon(
+                              icon,
+                              color: isDark ? Colors.white : _toolInk,
+                              size: compact ? 20 : 24,
+                            ),
+                          ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    color: _toolInk,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                     letterSpacing: 0,
                   ),
                   maxLines: 1,

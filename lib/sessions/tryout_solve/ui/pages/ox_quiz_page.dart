@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
@@ -71,11 +71,13 @@ class _OxQuizPageState extends State<OxQuizPage> {
           children: [
             Row(
               children: [
-                Text('占쏙옙占쏙옙  / ',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    )),
+                Text(
+                  '占쏙옙占쏙옙  / ',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: LinearProgressIndicator(
@@ -99,7 +101,7 @@ class _OxQuizPageState extends State<OxQuizPage> {
                     blurRadius: 4,
                     color: Color(0x12000000),
                     offset: Offset(0, 2),
-                  )
+                  ),
                 ],
               ),
               child: Column(
@@ -108,8 +110,10 @@ class _OxQuizPageState extends State<OxQuizPage> {
                   Row(
                     children: [
                       Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
@@ -164,7 +168,10 @@ class _OxQuizPageState extends State<OxQuizPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.black,
-                            side: BorderSide(color: Colors.grey.shade400, width: 2),
+                            side: BorderSide(
+                              color: Colors.grey.shade400,
+                              width: 2,
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 18),
                             textStyle: const TextStyle(
                               fontSize: 20,

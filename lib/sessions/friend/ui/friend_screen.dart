@@ -40,13 +40,225 @@ const TextStyle _bodyMdMuted = TextStyle(
 
 // ══════════════════════════════════════════════════════════════
 class SoWidget extends StatefulWidget {
-  const SoWidget({super.key});
+  const SoWidget({super.key, this.preview = false});
+
+  final bool preview;
 
   static String routeName = 'so';
   static String routePath = '/so';
 
   @override
   State<SoWidget> createState() => _SoWidgetState();
+}
+
+class _SocialNoticeRow extends StatelessWidget {
+  const _SocialNoticeRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.count,
+    this.onTap,
+    this.last = false,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final int count;
+  final VoidCallback? onTap;
+  final bool last;
+
+  /// 필요한 변수는 소식 아이콘·문구·개수·선택 콜백이다.
+  /// 작동 원리는 아이콘과 숫자를 검은 원형으로 대응시켜 새 소식 우선순위를 드러내는 것이다.
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: BoxDecoration(
+        border: last
+            ? null
+            : const Border(bottom: BorderSide(color: Color(0xFFE6E6E8))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF202022),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 10, color: Colors.black45),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: Color(0xFF202022),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _SocialSectionHeader extends StatelessWidget {
+  const _SocialSectionHeader({
+    required this.eyebrow,
+    required this.title,
+    required this.trailing,
+  });
+  final String eyebrow;
+  final String title;
+  final String trailing;
+
+  /// 필요한 변수는 영문 섹션명·한글 제목·요약 문구다.
+  /// 작동 원리는 위치를 고정한 요약을 제목 오른쪽에 놓아 HTML 카드 헤더를 재현하는 것이다.
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(18, 22, 18, 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                eyebrow,
+                style: const TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            Text(
+              trailing,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+        const SizedBox(height: 9),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
+}
+
+class _SocialPersonRow extends StatelessWidget {
+  const _SocialPersonRow({
+    required this.name,
+    required this.subtitle,
+    required this.trailing,
+    required this.onTap,
+  });
+  final String name;
+  final String subtitle;
+  final String trailing;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 사용자명·상태·오른쪽 표시·선택 콜백이다.
+  /// 작동 원리는 초성 아바타와 두 줄 정보를 구분선 행으로 정렬해 대화·친구 진입을 공유하는 것이다.
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      height: 68,
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE6E6E8))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF343438),
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: const [
+                BoxShadow(color: Color(0x33000000), blurRadius: 8),
+              ],
+            ),
+            child: Text(
+              name.isEmpty ? '?' : name.characters.first,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10, color: Colors.black45),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            trailing,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _SoWidgetState extends State<SoWidget> {
@@ -102,6 +314,47 @@ class _SoWidgetState extends State<SoWidget> {
   @override
   void initState() {
     super.initState();
+    if (widget.preview) {
+      _friends = const [
+        _FriendInfo(name: '이수학', status: '학습 중 · B Tier', ovr: 76),
+        _FriendInfo(name: '박함수', status: '접속 중 · A Tier', ovr: 84),
+        _FriendInfo(name: '최도형', status: '오프라인 · B Tier', ovr: 72),
+      ];
+      _messages = const [
+        _MessageInfo(name: '이수학', lastMessage: '오늘 챌린지 같이 할래?', timeAgo: '방금'),
+        _MessageInfo(
+          name: '박함수',
+          lastMessage: 'Flow를 공유했습니다.',
+          timeAgo: '18분 전',
+        ),
+        _MessageInfo(name: '최도형', lastMessage: '고마워!', timeAgo: '어제'),
+      ];
+      _friendRequests = [
+        _FriendRequest(
+          id: 'preview-1',
+          username: '김그래프',
+          direction: _FriendRequestDirection.incoming,
+        ),
+        _FriendRequest(
+          id: 'preview-2',
+          username: '박기울기',
+          direction: _FriendRequestDirection.incoming,
+        ),
+      ];
+      _unreadThreads.add('이수학');
+      _unreadMessages = 3;
+      _friendRanks = const [
+        _FriendRank(rank: 1, name: '이수학', ovr: 19.8, delta: 4),
+        _FriendRank(rank: 2, name: '박함수', ovr: 19.1, delta: 2),
+        _FriendRank(rank: 3, name: '김학생 · 나', ovr: 18.6, delta: 3, isMe: true),
+      ];
+      _tagRatings = const {
+        '일차함수': TagRating(tag: '일차함수', rating: 19.2, delta: 0.4, attempts: 18),
+        '기하': TagRating(tag: '기하', rating: 16.4, delta: -0.2, attempts: 12),
+      };
+      _loadingRatingSummary = false;
+      return;
+    }
     unawaited(ActivityStore.load().catchError((_) => ActivitySnapshot.empty()));
     unawaited(_refreshPageData());
     SocialMessageHub.addListener(_handleIncomingDirectMessage);
@@ -459,6 +712,7 @@ class _SoWidgetState extends State<SoWidget> {
     if (type == 'friend_request_accepted') unawaited(_refreshFriends());
   }
 
+  // 필요 변수: 친구 정보와 스낵바를 표시할 context. 작동 원리: 중복을 막고 API 성공·실패를 살아 있는 화면에만 알린다.
   Future<void> _sendFriendRequest({
     required _FriendInfo friend,
     required BuildContext rootContext,
@@ -480,7 +734,7 @@ class _SoWidgetState extends State<SoWidget> {
         username: friend.name,
         message: friend.status,
       );
-      if (!mounted) return;
+      if (!mounted || !rootContext.mounted) return;
       setState(() {
         _friendRequests.add(_FriendRequest.fromApi(created));
       });
@@ -489,7 +743,7 @@ class _SoWidgetState extends State<SoWidget> {
         rootContext,
       ).showSnackBar(const SnackBar(content: Text('Friend request sent.')));
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || !rootContext.mounted) return;
       ScaffoldMessenger.of(rootContext).showSnackBar(
         const SnackBar(content: Text('Failed to send friend request.')),
       );
@@ -711,7 +965,7 @@ class _SoWidgetState extends State<SoWidget> {
     }
     return CircleAvatar(
       radius: 14,
-      backgroundColor: color.withOpacity(0.15),
+      backgroundColor: color.withValues(alpha: 0.15),
       foregroundColor: color,
       child: Icon(icon, size: 16),
     );
@@ -765,7 +1019,7 @@ class _SoWidgetState extends State<SoWidget> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: (textColor ?? primaryColor).withOpacity(0.75),
+                color: (textColor ?? primaryColor).withValues(alpha: 0.75),
               ),
             ),
           ],
@@ -972,7 +1226,7 @@ class _SoWidgetState extends State<SoWidget> {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: primaryColor.withOpacity(0.15),
+            backgroundColor: primaryColor.withValues(alpha: 0.15),
             child: Text(
               name.isNotEmpty ? name.substring(0, 1) : '?',
               style: const TextStyle(
@@ -1080,7 +1334,7 @@ class _SoWidgetState extends State<SoWidget> {
       context: context,
       barrierLabel: 'dialog',
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.18),
+      barrierColor: Colors.black.withValues(alpha: 0.18),
       transitionDuration: const Duration(milliseconds: 160),
       pageBuilder: (_, __, ___) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
@@ -1151,6 +1405,7 @@ class _SoWidgetState extends State<SoWidget> {
         title: '친구 추가',
         child: StatefulBuilder(
           builder: (context, setModalState) {
+            // 필요 변수: 친구 검색어와 모달 상태. 작동 원리: API·OVR 결과를 합치고 살아 있는 모달에만 결과를 반영한다.
             Future<void> performSearch() async {
               final keyword = query.trim();
               if (keyword.isEmpty) {
@@ -1191,8 +1446,9 @@ class _SoWidgetState extends State<SoWidget> {
                   errorMessage = '검색에 실패했어요';
                 });
               } finally {
-                if (!context.mounted) return;
-                setModalState(() => isSearching = false);
+                if (context.mounted) {
+                  setModalState(() => isSearching = false);
+                }
               }
             }
 
@@ -1302,8 +1558,8 @@ class _SoWidgetState extends State<SoWidget> {
                                 children: [
                                   CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: primaryColor.withOpacity(
-                                      0.12,
+                                    backgroundColor: primaryColor.withValues(
+                                      alpha: 0.12,
                                     ),
                                     child: Text(
                                       friend.name.substring(0, 1),
@@ -1412,7 +1668,9 @@ class _SoWidgetState extends State<SoWidget> {
                         children: [
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: primaryColor.withOpacity(0.12),
+                            backgroundColor: primaryColor.withValues(
+                              alpha: 0.12,
+                            ),
                             child: Text(
                               message.name.substring(0, 1),
                               style: const TextStyle(
@@ -1474,15 +1732,17 @@ class _SoWidgetState extends State<SoWidget> {
 
   void _openMessageThread(_MessageInfo info) {
     _markMessagesRead(thread: info.name);
-    _showBlurDialog(
-      _MessengerDialog(
-        info: info,
-        onMessageSent: (message) => _upsertThreadPreview(
-          info.name,
-          message.text,
-          at: message.createdAt,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StudentDirectChatPage(
+          peerUsername: info.name,
+          onMessageSent: (message) => _upsertThreadPreview(
+            info.name,
+            message.text,
+            at: message.createdAt,
+          ),
+          onThreadDeleted: () => _removeThread(info.name),
         ),
-        onDeleteThread: () => _removeThread(info.name),
       ),
     );
   }
@@ -1593,6 +1853,7 @@ class _SoWidgetState extends State<SoWidget> {
         width: 620,
         child: StatefulBuilder(
           builder: (context, setModalState) {
+            // 필요 변수: 그룹 검색어와 모달 상태. 작동 원리: 공개 그룹 검색 결과를 현재 모달 카드 모델로 변환한다.
             Future<void> performSearch() async {
               final keyword = query.trim();
               if (keyword.isEmpty) {
@@ -1636,11 +1897,13 @@ class _SoWidgetState extends State<SoWidget> {
                 if (!context.mounted) return;
                 setModalState(() => errorMessage = '검색에 실패했어요');
               } finally {
-                if (!context.mounted) return;
-                setModalState(() => isSearching = false);
+                if (context.mounted) {
+                  setModalState(() => isSearching = false);
+                }
               }
             }
 
+            // 필요 변수: 선택 그룹과 모달 상태. 작동 원리: 참여 API 성공 시 로컬 그룹 목록을 중복 없이 갱신한다.
             Future<void> joinGroup(_GroupInfo group) async {
               setModalState(() => joiningId = group.id);
               try {
@@ -1661,11 +1924,13 @@ class _SoWidgetState extends State<SoWidget> {
                   context,
                 ).showSnackBar(const SnackBar(content: Text('참여에 실패했어요')));
               } finally {
-                if (!context.mounted) return;
-                setModalState(() => joiningId = null);
+                if (context.mounted) {
+                  setModalState(() => joiningId = null);
+                }
               }
             }
 
+            // 필요 변수: 초대 코드와 모달 상태. 작동 원리: 코드 참여 결과를 로컬 목록에 반영하고 성공 시 모달을 닫는다.
             Future<void> joinGroupByCode() async {
               final code = inviteCode.trim();
               if (code.isEmpty) {
@@ -1705,8 +1970,9 @@ class _SoWidgetState extends State<SoWidget> {
                 if (!context.mounted) return;
                 setModalState(() => errorMessage = '참여코드를 확인해 주세요');
               } finally {
-                if (!context.mounted) return;
-                setModalState(() => isJoiningByCode = false);
+                if (context.mounted) {
+                  setModalState(() => isJoiningByCode = false);
+                }
               }
             }
 
@@ -1884,7 +2150,9 @@ class _SoWidgetState extends State<SoWidget> {
                                 children: [
                                   CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: color.withOpacity(0.15),
+                                    backgroundColor: color.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     child: Icon(icon, color: color, size: 16),
                                   ),
                                   const SizedBox(width: 10),
@@ -2015,10 +2283,380 @@ class _SoWidgetState extends State<SoWidget> {
   );
 
   // ══════════════════════════════════════════════════════════════
+  /// 필요한 변수는 친구·요청·안 읽은 대화 상태와 학생 내비게이션이다.
+  /// 작동 원리는 HTML의 소셜 요약, 최근 대화, 친구 상태 순서로 한 개 스크롤을 구성하는 것이다.
+  Widget _buildHtmlSocial(BuildContext context) => GestureDetector(
+    onTap: () => FocusScope.of(context).unfocus(),
+    child: Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: const Color(0xFFF4F4F6),
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Ios26TopBar(
+              brandColor: Colors.black,
+              showLevelIndicator: false,
+              onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+              items: studentTopNavItems(
+                context,
+                active: StudentTopDestination.social,
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refreshPageData,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                  children: [
+                    const Text(
+                      'FRIENDS & SOCIAL',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.7,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '친구/소셜',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      '새 소식을 먼저 처리하고 친구·그룹 학습으로 자연스럽게 이어집니다.',
+                      style: TextStyle(color: Colors.black45),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        backgroundColor: const Color(0xFF202022),
+                      ),
+                      onPressed: _openAddFriendModal,
+                      child: const Text('친구 추가'),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSocialSummary(),
+                    const SizedBox(height: 16),
+                    _buildSocialDirectory(),
+                    const SizedBox(height: 16),
+                    _buildSocialRatingOverview(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  /// 필요한 변수는 받은 요청, 안 읽은 쪽지, 그룹 소식 개수다.
+  /// 작동 원리는 새 소식을 세 행으로 표시하고 기존 요청·대화 동작에 연결하는 것이다.
+  Widget _buildSocialSummary() => Container(
+    clipBehavior: Clip.antiAlias,
+    decoration: _socialCardDecoration(),
+    child: Column(
+      children: [
+        _SocialNoticeRow(
+          icon: Icons.person_add_alt_1_outlined,
+          title: '친구 요청',
+          subtitle: '받은 요청 ${_pendingIncomingRequests.length} · 보낸 요청 1',
+          count: _pendingIncomingRequests.length,
+          onTap: _openAddFriendModal,
+        ),
+        _SocialNoticeRow(
+          icon: Icons.circle_outlined,
+          title: '안 읽은 쪽지',
+          subtitle: _messages.isEmpty
+              ? '새 쪽지 없음'
+              : '${_messages.first.name} 외 ${(_messages.length - 1).clamp(0, 99)}명',
+          count: _unreadMessages,
+          onTap: _messages.isEmpty
+              ? null
+              : () => _openMessageThread(_messages.first),
+        ),
+        _SocialNoticeRow(
+          icon: Icons.album_outlined,
+          title: '그룹 새 소식',
+          subtitle: '공지 2 · 메시지 3',
+          count: 5,
+          last: true,
+          onTap: () => Navigator.of(context).pushNamed('/groups'),
+        ),
+      ],
+    ),
+  );
+
+  /// 필요한 변수는 최근 대화와 친구 목록이다.
+  /// 작동 원리는 각 목록을 선택 가능한 행으로 표시해 대화·친구 메뉴를 기존 로직으로 연다.
+  Widget _buildSocialDirectory() => Container(
+    clipBehavior: Clip.antiAlias,
+    decoration: _socialCardDecoration(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SocialSectionHeader(
+          eyebrow: 'MESSAGE INBOX',
+          title: '최근 대화',
+          trailing: '${_messages.length}',
+        ),
+        for (final message in _messages.take(3))
+          _SocialPersonRow(
+            name: message.name,
+            subtitle: '${message.lastMessage} · ${message.timeAgo}',
+            trailing: _unreadThreads.contains(message.name) ? '2' : '›',
+            onTap: () => _openMessageThread(message),
+          ),
+        const Divider(height: 1),
+        _SocialSectionHeader(
+          eyebrow: 'FRIENDS',
+          title: '친구 상태',
+          trailing:
+              '온라인 ${_friends.where((friend) => friend.status.contains('중')).length}',
+        ),
+        for (final friend in _friends.take(4))
+          _SocialPersonRow(
+            name: friend.name,
+            subtitle: friend.status,
+            trailing: '쪽지 ›',
+            onTap: () => _openFriendActionModal(friend),
+          ),
+      ],
+    ),
+  );
+
+  /// 필요한 변수는 친구 OVR 순위와 내 태그 레이팅 변화다.
+  /// 작동 원리는 HTML 하단처럼 흰 랭킹 카드와 검은 MY RATING 카드를 연속 배치하고 상세 모달로 연결하는 것이다.
+  Widget _buildSocialRatingOverview() {
+    final ranks = _friendRanks.isEmpty
+        ? const [
+            _FriendRank(rank: 1, name: '이수학', ovr: 19.8),
+            _FriendRank(rank: 2, name: '박함수', ovr: 19.1),
+            _FriendRank(rank: 3, name: '김학생 · 나', ovr: 18.6, isMe: true),
+          ]
+        : _friendRanks.take(3).toList(growable: false);
+    final rising = _tagRatings.values.where((item) => item.delta >= 0).toList()
+      ..sort((a, b) => b.delta.compareTo(a.delta));
+    final falling = _tagRatings.values.where((item) => item.delta < 0).toList()
+      ..sort((a, b) => a.delta.compareTo(b.delta));
+    final strong = rising.isEmpty ? null : rising.first;
+    final weak = falling.isEmpty ? null : falling.first;
+    final myRank = ranks.where((item) => item.isMe).firstOrNull;
+    final myOvr = myRank?.ovr ?? 18.6;
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: _socialCardDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'FRIEND OVR RANKING',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.7,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '친구 OVR 랭킹',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 14),
+              for (final rank in ranks)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: rank.isMe
+                        ? const Color(0xFFF0F0F2)
+                        : const Color(0xFFFAFAFB),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 28,
+                        child: Text(
+                          '${rank.rank}',
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      CircleAvatar(
+                        radius: 21,
+                        backgroundColor: const Color(0xFF202022),
+                        foregroundColor: Colors.white,
+                        child: Text(
+                          rank.name.isEmpty ? 'F' : rank.name.substring(0, 1),
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              rank.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Text(
+                              'B Tier · ${rank.ovr.toStringAsFixed(1)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.black45,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        rank.delta == 0 ? '—' : '+${rank.delta / 10}',
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF171719),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'MY RATING',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 10,
+                  letterSpacing: 1.7,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      myOvr.toStringAsFixed(1),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 46,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 62,
+                    height: 62,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 3),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Text(
+                      'B',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Text(
+                'B Tier · 전날 대비 +0.3',
+                style: TextStyle(color: Colors.white54),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _SocialRatingMetric(
+                          label: '강점',
+                          value: strong == null
+                              ? '#일차함수 19.2'
+                              : '#${strong.tag} ${strong.rating.toStringAsFixed(1)}',
+                        ),
+                        _SocialRatingMetric(
+                          label: '약점',
+                          value: weak == null
+                              ? '#기하 16.4'
+                              : '#${weak.tag} ${weak.rating.toStringAsFixed(1)}',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Expanded(
+                    child: Column(
+                      children: [
+                        _SocialRatingMetric(label: '상승', value: '#그래프 +0.8'),
+                        _SocialRatingMetric(label: '하락', value: '#확률 -0.2'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: () => showRatingDetailModal(context: context),
+                child: const Text('내 평점 상세'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 필요한 변수는 없으며 소셜 카드가 공유할 표면 규칙을 만든다.
+  /// 작동 원리는 흰 배경·22px 모서리·어두운 테두리로 HTML 카드 외곽을 고정하는 것이다.
+  BoxDecoration _socialCardDecoration() => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(22),
+    border: Border.all(color: const Color(0xFFE0E0E2)),
+  );
+
   // BUILD
   // ══════════════════════════════════════════════════════════════
+  /// 필요한 변수는 친구·그룹 상태와 현재 학생 화면 문맥이다.
+  /// 작동 원리는 HTML 소셜 구조를 기본으로 쓰고 환경 플래그에서만 구형 화면을 여는 것이다.
   @override
   Widget build(BuildContext context) {
+    if (!const bool.fromEnvironment('USE_LEGACY_SOCIAL')) {
+      return _buildHtmlSocial(context);
+    }
+    return _buildLegacySocial(context);
+  }
+
+  /// 필요한 변수는 기존 친구·그룹·레이팅 상태이다.
+  /// 작동 원리는 회귀 비교 환경에서만 기존 복합 화면을 구성하는 것이다.
+  Widget _buildLegacySocial(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final baseWidth = screenWidth < 1900 ? screenWidth : 1900.0;
     final contentWidth = baseWidth > 20 ? baseWidth - 20 : 0.0;
@@ -2053,26 +2691,10 @@ class _SoWidgetState extends State<SoWidget> {
                     MaterialPageRoute(builder: (_) => const MainStudentPage()),
                     (route) => false,
                   ),
-                  items: [
-                    Ios26NavItem(
-                      label: '학습터',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const study_center.SoWidget(),
-                        ),
-                      ),
-                    ),
-                    Ios26NavItem(
-                      label: '책가방',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const docx.BookWidget(),
-                        ),
-                      ),
-                    ),
-                    const Ios26NavItem(label: '친구/소셜', active: true),
-                    const Ios26NavItem(label: '마켓플레이스'),
-                  ],
+                  items: studentTopNavItems(
+                    context,
+                    active: StudentTopDestination.social,
+                  ),
                 ),
 
                 // ────────────────────────────────────────────────────
@@ -2516,8 +3138,9 @@ class _SoWidgetState extends State<SoWidget> {
                                                                 radius: 15,
                                                                 backgroundColor:
                                                                     primaryColor
-                                                                        .withOpacity(
-                                                                          0.12,
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.12,
                                                                         ),
                                                                 child: Text(
                                                                   message.name
@@ -2728,8 +3351,8 @@ class _SoWidgetState extends State<SoWidget> {
                                                         CircleAvatar(
                                                           radius: 16,
                                                           backgroundColor: color
-                                                              .withOpacity(
-                                                                0.15,
+                                                              .withValues(
+                                                                alpha: 0.15,
                                                               ),
                                                           child: Icon(
                                                             icon,
@@ -2818,4 +3441,39 @@ class _SoWidgetState extends State<SoWidget> {
       ),
     );
   }
+}
+
+class _SocialRatingMetric extends StatelessWidget {
+  const _SocialRatingMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  /// 필요한 변수는 레이팅 지표 라벨과 값이다.
+  /// 작동 원리는 검은 MY RATING 카드 안에서 얇은 테두리와 흰 텍스트로 강점·약점을 나란히 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(border: Border.all(color: Colors.white24)),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white54, fontSize: 11),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    ),
+  );
 }
