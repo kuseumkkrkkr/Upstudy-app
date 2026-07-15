@@ -7,9 +7,11 @@ from __future__ import annotations
 import json
 import uuid
 import sqlite3
+from contextlib import closing
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from domain.level_test import static_store
 from domain.level_test.models import LevelTestResult, PowerTest, SpeedTest
 from storage.storage import DB_PATH
 
@@ -77,41 +79,6 @@ def _ensure_level_test_tables() -> None:
 
     cur.execute(
         """
-        CREATE TABLE IF NOT EXISTS level_test_template (
-            template_id TEXT PRIMARY KEY,
-            status TEXT NOT NULL,
-            version TEXT NOT NULL,
-            subject_mix TEXT NOT NULL,
-            difficulty_profile TEXT NOT NULL,
-            used_count INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS level_test_template_item (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            template_id TEXT NOT NULL,
-            item_index INTEGER NOT NULL,
-            phase INTEGER NOT NULL,
-            subject_key TEXT NOT NULL,
-            hash_tags TEXT NOT NULL,
-            difficulty_tier INTEGER NOT NULL,
-            quest_id TEXT NOT NULL,
-            codebase_id INTEGER,
-            seed INTEGER,
-            problem_rating REAL NOT NULL DEFAULT 1200,
-            created_at TEXT NOT NULL,
-            UNIQUE(template_id, item_index)
-        )
-        """
-    )
-
-    cur.execute(
-        """
         CREATE TABLE IF NOT EXISTS level_test_session (
             session_id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
@@ -151,13 +118,6 @@ def _ensure_level_test_tables() -> None:
         """
     )
 
-    cur.execute(
-        """
-        CREATE INDEX IF NOT EXISTS level_test_template_status_idx
-        ON level_test_template(status, used_count, created_at)
-        """
-    )
-
     conn.commit()
     conn.close()
 
@@ -171,163 +131,57 @@ def _now_iso() -> str:
 # ---------------------------------------------------------------------------
 
 
-def create_placement_template(
-    *,
-    version: str,
-    subject_mix: Dict[str, Any],
-    difficulty_profile: Dict[str, Any],
-    status: str = "generating",
-) -> str:
-    _ensure_level_test_tables()
-    template_id = str(uuid.uuid4())
-    now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT INTO level_test_template (
-            template_id, status, version, subject_mix, difficulty_profile,
-            used_count, created_at, updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, 0, ?, ?)
-        """,
-        (
-            template_id,
-            status,
-            version,
-            json.dumps(subject_mix, ensure_ascii=False),
-            json.dumps(difficulty_profile, ensure_ascii=False),
-            now,
-            now,
-        ),
-    )
-    conn.commit()
-    conn.close()
-    return template_id
-
-
-def set_placement_template_status(template_id: str, status: str) -> None:
-    _ensure_level_test_tables()
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        UPDATE level_test_template
-        SET status = ?, updated_at = ?
-        WHERE template_id = ?
-        """,
-        (status, _now_iso(), template_id),
-    )
-    conn.commit()
-    conn.close()
-
-
-def add_placement_template_items(
-    template_id: str,
-    items: List[Dict[str, Any]],
-) -> None:
-    if not items:
-        return
-    _ensure_level_test_tables()
-    now = _now_iso()
-    payload = [
-        (
-            template_id,
-            int(item["item_index"]),
-            int(item.get("phase") or 1),
-            str(item.get("subject_key") or ""),
-            json.dumps(item.get("hash_tags") or [], ensure_ascii=False),
-            int(item.get("difficulty_tier") or 3),
-            str(item.get("quest_id") or ""),
-            item.get("codebase_id"),
-            item.get("seed"),
-            float(item.get("problem_rating") or 1200),
-            now,
-        )
-        for item in items
-        if item.get("quest_id")
-    ]
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.executemany(
-        """
-        INSERT OR REPLACE INTO level_test_template_item (
-            template_id, item_index, phase, subject_key, hash_tags,
-            difficulty_tier, quest_id, codebase_id, seed, problem_rating, created_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        payload,
-    )
-    conn.commit()
-    conn.close()
-
-
 def count_ready_placement_templates() -> int:
-    _ensure_level_test_tables()
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM level_test_template WHERE status = 'ready'")
-    count = int(cur.fetchone()[0] or 0)
-    conn.close()
-    return count
+    """필요 변수: 없음. 작동 원리: 일반 DB가 아닌 전용 정적 DB의 활성 폼 개수를 반환한다."""
+    return len(static_store.list_template_ids())
 
 
 def pick_ready_placement_template(user_id: str) -> Optional[Dict[str, Any]]:
+    """필요 변수: 사용자 ID. 작동 원리: 정적 폼 중 최근 3개를 피하고 전체 배정 횟수가 가장 적은 폼을 선택한다."""
     _ensure_level_test_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT t.*
-        FROM level_test_template t
-        WHERE t.status = 'ready'
-          AND t.template_id NOT IN (
-              SELECT template_id
-              FROM level_test_session
-              WHERE user_id = ?
-              ORDER BY started_at DESC
-              LIMIT 3
-          )
-        ORDER BY t.used_count ASC, t.created_at ASC
-        LIMIT 1
-        """,
-        (user_id,),
-    )
-    row = cur.fetchone()
-    conn.close()
-    return dict(row) if row else None
+    template_ids = static_store.list_template_ids()
+    if not template_ids:
+        return None
+    placeholders = ",".join("?" for _ in template_ids)
+    with closing(sqlite3.connect(DB_PATH)) as connection:
+        recent = {
+            str(row[0])
+            for row in connection.execute(
+                """
+                SELECT template_id FROM level_test_session
+                WHERE user_id=? ORDER BY started_at DESC LIMIT 3
+                """,
+                (user_id,),
+            )
+        }
+        usage = {
+            str(row[0]): int(row[1])
+            for row in connection.execute(
+                f"""
+                SELECT template_id, COUNT(*) FROM level_test_session
+                WHERE template_id IN ({placeholders}) GROUP BY template_id
+                """,
+                template_ids,
+            )
+        }
+    candidates = [template_id for template_id in template_ids if template_id not in recent]
+    if not candidates:
+        candidates = template_ids
+    order = {template_id: index for index, template_id in enumerate(template_ids)}
+    selected_id = min(candidates, key=lambda value: (usage.get(value, 0), order[value]))
+    template = static_store.get_template(selected_id) or {}
+    return {**template, "template_id": selected_id, "status": "ready"}
 
 
 def get_placement_template_items(template_id: str) -> List[Dict[str, Any]]:
-    _ensure_level_test_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT *
-        FROM level_test_template_item
-        WHERE template_id = ?
-        ORDER BY item_index ASC
-        """,
-        (template_id,),
-    )
-    rows = cur.fetchall()
-    conn.close()
-    items = []
-    for row in rows:
-        item = dict(row)
-        try:
-            item["hash_tags"] = json.loads(item.get("hash_tags") or "[]")
-        except json.JSONDecodeError:
-            item["hash_tags"] = []
-        items.append(item)
-    return items
+    """필요 변수: 정적 시험지 ID. 작동 원리: 전용 정적 DB에서만 50개 슬롯을 읽는다."""
+    return static_store.get_template_items(template_id)
 
 
 def create_placement_session(*, user_id: str, template_id: str) -> str:
+    """필요 변수: 사용자 ID와 정적 폼 ID. 작동 원리: 전용 DB에 존재하는 폼만 운영 세션으로 기록한다."""
+    if static_store.get_template(template_id) is None:
+        raise ValueError(f"unknown static placement template: {template_id}")
     _ensure_level_test_tables()
     session_id = str(uuid.uuid4())
     now = _now_iso()
@@ -341,14 +195,6 @@ def create_placement_session(*, user_id: str, template_id: str) -> str:
         VALUES (?, ?, ?, 'started', ?)
         """,
         (session_id, user_id, template_id, now),
-    )
-    cur.execute(
-        """
-        UPDATE level_test_template
-        SET used_count = used_count + 1, updated_at = ?
-        WHERE template_id = ?
-        """,
-        (now, template_id),
     )
     conn.commit()
     conn.close()

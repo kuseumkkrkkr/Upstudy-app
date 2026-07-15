@@ -37,6 +37,7 @@ from storage.study_group_storage import (
     upsert_group_notice,
 )
 from storage.social_storage import get_user_by_id
+from storage.exam_storage import get_exam
 
 
 study_group_router = APIRouter(prefix="/social/study-groups", tags=["study-groups"])
@@ -115,6 +116,8 @@ class StudyGroupMessageResponse(BaseModel):
     group_id: str
     user_id: str
     text: str
+    message_type: str = "text"
+    payload: Optional[dict] = None
     created_at: str
 
 
@@ -216,7 +219,6 @@ class StudyGroupSharedProblemListResponse(BaseModel):
 
 class StudyGroupSharedExamRequest(BaseModel):
     exam_id: str = Field(min_length=1)
-    seed: int
 
 
 class StudyGroupSharedExam(BaseModel):
@@ -224,7 +226,8 @@ class StudyGroupSharedExam(BaseModel):
     group_id: str
     user_id: str
     exam_id: str
-    seed: int
+    title: str
+    sender_name: str
     created_at: str
 
 
@@ -636,12 +639,39 @@ def share_exam_handler(
     payload: StudyGroupSharedExamRequest,
     user_id: str = Depends(_get_user_id),
 ) -> StudyGroupSharedExam:
+    """본인 소유 시험지만 공유하고, 답안 없이 채팅용 카드 메시지를 함께 생성한다."""
     _assert_group_member(user_id, group_id)
+    exam_id = payload.exam_id.strip()
+    exam = get_exam(exam_id)
+    if not exam or str(exam.get("user_id") or "") != user_id:
+        raise HTTPException(status_code=403, detail="Only your own exam can be shared")
+    params = exam.get("params") if isinstance(exam.get("params"), dict) else {}
+    title = str(params.get("title") or "내 시험지").strip() or "내 시험지"
+    profile = get_user_by_id(user_id) or {}
+    sender_name = str(profile.get("name") or profile.get("username") or "알 수 없음")
     shared = share_group_exam(
         group_id,
         user_id,
-        exam_id=payload.exam_id,
-        seed=payload.seed,
+        exam_id=exam_id,
+        seed=0,
+        title=title,
+        sender_name=sender_name,
+    )
+    append_group_message(
+        group_id=group_id,
+        user_id=user_id,
+        text="시험지를 공유했어요.",
+        message_type="shared_exam",
+        payload_json=json.dumps(
+            {
+                "share_id": shared["share_id"],
+                "exam_id": exam_id,
+                "title": title,
+                "sender_name": sender_name,
+                "created_at": shared["created_at"],
+            },
+            ensure_ascii=False,
+        ),
     )
     return StudyGroupSharedExam(**shared)
 
@@ -740,6 +770,8 @@ def list_group_messages_handler(
             group_id=msg["group_id"],
             user_id=msg["user_id"],
             text=msg["text"],
+            message_type=str(msg.get("message_type") or "text"),
+            payload=json.loads(msg["payload"]) if msg.get("payload") else None,
             created_at=msg["created_at"],
         )
         for msg in messages

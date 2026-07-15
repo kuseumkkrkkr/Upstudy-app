@@ -9,14 +9,13 @@ Endpoints:
 """
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timezone
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.api.routes.auth.middleware import require_role
-from domain.level_test import engine, repository as repo
+from domain.level_test import engine, repository as repo, static_store
 from domain.level_test.models import (
     LevelTestResult,
     PowerTest,
@@ -151,25 +150,6 @@ class SubmitPowerTestRequest(BaseModel):
     answers: List[Dict[str, Any]]
 
 
-def _create_ready_template() -> str:
-    template_id = repo.create_placement_template(
-        version=engine.PLACEMENT_VERSION,
-        subject_mix=engine.placement_subject_mix(),
-        difficulty_profile=engine.placement_difficulty_profile(),
-        status="generating",
-    )
-    try:
-        items = engine.build_placement_template_items()
-        if len(items) != engine.PLACEMENT_QUESTION_COUNT:
-            raise RuntimeError("placement template did not produce 50 items")
-        repo.add_placement_template_items(template_id, items)
-        repo.set_placement_template_status(template_id, "ready")
-        return template_id
-    except Exception:
-        repo.set_placement_template_status(template_id, "failed")
-        raise
-
-
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -278,18 +258,17 @@ async def generate_placement_templates(
     body: TemplateGenerateRequest,
     _user=Depends(require_role("teacher", "admin")),
 ):
-    """Generate ready-to-assign placement test templates."""
-    count = max(1, min(5, int(body.count or 1)))
-    template_ids = []
-    for _ in range(count):
-        template_ids.append(await asyncio.to_thread(_create_ready_template))
+    """필요 변수: 호환용 생성 요청. 작동 원리: 런타임 생성 없이 배포된 정적 DB를 검증하고 활성 폼 목록만 반환한다."""
+    del body
+    static_store.validate_static_database()
+    template_ids = static_store.list_template_ids()
     return TemplateGenerateResponse(
         data=TemplateGeneratePayload(
-            generated=len(template_ids),
-            ready_templates=repo.count_ready_placement_templates(),
+            generated=0,
+            ready_templates=len(template_ids),
             template_ids=template_ids,
         ),
-        message="Placement templates generated",
+        message="Static placement templates are ready",
     )
 
 
@@ -302,24 +281,23 @@ async def start_placement_test(
     user_id = request.state.user_id
     template = repo.pick_ready_placement_template(user_id)
     if template is None:
-        await asyncio.to_thread(_create_ready_template)
-        template = repo.pick_ready_placement_template(user_id)
-    if template is None:
-        raise HTTPException(status_code=503, detail="No placement template available")
+        raise HTTPException(status_code=503, detail="No static placement template available")
 
     template_id = str(template["template_id"])
     items = repo.get_placement_template_items(template_id)
     if len(items) != engine.PLACEMENT_QUESTION_COUNT:
         raise HTTPException(status_code=503, detail="Placement template is incomplete")
 
-    session_id = repo.create_placement_session(
-        user_id=user_id,
-        template_id=template_id,
-    )
     questions = [
         PlacementQuestion(**item)
         for item in engine.quest_payloads_for_template_items(items)
     ]
+    if len(questions) != engine.PLACEMENT_QUESTION_COUNT:
+        raise HTTPException(status_code=503, detail="Static placement problems are incomplete")
+    session_id = repo.create_placement_session(
+        user_id=user_id,
+        template_id=template_id,
+    )
     return PlacementStartResponse(
         data=PlacementStartPayload(
             session_id=session_id,
@@ -344,6 +322,12 @@ async def submit_placement_answer(
         raise HTTPException(status_code=404, detail="Placement session not found")
     if session["status"] == "graded":
         raise HTTPException(status_code=409, detail="Placement session already submitted")
+    assigned_item = static_store.get_template_item(
+        str(session["template_id"]),
+        body.item_index,
+    )
+    if not assigned_item or str(assigned_item["quest_id"]) != body.quest_id:
+        raise HTTPException(status_code=400, detail="Answer does not match the assigned static problem")
     repo.upsert_placement_answer(
         session_id=session_id,
         item_index=body.item_index,
@@ -351,7 +335,8 @@ async def submit_placement_answer(
         is_correct=body.is_correct,
         answer_time=body.answer_time,
         step_correctness=body.step_correctness,
-        tags=body.tags,
+        # 클라이언트가 보낸 태그 대신 검수된 정적 문제 태그만 레이팅에 사용한다.
+        tags=list(assigned_item["hash_tags"]),
     )
     return CommonResponse(data={"ok": True}, message="Placement answer saved")
 

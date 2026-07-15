@@ -641,21 +641,10 @@ class _SoWidgetState extends State<SoWidget> {
     return normalized.isEmpty ? '#-' : '#$normalized';
   }
 
-  static const double _tagRatingFloor = 1200;
-  static const double _tagDisplayMax = 32767;
-  static const double _tagOvrDivider = 128;
-
-  double _normalizedTagRating(double rating) =>
-      rating < _tagRatingFloor ? _tagRatingFloor : rating;
-  double _tagDisplayValue(double rating) =>
-      (_normalizedTagRating(rating) - _tagRatingFloor)
-          .clamp(0, _tagDisplayMax)
-          .toDouble();
-  double _tagOvrValue(double rating) =>
-      _tagDisplayValue(rating) / _tagOvrDivider;
+  double _tagOvrValue(double rating) => rating;
   String _tagOvrLabel(double rating) => rating.isNaN || rating <= 0
       ? '--'
-      : _tagOvrValue(rating).toStringAsFixed(1);
+      : _tagOvrValue(rating).round().toString();
   double _visibleDelta(double rating, double delta) =>
       _tagOvrValue(rating) - _tagOvrValue(rating - delta);
 

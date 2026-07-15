@@ -3,16 +3,13 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RatingConfig:
-    # Core ELO params
+    # 핵심 ELO 변수: K는 모든 정답·오답에 동일하고 DELTA_MAX는 단일 태그 급변을 제한한다.
     K: float = 24.0
-    K_MIN: float = 16.0
     DELTA_MAX: float = 36.0
 
-    # Confidence params
-    U_MAX: float = 2400.0
+    # 신뢰도 변수: 태그 시도 신뢰는 C_MAX에서 포화하고 최근성은 TAU_DAYS로 완만하게 감소한다.
     C_MAX: float = 24.0
     TAU_DAYS: float = 21.0
-    M_LOSE: float = 0.08
 
     # Confidence weights
     ALPHA: float = 0.45  # R_u

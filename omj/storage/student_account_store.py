@@ -12,6 +12,9 @@ from storage.storage import DB_PATH
 DAILY_POINT_LIMIT = 100
 DAILY_QUEST_REWARD_POINTS = 20
 ACTIVITY_DISPLAY_DAILY_CAP = 2000
+MAX_ACCOUNT_LEVEL = 256
+LEVEL_MILESTONE_INTERVAL = 5
+LEVEL_MILESTONE_BASE_COINS = 10
 _SQLITE_TIMEOUT_SECONDS = 30.0
 _ACCOUNT_TABLES_READY: set[str] = set()
 _ACCOUNT_TABLES_LOCK = threading.Lock()
@@ -36,13 +39,64 @@ def _connect(*, isolation_level: str | None = "") -> sqlite3.Connection:
 
 
 def level_for_activity_score(activity_score: int) -> int:
+    """누적 경험치로 레벨을 계산합니다.
+
+    activity_score는 누적 경험치이며, 제곱 증가식으로 요구 경험치를 높입니다.
+    반환값은 서비스 정책상 최대 레벨 256을 넘지 않습니다.
+    """
     score = max(0, int(activity_score or 0))
-    return int(math.sqrt(score / 100)) + 1
+    return min(MAX_ACCOUNT_LEVEL, int(math.sqrt(score / 100)) + 1)
 
 
 def required_activity_score_for_level(level: int) -> int:
-    safe_level = max(1, int(level or 1))
+    """특정 레벨에 도달하기 위한 누적 경험치를 반환합니다.
+
+    level은 1~256 범위로 고정하고, (레벨 - 1)^2 * 100 식으로
+    레벨이 높아질수록 다음 레벨 요구 경험치가 증가하게 합니다.
+    """
+    safe_level = min(MAX_ACCOUNT_LEVEL, max(1, int(level or 1)))
     return (safe_level - 1) * (safe_level - 1) * 100
+
+
+def coins_for_level_milestone(level: int) -> int:
+    """5의 배수 레벨 달성 보상 코인을 계산합니다.
+
+    level은 5의 배수여야 하며, 5레벨마다 보상 그룹이 하나 증가합니다.
+    기본 10코인에 그룹 번호를 곱해 보상도 단계적으로 늘립니다.
+    """
+    group = max(1, min(MAX_ACCOUNT_LEVEL // LEVEL_MILESTONE_INTERVAL, level // LEVEL_MILESTONE_INTERVAL))
+    return LEVEL_MILESTONE_BASE_COINS * group
+
+
+def _grant_level_milestone_rewards(
+    cur: sqlite3.Cursor, user_id: str, previous_level: int, current_level: int, now: str
+) -> int:
+    """이번 경험치 획득으로 통과한 5레벨 단위 보상을 한 번씩 지급합니다.
+
+    student_point_ledger의 (사용자, 사유, 유형, 참조값) 고유 인덱스를 사용해
+    같은 마일스톤을 재시도하거나 동시 요청해도 코인이 중복 지급되지 않게 합니다.
+    """
+    first_milestone = ((previous_level // LEVEL_MILESTONE_INTERVAL) + 1) * LEVEL_MILESTONE_INTERVAL
+    granted_coins = 0
+    for level in range(first_milestone, min(current_level, MAX_ACCOUNT_LEVEL) + 1, LEVEL_MILESTONE_INTERVAL):
+        coins = coins_for_level_milestone(level)
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO student_point_ledger (
+                user_id, delta_points, reason, ref_type, ref_id, source_date, created_at
+            ) VALUES (?, ?, 'level_milestone', 'level_milestone', ?, ?, ?)
+            """,
+            (user_id, coins, f"level:{level}", today_key(), now),
+        )
+        if cur.rowcount == 1:
+            granted_coins += coins
+    if granted_coins:
+        cur.execute(
+            """UPDATE student_account_stats
+               SET total_points = total_points + ?, updated_at = ? WHERE user_id = ?""",
+            (granted_coins, now, user_id),
+        )
+    return granted_coins
 
 
 def init_student_account_db() -> None:
@@ -187,7 +241,7 @@ def _summary_from_cursor(
     current_level_score = required_activity_score_for_level(level)
     next_level_score = required_activity_score_for_level(level + 1)
     span = max(1, next_level_score - current_level_score)
-    level_progress = (activity_score - current_level_score) / span
+    level_progress = 1.0 if level >= MAX_ACCOUNT_LEVEL else (activity_score - current_level_score) / span
     return {
         "user_id": user_id,
         "total_points": total_points,
@@ -200,6 +254,7 @@ def _summary_from_cursor(
         "daily_point_limit": DAILY_POINT_LIMIT,
         "daily_points_remaining": max(0, DAILY_POINT_LIMIT - today_points),
         "activity_display_daily_cap": ACTIVITY_DISPLAY_DAILY_CAP,
+        "max_level": MAX_ACCOUNT_LEVEL,
     }
 
 
@@ -232,6 +287,12 @@ def award_daily_quest_points(
     try:
         cur.execute("BEGIN IMMEDIATE")
         _ensure_stats(cur, user_id, now)
+        cur.execute(
+            "SELECT activity_score FROM student_account_stats WHERE user_id = ?",
+            (user_id,),
+        )
+        previous_score = int((cur.fetchone() or (0,))[0] or 0)
+        previous_level = level_for_activity_score(previous_score)
         cur.execute(
             """
             INSERT INTO student_daily_point_usage (
@@ -294,6 +355,11 @@ def award_daily_quest_points(
                 (granted, now, user_id, day),
             )
 
+        current_level = level_for_activity_score(previous_score + granted)
+        granted_milestone_coins = _grant_level_milestone_rewards(
+            cur, user_id, previous_level, current_level, now
+        )
+
         summary = _summary_from_cursor(cur, user_id, date_key=day)
         conn.commit()
         summary["reward"] = {
@@ -301,6 +367,7 @@ def award_daily_quest_points(
             "requested_points": safe_reward,
             "duplicate": duplicate,
             "daily_cap_reached": remaining <= 0,
+            "granted_milestone_coins": granted_milestone_coins,
         }
         return summary
     except sqlite3.IntegrityError:
@@ -349,6 +416,12 @@ def add_activity_score(
         cur.execute("BEGIN IMMEDIATE")
         _ensure_stats(cur, user_id, now)
         cur.execute(
+            "SELECT activity_score FROM student_account_stats WHERE user_id = ?",
+            (user_id,),
+        )
+        previous_score = int((cur.fetchone() or (0,))[0] or 0)
+        previous_level = level_for_activity_score(previous_score)
+        cur.execute(
             """
             INSERT OR IGNORE INTO student_activity_score_ledger (
                 user_id, delta_score, reason, ref_id, source_date, created_at
@@ -368,12 +441,18 @@ def add_activity_score(
                 (granted, now, user_id),
             )
 
+        current_level = level_for_activity_score(previous_score + granted)
+        granted_milestone_coins = _grant_level_milestone_rewards(
+            cur, user_id, previous_level, current_level, now
+        )
+
         summary = _summary_from_cursor(cur, user_id, date_key=day)
         conn.commit()
         summary["activity_score_reward"] = {
             "granted_score": granted,
             "requested_score": safe_delta,
             "duplicate": granted == 0,
+            "granted_milestone_coins": granted_milestone_coins,
         }
         return summary
     except Exception:

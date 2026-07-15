@@ -1,4 +1,5 @@
 import sqlite3
+import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -86,6 +87,18 @@ def record_problem_attempt(
     )
     row = cur.fetchone()
     conn.close()
+    # PostgreSQL 전환 중에도 최근 풀이 이력을 함께 기록해 사용자별 중복 제외 기준을 유지한다.
+    try:
+        from storage.postgres_problem_store import postgres_problem_store
+
+        postgres_problem_store.enqueue_problem_solve(
+            user_id=user_id,
+            codebase_id=codebase_id,
+            seed=seed,
+            tags=json.loads(tags_json) if tags_json else [],
+        )
+    except Exception:
+        pass
     return {
         "codebase_id": row[0],
         "seed": row[1],

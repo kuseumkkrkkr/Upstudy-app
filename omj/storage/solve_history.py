@@ -6,10 +6,12 @@ from typing import Any, Dict, Optional
 from storage.storage import DB_PATH
 
 
-_RETENTION_FULL_DAYS = 30
-_RETENTION_MAX_DAYS = 150
-_MAX_RECORDS_PER_USER = 5000
-_RECENT_CORRECT_DAYS_DEFAULT = 10
+# 필요 변수: 이의신청 확인에 필요한 최근 풀이 기록의 보관 일수와 최대 건수.
+# 작동 원리: 서버는 최근 7일분만 유지하고, 저장 직후 만료 행을 삭제해 장기 영구 적재를 막는다.
+_RETENTION_FULL_DAYS = 7
+_RETENTION_MAX_DAYS = 7
+_MAX_RECORDS_PER_USER = 210  # 사용자당 하루 30문제 × 7일
+_RECENT_CORRECT_DAYS_DEFAULT = 7
 
 
 def _now_iso() -> str:
@@ -67,7 +69,7 @@ def _purge_and_compress(user_id: str, *, delete_after_max: bool = True) -> None:
     init_solve_history_db()
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    # Compress entries older than 30 days but newer than 150 days
+    # 7일 정책에서는 압축 보관 구간이 없으며, 만료 행만 삭제한다.
     cutoff_full = _cutoff(_RETENTION_FULL_DAYS)
     cutoff_max = _cutoff(_RETENTION_MAX_DAYS)
     cur.execute(
@@ -89,7 +91,7 @@ def _purge_and_compress(user_id: str, *, delete_after_max: bool = True) -> None:
             (json.dumps(compressed, ensure_ascii=False), row_id),
         )
 
-    # Delete anything older than 150 days (server-side policy; skip for local-only mode)
+    # 이의신청 보관 기간(7일)을 넘긴 풀이는 서버 DB에서 제거한다.
     if delete_after_max:
         cur.execute(
             "DELETE FROM solve_history WHERE user_id = ? AND created_at < ?",

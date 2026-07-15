@@ -16,7 +16,7 @@ class LevelTestHomePage extends StatefulWidget {
 
 class _LevelTestHomePageState extends State<LevelTestHomePage> {
   static const int _questionCount = 50;
-  static const String _difficultyLabel = '중상~상';
+  static const String _difficultyLabel = '기초~최상';
   static const String _durationLabel = '약 60~90분';
 
   bool _loading = false;
@@ -192,7 +192,7 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              '시험지 후보군에서 선별된 50문항으로 현재 실력을 추정합니다.',
+                              '직접 검수한 전용 정적 50문항으로 현재 실력을 추정합니다.',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.black54,

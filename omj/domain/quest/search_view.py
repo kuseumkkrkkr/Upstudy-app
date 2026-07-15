@@ -47,11 +47,14 @@ def quest_title_text(quest: dict[str, Any]) -> str:
 
 
 def normalize_difficulty_tier(quest: dict[str, Any], default_tier: int = 3) -> int:
+    """필요 변수: 문제 응답. 작동 원리: 분리된 difficulty_tier만 우선 사용하고 구형 응답은 마지막 호환값으로 제한한다."""
     info = (quest.get("info") or {}) if isinstance(quest, dict) else {}
     data = (quest.get("data") or {}) if isinstance(quest, dict) else {}
-    raw = info.get("difficulty")
+    raw = info.get("difficulty_tier")
     if raw is None:
         raw = data.get("difficulty_tier")
+    if raw is None:
+        raw = info.get("difficulty")
     try:
         tier = int(raw)
     except Exception:
@@ -75,4 +78,3 @@ def enrich_quest_search_item(quest: dict[str, Any]) -> dict[str, Any]:
     out["difficulty_tier"] = normalize_difficulty_tier(quest)
     out["seed"] = normalize_seed(quest)
     return out
-

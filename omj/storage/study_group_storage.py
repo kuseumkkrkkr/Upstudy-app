@@ -99,10 +99,21 @@ def init_study_group_db() -> None:
             group_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
             text TEXT NOT NULL,
+            message_type TEXT NOT NULL DEFAULT 'text',
+            payload_json TEXT,
             created_at TEXT NOT NULL
         )
         """
     )
+    # 기존 DB도 시험지 공유 전용 채팅 카드를 저장할 수 있도록 확장한다.
+    for column, definition in (
+        ("message_type", "TEXT NOT NULL DEFAULT 'text'"),
+        ("payload_json", "TEXT"),
+    ):
+        try:
+            cur.execute(f"ALTER TABLE study_group_messages ADD COLUMN {column} {definition}")
+        except sqlite3.OperationalError:
+            pass
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_study_group_messages_group_id "
         "ON study_group_messages (group_id, created_at DESC)"
@@ -176,10 +187,21 @@ def init_study_group_db() -> None:
             user_id TEXT NOT NULL,
             exam_id TEXT NOT NULL,
             seed INTEGER NOT NULL,
+            title TEXT NOT NULL DEFAULT '',
+            sender_name TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL
         )
         """
     )
+    # 공유 목록은 내부 시험지 ID가 아닌 표시용 메타데이터만 사용한다.
+    for column, definition in (
+        ("title", "TEXT NOT NULL DEFAULT ''"),
+        ("sender_name", "TEXT NOT NULL DEFAULT ''"),
+    ):
+        try:
+            cur.execute(f"ALTER TABLE study_group_shared_exams ADD COLUMN {column} {definition}")
+        except sqlite3.OperationalError:
+            pass
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_shared_exams_group ON study_group_shared_exams (group_id, datetime(created_at) DESC)"
     )
@@ -638,6 +660,8 @@ def append_group_message(
     group_id: str,
     user_id: str,
     text: str,
+    message_type: str = "text",
+    payload_json: Optional[str] = None,
     limit: int = 500,
 ) -> Dict[str, object]:
     if not text.strip():
@@ -653,10 +677,11 @@ def append_group_message(
     try:
         conn.execute(
             """
-            INSERT INTO study_group_messages (message_id, group_id, user_id, text, created_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO study_group_messages
+            (message_id, group_id, user_id, text, message_type, payload_json, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (message_id, group_id, user_id, text.strip(), now),
+            (message_id, group_id, user_id, text.strip(), message_type, payload_json, now),
         )
         # enforce FIFO cap
         cur = conn.execute(
@@ -687,6 +712,8 @@ def append_group_message(
         "group_id": group_id,
         "user_id": user_id,
         "text": text.strip(),
+        "message_type": message_type,
+        "payload": payload_json,
         "created_at": now,
     }
 
@@ -703,7 +730,7 @@ def list_group_messages(
         limit = 200
     params: Tuple[object, ...]
     query = """
-        SELECT message_id, user_id, text, created_at
+        SELECT message_id, user_id, text, message_type, payload_json, created_at
         FROM study_group_messages
         WHERE group_id = ?
     """
@@ -726,7 +753,9 @@ def list_group_messages(
             "group_id": group_id,
             "user_id": r[1],
             "text": r[2],
-            "created_at": r[3],
+            "message_type": r[3] or "text",
+            "payload": r[4],
+            "created_at": r[5],
         }
         for r in rows
     ]
@@ -1284,8 +1313,17 @@ def _split_tags(raw: object) -> List[str]:
     ]
 
 
-def share_group_exam(group_id: str, user_id: str, exam_id: str, seed: int, *, cap: int = 5) -> Dict[str, object]:
-    """Append a shared exam entry for the group, enforcing FIFO cap."""
+def share_group_exam(
+    group_id: str,
+    user_id: str,
+    exam_id: str,
+    seed: int,
+    *,
+    title: str,
+    sender_name: str,
+    cap: int = 5,
+) -> Dict[str, object]:
+    """채점된 본인 시험지의 식별자와 표시용 정보만 그룹에 저장한다."""
     init_study_group_db()
     exam_value = exam_id.strip()
     if not exam_value:
@@ -1296,10 +1334,11 @@ def share_group_exam(group_id: str, user_id: str, exam_id: str, seed: int, *, ca
     try:
         conn.execute(
             """
-            INSERT INTO study_group_shared_exams (share_id, group_id, user_id, exam_id, seed, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO study_group_shared_exams
+            (share_id, group_id, user_id, exam_id, seed, title, sender_name, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (share_id, group_id, user_id, exam_value, int(seed), now),
+            (share_id, group_id, user_id, exam_value, int(seed), title.strip(), sender_name.strip(), now),
         )
         cur = conn.execute(
             "SELECT COUNT(*) FROM study_group_shared_exams WHERE group_id = ?",
@@ -1329,6 +1368,8 @@ def share_group_exam(group_id: str, user_id: str, exam_id: str, seed: int, *, ca
         "user_id": user_id,
         "exam_id": exam_value,
         "seed": int(seed),
+        "title": title.strip(),
+        "sender_name": sender_name.strip(),
         "created_at": now,
     }
 
@@ -1343,7 +1384,7 @@ def list_shared_group_exams(group_id: str, *, limit: int = 5) -> List[Dict[str, 
     try:
         cur = conn.execute(
             """
-            SELECT share_id, user_id, exam_id, seed, created_at
+            SELECT share_id, user_id, exam_id, seed, title, sender_name, created_at
             FROM study_group_shared_exams
             WHERE group_id = ?
             ORDER BY datetime(created_at) DESC
@@ -1361,7 +1402,9 @@ def list_shared_group_exams(group_id: str, *, limit: int = 5) -> List[Dict[str, 
             "user_id": row[1],
             "exam_id": row[2],
             "seed": int(row[3]),
-            "created_at": row[4],
+            "title": row[4] or "시험지",
+            "sender_name": row[5] or "알 수 없음",
+            "created_at": row[6],
         }
         for row in rows
     ]

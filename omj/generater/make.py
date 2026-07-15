@@ -37,6 +37,10 @@ _CODEBASE_RUNTIME_BATCH_TIMEOUT_SEC = max(
     float(os.getenv("CODEBASE_RUNTIME_BATCH_TIMEOUT_SEC", "6")),
 )
 _CODEBASE_RUNTIME_SEED_LIMITS_RAW = os.getenv("CODEBASE_RUNTIME_SEED_LIMITS", "32,32")
+_CODEBASE_ENTRY_REGEN_LIMIT = max(
+    1,
+    min(10, int(os.getenv("CODEBASE_ENTRY_REGEN_LIMIT", "3"))),
+)
 _runtime_seed_backfill_executor: Optional[ThreadPoolExecutor] = None
 _runtime_seed_backfill_lock = threading.Lock()
 _runtime_seed_backfill_inflight: set[tuple[int, str]] = set()
@@ -240,6 +244,7 @@ def make(
     cancel_event: Any = None,
     generation_context: Optional[Dict[str, Any]] = None,
     request_signature: Optional[str] = None,
+    student_ready_only: bool = False,
 ) -> Dict[str, Any]:
     check_cancelled(cancel_event)
     def normalize_tag(tag: str) -> str:
@@ -296,6 +301,8 @@ def make(
         entry_tags = {
             normalize_tag(tag) for tag in (entry.get("tags") or []) if normalize_tag(tag)
         }
+        if student_ready_only:
+            return bool(entry_tags) and entry_tags == desired_tags
         return bool(entry_tags) and entry_tags.issubset(desired_tags)
 
     def _generate_codebase_entry() -> Dict[str, Any]:
@@ -317,7 +324,9 @@ def make(
         cache_name = _generation_context_cache_name(request_signature)
         if cache_name and _uses_advanced_generation_context(generation_context):
             entry["name"] = cache_name
-        entry["tier"] = None
+        entry["tier"] = tier
+        entry["tier_source"] = "requested_contract"
+        entry["quality_status"] = "pending_validation"
         entry = save_codebase(entry)
         _refresh_entry(entry)
         seed_bank = entry.pop("seed_cache", []) if isinstance(entry, dict) else []
@@ -330,6 +339,8 @@ def make(
         return entry
 
     codebases = _load_codebases_cached()
+    if student_ready_only:
+        codebases = [entry for entry in codebases if entry.get("quality_status") == "approved"]
     for entry in codebases:
         _refresh_entry(entry)
 
@@ -387,7 +398,8 @@ def make(
         codebases = []
 
     if not codebases:
-        regen_limit = 10
+        # 생성기 내부 재시도와 중첩되므로 상위 코드베이스 재생성 횟수도 제한한다.
+        regen_limit = _CODEBASE_ENTRY_REGEN_LIMIT
         generated = None
         for regen_index in range(regen_limit):
             check_cancelled(cancel_event)
@@ -524,9 +536,6 @@ def make(
                     cached_batch = cached_seed_candidates[
                         batch_start:batch_start + batch_size
                     ]
-                    if entry_id is not None:
-                        for cached_seed in cached_batch:
-                            record_seed_attempt(entry_id, code_hash, success=False)
                     batch_results = run_codebase_batch(
                         current_entry,
                         cached_batch,
@@ -541,6 +550,7 @@ def make(
                             err_msg = raw_result["_error"]
                             last_seed_error = RuntimeError(err_msg)
                             if entry_id is not None:
+                                record_seed_attempt(entry_id, code_hash, success=False)
                                 batch_logs.append({
                                     "codebase_id": entry_id,
                                     "code_hash": code_hash,
@@ -579,6 +589,7 @@ def make(
                             elapsed_ms = int((time.monotonic() - started_at) * 1000)
                             last_seed_error = exc
                             if entry_id is not None:
+                                record_seed_attempt(entry_id, code_hash, success=False)
                                 batch_logs.append({
                                     "codebase_id": entry_id,
                                     "code_hash": code_hash,
@@ -598,10 +609,6 @@ def make(
                         break
                     check_cancelled(cancel_event)
                     batch = seed_candidates[batch_start:batch_start + batch_size]
-                    # Record attempts before running batch
-                    if entry_id is not None:
-                        for s in batch:
-                            record_seed_attempt(entry_id, code_hash, success=False)
                     batch_results = run_codebase_batch(
                         current_entry,
                         batch,
@@ -617,6 +624,7 @@ def make(
                             err_msg = raw_result["_error"]
                             last_seed_error = RuntimeError(err_msg)
                             if entry_id is not None:
+                                record_seed_attempt(entry_id, code_hash, success=False)
                                 batch_logs.append({
                                     "codebase_id": entry_id,
                                     "code_hash": code_hash,
@@ -656,6 +664,7 @@ def make(
                             elapsed_ms = int((time.monotonic() - started_at) * 1000)
                             last_seed_error = exc
                             if entry_id is not None:
+                                record_seed_attempt(entry_id, code_hash, success=False)
                                 batch_logs.append({
                                     "codebase_id": entry_id,
                                     "code_hash": code_hash,
@@ -699,7 +708,17 @@ def make(
                     codebase_id=current_entry.get("id"),
                 )
                 _schedule_runtime_seed_backfill(current_entry, code_hash)
-                return resample_storage_data(storage_data, coerce_text_only=True)
+                storage_data = resample_storage_data(storage_data, coerce_text_only=True)
+                if student_ready_only:
+                    from generater.problem_solve import finalize_student_quest
+                    from generater.codebase_store import record_seed_quality
+
+                    storage_data = finalize_student_quest(storage_data, tier, clean_tags)
+                    if entry_id is not None and seed_value is not None:
+                        record_seed_quality(
+                            int(entry_id), code_hash, int(seed_value), "approved", []
+                        )
+                return storage_data
             except TagAssignmentError as exc:
                 last_error = exc
                 error_messages.append(str(exc))

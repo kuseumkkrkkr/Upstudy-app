@@ -826,6 +826,7 @@ class _BookWidgetState extends State<BookWidget> {
 
   List<BookChapter> _chapters = const [];
   List<_ContentEntry> _contentEntries = const [];
+  List<_ParsedBookPage> _readerPagesCache = const [];
   List<GlobalKey> _sectionKeys = const [];
   List<bool> _chapterExpanded = const [];
   bool _initialized = false;
@@ -923,8 +924,14 @@ class _BookWidgetState extends State<BookWidget> {
   Color get _activeInkColor =>
       _toolMode == _ToolMode.highlighter ? _highlighterColor : _penColor;
 
-  List<_ParsedBookPage> get _readerPages =>
-      _paginateContentEntries(_contentEntries);
+  List<_ParsedBookPage> get _readerPages => _readerPagesCache;
+
+  /// 필요 변수: [_contentEntries]에 현재 교재의 장·절 콘텐츠가 준비되어 있어야 합니다.
+  /// 작동 원리: 페이지 분할 결과를 교재 콘텐츠가 바뀔 때 한 번만 계산해 보관합니다.
+  /// 빌드 및 페이지 이동 중에는 캐시를 재사용하여 전체 교재 재분할을 방지합니다.
+  void _rebuildReaderPages() {
+    _readerPagesCache = _paginateContentEntries(_contentEntries);
+  }
 
   Future<void> _loadReaderPreference() async {
     final enabled = await TextbookReaderPreferences.loadPageMode();
@@ -982,6 +989,7 @@ class _BookWidgetState extends State<BookWidget> {
       _recordBookView(book);
       _chapters = book.chapters;
       _contentEntries = _buildContentEntries(_chapters);
+      _rebuildReaderPages();
       _sectionKeys = List<GlobalKey>.generate(
         _contentEntries.length,
         (_) => GlobalKey(),
@@ -1074,6 +1082,7 @@ class _BookWidgetState extends State<BookWidget> {
         _currentBookTitle = fetched.title;
         _chapters = fetched.chapters;
         _contentEntries = _buildContentEntries(_chapters);
+        _rebuildReaderPages();
         _sectionKeys = List<GlobalKey>.generate(
           _contentEntries.length,
           (_) => GlobalKey(),
@@ -2903,20 +2912,20 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
   return entries;
 }
 
+/// 필요 변수: [entries]는 장 항목(level 0)이 각 절보다 먼저 배치된 목록이어야 합니다.
+/// 작동 원리: 장 제목을 단일 순회 중 캐시하고 문단을 정해진 글자 수로 나눠 페이지를 만듭니다.
+/// 각 항목마다 전체 목록을 다시 검색하지 않아 큰 교재에서도 선형 시간으로 처리됩니다.
 List<_ParsedBookPage> _paginateContentEntries(List<_ContentEntry> entries) {
   const maxPageChars = 780;
   final pages = <_ParsedBookPage>[];
+  final chapterTitles = <int, String>{};
 
   for (var entryIndex = 0; entryIndex < entries.length; entryIndex++) {
     final entry = entries[entryIndex];
-    final chapterTitle = entries
-        .firstWhere(
-          (candidate) =>
-              candidate.chapterIndex == entry.chapterIndex &&
-              candidate.level == 0,
-          orElse: () => entry,
-        )
-        .title;
+    if (entry.level == 0) {
+      chapterTitles[entry.chapterIndex] = entry.title;
+    }
+    final chapterTitle = chapterTitles[entry.chapterIndex] ?? entry.title;
 
     final paragraphs = entry.paragraphs.isEmpty
         ? <String>['내용이 비어 있습니다.']

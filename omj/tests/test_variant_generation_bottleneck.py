@@ -1,6 +1,7 @@
 import time
 import importlib
 import importlib.util
+import json
 import tempfile
 from pathlib import Path
 import sys
@@ -261,6 +262,29 @@ def test_variant_generation_context_promotes_advanced_metrics():
     assert any("정의역" in example for example in context["examples"])
     assert context["node_directives"][0]["node_id"] == "trap_node"
     assert len(signature) == 64
+
+
+def test_variant_generation_defaults_remain_soft_preferences():
+    """필요 변수: UI 기본 지표 전체. 작동 원리: 사용자가 조절하지 않은 횟수가 하드 제약으로 승격되지 않는지 확인한다."""
+    payload = server.VariantFlowDraftRequest(
+        flow_draft=[
+            {
+                "node_id": "verify_node",
+                "node_type": "verification",
+                "text": "정답을 검증한다.",
+                "hash_tags": ["#수열"],
+            }
+        ],
+        tags=["#수열"],
+        advanced_metrics=dict(server._VARIANT_METRIC_DEFAULTS),
+    )
+
+    context = server._build_variant_generation_context(payload, ["#수열"])
+    formatted = codebase_gen._format_generation_context(context)
+
+    assert context["changed_metrics"] == {}
+    assert context["dominant_metrics"] == []
+    assert "모든 횟수를 한 문항에 문자 그대로 강제하지 않음" in formatted
 
 
 def test_variant_generation_context_preserves_canvas_node_design():
@@ -736,3 +760,202 @@ def test_codebase_generation_prompt_includes_advanced_context():
     assert "고급 생성 파라미터 반영 지시" in prompt
     assert '"trap": 9' in prompt
     assert "정의역을 놓치면 오답" in prompt
+
+
+def test_typed_flow_graph_accepts_branch_merge_dag():
+    """필요 변수: 분기·병합·검증 노드. 작동 원리: 유효한 방향성 비순환 그래프를 허용한다."""
+    payload = server.VariantFlowDraftRequest(
+        flow_draft=[
+            {"node_id": "condition", "node_type": "condition", "branches": ["case_a", "case_b"]},
+            {"node_id": "case_a", "node_type": "reasoning", "branches": ["merge"]},
+            {"node_id": "case_b", "node_type": "reasoning", "branches": ["merge"]},
+            {"node_id": "merge", "node_type": "merge", "branches": ["verify"]},
+            {"node_id": "verify", "node_type": "verification", "branches": []},
+        ]
+    )
+
+    assert server._validate_typed_variant_flow_graph(payload.flow_draft) is None
+
+
+def test_typed_flow_graph_rejects_cycle_and_invalid_merge():
+    """필요 변수: 순환 그래프와 단일 입력 병합. 작동 원리: 역할 또는 DAG 규칙 위반을 생성 전에 차단한다."""
+    cycle_payload = server.VariantFlowDraftRequest(
+        flow_draft=[
+            {"node_id": "a", "node_type": "reasoning", "branches": ["b"]},
+            {"node_id": "b", "node_type": "reasoning", "branches": ["a", "verify"]},
+            {"node_id": "verify", "node_type": "verification", "branches": []},
+        ]
+    )
+    merge_payload = server.VariantFlowDraftRequest(
+        flow_draft=[
+            {"node_id": "a", "node_type": "reasoning", "branches": ["merge"]},
+            {"node_id": "merge", "node_type": "merge", "branches": ["verify"]},
+            {"node_id": "verify", "node_type": "verification", "branches": []},
+        ]
+    )
+
+    assert "acyclic" in server._validate_typed_variant_flow_graph(cycle_payload.flow_draft)
+    assert "two incoming" in server._validate_typed_variant_flow_graph(merge_payload.flow_draft)
+
+
+def test_generation_prompt_keeps_all_eight_nodes_and_edges():
+    """필요 변수: 노드 8개와 연결 정보. 작동 원리: UI의 전체 노드·링크가 모델 프롬프트에서 잘리지 않는지 확인한다."""
+    context = {
+        "node_directives": [
+            {
+                "node_id": f"node_{index}",
+                "node_type": "verification" if index == 7 else "reasoning",
+                "tags": ["#함수"],
+                "branches": [] if index == 7 else [f"node_{index + 1}"],
+                "instruction": f"지시 {index}",
+            }
+            for index in range(8)
+        ]
+    }
+
+    formatted = codebase_gen._format_generation_context(context)
+
+    assert "node_0" in formatted
+    assert "node_7" in formatted
+    assert "next=['node_1']" in formatted
+
+
+def test_semantic_review_accepts_mathematically_valid_sample(monkeypatch):
+    """필요 변수: 정합성 점수 9인 리뷰 응답. 작동 원리: 수리 호출 없이 원본 코드를 유지한다."""
+    monkeypatch.setattr(
+        codebase_gen,
+        "generate_json",
+        lambda **kwargs: {
+            "valid": True,
+            "hard_constraints_valid": True,
+            "math_score": 9,
+            "parameter_score": 8,
+            "issues": [],
+            "hard_constraint_issues": [],
+        },
+    )
+    monkeypatch.setattr(
+        codebase_gen,
+        "repair_codebase",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("repair must not run")),
+    )
+
+    code, status = codebase_gen._semantic_review_codebase(
+        prompt="정답 유일성 검증",
+        code_text="def generate_problem(seed=None): pass",
+        sample={"quest_answer": "3", "solves": []},
+    )
+
+    assert code == "def generate_problem(seed=None): pass"
+    assert status == "semantic:9:8"
+
+
+def test_semantic_review_ignores_parameter_score_for_unchanged_defaults(monkeypatch):
+    """필요 변수: 수학적으로 유효하지만 기본 성향 점수가 낮은 리뷰. 작동 원리: 조절 축이 없으면 파라미터 점수로 차단하지 않는다."""
+    monkeypatch.setattr(
+        codebase_gen,
+        "generate_json",
+        lambda **kwargs: {
+            "valid": True,
+            "hard_constraints_valid": True,
+            "math_score": 9,
+            "parameter_score": 1,
+            "issues": [],
+            "hard_constraint_issues": [],
+        },
+    )
+
+    _, status = codebase_gen._semantic_review_codebase(
+        prompt="기본 성향",
+        code_text="def generate_problem(seed=None): return {}",
+        sample={},
+        require_parameter_score=False,
+    )
+
+    assert status == "semantic:9:1"
+
+
+def test_semantic_review_serializes_pydantic_like_result():
+    """필요 변수: model_dump을 제공하는 결과 객체. 작동 원리: 의미 검산 JSON이 Pydantic 결과 때문에 실패하지 않는지 확인한다."""
+    class SampleResult:
+        def model_dump(self):
+            return {"data": {"quest_answer": "3"}}
+
+    encoded = json.dumps(
+        {"sample": SampleResult()},
+        default=codebase_gen._review_json_default,
+    )
+
+    assert json.loads(encoded)["sample"]["data"]["quest_answer"] == "3"
+
+
+def test_codebase_review_checks_three_fixed_seeds(monkeypatch):
+    """필요 변수: 고정 seed 목록과 실행기 모의 객체. 작동 원리: 한 코드가 서로 다른 세 문제에서도 검증되는지 확인한다."""
+    checked_seeds = []
+    monkeypatch.setattr(codebase_gen, "_SEMANTIC_REVIEW_ENABLED", False)
+    monkeypatch.setattr(
+        codebase_gen,
+        "run_codebase",
+        lambda *args, **kwargs: checked_seeds.append(kwargs["seed"]) or {"solves": []},
+    )
+    monkeypatch.setattr(codebase_gen, "validate_result", lambda value, **kwargs: value)
+
+    code, status = codebase_gen._review_codebase(
+        prompt="다중 seed 검증",
+        code_text="def generate_problem(seed=None): return {}",
+        hash_tags=["#함수"],
+        solves_count=1,
+        branch_conditions=0,
+        main_huddle=1,
+    )
+
+    assert code.startswith("def generate_problem")
+    assert status == "0"
+    assert checked_seeds == list(codebase_gen._SEMANTIC_REVIEW_SEEDS)
+
+
+def test_semantic_review_repairs_inconsistent_sample(monkeypatch):
+    """필요 변수: 수학 오류가 포함된 리뷰 응답. 작동 원리: 오류 근거를 자동 수리 프롬프트로 전달한다."""
+    captured = {}
+    reviews = iter(
+        [
+            {
+                "valid": False,
+                "hard_constraints_valid": False,
+                "math_score": 3,
+                "parameter_score": 4,
+                "issues": ["본문 조건이 정답에서 성립하지 않는다."],
+                "hard_constraint_issues": ["조절 축 횟수가 맞지 않는다."],
+            },
+            {
+                "valid": True,
+                "hard_constraints_valid": True,
+                "math_score": 8,
+                "parameter_score": 7,
+                "issues": [],
+                "hard_constraint_issues": [],
+            },
+        ]
+    )
+    monkeypatch.setattr(codebase_gen, "generate_json", lambda **kwargs: next(reviews))
+    monkeypatch.setattr(
+        codebase_gen,
+        "run_codebase",
+        lambda *args, **kwargs: {"quest_answer": "3", "solves": []},
+    )
+
+    def fake_repair(**kwargs):
+        captured.update(kwargs)
+        return {"code": "def generate_problem(seed=None): return {}"}
+
+    monkeypatch.setattr(codebase_gen, "repair_codebase", fake_repair)
+
+    code, status = codebase_gen._semantic_review_codebase(
+        prompt="조건 일관성 검증",
+        code_text="broken",
+        sample={"quest_answer": "3", "solves": []},
+    )
+
+    assert code.startswith("def generate_problem")
+    assert status == "semantic_repaired:8:7"
+    assert "본문 조건" in captured["error_message"]

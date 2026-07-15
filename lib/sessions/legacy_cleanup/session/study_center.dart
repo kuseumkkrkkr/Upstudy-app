@@ -11,6 +11,9 @@ import 'package:s11/shared/ui/components/tag_picker_dialog.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/data/models/concept_textbooks.dart';
 import 'package:s11/sessions/exam_paper/ui/modals/exam_mode.dart';
+import 'package:s11/shared/business/repositories/social_notification_store.dart';
+import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/course_service.dart';
 
 void main() => runApp(const _App());
 
@@ -186,13 +189,18 @@ class SoWidget extends StatelessWidget {
 }
 
 class StudyCenterNavBar extends StatelessWidget {
-  const StudyCenterNavBar({super.key});
+  const StudyCenterNavBar({super.key, this.onBack});
+
+  /// 필요 변수: [onBack]은 하위 학습 화면에서 이전 화면으로 돌아갈 때 사용한다.
+  /// 작동 원리: 콜백이 있으면 메뉴 대신 뒤로가기 버튼을 표시하고, 없으면 기존 메뉴를 유지한다.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
     return Ios26TopBar(
       brandColor: _kGreen,
-      onMenu: () => toggleAppDrawer(context),
+      onBack: onBack,
+      onMenu: onBack == null ? () => toggleAppDrawer(context) : null,
       onTitleTap: () {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const MainStudentPage()),
@@ -223,7 +231,75 @@ class StudyCenterNavBar extends StatelessWidget {
   }
 }
 
-class _HeroSection extends StatelessWidget {
+class _HeroSection extends StatefulWidget {
+  @override
+  State<_HeroSection> createState() => _HeroSectionState();
+}
+
+class _HeroSectionState extends State<_HeroSection> {
+  late final Future<_StudyCenterOverview> _overviewFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _overviewFuture = _loadOverview();
+  }
+
+  /// 필요 변수: 현재 날짜, 내 수강 과제, 수강 코스, 친구 요청 목록이다.
+  /// 작동 원리: 화면 진입 시 한 번만 서버 상태를 조회해 히어로의 요약 수치를 만들고 소셜 알림 저장소를 갱신한다.
+  Future<_StudyCenterOverview> _loadOverview() async {
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+    var todayTaskCount = 0;
+    var activeCourseCount = 0;
+    var pendingSocialCount = 0;
+
+    try {
+      final result = await ApiClient.instance.listMyAssignments();
+      todayTaskCount = (result.data ?? const <StudentAssignmentTask>[]).where((
+        task,
+      ) {
+        final due = DateTime.tryParse(task.assignment.dueDate ?? '');
+        final status = task.submission.status.toLowerCase();
+        final isFinished = status == 'submitted' || status == 'completed';
+        return due != null &&
+            DateTime(due.year, due.month, due.day) == todayKey &&
+            !isFinished;
+      }).length;
+    } catch (_) {
+      // 과제 API를 사용할 수 없으면 0건으로 표시해 화면 진입을 막지 않는다.
+    }
+
+    try {
+      final courses = await CourseService.fetchMyCourses();
+      activeCourseCount = courses
+          .where(
+            (course) =>
+                !course.isDemo &&
+                course.progress < 1 &&
+                course.status?.toLowerCase() != 'completed',
+          )
+          .length;
+    } catch (_) {
+      // 코스 조회 실패 시 다른 요약 정보는 정상적으로 표시한다.
+    }
+
+    try {
+      final requests = await ApiClient.instance.listFriendRequests();
+      pendingSocialCount = requests
+          .where((request) => request.status.toLowerCase() == 'pending')
+          .length;
+      SocialNotificationStore.update(friendRequests: pendingSocialCount);
+    } catch (_) {
+      // 기존 소셜 알림 값은 유지한다.
+    }
+
+    return _StudyCenterOverview(
+      todayTaskCount: todayTaskCount,
+      activeCourseCount: activeCourseCount,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
@@ -242,12 +318,35 @@ class _HeroSection extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          children: [_HeroBanner(), _QuickOverviewRow(), _QuickActionRow()],
+        child: FutureBuilder<_StudyCenterOverview>(
+          future: _overviewFuture,
+          builder: (context, snapshot) {
+            final overview = snapshot.data ?? _StudyCenterOverview.empty();
+            return Column(
+              children: [
+                _HeroBanner(),
+                _QuickOverviewRow(overview: overview),
+                _QuickActionRow(),
+              ],
+            );
+          },
         ),
       ),
     );
   }
+}
+
+class _StudyCenterOverview {
+  const _StudyCenterOverview({
+    required this.todayTaskCount,
+    required this.activeCourseCount,
+  });
+
+  final int todayTaskCount;
+  final int activeCourseCount;
+
+  factory _StudyCenterOverview.empty() =>
+      const _StudyCenterOverview(todayTaskCount: 0, activeCourseCount: 0);
 }
 
 class _HeroBanner extends StatelessWidget {
@@ -303,34 +402,47 @@ class _HeroBanner extends StatelessWidget {
 }
 
 class _QuickOverviewRow extends StatelessWidget {
+  const _QuickOverviewRow({required this.overview});
+
+  final _StudyCenterOverview overview;
+
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(18 * scale, 18 * scale, 18 * scale, 0),
       child: Row(
-        children: const [
+        children: [
           Expanded(
             child: _OverviewChip(
               title: '오늘 할 일',
-              value: '4개',
+              value: '${overview.todayTaskCount}개',
               icon: Icons.checklist_rounded,
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: _OverviewChip(
               title: '진행 코스',
-              value: '2개',
+              value: '${overview.activeCourseCount}개',
               icon: Icons.route_rounded,
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
-            child: _OverviewChip(
-              title: '소셜 알림',
-              value: '3건',
-              icon: Icons.notifications_active_rounded,
+            child: ValueListenableBuilder<SocialNotificationSnapshot>(
+              valueListenable: SocialNotificationStore.notifier,
+              builder: (context, social, _) {
+                final count =
+                    social.unreadMessages +
+                    social.friendRequests +
+                    social.friendRemovals;
+                return _OverviewChip(
+                  title: '소셜 알림',
+                  value: '$count건',
+                  icon: Icons.notifications_active_rounded,
+                );
+              },
             ),
           ),
         ],

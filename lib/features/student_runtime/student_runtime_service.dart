@@ -1,12 +1,11 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 
 import '../../shared/services/api/api_client.dart';
 import '../../shared/services/api/api_contract.dart';
 import 'models.dart';
 
-/// Singleton service that manages runtime course data, sessions, and backend
-/// communication for the student learning flow.
+/// 학생 학습 화면에서 런타임 코스 데이터와 세션 API 호출을 담당한다.
 class StudentRuntimeService {
   StudentRuntimeService._();
 
@@ -15,47 +14,50 @@ class StudentRuntimeService {
   final StreamController<RuntimeCourseModel> _courseController =
       StreamController<RuntimeCourseModel>.broadcast();
 
-  /// Emits the currently-selected course whenever it changes.
+  /// 현재 선택된 코스를 스트림으로 노출한다.
   Stream<RuntimeCourseModel> get courseStream => _courseController.stream;
 
-  /// Loads all courses the current student is enrolled in.
+  /// 현재 사용자 수강 중인 코스 목록을 조회한다.
   ///
-  /// On 404 (backend not ready), falls back to mock data so the UI can still
-  /// be demonstrated.
+  /// 필요 변수: 없음
+  /// 동작: /courses를 캐시 TTL 20초로 조회해 재입장 시 동일 조회 트래픽을 줄인다.
   Future<List<RuntimeCourseModel>> loadEnrolledCourses() async {
     try {
-      final response = await ApiClient.instance.authedGet(
+      final payload = await ApiClient.instance.authedGetJson(
         ApiContract.uri(ApiPaths.courses),
+        useCache: true,
+        cacheTtl: const Duration(seconds: 20),
+        parser: (d) {
+          if (d is Map<String, dynamic>) return d;
+          if (d is Map) return Map<String, dynamic>.from(d);
+          return const <String, dynamic>{};
+        },
       );
 
-      if (response.statusCode == 404) {
-        return _mockCourses();
-      }
+      final dynamic decoded = payload.data ?? const <String, dynamic>{};
+      final dynamic normalizedPayload = decoded is Map<String, dynamic> &&
+              decoded['data'] != null
+          ? decoded['data']
+          : decoded;
+      final List<dynamic> courses = normalizedPayload is List<dynamic>
+          ? normalizedPayload
+          : (normalizedPayload is Map<String, dynamic>
+              ? (normalizedPayload['courses'] as List<dynamic>? ?? const [])
+              : const []);
 
-      if (response.statusCode == 200) {
-        final dynamic decoded = jsonDecode(response.body);
-        final dynamic payload =
-            decoded is Map<String, dynamic> && decoded['data'] != null
-            ? decoded['data']
-            : decoded;
-        final List<dynamic> courses = payload is List<dynamic>
-            ? payload
-            : (payload is Map<String, dynamic>
-                  ? (payload['courses'] as List<dynamic>? ?? const [])
-                  : const []);
-        return courses
-            .map((e) => RuntimeCourseModel.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-
-      // For any other non-2xx, return mock data so the UI isn't broken.
-      return _mockCourses();
+      return courses
+          .map((e) => RuntimeCourseModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on Exception catch (_) {
+      // API 실패 시에도 UI가 깨지지 않도록 샘플 데이터 반환.
       return _mockCourses();
     }
   }
 
-  /// Returns the next module the student should work on for [courseId].
+  /// 다음 학습 모듈 정보를 조회한다.
+  ///
+  /// 필요 변수: courseId
+  /// 동작: POST 호출이므로 캐시는 사용하지 않고 200 응답만 파싱한다.
   Future<RuntimeModuleModel?> getNextModule(int courseId) async {
     try {
       final response = await ApiClient.instance.authedPost(
@@ -65,8 +67,8 @@ class StudentRuntimeService {
 
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
-        final dynamic payload =
-            decoded is Map<String, dynamic> && decoded['data'] != null
+        final dynamic payload = decoded is Map<String, dynamic> &&
+                decoded['data'] != null
             ? decoded['data']
             : decoded;
         if (payload is! Map<String, dynamic>) {
@@ -80,7 +82,10 @@ class StudentRuntimeService {
     }
   }
 
-  /// Submits the result after a student finishes a module.
+  /// 모듈 완료 결과를 제출한다.
+  ///
+  /// 필요 변수: moduleId, result
+  /// 동작: 제출 성공/실패 여부를 bool로 반환한다.
   Future<bool> submitModuleResult(
     int moduleId,
     Map<String, dynamic> result,
@@ -95,10 +100,8 @@ class StudentRuntimeService {
       }
       final correctCount =
           (result['correct_count'] ?? result['correctCount'] ?? 0) as num;
-      final totalCount =
-          (result['total_count'] ?? result['totalCount'] ?? 0) as num;
-      final elapsedSeconds =
-          result['elapsed_seconds'] ?? result['elapsedSeconds'];
+      final totalCount = (result['total_count'] ?? result['totalCount'] ?? 0) as num;
+      final elapsedSeconds = result['elapsed_seconds'] ?? result['elapsedSeconds'];
       final response = await ApiClient.instance.authedPost(
         ApiContract.uri(ApiPaths.courseRuntimeSubmit),
         body: {
@@ -117,7 +120,10 @@ class StudentRuntimeService {
     }
   }
 
-  /// Starts a new learning session for [courseId].
+  /// 세션 시작 API.
+  ///
+  /// 필요 변수: courseId
+  /// 동작: 시작 요청 성공 여부만 bool로 반환한다.
   Future<bool> startSession(int courseId) async {
     try {
       final response = await ApiClient.instance.authedPost(
@@ -130,22 +136,22 @@ class StudentRuntimeService {
     }
   }
 
-  /// Ends the session identified by [sessionId].
+  /// 세션 종료는 현재 백엔드 미구현으로 임시 true 처리.
   Future<bool> endSession(String sessionId) async {
     return true;
   }
 
-  /// Mock data used when the backend is unavailable.
+  /// API 장애 시 화면 렌더링을 보장하기 위한 더미 데이터.
   List<RuntimeCourseModel> _mockCourses() {
     return [
       RuntimeCourseModel(
         id: 1,
-        title: '수학 기초 마스터',
+        title: '샘플 강의',
         modules: [
           RuntimeModuleModel(
             id: 101,
             moduleType: RuntimeModuleType.textbookView,
-            title: '1장: 집합과 명제',
+            title: '1단계 교재 강의',
             status: 'completed',
             progressPercent: 100,
             configJson: '{}',
@@ -153,7 +159,7 @@ class StudentRuntimeService {
           RuntimeModuleModel(
             id: 102,
             moduleType: RuntimeModuleType.problemSolve,
-            title: '집합 문제 풀이',
+            title: '1단계 문제 풀이',
             status: 'completed',
             progressPercent: 100,
             configJson: '{}',
@@ -161,7 +167,7 @@ class StudentRuntimeService {
           RuntimeModuleModel(
             id: 103,
             moduleType: RuntimeModuleType.examSolve,
-            title: '1장 실전 테스트',
+            title: '1단계 모의고사',
             status: 'available',
             progressPercent: 0,
             configJson: '{}',
@@ -169,7 +175,7 @@ class StudentRuntimeService {
           RuntimeModuleModel(
             id: 104,
             moduleType: RuntimeModuleType.wrongAnswerReview,
-            title: '오답 노트 복습',
+            title: '오답 노트',
             status: 'locked',
             progressPercent: 0,
             configJson: '{}',
@@ -177,7 +183,7 @@ class StudentRuntimeService {
           RuntimeModuleModel(
             id: 105,
             moduleType: RuntimeModuleType.challenge,
-            title: '집합 챌린지',
+            title: '챌린지 모드',
             status: 'locked',
             progressPercent: 0,
             configJson: '{}',

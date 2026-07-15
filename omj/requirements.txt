@@ -6,3 +6,5 @@ google-genai
 pyjwt
 reportlab
 sympy
+psycopg[binary,pool]
+redis

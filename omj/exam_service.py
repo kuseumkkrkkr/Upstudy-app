@@ -1,5 +1,7 @@
 import random
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Mapping, Sequence, Tuple
+
+from csat_concept_index import normalize_csat_tag
 
 
 def plan_exam_items(
@@ -8,17 +10,25 @@ def plan_exam_items(
     difficulty_tier: int,
     question_count: int,
     paper_type: str = "aiflow",
+    concept_difficulty_index: Mapping[str, float] | None = None,
+    concept_combinations: Sequence[Sequence[str]] = (),
 ) -> List[Dict[str, object]]:
+    """필요 변수: 출제 범위·기준 티어·문항 수·개념 난도 인덱스. 작동 원리: 유형별 난이도 곡선과 어려운 개념 포함 규칙으로 문항 계획을 만든다."""
+    difficulty_index = concept_difficulty_index or {}
     if paper_type == "csat":
         return _plan_csat_items(
             ranges=ranges,
             initial_tier=difficulty_tier,
             question_count=question_count,
+            concept_difficulty_index=difficulty_index,
+            concept_combinations=concept_combinations,
         )
     return _plan_aiflow_items(
         ranges=ranges,
         difficulty_tier=difficulty_tier,
         question_count=question_count,
+        concept_difficulty_index=difficulty_index,
+        concept_combinations=concept_combinations,
     )
 
 
@@ -27,7 +37,10 @@ def _plan_aiflow_items(
     ranges: List[Dict[str, List[str]]],
     difficulty_tier: int,
     question_count: int,
+    concept_difficulty_index: Mapping[str, float],
+    concept_combinations: Sequence[Sequence[str]],
 ) -> List[Dict[str, object]]:
+    """필요 변수: 과목별 태그·기준 티어·문항 수·난도 인덱스. 작동 원리: 과목을 균등 배분하고 상위 티어에는 가장 어려운 선택 개념을 포함한다."""
     subjects = [r for r in ranges if r.get("tags")]
     if not subjects:
         raise ValueError("at least one subject range with tags is required")
@@ -57,6 +70,13 @@ def _plan_aiflow_items(
 
             use_overlay = question_count >= 30 and local_idx >= max(0, count - 5)
             tags = distributor.pick(tag_count, overlay=overlay_distributor if use_overlay else None)
+            tags = _include_hard_concept(
+                tags,
+                subject_tags,
+                tier,
+                concept_difficulty_index,
+                concept_combinations=concept_combinations,
+            )
 
             items.append(
                 {
@@ -86,7 +106,10 @@ def _plan_csat_items(
     ranges: List[Dict[str, List[str]]],
     initial_tier: int,
     question_count: int,
+    concept_difficulty_index: Mapping[str, float],
+    concept_combinations: Sequence[Sequence[str]],
 ) -> List[Dict[str, object]]:
+    """필요 변수: 수능 범위·시작 티어·30문항·난도 인덱스. 작동 원리: 수능 구간별 곡선을 유지하며 고난도 문항에 어려운 개념을 고정한다."""
     if question_count != 30:
         raise ValueError("수능 모드는 30문제만 허용됩니다.")
     if initial_tier not in (3, 4, 5):
@@ -119,6 +142,15 @@ def _plan_csat_items(
                 tag_count,
                 require_optional=True,
             )
+        available_tags = common_tags if item_index <= 22 else common_tags + optional_tags
+        tags = _include_hard_concept(
+            tags,
+            available_tags,
+            tier,
+            concept_difficulty_index,
+            concept_combinations=concept_combinations,
+            required_tags=optional_tags if item_index >= 23 else (),
+        )
 
         items.append(
             {
@@ -269,6 +301,65 @@ def clean_tags(tags: Sequence[str]) -> List[str]:
         seen.add(raw)
         cleaned.append(raw)
     return cleaned
+
+
+def _include_hard_concept(
+    selected_tags: Sequence[str],
+    available_tags: Sequence[str],
+    tier: int,
+    difficulty_index: Mapping[str, float],
+    *,
+    required_tags: Sequence[str] = (),
+    concept_combinations: Sequence[Sequence[str]] = (),
+) -> List[str]:
+    """필요 변수: 현재·전체·필수 태그, 문항 티어, 수능 근거 인덱스. 작동 원리: 4~5티어 문항에 실제 변별 문항의 개념 조합을 우선 넣고 선택 과목 태그를 보존한다."""
+    selected = clean_tags(selected_tags)
+    available = clean_tags(available_tags)
+    if tier < 4 or len(available) < 2 or len(selected) < 2:
+        return selected
+    available_by_key = {normalize_csat_tag(tag): tag for tag in available}
+    required = set(clean_tags(required_tags))
+    required_selected = [tag for tag in selected if tag in required]
+    for raw_combination in concept_combinations:
+        combination = [
+            available_by_key[normalize_csat_tag(tag)]
+            for tag in raw_combination
+            if normalize_csat_tag(tag) in available_by_key
+        ]
+        combination = clean_tags(combination)
+        if len(combination) < 2:
+            continue
+        preserved_required = required_selected[:1]
+        capacity = max(0, len(selected) - len(preserved_required))
+        injected = combination[:capacity]
+        merged = clean_tags([*preserved_required, *injected])
+        for tag in selected:
+            if len(merged) >= len(selected):
+                break
+            if tag not in merged:
+                merged.append(tag)
+        if len(set(merged) & set(combination)) >= min(2, len(combination)):
+            return merged[: len(selected)]
+    known_available = [
+        tag for tag in available if normalize_csat_tag(tag) in difficulty_index
+    ]
+    if len(known_available) < 2:
+        return selected
+    hardest = max(
+        enumerate(known_available),
+        key=lambda item: (
+            float(difficulty_index[normalize_csat_tag(item[1])]),
+            -item[0],
+        ),
+    )[1]
+    if hardest in selected:
+        return selected
+    replace_index = next(
+        (index for index in range(len(selected) - 1, -1, -1) if selected[index] not in required),
+        len(selected) - 1,
+    )
+    selected[replace_index] = hardest
+    return clean_tags(selected)
 
 
 def _split_counts(total: int, subject_count: int) -> List[int]:

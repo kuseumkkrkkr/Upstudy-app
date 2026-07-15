@@ -29,12 +29,31 @@ class CourseService {
     return amount;
   }
 
+
+  // URI 기반 GET 응답을 캐시 가능한 Map 형태로 변환해서 공통 정책으로 가져온다.
+  // query 파라미터를 path+쿼리 key로 정규화해 _get 캐시 키와 동일한 방식으로 재사용한다.
+  static Future<Map<String, dynamic>> _getCachedJson(
+    Uri uri, {
+    bool useCache = true,
+    Duration cacheTtl = const Duration(minutes: 10),
+  }) async {
+    final response = await ApiClient.instance.authedGetJson(
+      uri,
+      parser: (d) {
+        if (d is Map<String, dynamic>) return d;
+        if (d is Map) return Map<String, dynamic>.from(d);
+        return const <String, dynamic>{};
+      },
+      useCache: useCache,
+      cacheTtl: cacheTtl,
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
   static Future<List<Course>> fetchCourses({
     String? keyword,
     String? tag,
     double? recommendOvr,
   }) async {
-    final token = await ApiClient.instance.requireToken();
     final params = <String, String>{};
     if (keyword != null && keyword.trim().isNotEmpty) {
       params['query'] = keyword.trim();
@@ -48,11 +67,17 @@ class CourseService {
       ApiPaths.coursesV2,
       query: params.isEmpty ? null : params,
     );
-    final v2Resp = await ApiClient.instance.authedGet(v2Uri, token: token);
-    if (v2Resp.statusCode == 200) {
-      final payload = jsonDecode(v2Resp.body) as Map<String, dynamic>;
+    try {
+      final payload = await _getCachedJson(
+        v2Uri,
+        cacheTtl: const Duration(minutes: 5),
+      );
       final items = _extractCourseItems(payload);
-      return items.map((item) => _courseFromJson(item)).toList();
+      if (items.isNotEmpty) {
+        return items.map((item) => _courseFromJson(item)).toList();
+      }
+    } on ApiException {
+      // v2 API가 응답을 주지 않거나 상태가 다를 때 레거시 API로 폴백한다.
     }
 
     final legacyParams = <String, String>{};
@@ -69,12 +94,11 @@ class CourseService {
       ApiPaths.courses,
       query: legacyParams.isEmpty ? null : legacyParams,
     );
-    final resp = await ApiClient.instance.authedGet(uri, token: token);
-    if (resp.statusCode != 200) {
-      throw Exception('Failed to load courses: ${resp.statusCode}');
+    final resp = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 5));
+    if (resp.isEmpty) {
+      throw Exception('Failed to load courses.');
     }
-    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
-    final courses = (payload['courses'] as List<dynamic>? ?? [])
+    final courses = (resp['courses'] as List<dynamic>? ?? [])
         .map((item) => _courseFromJson(Map<String, dynamic>.from(item as Map)))
         .toList();
     return courses;
@@ -83,13 +107,13 @@ class CourseService {
   static Future<List<Course>> fetchMyCourses() async {
     final token = await ApiClient.instance.requireToken();
     final uri = ApiContract.uri(ApiPaths.coursesMy);
-    final resp = await ApiClient.instance.authedGet(uri, token: token);
-    if (resp.statusCode == 200) {
-      final payload = jsonDecode(resp.body) as Map<String, dynamic>;
+    try {
+      final payload = await _getCachedJson(
+        uri,
+        cacheTtl: const Duration(minutes: 2),
+      );
       final courses = (payload['courses'] as List<dynamic>? ?? [])
-          .map(
-            (item) => _courseFromJson(Map<String, dynamic>.from(item as Map)),
-          )
+          .map((item) => _courseFromJson(Map<String, dynamic>.from(item as Map)))
           .toList();
       if (courses.isEmpty) {
         final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
@@ -100,25 +124,22 @@ class CourseService {
         if (assigned.isNotEmpty) return assigned;
       }
       return courses;
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) {
+        throw Exception('Failed to load my courses: ${e.statusCode}');
+      }
     }
 
-    if (resp.statusCode == 404) {
-      // Older/local servers may not expose /courses/my. Try enrollments,
-      // then fall back to the generic /courses list (which includes
-      // enrollment data in its response).
-      final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
-      if (fromEnrollments.isNotEmpty) return fromEnrollments;
-      final fromV2Runtime = await _fallbackMyCoursesFromV2Runtime(token);
-      if (fromV2Runtime.isNotEmpty) return fromV2Runtime;
-      final fromAssignments = await _fallbackMyCoursesFromAcademyAssignments(
-        token,
-      );
-      if (fromAssignments.isNotEmpty) return fromAssignments;
-      final fromCourses = await _fallbackMyCoursesFromCourses(token);
-      return fromCourses;
-    }
-
-    throw Exception('Failed to load my courses: ${resp.statusCode}');
+    // Older/local servers may not expose /courses/my. Try enrollments,
+    // then fall back to other 목록 API.
+    final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
+    if (fromEnrollments.isNotEmpty) return fromEnrollments;
+    final fromV2Runtime = await _fallbackMyCoursesFromV2Runtime(token);
+    if (fromV2Runtime.isNotEmpty) return fromV2Runtime;
+    final fromAssignments = await _fallbackMyCoursesFromAcademyAssignments(token);
+    if (fromAssignments.isNotEmpty) return fromAssignments;
+    final fromCourses = await _fallbackMyCoursesFromCourses(token);
+    return fromCourses;
   }
 
   static Future<List<Course>> _fallbackMyCoursesFromAcademyAssignments(
@@ -128,9 +149,15 @@ class CourseService {
       '/academy/assignments/my',
       query: {'kind': 'course'},
     );
-    final resp = await ApiClient.instance.authedGet(uri, token: token);
-    if (resp.statusCode != 200) return const <Course>[];
-    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
+    Map<String, dynamic> payload;
+    try {
+      payload = await _getCachedJson(
+        uri,
+        cacheTtl: const Duration(minutes: 5),
+      );
+    } on ApiException {
+      return const <Course>[];
+    }
     final data = payload['data'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(payload['data'] as Map)
         : payload;
@@ -147,12 +174,10 @@ class CourseService {
     for (final courseId in courseIds) {
       try {
         final courseUri = ApiContract.uri(ApiPaths.courseV2(courseId));
-        final courseResp = await ApiClient.instance.authedGet(
+        final body = await _getCachedJson(
           courseUri,
-          token: token,
+          cacheTtl: const Duration(minutes: 5),
         );
-        if (courseResp.statusCode != 200) continue;
-        final body = jsonDecode(courseResp.body) as Map<String, dynamic>;
         final raw = body['data'] is Map<String, dynamic>
             ? Map<String, dynamic>.from(body['data'] as Map)
             : body;
@@ -213,21 +238,18 @@ class CourseService {
   }
 
   static Future<Course> fetchCourse(String courseId) async {
-    final token = await ApiClient.instance.requireToken();
-    final v2 = await _fetchV2Course(courseId, token);
+    final v2 = await _fetchV2Course(courseId);
     if (v2 != null) return v2;
 
     final uri = ApiContract.uri(ApiPaths.course(courseId));
-    final resp = await ApiClient.instance.authedGet(uri, token: token);
-    if (resp.statusCode != 200) {
-      throw Exception('Failed to load course: ${resp.statusCode}');
+    final payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 10));
+    if (payload.isEmpty) {
+      throw Exception('Failed to load course');
     }
-    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
     return _courseFromJson(payload);
   }
 
   static Future<Map<String, dynamic>> runtimeState(String courseId) async {
-    final token = await ApiClient.instance.requireToken();
     final normalizedId = courseId.trim();
     if (normalizedId.isEmpty) {
       return const <String, dynamic>{
@@ -248,14 +270,10 @@ class CourseService {
     ];
 
     for (final uri in candidates) {
-      final resp = await ApiClient.instance.authedGet(uri, token: token);
-      if (resp.statusCode != 200) {
+      final payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 2));
+      if (payload.isEmpty) {
         continue;
       }
-      final decoded = jsonDecode(resp.body);
-      final payload = decoded is Map<String, dynamic>
-          ? decoded
-          : const <String, dynamic>{};
       final data = payload['data'] is Map<String, dynamic>
           ? Map<String, dynamic>.from(payload['data'] as Map)
           : payload;
@@ -314,7 +332,7 @@ class CourseService {
   }
 
   static Future<Course?> _startV2Runtime(String courseId, String token) async {
-    final course = await _fetchV2Course(courseId, token);
+    final course = await _fetchV2Course(courseId);
     if (course == null) return null;
 
     final uri = ApiContract.uri(ApiPaths.courseRuntimeNext);
@@ -349,11 +367,13 @@ class CourseService {
     );
   }
 
-  static Future<Course?> _fetchV2Course(String courseId, String token) async {
+  static Future<Course?> _fetchV2Course(String courseId) async {
     final v2Uri = ApiContract.uri(ApiPaths.courseV2(courseId));
-    final v2Resp = await ApiClient.instance.authedGet(v2Uri, token: token);
-    if (v2Resp.statusCode != 200) return null;
-    final payload = jsonDecode(v2Resp.body) as Map<String, dynamic>;
+    final payload = await _getCachedJson(
+      v2Uri,
+      useCache: true,
+      cacheTtl: const Duration(minutes: 10),
+    );
     final raw = payload['data'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(payload['data'] as Map)
         : payload;
@@ -365,12 +385,16 @@ class CourseService {
     String token,
   ) async {
     final uri = ApiContract.uri(ApiPaths.coursesEnrolled);
-    final resp = await ApiClient.instance.authedGet(uri, token: token);
-    if (resp.statusCode != 200) {
+    Map<String, dynamic> payload;
+    try {
+      payload = await _getCachedJson(
+        uri,
+        cacheTtl: const Duration(minutes: 2),
+      );
+    } on ApiException {
       return const <Course>[];
     }
 
-    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
     final enrollments =
         (payload['items'] ?? payload['enrollments']) as List<dynamic>? ??
         const [];
@@ -408,11 +432,15 @@ class CourseService {
       ApiPaths.coursesV2,
       query: const {'limit': '200'},
     );
-    final resp = await ApiClient.instance.authedGet(uri, token: token);
-    if (resp.statusCode != 200) {
+    Map<String, dynamic> payload;
+    try {
+      payload = await _getCachedJson(
+        uri,
+        cacheTtl: const Duration(minutes: 5),
+      );
+    } on ApiException {
       return const <Course>[];
     }
-    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
     return _extractCourseItems(payload)
         .map(_courseFromJson)
         .where(
@@ -428,11 +456,15 @@ class CourseService {
     String token,
   ) async {
     final uri = ApiContract.uri(ApiPaths.courses);
-    final resp = await ApiClient.instance.authedGet(uri, token: token);
-    if (resp.statusCode != 200) {
+    Map<String, dynamic> payload;
+    try {
+      payload = await _getCachedJson(
+        uri,
+        cacheTtl: const Duration(minutes: 10),
+      );
+    } on ApiException {
       return const <Course>[];
     }
-    final payload = jsonDecode(resp.body) as Map<String, dynamic>;
     final courses = (payload['courses'] as List<dynamic>? ?? [])
         .map((item) => _courseFromJson(Map<String, dynamic>.from(item as Map)))
         .where(

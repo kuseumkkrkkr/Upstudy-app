@@ -30,6 +30,10 @@ class _PreviousPageIntent extends Intent {
 }
 
 abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
+  /// 상단 입력 레이어에서 객관식 보기 클릭 여부를 판별한다.
+  /// 실제 구현은 보기의 화면 좌표를 관리하는 UI 믹스인이 제공한다.
+  bool _selectOptionAt(Offset globalPosition);
+
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
 
   final ValueNotifier<Matrix4> _viewMatrix = ValueNotifier<Matrix4>(
@@ -41,6 +45,8 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   Timer? _pollTimer;
   Timer? _examCountdownTimer;
   int? _remainingSeconds;
+  final DateTime _examStartedAt = DateTime.now();
+  bool _courseModuleCompletionSubmitted = false;
   bool _continueLoaded = false;
 
   ExamStatus? _examStatus;
@@ -110,6 +116,19 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   int? _eraserPageIndex;
 
   bool _eraserActive = false;
+
+  /// 지우개 도구 선택 시 포인터를 따라 그릴 미리보기 위치와 페이지다.
+  /// 드래그 여부와 분리해 마우스를 누르지 않아도 지우개 위치를 안정적으로 표시한다.
+  Offset? _eraserCursorPosition;
+  int? _eraserCursorPageIndex;
+
+  /// 객관식 보기의 화면 좌표를 문항·보기 번호별로 보관한다.
+  /// 캔버스 입력 레이어가 보기 위에 있으므로 포인터 위치로 선택 대상을 판별할 때 사용한다.
+  final Map<int, Map<int, Rect>> _optionHitRegions = <int, Map<int, Rect>>{};
+
+  /// 객관식 보기의 렌더 영역을 안정적으로 조회하기 위한 키다.
+  /// 시험지 재빌드 후에도 같은 키를 재사용해 실제 화면 좌표를 갱신한다.
+  final Map<String, GlobalKey> _optionHitRegionKeys = <String, GlobalKey>{};
 
   bool _grading = false;
 

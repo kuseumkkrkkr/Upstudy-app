@@ -58,15 +58,8 @@ List<ContentBlock> _parseQuestBlocks(String? raw) {
   }
 }
 
-const double _visibleOvrFloor = 1200;
-const double _visibleOvrMax = 32767;
-const double _visibleOvrDivider = 128;
-
-/// Formats a raw rating into the same visible OVR scale used on the dashboard.
+/// 필요 변수: 서버 원본 OVR. 작동 원리: 별도 축 변환 없이 반올림한 동일 점수를 표시한다.
 String _formatOvrLabel(double value) {
   if (value.isNaN || value <= 0) return '--';
-  if (value < _visibleOvrFloor) return value.toStringAsFixed(1);
-  final visible = value - _visibleOvrFloor;
-  final ovr = visible.clamp(0, _visibleOvrMax) / _visibleOvrDivider;
-  return ovr.toStringAsFixed(1);
+  return value.round().toString();
 }

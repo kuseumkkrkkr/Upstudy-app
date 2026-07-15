@@ -66,6 +66,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   final List<_ProblemSnapshot?> _problemSnapshots = <_ProblemSnapshot?>[];
   final Stopwatch _problemClock = Stopwatch();
   final Stopwatch _sessionClock = Stopwatch();
+  // 필요 변수: 현재 풀이 화면 생명주기. 작동 원리: 네트워크 재시도에도 같은 제출 키를 재사용해 중복 레이팅을 방지한다.
+  late final String _ratingSessionId;
   bool _continueLoaded = false;
 
   double _problemElapsedOffset = 0.0;
@@ -113,6 +115,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   @override
   void initState() {
     super.initState();
+    _ratingSessionId = DateTime.now().microsecondsSinceEpoch.toString();
     _applyConfig(widget.config ?? const ProblemSolveConfig());
     _sessionClock.start();
     _scheduleSolveTimerTick(updateNow: true);
@@ -2503,19 +2506,14 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }) async {
     final questId = _currentQuestId();
     if (questId.isEmpty) return;
-    final info = quest?['info'] as Map<String, dynamic>? ?? {};
-    final rawTags = (info['hash_tag'] as List<dynamic>? ?? [])
-        .map((tag) => tag.toString())
-        .toList();
-    final tags = rawTags.isNotEmpty ? rawTags : _hashTags;
     final answerTime = _nowSeconds();
     try {
       final rating = await ApiClient.instance.submitRating(
         questId: questId,
         isCorrect: isCorrect,
-        tags: tags,
         stepCorrectness: stepCorrectness,
         answerTime: answerTime,
+        submissionId: 'solve:$_ratingSessionId:$_currentProblemIndex:$questId',
       );
       RatingStore.updateFromRating(rating);
     } catch (_) {

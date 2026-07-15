@@ -235,7 +235,7 @@ def course_proposal_prompt_v2(
   },
   "estimated_days": 30,
   "focus_tags": ["태그1", "태그2"],
-  "target_ovr": 5,
+  "target_ovr": 1200,
   "difficulty": "medium",
   "duration": "4주"
 }

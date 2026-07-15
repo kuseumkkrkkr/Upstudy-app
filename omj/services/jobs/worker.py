@@ -544,6 +544,36 @@ async def run_quest_batch_generation(job_id: str, payload: dict[str, Any]) -> di
     return {"quests": stored_quests, "count": len(stored_quests)}
 
 
+async def run_quest_cache_refill(job_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: 태그·난이도·보충 수량. 작동 원리: 사용자 응답과 분리된 저우선순위 작업으로 전역 문제 캐시만 보충한다."""
+    from generater.problem_solve import generate_problem_set
+    from storage.storage import get_last_store_error, store_data
+
+    hash_tags = [str(tag).strip() for tag in (payload.get("hash_tags") or []) if str(tag).strip()]
+    if not hash_tags:
+        raise ValueError("hash_tags must not be empty")
+    min_tier = max(1, min(5, int(payload.get("min_difficulty_tier") or 1)))
+    max_tier = max(min_tier, min(5, int(payload.get("max_difficulty_tier") or min_tier)))
+    question_count = max(1, min(10, int(payload.get("question_count") or 1)))
+    cancel_event = register_token(job_id)
+    check_cancelled(cancel_event)
+    quests = await asyncio.to_thread(
+        generate_problem_set,
+        hash_tags=hash_tags,
+        min_difficulty_tier=min_tier,
+        max_difficulty_tier=max_tier,
+        question_count=question_count,
+        cancel_event=cancel_event,
+    )
+    stored_count = 0
+    for quest in quests:
+        check_cancelled(cancel_event)
+        if not store_data(quest):
+            raise RuntimeError(get_last_store_error() or "failed to store cache quest")
+        stored_count += 1
+    return {"count": stored_count, "cache_refill": True}
+
+
 # Register built-in handlers
 register_handler("ai_course_proposal", run_ai_course_proposal)
 register_handler("variant_generation", run_variant_generation)
@@ -552,3 +582,4 @@ register_handler("textbook_build", run_textbook_build)
 register_handler("level_test", run_level_test)
 register_handler("quest_generation", run_quest_generation)
 register_handler("quest_batch_generation", run_quest_batch_generation)
+register_handler("quest_cache_refill", run_quest_cache_refill)

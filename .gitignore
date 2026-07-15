@@ -4,6 +4,9 @@
 *.pyc
 *.swp
 .DS_Store
+.env
+.env.*
+!.env.example
 .atom/
 .build/
 .buildlog/
@@ -32,6 +35,11 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+
+# 문제 난이도 마이그레이션의 로컬 DB 백업·리허설 산출물
+/omj/data/migration_backups/
+/omj/data/migration_rehearsal/
+/omj/data/local_runtime/
 
 # Symbolication related
 app.*.symbols

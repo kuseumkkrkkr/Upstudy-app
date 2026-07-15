@@ -1,4 +1,4 @@
-﻿// Barrel file for lib/sessions/course/
+// Barrel file for lib/sessions/course/
 // ignore_for_file: duplicate_export
 
 export 'package:s11/sessions/course/session/course_learning_page.dart';

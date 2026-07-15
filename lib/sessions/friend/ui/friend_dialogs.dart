@@ -364,8 +364,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
 
   final TextEditingController _codebaseCtrl = TextEditingController();
   final TextEditingController _seedCtrl = TextEditingController();
-  final TextEditingController _examIdCtrl = TextEditingController();
-  final TextEditingController _examSeedCtrl = TextEditingController();
   final TextEditingController _chatCtrl = TextEditingController();
   final TextEditingController _flowTagFilterCtrl = TextEditingController();
   final TextEditingController _flowUserFilterCtrl = TextEditingController();
@@ -378,6 +376,8 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
 
   List<GroupSharedProblem> _problems = [];
   List<GroupSharedExam> _exams = [];
+  List<ExamPaperEntry> _myExamPapers = [];
+  String? _selectedExamId;
   List<SharedFlowItem> _flows = [];
   List<StudyGroupMessage> _messages = [];
   List<SolveHistoryItem> _history = [];
@@ -619,8 +619,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
     _tabController.dispose();
     _codebaseCtrl.dispose();
     _seedCtrl.dispose();
-    _examIdCtrl.dispose();
-    _examSeedCtrl.dispose();
     _chatCtrl.dispose();
     _flowTagFilterCtrl.dispose();
     _flowUserFilterCtrl.dispose();
@@ -635,6 +633,9 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
       _loadFlows(),
       _loadMessages(),
       _loadHistory(),
+      ExamPaperStore.load().then((items) {
+        if (mounted) setState(() => _myExamPapers = items);
+      }),
       AuthStorage.instance.readUsername().then((value) => _myUsername = value),
       _loadMembers(),
     ]);
@@ -761,12 +762,12 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   }
 
   Future<void> _shareExam() async {
-    final examId = _examIdCtrl.text.trim();
-    final seed = int.tryParse(_examSeedCtrl.text.trim());
-    if (examId.isEmpty || seed == null) {
+    // 선택한 로컬 시험지 ID만 전송하며, 서버는 본인 소유 여부만 최종 검증한다.
+    final examId = _selectedExamId;
+    if (examId == null || examId.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('시험지 ID와 시드를 입력하세요')));
+      ).showSnackBar(const SnackBar(content: Text('공유할 시험지를 선택하세요')));
       return;
     }
     setState(() => _sharingExam = true);
@@ -774,25 +775,23 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
       final shared = await ApiClient.instance.shareGroupExam(
         groupId: widget.group.id,
         examId: examId,
-        seed: seed,
       );
       if (!mounted) return;
       setState(() {
         _exams.insert(0, shared);
         if (_exams.length > 5) _exams.removeLast();
       });
-      _examIdCtrl.clear();
-      _examSeedCtrl.clear();
+      setState(() => _selectedExamId = null);
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('시험지를 공유했어요')));
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('공유에 실패했어요')));
+      ).showSnackBar(SnackBar(content: Text('공유에 실패했어요: $e')));
     } finally {
       if (mounted) setState(() => _sharingExam = false);
     }
@@ -1190,29 +1189,33 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   }
 
   Widget _examPanel() {
+    // 문서고에 저장된 내 시험지만 선택하게 하여 직접 ID 입력과 답안 공유를 차단한다.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _examIdCtrl,
-                decoration: const InputDecoration(
-                  labelText: '시험지 ID',
-                  hintText: '문서고함 시험지 ID',
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: _examSeedCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: '시드',
-                  hintText: '예) 7',
-                ),
+              child: DropdownButtonFormField<String>(
+                value: _selectedExamId,
+                decoration: const InputDecoration(labelText: '내 시험지'),
+                hint: const Text('내가 푼 시험지 선택'),
+                items: _myExamPapers
+                    .map(
+                      (paper) => DropdownMenuItem(
+                        value: paper.examId,
+                        child: Text(
+                          paper.searchIndex.isNotEmpty
+                              ? paper.searchIndex
+                              : '${paper.paperType} 시험지',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _sharingExam
+                    ? null
+                    : (value) => setState(() => _selectedExamId = value),
               ),
             ),
             const SizedBox(width: 8),
@@ -1227,6 +1230,11 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                   : const Text('공유'),
             ),
           ],
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '내 시험지는 채점 전에도 공유할 수 있으며, 학생의 답안은 공유되지 않습니다.',
+          style: TextStyle(fontSize: 11, color: Colors.black54),
         ),
         const SizedBox(height: 12),
         Expanded(
@@ -1257,14 +1265,14 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '시험지 ${exam.examId} · 시드 ${exam.seed}',
+                                  exam.title,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '공유 ID: ${exam.shareId}',
+                                  '${exam.senderName} · ${_formatSharedDate(exam.createdAt)}',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: Colors.black54,
@@ -1326,6 +1334,8 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                         text: msg.text,
                         timeLabel: msg.createdAt,
                         isMe: isMe,
+                        messageType: msg.messageType,
+                        payload: msg.payload,
                       );
                     },
                   ),
@@ -1381,7 +1391,16 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
     required String text,
     required String timeLabel,
     required bool isMe,
+    required String messageType,
+    required Map<String, dynamic>? payload,
   }) {
+    if (messageType == 'shared_exam' && payload != null) {
+      return _buildSharedExamChatCard(
+        payload: payload,
+        timeLabel: timeLabel,
+        isMe: isMe,
+      );
+    }
     final bubbleColor = isMe ? _green : Colors.white;
     final textColor = isMe ? Colors.white : Colors.black87;
     final shareId = _extractShareId(text);
@@ -1772,6 +1791,64 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
         ],
       ),
     );
+  }
+
+  /// 공유 시험지는 일반 대화와 구분해 제목·공유자·날짜만 담은 전용 카드로 표시한다.
+  Widget _buildSharedExamChatCard({
+    required Map<String, dynamic> payload,
+    required String timeLabel,
+    required bool isMe,
+  }) {
+    final title = payload['title']?.toString() ?? '시험지';
+    final sender = payload['sender_name']?.toString() ?? '알 수 없음';
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        width: 270,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF2F8F3),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _green.withOpacity(0.35)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.assignment_outlined, color: _green),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '공유된 시험지',
+                    style: TextStyle(fontSize: 11, color: _green),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$sender · ${_formatSharedDate(timeLabel)}',
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 서버 UTC 문자열을 그룹 화면에서 읽기 쉬운 날짜·시각으로 변환한다.
+  String _formatSharedDate(String raw) {
+    final date = DateTime.tryParse(raw)?.toLocal();
+    if (date == null) return raw;
+    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')} '
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
 

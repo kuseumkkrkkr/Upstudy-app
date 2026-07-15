@@ -164,6 +164,7 @@ Backend/frontend 계약 테이블 (자동 생성)
 | POST | /quests/variants/from-flow-draft | server.py | public | VariantGenerateResponse | - | backend-only |
 | POST | /quests/variants/from-prompt-note | server.py | public | VariantGenerateResponse | - | backend-only |
 | POST | /rating/submit | server.py | public | RatingResponse | - | backend-only |
+| POST | /rating/submit-batch | server.py | public | List[RatingResponse] | - | backend-only |
 | GET | /rating/tags | server.py | public | TagRatingsResponse | - | backend-only |
 | GET | /rating/user | server.py | public | RatingResponse | - | backend-only |
 | GET | /rating/user/:param | server.py | public | RatingResponse | - | backend-only |

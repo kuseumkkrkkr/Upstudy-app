@@ -6,11 +6,11 @@ import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/theme/app_colors.dart';
+import 'package:s11/shared/ui/modal/level_detail_modal.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
-  static const String _logoAsset = 'assets/54bba925b2ad92c9.png';
   static const Color _drawerBg = Colors.white;
   static const Color _surface = Color(0xFFF5F7F1);
 
@@ -42,9 +42,9 @@ class AppDrawer extends StatelessWidget {
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: Image.asset(
-                      _logoAsset,
-                      fit: BoxFit.cover,
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Colors.white,
                       semanticLabel: 'AIFlow 로고',
                     ),
                   ),
@@ -122,12 +122,14 @@ class AppDrawer extends StatelessWidget {
             const Spacer(),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _surface,
+              // ListTile의 배경과 터치 효과가 같은 Material 위에 그려지도록 구성한다.
+              child: Material(
+                color: _surface,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFE2E7DE)),
+                  side: const BorderSide(color: Color(0xFFE2E7DE)),
                 ),
+                clipBehavior: Clip.antiAlias,
                 child: ListTile(
                   leading: const Icon(
                     Icons.logout_rounded,
@@ -183,62 +185,66 @@ class _DrawerAccountSummaryState extends State<_DrawerAccountSummary> {
           return const SizedBox(height: 54);
         }
 
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppDrawer._surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E7DE)),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: account.levelProgress,
-                        minHeight: 8,
-                        backgroundColor: Colors.white,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.success,
+        return InkWell(
+          onTap: () => LevelDetailModal.show(context, account),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppDrawer._surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE2E7DE)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: account.levelProgress,
+                          minHeight: 8,
+                          backgroundColor: Colors.white,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.success,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'lv. ${account.level}',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
+                    const SizedBox(width: 10),
+                    Text(
+                      'lv. ${account.level}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.monetization_on_rounded,
-                    color: Color(0xFFD59B19),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${account.totalPoints}',
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.monetization_on_rounded,
+                      color: Color(0xFFD59B19),
+                      size: 20,
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 6),
+                    Text(
+                      '${account.totalPoints}',
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

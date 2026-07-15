@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/data/models/textbook.dart';
@@ -132,15 +131,11 @@ class TextbookStore {
   }
 
   static Future<BookData?> getById(String id) async {
-    if (!kIsWeb) {
-      final cached = await _loadCachedBook(id);
-      if (cached != null) return cached;
-    }
+    final cached = await _loadCachedBook(id);
+    if (cached != null) return cached;
     final remote = await _fetchRemoteBook(id);
     if (remote != null) {
-      if (!kIsWeb) {
-        await _saveCachedBook(remote);
-      }
+      await _saveCachedBook(remote);
       return remote;
     }
     final all = await _loadAll();
@@ -214,7 +209,6 @@ class TextbookStore {
   }
 
   static Future<bool> hasLocalCopy(String id) async {
-    if (kIsWeb) return false;
     final cached = await _loadCachedBook(id);
     return cached != null;
   }
@@ -350,7 +344,7 @@ class TextbookStore {
     } catch (_) {
       items = null;
     }
-    if (items != null && !kIsWeb) {
+    if (items != null) {
       await LocalDb.instance.setString(
         _libraryCacheKey,
         jsonEncode(items.map((book) => book.toLibraryJson()).toList()),
@@ -360,7 +354,6 @@ class TextbookStore {
   }
 
   static Future<List<BookData>?> _loadLibraryFromLocal() async {
-    if (kIsWeb) return null;
     final raw = await LocalDb.instance.getString(_libraryCacheKey);
     return _parseLibraryMeta(raw);
   }

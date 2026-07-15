@@ -218,7 +218,8 @@ mixin _ExamPaperGradingMixin
     }
 
     unawaited(_submitExamRatings());
-    _openGradingReport();
+    final passed = await _completeCourseModuleIfPassed();
+    await _openGradingReport(passed: passed);
   }
 
   Future<_GradeResult> _gradeQuestion({
@@ -229,6 +230,36 @@ mixin _ExamPaperGradingMixin
     required int totalQuestions,
   }) async {
     final quest = await _loadQuest(item.questId);
+
+    // 객관식은 필기 이미지 분석이 아니라 선택한 보기 번호를 정답 데이터와 비교한다.
+    // 선택값이 없으면 빈 답안으로 남기고, 있으면 전용 채점 API의 결과를 그대로 사용한다.
+    final selectedIndex = _selectedOptions[item.itemIndex];
+    if (item.questOptions?.isNotEmpty == true) {
+      if (selectedIndex == null) {
+        return _GradeResult.empty(item.itemIndex!, quest: quest);
+      }
+      final questId = item.questId?.trim() ?? '';
+      if (questId.isEmpty) {
+        return _GradeResult.failure(
+          item.itemIndex!,
+          '객관식 문제 ID가 없습니다.',
+          quest: quest,
+        );
+      }
+      final result = await ApiClient.instance.gradeVariantSolve(
+        questId: questId,
+        selectedIndex: selectedIndex,
+      );
+      final isCorrect = result['raw_correct'] == true || result['pass'] == true;
+      return _GradeResult.success(
+        item.itemIndex!,
+        analysis: '',
+        warnings: const <String>[],
+        isCorrect: isCorrect,
+        quest: quest,
+      );
+    }
+
     final targetRegion = region;
     final relevant = _extractStrokesInRegion(strokes, targetRegion);
     if (relevant.length <= 2) {
@@ -683,13 +714,49 @@ mixin _ExamPaperGradingMixin
     return painter.height;
   }
 
-  void _openGradingReport() {
+  /// 채점 결과가 통과 점수 이상이면 코스 런타임 이수 상태를 저장한다.
+  /// 중복 제출을 막고, 서버 오류가 발생해도 시험 결과 화면은 항상 표시한다.
+  Future<bool> _completeCourseModuleIfPassed() async {
+    final total = _gradingTotal;
+    if (total <= 0) return false;
+    final correctCount = _gradeResults.values
+        .where((result) => result.isCorrect == true)
+        .length;
+    final passRate = widget.passRate.clamp(0, 100);
+    final passed = correctCount * 100 >= total * passRate;
+    final courseId = widget.courseId?.trim() ?? '';
+    final moduleId = widget.moduleId?.trim() ?? '';
+    if (!passed ||
+        _courseModuleCompletionSubmitted ||
+        courseId.isEmpty ||
+        moduleId.isEmpty) {
+      return passed;
+    }
+    _courseModuleCompletionSubmitted = true;
+    try {
+      await ApiClient.instance.submitCourseRuntimeModule(
+        courseId: courseId,
+        moduleId: moduleId,
+        correctCount: correctCount,
+        totalCount: total,
+        elapsedSeconds: DateTime.now().difference(_examStartedAt).inSeconds,
+      );
+    } catch (error) {
+      _courseModuleCompletionSubmitted = false;
+      debugPrint('Course exam module completion failed: $error');
+    }
+    return passed;
+  }
+
+  /// 채점 결과와 통과 여부를 결과 화면으로 전달한다.
+  /// 통과한 경우 완료 버튼을 누르면 시험지와 결과 화면을 닫아 코스 진행률을 갱신한다.
+  Future<void> _openGradingReport({required bool passed}) async {
     if (_gradeResults.isEmpty) return;
 
     final results = _gradeResults.values.toList()
       ..sort((a, b) => a.itemIndex.compareTo(b.itemIndex));
 
-    Navigator.of(context).push(
+    final completed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => _ExamGradingReportPage(
           results: results,
@@ -697,40 +764,41 @@ mixin _ExamPaperGradingMixin
           totalQuestions: _gradingTotal,
 
           examId: widget.examId,
+          passRate: widget.passRate.clamp(0, 100),
+          passed: passed,
         ),
       ),
     );
+    if (completed == true && mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _submitExamRatings() async {
     if (_gradeResults.isEmpty) return;
-    final futures = <Future<void>>[];
-    for (final result in _gradeResults.values) {
+    final items = <Map<String, dynamic>>[];
+    final examAttemptId =
+        '${widget.examId ?? 'local'}-${_examStartedAt.microsecondsSinceEpoch}';
+    final orderedResults = _gradeResults.values.toList()
+      ..sort((left, right) => left.itemIndex.compareTo(right.itemIndex));
+    for (final result in orderedResults) {
       if (result.quest == null) continue;
       if (result.isCorrect == null) continue;
       final quest = result.quest!;
       final header = quest['header'] as Map<String, dynamic>? ?? {};
-      final info = quest['info'] as Map<String, dynamic>? ?? {};
       final questId = header['quest_id']?.toString() ?? '';
       if (questId.isEmpty) continue;
-      final tags = (info['hash_tag'] as List<dynamic>? ?? [])
-          .map((tag) => tag.toString())
-          .toList();
-      futures.add(
-        ApiClient.instance
-            .submitRating(
-              questId: questId,
-              isCorrect: result.isCorrect ?? false,
-              tags: tags,
-              stepCorrectness: result.stepCorrectness,
-            )
-            .then(RatingStore.updateFromRating)
-            .catchError((_) {}),
-      );
+      items.add({
+        'quest_id': questId,
+        'is_correct': result.isCorrect ?? false,
+        'step_correctness': result.stepCorrectness,
+        'submission_id': 'exam:$examAttemptId:${result.itemIndex}:$questId',
+      });
     }
-    if (futures.isEmpty) return;
+    if (items.isEmpty) return;
     try {
-      await Future.wait(futures);
+      final ratings = await ApiClient.instance.submitRatingBatch(items: items);
+      if (ratings.isNotEmpty) RatingStore.updateFromRating(ratings.last);
     } catch (_) {}
   }
 }

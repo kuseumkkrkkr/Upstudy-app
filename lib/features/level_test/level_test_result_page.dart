@@ -124,17 +124,11 @@ class _PlacementResultView extends StatelessWidget {
 
   final LevelTestPlacementResult result;
 
-  static const double _ratingFloor = 1200;
-  static const double _ratingDisplayMax = 32767;
-  static const double _ratingOvrDivider = 128;
   static const String _difficultyLabel = '중상~상';
   static const String _durationLabel = '약 60~90분';
 
   String get _ovrText {
-    final display =
-        ((result.ovr < _ratingFloor ? _ratingFloor : result.ovr) - _ratingFloor)
-            .clamp(0, _ratingDisplayMax);
-    return (display / _ratingOvrDivider).toStringAsFixed(1);
+    return result.ovr > 0 ? result.ovr.round().toString() : '--';
   }
 
   String get _confidenceText => '${(result.confidence * 100).round()}%';

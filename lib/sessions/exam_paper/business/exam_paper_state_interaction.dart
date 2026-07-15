@@ -638,6 +638,8 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
   void _handlePointerDown(PointerDownEvent event) {
     if (_gestureActive || _activePointer != null) return;
 
+    if (_selectOptionAt(event.position)) return;
+
     if (_isPanPointer(event)) {
       _activePointer = event.pointer;
       _resetScrollAccumulator();
@@ -692,6 +694,27 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
       if (!_withinPage(localPosition)) return;
       _updateEraser(localPosition);
     }
+  }
+
+  /// 지우개 모드에서 호버 좌표를 논리 페이지 좌표로 변환한다.
+  /// 클릭 전에도 지우개 원형 커서를 보여 펜과 동일하게 포인터를 따라가게 한다.
+  void _handlePointerHover(PointerHoverEvent event) {
+    if (_toolMode != _ToolMode.eraser || _gestureActive) return;
+    final globalPosition = _toLogicalPosition(event.localPosition);
+    if (!_withinCanvas(globalPosition)) {
+      if (_eraserCursorPosition != null) {
+        _eraserCursorPosition = null;
+        _eraserCursorPageIndex = null;
+        _bumpPaint();
+      }
+      return;
+    }
+    final pageIndex = _pageIndexForGlobalY(globalPosition.dy);
+    final localPosition = _toPageLocal(globalPosition, pageIndex);
+    if (!_withinPage(localPosition)) return;
+    _eraserCursorPageIndex = pageIndex;
+    _eraserCursorPosition = localPosition;
+    _bumpPaint();
   }
 
   void _handlePointerUp(PointerUpEvent event) {
@@ -837,6 +860,8 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _eraserActive = true;
 
     _eraserPosition = position;
+    _eraserCursorPosition = position;
+    _eraserCursorPageIndex = _eraserPageIndex;
     _currentEraserPoints = <Offset>[position];
 
     _eraseAt(position);
@@ -848,6 +873,8 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _eraserActive = true;
 
     _eraserPosition = position;
+    _eraserCursorPosition = position;
+    _eraserCursorPageIndex = _eraserPageIndex;
     _currentEraserPoints?.add(position);
 
     _eraseAt(position);
@@ -886,6 +913,13 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     _eraserPageIndex = null;
 
     _bumpPaint();
+  }
+
+  /// 객관식 보기의 글로벌 렌더 영역을 등록한다.
+  /// 입력 레이어가 시험지보다 위에 배치된 구조에서도 보기 클릭을 정확히 전달한다.
+  GlobalKey _optionHitRegionKey(int itemIndex, int optionIndex) {
+    final key = '${itemIndex}_$optionIndex';
+    return _optionHitRegionKeys.putIfAbsent(key, GlobalKey.new);
   }
 
   void _eraseAt(Offset position) {

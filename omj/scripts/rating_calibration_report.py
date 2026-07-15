@@ -3,8 +3,8 @@ import math
 import random
 import statistics
 import sys
-import tempfile
 from collections import defaultdict, deque
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -14,7 +14,6 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 import rating_service
-import storage.rating_storage as rating_storage
 
 
 DEFAULT_STUDENT_COUNT = 2000
@@ -208,7 +207,7 @@ def run_algorithm(
                 beta_weight = 0.25
                 delta_cap = 50.0
             else:
-                k_factor = max(16.0, 24.0 * math.exp(-0.08 * max(0, state.lose_streak)))
+                k_factor = rating_service.compute_k_factor(state.lose_streak)
                 problem_rating = tuned_problem_rating(quest.difficulty, barrier, profile)
                 problem_weight = tuned_problem_weight(quest.difficulty, barrier, profile)
                 user_signal = 1.0
@@ -251,47 +250,97 @@ def run_algorithm(
     )
 
 
+class _SmokeRatingStore:
+    """PostgreSQL I/O 없이 운영 계산 함수만 재현하는 보정 스크립트용 메모리 저장소."""
+
+    def __init__(self) -> None:
+        self.user = {
+            "rating": 1200.0, "ovr": 1200.0, "ovr_prev": 1200.0,
+            "lose_streak": 0, "last_attempt_at": None, "recent_results": [],
+            "recent_index": 0, "recent_count": 0, "recent_sum": 0,
+        }
+        self.tags: dict[str, dict] = {}
+
+    @contextmanager
+    def transaction(self):
+        """필요 변수: 없음. 작동 원리: 운영 서비스와 같은 트랜잭션 문맥 형태를 제공한다."""
+        yield object()
+
+    def get_or_create_user(self, cur, user_id, *, for_update):
+        """필요 변수: 사용자 키. 작동 원리: 단일 스모크 사용자 상태를 반환한다."""
+        del cur, user_id, for_update
+        return dict(self.user)
+
+    def claim_submission(self, cur, **kwargs):
+        """필요 변수: 최초 스모크 제출. 작동 원리: 단 한 번 실행하므로 신규 제출로 처리한다."""
+        del cur, kwargs
+        return None
+
+    def get_tag_stats(self, cur, user_id, tags):
+        """필요 변수: 태그 목록. 작동 원리: 존재하는 메모리 태그만 반환한다."""
+        del cur, user_id
+        return {tag: self.tags[tag] for tag in tags if tag in self.tags}
+
+    def upsert_tag_stats(self, cur, rows):
+        """필요 변수: 태그 갱신값. 작동 원리: 태그별 최신 상태를 메모리에 기록한다."""
+        del cur
+        for row in rows:
+            self.tags[row["tag"]] = dict(row)
+
+    def compute_ovr(self, cur, user_id, fallback):
+        """필요 변수: 태그 레이팅. 작동 원리: 운영식과 같은 시도 수 상한 가중평균을 계산한다."""
+        del cur, user_id
+        weights = [min(int(row["attempts"]), 24) for row in self.tags.values()]
+        if not weights:
+            return fallback
+        return sum(row["rating"] * weight for row, weight in zip(self.tags.values(), weights)) / sum(weights)
+
+    def update_user(self, cur, values):
+        """필요 변수: 사용자 계산 결과. 작동 원리: 최신 상태를 메모리에 반영한다."""
+        del cur
+        self.user.update(values)
+
+    def save_submission_response(self, cur, **kwargs):
+        """필요 변수: 스모크 응답. 작동 원리: 단일 실행에서는 재생이 필요 없어 저장을 생략한다."""
+        del cur, kwargs
+
+
 def run_real_code_smoke_test(quests: list[QuestProfile]) -> dict[str, float]:
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_db_path = str(Path(temp_dir) / "rating_smoke.db")
-        original_rating_db = rating_service.DB_PATH
-        original_storage_db = rating_storage.DB_PATH
-        rating_service.DB_PATH = temp_db_path
-        rating_storage.DB_PATH = temp_db_path
-        try:
-            rating_storage.init_rating_db()
-            sample_quest = quests[len(quests) // 2]
-            quest_payload = {
-                "info": {
-                    "difficulty": sample_quest.difficulty,
-                    "main_huddle": sample_quest.main_huddle,
-                    "flow_rate": sample_quest.flow_rate,
-                },
-                "solves": [
-                    {
-                        "enter_huddle": sample_quest.main_huddle,
-                        "hash_tag": list(sample_quest.tags),
-                        "branches": [],
-                    }
-                ],
-            }
-            result = rating_service.apply_rating_update(
-                user_id="smoke-student",
-                quest=quest_payload,
-                is_correct=True,
-                submitted_tags=sample_quest.tags,
-                step_outcomes=[{"step_id": 1, "correct": True}],
-                response_time_seconds=42.0,
-                submission_ref="smoke-1",
-            )
-            return {
-                "rating": result.rating,
-                "ovr": result.ovr,
-                "recent_accuracy": result.recent_accuracy,
-            }
-        finally:
-            rating_service.DB_PATH = original_rating_db
-            rating_storage.DB_PATH = original_storage_db
+    """필요 변수: 합성 문제. 작동 원리: 운영 apply_rating_update를 메모리 저장소에 연결해 I/O와 무관한 계산 계약을 검증한다."""
+    sample_quest = quests[len(quests) // 2]
+    quest_payload = {
+        "header": {"quest_id": "calibration-smoke"},
+        "info": {
+            "difficulty": sample_quest.difficulty,
+            "main_huddle": sample_quest.main_huddle,
+            "flow_rate": sample_quest.flow_rate,
+            "hash_tag": list(sample_quest.tags),
+        },
+        "solves": [{
+            "enter_huddle": sample_quest.main_huddle,
+            "hash_tag": list(sample_quest.tags),
+            "branches": [],
+        }],
+    }
+    store = _SmokeRatingStore()
+    original_store = rating_service.postgres_rating_store
+    rating_service.postgres_rating_store = store
+    try:
+        result = rating_service.apply_rating_update(
+            user_id="smoke-student",
+            quest=quest_payload,
+            is_correct=True,
+            step_outcomes=[{"step_id": 1, "correct": True}],
+            response_time_seconds=42.0,
+            submission_ref="smoke-1",
+        )
+    finally:
+        rating_service.postgres_rating_store = original_store
+    return {
+        "rating": result.rating,
+        "ovr": result.ovr,
+        "recent_accuracy": result.recent_accuracy,
+    }
 
 
 def main() -> None:

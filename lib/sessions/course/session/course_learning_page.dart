@@ -12,6 +12,7 @@ import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
     show StudyCenterNavBar;
+import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'teacher_course_textbook_reader_page.dart';
 
 const _green = Color(0xFF1B402B);
@@ -51,6 +52,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   void initState() {
     super.initState();
     _course = widget.course;
+    _expandCurrentUnit(_course);
     unawaited(_loadCourseDetail(showLoading: _course.units.isEmpty));
     final number = _courseNumber(widget.course);
     unawaited(
@@ -69,6 +71,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
       if (!mounted) return;
       setState(() {
         _course = full;
+        _expandCurrentUnit(full);
       });
     } finally {
       if (mounted && showLoading) setState(() => _loadingCourse = false);
@@ -85,22 +88,19 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
     });
   }
 
-  void _startLearning() {
-    if (widget.course.isDemo) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('체험용 코스입니다. 진행률은 기록되지 않습니다.')),
+  /// 필요 변수: 최신 [course]의 유닛 상태를 사용한다.
+  /// 작동 원리: 진행 중인 유닛을 우선 펼치고, 없으면 첫 수강 가능 유닛을 열어 현재 위치를 즉시 보여준다.
+  void _expandCurrentUnit(Course course) {
+    if (course.units.isEmpty) return;
+    var index = course.units.indexWhere(
+      (unit) => unit.status == CourseUnitStatus.active,
+    );
+    if (index < 0) {
+      index = course.units.indexWhere(
+        (unit) => unit.status != CourseUnitStatus.locked,
       );
     }
-    final index = _course.units.indexWhere(
-      (unit) => unit.status != CourseUnitStatus.locked,
-    );
-    if (index == -1) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('수강 가능한 유닛이 아직 없습니다.')));
-      return;
-    }
-    setState(() => _expandedUnits.add(index));
+    if (index >= 0) _expandedUnits.add(index);
   }
 
   Future<void> _handleMissionTap(
@@ -260,18 +260,27 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   Future<void> _startExamSolve(CourseUnit unit, Map detail) async {
     final examId = detail['exam_id']?.toString() ?? '';
     final duration = (detail['exam_duration'] as num?)?.toInt();
+    final moduleId =
+        (detail['id'] ?? detail['module_id'] ?? detail['moduleId'] ?? '')
+            .toString();
+    final passRate = _safeInt(detail['pass_rate'], fallback: 100).clamp(0, 100);
     if (examId.isNotEmpty) {
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ExamPaperPage(
             examId: examId,
             courseId: _course.id,
+            moduleId: moduleId,
+            passRate: passRate,
             timeLimitMinutes: (duration != null && duration > 0)
                 ? duration
                 : null,
           ),
         ),
       );
+      if (mounted) {
+        unawaited(_loadCourseDetail(showLoading: false));
+      }
       return;
     }
     final scaffold = ScaffoldMessenger.of(context);
@@ -345,6 +354,19 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
     );
   }
 
+  /// 필요 변수: 현재 Navigator의 이전 경로 존재 여부를 사용한다.
+  /// 작동 원리: 이전 코스 화면으로 돌아가며, 단독 진입인 경우 코스 목록을 대체 경로로 제공한다.
+  void _goBack() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+    navigator.pushReplacement(
+      MaterialPageRoute(builder: (_) => const CourseCatalogPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
@@ -361,12 +383,11 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const StudyCenterNavBar(),
+                    StudyCenterNavBar(onBack: _goBack),
                     _LearningHero(
                       course: course,
                       scale: scale,
                       progressPercent: progressPercent,
-                      onPrimaryAction: isDemo ? null : _startLearning,
                       isDemo: isDemo,
                     ),
                     Padding(
@@ -421,14 +442,12 @@ class _LearningHero extends StatelessWidget {
     required this.course,
     required this.scale,
     required this.progressPercent,
-    required this.onPrimaryAction,
     required this.isDemo,
   });
 
   final Course course;
   final double scale;
   final int progressPercent;
-  final VoidCallback? onPrimaryAction;
   final bool isDemo;
 
   @override
@@ -527,22 +546,35 @@ class _LearningHero extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 16 * scale),
-              ElevatedButton(
-                onPressed: onPrimaryAction,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _green,
-                  foregroundColor: Colors.white,
-                  minimumSize: Size(double.infinity, 46 * scale),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12 * scale),
-                  ),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12 * scale,
+                  vertical: 11 * scale,
                 ),
-                child: Text(
-                  isDemo ? '체험 모드' : '학습 계속하기',
-                  style: GoogleFonts.inter(
-                    fontSize: 13 * scale,
-                    fontWeight: FontWeight.w600,
-                  ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F7F2),
+                  borderRadius: BorderRadius.circular(12 * scale),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isDemo ? Icons.visibility_outlined : Icons.bolt_rounded,
+                      size: 18 * scale,
+                      color: _green,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Expanded(
+                      child: Text(
+                        isDemo ? '체험 모드 · 기록되지 않음' : '현재 학습 위치가 아래에 열려 있어요',
+                        style: GoogleFonts.inter(
+                          fontSize: 12 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: _green,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

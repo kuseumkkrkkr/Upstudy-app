@@ -14,7 +14,10 @@ from generater.codebase_store import (
     save_cached_seed,
     save_seed_log,
     save_seed_logs_batch,
+    update_codebase_quality,
 )
+from student_problem_content_review import require_student_problem_contract
+from difficulty_contract import DIFFICULTY_CONTRACTS, clamp_difficulty_tier
 from services.jobs.cancellation import check_cancelled
 
 _SEED_VALIDATOR_BATCH_TIMEOUT_SEC = max(
@@ -116,8 +119,6 @@ def validate_codebase(
         check_cancelled(cancel_event)
         batch_count = min(batch_size, attempts_per_codebase - batch_start)
         seeds = [rng.randint(1, 1_000_000_000) for _ in range(batch_count)]
-        for s in seeds:
-            record_seed_attempt(entry_id, code_hash, success=False)
         attempts_here += len(seeds)
         batch_results = run_codebase_batch(
             entry,
@@ -132,6 +133,7 @@ def validate_codebase(
             started_at = time.monotonic()
             if isinstance(raw, dict) and "_error" in raw:
                 err_msg = raw["_error"]
+                record_seed_attempt(entry_id, code_hash, success=False)
                 batch_logs.append({
                     "codebase_id": entry_id,
                     "code_hash": code_hash,
@@ -152,8 +154,33 @@ def validate_codebase(
                     expected_branches=entry.get("branch_conditions"),
                     main_huddle=entry.get("strategy_level"),
                 )
+                # 원시 구조 통과만으로는 학생 노출 품질을 보장하지 못하므로 실제 저장 형태까지 만든다.
+                from generater.problem_solve import TierParams, _build_quest_from_codebase
+
+                canonical = DIFFICULTY_CONTRACTS[
+                    clamp_difficulty_tier(entry.get("tier"))
+                ]
+                params = TierParams(
+                    solves_count=canonical.solves_count,
+                    strategy_level=canonical.strategy_level,
+                    branch_conditions=canonical.branch_conditions,
+                )
+                quest = _build_quest_from_codebase(
+                    entry,
+                    list(entry.get("tags") or []),
+                    params,
+                    seed_value,
+                    question_type="short",
+                    raw_result=raw,
+                )
+                require_student_problem_contract(
+                    quest,
+                    expected_solve_count=params.solves_count,
+                    expected_tags=entry.get("tags") or [],
+                )
                 elapsed_ms = int((time.monotonic() - started_at) * 1000)
             except Exception as exc:
+                record_seed_attempt(entry_id, code_hash, success=False)
                 elapsed_ms = int((time.monotonic() - started_at) * 1000)
                 batch_logs.append({
                     "codebase_id": entry_id,
@@ -187,6 +214,13 @@ def validate_codebase(
             break
 
     attempts_total, successes_total = get_seed_stats(entry_id, code_hash)
+    approval_target = min(3, max(1, int(max_successes_per_codebase)))
+    if successes_here >= approval_target:
+        update_codebase_quality(entry_id, "approved", [])
+    elif attempts_here >= 10 and successes_here == 0:
+        update_codebase_quality(entry_id, "quarantined", ["student_contract_validation_failed"])
+    else:
+        update_codebase_quality(entry_id, "pending_validation", ["insufficient_validated_seeds"])
     return {
         "attempts": attempts_here,
         "successes": successes_here,

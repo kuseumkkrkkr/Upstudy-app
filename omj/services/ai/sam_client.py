@@ -24,15 +24,23 @@ SAM_OPENAI_BASE_URL = os.getenv(
 )
 
 DEFAULT_PROVIDER_MODEL = os.getenv("SAM_DEFAULT_MODEL", "fw-kimi-k2.7-code")
-DEFAULT_PROBLEM_MODEL = os.getenv("SAM_PROBLEM_MODEL", "fw-kimi-k2.7-code")
+DEFAULT_PROBLEM_MODEL = os.getenv("SAM_PROBLEM_MODEL", "gemini-3.5-flash")
 DEFAULT_FALLBACK_MODEL = os.getenv("SAM_FALLBACK_MODEL", "fw-kimi-k2.7-code")
 DEFAULT_ANALYSIS_MODEL = os.getenv("OMJ_ANALYSIS_MODEL", "az-deepseek-v4-flash")
 DEFAULT_CHAT_MODEL = os.getenv("OMJ_CHAT_MODEL", "gemma-3-27b")
-DEFAULT_CODEBASE_MODEL = os.getenv("CODEBASE_GEN_MODEL", "fw-kimi-k2.7-code")
+DEFAULT_CODEBASE_MODEL = os.getenv("CODEBASE_GEN_MODEL", "gemini-3.5-flash")
 DEFAULT_TAG_AGENT_MODEL = os.getenv("TAG_AGENT_MODEL", "az-deepseek-v4-flash")
 DEFAULT_CODEBASE_REPAIR_MODEL = os.getenv(
     "CODEBASE_REPAIR_MODEL",
-    "fw-kimi-k2.7-code",
+    "gemini-3.5-flash",
+)
+SAM_REQUEST_TIMEOUT_SECONDS = max(
+    5.0,
+    float(os.getenv("SAM_REQUEST_TIMEOUT_SECONDS", "120")),
+)
+SAM_REQUEST_MAX_RETRIES = max(
+    0,
+    min(2, int(os.getenv("SAM_REQUEST_MAX_RETRIES", "1"))),
 )
 
 
@@ -49,9 +57,15 @@ def is_sam_configured() -> bool:
 
 @lru_cache(maxsize=1)
 def get_sam_client() -> Any:
+    """필요 변수: API 키·엔드포인트·시간 제한. 작동 원리: 장기 점유를 막는 공용 클라이언트를 프로세스당 한 번 생성한다."""
     from openai import OpenAI
 
-    return OpenAI(api_key=get_sam_api_key(), base_url=SAM_OPENAI_BASE_URL)
+    return OpenAI(
+        api_key=get_sam_api_key(),
+        base_url=SAM_OPENAI_BASE_URL,
+        timeout=SAM_REQUEST_TIMEOUT_SECONDS,
+        max_retries=SAM_REQUEST_MAX_RETRIES,
+    )
 
 
 def strip_code_fences(text: str) -> str:

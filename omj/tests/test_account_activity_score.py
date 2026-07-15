@@ -67,6 +67,27 @@ class AccountActivityScoreTests(unittest.TestCase):
         )
         self.assertTrue(duplicate_data["activity_score_reward"]["duplicate"])
 
+    def test_level_milestone_grants_increasing_coins_once(self) -> None:
+        """레벨 5와 10을 한 번에 통과해도 보상이 중복 없이 누적되는지 검증합니다."""
+        response = self.client.post(
+            "/account/activity-score",
+            json={
+                "delta_score": 8100,
+                "ref_id": "problem:2026-07-06:q-milestone",
+                "reason": "problem_solve",
+                "date_key": "2026-07-06",
+            },
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertEqual(data["level"], 10)
+        self.assertEqual(data["total_points"], 30)
+        self.assertEqual(
+            data["activity_score_reward"]["granted_milestone_coins"], 30
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,12 +18,19 @@ from generater.codebase_store import (
     compute_code_hash,
     list_cached_seeds,
     load_codebases,
+    record_seed_quality,
     save_codebase,
+    update_codebase_quality,
 )
 from generater.question_format import apply_question_format
 from generater.fix_gen import fix_gen
 from resampling import resample_storage_data
 from services.jobs.cancellation import check_cancelled
+from student_problem_content_review import (
+    StudentProblemContractRejected,
+    require_student_problem_contract,
+)
+from difficulty_contract import DIFFICULTY_CONTRACTS, infer_tier_from_contract, resolve_difficulty_score
 
 
 @dataclass(frozen=True)
@@ -56,7 +63,9 @@ def min_tag_count_for_tier(tier: int) -> int:
         return 3
     if tier == 4:
         return 3
-    return 5
+    # 전수 검증에서 5개 개념 강제 템플릿은 모두 억지 결합으로 격리됐다.
+    # 6단계·전략3·분기2 구조와 세 개 이상의 실제 결합 개념으로 고난도를 판정한다.
+    return 3
 
 
 def max_tag_count_for_tier(tier: int) -> int:
@@ -170,21 +179,52 @@ def select_tags_for_tier(tag_pool: Sequence[str], tier: int, rng: random.Random)
     return pick_random_tags(tag_pool, count, rng)
 
 
+def stamp_difficulty_tier(quest: Dict[str, Any], tier: int) -> Dict[str, Any]:
+    """필요 변수: 생성된 문제와 목표 티어. 작동 원리: 기존 difficulty는 계산 점수로 보존하고 조회·캐시용 티어를 별도 필드에 기록한다."""
+    resolved_tier = int(max(1, min(5, tier)))
+    info = quest.setdefault("info", {})
+    if not isinstance(info, dict):
+        info = {}
+        quest["info"] = info
+    raw_score = resolve_difficulty_score(info)
+    info["difficulty"] = raw_score
+    info["difficulty_score"] = raw_score
+    info["difficulty_tier"] = resolved_tier
+    return quest
+
+
+def finalize_student_quest(
+    quest: Dict[str, Any],
+    tier: int,
+    expected_tags: Sequence[str] | None = None,
+) -> Dict[str, Any]:
+    """필요 변수: 생성 문제·목표 티어·태그. 작동 원리: 점수와 티어를 분리 기록한 뒤 본문·풀이 수·태그 계약을 모두 검증한다."""
+    params = TIER_PARAMS.get(tier, TIER_PARAMS[3])
+    resolved = stamp_difficulty_tier(quest, tier)
+    return require_student_problem_contract(
+        resolved,
+        expected_solve_count=params.solves_count,
+        expected_tags=expected_tags or ((resolved.get("info") or {}).get("hash_tag") or []),
+    )
+
+
 def _infer_tier(entry: Dict[str, Any]) -> Optional[int]:
     tier = entry.get("tier")
-    if isinstance(tier, int):
-        return tier
     solves = entry.get("solves_count")
     strategy = entry.get("strategy_level")
     branch = entry.get("branch_conditions")
-    for key, params in TIER_PARAMS.items():
+    if isinstance(tier, int) and tier in DIFFICULTY_CONTRACTS:
+        contract = DIFFICULTY_CONTRACTS[tier]
         if (
-            solves == params.solves_count
-            and strategy == params.strategy_level
-            and branch == params.branch_conditions
+            solves == contract.solves_count
+            and strategy == contract.strategy_level
+            and branch == contract.branch_conditions
         ):
-            return key
-    return None
+            return tier
+    if solves is None or strategy is None:
+        return None
+    inferred, _ = infer_tier_from_contract(solves, strategy, branch)
+    return inferred
 
 
 def _flow_tolerance_match(entry: Dict[str, Any], min_tier: int, max_tier: int) -> bool:
@@ -350,7 +390,23 @@ def generate_problem_set(
         entry_tags = {normalize_tag(tag) for tag in (entry.get('tags') or []) if normalize_tag(tag)}
         return bool(entry_tags) and entry_tags.issubset(selected_tag_set)
 
-    eligible_codebases = [entry for entry in load_codebases() if _entry_within_selection(entry)]
+    eligible_codebases = [
+        entry for entry in load_codebases(student_ready_only=True)
+        if _entry_within_selection(entry)
+    ]
+    # 필요 변수: 승인 코드베이스의 티어와 정확한 태그 집합.
+    # 작동 원리: 선택 전체의 부분집합이라는 이유로 다른 개념 템플릿을 재사용하지 않도록 복합 역색인을 만든다.
+    codebases_by_contract: dict[tuple[int, frozenset[str]], list[dict[str, Any]]] = {}
+    for candidate in eligible_codebases:
+        candidate_tier = _infer_tier(candidate)
+        if candidate_tier is None:
+            continue
+        candidate_tags = frozenset(
+            normalize_tag(tag) for tag in candidate.get("tags", []) if normalize_tag(tag)
+        )
+        if not candidate_tags:
+            continue
+        codebases_by_contract.setdefault((candidate_tier, candidate_tags), []).append(candidate)
 
     new_count = question_count
     if eligible_codebases:
@@ -363,18 +419,23 @@ def generate_problem_set(
     reuse_count = max(0, question_count - new_count)
 
     plan: list[dict[str, Any]] = []
-    reuse_cursor = 0
+    reuse_cursors = {tier: 0 for tier in range(1, 6)}
     for idx in range(question_count):
         tags_for_problem = per_problem_tags[idx] or clean_tags[:]
         tier = tiers[idx]
-        if idx < reuse_count and eligible_codebases:
-            entry = eligible_codebases[reuse_cursor % len(eligible_codebases)]
-            reuse_cursor += 1
+        task_tag_key = frozenset(normalize_tag(tag) for tag in tags_for_problem if normalize_tag(tag))
+        tier_candidates = codebases_by_contract.get((tier, task_tag_key), [])
+        if idx < reuse_count and tier_candidates:
+            cursor = reuse_cursors[tier]
+            entry = tier_candidates[cursor % len(tier_candidates)]
+            reuse_cursors[tier] = cursor + 1
         else:
             entry = None
         plan.append({'index': idx, 'entry': entry, 'tags': tags_for_problem, 'tier': tier})
 
-    fallback_candidates = [entry for entry in eligible_codebases]
+    fallback_candidates_by_contract = {
+        key: list(entries) for key, entries in codebases_by_contract.items()
+    }
     quests: list[dict[str, Any] | None] = [None] * question_count
 
     def _generate_single(task: dict[str, Any], seed_base: int) -> dict[str, Any]:
@@ -398,6 +459,9 @@ def generate_problem_set(
             seed_candidates = list_cached_seeds(entry_id, code_hash, limit=150) if entry_id is not None else []
             seed_candidates = [s for s in seed_candidates if s not in avoid]
             seen: set[int] = set()
+            contract_rejections = 0
+            contract_blocked = False
+            last_error: Exception | None = None
 
             # Try cached seeds in parallel batches first
             batch_size = 8
@@ -430,13 +494,26 @@ def generate_problem_set(
                         if entry_id is not None:
                             with recent_map_lock:
                                 recent_map.setdefault(int(entry_id), set()).add(int(s))
-                        return quest
+                        finalized = finalize_student_quest(quest, tier, tags_for_problem)
+                        if entry_id is not None:
+                            record_seed_quality(int(entry_id), code_hash, int(s), "approved", [])
+                        return finalized
+                    except StudentProblemContractRejected as exc:
+                        if entry_id is not None:
+                            record_seed_quality(int(entry_id), code_hash, int(s), "rejected", [str(exc)])
+                        last_error = exc
+                        contract_rejections += 1
+                        if contract_rejections >= 3:
+                            contract_blocked = True
+                            break
+                        continue
                     except Exception:
                         continue
+                if contract_blocked:
+                    break
 
             attempts = 0
-            last_error: Exception | None = None
-            while attempts < 300:
+            while attempts < 300 and not contract_blocked:
                 check_cancelled(cancel_event)
                 batch_seeds = []
                 while len(batch_seeds) < 8 and attempts < 300:
@@ -471,22 +548,57 @@ def generate_problem_set(
                         if entry_id is not None:
                             with recent_map_lock:
                                 recent_map.setdefault(int(entry_id), set()).add(int(seed_value))
-                        return quest
+                        finalized = finalize_student_quest(quest, tier, tags_for_problem)
+                        if entry_id is not None:
+                            record_seed_quality(int(entry_id), code_hash, int(seed_value), "approved", [])
+                        return finalized
+                    except StudentProblemContractRejected as exc:
+                        if entry_id is not None:
+                            record_seed_quality(
+                                int(entry_id), code_hash, int(seed_value), "rejected", [str(exc)]
+                            )
+                        last_error = exc
+                        contract_rejections += 1
+                        if contract_rejections >= 3:
+                            contract_blocked = True
+                            break
+                        continue
                     except Exception as exc:
                         last_error = exc
                         continue
                 # If batch had no success, continue to next batch
+                if contract_blocked:
+                    break
 
-            if allow_fallback and fallback_candidates:
-                fallback_pool = [cand for cand in fallback_candidates if cand is not entry_obj]
+            if allow_fallback:
+                tag_key = frozenset(
+                    normalize_tag(tag) for tag in tags_for_problem if normalize_tag(tag)
+                )
+                fallback_pool = [
+                    candidate
+                    for candidate in fallback_candidates_by_contract.get((tier, tag_key), [])
+                    if candidate is not entry_obj
+                ]
                 if fallback_pool:
                     fallback_entry = local_rng.choice(fallback_pool)
                     return _build(fallback_entry, False)
             raise last_error or RuntimeError('no valid seed for codebase')
 
         if entry is None:
-            new_entry = _generate_and_store_codebase(tags_for_problem, tier, local_rng)
-            return _build(new_entry, False)
+            last_error: Exception | None = None
+            for _ in range(3):
+                new_entry = _generate_and_store_codebase(tags_for_problem, tier, local_rng)
+                try:
+                    return _build(new_entry, False)
+                except StudentProblemContractRejected as exc:
+                    last_error = exc
+                    if new_entry.get("id") is not None:
+                        update_codebase_quality(
+                            int(new_entry["id"]),
+                            "quarantined",
+                            ["student_contract_validation_failed"],
+                        )
+            raise last_error or RuntimeError("new codebase failed student contract validation")
         return _build(entry, True)
 
     max_parallel = int(os.getenv("PROBLEM_SET_MAX_PARALLEL", "32"))

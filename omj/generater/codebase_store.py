@@ -158,6 +158,25 @@ def _init_db_impl(conn: sqlite3.Connection) -> None:
             """
         )
         _ensure_column(conn, "codebases", "validated_seeds", "TEXT")
+        _ensure_column(conn, "codebases", "tier_source", "TEXT")
+        _ensure_column(conn, "codebases", "quality_status", "TEXT NOT NULL DEFAULT 'pending_validation'")
+        _ensure_column(conn, "codebases", "quality_reasons", "TEXT NOT NULL DEFAULT '[]'")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_codebases_tier_quality ON codebases(tier, quality_status, id)"
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS codebase_quality_validation (
+                codebase_id INTEGER NOT NULL,
+                code_hash TEXT NOT NULL,
+                seed INTEGER NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('approved','rejected')),
+                reasons_json TEXT NOT NULL,
+                checked_at INTEGER NOT NULL,
+                PRIMARY KEY(codebase_id, code_hash, seed)
+            )
+            """
+        )
         conn.commit()
 
 
@@ -175,14 +194,18 @@ def _close_connection() -> None:
         _db_local.conn = None
 
 
-def load_codebases() -> List[Dict[str, Any]]:
+def load_codebases(*, student_ready_only: bool = False) -> List[Dict[str, Any]]:
+    """필요 변수: 학생용 승인 필터. 작동 원리: 관리·수리 경로는 전부 읽고 학생 재사용 경로는 검증 완료 코드베이스만 읽는다."""
     init_db()
     with _get_db_connection() as conn:
+        where = "WHERE quality_status = 'approved'" if student_ready_only else ""
         rows = conn.execute(
-            """
+            f"""
             SELECT id, name, prompt, code, mode, tags, difficulty, tier,
-                   solves_count, strategy_level, branch_conditions, validated_seeds, created_at
+                   solves_count, strategy_level, branch_conditions, validated_seeds, created_at,
+                   tier_source, quality_status, quality_reasons
             FROM codebases
+            {where}
             ORDER BY id ASC
             """
         ).fetchall()
@@ -213,6 +236,9 @@ def load_codebases() -> List[Dict[str, Any]]:
                 "branch_conditions": row["branch_conditions"],
                 "validated_seeds": validated_seeds,
                 "created_at": row["created_at"],
+                "tier_source": row["tier_source"],
+                "quality_status": row["quality_status"],
+                "quality_reasons": _safe_json_list(row["quality_reasons"]),
             }
         )
     return results
@@ -225,8 +251,9 @@ def save_codebase(entry: Dict[str, Any]) -> Dict[str, Any]:
             """
             INSERT INTO codebases (
               name, prompt, code, mode, tags, difficulty, tier,
-              solves_count, strategy_level, branch_conditions, validated_seeds
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              solves_count, strategy_level, branch_conditions, validated_seeds,
+              tier_source, quality_status, quality_reasons
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 entry.get("name") or "",
@@ -240,6 +267,9 @@ def save_codebase(entry: Dict[str, Any]) -> Dict[str, Any]:
                 entry.get("strategy_level"),
                 entry.get("branch_conditions"),
                 json.dumps(entry.get("validated_seeds") or [], ensure_ascii=False),
+                entry.get("tier_source") or "explicit",
+                entry.get("quality_status") or "pending_validation",
+                json.dumps(entry.get("quality_reasons") or [], ensure_ascii=False),
             ),
         )
         new_id = cursor.lastrowid
@@ -249,6 +279,28 @@ def save_codebase(entry: Dict[str, Any]) -> Dict[str, Any]:
     entry["id"] = new_id
     entry["name"] = name
     return entry
+
+
+def _safe_json_list(value: Any) -> List[Any]:
+    """필요 변수: JSON 목록 문자열. 작동 원리: 손상된 품질 사유를 빈 목록으로 안전하게 읽는다."""
+    try:
+        parsed = json.loads(value) if isinstance(value, str) else value
+    except json.JSONDecodeError:
+        return []
+    return parsed if isinstance(parsed, list) else []
+
+
+def update_codebase_quality(entry_id: int, status: str, reasons: List[str]) -> None:
+    """필요 변수: 코드베이스 ID·품질 상태·사유. 작동 원리: 학생 재사용 승인 또는 격리를 한 행 갱신으로 기록한다."""
+    if status not in {"pending_validation", "approved", "quarantined", "rejected"}:
+        raise ValueError(f"invalid codebase quality status: {status}")
+    init_db()
+    with _get_db_connection() as conn:
+        conn.execute(
+            "UPDATE codebases SET quality_status=?, quality_reasons=? WHERE id=?",
+            (status, json.dumps(list(dict.fromkeys(reasons)), ensure_ascii=False), int(entry_id)),
+        )
+        conn.commit()
 
 
 def update_codebase(entry_id: int, code: str, prompt: Optional[str] = None) -> None:
@@ -276,6 +328,20 @@ def fetch_cached_seed(codebase_id: int, code_hash: str) -> Optional[int]:
             SELECT seed
             FROM codebase_seed_cache
             WHERE codebase_id = ? AND code_hash = ?
+              AND (
+                NOT EXISTS (
+                  SELECT 1 FROM codebase_quality_validation q
+                  WHERE q.codebase_id = codebase_seed_cache.codebase_id
+                    AND q.code_hash = codebase_seed_cache.code_hash
+                )
+                OR EXISTS (
+                  SELECT 1 FROM codebase_quality_validation q
+                  WHERE q.codebase_id = codebase_seed_cache.codebase_id
+                    AND q.code_hash = codebase_seed_cache.code_hash
+                    AND q.seed = codebase_seed_cache.seed
+                    AND q.status = 'approved'
+                )
+              )
             ORDER BY RANDOM()
             LIMIT 1
             """,
@@ -296,6 +362,20 @@ def list_cached_seeds(codebase_id: int, code_hash: str, limit: int = 100) -> Lis
             SELECT seed
             FROM codebase_seed_cache
             WHERE codebase_id = ? AND code_hash = ?
+              AND (
+                NOT EXISTS (
+                  SELECT 1 FROM codebase_quality_validation q
+                  WHERE q.codebase_id = codebase_seed_cache.codebase_id
+                    AND q.code_hash = codebase_seed_cache.code_hash
+                )
+                OR EXISTS (
+                  SELECT 1 FROM codebase_quality_validation q
+                  WHERE q.codebase_id = codebase_seed_cache.codebase_id
+                    AND q.code_hash = codebase_seed_cache.code_hash
+                    AND q.seed = codebase_seed_cache.seed
+                    AND q.status = 'approved'
+                )
+              )
             ORDER BY RANDOM()
             LIMIT ?
             """,
@@ -316,6 +396,39 @@ def save_cached_seed(codebase_id: int, code_hash: str, seed: int) -> None:
         )
         conn.commit()
     record_validated_seed(codebase_id, code_hash, int(seed))
+
+
+def record_seed_quality(
+    codebase_id: int,
+    code_hash: str,
+    seed: int,
+    status: str,
+    reasons: List[str],
+) -> None:
+    """필요 변수: 코드베이스·해시·시드·최종 품질 결과. 작동 원리: 원시 실행 성공과 학생 노출 승인을 분리해 시드 단위로 UPSERT한다."""
+    if status not in {"approved", "rejected"}:
+        raise ValueError(f"invalid seed quality status: {status}")
+    init_db()
+    with _get_db_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO codebase_quality_validation
+            (codebase_id, code_hash, seed, status, reasons_json, checked_at)
+            VALUES (?, ?, ?, ?, ?, strftime('%s','now'))
+            ON CONFLICT(codebase_id, code_hash, seed) DO UPDATE SET
+                status=excluded.status,
+                reasons_json=excluded.reasons_json,
+                checked_at=excluded.checked_at
+            """,
+            (
+                int(codebase_id),
+                code_hash,
+                int(seed),
+                status,
+                json.dumps(list(dict.fromkeys(reasons)), ensure_ascii=False),
+            ),
+        )
+        conn.commit()
 
 
 def record_validated_seed(codebase_id: int, code_hash: str, seed: int) -> None:

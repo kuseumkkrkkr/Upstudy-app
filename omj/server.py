@@ -102,6 +102,11 @@ from clean_riddles import build_clean_payload
 from baselines.basemodel import ContentBlocks
 
 from exam_service import plan_exam_items
+from csat_concept_index import (
+    csat_index_metadata,
+    get_csat_concept_difficulty,
+    get_csat_hard_combinations,
+)
 
 from generater.fix_gen import (
     allowed_generation_tags,
@@ -117,6 +122,8 @@ from generater.codebase_runner import (
 )
 
 from generater.problem_solve import generate_problem_set
+from student_problem_content_review import require_student_problem_contract
+from difficulty_contract import DIFFICULTY_CONTRACTS, clamp_difficulty_tier
 from services.jobs.cancellation import (
     GenerationCancelled,
     cancel_token,
@@ -151,7 +158,7 @@ from generater.seed_validator import run_seed_validation_cycle, validate_codebas
 
 from generater.codebase_repair import repair_codebase
 
-from rating_service import apply_rating_update, fetch_tag_ratings, fetch_user_rating
+from rating_service import apply_rating_batch, apply_rating_update, fetch_tag_ratings, fetch_user_rating
 
 from storage.exam_storage import (
     add_exam_items,
@@ -175,6 +182,7 @@ from storage.exam_editor_storage import (
 
 from storage.storage import (
     DB_PATH,
+    claim_cached_quests,
     get_quest,
     get_last_store_error,
     init_db,
@@ -216,6 +224,7 @@ from storage.ox_quiz_storage import (
     insert_questions,
 )
 from services.ai.sam_client import DEFAULT_TAG_AGENT_MODEL, generate_json, is_sam_configured
+from services.problem_runtime_cache import problem_runtime_cache
 
 from storage.social_storage import (
     add_friend,
@@ -239,7 +248,7 @@ from storage.social_storage import (
 from storage.study_group_storage import init_study_group_db
 from study_group import study_group_router
 
-from storage.rating_storage import init_rating_db
+from storage.postgres_rating_store import postgres_rating_store
 from storage.teacher_store import (
     init_teacher_store_db,
     purchase as teacher_store_purchase,
@@ -354,6 +363,27 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _embedded_background_workers_enabled() -> bool:
+    """필요 변수: RUN_EMBEDDED_BACKGROUND_WORKERS. 작동 원리: 다중 웹 프로세스에서 작업 워커·생성 풀 중복 기동을 명시적으로 차단한다."""
+    return os.getenv("RUN_EMBEDDED_BACKGROUND_WORKERS", "1").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+@app.get("/health/ready")
+def health_ready() -> Dict[str, Any]:
+    """필요 변수: 현재 저장소 환경. 작동 원리: 선택한 상용 캐시 계층이 검증·연결된 경우에만 배포 준비 완료를 반환한다."""
+    from services.runtime_readiness import runtime_readiness
+
+    report = runtime_readiness()
+    if report["ready"] is not True:
+        raise HTTPException(status_code=503, detail=report)
+    return report
+
+
 def _safe_include_router(router, *, name: str) -> None:
     try:
         app.include_router(router)
@@ -365,6 +395,13 @@ def _safe_include_router(router, *, name: str) -> None:
 def include_api_routers() -> None:
     """Attach API routers with explicit diagnostics."""
     app.include_router(study_group_router)
+
+    # 대결장 라우터는 독립 도메인으로 로드해 기존 소셜 기능과 장애를 분리한다.
+    try:
+        from arena import router as arena_router
+        _safe_include_router(arena_router, name="arena")
+    except Exception as exc:
+        logger.error("failed to load arena router: %s", exc)
 
     # V2 course routers
     try:
@@ -468,6 +505,8 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
 
 _GEN_SEMAPHORE = asyncio.Semaphore(2)
+_CACHE_REFILL_LOCK = threading.Lock()
+_CACHE_REFILL_INFLIGHT: Dict[str, int] = {}
 _EXAM_ITEM_MAX_CONCURRENT = max(1, int(os.getenv("EXAM_ITEM_MAX_CONCURRENT", "8")))
 _EXAM_ITEM_SEMAPHORE = asyncio.Semaphore(_EXAM_ITEM_MAX_CONCURRENT)
 
@@ -635,14 +674,19 @@ async def _startup_event() -> None:
     init_continue_db()
     init_solve_history_db()
     init_weakness_db()
-    init_rating_db()
+    postgres_rating_store.require_ready()
     init_teacher_store_db()
     init_teacher_exam_document_db()
     init_student_account_db()
     init_user_db()
     init_course_db()
     _init_variant_tray_db()
-    # Start background job worker
+    # 웹/워커 모드와 관계없이 정적 문제 파일이 없거나 손상되면 서버를 준비 완료로 올리지 않는다.
+    await _validate_level_test_static_db()
+    if not _embedded_background_workers_enabled():
+        logger.info("embedded background workers disabled for web process")
+        return
+    # 단일 프로세스 개발 모드에서만 내장 작업 워커를 시작한다. 상용 다중 웹 프로세스는 전용 worker_main을 사용한다.
     from services.jobs.worker import JobWorker
     from services.jobs.store import JobStore
     stale_before = (datetime.now(timezone.utc) - timedelta(hours=6)).isoformat()
@@ -659,16 +703,13 @@ async def _startup_event() -> None:
         max_concurrent=worker_concurrency,
     )
     await app.state.job_worker.start()
-    app.state.level_test_template_pool_task = asyncio.create_task(
-        _ensure_level_test_template_pool()
-    )
 
 
 @app.on_event("shutdown")
 async def _shutdown_event() -> None:
     if hasattr(app.state, "job_worker"):
         await app.state.job_worker.stop()
-    for task_name in ("level_test_template_pool_task", "seed_validator_task"):
+    for task_name in ("seed_validator_task",):
         task = getattr(app.state, task_name, None)
         if task is None:
             continue
@@ -681,35 +722,20 @@ async def _shutdown_event() -> None:
     shutdown_process_pool(wait=False)
 
 
-async def _ensure_level_test_template_pool() -> None:
-    target_count = max(0, int(os.getenv("LEVEL_TEST_TEMPLATE_TARGET", "5")))
-    if target_count <= 0:
-        return
+async def _validate_level_test_static_db() -> None:
+    """필요 변수: 배포된 레벨테스트 정적 DB. 작동 원리: 서버 시작 시 읽기 전용 무결성만 확인하고 문제 생성이나 운영 DB 쓰기는 하지 않는다."""
     try:
-        from domain.level_test import engine as level_test_engine
-        from domain.level_test import repository as level_test_repo
+        from domain.level_test.static_store import validate_static_database
 
-        while level_test_repo.count_ready_placement_templates() < target_count:
-            template_id = level_test_repo.create_placement_template(
-                version=level_test_engine.PLACEMENT_VERSION,
-                subject_mix=level_test_engine.placement_subject_mix(),
-                difficulty_profile=level_test_engine.placement_difficulty_profile(),
-                status="generating",
-            )
-            try:
-                items = await asyncio.to_thread(
-                    level_test_engine.build_placement_template_items
-                )
-                if len(items) != level_test_engine.PLACEMENT_QUESTION_COUNT:
-                    raise RuntimeError("level-test template is incomplete")
-                level_test_repo.add_placement_template_items(template_id, items)
-                level_test_repo.set_placement_template_status(template_id, "ready")
-            except Exception as exc:
-                logger.error("failed to generate level-test template: %s", exc)
-                level_test_repo.set_placement_template_status(template_id, "failed")
-                return
+        report = await asyncio.to_thread(validate_static_database)
+        logger.info(
+            "level-test static DB ready: problems=%s templates=%s",
+            report["problem_count"],
+            report["template_count"],
+        )
     except Exception as exc:
-        logger.error("failed to ensure level-test template pool: %s", exc)
+        logger.error("failed to validate level-test static DB: %s", exc)
+        raise RuntimeError("level-test static DB is not ready") from exc
 
 
 def _save_seed_history(user_id: str, entries: List[Dict[str, Any]]) -> None:
@@ -798,6 +824,46 @@ def _record_seed_history_entry(
         except Exception:
             continue
         mapping.setdefault(cb, set()).add(sd)
+
+
+def _enqueue_cache_refill(
+    *,
+    user_id: str,
+    hash_tags: List[str],
+    min_tier: int,
+    max_tier: int,
+    question_count: int,
+) -> bool:
+    """필요 변수: 생성 조건과 보충 수량. 작동 원리: 동일 조건의 보충 작업을 짧은 시간에 한 번만 등록해 요청 폭주가 생성 폭주로 번지는 것을 막는다."""
+    if question_count < 1:
+        return False
+    normalized_tags = sorted({str(tag).strip().lstrip("#") for tag in hash_tags if str(tag).strip()})
+    if not normalized_tags:
+        return False
+    key = f"{','.join(normalized_tags)}|{min_tier}|{max_tier}"
+    now = int(time.time())
+    with _CACHE_REFILL_LOCK:
+        previous = _CACHE_REFILL_INFLIGHT.get(key, 0)
+        if now - previous < 300:
+            return False
+        _CACHE_REFILL_INFLIGHT[key] = now
+    try:
+        JobStateMachine().start_job(
+            user_id=user_id,
+            job_type="quest_cache_refill",
+            payload={
+                "hash_tags": hash_tags,
+                "min_difficulty_tier": min_tier,
+                "max_difficulty_tier": max_tier,
+                "question_count": min(10, question_count),
+            },
+        )
+        return True
+    except Exception:
+        with _CACHE_REFILL_LOCK:
+            _CACHE_REFILL_INFLIGHT.pop(key, None)
+        logger.exception("failed to enqueue quest cache refill")
+        return False
 
 
 def _update_exam_score_sheet(
@@ -1643,6 +1709,7 @@ class VariantBaseQuestRef(BaseModel):
 
 class VariantFlowNodeDraft(BaseModel):
     node_id: str
+    node_type: Optional[str] = None
     text: Optional[str] = None
     hash_tags: List[str] = Field(default_factory=list)
     branches: List[str] = Field(default_factory=list)
@@ -1663,6 +1730,93 @@ class VariantFlowDraftRequest(BaseModel):
     solves_count: int = Field(default=4, ge=1, le=10)
     strategy_level: int = Field(default=2, ge=1, le=3)
     branch_conditions: int = Field(default=1, ge=0, le=5)
+
+
+def _validate_typed_variant_flow_graph(
+    flow_draft: List[VariantFlowNodeDraft],
+) -> Optional[str]:
+    """노드 유형이 포함된 새 캔버스 요청의 참조 무결성과 DAG 역할 규칙을 검사한다."""
+    if not flow_draft or not all((node.node_type or "").strip() for node in flow_draft):
+        return None
+    if len(flow_draft) > 32:
+        return "flow_draft supports at most 32 typed nodes"
+
+    allowed_types = {
+        "condition", "concept", "insight", "reasoning",
+        "computation", "trap", "merge", "verification",
+    }
+    max_outgoing = {
+        "condition": 4,
+        "concept": 4,
+        "insight": 4,
+        "reasoning": 4,
+        "computation": 2,
+        "trap": 2,
+        "merge": 1,
+        "verification": 0,
+    }
+    node_ids = [node.node_id.strip() for node in flow_draft]
+    if any(not node_id for node_id in node_ids) or len(set(node_ids)) != len(node_ids):
+        return "node_id values must be non-empty and unique"
+
+    by_id = {node.node_id.strip(): node for node in flow_draft}
+    indegree = {node_id: 0 for node_id in node_ids}
+    undirected = {node_id: set() for node_id in node_ids}
+    for node_id, node in by_id.items():
+        node_type = (node.node_type or "").strip()
+        if node_type not in allowed_types:
+            return f"unsupported node_type: {node_type}"
+        targets = [str(target).strip() for target in node.branches]
+        if len(targets) != len(set(targets)):
+            return f"duplicate branches are not allowed: {node_id}"
+        if len(targets) > max_outgoing[node_type]:
+            return f"{node_type} node exceeds its outgoing connection limit"
+        for target_id in targets:
+            if target_id == node_id:
+                return "self connections are not allowed"
+            if target_id not in by_id:
+                return f"unknown branch target: {target_id}"
+            indegree[target_id] += 1
+            undirected[node_id].add(target_id)
+            undirected[target_id].add(node_id)
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(node_id: str) -> bool:
+        if node_id in visiting:
+            return False
+        if node_id in visited:
+            return True
+        visiting.add(node_id)
+        for target_id in by_id[node_id].branches:
+            if not visit(str(target_id).strip()):
+                return False
+        visiting.remove(node_id)
+        visited.add(node_id)
+        return True
+
+    if any(not visit(node_id) for node_id in node_ids):
+        return "flow graph must be acyclic"
+
+    connected = set()
+    pending = [node_ids[0]]
+    while pending:
+        current = pending.pop()
+        if current in connected:
+            continue
+        connected.add(current)
+        pending.extend(undirected[current] - connected)
+    if len(connected) != len(node_ids):
+        return "flow graph contains disconnected nodes"
+    if not any(node.node_type == "verification" for node in flow_draft):
+        return "at least one verification node is required"
+    for node in flow_draft:
+        if not node.branches and node.node_type != "verification":
+            return "every terminal flow must be a verification node"
+        if node.node_type == "merge" and indegree[node.node_id.strip()] < 2:
+            return "merge nodes require at least two incoming connections"
+    return None
 
 
 class VariantPromptNoteRequest(BaseModel):
@@ -2612,13 +2766,17 @@ class RatingSubmitRequest(BaseModel):
 
     is_correct: bool
 
-    tags: List[str] = Field(default_factory=list)
-
     answer_time: Optional[float] = None
 
     step_correctness: List[Dict[str, Any]] = Field(default_factory=list)
 
-    submission_id: Optional[str] = None
+    submission_id: str = Field(min_length=1, max_length=160)
+
+
+
+class RatingBatchSubmitRequest(BaseModel):
+
+    items: List[RatingSubmitRequest] = Field(min_length=1, max_length=100)
 
 
 
@@ -2921,7 +3079,7 @@ def _startup() -> None:
 
     init_user_kv_db()
 
-    init_rating_db()
+    postgres_rating_store.require_ready()
 
     init_weakness_db()
 
@@ -2929,6 +3087,9 @@ def _startup() -> None:
 
     init_textbook_db()
     init_serverchat()
+
+    if not _embedded_background_workers_enabled():
+        return
 
     try:
 
@@ -3989,6 +4150,14 @@ async def create_exam_handler(
 
     try:
 
+        selected_concepts = [
+            tag
+            for exam_range in ranges
+            for tag in (exam_range.get("tags") or [])
+        ]
+
+        concept_index_metadata = csat_index_metadata()
+
         items = plan_exam_items(
 
             ranges=ranges,
@@ -3998,6 +4167,10 @@ async def create_exam_handler(
             question_count=payload.question_count,
 
             paper_type=payload.paper_type,
+
+            concept_difficulty_index=get_csat_concept_difficulty(selected_concepts),
+
+            concept_combinations=get_csat_hard_combinations(selected_concepts),
 
         )
 
@@ -4011,6 +4184,7 @@ async def create_exam_handler(
         params={
             **payload.model_dump(),
             "ranges": ranges,
+            "concept_index": concept_index_metadata,
         },
         status="queued",
     )
@@ -4266,7 +4440,7 @@ def deploy_exam_editor_paper_handler(
                 "status": "done",
                 "subject_key": "custom",
                 "hash_tags": hash_tags if isinstance(hash_tags, list) else [],
-                "difficulty_tier": int(q_info.get("difficulty") or 3),
+                "difficulty_tier": int(q_info.get("difficulty_tier") or 3),
                 "solves_count": max(1, len((quest or {}).get("solves", []) or [])),
                 "strategy_level": 3,
                 "branch_conditions": 2,
@@ -4902,6 +5076,42 @@ _VARIANT_METRIC_LABELS = {
     "low_rate": "하위권 예상 정답률",
 }
 
+_VARIANT_METRIC_DEFAULTS = {
+    "concept": 6,
+    "reasoning": 6,
+    "insight": 5,
+    "calculation": 4,
+    "information": 5,
+    "trap": 3,
+    "compression": 4,
+    "concept_count": 3,
+    "concept_depth": 5,
+    "prerequisite_depth": 4,
+    "graph_depth": 5,
+    "graph_width": 3,
+    "branch_factor": 1,
+    "merge_factor": 1,
+    "insight_count": 2,
+    "insight_depth": 5,
+    "insight_uniqueness": 5,
+    "condition_count": 4,
+    "condition_density": 5,
+    "hidden_information": 4,
+    "implicit_constraints": 4,
+    "symbolic_operations": 4,
+    "algebra_steps": 4,
+    "derivative_steps": 2,
+    "integral_steps": 1,
+    "simplification_cost": 4,
+    "trap_count": 2,
+    "trap_severity": 3,
+    "compression_score": 4,
+    "implicit_information": 4,
+    "top_rate": 82,
+    "middle_rate": 46,
+    "low_rate": 18,
+}
+
 _VARIANT_METRIC_DIRECTIVES = {
     "concept": "서로 다른 개념을 결합하되 정답 변수는 하나로 유지한다.",
     "reasoning": "조건 해석에서 결론까지 중간 추론 단계를 분명히 만든다.",
@@ -5008,6 +5218,19 @@ def _variant_metric_directive(key: str, value: int) -> str:
     )
 
 
+def _variant_metric_contract(key: str, value: int) -> str:
+    """횟수형 값은 검증 가능한 수량으로, 점수형 값은 강도로 모델에 전달한다."""
+    if key.endswith("_rate"):
+        return f"학생 시뮬레이션 목표 정답률 {value}%에 맞춰 난도를 보정한다."
+    if key.endswith("_count") or key.endswith("_steps") or key in {
+        "symbolic_operations",
+        "branch_factor",
+        "merge_factor",
+    }:
+        return f"문제와 풀이에서 식별 가능한 해당 요소를 목표 {value}회(개)로 설계한다."
+    return f"1~10 척도에서 목표 강도 {value}가 드러나도록 설계한다."
+
+
 def _variant_metric_example(key: str, value: int) -> Optional[str]:
     if _variant_metric_is_low(key, value):
         return _VARIANT_METRIC_LOW_EXAMPLES.get(key)
@@ -5044,25 +5267,36 @@ def _normalize_variant_metrics(raw_metrics: Any) -> Dict[str, int]:
 
 def _variant_metric_weight(item: Tuple[str, int]) -> float:
     key, value = item
-    if key.endswith("_rate"):
-        return abs(value - 50) / 10.0
-    return abs(value - 5)
+    baseline = _VARIANT_METRIC_DEFAULTS.get(key, 5)
+    difference = abs(value - baseline)
+    return difference / 10.0 if key.endswith("_rate") else float(difference)
 
 
 def _build_variant_generation_context(payload: Any, tags: List[str]) -> Dict[str, Any]:
+    """필요 변수: 생성 요청·태그·UI 기본값. 작동 원리: 사용자가 조절한 축만 하드 제약으로 분리해 상충 지시를 줄인다."""
     profile = payload.advanced_profile if isinstance(payload.advanced_profile, dict) else {}
     metrics = _normalize_variant_metrics(payload.advanced_metrics)
     if not metrics:
         metrics = _normalize_variant_metrics(profile.get("metrics"))
 
+    changed_metrics = {
+        key: value
+        for key, value in metrics.items()
+        if value != _VARIANT_METRIC_DEFAULTS.get(key, 5)
+    }
     dominant_metrics = []
-    for key, value in sorted(metrics.items(), key=_variant_metric_weight, reverse=True)[:8]:
+    for key, value in sorted(
+        changed_metrics.items(),
+        key=_variant_metric_weight,
+        reverse=True,
+    )[:12]:
         dominant_metrics.append(
             {
                 "id": key,
                 "label": _VARIANT_METRIC_LABELS.get(key, key),
                 "value": value,
                 "directive": _variant_metric_directive(key, value),
+                "contract": _variant_metric_contract(key, value),
             }
         )
 
@@ -5075,7 +5309,7 @@ def _build_variant_generation_context(payload: Any, tags: List[str]) -> Dict[str
             examples.append(example)
 
     node_directives = []
-    for node in getattr(payload, "flow_draft", [])[:8]:
+    for node in getattr(payload, "flow_draft", [])[:32]:
         instruction = node.teacher_instruction or node.prompt_text or node.text
         text = _compact_variant_text(instruction, 260)
         if not text:
@@ -5083,8 +5317,9 @@ def _build_variant_generation_context(payload: Any, tags: List[str]) -> Dict[str
         node_directives.append(
             {
                 "node_id": node.node_id,
+                "node_type": node.node_type,
                 "tags": [str(tag) for tag in (node.hash_tags or [])[:5]],
-                "branches": [str(branch) for branch in (node.branches or [])[:5]],
+                "branches": [str(branch) for branch in (node.branches or [])[:8]],
                 "instruction": text,
             }
         )
@@ -5100,9 +5335,10 @@ def _build_variant_generation_context(payload: Any, tags: List[str]) -> Dict[str
         "profile_label": _compact_variant_text(profile.get("label"), 80),
         "profile_intent": _compact_variant_text(profile.get("intent"), 180),
         "metrics": metrics,
+        "changed_metrics": changed_metrics,
         "dominant_metrics": dominant_metrics,
         "node_directives": node_directives,
-        "examples": examples[:4],
+        "examples": examples[:8],
         "prompt_excerpt": _compact_variant_text(payload.prompt, 900),
     }
 
@@ -5390,42 +5626,98 @@ async def generate_quest_batch_stream_handler(
     if not hash_tags:
         raise HTTPException(status_code=400, detail="hash_tags must not be empty")
 
-    history_entries, history_map = _load_recent_seed_history(user_id)
     stream_token = f"stream:{user_id}:{uuid.uuid4()}"
     cancel_event = register_token(stream_token)
 
     async def _event_stream():
         try:
-            async with _GEN_SEMAPHORE:
-                generation_task = asyncio.create_task(asyncio.to_thread(
-                    generate_problem_set,
-                    hash_tags=hash_tags,
-                    min_difficulty_tier=payload.min_difficulty_tier,
-                    max_difficulty_tier=payload.max_difficulty_tier,
-                    question_count=payload.question_count,
-                    recent_codebase_seeds={key: list(value) for key, value in history_map.items()},
-                    cancel_event=cancel_event,
-                ))
-                while not generation_task.done():
-                    if await request.is_disconnected():
-                        cancel_event.set()
-                        hard_cancel_process_pool()
-                        generation_task.cancel()
-                        raise GenerationCancelled("stream disconnected")
-                    await asyncio.sleep(0.2)
-                quests = await generation_task
-            check_cancelled(cancel_event)
-            for quest in quests:
+            # 최근 풀이 이력에 없는 전역 캐시를 먼저 사용자별 큐에서 꺼낸다.
+            cached_quests, cache_state = await asyncio.to_thread(
+                claim_cached_quests,
+                user_id=user_id,
+                hash_tags=hash_tags,
+                min_difficulty_tier=payload.min_difficulty_tier,
+                max_difficulty_tier=payload.max_difficulty_tier,
+                question_count=payload.question_count,
+                prefetch_count=max(10, payload.question_count),
+            )
+            # 기존 캐시도 본문·정답·풀이 전체 검수를 통과한 문제만 학생에게 전달한다.
+            approved_cached_quests = []
+            for quest in cached_quests:
+                try:
+                    info = quest.get("info") if isinstance(quest.get("info"), dict) else {}
+                    tier = clamp_difficulty_tier(info.get("difficulty_tier"))
+                    contract = DIFFICULTY_CONTRACTS[tier]
+                    approved_cached_quests.append(
+                        require_student_problem_contract(
+                            quest,
+                            expected_solve_count=contract.solves_count,
+                            expected_tags=info.get("hash_tag") or [],
+                        )
+                    )
+                except ValueError:
+                    continue
+            cached_quests = approved_cached_quests
+            for quest in cached_quests:
                 check_cancelled(cancel_event)
-                if not store_data(quest):
-                    detail = get_last_store_error() or "failed to store quest"
-                    yield f"data: {json.dumps({'error': detail}, ensure_ascii=False)}\n\n"
-                    return
-                cb_id, seed_val = _extract_codebase_seed(quest)
-                _record_seed_history_entry(user_id, history_entries, history_map, cb_id, seed_val)
+                asyncio.create_task(
+                    asyncio.to_thread(
+                        problem_runtime_cache.record_delivery,
+                        user_id=user_id,
+                        quest=quest,
+                    )
+                )
                 yield f"data: {json.dumps(quest, ensure_ascii=False)}\n\n"
 
-            _save_seed_history(user_id, history_entries)
+            # 캐시가 부족한 경우에만 보충 작업을 큐에 넣는다. 50%/최소 1개 확장 결과는
+            # 5% 확률로 신규 생성도 함께 시도해 캐시 품질이 한 조건에 고착되지 않게 한다.
+            refill_count = max(0, cache_state["queued"])
+            matched = cache_state["match_stage"]
+            if cached_quests and 0 < matched < len(hash_tags):
+                bucket = int(hashlib.sha256(f"{user_id}:{stream_token}".encode("utf-8")).hexdigest()[:4], 16)
+                if bucket % 20 == 0:
+                    refill_count = max(refill_count, 1)
+            if refill_count:
+                _enqueue_cache_refill(
+                    user_id=user_id,
+                    hash_tags=hash_tags,
+                    min_tier=payload.min_difficulty_tier,
+                    max_tier=payload.max_difficulty_tier,
+                    question_count=refill_count,
+                )
+
+            # 캐시 미스 또는 내용 검수 탈락분은 동기 생성으로 채워 요청 문항 수를 보장한다.
+            # 검수 통과 캐시는 즉시 제공하고 장기 보충은 worker가 담당한다.
+            missing_count = max(0, payload.question_count - len(cached_quests))
+            if missing_count:
+                history_entries, history_map = _load_recent_seed_history(user_id)
+                async with _GEN_SEMAPHORE:
+                    quests = await asyncio.to_thread(
+                        generate_problem_set,
+                        hash_tags=hash_tags,
+                        min_difficulty_tier=payload.min_difficulty_tier,
+                        max_difficulty_tier=payload.max_difficulty_tier,
+                        question_count=missing_count,
+                        recent_codebase_seeds={key: list(value) for key, value in history_map.items()},
+                        cancel_event=cancel_event,
+                    )
+                for quest in quests:
+                    check_cancelled(cancel_event)
+                    if not store_data(quest):
+                        detail = get_last_store_error() or "failed to store quest"
+                        yield f"data: {json.dumps({'error': detail}, ensure_ascii=False)}\n\n"
+                        return
+                    cb_id, seed_val = _extract_codebase_seed(quest)
+                    _record_seed_history_entry(user_id, history_entries, history_map, cb_id, seed_val)
+                    asyncio.create_task(
+                        asyncio.to_thread(
+                            problem_runtime_cache.record_delivery,
+                            user_id=user_id,
+                            quest=quest,
+                        )
+                    )
+                    yield f"data: {json.dumps(quest, ensure_ascii=False)}\n\n"
+                _save_seed_history(user_id, history_entries)
             yield "data: [DONE]\n\n"
 
         except ValueError as exc:
@@ -5447,6 +5739,13 @@ def generate_variant_from_flow_draft(
 ) -> VariantGenerateResponse:
     if not payload.flow_draft:
         return _variant_rejection("missing_field", "flow_draft must not be empty", "Add at least one node")
+    graph_error = _validate_typed_variant_flow_graph(payload.flow_draft)
+    if graph_error:
+        return _variant_rejection(
+            "invalid_flow_graph",
+            graph_error,
+            "Reconnect nodes as one acyclic flow ending in verification",
+        )
     try:
         tags = _resolve_variant_tags(payload.tags, payload.base_quest_ref)
     except (TypeError, ValueError) as exc:
@@ -5786,6 +6085,11 @@ def record_problem_habit(
         tags_json=json.dumps(payload.tags, ensure_ascii=False),
         quest_title=payload.quest_title or "",
     )
+    problem_runtime_cache.record_solved(
+        user_id=user_id,
+        codebase_id=payload.codebase_id,
+        seed=str(payload.seed),
+    )
     return ProblemHabitItem(
         codebase_id=stored["codebase_id"],
         seed=str(stored["seed"]),
@@ -5794,6 +6098,24 @@ def record_problem_habit(
         retry_count=stored["retry_count"],
         updated_at=stored["updated_at"],
     )
+
+
+@app.get("/problems/trending")
+def list_trending_problems(
+    minutes: int = 15,
+    limit: int = 20,
+    user_id: str = Depends(_get_user_id),  # noqa: ARG001 - 통계 조회 권한 확인용 인증
+) -> Dict[str, Any]:
+    """필요 변수: 집계 시간과 반환 개수. 작동 원리: Redis 분 단위 전달량과 활성 사용자 수를 합산해 급상승 문제를 반환한다."""
+    safe_minutes = max(1, min(minutes, 60))
+    safe_limit = max(1, min(limit, 100))
+    return {
+        "minutes": safe_minutes,
+        "items": problem_runtime_cache.list_trending(
+            minutes=safe_minutes,
+            limit=safe_limit,
+        ),
+    }
 
 
 @app.get("/habit/problem", response_model=ProblemHabitListResponse)
@@ -6664,32 +6986,14 @@ def _save_solve_image(
     user_id: Optional[str],
 
 ) -> Optional[str]:
+    """풀이 분석 이미지를 서버 파일 시스템에 남기지 않는다.
 
-    if not image_bytes:
-
-        return None
-
-    safe_user = (user_id or "anonymous").replace(os.sep, "_")
-
-    stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S%fZ")
-
-    filename = f"{prefix}_{safe_user}_{stamp}.png"
-
-    path = os.path.join(_ASSETS_DIR, "solve_images", filename)
-
-    try:
-
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        with open(path, "wb") as handle:
-
-            handle.write(image_bytes)
-
-        return path
-
-    except Exception:
-
-        return None
+    필요 변수: 요청에서 전달된 이미지 바이트, 파일 종류, 사용자 식별자.
+    작동 원리: OCR/채점 처리에는 메모리의 이미지 바이트만 사용하고, 디버깅 종료 정책에 따라
+    학생 풀이·문제·히트맵 원본을 디스크에 기록하지 않는다. 인자는 호출 호환성을 위해 유지한다.
+    """
+    del image_bytes, prefix, user_id
+    return None
 
 
 
@@ -6813,16 +7117,9 @@ async def analyze_solve(
         pass
 
     try:
-        # Persist solve history for weakness/review (full for 30d, compressed afterwards)
+        # 이의신청 확인용 풀이 이력은 storage 정책에 따라 최근 7일만 보관한다.
         kind = "exam" if payload.get("exam_id") else "problem"
         codebase_id, seed_val = _extract_codebase_seed(payload)
-        delete_after_max = True
-        device_kind = payload.get("device_kind") or payload.get("data", {}).get("device_kind")
-        local_storage_flag = payload.get("local_storage")
-        if isinstance(local_storage_flag, bool) and local_storage_flag:
-            delete_after_max = False
-        elif isinstance(device_kind, str) and device_kind.lower() in {"native", "local", "offline"}:
-            delete_after_max = False
         history_payload = {
             **result,
             "all_formulas": payload.get("all_formulas") or [],
@@ -6841,7 +7138,8 @@ async def analyze_solve(
             codebase_id=codebase_id,
             seed=seed_val,
             payload=history_payload,
-            delete_after_max=delete_after_max,
+            # 클라이언트 값으로 서버 보관 기간을 연장할 수 없다.
+            delete_after_max=True,
         )
         if kind == "exam" and payload.get("exam_id"):
             _update_exam_score_sheet(
@@ -7007,12 +7305,6 @@ def submit_rating(
 
         raise HTTPException(status_code=404, detail="Quest not found")
 
-    tags = payload.tags
-
-    if not tags:
-
-        tags = (quest.get("info", {}) or {}).get("hash_tag", []) or []
-
     result = apply_rating_update(
 
         user_id=user_id,
@@ -7020,8 +7312,6 @@ def submit_rating(
         quest=quest,
 
         is_correct=bool(payload.is_correct),
-
-        submitted_tags=tags,
 
         step_outcomes=payload.step_correctness,
 
@@ -7044,6 +7334,30 @@ def submit_rating(
         lose_streak=result.lose_streak,
 
     )
+
+
+@app.post("/rating/submit-batch", response_model=List[RatingResponse])
+def submit_rating_batch(
+    payload: RatingBatchSubmitRequest,
+    user_id: str = Depends(_get_user_id),
+) -> List[RatingResponse]:
+    """필요 변수: 인증 사용자와 필수 제출 키가 있는 채점 목록. 작동 원리: 서버 문제 원본을 조회한 뒤 한 PostgreSQL 트랜잭션으로 순서대로 반영한다."""
+    submissions = []
+    for item in payload.items:
+        quest = get_quest(item.quest_id)
+        if not quest:
+            raise HTTPException(status_code=404, detail=f"Quest not found: {item.quest_id}")
+        submissions.append({
+            "quest": quest,
+            "is_correct": item.is_correct,
+            "step_outcomes": item.step_correctness,
+            "response_time_seconds": item.answer_time,
+            "submission_ref": item.submission_id,
+        })
+    return [
+        RatingResponse(**result.__dict__)
+        for result in apply_rating_batch(user_id=user_id, submissions=submissions)
+    ]
 
 
 
@@ -7339,8 +7653,9 @@ async def _generate_exam_item(
                 False,
                 None,
                 item.get("question_type"),
-                used_codebase_ids,
+                None,  # 동일 승인 코드베이스의 다른 검증 시드는 재사용해 30문항 cold generation을 줄인다.
                 avoid_seeds_by_codebase=snapshot_avoid,
+                student_ready_only=True,
             )
             data_block = storage_data.get("data") or {}
             codebase_id = data_block.get("codebase_id")

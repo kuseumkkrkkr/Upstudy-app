@@ -11,6 +11,7 @@ import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
     as study_center;
 import 'package:s11/sessions/course/session/course_learning_page.dart';
+import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'shared.dart';
 
@@ -53,8 +54,16 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
     }
   }
 
+  /// 필요 변수: 현재 코스의 수강 여부와 코스 ID를 사용한다.
+  /// 작동 원리: 이미 수강 중이면 추가 API 요청 없이 학습 화면으로 이동하고, 미수강일 때만 한 번 등록한다.
   Future<void> _enrollAndGo() async {
-    if (widget.course.isDemo) return;
+    if (widget.course.isDemo || _course.isCompleted) return;
+    if (_course.isEnrolled) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => CourseLearningPage(course: _course)),
+      );
+      return;
+    }
     setState(() => _enrolling = true);
     try {
       final enrolled = await CourseService.enroll(widget.course.id);
@@ -72,6 +81,19 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
     }
   }
 
+  /// 필요 변수: 현재 Navigator의 이전 경로 존재 여부를 사용한다.
+  /// 작동 원리: 목록으로 복귀할 수 있으면 pop하고, 단독 진입이면 코스 목록을 새 기준 화면으로 연다.
+  void _goBack() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+    navigator.pushReplacement(
+      MaterialPageRoute(builder: (_) => const CourseCatalogPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = courseUiScale(context);
@@ -81,9 +103,12 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
         : course.description;
     final progressPercent = (course.progress * 100).round();
     final isEnrolled = course.isEnrolled;
-    final primaryActionLabel = course.isDemo
+    final primaryActionLabel = course.isCompleted
+        ? '완료한 코스 · 미리보기'
+        : course.isDemo
         ? '데모 코스입니다'
         : (isEnrolled ? '코스 계속하기' : '수강 신청');
+    final canStartCourse = !course.isDemo && !course.isCompleted;
 
     return Scaffold(
       backgroundColor: kCourseBgGrey,
@@ -96,6 +121,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                   children: [
                     Ios26TopBar(
                       brandColor: kCourseGreen,
+                      onBack: _goBack,
                       onTitleTap: () =>
                           Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
@@ -135,7 +161,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                       scale: scale,
                       progressPercent: progressPercent,
                       primaryActionLabel: primaryActionLabel,
-                      onPrimary: course.isDemo ? null : _enrollAndGo,
+                      onPrimary: canStartCourse ? _enrollAndGo : null,
                       enrolling: _enrolling,
                     ),
                     Padding(
@@ -214,7 +240,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton(
-                              onPressed: course.isDemo ? null : _enrollAndGo,
+                              onPressed: canStartCourse ? _enrollAndGo : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: kCourseGreen,
                                 foregroundColor: Colors.white,
