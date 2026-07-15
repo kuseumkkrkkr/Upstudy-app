@@ -1,10 +1,10 @@
-﻿import 'package:s11/shared/services/api/auth_service.dart';
+import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/percent_indicator.dart';
 
 import 'sign_up_3.dart';
 import 'package:s11/sessions/auth/session/signup_flow.dart';
+import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
 
 class BuildpageCopyWidget extends StatefulWidget {
   const BuildpageCopyWidget({
@@ -221,169 +221,98 @@ class _BuildpageCopyWidgetState extends State<BuildpageCopyWidget> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // 헤더
-                _buildHeader(),
-
-                // 진행률 표시
-                LinearPercentIndicator(
-                  percent: _progressPercent,
-                  lineHeight: 8,
-                  animation: true,
-                  animateFromLastPercent: true,
-                  progressColor: const Color(0xFF1B402B),
-                  backgroundColor: const Color(0xFFE6E6E6),
-                  padding: EdgeInsets.zero,
-                ),
-
-                const SizedBox(height: 20),
-
-                // 아이디 입력
-                _buildInputSection(
-                  label: '사용할 아이디를 알려주세요',
-                  hint: _idHint,
-                  controller: _idController,
-                  enabled: !_idConfirmed,
-                  onChanged: (_) {
-                    if (_idConfirmed) return;
-                    if (_idHint != '4자리 ~ 16자리 영어 대소문자와 숫자만 가능합니다') {
-                      setState(() {
-                        _idHint = '4자리 ~ 16자리 영어 대소문자와 숫자만 가능합니다';
-                      });
-                    }
-                  },
-                ),
-
-                _buildSlidingSection(
-                  visible: _showPasswordSection,
-                  sectionKey: 'password',
-                  child: _buildInputSection(
-                    label: '사용하실 비밀번호를 입력해주세요',
-                    hint: _passwordHint,
-                    controller: _passwordController,
-                    topPadding: 10,
-                    enabled: !_passwordConfirmed,
-                    onChanged: (_) {
-                      if (_passwordConfirmed) return;
-                      if (_passwordHint != ' 8 ~ 20자리 영어 대소문자와 숫자를 포함하여야 합니다') {
-                        setState(() {
-                          _passwordHint = ' 8 ~ 20자리 영어 대소문자와 숫자를 포함하여야 합니다';
-                        });
-                      }
-                    },
-                  ),
-                ),
-
-                _buildSlidingSection(
-                  visible: _showEmailSection,
-                  sectionKey: 'email',
-                  child: _buildInputSection(
-                    label: '이메일을 입력해 주세요(선택)',
-                    hint: _emailHint,
-                    controller: _emailController,
-                    topPadding: 10,
-                    onChanged: (_) {
-                      if (_emailHint.isNotEmpty) {
-                        setState(() => _emailHint = '');
-                      }
-                    },
-                  ),
-                ),
-
-                // 액션 버튼
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: ElevatedButton(
-                    onPressed: (_submitting || _checkingId || _checkingPassword)
-                        ? null
-                        : _idConfirmed
-                        ? _passwordConfirmed
-                              ? _submit
-                              : _confirmPassword
-                        : _checkUsername,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B402B),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(150, 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      _idConfirmed
-                          ? _passwordConfirmed
-                                ? '가입하기'
-                                : '▼ 계속하기'
-                          : '중복확인',
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
-
-                // 로그인 버튼
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      minimumSize: const Size(300, 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      '이미 계정이 있으신가요? 로그인',
-                      style: TextStyle(color: Color(0xFF575757), fontSize: 20),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      height: 70,
-      color: Colors.white,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF3B3B3B),
-                size: 50,
-              ),
-              onPressed: () {
-                Navigator.of(context).maybePop();
+      child: AuthFlowScaffold(
+        eyebrow: 'New account · Security',
+        title: '안전한 계정을\n완성해요.',
+        description: '로그인에 사용할 아이디와 비밀번호를 설정합니다. 이메일은 계정 복구에 활용할 수 있어요.',
+        progress: _progressPercent,
+        stepLabel: '2 / 3',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildInputSection(
+              label: '사용할 아이디를 알려주세요',
+              hint: _idHint,
+              controller: _idController,
+              enabled: !_idConfirmed,
+              onChanged: (_) {
+                if (_idConfirmed) return;
+                if (_idHint != '4자리 ~ 16자리 영어 대소문자와 숫자만 가능합니다') {
+                  setState(() {
+                    _idHint = '4자리 ~ 16자리 영어 대소문자와 숫자만 가능합니다';
+                  });
+                }
               },
             ),
-          ),
-          const Text(
-            'AIFlow',
-            style: TextStyle(
-              color: Color(0xFF1B402B),
-              fontSize: 50,
-              fontWeight: FontWeight.bold,
+
+            _buildSlidingSection(
+              visible: _showPasswordSection,
+              sectionKey: 'password',
+              child: _buildInputSection(
+                label: '사용하실 비밀번호를 입력해주세요',
+                hint: _passwordHint,
+                controller: _passwordController,
+                topPadding: 10,
+                enabled: !_passwordConfirmed,
+                onChanged: (_) {
+                  if (_passwordConfirmed) return;
+                  if (_passwordHint != ' 8 ~ 20자리 영어 대소문자와 숫자를 포함하여야 합니다') {
+                    setState(() {
+                      _passwordHint = ' 8 ~ 20자리 영어 대소문자와 숫자를 포함하여야 합니다';
+                    });
+                  }
+                },
+              ),
             ),
-          ),
-        ],
+
+            _buildSlidingSection(
+              visible: _showEmailSection,
+              sectionKey: 'email',
+              child: _buildInputSection(
+                label: '이메일을 입력해 주세요(선택)',
+                hint: _emailHint,
+                controller: _emailController,
+                topPadding: 10,
+                onChanged: (_) {
+                  if (_emailHint.isNotEmpty) {
+                    setState(() => _emailHint = '');
+                  }
+                },
+              ),
+            ),
+
+            const SizedBox(height: 18),
+            AuthPrimaryButton(
+              label: _idConfirmed
+                  ? _passwordConfirmed
+                        ? '가입 완료하기'
+                        : '비밀번호 확인'
+                  : '아이디 중복 확인',
+              onPressed: (_submitting || _checkingId || _checkingPassword)
+                  ? null
+                  : _idConfirmed
+                  ? _passwordConfirmed
+                        ? _submit
+                        : _confirmPassword
+                  : _checkUsername,
+              loading: _submitting || _checkingId || _checkingPassword,
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: const Text(
+                '이미 계정이 있으신가요? 로그인',
+                style: TextStyle(
+                  color: AuthDesignTokens.muted,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -396,56 +325,49 @@ class _BuildpageCopyWidgetState extends State<BuildpageCopyWidget> {
     bool enabled = true,
     ValueChanged<String>? onChanged,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(48, topPadding, 0, 0),
-          child: Text(
+    return Padding(
+      padding: EdgeInsets.only(top: topPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
             label,
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: AuthDesignTokens.ink,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -.4,
+            ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(48, 20, 48, 0),
-          child: TextField(
+          const SizedBox(height: 12),
+          TextField(
             controller: controller,
             enabled: enabled,
-            style: const TextStyle(fontSize: 30),
-            decoration: InputDecoration(
-              hintText: 'TextField',
-              filled: true,
-              fillColor: const Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 16,
-              ),
+            obscureText: label.contains('비밀번호'),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            decoration: authInputDecoration(
+              label.contains('아이디')
+                  ? '아이디'
+                  : label.contains('비밀번호')
+                  ? '비밀번호'
+                  : '이메일 (선택)',
             ),
             onChanged: onChanged,
           ),
-        ),
-        if (hint.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(48, 5, 0, 0),
-            child: Text(
-              hint,
-              style: const TextStyle(color: Color(0xFF45BF63), fontSize: 16),
+          if (hint.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 7),
+              child: Text(
+                hint.trim(),
+                style: const TextStyle(
+                  color: AuthDesignTokens.muted,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

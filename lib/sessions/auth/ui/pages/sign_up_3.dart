@@ -1,10 +1,8 @@
-import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:flutter/material.dart';
-// ignore_for_file: unused_import
-import 'package:percent_indicator/percent_indicator.dart';
 
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/auth/session/signup_flow.dart';
+import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
 
 class BuildpageCopyCopyWidget extends StatefulWidget {
   const BuildpageCopyCopyWidget({
@@ -76,80 +74,65 @@ class _BuildpageCopyCopyWidgetState extends State<BuildpageCopyCopyWidget>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // 헤더
-              _buildHeader(),
-
-              // 진행률 표시
-              AnimatedBuilder(
-                animation: _progress,
-                builder: (context, child) {
-                  return LinearPercentIndicator(
-                    percent: _progress.value,
-                    lineHeight: 8,
-                    animation: false,
-                    progressColor: const Color(0xFF1B402B),
-                    backgroundColor: const Color(0xFFE6E6E6),
-                    padding: EdgeInsets.zero,
-                  );
-                },
-              ),
-
-              // 중앙 메시지
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    '거의 다 되었습니다\n조금만 기다려주세요',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 100,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+      child: AnimatedBuilder(
+        animation: _progress,
+        builder: (context, child) => AuthFlowScaffold(
+          eyebrow: 'New account · Complete',
+          title: '학습 공간을\n준비하고 있어요.',
+          description: '프로필과 추천 커리큘럼을 연결한 뒤 자동으로 학생 홈으로 이동합니다.',
+          progress: _progress.value,
+          stepLabel: '3 / 3',
+          child: const _CompletionCard(),
         ),
       ),
     );
   }
+}
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      height: 70,
-      color: Colors.white,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF3B3B3B),
-                size: 50,
-              ),
-              onPressed: () {
-                Navigator.of(context).maybePop();
-              },
-            ),
+class _CompletionCard extends StatelessWidget {
+  const _CompletionCard();
+
+  /// 필요한 변수는 없으며 가입 완료 대기 상태를 표시합니다.
+  /// 작동 원리는 회전 인디케이터와 짧은 안내로 자동 이동 중임을 명확히 전달하는 것입니다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 40),
+    decoration: BoxDecoration(
+      color: AuthDesignTokens.surfaceMuted,
+      border: Border.all(color: AuthDesignTokens.line),
+      borderRadius: BorderRadius.circular(22),
+    ),
+    child: const Column(
+      children: [
+        SizedBox.square(
+          dimension: 34,
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            color: AuthDesignTokens.ink,
           ),
-          const Text(
-            'AIFlow',
-            style: TextStyle(
-              color: Color(0xFF1B402B),
-              fontSize: 50,
-              fontWeight: FontWeight.bold,
-            ),
+        ),
+        SizedBox(height: 24),
+        Text(
+          '거의 다 되었습니다',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AuthDesignTokens.ink,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        SizedBox(height: 8),
+        Text(
+          '잠시만 기다려주세요. 안전하게 계정을 연결하고 있습니다.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AuthDesignTokens.muted,
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
+      ],
+    ),
+  );
 }

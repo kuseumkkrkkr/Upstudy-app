@@ -1,9 +1,9 @@
-﻿import 'package:s11/shared/services/api/auth_service.dart';
+import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/percent_indicator.dart';
 
 import 'sign_up_2.dart';
 import 'package:s11/sessions/auth/session/signup_flow.dart';
+import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
 
 class BuildpageWidget extends StatefulWidget {
   static const routeName = '/signup';
@@ -229,182 +229,124 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Header
-                _buildHeader(),
-
-                // Progress Indicator
-                LinearPercentIndicator(
-                  percent: _progressPercent,
-                  lineHeight: 8,
-                  animation: true,
-                  animateFromLastPercent: true,
-                  progressColor: const Color(0xFF1B402B),
-                  backgroundColor: const Color(0xFFE6E6E6),
-                  padding: EdgeInsets.zero,
-                ),
-
-                const SizedBox(height: 20),
-
-                // Name Input Section
-                _buildSectionTitle('제가 당신을 이렇게 부를꺼에요'),
-                const SizedBox(height: 20),
-                _buildTextField(
-                  _nameController,
-                  _nameFocusNode,
-                  enabled: !_nameConfirmed,
-                  onChanged: (value) {
-                    if (_nameConfirmed) return;
-                    if (_nameHint.isNotEmpty) {
-                      setState(() => _nameHint = '');
-                    }
-                  },
-                ),
-                if (_nameHint.isNotEmpty) ...[
-                  const SizedBox(height: 5),
-                  _buildHintText(_nameHint),
-                ],
-                const SizedBox(height: 20),
-                _buildSlidingSection(
-                  visible: !_nameConfirmed,
-                  sectionKey: 'name-action',
-                  child: _buildActionButton(
-                    '▼ 계속하기',
-                    onPressed: _nameValidating ? null : _confirmName,
-                  ),
-                ),
-
-                _buildSlidingSection(
-                  visible: _showTrackSection,
-                  sectionKey: 'track',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('과정을 선택해주세요'),
-                      const SizedBox(height: 10),
-                      _buildSchoolLevelButtons(),
-                      const SizedBox(height: 5),
-                      _buildHintText(
-                        '잘 선택해 주세요  커리큘럼 추천의 바탕이 되요 언제든 다시 입력할 수 있어요',
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
-                ),
-
-                _buildSlidingSection(
-                  visible: _showGradeSection,
-                  sectionKey: 'grade',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('학년을 선택해주세요'),
-                      const SizedBox(height: 10),
-                      _buildGradeButtons(),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
-                ),
-
-                _buildSlidingSection(
-                  visible: _showSubjectSection,
-                  sectionKey: 'subject',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('과목을 선택해주세요'),
-                      const SizedBox(height: 10),
-                      _buildSubjectButtons(),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
-                ),
-
-                _buildSlidingSection(
-                  visible: _showSchoolSection,
-                  sectionKey: 'school',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('학교명을 입력해주세요'),
-                      const SizedBox(height: 20),
-                      _buildSchoolAutocomplete(),
-                      const SizedBox(height: 5),
-                      _buildHintText(_schoolHint),
-                      const SizedBox(height: 20),
-                      Center(
-                        child: _buildActionButton(
-                          _isSchoolLocallyValid(_schoolValue)
-                              ? '완료하기'
-                              : '▼ 계속하기',
-                          onPressed: _schoolValidating
-                              ? null
-                              : _completeSchoolStep,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      height: 70,
-      color: Colors.white,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF3B3B3B),
-                size: 50,
-              ),
-              onPressed: () {
-                Navigator.of(context).maybePop();
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: AuthFlowScaffold(
+        eyebrow: 'New account · Profile',
+        title: '나에게 맞는\n학습을 준비해요.',
+        description: '이름과 학습 과정을 확인하면 AIFlow가 알맞은 커리큘럼을 준비합니다.',
+        progress: _progressPercent,
+        stepLabel: '1 / 3',
+        onBack: () => Navigator.of(context).maybePop(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildSectionTitle('제가 당신을 이렇게 부를 거예요'),
+            const SizedBox(height: 12),
+            _buildTextField(
+              _nameController,
+              _nameFocusNode,
+              enabled: !_nameConfirmed,
+              onChanged: (value) {
+                if (_nameConfirmed) return;
+                if (_nameHint.isNotEmpty) {
+                  setState(() => _nameHint = '');
+                }
               },
             ),
-          ),
-          const Text(
-            'AIFlow',
-            style: TextStyle(
-              color: Color(0xFF1B402B),
-              fontSize: 50,
-              fontWeight: FontWeight.bold,
+            if (_nameHint.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              _buildHintText(_nameHint),
+            ],
+            const SizedBox(height: 16),
+            _buildSlidingSection(
+              visible: !_nameConfirmed,
+              sectionKey: 'name-action',
+              child: _buildActionButton(
+                '▼ 계속하기',
+                onPressed: _nameValidating ? null : _confirmName,
+              ),
             ),
-          ),
-        ],
+
+            _buildSlidingSection(
+              visible: _showTrackSection,
+              sectionKey: 'track',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 28),
+                  _buildSectionTitle('과정을 선택해주세요'),
+                  const SizedBox(height: 12),
+                  _buildSchoolLevelButtons(),
+                  const SizedBox(height: 8),
+                  _buildHintText('커리큘럼 추천의 기준이며 나중에 다시 변경할 수 있어요.'),
+                ],
+              ),
+            ),
+
+            _buildSlidingSection(
+              visible: _showGradeSection,
+              sectionKey: 'grade',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 28),
+                  _buildSectionTitle('학년을 선택해주세요'),
+                  const SizedBox(height: 12),
+                  _buildGradeButtons(),
+                ],
+              ),
+            ),
+
+            _buildSlidingSection(
+              visible: _showSubjectSection,
+              sectionKey: 'subject',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 28),
+                  _buildSectionTitle('과목을 선택해주세요'),
+                  const SizedBox(height: 12),
+                  _buildSubjectButtons(),
+                ],
+              ),
+            ),
+
+            _buildSlidingSection(
+              visible: _showSchoolSection,
+              sectionKey: 'school',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 28),
+                  _buildSectionTitle('학교명을 입력해주세요'),
+                  const SizedBox(height: 12),
+                  _buildSchoolAutocomplete(),
+                  const SizedBox(height: 8),
+                  _buildHintText(_schoolHint),
+                  const SizedBox(height: 16),
+                  _buildActionButton(
+                    _isSchoolLocallyValid(_schoolValue)
+                        ? '프로필 완료하기'
+                        : '학교 선택 후 계속',
+                    onPressed: _schoolValidating ? null : _completeSchoolStep,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(left: 48),
-        child: Text(
-          title,
-          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-        ),
+    return Text(
+      title,
+      style: const TextStyle(
+        color: AuthDesignTokens.ink,
+        fontSize: 18,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -.4,
       ),
     );
   }
@@ -415,63 +357,36 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     bool enabled = true,
     ValueChanged<String>? onChanged,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        enabled: enabled,
-        style: const TextStyle(fontSize: 30),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: 'TextField',
-          filled: true,
-          fillColor: const Color(0xFFF5F5F5),
-          enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.transparent),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.transparent),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.red),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.red),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        onChanged: onChanged,
-      ),
+    return TextFormField(
+      controller: controller,
+      focusNode: focusNode,
+      enabled: enabled,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      decoration: authInputDecoration('이름', hintText: '예: 김에이'),
+      onChanged: onChanged,
     );
   }
 
   Widget _buildSchoolLevelButtons() {
     final hasSelection = _selectedTrack != null;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildRoundedButton(
-              '중학',
-              dimmed: hasSelection && _selectedTrack != '중학',
-              onTap: () => _selectTrack('중학'),
-            ),
+    return Row(
+      children: [
+        Expanded(
+          child: _buildRoundedButton(
+            '중학',
+            dimmed: hasSelection && _selectedTrack != '중학',
+            onTap: () => _selectTrack('중학'),
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: _buildRoundedButton(
-              '고등',
-              dimmed: hasSelection && _selectedTrack != '고등',
-              onTap: () => _selectTrack('고등'),
-            ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildRoundedButton(
+            '고등',
+            dimmed: hasSelection && _selectedTrack != '고등',
+            onTap: () => _selectTrack('고등'),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -479,56 +394,50 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     final hasSelection = _selectedGrade != null;
     const grades = ['1학년', '2학년', '3학년'];
     final options = _isHighSchool ? [...grades, 'N수이상'] : grades;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: Row(
-        children: [
-          for (var i = 0; i < options.length; i++) ...[
-            Expanded(
-              child: _buildRoundedButton(
-                options[i],
-                dimmed: hasSelection && _selectedGrade != options[i],
-                onTap: () => _selectGrade(options[i]),
-              ),
+    return Row(
+      children: [
+        for (var i = 0; i < options.length; i++) ...[
+          Expanded(
+            child: _buildRoundedButton(
+              options[i],
+              dimmed: hasSelection && _selectedGrade != options[i],
+              onTap: () => _selectGrade(options[i]),
             ),
-            if (i < options.length - 1) const SizedBox(width: 12),
-          ],
+          ),
+          if (i < options.length - 1) const SizedBox(width: 8),
         ],
-      ),
+      ],
     );
   }
 
   Widget _buildSubjectButtons() {
     final hasSelection = _selectedSubject != null;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildRoundedButton(
-              '확률과 통계',
-              dimmed: hasSelection && _selectedSubject != '확률과 통계',
-              onTap: () => _selectSubject('확률과 통계'),
-            ),
+    return Row(
+      children: [
+        Expanded(
+          child: _buildRoundedButton(
+            '확률과 통계',
+            dimmed: hasSelection && _selectedSubject != '확률과 통계',
+            onTap: () => _selectSubject('확률과 통계'),
           ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: _buildRoundedButton(
-              '기하와 벡터',
-              dimmed: hasSelection && _selectedSubject != '기하와 벡터',
-              onTap: () => _selectSubject('기하와 벡터'),
-            ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildRoundedButton(
+            '기하와 벡터',
+            dimmed: hasSelection && _selectedSubject != '기하와 벡터',
+            onTap: () => _selectSubject('기하와 벡터'),
           ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: _buildRoundedButton(
-              '미분과 적분',
-              dimmed: hasSelection && _selectedSubject != '미분과 적분',
-              onTap: () => _selectSubject('미분과 적분'),
-            ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildRoundedButton(
+            '미분과 적분',
+            dimmed: hasSelection && _selectedSubject != '미분과 적분',
+            onTap: () => _selectSubject('미분과 적분'),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -537,23 +446,31 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     required bool dimmed,
     VoidCallback? onTap,
   }) {
-    final color = dimmed ? const Color(0xFF949494) : const Color(0xFF1B402B);
-    return GestureDetector(
+    final selected = !dimmed;
+    return InkWell(
       onTap: onTap,
-      child: Container(
-        height: 70,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        constraints: const BoxConstraints(minHeight: 48),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(24),
+          color: selected
+              ? AuthDesignTokens.ink
+              : AuthDesignTokens.surfaceMuted,
+          border: Border.all(
+            color: selected ? AuthDesignTokens.ink : AuthDesignTokens.line,
+          ),
+          borderRadius: BorderRadius.circular(16),
         ),
-        child: Center(
-          child: Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w600,
-            ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: selected ? Colors.white : AuthDesignTokens.muted,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
@@ -561,33 +478,21 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   Widget _buildHintText(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(left: 48),
-        child: Text(
-          text,
-          style: const TextStyle(color: Color(0xFF45BF63), fontSize: 16),
-        ),
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AuthDesignTokens.muted,
+        fontSize: 11,
+        height: 1.45,
       ),
     );
   }
 
   Widget _buildActionButton(String text, {VoidCallback? onPressed}) {
-    return ElevatedButton(
+    return AuthPrimaryButton(
+      label: text.replaceFirst('▼ ', ''),
       onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF1B402B),
-        foregroundColor: Colors.white,
-        minimumSize: const Size(150, 40),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-      ),
+      loading: _nameValidating || _schoolValidating,
     );
   }
 
@@ -619,91 +524,63 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   Widget _buildSchoolAutocomplete() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: Autocomplete<String>(
-        optionsBuilder: (TextEditingValue textEditingValue) {
-          final query = textEditingValue.text.trim();
-          if (query.isEmpty) {
-            return const Iterable<String>.empty();
-          }
-          return _schoolSuggestions.where((option) => option.contains(query));
-        },
-        onSelected: (selection) {
-          setState(() {
-            _schoolValue = selection;
-            _schoolValidated = false;
-          });
-        },
-        fieldViewBuilder:
-            (context, textEditingController, focusNode, onFieldSubmitted) {
-              _schoolController = textEditingController;
-              return TextFormField(
-                controller: textEditingController,
-                focusNode: focusNode,
-                style: const TextStyle(fontSize: 30),
-                decoration: InputDecoration(
-                  isDense: true,
-                  hintText: 'TextField',
-                  filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.transparent),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.transparent),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.red),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.red),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _schoolValue = value;
-                    _schoolValidated = false;
-                    if (_schoolHint !=
-                        '입력은 선택이며 언제든 다시 입력하거나 삭제할 수 있어요 / 목록에 없는 학교는 서비스 대상이 아니에요') {
-                      _schoolHint =
-                          '입력은 선택이며 언제든 다시 입력하거나 삭제할 수 있어요 / 목록에 없는 학교는 서비스 대상이 아니에요';
-                    }
-                  });
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        final query = textEditingValue.text.trim();
+        if (query.isEmpty) {
+          return const Iterable<String>.empty();
+        }
+        return _schoolSuggestions.where((option) => option.contains(query));
+      },
+      onSelected: (selection) {
+        setState(() {
+          _schoolValue = selection;
+          _schoolValidated = false;
+        });
+      },
+      fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+        _schoolController = textEditingController;
+        return TextFormField(
+          controller: textEditingController,
+          focusNode: focusNode,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          decoration: authInputDecoration('학교', hintText: '학교명을 검색하세요'),
+          onChanged: (value) {
+            setState(() {
+              _schoolValue = value;
+              _schoolValidated = false;
+              if (_schoolHint !=
+                  '입력은 선택이며 언제든 다시 입력하거나 삭제할 수 있어요 / 목록에 없는 학교는 서비스 대상이 아니에요') {
+                _schoolHint =
+                    '입력은 선택이며 언제든 다시 입력하거나 삭제할 수 있어요 / 목록에 없는 학교는 서비스 대상이 아니에요';
+              }
+            });
+          },
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            color: AuthDesignTokens.surface,
+            elevation: 8,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220, maxWidth: 560),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options.elementAt(index);
+                  return ListTile(
+                    title: Text(option),
+                    onTap: () => onSelected(option),
+                  );
                 },
-              );
-            },
-        optionsViewBuilder: (context, onSelected, options) {
-          return Align(
-            alignment: Alignment.topLeft,
-            child: Material(
-              color: Colors.white,
-              elevation: 2,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: 220,
-                  maxWidth: 520,
-                ),
-                child: ListView.builder(
-                  padding: EdgeInsets.zero,
-                  itemCount: options.length,
-                  itemBuilder: (context, index) {
-                    final option = options.elementAt(index);
-                    return ListTile(
-                      title: Text(option),
-                      onTap: () => onSelected(option),
-                    );
-                  },
-                ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
