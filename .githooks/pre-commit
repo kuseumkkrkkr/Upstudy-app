@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# 필요한 변수: 현재 Git 브랜치 이름.
+# 작동 원리: main이 아닌 브랜치와 detached HEAD에서 새 커밋을 차단한다.
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+
+if [ "$branch" != "main" ]; then
+  echo "커밋이 차단되었습니다. 이 저장소는 main 브랜치에서만 커밋할 수 있습니다." >&2
+  exit 1
+fi
+
+exit 0
