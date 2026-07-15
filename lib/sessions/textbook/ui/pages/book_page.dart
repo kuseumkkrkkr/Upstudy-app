@@ -127,7 +127,7 @@ class BookLibraryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF1B402B);
+    const primary = Color(0xFF202022);
     const bg = Color(0xFFF8F8F8);
     const border = Color(0x1A000000);
 
@@ -396,8 +396,8 @@ class _BookLibraryBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF1B402B);
-    const primaryLight = Color(0xFF45BF63);
+    const primary = Color(0xFF202022);
+    const primaryLight = Color(0xFF707075);
     const border = Color(0xFFE0E3E7);
     const shadow = BoxShadow(
       blurRadius: 4,
@@ -654,7 +654,7 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF1B402B);
+    const primary = Color(0xFF202022);
     const bg = Color(0xFFF8F8F8);
     const border = Color(0xFFE0E3E7);
     const shadow = BoxShadow(
@@ -806,8 +806,8 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
 enum _ToolMode { none, pen, highlighter, eraser }
 
 class _BookWidgetState extends State<BookWidget> {
-  static const Color kPrimary = Color(0xFF1B402B);
-  static const Color kPrimaryLight = Color(0xFF45BF63);
+  static const Color kPrimary = Color(0xFF202022);
+  static const Color kPrimaryLight = Color(0xFF707075);
   static const Color kBg = Color(0xFFF8F8F8);
   static const Color kBorder = Color(0xFFE0E3E7);
 
@@ -2732,7 +2732,7 @@ class _WidthChip extends StatelessWidget {
         width: 36,
         height: 28,
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF1B402B) : Colors.white,
+          color: selected ? const Color(0xFF202022) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFFE0E3E7)),
         ),

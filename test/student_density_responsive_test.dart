@@ -815,8 +815,9 @@ void main() {
     expect(find.text('알림'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -900));
     await tester.pumpAndSettle();
-    expect(find.text('STORAGE CONTRACT'), findsOneWidget);
-    expect(find.text('settings.notifications_enabled'), findsOneWidget);
+    expect(find.text('STORAGE CONTRACT'), findsNothing);
+    expect(find.text('settings.notifications_enabled'), findsNothing);
+    expect(find.text('자동 저장'), findsOneWidget);
   });
 
   testWidgets('500px 학습 액션은 HTML처럼 전체 화면 패널과 하단 닫기를 사용한다', (tester) async {

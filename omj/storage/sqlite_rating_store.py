@@ -141,7 +141,7 @@ class SQLiteRatingStore:
 
     def ensure_ready(self) -> None:
         """필요 변수: QUEST_DB_PATH. 작동 원리: startup 전에 fallback 테이블을 한 번 준비한다."""
-        connection = connect_sqlite(DB_PATH)
+        connection = connect_sqlite(DB_PATH, row_factory=sqlite3.Row)
         try:
             _ensure_schema(connection)
         finally:
@@ -150,7 +150,7 @@ class SQLiteRatingStore:
     @contextmanager
     def transaction(self) -> Iterator[SQLiteRatingCursor]:
         """필요 변수: SQLite 연결·WAL 설정. 작동 원리: 한 요청의 레이팅 변경을 원자적으로 commit 또는 rollback한다."""
-        connection = connect_sqlite(DB_PATH)
+        connection = connect_sqlite(DB_PATH, row_factory=sqlite3.Row)
         _ensure_schema(connection)
         try:
             connection.execute("BEGIN")

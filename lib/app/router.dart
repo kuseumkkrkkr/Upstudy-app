@@ -14,7 +14,6 @@ import 'package:s11/features/level_test/level_test.dart';
 import 'package:s11/features/student_schedule/student_schedule.dart';
 import 'package:s11/features/wrong_answer/wrong_answer.dart';
 import 'package:s11/features/group_study/group_study.dart';
-import 'package:s11/features/course_runtime/course_runtime_page.dart';
 import 'package:s11/features/flow_access/flow_access_page.dart';
 import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
@@ -51,7 +50,7 @@ class AppRoutes {
 
   // ─── Learning ───
   static const String studentRuntime = StudentRuntimePage.routeName;
-  static const String courseRuntime = CourseRuntimePage.routeName;
+  static const String courseRuntime = '/course_runtime';
   static const String flowAccess = FlowAccessPage.routeName;
 
   // ─── Level Test ───
@@ -111,7 +110,10 @@ Map<String, WidgetBuilder> appRoutes(
 
     // Learning
     AppRoutes.studentRuntime: (_) => const StudentRuntimePage(),
-    AppRoutes.courseRuntime: (_) => const CourseRuntimePage(),
+    // 필요한 변수는 레거시 코스 런타임 경로다.
+    // 작동 원리: 인자가 없는 과거 경로는 런타임 상태를 가진 CourseLearningPage를 직접 만들 수 없으므로,
+    // 실제 학습 진입을 결정하는 코스 목록으로 연결해 개발 중 플레이스홀더를 노출하지 않는다.
+    AppRoutes.courseRuntime: (_) => const CourseCatalogPage(),
     AppRoutes.flowAccess: (_) => const FlowAccessPage(),
 
     // Level Test

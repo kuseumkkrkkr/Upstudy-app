@@ -6,6 +6,7 @@ import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/features/group_study/student_academy_details_dialog.dart';
 
@@ -144,6 +145,7 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
   @override
   Widget build(BuildContext context) {
     final academy = _academy;
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
@@ -174,54 +176,76 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
                   : RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                        padding: EdgeInsets.fromLTRB(
+                          studentDensityHorizontalPadding(context),
+                          studentDensityVerticalPadding(context),
+                          studentDensityHorizontalPadding(context),
+                          40,
+                        ),
                         children: [
-                          const Text(
-                            'ACADEMY',
-                            style: TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 1.7,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w900,
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 1280),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  StudentDensityPageHeader(
+                                    eyebrow: 'ACADEMY',
+                                    title: '학원',
+                                    description: '오늘 수업과 과제를 한곳에서 확인합니다.',
+                                    action: OutlinedButton(
+                                      onPressed: _openAcademyDetails,
+                                      child: const Text('학원 정보'),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _AcademyInfoCard(
+                                    academy: academy,
+                                    attendancePresent: _attendancePresent,
+                                    remainingTasks: _tasks
+                                        .where((task) => !task.completed)
+                                        .length,
+                                    nextClass: _schedule.isEmpty
+                                        ? '목 19:30'
+                                        : _schedule.first['time']?.toString() ??
+                                              '목 19:30',
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (mobile)
+                                    _TodayAcademyCard(
+                                      tasks: _tasks,
+                                      attendancePresent: _attendancePresent,
+                                    )
+                                  else
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          flex: 13,
+                                          child: _TodayAcademyCard(
+                                            tasks: _tasks,
+                                            attendancePresent:
+                                                _attendancePresent,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          flex: 7,
+                                          child: _AcademyTimetableCard(
+                                            schedule: _schedule,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  if (mobile) ...[
+                                    const SizedBox(height: 12),
+                                    _AcademyTimetableCard(schedule: _schedule),
+                                  ],
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '학원',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '오늘 수업과 과제를 한곳에서 확인합니다.',
-                            style: TextStyle(color: Colors.black45),
-                          ),
-                          const SizedBox(height: 16),
-                          OutlinedButton(
-                            onPressed: _openAcademyDetails,
-                            child: const Text('학원 정보'),
-                          ),
-                          const SizedBox(height: 12),
-                          _AcademyInfoCard(
-                            academy: academy,
-                            attendancePresent: _attendancePresent,
-                            remainingTasks: _tasks
-                                .where((task) => !task.completed)
-                                .length,
-                            nextClass: _schedule.isEmpty
-                                ? '목 19:30'
-                                : _schedule.first['time']?.toString() ??
-                                      '목 19:30',
-                          ),
-                          const SizedBox(height: 12),
-                          _TodayAcademyCard(
-                            tasks: _tasks,
-                            attendancePresent: _attendancePresent,
-                          ),
-                          const SizedBox(height: 12),
-                          _AcademyTimetableCard(schedule: _schedule),
                         ],
                       ),
                     ),

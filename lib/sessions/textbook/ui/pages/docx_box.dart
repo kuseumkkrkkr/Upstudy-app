@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B402B)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF202022)),
         fontFamily: 'Inter',
       ),
       home: const BookWidget(),
@@ -405,7 +405,7 @@ class _BookWidgetState extends State<BookWidget> {
   //  HERO SECTION
   // ══════════════════════════════════════════════════════════
   /// 필요한 변수는 교재·시험지·북마크 수와 최근 방문 목록이다.
-  /// 작동 원리는 HTML 책가방의 소개 카드, 3열 통계, 최근 방문 목록을 하나의 반응형 흐름으로 구성하는 것이다.
+  /// 작동 원리는 HTML 책가방의 요약·최근·자료 카드 순서를 유지하고, 넓은 화면에서는 요약 정보를 한 줄로 압축하는 것이다.
   Widget _buildHeroSection(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 980;
@@ -429,36 +429,38 @@ class _BookWidgetState extends State<BookWidget> {
                 isCompact ? 20 : 30,
                 20,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'MY LEARNING MATERIALS',
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 720;
+                  final titleBlock = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          '책가방',
-                          style: TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1.8,
-                          ),
+                      const Text(
+                        'MY LEARNING MATERIALS',
+                        style: TextStyle(
+                          color: Colors.black45,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.4,
                         ),
                       ),
-                      _buildSearchBar(isCompact: isCompact),
+                      const SizedBox(height: 10),
+                      const Text(
+                        '책가방',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1.8,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        '최근 자료를 이어보거나 보관된 학습 자료를 찾으세요.',
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
                     ],
-                  ),
-                  const SizedBox(height: 28),
-                  ValueListenableBuilder<List<ExamPaperEntry>>(
+                  );
+                  final stats = ValueListenableBuilder<List<ExamPaperEntry>>(
                     valueListenable: ExamPaperStore.notifier,
                     builder: (_, exams, __) => Row(
                       children: [
@@ -481,8 +483,31 @@ class _BookWidgetState extends State<BookWidget> {
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  );
+                  if (!wide) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: titleBlock),
+                            _buildSearchBar(isCompact: true),
+                          ],
+                        ),
+                        const SizedBox(height: 22),
+                        stats,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(flex: 5, child: titleBlock),
+                      Expanded(flex: 4, child: stats),
+                      const SizedBox(width: 18),
+                      _buildSearchBar(),
+                    ],
+                  );
+                },
               ),
             ),
           ),
@@ -643,7 +668,7 @@ class _BookWidgetState extends State<BookWidget> {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            color: const Color(0xFF5A6E64),
+            color: const Color(0xFF66666C),
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
@@ -655,7 +680,7 @@ class _BookWidgetState extends State<BookWidget> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               '아직 없어요',
-              style: TextStyle(color: const Color(0xFF75877E), fontSize: 13),
+              style: TextStyle(color: const Color(0xFF77777D), fontSize: 13),
             ),
           )
         else
@@ -709,7 +734,7 @@ class _BookWidgetState extends State<BookWidget> {
                   _LatexLine(
                     item.subtitle,
                     style: TextStyle(
-                      color: const Color(0xFF687C72),
+                      color: const Color(0xFF707075),
                       fontSize: 11,
                     ),
                   ),
@@ -725,7 +750,7 @@ class _BookWidgetState extends State<BookWidget> {
                   color: BookWidget.brightGreen,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: const Color(0xFFBBD8CA),
+                    color: const Color(0xFFD4D4D8),
                     width: 0.6,
                   ),
                 ),
@@ -1270,12 +1295,13 @@ class _BookWidgetState extends State<BookWidget> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE0E0E2)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1F000000),
-            blurRadius: 14,
-            offset: Offset(0, 6),
+            color: Color(0x12000000),
+            blurRadius: 22,
+            offset: Offset(0, 10),
           ),
         ],
       ),

@@ -7,6 +7,7 @@ import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/auth/ui/pages/sign_up.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 class LoginPage extends StatefulWidget {
   static const routeName = '/login';
@@ -234,35 +235,6 @@ class _LoginPageState extends State<LoginPage> {
           child: const Text('처음 오셨나요? 회원가입'),
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F6),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '로그인 성공',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.black45,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              SizedBox(height: 5),
-              Text(
-                'POST /auth/login → setToken → 학생 홈',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontFamily: 'monospace',
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -283,6 +255,125 @@ class _LoginPageState extends State<LoginPage> {
       borderSide: const BorderSide(color: Colors.black, width: 1.5),
     ),
   );
+
+  /// 필요한 변수는 로그인 폼과 현재 화면 폭이다.
+  /// 작동 원리는 HTML 시안처럼 PC는 소개와 입력 폼을 2열로, 모바일은 같은 내용을 읽기 순서대로 1열로 배치한다.
+  Widget _buildLoginLayout(BuildContext context, Widget form) {
+    final mobile = isStudentDensityMobile(context);
+    final story = Container(
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 22 : 52,
+        mobile ? 28 : 56,
+        mobile ? 22 : 52,
+        mobile ? 26 : 52,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF202022),
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(28),
+          topRight: mobile ? const Radius.circular(28) : Radius.zero,
+          bottomLeft: mobile ? Radius.zero : const Radius.circular(28),
+        ),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'A   AIFlow',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 44),
+          Text(
+            'WELCOME BACK',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 10,
+              letterSpacing: 1.6,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 14),
+          Text(
+            '멈춘 곳에서\n다시 시작해요.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 52,
+              height: .95,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 30),
+          Text(
+            '로그인하면 코스 진도, 필기, 복습 기록과 그룹 활동을 그대로 이어갑니다.',
+            style: TextStyle(color: Colors.white54, height: 1.5),
+          ),
+          SizedBox(height: 42),
+          _RestoreNotice(),
+        ],
+      ),
+    );
+    final formCard = Container(
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 22 : 52,
+        mobile ? 32 : 56,
+        mobile ? 22 : 52,
+        mobile ? 28 : 52,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          bottomLeft: mobile ? const Radius.circular(28) : Radius.zero,
+          bottomRight: const Radius.circular(28),
+          topRight: mobile ? Radius.zero : const Radius.circular(28),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'STUDENT LOGIN',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 1.6,
+              color: Colors.black54,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 36),
+          const Text(
+            '로그인',
+            style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            '아이디 또는 이메일로 로그인하세요.',
+            style: TextStyle(color: Colors.black45),
+          ),
+          form,
+        ],
+      ),
+    );
+    final layout = mobile
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [story, formCard],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 11, child: story),
+              Expanded(flex: 9, child: formCard),
+            ],
+          );
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1280),
+      child: layout,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -344,93 +435,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(22, 28, 22, 26),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF202022),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'A   AIFlow',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                        Text(
-                          'WELCOME BACK',
-                          style: TextStyle(
-                            color: Colors.white54,
-                            fontSize: 10,
-                            letterSpacing: 1.6,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                        Text(
-                          '멈춘 곳에서\n다시 시작해요.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 42,
-                            height: .95,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        SizedBox(height: 34),
-                        Text(
-                          '로그인하면 코스 진도, 필기, 복습 기록과 그룹 활동을 그대로 이어갑니다.',
-                          style: TextStyle(color: Colors.white54, height: 1.5),
-                        ),
-                        SizedBox(height: 42),
-                        _RestoreNotice(),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(22, 32, 22, 28),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(28),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'STUDENT LOGIN',
-                          style: TextStyle(
-                            fontSize: 10,
-                            letterSpacing: 1.6,
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 36),
-                        const Text(
-                          '로그인',
-                          style: TextStyle(
-                            fontSize: 42,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          '아이디 또는 이메일로 로그인하세요.',
-                          style: TextStyle(color: Colors.black45),
-                        ),
-                        form,
-                      ],
-                    ),
-                  ),
-                ],
+                padding: EdgeInsets.fromLTRB(
+                  studentDensityHorizontalPadding(context),
+                  studentDensityVerticalPadding(context),
+                  studentDensityHorizontalPadding(context),
+                  40,
+                ),
+                children: [Center(child: _buildLoginLayout(context, form))],
               ),
             ),
           ],

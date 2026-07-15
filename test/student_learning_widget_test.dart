@@ -289,7 +289,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('첫 번째 풀이 단계'), findsOneWidget);
-    expect(find.text('문제 정보'), findsNothing);
+    expect(find.text('문제 정보'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('첫 번째 풀이 단계')).dy,
+      lessThan(tester.getTopLeft(find.text('문제 정보')).dy),
+    );
     expect(find.byTooltip('축소'), findsOneWidget);
     expect(find.byTooltip('확대'), findsOneWidget);
     expect(find.text('초기화'), findsOneWidget);

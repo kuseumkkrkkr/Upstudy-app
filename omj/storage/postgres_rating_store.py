@@ -30,7 +30,7 @@ class PostgresRatingStore:
 
     @contextmanager
     def transaction(self) -> Iterator[Any]:
-        """필요 변수: 공유 PostgreSQL 연결 풀. 작동 원리: 연결 단위 트랜잭션을 열고 예외 시 자동 롤백한다."""
+        """필요 변수: DATABASE_URL·공유 연결 풀. 작동 원리: PostgreSQL 설정 시 PostgreSQL을, 미설정 시 SQLite를 같은 트랜잭션 계약으로 사용한다."""
         if not self._postgres_configured():
             with self._sqlite_store().transaction() as cur:
                 yield cur
