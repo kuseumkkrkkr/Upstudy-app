@@ -8,6 +8,7 @@ import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
+import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
@@ -106,7 +107,15 @@ Map<String, dynamic> _arenaResponsiveSummary() => {
   'profile': {'tier': 'B', 'rating': 1580, 'wins': 18, 'losses': 9, 'draws': 2},
   'queues': [
     for (final type in ['duel_exam', 'duel_ox', 'team_exam', 'team_ox'])
-      {'queue_type': type, 'tier': 'B', 'rating': 1580, 'wins': 18, 'losses': 9, 'draws': 2, 'estimated_wait_seconds': 12},
+      {
+        'queue_type': type,
+        'tier': 'B',
+        'rating': 1580,
+        'wins': 18,
+        'losses': 9,
+        'draws': 2,
+        'estimated_wait_seconds': 12,
+      },
   ],
 };
 
@@ -815,8 +824,9 @@ void main() {
     expect(find.text('알림'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -900));
     await tester.pumpAndSettle();
-    expect(find.text('STORAGE CONTRACT'), findsOneWidget);
-    expect(find.text('settings.notifications_enabled'), findsOneWidget);
+    expect(find.text('STORAGE CONTRACT'), findsNothing);
+    expect(find.text('settings.notifications_enabled'), findsNothing);
+    expect(find.text('자동 저장'), findsOneWidget);
   });
 
   testWidgets('500px 학습 액션은 HTML처럼 전체 화면 패널과 하단 닫기를 사용한다', (tester) async {
@@ -853,11 +863,16 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MaterialApp(home: ArenaPage(initialSummary: _arenaResponsiveSummary())));
+    await tester.pumpWidget(
+      MaterialApp(home: ArenaPage(initialSummary: _arenaResponsiveSummary())),
+    );
     await tester.pump();
 
     expect(find.byKey(const ValueKey('arena-mobile-overview')), findsOneWidget);
-    expect(find.byKey(const ValueKey('arena-mobile-queue-list')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('arena-mobile-queue-list')),
+      findsOneWidget,
+    );
     await tester.drag(find.byType(ListView).first, const Offset(0, -620));
     await tester.pump();
     await tester.tap(find.text('2 VS 2'));
@@ -872,13 +887,21 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MaterialApp(home: ArenaPage(initialSummary: _arenaResponsiveSummary())));
+    await tester.pumpWidget(
+      MaterialApp(home: ArenaPage(initialSummary: _arenaResponsiveSummary())),
+    );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('arena-desktop-overview')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('arena-desktop-overview')),
+      findsOneWidget,
+    );
     await tester.drag(find.byType(ListView).first, const Offset(0, -560));
     await tester.pump();
-    expect(find.byKey(const ValueKey('arena-desktop-queue-grid')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('arena-desktop-queue-grid')),
+      findsOneWidget,
+    );
     final exam = tester.getTopLeft(find.text('1v1 시험 대결'));
     final ox = tester.getTopLeft(find.text('1v1 OX 대결'));
     expect((exam.dx - ox.dx).abs(), greaterThan(180));
@@ -891,14 +914,32 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: MarketplacePage(initialData: [
-      {'id': 'q1', 'type': 'quest', 'title': '중2 함수 실전 100제', 'subtitle': '평점 4.9 · 1,200P'},
-    ])));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MarketplacePage(
+          initialData: [
+            {
+              'id': 'q1',
+              'type': 'quest',
+              'title': '중2 함수 실전 100제',
+              'subtitle': '평점 4.9 · 1,200P',
+            },
+          ],
+        ),
+      ),
+    );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('market-mobile-search-panel')), findsOneWidget);
-    final field = tester.getTopLeft(find.byKey(const ValueKey('market-search-field')));
-    final filters = tester.getTopLeft(find.byKey(const ValueKey('market-mobile-filters')));
+    expect(
+      find.byKey(const ValueKey('market-mobile-search-panel')),
+      findsOneWidget,
+    );
+    final field = tester.getTopLeft(
+      find.byKey(const ValueKey('market-search-field')),
+    );
+    final filters = tester.getTopLeft(
+      find.byKey(const ValueKey('market-mobile-filters')),
+    );
     expect(filters.dy, greaterThan(field.dy + 45));
   });
 
@@ -908,15 +949,67 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: MarketplacePage(initialData: [
-      {'id': 'q1', 'type': 'quest', 'title': '중2 함수 실전 100제', 'subtitle': '평점 4.9 · 1,200P'},
-    ])));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MarketplacePage(
+          initialData: [
+            {
+              'id': 'q1',
+              'type': 'quest',
+              'title': '중2 함수 실전 100제',
+              'subtitle': '평점 4.9 · 1,200P',
+            },
+          ],
+        ),
+      ),
+    );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('market-desktop-search-panel')), findsOneWidget);
-    final field = tester.getTopLeft(find.byKey(const ValueKey('market-search-field')));
-    final filters = tester.getTopLeft(find.byKey(const ValueKey('market-desktop-filters')));
+    expect(
+      find.byKey(const ValueKey('market-desktop-search-panel')),
+      findsOneWidget,
+    );
+    final field = tester.getTopLeft(
+      find.byKey(const ValueKey('market-search-field')),
+    );
+    final filters = tester.getTopLeft(
+      find.byKey(const ValueKey('market-desktop-filters')),
+    );
     expect((filters.dy - field.dy).abs(), lessThan(24));
     expect(filters.dx, greaterThan(field.dx + 300));
+  });
+
+  testWidgets('500px 코스 완료 조건은 HTML 전체 화면 액션 패널로 열린다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showCoursePolicyDialog(context),
+              child: const Text('조건 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('조건 열기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('RUNTIME POLICY'), findsOneWidget);
+    expect(find.text('학습 완료 조건'), findsOneWidget);
+    expect(find.text('최소 학습 시간'), findsOneWidget);
+    expect(find.text('닫기'), findsOneWidget);
+    final panel = find
+        .ancestor(
+          of: find.text('RUNTIME POLICY'),
+          matching: find.byType(Material),
+        )
+        .first;
+    expect(tester.getTopLeft(panel).dx, 0);
   });
 }

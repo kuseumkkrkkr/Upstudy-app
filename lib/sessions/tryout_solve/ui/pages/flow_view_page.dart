@@ -217,7 +217,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
     final allFormulas = questData['all_formulas'];
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF4F4F5),
       drawer: const AppDrawer(),
       body: SafeArea(
         child: Stack(
@@ -228,22 +228,26 @@ class _FlowViewPageState extends State<FlowViewPage> {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      final isWide = constraints.maxWidth >= 1100;
+                      // 필요한 변수는 작업 영역 폭이다.
+                      // 작동 원리는 HTML 시안의 PC 3열 기준을 1180px에 맞추고, 그 아래에서는 그래프 우선 단일 열로 전환하는 것이다.
+                      final isWide = constraints.maxWidth >= 1180;
                       if (isWide) {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(
-                              flex: _chatActive ? 3 : 2,
+                            SizedBox(
+                              width: _chatActive ? 300 : 280,
                               child: _buildLeftPanel(
                                 questTitleBlocks,
                                 questAnswerBlocks,
                                 questAnswerRiddle,
                               ),
                             ),
-                            Expanded(flex: 5, child: _buildCanvasPanel()),
-                            Expanded(
-                              flex: _chatActive ? 2 : 3,
+                            const VerticalDivider(width: 1, thickness: 1),
+                            Expanded(child: _buildCanvasPanel()),
+                            const VerticalDivider(width: 1, thickness: 1),
+                            SizedBox(
+                              width: _chatActive ? 300 : 340,
                               child: _buildDetailPanel(),
                             ),
                           ],
@@ -253,16 +257,21 @@ class _FlowViewPageState extends State<FlowViewPage> {
                       // 필요한 변수는 좁은 화면 폭과 그래프·제출 요약 패널이다.
                       // 모바일에서는 핵심 학습 흐름인 그래프를 먼저 보여주고 제출 요약을 아래로 보낸다.
                       return ListView(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 28),
                         children: [
-                          _buildCanvasPanel(height: 760),
-                          const SizedBox(height: 10),
+                          _buildCanvasPanel(
+                            height: math.max(
+                              500,
+                              math.min(680, constraints.maxHeight * .72),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
                           _buildLeftPanel(
                             questTitleBlocks,
                             questAnswerBlocks,
                             questAnswerRiddle,
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 14),
                           _buildDetailPanel(),
                         ],
                       );
@@ -307,8 +316,13 @@ class _FlowViewPageState extends State<FlowViewPage> {
           onMenu: () => _scaffoldKey.currentState?.openDrawer(),
           items: const [],
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 22, 14, 4),
+        Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8F8F9),
+            border: Border(bottom: BorderSide(color: Color(0xFFE0E0E2))),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -324,7 +338,11 @@ class _FlowViewPageState extends State<FlowViewPage> {
               const SizedBox(height: 8),
               const Text(
                 'Flow 분석',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                  fontSize: 32,
+                  letterSpacing: -1.1,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const SizedBox(height: 6),
               const Text(
@@ -388,12 +406,13 @@ class _FlowViewPageState extends State<FlowViewPage> {
         : questAnswerBlocks;
     final showAnswer = _allStepsCorrect;
     final questData = widget.quest['data'] as Map<String, dynamic>? ?? {};
-    return Card(
-      elevation: 4,
+    return Container(
       margin: const EdgeInsets.all(10),
-      color: Colors.white,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE0E0E2)),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -401,7 +420,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.menu_book_outlined, color: Color(0xFF1B402B)),
+                const Icon(Icons.menu_book_outlined, color: Colors.black87),
                 const SizedBox(width: 8),
                 const Text(
                   '문제 정보',
@@ -459,7 +478,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
                       questData['all_formulas'],
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2D6BFF),
+                      backgroundColor: const Color(0xFF202022),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -476,7 +495,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
                   ElevatedButton.icon(
                     onPressed: () => setState(() => _showSharedAnalysis = true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B402B),
+                      backgroundColor: const Color(0xFF202022),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -506,12 +525,13 @@ class _FlowViewPageState extends State<FlowViewPage> {
             nodeStates: _nodeStates,
             onNodeTap: (node) => setState(() => _selected = node),
           );
-    return Card(
-      elevation: 6,
+    return Container(
       margin: const EdgeInsets.all(10),
-      color: Colors.white,
-      shadowColor: Colors.black.withValues(alpha: 0.12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE0E0E2)),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: SizedBox(
         height: height,
         child: Column(
@@ -524,9 +544,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
                   spacing: 10,
                   runSpacing: 6,
                   children: const [
-                    _LegendChip(label: '정답', color: Color(0xFF2D6BFF)),
-                    _LegendChip(label: '오답', color: Color(0xFFE53935)),
-                    _LegendChip(label: '이후 단계', color: Color(0xFF9E9E9E)),
+                    _LegendChip(label: '정답', color: Color(0xFF202022)),
+                    _LegendChip(label: '오답', color: Color(0xFF7A7A80)),
+                    _LegendChip(label: '이후 단계', color: Color(0xFFB3B3B8)),
                   ],
                 ),
               ),
@@ -556,12 +576,13 @@ class _FlowViewPageState extends State<FlowViewPage> {
     final nodeState = node == null
         ? _FlowNodeState.normal
         : _nodeStates[node.id] ?? _FlowNodeState.normal;
-    return Card(
-      elevation: 5,
+    return Container(
       margin: const EdgeInsets.all(10),
-      color: Colors.white,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE0E0E2)),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: node == null
@@ -1199,7 +1220,7 @@ class _FlowNodeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseBorder = selected ? Colors.blueAccent : Colors.black12;
+    final baseBorder = selected ? Colors.black : const Color(0xFFD8D8DC);
     final style = _NodeStyle.fromState(state, baseBorder);
     return GestureDetector(
       onTap: onTap,
@@ -1256,14 +1277,14 @@ class _NodeStyle {
     switch (state) {
       case _FlowNodeState.correct:
         return const _NodeStyle(
-          background: Color(0xFFE9F0FF),
-          border: Color(0xFF2D6BFF),
+          background: Color(0xFFECECEF),
+          border: Color(0xFF202022),
           opacity: 1,
         );
       case _FlowNodeState.incorrect:
         return const _NodeStyle(
-          background: Color(0xFFFFEBEE),
-          border: Color(0xFFE53935),
+          background: Color(0xFFF2F2F3),
+          border: Color(0xFF66666C),
           opacity: 1,
         );
       case _FlowNodeState.dim:
@@ -1391,7 +1412,7 @@ class _FlowDotGridPainter extends CustomPainter {
   /// 작동 원리는 20px 간격의 옅은 점을 찍어 HTML Flow 작업 영역의 격자 배경을 재현하는 것이다.
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0xFFD9DFEA);
+    final paint = Paint()..color = const Color(0xFFE2E2E5);
     for (double x = 8; x < size.width; x += 20) {
       for (double y = 8; y < size.height; y += 20) {
         canvas.drawCircle(Offset(x, y), .75, paint);

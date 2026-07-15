@@ -5,6 +5,7 @@ import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 
@@ -191,6 +192,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    if (!isStudentDensityMobile(context)) return _buildDesktopSettings(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
@@ -333,50 +335,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(22),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF202022),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'STORAGE CONTRACT',
-                          style: TextStyle(
-                            fontSize: 10,
-                            letterSpacing: 1.6,
-                            color: Colors.white54,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                        Text(
-                          '서버 요청 없이\n바로 저장돼요.',
-                          style: TextStyle(
-                            fontSize: 26,
-                            height: 1.02,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        SizedBox(height: 18),
-                        _StorageCode('settings.notifications_enabled'),
-                        SizedBox(height: 8),
-                        _StorageCode('textbook_reader.page_mode'),
-                        SizedBox(height: 14),
-                        Text(
-                          '설정 화면에서는 /user/storage API를 호출하지 않습니다.',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.white54,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildPreferenceNotice(),
                 ],
               ),
             ),
@@ -385,6 +344,226 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+
+  /// 필요한 변수는 교재·알림 설정값과 라이선스 이동 콜백이다.
+  /// 작동 원리는 HTML의 설정 본문과 보조 안내를 PC 2열로 분리하고, 모바일과 동일한 저장 콜백을 사용한다.
+  Widget _buildDesktopSettings(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xFFF4F4F6),
+    drawer: const AppDrawer(),
+    body: SafeArea(
+      child: Column(
+        children: [
+          Builder(
+            builder: (context) => Ios26TopBar(
+              brandColor: Colors.black,
+              showLevelIndicator: false,
+              onMenu: () => toggleAppDrawer(context),
+              items: studentTopNavItems(
+                context,
+                active: StudentTopDestination.learning,
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                studentDensityHorizontalPadding(context),
+                studentDensityVerticalPadding(context),
+                studentDensityHorizontalPadding(context),
+                48,
+              ),
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1280),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        StudentDensityPageHeader(
+                          eyebrow: 'PREFERENCES',
+                          title: '설정',
+                          description: '실제로 저장되는 학습 환경만 간결하게 조정합니다.',
+                          action: OutlinedButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ProfilePage(),
+                              ),
+                            ),
+                            child: const Text('프로필로 돌아가기'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildSettingsHero(),
+                                  const SizedBox(height: 16),
+                                  _buildSettingsPanelList(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            SizedBox(
+                              width: 330,
+                              child: _buildPreferenceNotice(),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  /// 필요한 변수는 교재 보기·알림 상태와 각 저장 콜백이다.
+  /// 작동 원리는 세 설정을 같은 카드 순서로 재사용해 화면 폭과 관계없이 기능 계약을 유지한다.
+  Widget _buildSettingsPanelList() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _SettingsPanel(
+        number: '01',
+        title: '교재 보기',
+        subtitle: '본문을 연속 스크롤 또는 PDF형 페이지로 봅니다.',
+        child: _settingTile(
+          icon: Icons.auto_stories_outlined,
+          title: 'PDF형 페이지 보기',
+          subtitle: _textbookPageMode ? '현재 페이지 단위로 열립니다.' : '현재 연속 스크롤로 열립니다.',
+          trailing: Switch.adaptive(
+            value: _textbookPageMode,
+            onChanged: _setTextbookPageMode,
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      _SettingsPanel(
+        number: '02',
+        title: '알림',
+        subtitle: '앱의 모든 알림을 한 번에 켜거나 끕니다.',
+        child: _settingTile(
+          icon: Icons.notifications_none_rounded,
+          title: '모든 알림',
+          subtitle: _notificationsEnabled
+              ? '현재 모든 알림이 켜져 있습니다.'
+              : '현재 모든 알림이 꺼져 있습니다.',
+          trailing: Switch.adaptive(
+            value: _notificationsEnabled,
+            onChanged: _setNotificationsEnabled,
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      _SettingsPanel(
+        number: '03',
+        title: '앱 정보',
+        subtitle: 'AIFlow에 포함된 오픈소스 라이선스를 확인합니다.',
+        child: _settingTile(
+          icon: Icons.receipt_long_outlined,
+          title: '라이선스 보기',
+          subtitle: 'Flutter와 포함된 패키지 정보',
+          trailing: const Icon(Icons.chevron_right),
+          onTap: _showLicenses,
+        ),
+      ),
+    ],
+  );
+
+  /// 필요한 변수는 없으며 사용자에게 표시할 저장 안내다.
+  /// 작동 원리는 개발용 키·엔드포인트를 노출하지 않고 변경 내용이 이 기기에 바로 적용된다는 결과만 안내한다.
+  Widget _buildPreferenceNotice() => Container(
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: const Color(0xFF202022),
+      borderRadius: BorderRadius.circular(28),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '학습 환경',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.6,
+            color: Colors.white54,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        SizedBox(height: 12),
+        Text(
+          '변경 내용은\n바로 적용돼요.',
+          style: TextStyle(
+            fontSize: 26,
+            height: 1.02,
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        SizedBox(height: 14),
+        Text(
+          '알림과 교재 보기 방식은 언제든 이 화면에서 다시 바꿀 수 있습니다.',
+          style: TextStyle(fontSize: 12, color: Colors.white54, height: 1.45),
+        ),
+      ],
+    ),
+  );
+
+  /// 필요한 변수는 없으며 설정 상단의 시각적 문맥 카드다.
+  /// 작동 원리는 모바일 히어로와 동일한 안내를 넓은 PC 본문에 맞춰 한 줄로 확장한다.
+  Widget _buildSettingsHero() => Container(
+    padding: const EdgeInsets.all(28),
+    decoration: BoxDecoration(
+      color: const Color(0xFF202022),
+      borderRadius: BorderRadius.circular(28),
+    ),
+    child: const Row(
+      children: [
+        _SettingsHeroIcon(),
+        SizedBox(width: 18),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'LOCAL PREFERENCES',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 9,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                '이 기기의 학습 환경',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          '자동 저장',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) =>
@@ -543,32 +722,6 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
-}
-
-class _StorageCode extends StatelessWidget {
-  const _StorageCode(this.value);
-
-  final String value;
-
-  /// 필요한 변수는 로컬 설정 키다.
-  /// 작동 원리는 서버 요청 없는 저장 계약을 어두운 코드 표면에 한 줄로 표시하는 것이다.
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .08),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.white12),
-    ),
-    child: Text(
-      value,
-      style: const TextStyle(
-        color: Colors.white70,
-        fontSize: 11,
-        fontFamily: 'monospace',
-      ),
-    ),
-  );
 }
 
 class _SettingsHeroIcon extends StatelessWidget {

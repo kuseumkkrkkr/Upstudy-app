@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
+import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/course/session/teacher_course_textbook_reader_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
@@ -23,6 +24,9 @@ import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
 import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/features/student_schedule/schedule_page.dart';
+import 'package:s11/features/student_runtime/student_runtime_page.dart';
+import 'package:s11/features/student_runtime/models.dart';
+import 'package:s11/features/course_runtime/course_runtime_page.dart';
 import 'package:s11/features/group_study/group_list_page.dart';
 import 'package:s11/features/group_study/group_detail_page.dart';
 import 'package:s11/features/group_study/student_academy_page.dart';
@@ -137,6 +141,58 @@ List<Course> _previewCourses() => const [
     status: 'completed',
     lessons: 8,
     targetOvr: 100,
+  ),
+];
+
+/// 필요한 변수는 HTML 코스 학습 시안의 현재 모듈·진행률·잠금 상태다.
+/// 작동 원리: 실제 StudentRuntimePage에 고정 데이터를 주입해 네트워크 없이 PC·모바일 경로 배열을 캡처한다.
+List<RuntimeCourseModel> _previewRuntimeCourses() => [
+  RuntimeCourseModel(
+    id: 101,
+    title: '일차함수 완성',
+    overallProgress: 42,
+    modules: [
+      RuntimeModuleModel(
+        id: 1,
+        moduleType: RuntimeModuleType.textbookView,
+        title: '좌표와 그래프 읽기',
+        status: 'completed',
+        progressPercent: 100,
+        configJson: '{}',
+      ),
+      RuntimeModuleModel(
+        id: 2,
+        moduleType: RuntimeModuleType.textbookView,
+        title: '기울기의 의미',
+        status: 'available',
+        progressPercent: 65,
+        configJson: '{}',
+      ),
+      RuntimeModuleModel(
+        id: 3,
+        moduleType: RuntimeModuleType.problemSolve,
+        title: '기울기 문제 풀이',
+        status: 'locked',
+        progressPercent: 0,
+        configJson: '{}',
+      ),
+      RuntimeModuleModel(
+        id: 4,
+        moduleType: RuntimeModuleType.levelTest,
+        title: '그래프 이해 레벨 테스트',
+        status: 'locked',
+        progressPercent: 0,
+        configJson: '{}',
+      ),
+      RuntimeModuleModel(
+        id: 5,
+        moduleType: RuntimeModuleType.examSolve,
+        title: '일차함수 실전 시험',
+        status: 'locked',
+        progressPercent: 0,
+        configJson: '{}',
+      ),
+    ],
   ),
 ];
 
@@ -314,6 +370,10 @@ class StudentDensityPreviewApp extends StatelessWidget {
         course: _previewDetailCourse(courses.first),
       ),
       'course-learning' => CourseLearningPage(course: courses.first),
+      'student-runtime' => StudentRuntimePage(
+        initialCourses: _previewRuntimeCourses(),
+      ),
+      'course-runtime' => const CourseRuntimePage(),
       'wrong-answers' => const WrongAnswerListPage(),
       'level-test' => const LevelTestHomePage(),
       'solve' => BuildpageWidget(config: _previewSolveConfig()),
@@ -611,6 +671,19 @@ class _PreviewActionLauncherState extends State<_PreviewActionLauncher> {
         await showStudentToolModal(context, const TimerPage());
       case 'tool-focus':
         await showStudentToolModal(context, const FocusModePage());
+      case 'course-reorder':
+        await showCourseReorderDialog(
+          context,
+          courses: _previewCourses().take(2).toList(growable: false),
+          onSaved: () {},
+        );
+      case 'course-compare':
+        await showCourseCompareDialog(
+          context,
+          courses: _previewCourses().take(2).toList(growable: false),
+        );
+      case 'course-policy':
+        await showCoursePolicyDialog(context);
       case 'study-mode':
         await showStudyModeModal<void>(context: context);
       case 'daily-test':

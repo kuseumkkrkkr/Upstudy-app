@@ -8,6 +8,7 @@ import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -408,6 +409,9 @@ class _ProfilePageState extends State<ProfilePage> {
     final name = _nameController.text.trim().isEmpty
         ? _usernameController.text.trim()
         : _nameController.text.trim();
+    if (!isStudentDensityMobile(context)) {
+      return _buildDesktopProfile(context, name);
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
@@ -494,32 +498,6 @@ class _ProfilePageState extends State<ProfilePage> {
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.black45,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF3F3F5),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(0xFFE1E1E4),
-                                ),
-                              ),
-                              child: const Text(
-                                'GET /auth/me',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.black54,
-                                ),
-                              ),
                             ),
                           ),
                           const SizedBox(height: 18),
@@ -686,6 +664,290 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
+  /// 필요한 변수는 현재 프로필 값·저장 콜백과 데스크톱 폭이다.
+  /// 작동 원리는 HTML의 본문 1열과 계정 보조 패널 1열을 분리해 PC에서 정보 밀도를 유지하고, 기존 API 저장 동작은 그대로 재사용한다.
+  Widget _buildDesktopProfile(BuildContext context, String name) => Scaffold(
+    backgroundColor: const Color(0xFFF4F4F6),
+    drawer: const AppDrawer(),
+    body: SafeArea(
+      child: Column(
+        children: [
+          Builder(
+            builder: (context) => Ios26TopBar(
+              brandColor: Colors.black,
+              showLevelIndicator: false,
+              onMenu: () => toggleAppDrawer(context),
+              items: studentTopNavItems(
+                context,
+                active: StudentTopDestination.learning,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  studentDensityHorizontalPadding(context),
+                  studentDensityVerticalPadding(context),
+                  studentDensityHorizontalPadding(context),
+                  48,
+                ),
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1280),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          StudentDensityPageHeader(
+                            eyebrow: 'MY ACCOUNT',
+                            title: '프로필',
+                            description: '학습 정보와 계정 정보를 확인하고 필요한 항목만 수정합니다.',
+                            action: OutlinedButton(
+                              onPressed: _openSettings,
+                              child: const Text('설정'),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _ProfileHero(
+                            name: name,
+                            username: _usernameController.text,
+                            grade: _gradeController.text,
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _buildDesktopInfoCard(),
+                                    const SizedBox(height: 14),
+                                    _htmlAccountCard(
+                                      eyebrow: 'SECURITY',
+                                      title: '비밀번호 변경',
+                                      description: '변경하지 않으려면 두 입력란을 비워두세요.',
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _field(
+                                                controller: _passwordController,
+                                                label: '새 비밀번호',
+                                                hintText: '8–20자 영문+숫자',
+                                                obscureText: true,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            Expanded(
+                                              child: _field(
+                                                controller:
+                                                    _passwordConfirmController,
+                                                label: '새 비밀번호 확인',
+                                                hintText: '한 번 더 입력',
+                                                obscureText: true,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 14),
+                                    FilledButton(
+                                      onPressed: _saving ? null : _saveProfile,
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF202022,
+                                        ),
+                                        minimumSize: const Size.fromHeight(52),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                      ),
+                                      child: _saving
+                                          ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : const Text('변경사항 저장'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              SizedBox(
+                                width: 320,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _htmlAccountCard(
+                                      eyebrow: 'READER',
+                                      title: '교재 보기',
+                                      description: '교재를 PDF형 페이지 단위로 표시합니다.',
+                                      children: [
+                                        SwitchListTile.adaptive(
+                                          contentPadding: EdgeInsets.zero,
+                                          value: _textbookPageMode,
+                                          onChanged: _setTextbookPageMode,
+                                          title: Text(
+                                            _textbookPageMode
+                                                ? '페이지 보기 켜짐'
+                                                : '페이지 보기 꺼짐',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 14),
+                                    _htmlAccountCard(
+                                      eyebrow: 'SESSION',
+                                      title: '로그인 상태',
+                                      description:
+                                          '이 기기의 JWT와 사용자명을 삭제하고 로그아웃합니다.',
+                                      children: [
+                                        OutlinedButton(
+                                          onPressed: _logout,
+                                          child: const Text('로그아웃'),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 14),
+                                    _buildDangerCard(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  /// 필요한 변수는 학생 정보 입력 컨트롤러와 필드 검증기다.
+  /// 작동 원리는 HTML의 PC 2열 입력 그리드로 필드를 배열하되, 동일 컨트롤러를 사용해 저장 계약을 바꾸지 않는다.
+  Widget _buildDesktopInfoCard() => _htmlAccountCard(
+    eyebrow: 'LEARNING PROFILE',
+    title: '학생 정보',
+    description: '코스 추천과 학습 분석에 사용하는 정보입니다.',
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: _field(
+              controller: _nameController,
+              label: '이름',
+              validator: (value) =>
+                  value == null || value.trim().isEmpty ? '이름을 입력해 주세요.' : null,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: _field(
+              controller: _usernameController,
+              label: '아이디',
+              validator: (value) =>
+                  value == null || value.trim().isEmpty ? 'ID를 입력해 주세요.' : null,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 14),
+      Row(
+        children: [
+          Expanded(
+            child: _field(controller: _trackController, label: '과정'),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: _field(controller: _gradeController, label: '학년'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 14),
+      Row(
+        children: [
+          Expanded(
+            child: _field(controller: _subjectController, label: '과목'),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: _field(controller: _schoolController, label: '학교'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 14),
+      _field(
+        controller: _emailController,
+        label: '이메일',
+        keyboardType: TextInputType.emailAddress,
+      ),
+    ],
+  );
+
+  /// 필요한 변수는 계정 삭제 처리 상태와 삭제 모달 콜백이다.
+  /// 작동 원리는 위험 동작을 보조 패널 최하단에 분리해 PC에서도 일반 설정과 혼동되지 않게 한다.
+  Widget _buildDangerCard() => Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF7F6),
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: const Color(0xFFF0B8B2)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'DANGER ZONE',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.6,
+            color: Colors.redAccent,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          '계정 삭제',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '현재 비밀번호 확인 후 계정과 로그인 정보를 삭제합니다. 되돌릴 수 없습니다.',
+          style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.45),
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton(
+          onPressed: _deleting ? null : _openDeleteModal,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.redAccent,
+            side: const BorderSide(color: Colors.redAccent),
+          ),
+          child: const Text('계정 삭제'),
+        ),
+      ],
+    ),
+  );
 
   /// 필요한 변수는 없으며 프로필 카드의 공용 표면을 만든다.
   /// 작동 원리는 흰 배경과 28px 둥근 모서리로 HTML 정보 카드를 재현하는 것이다.

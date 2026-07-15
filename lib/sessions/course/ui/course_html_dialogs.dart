@@ -11,7 +11,7 @@ Future<void> showCourseReorderDialog(
   required VoidCallback onSaved,
 }) async {
   final reordered = List<Course>.from(courses);
-  final saved = await showDialog<bool>(
+  final saved = await _showCourseActionPanel<bool>(
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setModalState) => _CourseActionDialog(
@@ -74,7 +74,7 @@ Future<void> showCourseCompareDialog(
   required List<Course> courses,
 }) {
   final visible = courses.take(2).toList(growable: false);
-  return showDialog<void>(
+  return _showCourseActionPanel<void>(
     context: context,
     builder: (context) => _CourseActionDialog(
       kicker: 'COMPARE COURSES',
@@ -112,7 +112,7 @@ Future<void> showCourseCompareDialog(
 /// 필요한 변수는 현재 화면 context다.
 /// 작동 원리는 교재 런타임의 최소 시간·하트비트·완료 후 갱신 정책을 HTML 세 단계 목록으로 보여준다.
 Future<void> showCoursePolicyDialog(BuildContext context) {
-  return showDialog<void>(
+  return _showCourseActionPanel<void>(
     context: context,
     builder: (context) => const _CourseActionDialog(
       kicker: 'RUNTIME POLICY',
@@ -145,6 +145,41 @@ Future<void> showCoursePolicyDialog(BuildContext context) {
   );
 }
 
+/// 필요한 변수는 현재 Navigator 문맥과 코스 액션 본문 빌더다.
+/// 작동 원리: PC는 오른쪽 720px, 모바일은 전체 화면으로 HTML 액션 패널을 슬라이드 표시한다.
+Future<T?> _showCourseActionPanel<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+}) {
+  return showGeneralDialog<T>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: '닫기',
+    barrierColor: Colors.black.withValues(alpha: .3),
+    transitionDuration: const Duration(milliseconds: 220),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      final width = MediaQuery.sizeOf(context).width;
+      return Align(
+        alignment: Alignment.centerRight,
+        child: SizedBox(
+          width: width <= 780 ? width : 720,
+          height: double.infinity,
+          child: builder(context),
+        ),
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
+        child: child,
+      );
+    },
+  );
+}
+
 class _CourseActionDialog extends StatelessWidget {
   const _CourseActionDialog({
     required this.kicker,
@@ -165,18 +200,15 @@ class _CourseActionDialog extends StatelessWidget {
   /// 필요한 변수는 모달 제목·설명·본문·선택 저장 동작이다.
   /// 작동 원리는 코스 관련 HTML 액션이 같은 여백과 흑백 버튼을 공유하도록 전면 모달 틀을 제공한다.
   @override
-  Widget build(BuildContext context) => Dialog(
-    insetPadding: const EdgeInsets.all(14),
-    backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 720, maxHeight: 760),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xFFFAFAFB),
+    child: SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 18, 20),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
@@ -200,36 +232,58 @@ class _CourseActionDialog extends StatelessWidget {
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        description,
-                        style: const TextStyle(color: Colors.black45),
-                      ),
                     ],
                   ),
                 ),
-                IconButton(
+                IconButton.outlined(
                   tooltip: '닫기',
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            body,
-            if (onPrimary != null) ...[
-              const SizedBox(height: 14),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF202022),
-                  minimumSize: const Size.fromHeight(50),
-                ),
-                onPressed: () => onPrimary!(),
-                child: Text(primaryLabel ?? '저장'),
+          ),
+          const Divider(height: 1, color: Color(0xFFE4E4E6)),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    description,
+                    style: const TextStyle(color: Colors.black45),
+                  ),
+                  const SizedBox(height: 22),
+                  body,
+                ],
               ),
-            ],
-          ],
-        ),
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE4E4E6)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(onPrimary == null ? '닫기' : '취소'),
+                ),
+                if (onPrimary != null) ...[
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF202022),
+                    ),
+                    onPressed: () => onPrimary!(),
+                    child: Text(primaryLabel ?? '저장'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     ),
   );

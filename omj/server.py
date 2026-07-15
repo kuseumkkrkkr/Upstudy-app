@@ -7396,12 +7396,16 @@ def get_user_rating(
     user_id: str = Depends(_get_user_id),
 
 ) -> RatingResponse:
+    """필요 변수: 요청 사용자 ID와 조회 대상 사용자 ID.
 
-    if target_user_id != user_id:
-
+    작동 원리: 본인 또는 양방향 친구 관계인 사용자만 대상의 요약 레이팅을
+    조회할 수 있게 하여, 친구 화면의 OVR 표시를 지원하면서 비친구의 레이팅
+    정보 노출은 차단한다.
+    """
+    if target_user_id != user_id and not are_friends(user_id, target_user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    result = fetch_user_rating(user_id)
+    result = fetch_user_rating(target_user_id)
 
     return RatingResponse(
 
