@@ -70,6 +70,7 @@ class LandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
+    final inlineSignup = useInlineSignupEntry(context);
     final story = _LandingStory(
       onAbout: () => _goToAbout(context),
       onContact: () => _contactByEmail(context),
@@ -77,6 +78,7 @@ class LandingPage extends StatelessWidget {
     final entry = _LandingEntry(
       onLogin: () => _goToLogin(context),
       onSignup: () => _goToSignup(context),
+      showSignupButton: !inlineSignup,
     );
 
     return Scaffold(
@@ -199,10 +201,15 @@ class _LandingStory extends StatelessWidget {
 }
 
 class _LandingEntry extends StatelessWidget {
-  const _LandingEntry({required this.onLogin, required this.onSignup});
+  const _LandingEntry({
+    required this.onLogin,
+    required this.onSignup,
+    required this.showSignupButton,
+  });
 
   final VoidCallback onLogin;
   final VoidCallback onSignup;
+  final bool showSignupButton;
 
   /// 필요한 변수는 로그인·가입 콜백과 현재 화면 폭입니다.
   /// 작동 원리는 가장 빈번한 두 인증 행동을 큰 전폭 버튼과 상태 안내로 제공하는 것입니다.
@@ -248,20 +255,22 @@ class _LandingEntry extends StatelessWidget {
           ),
           const SizedBox(height: 34),
           AuthPrimaryButton(label: '로그인', onPressed: onLogin),
-          const SizedBox(height: 10),
-          OutlinedButton(
-            onPressed: onSignup,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-              foregroundColor: AuthDesignTokens.ink,
-              side: const BorderSide(color: AuthDesignTokens.line),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          if (showSignupButton) ...[
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: onSignup,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                foregroundColor: AuthDesignTokens.ink,
+                side: const BorderSide(color: AuthDesignTokens.line),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
               ),
-              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+              child: const Text('새 계정 만들기'),
             ),
-            child: const Text('새 계정 만들기'),
-          ),
+          ],
           const SizedBox(height: 26),
           Container(
             padding: const EdgeInsets.all(16),

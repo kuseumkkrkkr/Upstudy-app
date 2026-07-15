@@ -19,6 +19,15 @@ abstract final class AuthDesignTokens {
 bool isAuthMobile(BuildContext context) =>
     MediaQuery.sizeOf(context).width <= AuthDesignTokens.mobileBreakpoint;
 
+/// 필요한 변수는 현재 화면의 폭과 방향입니다.
+/// 작동 원리는 세로 또는 좁은 화면에서는 로그인 안의 가입 링크를,
+/// 넓은 가로 화면에서는 랜딩의 가입 버튼을 하나만 노출하게 하는 것입니다.
+bool useInlineSignupEntry(BuildContext context) {
+  final size = MediaQuery.sizeOf(context);
+  return size.width <= AuthDesignTokens.mobileBreakpoint ||
+      size.height > size.width;
+}
+
 /// 필요한 변수는 입력 필드 제목과 선택적인 안내 문구입니다.
 /// 작동 원리는 모든 인증 입력에 같은 표면, 테두리, 포커스 상태를 적용하는 것입니다.
 InputDecoration authInputDecoration(String label, {String? hintText}) =>

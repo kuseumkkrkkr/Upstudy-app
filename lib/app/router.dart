@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
-import 'package:s11/sessions/auth/ui/pages/sign_up.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
@@ -91,7 +90,9 @@ Map<String, WidgetBuilder> appRoutes(
     // Auth
     AppRoutes.login: (_) => const LoginPage(),
     AppRoutes.signup: (_) => const SignupPage(),
-    AppRoutes.signupLegacy: (_) => const BuildpageWidget(),
+    // 필요한 변수는 과거 회원가입 경로다.
+    // 작동 원리: 이전 링크도 정식 SignupPage로 연결해 가입 폼·검증·API가 분기되지 않게 한다.
+    AppRoutes.signupLegacy: (_) => const SignupPage(),
     AppRoutes.profile: (_) => const ProfilePage(),
     AppRoutes.settingsPage: (_) => const SettingsPage(),
 

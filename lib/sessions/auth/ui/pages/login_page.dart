@@ -4,7 +4,7 @@ import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:s11/shared/services/auth/kakao_login_service.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
-import 'package:s11/sessions/auth/ui/pages/sign_up.dart';
+import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
 
 class LoginPage extends StatefulWidget {
@@ -121,7 +121,11 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Widget _buildFormContents() {
+  /// 필요한 변수는 현재 인증 화면 문맥이다.
+  /// 작동 원리는 좁거나 세로인 화면에서만 가입 진입을 폼 안에 두고,
+  /// 어떤 진입점도 동일한 SignupPage와 가입 API를 사용하게 하는 것이다.
+  Widget _buildFormContents(BuildContext context) {
+    final showInlineSignup = useInlineSignupEntry(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -193,27 +197,29 @@ class _LoginPageState extends State<LoginPage> {
               : const Icon(Icons.chat_bubble_outline),
           label: Text(_loading ? '' : '카카오로 계속하기'),
         ),
-        const SizedBox(height: 12),
-        TextButton(
-          onPressed: _loading
-              ? null
-              : () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const BuildpageWidget()),
-                  );
-                },
-          style: TextButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: AuthDesignTokens.line),
+        if (showInlineSignup) ...[
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: _loading
+                ? null
+                : () {
+                    Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(builder: (_) => const SignupPage()),
+                    );
+                  },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: AuthDesignTokens.line),
+              ),
             ),
+            child: const Text('처음 오셨나요? 회원가입'),
           ),
-          child: const Text('처음 오셨나요? 회원가입'),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
+        ],
       ],
     );
   }
@@ -342,7 +348,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final form = Form(key: _formKey, child: _buildFormContents());
+    final form = Form(key: _formKey, child: _buildFormContents(context));
 
     if (widget.asDialog) {
       return Material(

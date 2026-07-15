@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
-import 'package:s11/sessions/auth/ui/pages/sign_up.dart';
+import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 
 /// 필요한 변수는 테스트 화면 크기와 표시할 인증 화면입니다.
@@ -56,14 +56,31 @@ void main() {
     );
   });
 
-  testWidgets('랜딩 회원가입 버튼은 정식 가입 화면을 연다', (tester) async {
+  testWidgets('좁은 세로 랜딩은 로그인 안의 회원가입으로 정식 가입 화면을 연다', (tester) async {
     await _pumpAuthPage(
       tester,
       size: const Size(390, 844),
       page: const LandingPage(),
     );
-    await tester.ensureVisible(find.text('새 계정 만들기'));
+    expect(find.text('새 계정 만들기'), findsNothing);
+    await tester.ensureVisible(find.text('로그인'));
     await tester.pump();
+    await tester.tap(find.text('로그인'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('처음 오셨나요? 회원가입'));
+    await tester.pump();
+    await tester.tap(find.text('처음 오셨나요? 회원가입'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
+  });
+
+  testWidgets('넓은 가로 랜딩은 새 계정 만들기로 정식 가입 화면을 연다', (tester) async {
+    await _pumpAuthPage(
+      tester,
+      size: const Size(1024, 768),
+      page: const LandingPage(),
+    );
     await tester.tap(find.text('새 계정 만들기'));
     await tester.pumpAndSettle();
 
@@ -90,7 +107,7 @@ void main() {
     await _pumpAuthPage(
       tester,
       size: const Size(390, 844),
-      page: const BuildpageWidget(),
+      page: const SignupPage(preview: true),
     );
 
     expect(
