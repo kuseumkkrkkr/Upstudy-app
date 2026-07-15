@@ -708,6 +708,8 @@ class _NavChip extends StatelessWidget {
 
   final Ios26NavItem item;
 
+  /// 필요 변수: `item.label`, `item.active`, `item.onTap`이다.
+  /// 작동 원리: 캡슐 버튼 내부를 `Center`로 감싸 텍스트가 위로 치우치지 않게 하고, 활성 상태는 배경과 글자색만 바꾼다.
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -715,6 +717,7 @@ class _NavChip extends StatelessWidget {
       onTap: item.onTap,
       child: Container(
         constraints: const BoxConstraints(minHeight: 34),
+        alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 15),
         decoration: BoxDecoration(
           color: item.active ? StudentDensityTokens.dark : Colors.transparent,
@@ -722,10 +725,12 @@ class _NavChip extends StatelessWidget {
         ),
         child: Text(
           item.label,
+          textAlign: TextAlign.center,
           style: TextStyle(
             color: item.active ? Colors.white : StudentDensityTokens.muted,
             fontSize: 12,
             fontWeight: FontWeight.w800,
+            height: 1,
           ),
         ),
       ),
