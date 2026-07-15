@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
+import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/course/session/teacher_course_textbook_reader_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
@@ -611,6 +612,19 @@ class _PreviewActionLauncherState extends State<_PreviewActionLauncher> {
         await showStudentToolModal(context, const TimerPage());
       case 'tool-focus':
         await showStudentToolModal(context, const FocusModePage());
+      case 'course-reorder':
+        await showCourseReorderDialog(
+          context,
+          courses: _previewCourses().take(2).toList(growable: false),
+          onSaved: () {},
+        );
+      case 'course-compare':
+        await showCourseCompareDialog(
+          context,
+          courses: _previewCourses().take(2).toList(growable: false),
+        );
+      case 'course-policy':
+        await showCoursePolicyDialog(context);
       case 'study-mode':
         await showStudyModeModal<void>(context: context);
       case 'daily-test':

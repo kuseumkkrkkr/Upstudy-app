@@ -8,6 +8,7 @@ import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
+import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/features/level_test/level_test_home_page.dart';
@@ -830,5 +831,39 @@ void main() {
     expect(tester.getTopLeft(panel), Offset.zero);
     expect(tester.getSize(panel), const Size(500, 1000));
     expect(find.text('닫기'), findsOneWidget);
+  });
+
+  testWidgets('500px 코스 완료 조건은 HTML 전체 화면 액션 패널로 열린다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showCoursePolicyDialog(context),
+              child: const Text('조건 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('조건 열기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('RUNTIME POLICY'), findsOneWidget);
+    expect(find.text('학습 완료 조건'), findsOneWidget);
+    expect(find.text('최소 학습 시간'), findsOneWidget);
+    expect(find.text('닫기'), findsOneWidget);
+    final panel = find
+        .ancestor(
+          of: find.text('RUNTIME POLICY'),
+          matching: find.byType(Material),
+        )
+        .first;
+    expect(tester.getTopLeft(panel).dx, 0);
   });
 }
