@@ -188,6 +188,11 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                       .take(4)
                       .toList(growable: false);
                   return SingleChildScrollView(
+                    key: ValueKey(
+                      mobile
+                          ? 'course-catalog-mobile'
+                          : 'course-catalog-desktop',
+                    ),
                     child: StudentDensityPage(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -416,7 +421,8 @@ class _CourseSearchDock extends StatelessWidget {
             height: 36,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: mobile ? 5 : filters.length,
+              // 모바일도 모든 조건을 가로 스크롤로 제공해 완료 코스 탐색이 숨지 않게 한다.
+              itemCount: filters.length,
               separatorBuilder: (_, __) => const SizedBox(width: 5),
               itemBuilder: (context, index) {
                 final label = filters[index];
@@ -773,10 +779,20 @@ class _RecommendationSection extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.all(mobile ? 28 : 32),
             child: mobile
-                ? _RecommendationCopy(course: primary)
+                ? _RecommendationCopy(
+                    course: primary,
+                    onOpen: () => onOpen(primary),
+                    onCompare: onCompare,
+                  )
                 : Row(
                     children: [
-                      Expanded(child: _RecommendationCopy(course: primary)),
+                      Expanded(
+                        child: _RecommendationCopy(
+                          course: primary,
+                          onOpen: () => onOpen(primary),
+                          onCompare: onCompare,
+                        ),
+                      ),
                       const SizedBox(width: 24),
                       const _RecommendationScore(),
                     ],
@@ -831,9 +847,15 @@ class _RecommendationSection extends StatelessWidget {
 }
 
 class _RecommendationCopy extends StatelessWidget {
-  const _RecommendationCopy({required this.course});
+  const _RecommendationCopy({
+    required this.course,
+    required this.onOpen,
+    required this.onCompare,
+  });
 
   final Course course;
+  final VoidCallback onOpen;
+  final VoidCallback onCompare;
 
   /// 필요한 변수는 첫 추천 코스다.
   /// 작동 원리: 시안의 큰 추천 제목과 설명·메타데이터·행동을 구성한다.
@@ -864,6 +886,40 @@ class _RecommendationCopy extends StatelessWidget {
             fontSize: 12,
             height: 1.6,
           ),
+        ),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            _CourseMetaPill(
+              label: course.targetOvr > 0
+                  ? '목표 OVR ${course.targetOvr}'
+                  : '맞춤 추천',
+            ),
+            _CourseMetaPill(
+              label: course.lessons > 0 ? '${course.lessons}강' : course.level,
+            ),
+            _CourseMetaPill(label: course.duration),
+            for (final tag in course.focusTags.take(2))
+              _CourseMetaPill(label: '#$tag'),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton(
+              onPressed: onOpen,
+              style: FilledButton.styleFrom(
+                backgroundColor: StudentDensityTokens.dark,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('코스 상세'),
+            ),
+            OutlinedButton(onPressed: onCompare, child: const Text('추천 비교')),
+          ],
         ),
       ],
     );

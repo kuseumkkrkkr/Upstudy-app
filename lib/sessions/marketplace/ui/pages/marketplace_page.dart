@@ -215,10 +215,11 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   /// 필요한 변수는 검색·필터·추천 결과 상태다.
-  /// 작동 원리는 HTML 마켓의 제목, 검색 카드, 필터 캡슐, 추천 행을 같은 순서와 여백으로 렌더링하는 것이다.
+  /// 작동 원리는 HTML 마켓의 1280px 검색 한 줄·결과 카드와 780px 이하 단일 열을 같은 데이터·동작으로 재배치하는 것이다.
   @override
   Widget build(BuildContext context) {
     final items = _filteredItems;
+    final desktop = MediaQuery.sizeOf(context).width >= 1000;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
@@ -230,59 +231,40 @@ class _MarketplacePageState extends State<MarketplacePage> {
               child: RefreshIndicator(
                 onRefresh: _search,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                  padding: EdgeInsets.fromLTRB(desktop ? 40 : 14, 24, desktop ? 40 : 14, 40),
                   children: [
-                    const Text(
-                      'COMMUNITY',
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.7,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '마켓',
-                      style: TextStyle(
-                        fontSize: 32,
-                        letterSpacing: -1.4,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '필요한 문제와 교재를 찾아 내 학습으로 연결합니다.',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                    const SizedBox(height: 28),
-                    _SearchPanel(
-                      controller: _queryController,
-                      loading: _loading,
-                      filter: _filter,
-                      onFilterChanged: _handleFilterChanged,
-                      onSearch: _search,
-                    ),
-                    const SizedBox(height: 12),
-                    if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          _error!,
-                          style: const TextStyle(color: Colors.red),
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1280),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('COMMUNITY', style: TextStyle(fontSize: 10, letterSpacing: 1.7, color: Colors.black54, fontWeight: FontWeight.w900)),
+                            const SizedBox(height: 8),
+                            Text('마켓', style: TextStyle(fontSize: desktop ? 50 : 32, letterSpacing: desktop ? -2.4 : -1.4, fontWeight: FontWeight.w900)),
+                            const SizedBox(height: 6),
+                            const Text('필요한 문제와 교재를 찾아 내 학습으로 연결합니다.', style: TextStyle(color: Colors.black45)),
+                            const SizedBox(height: 28),
+                            _SearchPanel(
+                              controller: _queryController,
+                              loading: _loading,
+                              filter: _filter,
+                              desktop: desktop,
+                              onFilterChanged: _handleFilterChanged,
+                              onSearch: _search,
+                            ),
+                            const SizedBox(height: 12),
+                            if (_error != null)
+                              Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: const TextStyle(color: Colors.red))),
+                            _RecommendationCard(items: items.take(3).toList(), onOpen: _openItem),
+                            if (items.length > 3) ...[
+                              const SizedBox(height: 12),
+                              _MoreResultsCard(items: items.skip(3).toList(), onOpen: _openItem),
+                            ],
+                          ],
                         ),
                       ),
-                    _RecommendationCard(
-                      items: items.take(3).toList(),
-                      onOpen: _openItem,
                     ),
-                    if (items.length > 3) ...[
-                      const SizedBox(height: 12),
-                      _MoreResultsCard(
-                        items: items.skip(3).toList(),
-                        onOpen: _openItem,
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -299,6 +281,7 @@ class _SearchPanel extends StatelessWidget {
     required this.controller,
     required this.loading,
     required this.filter,
+    required this.desktop,
     required this.onFilterChanged,
     required this.onSearch,
   });
@@ -306,6 +289,7 @@ class _SearchPanel extends StatelessWidget {
   final TextEditingController controller;
   final bool loading;
   final String filter;
+  final bool desktop;
   final ValueChanged<String> onFilterChanged;
   final VoidCallback onSearch;
 
@@ -313,79 +297,42 @@ class _SearchPanel extends StatelessWidget {
   /// 작동 원리는 한 개 입력과 명시적 검색 버튼으로 요청 수를 제한하고 세 유형 필터는 로컬 결과만 전환하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final field = TextField(
+      key: const ValueKey('market-search-field'),
+      controller: controller,
+      textInputAction: TextInputAction.search,
+      onSubmitted: (_) => onSearch(),
+      decoration: InputDecoration(
+        hintText: '문제 · 교재 · 태그 검색',
+        prefixIcon: const Icon(Icons.search_rounded),
+        filled: true,
+        fillColor: const Color(0xFFF7F7F8),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFDEDEE1))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.black, width: 1.2)),
+      ),
+    );
+    final button = FilledButton(
+      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF202022), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+      onPressed: loading ? null : onSearch,
+      child: Text(loading ? '검색 중' : '검색'),
+    );
+    final filters = Wrap(
+      key: ValueKey(desktop ? 'market-desktop-filters' : 'market-mobile-filters'),
+      spacing: 8,
+      runSpacing: 8,
+      children: ['전체', '문제', '교재', '필터+'].map((label) => ChoiceChip(label: Text(label), selected: filter == label, showCheckmark: false, selectedColor: Colors.black, side: BorderSide(color: filter == label ? Colors.black : const Color(0xFFDEDEE1)), labelStyle: TextStyle(color: filter == label ? Colors.white : Colors.black, fontSize: 11, fontWeight: FontWeight.w800), onSelected: (_) => onFilterChanged(label))).toList(growable: false),
+    );
     return Container(
+      key: ValueKey(desktop ? 'market-desktop-search-panel' : 'market-mobile-search-panel'),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE0E0E2)),
       ),
-      child: Column(
-        children: [
-          TextField(
-            controller: controller,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => onSearch(),
-            decoration: InputDecoration(
-              hintText: '문제 · 교재 · 태그 검색',
-              prefixIcon: const Icon(Icons.search_rounded),
-              filled: true,
-              fillColor: const Color(0xFFF7F7F8),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFDEDEE1)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Colors.black, width: 1.2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF202022),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: loading ? null : onSearch,
-              child: Text(loading ? '검색 중' : '검색'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              spacing: 8,
-              children: ['전체', '문제', '교재', '필터+']
-                  .map(
-                    (label) => ChoiceChip(
-                      label: Text(label),
-                      selected: filter == label,
-                      showCheckmark: false,
-                      selectedColor: Colors.black,
-                      side: BorderSide(
-                        color: filter == label
-                            ? Colors.black
-                            : const Color(0xFFDEDEE1),
-                      ),
-                      labelStyle: TextStyle(
-                        color: filter == label ? Colors.white : Colors.black,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      onSelected: (_) => onFilterChanged(label),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-          ),
-        ],
-      ),
+      child: desktop
+          ? Row(children: [Expanded(child: field), const SizedBox(width: 8), button, const SizedBox(width: 12), Flexible(child: filters)])
+          : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [field, const SizedBox(height: 8), SizedBox(width: double.infinity, child: button), const SizedBox(height: 8), Align(alignment: Alignment.centerLeft, child: filters)]),
     );
   }
 }

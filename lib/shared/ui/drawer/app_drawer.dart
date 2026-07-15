@@ -7,12 +7,13 @@ import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/shared/ui/modal/level_detail_modal.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
-  static const Color _drawerBg = Colors.white;
-  static const Color _surface = Color(0xFFF5F7F1);
+  static const Color _drawerBg = Color(0xFFF4F4F6);
+  static const Color _surface = StudentDensityTokens.surface;
 
   /// 필요한 변수는 현재 화면 문맥과 학생 목적지 경로다.
   /// 드로어를 먼저 닫고 루트 내비게이터의 명명 라우트로 이동해 모바일에서도 모든 상단 메뉴를 제공한다.
@@ -22,12 +23,15 @@ class AppDrawer extends StatelessWidget {
     navigator.pushNamed(route);
   }
 
-  /// 필요한 변수는 인증된 학생 문맥과 공용 명명 라우트다.
-  /// 핵심 학습·소셜 메뉴는 스크롤 영역에 두고 로그아웃은 하단에 고정한다.
+  /// 필요한 변수는 인증된 학생 문맥·공용 명명 라우트·현재 화면 폭이다.
+  /// 핵심 학습·소셜 메뉴는 스크롤 영역에 두고, 시안의 `min(310px, 100vw - 40px)` 폭과 로그아웃 하단 고정을 유지한다.
   @override
   Widget build(BuildContext context) {
+    final drawerWidth = (MediaQuery.sizeOf(context).width - 40)
+        .clamp(0, 310)
+        .toDouble();
     return Drawer(
-      width: 360,
+      width: drawerWidth,
       backgroundColor: _drawerBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/theme/app_colors.dart';
 
-/// Level test result page showing score, badge, and home button.
+/// 레벨 테스트의 일반 결과와 배치 결과를 같은 학생용 리포트 표면으로 표시한다.
+/// 필요한 값은 채점 수치 또는 배치 API 결과이며, 홈 이동은 기존 Navigator 흐름을 그대로 사용한다.
 class LevelTestResultPage extends StatelessWidget {
   const LevelTestResultPage({
     super.key,
@@ -17,264 +17,643 @@ class LevelTestResultPage extends StatelessWidget {
   final bool passed;
   final LevelTestPlacementResult? placementResult;
 
+  /// 필요한 값은 정답 수와 전체 문항 수다.
+  /// 0문항 응답에서도 0으로 안전하게 표시해 결과 화면 렌더링을 보장한다.
   double get _percentage {
     if (totalCount == 0) return 0;
     return (correctCount / totalCount) * 100;
   }
 
+  /// 배치 결과 유무에 따라 기존 두 결과 계약을 하나의 시안형 화면으로 분기한다.
   @override
   Widget build(BuildContext context) {
-    if (placementResult != null) {
-      return _PlacementResultView(result: placementResult!);
-    }
-    final pct = _percentage.toStringAsFixed(1);
+    final placement = placementResult;
+    final report = placement == null
+        ? _LevelResultReport.standard(
+            correctCount: correctCount,
+            totalCount: totalCount,
+            passed: passed,
+            percentage: _percentage,
+          )
+        : _LevelResultReport.placement(placement);
 
+    return _LevelResultScaffold(report: report);
+  }
+}
+
+/// HTML 시안의 결과 리포트 구조를 PC의 2열, 모바일의 단일 열로 전환한다.
+/// 결과 데이터는 [_LevelResultReport]로 정규화하여 API·일반 시험 흐름이 같은 위젯을 재사용한다.
+class _LevelResultScaffold extends StatelessWidget {
+  const _LevelResultScaffold({required this.report});
+
+  final _LevelResultReport report;
+
+  /// 필요한 값은 화면 폭과 결과 요약이다.
+  /// 760px 미만에서는 읽기 순서를 유지한 단일 열, 이상에서는 요약과 분석을 분리한 2열로 배치한다.
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        title: const Text(
-          '테스트 결과',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        automaticallyImplyLeading: false,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (passed)
-                const Icon(Icons.celebration, color: Colors.amber, size: 64)
-              else
-                const Icon(
-                  Icons.sentiment_dissatisfied,
-                  color: Colors.grey,
-                  size: 64,
+      backgroundColor: _LevelResultTokens.canvas,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 760;
+            final horizontal = compact ? 18.0 : 42.0;
+            final content = ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontal,
+                  compact ? 16 : 28,
+                  horizontal,
+                  36,
                 ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: passed
-                      ? AppColors.primary.withValues(alpha: 0.12)
-                      : Colors.red.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  passed ? '합격' : '불합격',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: passed ? AppColors.primary : Colors.red,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                '$correctCount / $totalCount',
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '정답률 $pct%',
-                style: const TextStyle(fontSize: 16, color: Colors.black54),
-              ),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ResultTopBar(compact: compact),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.only(top: compact ? 22 : 34),
+                        child: _ResultBody(report: report, compact: compact),
+                      ),
                     ),
-                    elevation: 2,
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
-                  child: const Text(
-                    '홈으로',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ],
+                ),
+              ),
+            );
+            return Align(alignment: Alignment.topCenter, child: content);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// 결과 상단의 제품명과 홈 복귀 동작을 제공한다.
+/// 뒤로 가기 대신 기존 결과 흐름과 동일하게 첫 라우트까지 정리해 학습 진입점을 명확히 한다.
+class _ResultTopBar extends StatelessWidget {
+  const _ResultTopBar({required this.compact});
+
+  final bool compact;
+
+  /// 필요한 값은 현재 Navigator다.
+  /// 모든 시험 결과 진입 경로에서 동일한 홈 복귀 계약을 유지한다.
+  void _goHome(BuildContext context) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Text(
+          'AIFLOW',
+          style: TextStyle(
+            fontSize: 15,
+            letterSpacing: 2.4,
+            fontWeight: FontWeight.w900,
+            color: _LevelResultTokens.ink,
+          ),
+        ),
+        const SizedBox(width: 10),
+        const Text(
+          'LEVEL REPORT',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.2,
+            fontWeight: FontWeight.w800,
+            color: _LevelResultTokens.muted,
+          ),
+        ),
+        const Spacer(),
+        OutlinedButton.icon(
+          key: const ValueKey('level-result-home-button'),
+          onPressed: () => _goHome(context),
+          icon: const Icon(Icons.home_outlined, size: 18),
+          label: Text(compact ? '홈' : '학습 홈으로'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _LevelResultTokens.ink,
+            minimumSize: Size(0, compact ? 42 : 46),
+            side: const BorderSide(color: _LevelResultTokens.line),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 결과 카드·태그 분석·다음 행동을 시안의 읽기 순서로 조합한다.
+/// PC와 모바일 모두 같은 데이터이지만 폭에 따라 레이아웃만 달라져 분석 정보가 누락되지 않는다.
+class _ResultBody extends StatelessWidget {
+  const _ResultBody({required this.report, required this.compact});
+
+  final _LevelResultReport report;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final overview = _ResultOverview(report: report, compact: compact);
+    final analysis = _ResultAnalysis(report: report, compact: compact);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          report.isPlacement ? 'PLACEMENT COMPLETE' : 'TEST COMPLETE',
+          style: const TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.8,
+            fontWeight: FontWeight.w900,
+            color: _LevelResultTokens.muted,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          report.isPlacement ? '나의 학습 기준점이\n완성됐어요.' : '이번 테스트를\n완료했어요.',
+          style: TextStyle(
+            fontSize: compact ? 36 : 54,
+            height: .98,
+            letterSpacing: -2.2,
+            fontWeight: FontWeight.w900,
+            color: _LevelResultTokens.ink,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          report.description,
+          style: TextStyle(
+            fontSize: compact ? 14 : 16,
+            height: 1.55,
+            color: _LevelResultTokens.muted,
+          ),
+        ),
+        SizedBox(height: compact ? 24 : 34),
+        if (compact) ...[
+          overview,
+          const SizedBox(height: 14),
+          analysis,
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 6, child: overview),
+              const SizedBox(width: 18),
+              Expanded(flex: 5, child: analysis),
+            ],
+          ),
+        SizedBox(height: compact ? 18 : 24),
+        _NextStepCard(report: report, compact: compact),
+      ],
+    );
+  }
+}
+
+/// OVR 또는 정답률을 가장 큰 숫자로 표시하고 시험 계약의 부가 수치를 같은 카드에 묶는다.
+/// 텍스트 크기는 좁은 화면에서만 줄여 390px에서도 줄바꿈이나 오버플로를 막는다.
+class _ResultOverview extends StatelessWidget {
+  const _ResultOverview({required this.report, required this.compact});
+
+  final _LevelResultReport report;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('level-result-overview'),
+      padding: EdgeInsets.all(compact ? 22 : 30),
+      decoration: _LevelResultTokens.cardDecoration(dark: true),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'MY OVR',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.7,
+                ),
+              ),
+              const Spacer(),
+              _StatusPill(label: report.statusLabel),
+            ],
+          ),
+          SizedBox(height: compact ? 28 : 38),
+          Text(
+            report.primaryValue,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: compact ? 68 : 96,
+              height: .8,
+              letterSpacing: -5,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            report.primaryCaption,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          const SizedBox(height: 26),
+          const Divider(color: Colors.white24, height: 1),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _Metric(
+                label: report.firstMetricLabel,
+                value: report.firstMetricValue,
+              ),
+              _Metric(
+                label: report.secondMetricLabel,
+                value: report.secondMetricValue,
+              ),
+              _Metric(label: '분석 상태', value: report.analysisState),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 강점·보완 태그와 신뢰도를 가벼운 흑백 카드로 표시한다.
+/// API가 빈 목록을 내려도 안내 문구를 보이게 해 결과 화면의 정보 밀도를 안정적으로 유지한다.
+class _ResultAnalysis extends StatelessWidget {
+  const _ResultAnalysis({required this.report, required this.compact});
+
+  final _LevelResultReport report;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('level-result-analysis'),
+      padding: EdgeInsets.all(compact ? 20 : 26),
+      decoration: _LevelResultTokens.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'LEARNING SIGNALS',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 1.5,
+              fontWeight: FontWeight.w900,
+              color: _LevelResultTokens.muted,
+            ),
+          ),
+          const SizedBox(height: 7),
+          const Text(
+            '다음 학습을 위한 분석',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 22),
+          _TagGroup(title: '강점 태그', tags: report.strongTags, positive: true),
+          const SizedBox(height: 18),
+          _TagGroup(title: '보완 태그', tags: report.weakTags),
+          const SizedBox(height: 22),
+          const Divider(height: 1, color: _LevelResultTokens.line),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Icon(Icons.verified_outlined, size: 19),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  report.confidenceCopy,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    color: _LevelResultTokens.muted,
                   ),
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PlacementResultView extends StatelessWidget {
-  const _PlacementResultView({required this.result});
-
-  final LevelTestPlacementResult result;
-
-  static const String _difficultyLabel = '중상~상';
-  static const String _durationLabel = '약 60~90분';
-
-  String get _ovrText {
-    return result.ovr > 0 ? result.ovr.round().toString() : '--';
-  }
-
-  String get _confidenceText => '${(result.confidence * 100).round()}%';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        title: const Text(
-          '레벨테스트 결과',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        automaticallyImplyLeading: false,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          const Icon(
-            Icons.insights_rounded,
-            color: AppColors.primary,
-            size: 64,
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            '레이팅 추정 완료',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            _ovrText,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 58,
-              fontWeight: FontWeight.w900,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'raw ${result.rating.toStringAsFixed(0)} · 신뢰도 $_confidenceText',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: Colors.black54),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: const Column(
-              children: [
-                Text(
-                  '난이도 $_difficultyLabel · 예상 소요시간 $_durationLabel',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  '이것은 추정 레이팅이며, 변동 가능성이 있습니다.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-          _TagSection(title: '강한 태그', tags: result.strongTags),
-          const SizedBox(height: 14),
-          _TagSection(title: '보완 태그', tags: result.weakTags),
-          const SizedBox(height: 34),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
-            child: const Text(
-              '홈으로',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _TagSection extends StatelessWidget {
-  const _TagSection({required this.title, required this.tags});
+/// 결과 뒤의 다음 학습 행동을 기존 홈 라우팅으로 연결한다.
+/// 라우트 계약을 새로 만들지 않고 첫 라우트 복귀로 기존 대시보드 진입점을 보존한다.
+class _NextStepCard extends StatelessWidget {
+  const _NextStepCard({required this.report, required this.compact});
 
-  final String title;
-  final List<Map<String, dynamic>> tags;
+  final _LevelResultReport report;
+  final bool compact;
+
+  /// 필요한 값은 현재 Navigator다.
+  /// 기존 결과 화면의 홈 버튼과 같은 popUntil 동작으로 라우팅 회귀를 막는다.
+  void _goHome(BuildContext context) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        borderRadius: BorderRadius.circular(10),
+      padding: EdgeInsets.all(compact ? 20 : 26),
+      decoration: _LevelResultTokens.cardDecoration(),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _content(context, stacked: true),
+            )
+          : Row(children: _content(context, stacked: false)),
+    );
+  }
+
+  /// 필요한 값은 화면 폭과 홈 이동 콜백이다.
+  /// 모바일에서는 설명과 버튼을 세로로, PC에서는 같은 행의 명확한 CTA로 구성한다.
+  List<Widget> _content(BuildContext context, {required bool stacked}) {
+    final copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'NEXT STEP',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.w900,
+            color: _LevelResultTokens.muted,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          report.nextTitle,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          report.nextDescription,
+          style: const TextStyle(fontSize: 13, color: _LevelResultTokens.muted),
+        ),
+      ],
+    );
+    final button = FilledButton.icon(
+      key: const ValueKey('level-result-next-button'),
+      onPressed: () => _goHome(context),
+      icon: const Icon(Icons.arrow_forward_rounded),
+      label: const Text('학습 홈에서 이어가기'),
+      style: FilledButton.styleFrom(
+        backgroundColor: _LevelResultTokens.ink,
+        foregroundColor: Colors.white,
+        minimumSize: Size(0, compact ? 50 : 52),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
+    );
+    if (stacked) return [copy, const SizedBox(height: 18), button];
+    return [Expanded(child: copy), const SizedBox(width: 20), button];
+  }
+}
+
+/// 흑백 결과 화면에 필요한 상태·태그·보조 문구를 두 API 계약에서 계산한다.
+/// 서버 값은 그대로 보존하고 표현만 이 모델에서 통일해 UI 분기를 간결하게 유지한다.
+class _LevelResultReport {
+  const _LevelResultReport._({
+    required this.isPlacement,
+    required this.primaryValue,
+    required this.primaryCaption,
+    required this.statusLabel,
+    required this.firstMetricLabel,
+    required this.firstMetricValue,
+    required this.secondMetricLabel,
+    required this.secondMetricValue,
+    required this.analysisState,
+    required this.description,
+    required this.confidenceCopy,
+    required this.strongTags,
+    required this.weakTags,
+    required this.nextTitle,
+    required this.nextDescription,
+  });
+
+  factory _LevelResultReport.standard({
+    required int correctCount,
+    required int totalCount,
+    required bool passed,
+    required double percentage,
+  }) {
+    return _LevelResultReport._(
+      isPlacement: false,
+      primaryValue: '${percentage.toStringAsFixed(0)}%',
+      primaryCaption: '$correctCount / $totalCount 문항 정답',
+      statusLabel: passed ? 'PASS' : 'REVIEW',
+      firstMetricLabel: '정답률',
+      firstMetricValue: '${percentage.toStringAsFixed(1)}%',
+      secondMetricLabel: '결과',
+      secondMetricValue: passed ? '통과' : '복습 추천',
+      analysisState: '완료',
+      description: passed
+          ? '현재 단원의 핵심 개념을 안정적으로 이해하고 있어요.'
+          : '틀린 문항을 복습하면 다음 학습을 더 단단하게 시작할 수 있어요.',
+      confidenceCopy: '시험 결과가 저장되었습니다. 다음 학습에서 부족한 개념을 다시 확인할 수 있어요.',
+      strongTags: const [],
+      weakTags: const [],
+      nextTitle: passed ? '다음 학습으로 넘어갈 준비가 됐어요.' : '복습부터 차근차근 이어가 볼까요?',
+      nextDescription: '학습 홈에서 코스와 복습 과제를 확인하세요.',
+    );
+  }
+
+  factory _LevelResultReport.placement(LevelTestPlacementResult result) {
+    final confidence = (result.confidence * 100).round();
+    return _LevelResultReport._(
+      isPlacement: true,
+      primaryValue: result.ovr > 0 ? result.ovr.toStringAsFixed(1) : '--',
+      primaryCaption: '첫 OVR · 배치 테스트 기준점',
+      statusLabel: 'MEASURED',
+      firstMetricLabel: '신뢰도',
+      firstMetricValue: '$confidence%',
+      secondMetricLabel: '최근 정확도',
+      secondMetricValue: '${(result.recentAccuracy * 100).round()}%',
+      analysisState: '분석 완료',
+      description:
+          '정오답과 풀이 시간을 바탕으로 현재 학습 위치를 분석했어요. 이 기준점은 다음 풀이 기록으로 더 정확해집니다.',
+      confidenceCopy: '측정 신뢰도 $confidence% · 이후 코스와 문제 풀이에 따라 OVR이 계속 보정됩니다.',
+      strongTags: result.strongTags,
+      weakTags: result.weakTags,
+      nextTitle: '분석 결과를 바탕으로 코스를 추천할게요.',
+      nextDescription: '학습 홈에서 현재 수준에 맞는 다음 단원을 시작하세요.',
+    );
+  }
+
+  final bool isPlacement;
+  final String primaryValue;
+  final String primaryCaption;
+  final String statusLabel;
+  final String firstMetricLabel;
+  final String firstMetricValue;
+  final String secondMetricLabel;
+  final String secondMetricValue;
+  final String analysisState;
+  final String description;
+  final String confidenceCopy;
+  final List<Map<String, dynamic>> strongTags;
+  final List<Map<String, dynamic>> weakTags;
+  final String nextTitle;
+  final String nextDescription;
+}
+
+/// 태그 평점 목록을 간결한 흑백 배지로 표현한다.
+/// 태그 값이 없거나 형식이 달라도 안전한 텍스트로 변환해 서버 응답 오류가 화면을 막지 않게 한다.
+class _TagGroup extends StatelessWidget {
+  const _TagGroup({
+    required this.title,
+    required this.tags,
+    this.positive = false,
+  });
+
+  final String title;
+  final List<Map<String, dynamic>> tags;
+  final bool positive;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 9),
+        if (tags.isEmpty)
+          const Text(
+            '아직 충분한 분석 태그가 없습니다.',
+            style: TextStyle(fontSize: 13, color: _LevelResultTokens.muted),
+          )
+        else
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: tags
+                .take(5)
+                .map((tag) {
+                  final label = (tag['tag'] ?? '학습 태그').toString();
+                  final rating = (tag['rating'] as num?)?.toDouble();
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: positive
+                          ? _LevelResultTokens.ink
+                          : const Color(0xFFF0F0F0),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      rating == null
+                          ? '#$label'
+                          : '#$label ${rating.toStringAsFixed(1)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: positive ? Colors.white : _LevelResultTokens.ink,
+                      ),
+                    ),
+                  );
+                })
+                .toList(growable: false),
+          ),
+      ],
+    );
+  }
+}
+
+/// 요약 카드의 보조 지표를 일정한 최소 폭으로 표시한다.
+/// Wrap을 사용해 390px에서도 지표가 잘리지 않고 다음 줄로 자연스럽게 이동한다.
+class _Metric extends StatelessWidget {
+  const _Metric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 112,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            label,
+            style: const TextStyle(fontSize: 11, color: Colors.white60),
           ),
-          const SizedBox(height: 10),
-          if (tags.isEmpty)
-            const Text('분석할 태그가 없습니다.', style: TextStyle(color: Colors.black54))
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final tag in tags)
-                  Chip(
-                    label: Text(
-                      '#${tag['tag']} ${((tag['rating'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)}',
-                    ),
-                  ),
-              ],
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
             ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// 결과 상태를 대비 높은 작은 배지로 제공한다.
+/// PASS·REVIEW·MEASURED 값을 고정 폭 없이 보여줘 상태 문자열 변경에도 대응한다.
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          color: _LevelResultTokens.ink,
+          fontWeight: FontWeight.w900,
+          letterSpacing: .6,
+        ),
+      ),
+    );
+  }
+}
+
+/// 시안의 흑백 표면·여백을 한 곳에서 관리한다.
+/// 결과 전용 토큰만 두어 기존 전역 테마나 다른 학생 화면에 영향을 주지 않는다.
+abstract final class _LevelResultTokens {
+  static const canvas = Color(0xFFF5F5F3);
+  static const ink = Color(0xFF171717);
+  static const muted = Color(0xFF6C6C6C);
+  static const line = Color(0xFFD9D9D5);
+
+  /// 필요한 값은 어두운 요약 여부다.
+  /// 밝고 어두운 카드 모두 같은 모서리와 테두리 규칙을 사용해 HTML 시안의 표면 밀도를 맞춘다.
+  static BoxDecoration cardDecoration({bool dark = false}) {
+    return BoxDecoration(
+      color: dark ? ink : Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: dark ? ink : line),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: dark ? .08 : .035),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ],
     );
   }
 }

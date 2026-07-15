@@ -67,13 +67,16 @@ class Ios26TopBar extends StatelessWidget {
   final double? leftInset;
 
   /// 필요 변수: 현재 화면 폭과 전달받은 메뉴·행동 목록.
-  /// 작동 원리: HTML처럼 좌측 메뉴·브랜드, 중앙 캡슐 메뉴, 우측 검색·알림·프로필을 독립 정렬합니다.
+  /// 작동 원리: HTML처럼 PC는 브랜드·중앙 캡슐 메뉴·우측 행동을, 모바일은 햄버거와 행동만 분리 정렬합니다.
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final compact = width <= StudentDensityTokens.mobileBreakpoint;
     final barHeight = compact ? 58.0 : 68.0;
     final effectiveLeftInset = leftInset ?? (compact ? 12.0 : 40.0);
+    final showBackButton = onBack != null;
+    final showMobileMenuButton = compact && onMenu != null && !showBackButton;
+    final hasLeadingControl = showBackButton || showMobileMenuButton;
 
     return ClipRRect(
       child: BackdropFilter(
@@ -98,21 +101,20 @@ class Ios26TopBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (onBack != null)
+                    if (showBackButton)
                       _TopCircleButton(
                         icon: Icons.arrow_back_ios_new_rounded,
                         tooltip: '뒤로가기',
                         onTap: onBack,
                       )
-                    else if (onMenu != null)
+                    else if (showMobileMenuButton)
                       _TopCircleButton(
                         key: const ValueKey('student-mobile-menu'),
                         icon: Icons.menu_rounded,
                         tooltip: '전체 메뉴',
                         onTap: onMenu,
                       ),
-                    if (onBack != null || onMenu != null)
-                      SizedBox(width: compact ? 7 : 10),
+                    if (hasLeadingControl) SizedBox(width: compact ? 7 : 10),
                     GestureDetector(
                       onTap: onTitleTap,
                       child: Row(
@@ -154,21 +156,16 @@ class Ios26TopBar extends StatelessWidget {
                 ),
               ),
               if (items.isNotEmpty && !compact)
-                Transform.translate(
-                  offset: const Offset(-22, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.68),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: StudentDensityTokens.line),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (final item in items) _NavChip(item: item),
-                      ],
-                    ),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.68),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: StudentDensityTokens.line),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [for (final item in items) _NavChip(item: item)],
                   ),
                 ),
               Align(

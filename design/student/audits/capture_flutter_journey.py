@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import http.server
 import socketserver
 import threading
@@ -65,7 +66,80 @@ def _parse_click(value: str) -> tuple[int, int]:
     return int(x), int(y)
 
 
-def capture(args: argparse.Namespace) -> None:
+def _scroll_point(args: argparse.Namespace) -> tuple[int, int]:
+    """필요 변수는 뷰포트와 선택 스크롤 좌표다.
+
+    작동 원리: 화면 가장자리 대신 콘텐츠 중앙의 내부 스크롤러를 터치해
+    Flutter의 ListView·모달·드로어 전문을 순서대로 기록한다.
+    """
+
+    x = args.scroll_x if args.scroll_x >= 0 else args.width // 2
+    y = args.scroll_y if args.scroll_y >= 0 else min(args.height - 96, max(180, args.height // 2))
+    return max(1, min(args.width - 1, x)), max(1, min(args.height - 1, y))
+
+
+def _scroll_inner_content(
+    page,
+    cdp,
+    args: argparse.Namespace,
+) -> None:
+    """필요 변수는 브라우저·Flutter CDP·스크롤 좌표·이동 거리다.
+
+    작동 원리: 지정 좌표 아래의 실제 내부 스크롤러에 터치 제스처 또는 휠을
+    전달한다. 모달과 드로어도 같은 좌표를 지정하면 외부 페이지 대신 전문을 이동한다.
+    """
+
+    x, start_y = _scroll_point(args)
+    if cdp is not None:
+        end_y = max(24, start_y - args.scroll_by)
+        cdp.send(
+            "Input.dispatchTouchEvent",
+            {"type": "touchStart", "touchPoints": [{"x": x, "y": start_y}]},
+        )
+        for step in range(1, 17):
+            y = start_y + (end_y - start_y) * step / 16
+            cdp.send(
+                "Input.dispatchTouchEvent",
+                {"type": "touchMove", "touchPoints": [{"x": x, "y": y}]},
+            )
+            page.wait_for_timeout(16)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        return
+
+    page.mouse.move(x, start_y)
+    page.mouse.wheel(0, args.scroll_by)
+
+
+def _capture_scroll_states(
+    page,
+    cdp,
+    args: argparse.Namespace,
+    output_dir: Path,
+    prefix: str,
+    steps: int,
+) -> int:
+    """필요 변수는 캡처 대상·스크롤 횟수·저장 경로다.
+
+    작동 원리: 첫 화면과 내부 스크롤 이후 화면을 모두 저장하고, 내용이 더 이상
+    변하지 않으면 다음 이동을 멈춰 같은 장면만 반복 기록하지 않는다.
+    """
+
+    first = page.screenshot(path=output_dir / f"{prefix}-00.png")
+    previous_hash = hashlib.sha256(first).digest()
+    captured = 1
+    for index in range(1, steps + 1):
+        _scroll_inner_content(page, cdp, args)
+        page.wait_for_timeout(450)
+        image = page.screenshot(path=output_dir / f"{prefix}-{index:02d}.png")
+        captured += 1
+        current_hash = hashlib.sha256(image).digest()
+        if current_hash == previous_hash:
+            break
+        previous_hash = current_hash
+    return captured
+
+
+def capture(args: argparse.Namespace) -> int:
     """필요 변수는 화면 ID·viewport·스크롤 횟수·선택 클릭 좌표다.
 
     작동 원리는 실제 Edge에서 Flutter를 열고 각 휠 이동 및 클릭 뒤 안정화된 viewport를 PNG로 저장하는 것이다.
@@ -99,35 +173,29 @@ def capture(args: argparse.Namespace) -> None:
         page.goto(url, wait_until="networkidle")
         page.wait_for_timeout(args.wait_ms)
         cdp = page.context.new_cdp_session(page) if flutter_source else None
-        page.screenshot(path=output_dir / "scroll-00.png")
-        for index in range(1, args.steps + 1):
-            if flutter_source:
-                x = 8
-                start_y = min(args.height - 80, 860)
-                end_y = max(90, start_y - args.scroll_by)
-                cdp.send(
-                    "Input.dispatchTouchEvent",
-                    {"type": "touchStart", "touchPoints": [{"x": x, "y": start_y}]},
-                )
-                for step in range(1, 17):
-                    y = start_y + (end_y - start_y) * step / 16
-                    cdp.send(
-                        "Input.dispatchTouchEvent",
-                        {"type": "touchMove", "touchPoints": [{"x": x, "y": y}]},
-                    )
-                    page.wait_for_timeout(16)
-                cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
-            else:
-                page.mouse.move(args.width // 2, args.height // 2)
-                page.mouse.wheel(0, args.scroll_by)
-            page.wait_for_timeout(450)
-            page.screenshot(path=output_dir / f"scroll-{index:02d}.png")
+        scroll_states = _capture_scroll_states(
+            page,
+            cdp,
+            args,
+            output_dir,
+            "scroll",
+            args.steps,
+        )
         for click_index, click in enumerate(args.click, start=1):
             x, y = _parse_click(click)
             page.mouse.click(x, y)
             page.wait_for_timeout(args.click_wait_ms)
-            page.screenshot(path=output_dir / f"click-{click_index:02d}-{x}-{y}.png")
+            click_prefix = f"click-{click_index:02d}-{x}-{y}"
+            _capture_scroll_states(
+                page,
+                cdp,
+                args,
+                output_dir,
+                click_prefix,
+                args.click_scroll_steps,
+            )
         browser.close()
+    return scroll_states
 
 
 def main() -> None:
@@ -142,17 +210,24 @@ def main() -> None:
     parser.add_argument("--action", default="")
     parser.add_argument("--width", type=int, default=500)
     parser.add_argument("--height", type=int, default=1000)
-    parser.add_argument("--steps", type=int, default=4)
+    parser.add_argument("--steps", type=int, default=10)
     parser.add_argument("--scroll-by", type=int, default=720)
+    parser.add_argument("--scroll-x", type=int, default=-1)
+    parser.add_argument("--scroll-y", type=int, default=-1)
+    parser.add_argument("--click-scroll-steps", type=int, default=10)
     parser.add_argument("--click", action="append", default=[])
     parser.add_argument("--wait-ms", type=int, default=2500)
     parser.add_argument("--click-wait-ms", type=int, default=2500)
     parser.add_argument("--port", type=int, default=8981)
     args = parser.parse_args()
     started = time.perf_counter()
-    capture(args)
+    scroll_states = capture(args)
     elapsed = time.perf_counter() - started
-    print(f"Captured {args.screen}: {args.steps + 1} scroll states, {len(args.click)} clicks, {elapsed:.1f}s")
+    print(
+        f"Captured {args.screen}: {scroll_states} internal scroll states, "
+        f"{len(args.click)} clicks with {args.click_scroll_steps} inner-scroll attempts, "
+        f"{elapsed:.1f}s"
+    )
 
 
 if __name__ == "__main__":

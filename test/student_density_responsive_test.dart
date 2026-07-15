@@ -100,6 +100,16 @@ Widget _responsiveFixture() {
   );
 }
 
+/// 필요한 변수 없음. 아레나의 네 대결 큐를 네트워크 없이 같은 상태로 제공한다.
+/// 작동 원리: 390·500·1280px에서 데이터 차이 없이 레이아웃 분기만 검증하게 한다.
+Map<String, dynamic> _arenaResponsiveSummary() => {
+  'profile': {'tier': 'B', 'rating': 1580, 'wins': 18, 'losses': 9, 'draws': 2},
+  'queues': [
+    for (final type in ['duel_exam', 'duel_ox', 'team_exam', 'team_ox'])
+      {'queue_type': type, 'tier': 'B', 'rating': 1580, 'wins': 18, 'losses': 9, 'draws': 2, 'estimated_wait_seconds': 12},
+  ],
+};
+
 /// 필요한 변수는 검증할 논리 화면 크기와 모바일 여부다.
 /// 지정 크기로 공용 학생 셸을 렌더하고 HTML 시안의 햄버거·탭 노출 규칙을 확인한다.
 Future<void> _verifyViewport(
@@ -115,7 +125,10 @@ Future<void> _verifyViewport(
   await tester.pumpWidget(_responsiveFixture());
   await tester.pumpAndSettle();
 
-  expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+  expect(
+    find.byKey(const ValueKey('student-mobile-menu')),
+    mobile ? findsOneWidget : findsNothing,
+  );
   expect(find.text('학습터'), mobile ? findsNothing : findsOneWidget);
   expect(find.byType(BottomNavigationBar), findsNothing);
   expect(find.byType(NavigationRail), findsNothing);
@@ -132,7 +145,7 @@ void main() {
     await _verifyViewport(tester, const Size(500, 1000), mobile: true);
   });
 
-  testWidgets('1280×900 PC는 햄버거와 상단 메뉴를 함께 표시한다', (tester) async {
+  testWidgets('1280×900 PC는 햄버거 없이 중앙 상단 메뉴를 표시한다', (tester) async {
     await _verifyViewport(tester, const Size(1280, 900), mobile: false);
   });
 
@@ -378,7 +391,7 @@ void main() {
     expect(find.text('페이지 미리보기'), findsOneWidget);
   });
 
-  testWidgets('500px 아레나는 HTML 랭크 프로필과 네 대결 큐를 유지한다', (tester) async {
+  testWidgets('500px 아레나는 HTML 랭크 프로필과 인원별 대결 큐를 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -425,6 +438,8 @@ void main() {
     await tester.pump();
     expect(find.text('대결 방식 선택'), findsOneWidget);
     expect(find.text('1v1 시험 대결'), findsOneWidget);
+    await tester.tap(find.text('2 VS 2'));
+    await tester.pump();
     expect(find.text('2v2 OX 대결'), findsOneWidget);
   });
 
@@ -830,5 +845,78 @@ void main() {
     expect(tester.getTopLeft(panel), Offset.zero);
     expect(tester.getSize(panel), const Size(500, 1000));
     expect(find.text('닫기'), findsOneWidget);
+  });
+
+  testWidgets('390px 아레나는 단일 열과 안전한 인원 전환을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(MaterialApp(home: ArenaPage(initialSummary: _arenaResponsiveSummary())));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('arena-mobile-overview')), findsOneWidget);
+    expect(find.byKey(const ValueKey('arena-mobile-queue-list')), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -620));
+    await tester.pump();
+    await tester.tap(find.text('2 VS 2'));
+    await tester.pump();
+    expect(find.text('2v2 시험 대결'), findsOneWidget);
+    expect(find.text('2v2 OX 대결'), findsOneWidget);
+  });
+
+  testWidgets('1280px 아레나는 HTML형 양열 overview와 큐 그리드를 사용한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(MaterialApp(home: ArenaPage(initialSummary: _arenaResponsiveSummary())));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('arena-desktop-overview')), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -560));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('arena-desktop-queue-grid')), findsOneWidget);
+    final exam = tester.getTopLeft(find.text('1v1 시험 대결'));
+    final ox = tester.getTopLeft(find.text('1v1 OX 대결'));
+    expect((exam.dx - ox.dx).abs(), greaterThan(180));
+    expect((exam.dy - ox.dy).abs(), lessThan(40));
+  });
+
+  testWidgets('390px 마켓은 검색과 필터를 세로로 쌓는다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: MarketplacePage(initialData: [
+      {'id': 'q1', 'type': 'quest', 'title': '중2 함수 실전 100제', 'subtitle': '평점 4.9 · 1,200P'},
+    ])));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('market-mobile-search-panel')), findsOneWidget);
+    final field = tester.getTopLeft(find.byKey(const ValueKey('market-search-field')));
+    final filters = tester.getTopLeft(find.byKey(const ValueKey('market-mobile-filters')));
+    expect(filters.dy, greaterThan(field.dy + 45));
+  });
+
+  testWidgets('1280px 마켓은 HTML형 검색·버튼·필터 한 줄을 사용한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: MarketplacePage(initialData: [
+      {'id': 'q1', 'type': 'quest', 'title': '중2 함수 실전 100제', 'subtitle': '평점 4.9 · 1,200P'},
+    ])));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('market-desktop-search-panel')), findsOneWidget);
+    final field = tester.getTopLeft(find.byKey(const ValueKey('market-search-field')));
+    final filters = tester.getTopLeft(find.byKey(const ValueKey('market-desktop-filters')));
+    expect((filters.dy - field.dy).abs(), lessThan(24));
+    expect(filters.dx, greaterThan(field.dx + 300));
   });
 }

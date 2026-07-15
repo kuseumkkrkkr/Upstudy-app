@@ -115,6 +115,14 @@ double _uiScale(BuildContext context, {double min = 0.6, double max = 1.0}) {
   return scale;
 }
 
+/// 필요한 값은 모바일 여부와 하단 카드 위젯이다.
+/// 스크롤 내부 모바일 Column에는 flex 자식을 두지 않고, PC에서만 남은 가로 폭을 동등하게 나눈다.
+Widget _bottomResponsiveChild({required bool mobile, required Widget child}) {
+  return mobile
+      ? SizedBox(width: double.infinity, child: child)
+      : Expanded(child: child);
+}
+
 DateTime _dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
@@ -340,7 +348,10 @@ class _MainStudentPageState extends State<MainStudentPage> {
       ...(_teacherTasksByDate[today] ?? const <String>[]),
       ...(_tasksByDate[today] ?? const <String>[]),
     ];
-    final heroExtent = mobile ? 210.0 : 294.0;
+    // 필요한 변수는 모바일 본문 여백과 2줄 인사 문구의 실제 높이다.
+    // 작동 원리: 좁은 폭에서도 인사·보조 설명이 잘리지 않도록 시안의 압축 히어로를
+    // 고정 210px이 아닌 내용이 들어가는 250px 높이로 유지한다.
+    final heroExtent = mobile ? 250.0 : 294.0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -568,6 +579,7 @@ class _HeroSection extends StatelessWidget {
     final mobile = isStudentDensityMobile(context);
     const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return SizedBox(
+      key: ValueKey(mobile ? 'student-home-mobile' : 'student-home-desktop'),
       height: height,
       child: StudentDensityPage(
         padding: EdgeInsets.fromLTRB(
@@ -1167,6 +1179,11 @@ class _LearningSection extends StatelessWidget {
     ];
 
     return Center(
+      key: ValueKey(
+        mobile
+            ? 'student-home-learning-mobile'
+            : 'student-home-learning-desktop',
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           maxWidth: StudentDensityTokens.desktopMaxWidth,
@@ -1259,7 +1276,7 @@ class _HomeStatusCard extends StatelessWidget {
     final mobile = isStudentDensityMobile(context);
     return SizedBox(
       width: double.infinity,
-      height: mobile ? 104 : 132,
+      height: mobile ? 118 : 132,
       child: Stack(
         fit: StackFit.expand,
         clipBehavior: Clip.none,
@@ -1627,8 +1644,8 @@ class _BottomSection extends StatelessWidget {
             direction: mobile ? Axis.vertical : Axis.horizontal,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                fit: mobile ? FlexFit.loose : FlexFit.tight,
+              _bottomResponsiveChild(
+                mobile: mobile,
                 child: ValueListenableBuilder<ActivitySnapshot>(
                   valueListenable: ActivityStore.notifier,
                   builder: (context, activitySnapshot, __) {
@@ -1793,8 +1810,8 @@ class _BottomSection extends StatelessWidget {
                 width: mobile ? 0 : 12 * scale,
                 height: mobile ? 12 * scale : 0,
               ),
-              Flexible(
-                fit: mobile ? FlexFit.loose : FlexFit.tight,
+              _bottomResponsiveChild(
+                mobile: mobile,
                 child: Container(
                   width: double.infinity,
                   height: 190 * scale,
