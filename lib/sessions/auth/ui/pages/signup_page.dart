@@ -646,16 +646,24 @@ class _SignupSteps extends StatelessWidget {
           (1, '02', '계정 만들기'),
           (2, '03', '최종 확인'),
         ])
-          TextButton(
-            onPressed: () => onSelected(item.$1),
-            child: Text(
-              '${item.$2}  ${item.$3}',
-              style: TextStyle(
-                fontSize: 12,
-                color: stage == item.$1 ? Colors.black : Colors.black38,
-                fontWeight: stage == item.$1
-                    ? FontWeight.w900
-                    : FontWeight.w500,
+          Expanded(
+            child: TextButton(
+              onPressed: () => onSelected(item.$1),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '${item.$2}  ${item.$3}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: stage == item.$1 ? Colors.black : Colors.black38,
+                    fontWeight: stage == item.$1
+                        ? FontWeight.w900
+                        : FontWeight.w500,
+                  ),
+                ),
               ),
             ),
           ),

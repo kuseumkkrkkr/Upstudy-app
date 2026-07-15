@@ -348,36 +348,76 @@ class _LoginPageState extends State<LoginPage> {
 
     if (widget.asDialog) {
       return Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AuthDesignTokens.surface,
+        borderRadius: BorderRadius.circular(30),
+        clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: 520,
-            maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+            maxWidth: 560,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isAuthMobile(context) ? 22 : 34),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      '로그인',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
+                    Container(
+                      width: 38,
+                      height: 38,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AuthDesignTokens.ink,
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: const Text(
+                        'A',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'AIFlow',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    const Spacer(),
                     IconButton(
+                      tooltip: '닫기',
                       icon: const Icon(Icons.close),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
-                const Divider(height: 24),
+                const SizedBox(height: 34),
+                const Text(
+                  'WELCOME BACK',
+                  style: TextStyle(
+                    color: AuthDesignTokens.muted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '학습을 이어가세요.',
+                  style: TextStyle(
+                    color: AuthDesignTokens.ink,
+                    fontSize: 34,
+                    letterSpacing: -1.6,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '아이디 또는 이메일로 안전하게 로그인합니다.',
+                  style: TextStyle(color: AuthDesignTokens.muted, fontSize: 12),
+                ),
                 form,
               ],
             ),

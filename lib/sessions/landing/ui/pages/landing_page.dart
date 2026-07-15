@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
+import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
+import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
 
 class LandingPage extends StatelessWidget {
@@ -11,26 +12,41 @@ class LandingPage extends StatelessWidget {
 
   const LandingPage({super.key});
 
+  /// 필요한 변수는 현재 화면의 Navigator와 Dialog 컨텍스트입니다.
+  /// 작동 원리는 랜딩 위에 반응형 로그인 모달을 표시하고 성공 시 기존 인증 이동 흐름을 유지하는 것입니다.
   void _goToLogin(BuildContext context) {
     showDialog<void>(
       context: context,
       useRootNavigator: true,
       barrierDismissible: true,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const LoginPage(asDialog: true),
+      barrierColor: Colors.black.withValues(alpha: .46),
+      builder: (_) => const Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+        child: LoginPage(asDialog: true),
       ),
     );
   }
 
+  /// 필요한 변수는 현재 Navigator입니다.
+  /// 작동 원리는 정식 `/signup`과 같은 회원가입 화면을 전체 페이지로 여는 것입니다.
+  void _goToSignup(BuildContext context) {
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push(MaterialPageRoute(builder: (_) => const SignupPage()));
+  }
+
+  /// 필요한 변수는 현재 Navigator입니다.
+  /// 작동 원리는 서비스 소개 화면을 기존 라우팅 방식 그대로 여는 것입니다.
   void _goToAbout(BuildContext context) {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const LandingAboutPage()));
   }
 
+  /// 필요한 변수는 현재 화면 컨텍스트와 문의 이메일입니다.
+  /// 작동 원리는 외부 메일 앱을 열고 실패하면 화면 하단에 주소를 안내하는 것입니다.
   Future<void> _contactByEmail(BuildContext context) async {
     final uri = Uri(
       scheme: 'mailto',
@@ -49,138 +65,307 @@ class LandingPage extends StatelessWidget {
     );
   }
 
+  /// 필요한 변수는 로그인·가입·소개·문의 콜백과 화면 폭입니다.
+  /// 작동 원리는 데스크톱에서 소개와 인증 선택을 2열로, 모바일에서는 한 열로 재배치하는 것입니다.
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final mobile = isAuthMobile(context);
+    final story = _LandingStory(
+      onAbout: () => _goToAbout(context),
+      onContact: () => _contactByEmail(context),
+    );
+    final entry = _LandingEntry(
+      onLogin: () => _goToLogin(context),
+      onSignup: () => _goToSignup(context),
+    );
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Image.network(
-            'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-            width: screenWidth,
-            height: screenHeight,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const DecoratedBox(
-              decoration: BoxDecoration(color: Colors.black),
-            ),
-          ),
-          Container(
-            width: screenWidth,
-            height: screenHeight,
-            color: Colors.black.withValues(alpha: 0.5),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Row(
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  color: Colors.black,
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    semanticLabel: 'AIFlow 로고',
+      backgroundColor: AuthDesignTokens.canvas,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            const Positioned(top: -130, right: -100, child: _AmbientOrb()),
+            SingleChildScrollView(
+              padding: EdgeInsets.all(mobile ? 14 : 28),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1440),
+                  child: Container(
+                    constraints: BoxConstraints(
+                      minHeight: mobile
+                          ? 0
+                          : MediaQuery.sizeOf(context).height - 56,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(mobile ? 28 : 38),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x24000000),
+                          blurRadius: 80,
+                          offset: Offset(0, 28),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: mobile
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [story, entry],
+                          )
+                        : IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(flex: 11, child: story),
+                                Expanded(flex: 9, child: entry),
+                              ],
+                            ),
+                          ),
                   ),
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LandingStory extends StatelessWidget {
+  const _LandingStory({required this.onAbout, required this.onContact});
+
+  final VoidCallback onAbout;
+  final VoidCallback onContact;
+
+  /// 필요한 변수는 소개·문의 콜백과 현재 화면 폭입니다.
+  /// 작동 원리는 검은 브랜드 면에 제품 가치와 보조 링크를 우선순위대로 배치하는 것입니다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isAuthMobile(context);
+    return Container(
+      color: AuthDesignTokens.darkSurface,
+      padding: EdgeInsets.all(mobile ? 24 : 54),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _LandingBrand(light: true),
+          SizedBox(height: mobile ? 54 : 108),
+          const Text(
+            'LEARN WITH FLOW',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.8,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '나만의 학습 흐름을\n완성하세요.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: mobile ? 40 : 62,
+              height: 1.02,
+              letterSpacing: mobile ? -2 : -3.2,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: const Text(
+              '진도, 문제 풀이, 필기와 복습 기록을 한곳에서 연결하고 필요한 학습을 다음 흐름으로 이어갑니다.',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+                height: 1.65,
+              ),
+            ),
+          ),
+          SizedBox(height: mobile ? 48 : 80),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _DarkLinkButton(label: 'AIFlow 알아보기', onPressed: onAbout),
+              _DarkLinkButton(label: '도입 문의', onPressed: onContact),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LandingEntry extends StatelessWidget {
+  const _LandingEntry({required this.onLogin, required this.onSignup});
+
+  final VoidCallback onLogin;
+  final VoidCallback onSignup;
+
+  /// 필요한 변수는 로그인·가입 콜백과 현재 화면 폭입니다.
+  /// 작동 원리는 가장 빈번한 두 인증 행동을 큰 전폭 버튼과 상태 안내로 제공하는 것입니다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isAuthMobile(context);
+    return Container(
+      color: AuthDesignTokens.surface.withValues(alpha: .96),
+      padding: EdgeInsets.all(mobile ? 24 : 54),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (mobile) const _LandingBrand(light: false),
+          if (mobile) const SizedBox(height: 42),
+          const Text(
+            'START A SESSION',
+            style: TextStyle(
+              color: AuthDesignTokens.muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.6,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'AIFlow 시작하기',
+            style: TextStyle(
+              color: AuthDesignTokens.ink,
+              fontSize: mobile ? 34 : 44,
+              letterSpacing: -2,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '계정이 있다면 학습 기록을 이어가고, 처음이라면 맞춤 학습 프로필을 만들어 보세요.',
+            style: TextStyle(
+              color: AuthDesignTokens.muted,
+              fontSize: 13,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 34),
+          AuthPrimaryButton(label: '로그인', onPressed: onLogin),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: onSignup,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 50),
+              foregroundColor: AuthDesignTokens.ink,
+              side: const BorderSide(color: AuthDesignTokens.line),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            child: const Text('새 계정 만들기'),
+          ),
+          const SizedBox(height: 26),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AuthDesignTokens.surfaceMuted,
+              border: Border.all(color: AuthDesignTokens.line),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.lock_outline_rounded, size: 18),
+                SizedBox(width: 10),
                 Expanded(
-                  child: Container(
-                    height: 70,
-                    color: const Color(0xFF121712),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => _goToLogin(context),
-                          child: Text(
-                            '로그인',
-                            style: GoogleFonts.interTight(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        TextButton(
-                          onPressed: () => _goToAbout(context),
-                          child: Text(
-                            '알아보기',
-                            style: GoogleFonts.interTight(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        TextButton(
-                          onPressed: () => _contactByEmail(context),
-                          child: Text(
-                            '문의하기',
-                            style: GoogleFonts.interTight(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                      ],
+                  child: Text(
+                    '저장된 세션은 서버에서 확인한 뒤 안전하게 복원합니다.',
+                    style: TextStyle(
+                      color: AuthDesignTokens.muted,
+                      fontSize: 11,
+                      height: 1.4,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'AIFlow와 함께',
-                    style: GoogleFonts.ptSans(
-                      color: const Color(0xFFE0E0E0),
-                      fontSize: 28,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    '당신의 수학문제를\n만드세요',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.interTight(
-                      color: Colors.white,
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 60),
-                  ElevatedButton(
-                    onPressed: () => _goToLogin(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF45BF63),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(300, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      '시작하기 ▶',
-                      style: GoogleFonts.interTight(fontSize: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
+}
+
+class _LandingBrand extends StatelessWidget {
+  const _LandingBrand({required this.light});
+
+  final bool light;
+
+  /// 필요한 변수는 밝은 표면 여부입니다.
+  /// 작동 원리는 표면 명도에 따라 로고 전경과 배경을 반전하는 것입니다.
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: light ? Colors.white : AuthDesignTokens.ink,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Text(
+          'A',
+          style: TextStyle(
+            color: light ? AuthDesignTokens.ink : Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+      const SizedBox(width: 11),
+      Text(
+        'AIFlow',
+        style: TextStyle(
+          color: light ? Colors.white : AuthDesignTokens.ink,
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ],
+  );
+}
+
+class _DarkLinkButton extends StatelessWidget {
+  const _DarkLinkButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  /// 필요한 변수는 버튼 문구와 실행 함수입니다.
+  /// 작동 원리는 어두운 면의 보조 행동을 반투명 캡슐 버튼으로 표시하는 것입니다.
+  @override
+  Widget build(BuildContext context) => OutlinedButton(
+    onPressed: onPressed,
+    style: OutlinedButton.styleFrom(
+      minimumSize: const Size(0, 44),
+      foregroundColor: Colors.white,
+      side: const BorderSide(color: Colors.white24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+    ),
+    child: Text(label),
+  );
+}
+
+class _AmbientOrb extends StatelessWidget {
+  const _AmbientOrb();
+
+  /// 필요한 변수는 없으며 랜딩 배경에 정적인 밝은 원형 레이어를 표시합니다.
+  /// 작동 원리는 이미지 네트워크 요청 없이 중성 배경에 얕은 깊이를 추가하는 것입니다.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 420,
+    height: 420,
+    decoration: const BoxDecoration(
+      color: Color(0x88FFFFFF),
+      shape: BoxShape.circle,
+    ),
+  );
 }
