@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
-enum StudentTopDestination { learning, courses, bookbag, social, marketplace }
+enum StudentTopDestination {
+  home,
+  learning,
+  courses,
+  bookbag,
+  social,
+  marketplace,
+}
 
 /// 필요한 변수는 현재 화면 문맥과 활성 학생 메뉴다.
-/// 모든 학생 화면이 동일한 명명 라우트를 사용하도록 PC 상단 메뉴 항목과 활성 상태를 생성한다.
+/// 각 학습 기능의 명명 라우트를 PC 상단 메뉴 항목과 활성 상태로 생성한다.
 List<Ios26NavItem> studentTopNavItems(
   BuildContext context, {
   required StudentTopDestination active,
@@ -13,8 +20,8 @@ List<Ios26NavItem> studentTopNavItems(
   const destinations =
       <({StudentTopDestination destination, String label, String route})>[
         (
-          destination: StudentTopDestination.learning,
-          label: '학습터',
+          destination: StudentTopDestination.home,
+          label: '홈',
           route: '/student/dashboard',
         ),
         (

@@ -9,7 +9,7 @@ import json
 
 import os
 import random
-import sqlite3
+from infra.db import postgres_compat as db
 
 import urllib.error
 
@@ -95,6 +95,7 @@ from auth import (
 get_user_by_id = get_auth_user_by_id
 
 from analysis_service import analyze_pregrade, analyze_submission
+from services.ocr.texteller_grid import warm_texteller_runtime
 from services.ai.guard import check_excessive, check_harmful
 
 from clean_riddles import build_clean_payload
@@ -181,15 +182,17 @@ from storage.exam_editor_storage import (
 )
 
 from storage.storage import (
-    DB_PATH,
     claim_cached_quests,
-    get_quest,
     get_last_store_error,
-    init_db,
-    search_quests,
-    store_data,
-    update_quest_mcq,
 )
+from storage.postgres_problem_store import postgres_problem_store
+
+# 필요 변수: PostgreSQL 문제 payload 스키마.
+# 작동 원리: 메인 API의 문제 CRUD가 파일 저장소를 거치지 않고 JSONB 저장소를 직접 사용한다.
+get_quest = postgres_problem_store.get_problem
+search_quests = postgres_problem_store.search_problems
+store_data = postgres_problem_store.upsert_problem
+update_quest_mcq = postgres_problem_store.update_problem_mcq
 from domain.quest.search_view import enrich_quest_search_item, quest_title_text
 from domain.exam import repository as exam_paper_repo
 from services.ai.providers.base import get_default_provider
@@ -365,7 +368,7 @@ logger = logging.getLogger(__name__)
 
 def _embedded_background_workers_enabled() -> bool:
     """필요 변수: RUN_EMBEDDED_BACKGROUND_WORKERS. 작동 원리: 다중 웹 프로세스에서 작업 워커·생성 풀 중복 기동을 명시적으로 차단한다."""
-    return os.getenv("RUN_EMBEDDED_BACKGROUND_WORKERS", "1").strip().lower() in {
+    return os.getenv("RUN_EMBEDDED_BACKGROUND_WORKERS", "0").strip().lower() in {
         "1",
         "true",
         "yes",
@@ -439,6 +442,13 @@ def include_api_routers() -> None:
         _safe_include_router(exams_v2_router, name="app.api.routes.exams.router")
     except Exception as exc:
         logger.error("failed to load exams router: %s", exc)
+
+    # 마켓플레이스는 공개 목록만 제공하며 문제 생성 경로와 분리한다.
+    try:
+        from app.api.routes.marketplace.router import router as marketplace_router
+        _safe_include_router(marketplace_router, name="app.api.routes.marketplace.router")
+    except Exception as exc:
+        logger.error("failed to load marketplace router: %s", exc)
 
     # Challenge router
     try:
@@ -520,6 +530,10 @@ _GEN_STATUS_TTL = 300
 
 _WS_CONNECTIONS: Dict[str, List[WebSocket]] = {}
 _WS_LOCK = asyncio.Lock()
+# 필요 변수: 사용자별 송신 잠금과 연결 상한. 작동 원리: 같은 사용자의 알림을
+# 동시에 소켓에 쓰지 않고, 재접속 폭주로 연결 목록이 무한히 늘어나는 것을 막는다.
+_WS_SEND_LOCKS: Dict[str, asyncio.Lock] = {}
+_WS_MAX_CONNECTIONS_PER_USER = max(1, int(os.getenv("WS_MAX_CONNECTIONS_PER_USER", "4")))
 
 _HISTORY_KEY = "problem_history_v2"
 _HISTORY_WINDOW_SEC = 3 * 24 * 60 * 60
@@ -533,7 +547,7 @@ def _now_iso() -> str:
 
 
 def _init_variant_tray_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -573,7 +587,7 @@ def _insert_variant_tray_item(
     quest_id = (header.get("quest_id") or payload.get("quest_id") or "").strip() or None
     codebase_id, seed = _extract_codebase_seed(quest or payload)
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -581,6 +595,7 @@ def _insert_variant_tray_item(
             user_id, quest_id, codebase_id, seed, source_variant_mode, visibility_scope,
             is_mcq_branch, payload_json, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        RETURNING id
         """,
         (
             user_id,
@@ -595,7 +610,8 @@ def _insert_variant_tray_item(
             now,
         ),
     )
-    row_id = int(cur.lastrowid or 0)
+    inserted = cur.fetchone()
+    row_id = int(inserted[0]) if inserted else 0
     cur.execute(
         """
         DELETE FROM quest_variant_tray
@@ -628,7 +644,7 @@ def _insert_variant_tray_item(
 def _list_variant_tray_items(*, user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
     _init_variant_tray_db()
     safe_limit = max(1, min(limit, 500))
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -667,22 +683,26 @@ def _list_variant_tray_items(*, user_id: str, limit: int = 100) -> List[Dict[str
 
 @app.on_event("startup")
 async def _startup_event() -> None:
-    init_db()
-    init_exam_db()
-    init_exam_editor_db()
-    init_habit_db()
-    init_continue_db()
-    init_solve_history_db()
-    init_weakness_db()
+    """필요 변수: PostgreSQL·Redis 시크릿과 마이그레이션.
+    작동 원리: 웹 프로세스는 PostgreSQL 핵심 저장소만 검증하고 레거시 파일 DB 초기화를 실행하지 않는다.
+    """
     postgres_rating_store.require_ready()
-    init_teacher_store_db()
-    init_teacher_exam_document_db()
     init_student_account_db()
     init_user_db()
-    init_course_db()
-    _init_variant_tray_db()
-    # 웹/워커 모드와 관계없이 정적 문제 파일이 없거나 손상되면 서버를 준비 완료로 올리지 않는다.
-    await _validate_level_test_static_db()
+    init_user_kv_db()
+    # 교사 문서함과 코스 빌더가 첫 요청부터 기본 교재를 조회할 수 있게 준비한다.
+    init_textbook_db()
+    if os.getenv("OCR_TEXTELLER_WARMUP_ON_STARTUP", "0").strip().lower() in {"1", "true", "yes"}:
+        # 필요 변수: 사전 캐시된 TexTeller 가중치. 작동 원리: 첫 사용자 요청 대신 서버 준비 단계에서 모델 메모리를 확보한다.
+        warmup_started = time.perf_counter()
+        warning = await asyncio.to_thread(warm_texteller_runtime)
+        if warning:
+            logger.warning(warning)
+        else:
+            logger.info(
+                "TexTeller warmup complete in %.2fs",
+                time.perf_counter() - warmup_started,
+            )
     if not _embedded_background_workers_enabled():
         logger.info("embedded background workers disabled for web process")
         return
@@ -722,20 +742,20 @@ async def _shutdown_event() -> None:
     shutdown_process_pool(wait=False)
 
 
-async def _validate_level_test_static_db() -> None:
-    """필요 변수: 배포된 레벨테스트 정적 DB. 작동 원리: 서버 시작 시 읽기 전용 무결성만 확인하고 문제 생성이나 운영 DB 쓰기는 하지 않는다."""
+async def _validate_level_test_postgres() -> None:
+    """필요 변수: PostgreSQL DATABASE_URL과 008 migration. 작동 원리: 서버 시작 시 레벨테스트 핵심 테이블 존재를 확인한다."""
     try:
-        from domain.level_test.static_store import validate_static_database
+        from storage.postgres_level_test_store import postgres_level_test_store
 
-        report = await asyncio.to_thread(validate_static_database)
-        logger.info(
-            "level-test static DB ready: problems=%s templates=%s",
-            report["problem_count"],
-            report["template_count"],
-        )
+        await asyncio.to_thread(postgres_level_test_store.require_ready)
+        logger.info("level-test PostgreSQL store ready")
     except Exception as exc:
-        logger.error("failed to validate level-test static DB: %s", exc)
-        raise RuntimeError("level-test static DB is not ready") from exc
+        logger.error("failed to validate level-test PostgreSQL store: %s", exc)
+        raise RuntimeError("level-test PostgreSQL store is not ready") from exc
+
+
+# 운영 worker의 기존 호출명과 호환하되 실제 검사는 PostgreSQL에서 수행한다.
+_validate_level_test_static_db = _validate_level_test_postgres
 
 
 def _save_seed_history(user_id: str, entries: List[Dict[str, Any]]) -> None:
@@ -2236,6 +2256,31 @@ class FriendRequestListResponse(BaseModel):
 
     requests: List[FriendRequestResponse]
 
+
+def _friend_profiles_from_rows(
+    rows: List[Dict[str, Any]],
+    *,
+    source: str,
+) -> List[FriendProfile]:
+    """필요 변수: 사용자 조회 행 목록과 호출 출처.
+
+    작동 원리: 각 행을 독립 검증해 손상된 사용자 한 명만 제외하고 나머지
+    친구 검색·목록 응답은 계속 반환한다.
+    """
+    profiles: List[FriendProfile] = []
+    for row in rows:
+        try:
+            profiles.append(FriendProfile(**row))
+        except Exception as exc:
+            logger.warning(
+                "소셜 사용자 행을 건너뜁니다: source=%s user_id=%s error=%s",
+                source,
+                str(row.get("user_id") or ""),
+                type(exc).__name__,
+            )
+    return profiles
+
+
 def _make_friend_request_response(
     request: Dict[str, str],
     *,
@@ -2253,6 +2298,33 @@ def _make_friend_request_response(
         message=request.get("message") or "",
         created_at=request.get("created_at") or datetime.utcnow().isoformat(timespec="seconds") + "Z",
     )
+
+
+def _friend_request_responses_safely(
+    requests: List[Dict[str, str]],
+    *,
+    me_user_id: str,
+) -> List[FriendRequestResponse]:
+    """필요 변수: 친구 요청 행 목록과 현재 사용자 ID.
+
+    작동 원리: 상대 사용자 조회·응답 변환을 요청별로 격리해 조회 오류가 난
+    요청 하나만 제외하고 나머지 알림은 유지한다.
+    """
+    responses: List[FriendRequestResponse] = []
+    for request in requests:
+        try:
+            responses.append(
+                _make_friend_request_response(request=request, me_user_id=me_user_id)
+            )
+        except Exception as exc:
+            logger.warning(
+                "친구 요청 사용자 조회를 건너뜁니다: request_id=%s error=%s",
+                str(request.get("id") or ""),
+                type(exc).__name__,
+            )
+    return responses
+
+
 class FriendListResponse(BaseModel):
 
     friends: List[FriendProfile]
@@ -2972,31 +3044,57 @@ def _require_admin_payload(
 
 
 async def _register_ws(user_id: str, websocket: WebSocket) -> None:
+    """웹소켓을 승인하고 사용자별 연결 목록에 등록한다.
+
+    필요 변수: user_id, websocket. 작동 원리: 사용자별 연결 상한을 적용해
+    클라이언트 재연결 실패가 소켓·버퍼 고갈로 이어지지 않게 한다.
+    """
     await websocket.accept()
+    stale_connections: List[WebSocket] = []
     async with _WS_LOCK:
-        _WS_CONNECTIONS.setdefault(user_id, []).append(websocket)
+        connections = _WS_CONNECTIONS.setdefault(user_id, [])
+        if len(connections) >= _WS_MAX_CONNECTIONS_PER_USER:
+            stale_connections = connections[: len(connections) - _WS_MAX_CONNECTIONS_PER_USER + 1]
+            del connections[: len(stale_connections)]
+        connections.append(websocket)
+        _WS_SEND_LOCKS.setdefault(user_id, asyncio.Lock())
+
+    for stale in stale_connections:
+        try:
+            await stale.close(code=1008, reason="too many connections")
+        except (WebSocketDisconnect, RuntimeError, OSError):
+            pass
 
 async def _unregister_ws(user_id: str, websocket: WebSocket) -> None:
+    """종료된 웹소켓을 목록에서 제거하고 빈 사용자 상태를 정리한다."""
     async with _WS_LOCK:
         conns = _WS_CONNECTIONS.get(user_id, [])
         if websocket in conns:
             conns.remove(websocket)
         if not conns:
             _WS_CONNECTIONS.pop(user_id, None)
+            _WS_SEND_LOCKS.pop(user_id, None)
 
 async def _send_ws(user_id: str, payload: Dict[str, Any]) -> None:
+    """사용자 소켓에 알림을 순차 송신한다.
+
+    필요 변수: user_id, payload. 작동 원리: 사용자별 잠금으로 동시 send를
+    직렬화하고, 연결이 끊긴 소켓은 즉시 정리해 송신 작업 누적을 줄인다.
+    """
     message = json.dumps(payload)
     async with _WS_LOCK:
         conns = list(_WS_CONNECTIONS.get(user_id, []))
-    for ws in conns:
-        try:
-            await ws.send_text(message)
-        except Exception:
+        send_lock = _WS_SEND_LOCKS.setdefault(user_id, asyncio.Lock())
+    async with send_lock:
+        for ws in conns:
             try:
-                await ws.close()
-            except Exception:
-                pass
-            await _unregister_ws(user_id, ws)
+                await ws.send_text(message)
+            except (WebSocketDisconnect, RuntimeError, OSError):
+                try:
+                    await ws.close()
+                except (WebSocketDisconnect, RuntimeError, OSError):
+                    pass
+                await _unregister_ws(user_id, ws)
 
 def _notify_user(user_id: str, payload: Dict[str, Any]) -> None:
     try:
@@ -3013,6 +3111,11 @@ def _notify_user(user_id: str, payload: Dict[str, Any]) -> None:
 
 @app.websocket("/ws/social")
 async def social_websocket(websocket: WebSocket) -> None:
+    """인증된 소셜 웹소켓을 유지하고 연결 종료 시 자원을 정리한다.
+
+    필요 변수: token, user_id. 작동 원리: 클라이언트의 ping·메시지를 대기하며
+    정상적인 작업 취소는 다시 전파하되, 연결 해제는 오류로 처리하지 않는다.
+    """
     token = websocket.query_params.get("token") or websocket.headers.get("Authorization") or ""
     if token.startswith("Bearer "):
         token = token[7:]
@@ -3066,27 +3169,11 @@ async def _seed_validator_loop() -> None:
 @app.on_event("startup")
 
 def _startup() -> None:
-
-    init_db()
-
-    init_exam_db()
-
+    """필요 변수: PostgreSQL 핵심 스키마. 작동 원리: 중복 startup 훅에서도 파일 DB 초기화 없이 같은 준비 상태만 확인한다."""
     init_user_db()
-
-    init_social_db()
-
-    init_study_group_db()
-
     init_user_kv_db()
-
     postgres_rating_store.require_ready()
-
-    init_weakness_db()
-
-    init_teacher_exam_document_db()
-
-    init_textbook_db()
-    init_serverchat()
+    init_student_account_db()
 
     if not _embedded_background_workers_enabled():
         return
@@ -3304,13 +3391,16 @@ def get_user_storage(
 
     user_id: str = Depends(_get_user_id),
 
-) -> Dict[str, str]:
+) -> Dict[str, Optional[str]]:
+
+    """사용자 저장소 값을 조회한다.
+
+    필요한 변수는 인증된 ``user_id``와 UTF-8 키 문자열 ``key``다. 저장된 값이
+    없을 수 있는 사용자 설정의 특성상, 미존재 키도 정상 조회 결과(값 ``null``)로
+    반환해 최초 화면 진입마다 예상된 404 로그가 쌓이지 않게 한다.
+    """
 
     value = get_user_kv(user_id, key)
-
-    if value is None:
-
-        raise HTTPException(status_code=404, detail="Not found")
 
     return {"value": value}
 
@@ -3438,7 +3528,7 @@ def search_friends(
 
     return FriendSearchResponse(
 
-        users=[FriendProfile(**user) for user in users],
+        users=_friend_profiles_from_rows(users, source="friend_search"),
 
     )
 
@@ -3451,10 +3541,7 @@ def search_friends(
 def list_friend_requests(user_id: str = Depends(_get_user_id)) -> FriendRequestListResponse:
     requests = list_friend_requests_for_user(user_id)
     return FriendRequestListResponse(
-        requests=[
-            _make_friend_request_response(request=req, me_user_id=user_id)
-            for req in requests
-        ]
+        requests=_friend_request_responses_safely(requests, me_user_id=user_id)
     )
 
 @app.post("/social/friend-requests", response_model=FriendRequestResponse, status_code=201)
@@ -3552,38 +3639,60 @@ def list_friends(user_id: str = Depends(_get_user_id)) -> FriendListResponse:
 
     return FriendListResponse(
 
-        friends=[FriendProfile(**friend) for friend in friends],
+        friends=_friend_profiles_from_rows(friends, source="friend_list"),
 
     )
 
 
 @app.get("/social/friends/rankings", response_model=FriendRankingsResponse)
 def list_friend_rankings(user_id: str = Depends(_get_user_id)) -> FriendRankingsResponse:
-    me_profile = get_social_user_by_id(user_id) or {}
-    me_rating = fetch_user_rating(user_id)
+    try:
+        me_profile = get_social_user_by_id(user_id) or {}
+    except Exception as exc:
+        logger.warning(
+            "친구 랭킹 본인 프로필 조회를 ID로 대체합니다: user_id=%s error=%s",
+            user_id,
+            type(exc).__name__,
+        )
+        me_profile = {}
     friend_profiles = get_friends(user_id)
 
-    rows: List[Dict[str, Any]] = [
+    # 필요 변수: 본인 프로필과 친구 프로필 목록.
+    # 작동 원리: 사용자별 레이팅 조회를 독립적으로 처리해 한 명의 손상 데이터나 일시 오류가 전체 랭킹 응답을 중단하지 않게 한다.
+    candidates: List[Dict[str, Any]] = [
         {
             "user_id": user_id,
             "username": (me_profile.get("username") or me_profile.get("name") or "me"),
-            "visible_ovr": float(me_rating.ovr),
             "is_me": True,
-        }
+        },
+        *friend_profiles,
     ]
-    seen_user_ids = {user_id}
-    for friend in friend_profiles:
-        friend_id = str(friend.get("user_id") or "")
-        if not friend_id or friend_id in seen_user_ids:
+    rows: List[Dict[str, Any]] = []
+    seen_user_ids: set[str] = set()
+    for candidate in candidates:
+        candidate_id = str(candidate.get("user_id") or "").strip()
+        if not candidate_id or candidate_id in seen_user_ids:
             continue
-        seen_user_ids.add(friend_id)
-        rating = fetch_user_rating(friend_id)
+        seen_user_ids.add(candidate_id)
+        try:
+            rating = fetch_user_rating(candidate_id)
+            visible_ovr = float(rating.ovr)
+            candidate_name = str(
+                candidate.get("username") or candidate.get("name") or candidate_id
+            )
+        except Exception as exc:
+            logger.warning(
+                "친구 랭킹 사용자 조회를 건너뜁니다: user_id=%s error=%s",
+                candidate_id,
+                type(exc).__name__,
+            )
+            continue
         rows.append(
             {
-                "user_id": friend_id,
-                "username": (friend.get("username") or friend.get("name") or friend_id),
-                "visible_ovr": float(rating.ovr),
-                "is_me": False,
+                "user_id": candidate_id,
+                "username": candidate_name,
+                "visible_ovr": visible_ovr,
+                "is_me": candidate_id == user_id,
             }
         )
 
@@ -6153,6 +6262,17 @@ def list_solve_history_handler(
     kind: Optional[str] = None,
     user_id: str = Depends(_get_user_id),
 ) -> SolveHistoryListResponse:
+    # 필요 변수: SQLite·PostgreSQL 이력 행의 codebase_id·seed 원본 값.
+    # 작동 원리: 과거 문자열 데이터는 재풀이 식별자로 사용할 수 없으므로 None으로 격리해,
+    # 한 건의 손상 이력이 전체 복습 목록 API를 500으로 중단시키지 않게 한다.
+    def _optional_history_int(value: Any) -> Optional[int]:
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
     init_solve_history_db()
     days = max(1, min(days, 150))
     limit = max(1, min(limit, 5000))
@@ -6166,8 +6286,8 @@ def list_solve_history_handler(
                 kind=row["kind"],
                 quest_id=row.get("quest_id"),
                 exam_id=row.get("exam_id"),
-                codebase_id=row.get("codebase_id"),
-                seed=row.get("seed"),
+                codebase_id=_optional_history_int(row.get("codebase_id")),
+                seed=_optional_history_int(row.get("seed")),
                 data=row.get("data"),
             )
             for row in rows
@@ -6181,13 +6301,13 @@ def replay_problem_habit(
     user_id: str = Depends(_get_user_id),
 ) -> Dict[str, Any]:
     # Try to find an exact quest stored with the same codebase/seed
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
-        SELECT quest_id FROM quest_data
+        SELECT quest_id FROM problem_payload
         WHERE codebase_id = ? AND seed = ?
-        ORDER BY rowid DESC LIMIT 1
+        ORDER BY updated_at DESC LIMIT 1
         """,
         (payload.codebase_id, payload.seed),
     )
@@ -6195,7 +6315,7 @@ def replay_problem_habit(
     conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="No quest found for this seed")
-    quest = get_quest(row[0])
+    quest = postgres_problem_store.get_problem(row[0])
     if not quest:
         raise HTTPException(status_code=404, detail="Quest data missing")
     return quest
@@ -6796,6 +6916,7 @@ def test_chat_message(
 
 @app.get("/serverchat/config", response_model=ServerChatConfigResponse)
 def serverchat_get_config(user_id: str = Depends(_get_user_id)) -> ServerChatConfigResponse:
+    """필요 변수: 인증 사용자 ID. 작동 원리: 현재 Gemma 캐릭터와 실제 런타임 모델 설정을 읽기 전용으로 반환한다."""
     profile = get_serverchat_profile(user_id)
     return ServerChatConfigResponse(
         character=profile.get("character", "female"),
@@ -6809,12 +6930,13 @@ def serverchat_set_config(
     payload: ServerChatConfigRequest,
     user_id: str = Depends(_get_user_id),
 ) -> ServerChatConfigResponse:
+    """필요 변수: 인증 사용자 ID와 캐릭터 요청값. 작동 원리: 호환 설정을 저장한 뒤 현재 Gemma 프로필과 모델명을 반환한다."""
     character = set_serverchat_character(user_id, payload.character)
     profile = get_serverchat_profile(user_id)
     return ServerChatConfigResponse(
         character=character,
         character_name=profile.get("character_name", ""),
-        model="",
+        model=profile.get("model", ""),
     )
 
 
@@ -7029,14 +7151,12 @@ async def analyze_ocr(
 
     try:
 
-        result = analyze_pregrade(
-
+        # 필요 변수: OCR 요청 payload와 이미지. 작동 원리: 무거운 모델 추론을 작업 스레드로 보내 API 이벤트 루프를 보호한다.
+        result = await asyncio.to_thread(
+            analyze_pregrade,
             payload,
-
             student_work_image_bytes=student_bytes,
-
             heatmap_image_bytes=heatmap_bytes,
-
         )
 
     except RuntimeError as exc:
@@ -7087,16 +7207,13 @@ async def analyze_solve(
 
     try:
 
-        result = analyze_submission(
-
+        # 필요 변수: 채점 payload와 이미지. 작동 원리: TexTeller·Qwen 호출 동안 다른 비동기 요청 처리를 막지 않는다.
+        result = await asyncio.to_thread(
+            analyze_submission,
             payload,
-
             student_work_image_bytes=student_bytes,
-
             problem_image_bytes=problem_bytes,
-
             heatmap_image_bytes=heatmap_bytes,
-
         )
 
     except RuntimeError as exc:
@@ -7793,6 +7910,36 @@ def _make_dm_response(*, msg: Dict[str, str], me_username: str, peer_username: s
     )
 
 
+def _dm_responses_safely(
+    messages: List[Dict[str, Any]],
+    *,
+    me_username: str,
+    peer_username: str,
+) -> List[DirectMessageResponse]:
+    """필요 변수: 메시지 행 목록과 대화 참여자 이름.
+
+    작동 원리: 메시지별 응답 변환을 격리해 손상된 메시지 한 건만 제외하고
+    정상 대화 내역은 계속 반환한다.
+    """
+    responses: List[DirectMessageResponse] = []
+    for message in messages:
+        try:
+            responses.append(
+                _make_dm_response(
+                    msg=message,
+                    me_username=me_username,
+                    peer_username=peer_username,
+                )
+            )
+        except Exception as exc:
+            logger.warning(
+                "소셜 메시지 행을 건너뜁니다: message_id=%s error=%s",
+                str(message.get("id") or ""),
+                type(exc).__name__,
+            )
+    return responses
+
+
 @app.get("/social/messages", response_model=DirectMessageListResponse)
 def list_direct_messages(
     peer: str,
@@ -7816,14 +7963,11 @@ def list_direct_messages(
     )
     trimmed = messages[-max_total:] if len(messages) > max_total else messages
     return DirectMessageListResponse(
-        messages=[
-            _make_dm_response(
-                msg=msg,
-                me_username=me_username,
-                peer_username=peer_username,
-            )
-            for msg in trimmed
-        ]
+        messages=_dm_responses_safely(
+            trimmed,
+            me_username=me_username,
+            peer_username=peer_username,
+        )
     )
 
 
@@ -7915,11 +8059,21 @@ def list_conversations_handler(
     me_username = me.get("username") if me else "me"
     result: List[DirectMessageResponse] = []
     for msg in messages:
-        peer_user = get_social_user_by_id(msg.get("peer_id") or "") or {}
-        peer_username = peer_user.get("username") or ""
-        result.append(
-            _make_dm_response(
-                msg=msg,
+        peer_id = str(msg.get("peer_id") or "")
+        try:
+            peer_user = get_social_user_by_id(peer_id) or {}
+            peer_username = str(peer_user.get("username") or peer_id)
+        except Exception as exc:
+            # 상대 프로필이 일시적으로 조회되지 않아도 대화 자체는 ID로 보존한다.
+            logger.warning(
+                "대화 상대 사용자 조회를 ID로 대체합니다: peer_id=%s error=%s",
+                peer_id,
+                type(exc).__name__,
+            )
+            peer_username = peer_id
+        result.extend(
+            _dm_responses_safely(
+                [msg],
                 me_username=me_username,
                 peer_username=peer_username,
             )

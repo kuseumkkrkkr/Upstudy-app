@@ -7,19 +7,17 @@ import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 
 import 'package:s11/features/student_runtime/student_runtime.dart';
 import 'package:s11/features/level_test/level_test.dart';
 import 'package:s11/features/student_schedule/student_schedule.dart';
 import 'package:s11/features/wrong_answer/wrong_answer.dart';
 import 'package:s11/features/group_study/group_study.dart';
-import 'package:s11/features/flow_access/flow_access_page.dart';
 import 'package:s11/features/arena/arena_page.dart';
-import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
-import 'package:s11/sessions/legacy_cleanup/session/study_center.dart'
-    as study_center;
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
 
@@ -39,7 +37,6 @@ class AppRoutes {
   static const String landingAbout = LandingAboutPage.routeName;
   static const String app = '/app';
   static const String studentDashboard = '/student/dashboard';
-  static const String studyCenter = '/study-center';
   static const String courses = '/courses';
   static const String bookbag = '/bookbag';
   static const String social = '/social';
@@ -50,7 +47,6 @@ class AppRoutes {
   // ─── Learning ───
   static const String studentRuntime = StudentRuntimePage.routeName;
   static const String courseRuntime = '/course_runtime';
-  static const String flowAccess = FlowAccessPage.routeName;
 
   // ─── Level Test ───
   static const String levelTest = LevelTestHomePage.routeName;
@@ -76,14 +72,16 @@ class AppRoutes {
 /// Only routes that do **not** require constructor arguments should be
 /// registered here. Argument-bearing pages are handled by
 /// [onGenerateAppRoute].
-/// 필요한 변수는 인증 여부이며, 작동 원리는 모바일 드로어와 PC 상단 메뉴가 같은 명명 라우트를 공유하는 것이다.
-Map<String, WidgetBuilder> appRoutes(
-  BuildContext context, {
-  required bool isAuthenticated,
-}) {
+/// 필요한 변수는 현재 JWT 상태와 정적 학생 화면 빌더다.
+/// 작동 원리: 모바일 드로어와 PC 상단 메뉴가 같은 명명 라우트를 공유하고, 학생 홈은 생성 시점의 인증 상태를 확인한다.
+Map<String, WidgetBuilder> appRoutes() {
+  /// 필요한 변수는 현재 API 클라이언트의 JWT 상태다.
+  /// 작동 원리: 라우트 생성 시점의 세션을 확인해 로그인·로그아웃 결과를 오래된 시작 플래그 없이 즉시 반영한다.
   WidgetBuilder authedStudentDashboard() {
-    return (_) =>
-        isAuthenticated ? const MainStudentPage() : const LandingPage();
+    return (_) {
+      final hasSession = ApiClient.instance.hasAuthenticatedSession;
+      return hasSession ? const MainStudentPage() : const LandingPage();
+    };
   }
 
   return {
@@ -101,13 +99,14 @@ Map<String, WidgetBuilder> appRoutes(
     AppRoutes.landingAbout: (_) => const LandingAboutPage(),
     AppRoutes.app: authedStudentDashboard(),
     AppRoutes.studentDashboard: authedStudentDashboard(),
-    AppRoutes.studyCenter: (_) => const study_center.SoWidget(),
     AppRoutes.courses: (_) => const CourseCatalogPage(),
     AppRoutes.bookbag: (_) => const docx.BookWidget(),
     AppRoutes.social: (_) => const SoWidget(),
     AppRoutes.marketplace: (_) => const MarketplacePage(),
     AppRoutes.arena: (_) => const ArenaPage(),
-    AppRoutes.tools: (_) => const StudentLearningToolsPage(),
+    // 필요한 변수는 서버 AI 챗봇과 전체 화면 표시 여부다.
+    // 작동 원리: 도구·설정의 학습 도구 메뉴를 별도 도구 목록 대신 AI 학습 튜터 전용 화면으로 연다.
+    AppRoutes.tools: (_) => const ServerChatPage(standalone: true),
 
     // Learning
     AppRoutes.studentRuntime: (_) => const StudentRuntimePage(),
@@ -115,7 +114,6 @@ Map<String, WidgetBuilder> appRoutes(
     // 작동 원리: 인자가 없는 과거 경로는 런타임 상태를 가진 CourseLearningPage를 직접 만들 수 없으므로,
     // 실제 학습 진입을 결정하는 코스 목록으로 연결해 개발 중 플레이스홀더를 노출하지 않는다.
     AppRoutes.courseRuntime: (_) => const CourseCatalogPage(),
-    AppRoutes.flowAccess: (_) => const FlowAccessPage(),
 
     // Level Test
     AppRoutes.levelTest: (_) => const LevelTestHomePage(),

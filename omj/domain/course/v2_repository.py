@@ -1,4 +1,4 @@
-"""SQLite-backed repository for Course V2.
+"""PostgreSQL-backed repository for Course V2.
 
 Provides:
 - _ensure_course_v2_tables: idempotent schema init for course_v2 table
@@ -8,11 +8,10 @@ Provides:
 from __future__ import annotations
 
 import json
-import sqlite3
+from infra.db import postgres_compat as db
 import uuid
 from typing import Any, Optional
 
-from storage.storage import DB_PATH
 from domain.course.v2_models import (
     ChallengePolicy,
     CourseModule,
@@ -26,7 +25,7 @@ from domain.course.v2_models import (
 
 def _ensure_course_v2_tables() -> None:
     """Create the course_v2 table if it does not exist."""
-    with sqlite3.connect(DB_PATH) as conn:
+    with db.connect() as conn:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS course_v2 (
@@ -59,28 +58,28 @@ def _ensure_course_v2_tables() -> None:
             """
         )
         try:
-            conn.execute("ALTER TABLE course_v2 ADD COLUMN curriculum_settings_json TEXT")
-        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE course_v2 ADD COLUMN IF NOT EXISTS curriculum_settings_json TEXT")
+        except db.OperationalError:
             pass
         try:
-            conn.execute("ALTER TABLE course_v2 ADD COLUMN challenge_settings_json TEXT")
-        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE course_v2 ADD COLUMN IF NOT EXISTS challenge_settings_json TEXT")
+        except db.OperationalError:
             pass
         try:
-            conn.execute("ALTER TABLE course_v2 ADD COLUMN owner_user_id TEXT NOT NULL DEFAULT ''")
-        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE course_v2 ADD COLUMN IF NOT EXISTS owner_user_id TEXT NOT NULL DEFAULT ''")
+        except db.OperationalError:
             pass
         try:
-            conn.execute("ALTER TABLE course_v2 ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0")
-        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE course_v2 ADD COLUMN IF NOT EXISTS is_public INTEGER NOT NULL DEFAULT 0")
+        except db.OperationalError:
             pass
         try:
-            conn.execute("ALTER TABLE course_v2 ADD COLUMN access_academy_id TEXT")
-        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE course_v2 ADD COLUMN IF NOT EXISTS access_academy_id TEXT")
+        except db.OperationalError:
             pass
         try:
-            conn.execute("ALTER TABLE course_v2 ADD COLUMN access_group_id TEXT")
-        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE course_v2 ADD COLUMN IF NOT EXISTS access_group_id TEXT")
+        except db.OperationalError:
             pass
         conn.commit()
 
@@ -100,7 +99,7 @@ def _ensure_course_v2_tables() -> None:
 
 
 def _serialize_course(course: CourseV2) -> dict[str, Any]:
-    """Convert a CourseV2 into a flat dict suitable for SQLite."""
+    """필요 변수: CourseV2 모델. 작동 원리: PostgreSQL 저장용 평면 딕셔너리로 직렬화한다."""
     return {
         "id": course.id,
         "owner_user_id": course.owner_user_id or "",
@@ -159,8 +158,8 @@ def _serialize_course(course: CourseV2) -> dict[str, Any]:
     }
 
 
-def _row_to_course(row: sqlite3.Row) -> CourseV2:
-    """Convert a sqlite3.Row into a CourseV2 instance."""
+def _row_to_course(row: db.Row) -> CourseV2:
+    """Convert a db.Row into a CourseV2 instance."""
     data: dict[str, Any] = dict(row)
 
     # Parse list fields
@@ -258,7 +257,7 @@ def create_course_v2(course: CourseV2) -> str:
     payload["created_at"] = course.created_at or now
     payload["updated_at"] = course.updated_at or now
 
-    with sqlite3.connect(DB_PATH) as conn:
+    with db.connect() as conn:
         conn.execute(
             """
             INSERT INTO course_v2 (
@@ -287,8 +286,8 @@ def create_course_v2(course: CourseV2) -> str:
 def get_course_v2(course_id: str) -> Optional[CourseV2]:
     """Fetch a single CourseV2 by id."""
     _ensure_course_v2_tables()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
+    with db.connect() as conn:
+        conn.row_factory = db.Row
         row = conn.execute(
             "SELECT * FROM course_v2 WHERE id = ?", (course_id,)
         ).fetchone()
@@ -304,8 +303,11 @@ def update_course_v2(course: CourseV2) -> bool:
 
     payload = _serialize_course(course)
     payload["updated_at"] = int(time.time())
+    # 필요한 변수는 선택적 course.created_at과 현재 갱신 시각이다.
+    # 작동 원리는 신규 UPSERT에서 NOT NULL 생성 시각을 채우고 기존 코스 입력값은 보존하는 것이다.
+    payload["created_at"] = course.created_at or payload["updated_at"]
 
-    with sqlite3.connect(DB_PATH) as conn:
+    with db.connect() as conn:
         cur = conn.execute(
             """
             INSERT INTO course_v2 (
@@ -358,7 +360,7 @@ def update_course_v2(course: CourseV2) -> bool:
 def delete_course_v2(course_id: str) -> bool:
     """Delete a CourseV2 by id. Returns True if a row was deleted."""
     _ensure_course_v2_tables()
-    with sqlite3.connect(DB_PATH) as conn:
+    with db.connect() as conn:
         conn.execute("DELETE FROM course_v2_runtime WHERE course_id = ?", (course_id,))
         cur = conn.execute("DELETE FROM course_v2 WHERE id = ?", (course_id,))
         conn.commit()
@@ -391,8 +393,8 @@ def list_courses_v2(
     sql = f"SELECT * FROM course_v2 {where_sql} {order_sql} LIMIT ? OFFSET ?"
     params = list(params)
     params.extend([max(1, limit), max(0, offset)])
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
+    with db.connect() as conn:
+        conn.row_factory = db.Row
         rows = conn.execute(sql, params).fetchall()
     results = [_row_to_course(row) for row in rows]
 
@@ -418,14 +420,14 @@ def count_courses_v2(
     )
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
     sql = f"SELECT COUNT(*) FROM course_v2 {where_sql}"
-    with sqlite3.connect(DB_PATH) as conn:
+    with db.connect() as conn:
         row = conn.execute(sql, params).fetchone()
     return int((row or [0])[0])
 
 
 def count_courses_by_visibility(owner_user_id: str, is_public: bool, *, exclude_course_id: Optional[str] = None) -> int:
     _ensure_course_v2_tables()
-    with sqlite3.connect(DB_PATH) as conn:
+    with db.connect() as conn:
         if exclude_course_id:
             row = conn.execute(
                 """
@@ -444,8 +446,8 @@ def count_courses_by_visibility(owner_user_id: str, is_public: bool, *, exclude_
 
 def get_runtime_state(user_id: str, course_id: str) -> dict[str, Any]:
     _ensure_course_v2_tables()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
+    with db.connect() as conn:
+        conn.row_factory = db.Row
         row = conn.execute(
             "SELECT state_json FROM course_v2_runtime WHERE user_id = ? AND course_id = ?",
             (user_id, course_id),
@@ -467,8 +469,8 @@ def list_runtime_states(user_id: str, course_ids: list[str]) -> dict[str, dict[s
     if not user_id or not ids:
         return {}
     placeholders = ",".join("?" for _ in ids)
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
+    with db.connect() as conn:
+        conn.row_factory = db.Row
         rows = conn.execute(
             f"""
             SELECT course_id, state_json
@@ -493,7 +495,7 @@ def list_runtime_states(user_id: str, course_ids: list[str]) -> dict[str, dict[s
 def upsert_runtime_state(user_id: str, course_id: str, state: dict[str, Any]) -> None:
     _ensure_course_v2_tables()
     payload = json.dumps(state, ensure_ascii=False)
-    with sqlite3.connect(DB_PATH) as conn:
+    with db.connect() as conn:
         conn.execute(
             """
             INSERT INTO course_v2_runtime (user_id, course_id, state_json, created_at, updated_at)

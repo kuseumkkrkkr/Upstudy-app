@@ -8,3 +8,12 @@ reportlab
 sympy
 psycopg[binary,pool]
 redis
+# 수식 전용 TexTeller 그리드 엔진. 웹 프로세스는 동시 실행 수를 1로 제한한다.
+pillow
+numpy
+torch
+transformers>=4.47,<4.49
+huggingface-hub>=0.24,<1
+safetensors>=0.4,<1
+# 오래된 timm이 설치된 서버에서도 transformers의 지연 import 충돌을 막는다.
+timm>=1.0.12,<2

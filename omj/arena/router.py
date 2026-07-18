@@ -15,6 +15,7 @@ from auth import decode_token, resolve_token_payload_user
 
 from .service import arena_service
 from .repository import ArenaStoreUnavailable
+from .models import JOINABLE_QUEUE_TYPES
 
 
 router = APIRouter(prefix="/arena", tags=["arena"])
@@ -70,10 +71,25 @@ async def summary(user_id: str = Depends(_user_id)) -> dict[str, Any]:
     return await arena_service.summary(user_id)
 
 
+@router.get("/rankings")
+async def rankings(queue_type: str = "duel_exam", user_id: str = Depends(_user_id)) -> dict[str, Any]:
+    """필요 변수: 큐 유형·인증 사용자. 봇을 저장하지 않는 사용자 레이팅 순위를 반환한다."""
+
+    del user_id
+    if queue_type not in JOINABLE_QUEUE_TYPES:
+        raise HTTPException(status_code=403, detail="현재 사용할 수 없는 대결 방식입니다.")
+    try:
+        return {"queue_type": queue_type, "items": await arena_service.rankings(queue_type)}
+    except (ValueError, ArenaStoreUnavailable) as exc:
+        raise (_service_unavailable(exc) if isinstance(exc, ArenaStoreUnavailable) else _bad_request(exc)) from exc
+
+
 @router.post("/queue/join")
 async def join_queue(body: JoinBody, user_id: str = Depends(_user_id)) -> dict[str, Any]:
     """대결 큐에 참가하고 인원이 충족되면 경기 ID를 반환한다."""
 
+    if body.queue_type not in JOINABLE_QUEUE_TYPES:
+        raise HTTPException(status_code=403, detail="현재 사용할 수 없는 대결 방식입니다.")
     try:
         return await arena_service.join(user_id, body.queue_type, body.idempotency_key)
     except ArenaStoreUnavailable as exc:

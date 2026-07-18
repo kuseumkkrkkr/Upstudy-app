@@ -271,31 +271,6 @@ class _LandingEntry extends StatelessWidget {
               child: const Text('새 계정 만들기'),
             ),
           ],
-          const SizedBox(height: 26),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AuthDesignTokens.surfaceMuted,
-              border: Border.all(color: AuthDesignTokens.line),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.lock_outline_rounded, size: 18),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '저장된 세션은 서버에서 확인한 뒤 안전하게 복원합니다.',
-                    style: TextStyle(
-                      color: AuthDesignTokens.muted,
-                      fontSize: 11,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

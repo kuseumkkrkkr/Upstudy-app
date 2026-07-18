@@ -20,6 +20,7 @@ import 'package:s11/shared/data/models/concept_tag.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
 import 'package:s11/sessions/friend/shared/social_message_hub.dart';

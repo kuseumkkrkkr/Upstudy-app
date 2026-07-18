@@ -32,10 +32,23 @@ cd omj
 uvicorn server:app --reload
 ```
 
+`--reload`는 Python 파일 변경 때 프로세스를 다시 만들므로 TexTeller도 다시 적재한다. OCR 체감 속도를 확인하거나 운영할 때는 reload 없이 실행한다.
+
+```bash
+cd omj
+python scripts/prefetch_texteller.py
+uvicorn server:app --host 0.0.0.0 --port 8000
+```
+
+`OCR_TEXTELLER_WARMUP_ON_STARTUP=true`이면 서버가 요청을 받기 전에 모델을 한 번 적재한다. 동일 필기의 재채점·디버그 재실행은 `OCR_TEXTELLER_CACHE_TTL_SECONDS` 동안 결과 캐시를 사용한다.
+
 Environment variables:
 - `SAM_API_KEY`: required for AI generation.
 - `OMJ_JWT_SECRET`: secret for JWT tokens (defaults to a dev value).
 - `OMJ_PDF_FONT_PATH`: optional TTF font path for PDF rendering (recommended for non-ASCII text).
+- `OCR_TEXTELLER_WARMUP_ON_STARTUP`: 서버 시작 중 로컬 OCR 모델을 미리 적재한다.
+- `OCR_TEXTELLER_CACHE_MAX_ENTRIES`: 동일 필기 재실행 결과의 프로세스별 최대 캐시 수다.
+- `OCR_TEXTELLER_CACHE_TTL_SECONDS`: OCR 결과 캐시 유지 시간(초)이다.
 
 API endpoints:
 - `POST /auth/anonymous`: issue a JWT token.

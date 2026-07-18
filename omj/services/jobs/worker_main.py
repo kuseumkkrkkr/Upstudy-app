@@ -59,7 +59,7 @@ async def run_worker() -> None:
 
         maintenance_tasks.extend(
             [
-                asyncio.create_task(server._validate_level_test_static_db()),
+                asyncio.create_task(server._validate_level_test_postgres()),
                 asyncio.create_task(server._seed_validator_loop()),
             ]
         )

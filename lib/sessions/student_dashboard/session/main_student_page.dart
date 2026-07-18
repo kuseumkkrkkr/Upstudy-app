@@ -6,11 +6,11 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/features/level_test/level_test.dart';
+import 'package:s11/app/router.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/curriculum_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
-import 'package:s11/sessions/student_dashboard/ui/modals/social_modal.dart';
 import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
@@ -19,6 +19,7 @@ import 'package:s11/sessions/learning_tools/ui/pages/timer_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
+import 'package:s11/sessions/student_dashboard/business/activity_badge_catalog.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/learning_tools_strip.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/attendance_store.dart';
@@ -60,6 +61,8 @@ const double _ratingDisplayMax = 32767;
 const double _ratingOvrDivider = 128;
 const int _ratingEstimateMinSolved = 50;
 const double _ratingDeltaPercentMax = 0.5;
+const double _homeFooterDesktopHeight = 384;
+const double _homeFooterSixWeekHeight = 438;
 
 double _ratingDisplay(double rating) {
   return (math.max(rating, _ratingFloor) - _ratingFloor)
@@ -130,11 +133,32 @@ Widget _bottomResponsiveChild({
 DateTime _dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
-String _formatTasksSummary(List<String> tasks) {
-  if (tasks.isEmpty) return '등록된 일정이 없습니다.';
-  if (tasks.length == 1) return tasks.first;
-  if (tasks.length == 2) return '${tasks[0]}\n${tasks[1]}';
-  return '${tasks[0]}\n${tasks[1]} 외 ${tasks.length - 2}개';
+String _assignmentKindLabel(String kind) {
+  switch (kind) {
+    case 'problem':
+      return '문제 풀이';
+    case 'exam':
+      return '시험';
+    case 'homework':
+      return '숙제';
+    default:
+      return '과제';
+  }
+}
+
+enum _TodayTaskTarget { course, group, schedule }
+
+class _TodayTaskItem extends TodayTaskEntry {
+  const _TodayTaskItem({
+    required super.title,
+    required super.caption,
+    required super.icon,
+    required this.target,
+    this.targetId,
+  });
+
+  final _TodayTaskTarget target;
+  final String? targetId;
 }
 
 String _formatSocialNotice(SocialNotificationSnapshot snapshot) {
@@ -150,15 +174,6 @@ String _formatDateLabel(String dateKey) {
   final parts = dateKey.split('-');
   if (parts.length == 3) return '${parts[1]}.${parts[2]}';
   return dateKey;
-}
-
-String _noticePreviewText(String html) {
-  final plain = html
-      .replaceAll(RegExp(r'<[^>]*>'), ' ')
-      .replaceAll('&nbsp;', ' ')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
-  return plain.isEmpty ? '본문 없음' : plain;
 }
 
 String _noticeDateLabel(String value) {
@@ -251,8 +266,8 @@ class MainStudentPage extends StatefulWidget {
 
 class _MainStudentPageState extends State<MainStudentPage> {
   final ScrollController _scrollController = ScrollController();
-  Map<DateTime, List<String>> _tasksByDate = {};
-  Map<DateTime, List<String>> _teacherTasksByDate = {};
+  List<_TodayTaskItem> _todayTeacherTasks = const [];
+  List<_TodayTaskItem> _todayPersonalTasks = const [];
   String? _displayName;
   Key _courseLoaderKey = UniqueKey();
 
@@ -269,6 +284,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
     );
     unawaited(RatingStore.refresh());
     unawaited(_refreshTeacherTasks());
+    unawaited(_refreshPersonalTasks());
   }
 
   @override
@@ -280,50 +296,119 @@ class _MainStudentPageState extends State<MainStudentPage> {
     }
   }
 
+  /// 필요 변수는 프로필의 이름·아이디와 로컬에 저장된 로그인 아이디다.
+  /// 작동 원리는 이름, 프로필 아이디, 저장 아이디, 전달값 순서로 첫 번째 유효한 값을 앱바에 반영한다.
   Future<void> _refreshDisplayName() async {
     final stored = (await AuthStorage.instance.readUsername())?.trim();
     final prefs = await SharedPreferences.getInstance();
     final legacyStored = prefs.getString('username')?.trim();
-    final candidate = (stored != null && stored.isNotEmpty)
-        ? stored
-        : (legacyStored != null && legacyStored.isNotEmpty)
-        ? legacyStored
-        : (_displayName?.trim().isNotEmpty == true
-              ? _displayName!.trim()
-              : widget.username?.trim());
+    UserProfile? profile;
+    try {
+      profile = await ApiClient.instance.getMyProfile();
+    } catch (_) {
+      // 프로필 조회가 실패해도 로컬 아이디로 앱바를 계속 표시한다.
+    }
+    final candidates = <String?>[
+      profile?.name,
+      profile?.username,
+      stored,
+      legacyStored,
+      _displayName,
+      widget.username,
+    ];
+    final candidate = candidates
+        .map((value) => value?.trim())
+        .whereType<String>()
+        .firstWhere((value) => value.isNotEmpty, orElse: () => '사용자');
     if (!mounted) return;
-    if (candidate != null && candidate != _displayName) {
+    if (candidate != _displayName) {
       setState(() => _displayName = candidate);
     }
   }
 
-  void _handleTasksChanged(Map<DateTime, List<String>> updated) {
-    final normalized = {
-      for (final entry in updated.entries)
-        _dateOnly(entry.key): List<String>.from(entry.value),
-    };
-    setState(() => _tasksByDate = normalized);
-    unawaited(ApiClient.instance.syncMyStudentSchedule(normalized));
-  }
-
+  /// 필요한 변수는 교사가 배정한 과제의 종류·마감일·참조 ID다.
+  /// 작동 원리: 오늘 마감인 모든 지정 과제를 카드 모델로 변환하고, 카드별 목적지로
+  /// 코스·그룹 학습 화면을 분기한다.
   Future<void> _refreshTeacherTasks() async {
     try {
-      final res = await ApiClient.instance.listMyAssignments(kind: 'homework');
-      final tasks = <DateTime, List<String>>{};
+      final res = await ApiClient.instance.listMyAssignments();
+      final today = _dateOnly(DateTime.now());
+      final tasks = <_TodayTaskItem>[];
       for (final item in res.data ?? const <StudentAssignmentTask>[]) {
         final due = DateTime.tryParse(item.assignment.dueDate ?? '');
-        if (due == null) continue;
-        final key = _dateOnly(due);
+        if (due == null || _dateOnly(due) != today) continue;
         final title = item.assignment.title?.trim().isNotEmpty == true
             ? item.assignment.title!.trim()
             : item.assignment.refId;
-        tasks.putIfAbsent(key, () => <String>[]).add('숙제: $title');
+        final isCourse = item.assignment.kind == 'course';
+        tasks.add(
+          _TodayTaskItem(
+            title: title,
+            caption: isCourse
+                ? '교사 지정 코스 · 학습하러 가기'
+                : '교사 지정 ${_assignmentKindLabel(item.assignment.kind)} · 확인하러 가기',
+            icon: isCourse ? Icons.menu_book_rounded : Icons.assignment_rounded,
+            target: isCourse ? _TodayTaskTarget.course : _TodayTaskTarget.group,
+            targetId: isCourse
+                ? item.assignment.refId
+                : item.assignment.groupId,
+          ),
+        );
       }
       if (!mounted) return;
-      setState(() => _teacherTasksByDate = tasks);
+      setState(() => _todayTeacherTasks = tasks);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _teacherTasksByDate = {});
+      setState(() => _todayTeacherTasks = const []);
+    }
+  }
+
+  /// 필요한 변수는 서버에 저장된 개인 일정의 날짜와 제목이다.
+  /// 작동 원리: 오늘 날짜와 같은 일정만 홈의 알림 카드로 만들고, 선택 시 일정 화면으로 이동시킨다.
+  Future<void> _refreshPersonalTasks() async {
+    try {
+      final res = await ApiClient.instance.listMyStudentSchedule();
+      final today = _dateOnly(DateTime.now());
+      final tasks = (res.data ?? const <StudentScheduleTask>[])
+          .where(
+            (item) => _dateOnly(DateTime.tryParse(item.date) ?? today) == today,
+          )
+          .where((item) => item.title.trim().isNotEmpty)
+          .map(
+            (item) => _TodayTaskItem(
+              title: item.title.trim(),
+              caption: '내 일정 · 일정에서 보기',
+              icon: Icons.event_note_rounded,
+              target: _TodayTaskTarget.schedule,
+            ),
+          )
+          .toList(growable: false);
+      if (!mounted) return;
+      setState(() => _todayPersonalTasks = tasks);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _todayPersonalTasks = const []);
+    }
+  }
+
+  /// 필요한 변수는 카드가 가리키는 기능 종류와 참조 ID다.
+  /// 작동 원리: 개인 일정은 일정으로, 교사 지정 코스는 코스 목록으로, 나머지 과제는
+  /// 해당 그룹 화면으로 바로 보낸다.
+  void _openTodayTask(_TodayTaskItem task) {
+    switch (task.target) {
+      case _TodayTaskTarget.course:
+        Navigator.of(context).pushNamed(AppRoutes.courses);
+        return;
+      case _TodayTaskTarget.group:
+        final groupId = task.targetId?.trim();
+        if (groupId == null || groupId.isEmpty) return;
+        Navigator.of(
+          context,
+        ).pushNamed(AppRoutes.groupDetail, arguments: groupId);
+        return;
+      case _TodayTaskTarget.schedule:
+        Navigator.of(context).pushNamed(AppRoutes.schedule);
+        return;
     }
   }
 
@@ -347,11 +432,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final today = _dateOnly(DateTime.now());
-    final todayTasks = [
-      ...(_teacherTasksByDate[today] ?? const <String>[]),
-      ...(_tasksByDate[today] ?? const <String>[]),
-    ];
+    final todayTasks = [..._todayTeacherTasks, ..._todayPersonalTasks];
     // 필요한 변수는 모바일 본문 여백과 2줄 인사 문구의 실제 높이다.
     // 작동 원리: 좁은 폭에서도 인사·보조 설명이 잘리지 않도록 시안의 압축 히어로를
     // 고정 210px이 아닌 내용이 들어가는 250px 높이로 유지한다.
@@ -365,7 +446,10 @@ class _MainStudentPageState extends State<MainStudentPage> {
         body: SafeArea(
           child: Column(
             children: [
-              _Header(displayName: _displayName),
+              _Header(
+                displayName: _displayName,
+                onProfileChanged: _refreshDisplayName,
+              ),
               Expanded(
                 child: SingleChildScrollView(
                   controller: _scrollController,
@@ -380,14 +464,12 @@ class _MainStudentPageState extends State<MainStudentPage> {
                           todayTasks: todayTasks,
                           activeCourse: course,
                           onCourseTap: _handleCourseTap,
-                          onTodayTasksTap: () {
-                            showTodayTasksModal(
-                              context: context,
-                              tasksByDate: _tasksByDate,
-                              lockedTasksByDate: _teacherTasksByDate,
-                              onTasksChanged: _handleTasksChanged,
-                            );
-                          },
+                          onTodayTasksTap: () => showTodayTasksModal(
+                            context: context,
+                            tasks: todayTasks,
+                            onTaskTap: (task) =>
+                                _openTodayTask(task as _TodayTaskItem),
+                          ),
                         ),
                       ),
                       _BottomSection(),
@@ -455,12 +537,20 @@ class _CourseLoaderState extends State<_CourseLoader> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.displayName});
+  const _Header({required this.displayName, required this.onProfileChanged});
 
   final String? displayName;
+  final Future<void> Function() onProfileChanged;
 
-  /// 필요한 변수는 현재 학생 화면 문맥과 활성 학습터 메뉴다.
-  /// 공용 상단 내비게이션을 사용해 다섯 목적지의 이동 계약을 모든 PC 화면과 동일하게 유지한다.
+  /// 필요 변수는 현재 Navigator와 프로필 변경 후 실행할 새로고침 함수다.
+  /// 작동 원리는 프로필 화면이 닫히면 이름과 아이디를 다시 읽어 앱바에 즉시 반영하는 것이다.
+  Future<void> _openProfile(BuildContext context) async {
+    await Navigator.of(context).pushNamed('/profile');
+    await onProfileChanged();
+  }
+
+  /// 필요한 변수는 현재 학생 화면 문맥과 활성 홈 메뉴다.
+  /// 공용 상단 내비게이션을 사용해 홈을 포함한 학습 목적지의 이동 계약을 유지한다.
   @override
   Widget build(BuildContext context) {
     return Ios26TopBar(
@@ -469,13 +559,10 @@ class _Header extends StatelessWidget {
       showLevelIndicator: false,
       profileLabel: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()
-          : '김학생',
-      onNotifications: () => showSocialModal(context: context),
-      onProfile: () => Navigator.of(context).pushNamed('/profile'),
-      items: studentTopNavItems(
-        context,
-        active: StudentTopDestination.learning,
-      ),
+          : null,
+      onNotifications: () => showStudentNotifications(context),
+      onProfile: () => unawaited(_openProfile(context)),
+      items: studentTopNavItems(context, active: StudentTopDestination.home),
     );
   }
 }
@@ -1070,7 +1157,7 @@ class _LearningSection extends StatelessWidget {
     required this.onCourseTap,
     required this.onTodayTasksTap,
   });
-  final List<String> todayTasks;
+  final List<_TodayTaskItem> todayTasks;
   final Course? activeCourse;
   final VoidCallback onCourseTap;
   final VoidCallback onTodayTasksTap;
@@ -1078,8 +1165,6 @@ class _LearningSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final todayCount = todayTasks.length;
-    final todaySummary = _formatTasksSummary(todayTasks);
     final progressPercent = activeCourse == null
         ? null
         : (activeCourse!.progress * 100).round();
@@ -1115,7 +1200,10 @@ class _LearningSection extends StatelessWidget {
       },
     );
 
-    final toolCard = StudentDensitySurface(
+    // 필요한 변수는 학습 도구 제목·빠른 실행 배지·도구 목록이다.
+    // 작동 원리: 학습 도구는 바깥의 연회색 학습 컨테이너에 통합하고,
+    // 오른쪽 코스·알림 카드만 흰색 surface로 분리해 시안의 계층을 유지한다.
+    final toolCard = Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1151,7 +1239,7 @@ class _LearningSection extends StatelessWidget {
             icon: Icons.notifications_none_rounded,
             title: '알림',
             description: _formatSocialNotice(snapshot),
-            onTap: () => showSocialModal(context: context),
+            onTap: () => showStudentNotifications(context),
           ),
         ),
       ],
@@ -1173,10 +1261,8 @@ class _LearningSection extends StatelessWidget {
       Expanded(
         child: _HomeStatusCard(
           label: '오늘 할 일',
-          value: '$todayCount개',
-          meta: todaySummary.isEmpty
-              ? '개인 일정 없음 · 자세히 보기'
-              : '$todaySummary · 자세히 보기',
+          value: '${todayTasks.length}개',
+          meta: todayTasks.isEmpty ? '오늘 해야 할 일이 없습니다.' : '카드를 눌러 할 일을 확인하세요.',
           onTap: onTodayTasksTap,
         ),
       ),
@@ -1514,7 +1600,7 @@ class _LearnBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 7),
                       Text(
-                        '이어하기 · 코스보기 · 복습 · 문제풀기 · 시험 · 교재보기',
+                        '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -1593,17 +1679,20 @@ class _DailyQuestProgressCardState extends State<_DailyQuestProgressCard> {
       builder: (context, snapshot) {
         final bundle = snapshot.data;
         final items = bundle?.items ?? const <DailyQuestItem>[];
+        final loadFailed = snapshot.hasError;
         final completed = items
             .where((item) => item.status == 'completed')
             .length;
-        final total = items.isEmpty ? 5 : items.length;
+        final total = items.length;
         final claimable = items.any(
           (item) =>
               item.claimable ||
               (item.status == 'completed' && !item.rewardClaimed),
         );
         final loading = snapshot.connectionState == ConnectionState.waiting;
-        final meta = widget.courseId?.trim().isNotEmpty == true
+        final meta = loadFailed
+            ? '퀘스트를 불러오는데 실패했어요'
+            : widget.courseId?.trim().isNotEmpty == true
             ? loading
                   ? '불러오는 중'
                   : '오늘 진행 · 자세히 보기'
@@ -1611,7 +1700,7 @@ class _DailyQuestProgressCardState extends State<_DailyQuestProgressCard> {
 
         return _HomeStatusCard(
           label: '일일 테스트',
-          value: '$completed / $total',
+          value: loadFailed ? '오류' : '$completed / $total',
           meta: meta,
           showBadge: claimable,
           onTap: _openDailyQuestModal,
@@ -1624,6 +1713,8 @@ class _DailyQuestProgressCardState extends State<_DailyQuestProgressCard> {
 class _BottomSection extends StatelessWidget {
   const _BottomSection();
 
+  /// 필요 변수는 레이팅 산정 가능 여부와 현재 화면 문맥이다.
+  /// 작동 원리는 레이팅이 준비되면 상세 보고서를, 준비 전이면 레벨 테스트를 연다.
   void _handleRatingTap(BuildContext context, bool isEligible) {
     if (isEligible) {
       showRatingDetailModal(context: context);
@@ -1634,294 +1725,363 @@ class _BottomSection extends StatelessWidget {
     ).push(MaterialPageRoute(builder: (_) => const LevelTestHomePage()));
   }
 
+  /// 필요 변수는 모바일 여부와 공통 학생 화면의 본문 최대 폭·가로 여백이다.
+  /// 작동 원리는 레이팅부터 공지까지의 하단 콘텐츠를 시안과 같은 1500px 본문 안에
+  /// 배치해 넓은 모니터에서도 카드 비율과 좌우 정렬이 학습 영역에서 이어지게 한다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final width = MediaQuery.sizeOf(context).width;
-    final horizontalPadding = mobile
-        ? 14.0
-        : (width * .04).clamp(24.0, 54.0).toDouble();
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        horizontalPadding,
-        0,
-        horizontalPadding,
-        horizontalPadding,
-      ),
-      child: Column(
-        children: [
-          Flex(
-            direction: mobile ? Axis.vertical : Axis.horizontal,
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final horizontalPadding = studentDensityHorizontalPadding(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: StudentDensityTokens.desktopMaxWidth,
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            0,
+            horizontalPadding,
+            horizontalPadding,
+          ),
+          child: Column(
             children: [
-              _bottomResponsiveChild(
-                mobile: mobile,
-                flex: 85,
-                child: ValueListenableBuilder<ActivitySnapshot>(
-                  valueListenable: ActivityStore.notifier,
-                  builder: (context, activitySnapshot, __) {
-                    final solvedCount = activitySnapshot.totalSolvedCount;
-                    final remainingCount =
-                        (_ratingEstimateMinSolved - solvedCount).clamp(
-                          0,
-                          _ratingEstimateMinSolved,
-                        );
-                    final isEligible = remainingCount == 0;
-                    return ValueListenableBuilder<RatingSnapshot>(
-                      valueListenable: RatingStore.notifier,
-                      builder: (context, ratingSnapshot, _) {
-                        final ovrText = ratingSnapshot.isLoaded
-                            ? _formatRatingOvr(ratingSnapshot.ovr)
-                            : '--';
-                        final deltaOvr =
-                            ratingSnapshot.delta / _ratingOvrDivider;
-                        final deltaText = ratingSnapshot.isLoaded
-                            ? _formatRatingDelta(deltaOvr)
-                            : '--';
-                        final deltaColor = deltaOvr > 0
-                            ? Colors.red
-                            : deltaOvr < 0
-                            ? Colors.blue
-                            : Colors.black54;
-                        final risePercent = _ratingRisePercent(deltaOvr);
-                        final percentText = ratingSnapshot.isLoaded
-                            ? '$risePercent%'
-                            : '--';
-                        final ctaText = isEligible
-                            ? '레이팅 자세히 보기 및 보고서 보기'
-                            : '레벨테스트 풀러 가기';
+              Flex(
+                direction: mobile ? Axis.vertical : Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _bottomResponsiveChild(
+                    mobile: mobile,
+                    flex: 85,
+                    child: ValueListenableBuilder<ActivitySnapshot>(
+                      valueListenable: ActivityStore.notifier,
+                      builder: (context, activitySnapshot, __) {
+                        final solvedCount = activitySnapshot.totalSolvedCount;
+                        final remainingCount =
+                            (_ratingEstimateMinSolved - solvedCount).clamp(
+                              0,
+                              _ratingEstimateMinSolved,
+                            );
+                        final isEligible = remainingCount == 0;
+                        return ValueListenableBuilder<RatingSnapshot>(
+                          valueListenable: RatingStore.notifier,
+                          builder: (context, ratingSnapshot, _) {
+                            final ovrText = ratingSnapshot.isLoaded
+                                ? _formatRatingOvr(ratingSnapshot.ovr)
+                                : '--';
+                            final deltaOvr =
+                                ratingSnapshot.delta / _ratingOvrDivider;
+                            final deltaText = ratingSnapshot.isLoaded
+                                ? _formatRatingDelta(deltaOvr)
+                                : '--';
+                            final deltaColor = deltaOvr > 0
+                                ? Colors.red
+                                : deltaOvr < 0
+                                ? Colors.blue
+                                : Colors.black54;
+                            final risePercent = _ratingRisePercent(deltaOvr);
+                            final percentText = ratingSnapshot.isLoaded
+                                ? '$risePercent%'
+                                : '--';
+                            final ctaText = isEligible
+                                ? '레이팅 자세히 보기 및 보고서 보기'
+                                : '레벨테스트 풀러 가기';
 
-                        return Container(
-                          height: 240,
-                          margin: const EdgeInsets.only(top: 14),
-                          decoration: _cardDeco(radius: 26),
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 20,
-                                  bottom: 8,
-                                ),
-                                child: Text(
-                                  '나의 레이팅',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                              ),
-                              if (isEligible) ...[
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      ovrText,
-                                      style: _ts(
-                                        size: 36,
-                                        weight: FontWeight.w900,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          deltaText,
-                                          style: _ts(
-                                            size: 10,
-                                            color: deltaColor,
-                                          ),
-                                        ),
-                                        Text(
-                                          percentText,
-                                          style: _ts(
-                                            size: 10,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Center(
-                                  child: Text(
-                                    '전날 대비 OVR',
-                                    style: _ts(
-                                      size: 11,
-                                      weight: FontWeight.w600,
-                                      color: Colors.black54,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ] else ...[
-                                Expanded(
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          '아직 문제를 다 풀지 않았어요',
-                                          style: _ts(
-                                            size: 14,
-                                            weight: FontWeight.w600,
-                                            color: Colors.black54,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '레이팅 추정까지 $remainingCount문제 남았어요',
-                                          style: _ts(
-                                            size: 14,
-                                            weight: FontWeight.w600,
-                                            color: Colors.black54,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              const Divider(thickness: 1, height: 16),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 4,
-                                  bottom: 12,
-                                ),
-                                child: _InlineCta(
-                                  label: ctaText,
-                                  onTap: () =>
-                                      _handleRatingTap(context, isEligible),
-                                  iconSize: 13,
-                                  radius: 8,
-                                  textStyle: _ts(size: 13),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 6,
-                                    horizontal: 4,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            return _HomeRatingCard(
+                              isEligible: isEligible,
+                              remainingCount: remainingCount,
+                              ovrText: ovrText,
+                              deltaText: deltaText,
+                              deltaColor: deltaColor,
+                              risePercent: risePercent,
+                              percentText: percentText,
+                              ctaText: ctaText,
+                              onTap: () =>
+                                  _handleRatingTap(context, isEligible),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
-              ),
-              SizedBox(width: mobile ? 0 : 14, height: mobile ? 14 : 0),
-              _bottomResponsiveChild(
-                mobile: mobile,
-                flex: 115,
-                child: Container(
-                  width: double.infinity,
-                  height: mobile ? 210 : 240,
-                  margin: const EdgeInsets.only(top: 14),
-                  decoration: _cardDeco(
-                    radius: 26,
-                    color: const Color(0xFFF0F0F3),
+                    ),
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        right: -20,
-                        bottom: -64,
-                        child: Container(
-                          width: 190,
-                          height: 190,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFD7D7DB)),
-                          ),
-                          child: Center(
+                  SizedBox(width: mobile ? 0 : 14, height: mobile ? 14 : 0),
+                  _bottomResponsiveChild(
+                    mobile: mobile,
+                    flex: 115,
+                    child: Container(
+                      width: double.infinity,
+                      height: mobile ? 210 : 240,
+                      margin: const EdgeInsets.only(top: 14),
+                      decoration: _cardDeco(
+                        radius: 26,
+                        color: const Color(0xFFF0F0F3),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -20,
+                            bottom: -64,
                             child: Container(
-                              width: 124,
-                              height: 124,
+                              width: 190,
+                              height: 190,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: const Color(0xFFD7D7DB),
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const StudentDensityEyebrow('REAL-TIME MATCH'),
-                            const SizedBox(height: 12),
-                            const Text(
-                              '수학 대결장',
-                              style: TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -1,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            const Text(
-                              '1v1 · 2v2 실시간 실력 대결',
-                              style: TextStyle(
-                                color: StudentDensityTokens.muted,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const Spacer(),
-                            FilledButton(
-                              onPressed: () => showArena(context),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: StudentDensityTokens.dark,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
+                              child: Center(
+                                child: Container(
+                                  width: 124,
+                                  height: 124,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFFD7D7DB),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              child: const Text('대결장 입장 ›'),
                             ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        top: 22,
-                        right: 24,
-                        child: Container(
-                          width: 56,
-                          height: 56,
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            color: StudentDensityTokens.dark,
-                            shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 28,
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const StudentDensityEyebrow('REAL-TIME MATCH'),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  '수학 대결장',
+                                  style: TextStyle(
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  '1v1 · 2v2 실시간 실력 대결',
+                                  style: TextStyle(
+                                    color: StudentDensityTokens.muted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const Spacer(),
+                                FilledButton(
+                                  onPressed: () => showArena(context),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: StudentDensityTokens.dark,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  child: const Text('대결장 입장 ›'),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                          Positioned(
+                            top: 22,
+                            right: 24,
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                color: StudentDensityTokens.dark,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
+              const SizedBox(height: 14),
+              const _ActivityRewardsRow(),
             ],
           ),
-          const SizedBox(height: 14),
-          const _ActivityRewardsRow(),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeRatingCard extends StatelessWidget {
+  const _HomeRatingCard({
+    required this.isEligible,
+    required this.remainingCount,
+    required this.ovrText,
+    required this.deltaText,
+    required this.deltaColor,
+    required this.risePercent,
+    required this.percentText,
+    required this.ctaText,
+    required this.onTap,
+  });
+
+  final bool isEligible;
+  final int remainingCount;
+  final String ovrText;
+  final String deltaText;
+  final Color deltaColor;
+  final int risePercent;
+  final String percentText;
+  final String ctaText;
+  final VoidCallback onTap;
+
+  /// 필요 변수는 레이팅 값·변화량·산정 가능 여부와 상세 이동 함수다.
+  /// 작동 원리는 HTML 시안의 MY RATING 제목, 등급 배지, 상승 진행률을 유지하고
+  /// 산정 전에는 같은 카드 안에서 남은 문제 수와 레벨 테스트 이동을 보여준다.
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: SizedBox(
+        height: 240,
+        child: StudentDensitySurface(
+          padding: const EdgeInsets.all(20),
+          radius: 26,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const StudentDensityEyebrow('MY RATING'),
+              const SizedBox(height: 8),
+              if (isEligible) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'OVR $ovrText',
+                            style: const TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '전날 대비 $deltaText · B Tier',
+                            style: TextStyle(color: deltaColor, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const _HomeRankBadge(),
+                  ],
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    _DashboardPill('상승 $percentText'),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: risePercent / 100,
+                        minHeight: 7,
+                        color: StudentDensityTokens.dark,
+                        backgroundColor: const Color(0xFFE4E4E7),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                FilledButton(
+                  onPressed: onTap,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: StudentDensityTokens.dark,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('레이팅 자세히 보기'),
+                ),
+              ] else ...[
+                const Text(
+                  '나의 레이팅',
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          '아직 문제를 다 풀지 않았어요',
+                          style: TextStyle(
+                            color: StudentDensityTokens.muted,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '레이팅 추정까지 $remainingCount문제 남았어요',
+                          style: const TextStyle(
+                            color: StudentDensityTokens.muted,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 12),
+                _InlineCta(
+                  label: ctaText,
+                  onTap: onTap,
+                  iconSize: 13,
+                  radius: 8,
+                  textStyle: _ts(size: 13),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeRankBadge extends StatelessWidget {
+  const _HomeRankBadge();
+
+  /// 필요 변수는 고정된 홈 미리보기 등급이다.
+  /// 작동 원리는 HTML의 검은 62px B 등급 배지를 흰 이중 테두리와 함께 재현한다.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 62,
+      height: 62,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.dark,
+        border: Border.all(color: Colors.white, width: 4),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 12)],
+      ),
+      child: const Text(
+        'B',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 26,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }
@@ -1930,14 +2090,18 @@ class _BottomSection extends StatelessWidget {
 class _ActivityRewardsRow extends StatelessWidget {
   const _ActivityRewardsRow();
 
-  /// 필요한 변수는 하단 영역의 실제 가로 폭이다.
-  /// 작동 원리: HTML `home-footer-grid`처럼 PC는 1.35:.72:.9, 태블릿은 달력 전체 폭 후 1.2:.8, 모바일은 세로로 배치한다.
+  /// 필요한 변수는 하단 영역의 실제 가로 폭과 현재 월의 주 수다.
+  /// 작동 원리: HTML `home-footer-grid`처럼 PC는 1.35:.72:.9, 태블릿은 달력 전체 폭 후
+  /// 1.2:.8, 모바일은 세로로 배치하고 6주인 달에는 세 카드 높이를 함께 늘린다.
   @override
   Widget build(BuildContext context) {
     final scale = _uiScale(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportWidth = MediaQuery.sizeOf(context).width;
+        final footerHeight = _homeMonthCells(DateTime.now()).length > 35
+            ? _homeFooterSixWeekHeight
+            : _homeFooterDesktopHeight;
         if (viewportWidth <= 780) {
           return Column(
             key: const ValueKey('student-home-footer-mobile'),
@@ -1957,28 +2121,37 @@ class _ActivityRewardsRow extends StatelessWidget {
             children: [
               _ActivityHistoryCard(),
               SizedBox(height: 12 * scale),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Expanded(flex: 12, child: _ChallengeAchievementCard()),
-                  SizedBox(width: 12 * scale),
-                  const Expanded(flex: 8, child: _SystemNoticeCard()),
-                ],
+              SizedBox(
+                height: footerHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Expanded(
+                      flex: 12,
+                      child: _ChallengeAchievementCard(),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    const Expanded(flex: 8, child: _SystemNoticeCard()),
+                  ],
+                ),
               ),
             ],
           );
         }
 
-        return Row(
+        return SizedBox(
           key: const ValueKey('student-home-footer-desktop'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 135, child: _ActivityHistoryCard()),
-            SizedBox(width: 12 * scale),
-            const Expanded(flex: 72, child: _ChallengeAchievementCard()),
-            SizedBox(width: 12 * scale),
-            const Expanded(flex: 90, child: _SystemNoticeCard()),
-          ],
+          height: footerHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 135, child: _ActivityHistoryCard()),
+              SizedBox(width: 12 * scale),
+              const Expanded(flex: 72, child: _ChallengeAchievementCard()),
+              SizedBox(width: 12 * scale),
+              const Expanded(flex: 90, child: _SystemNoticeCard()),
+            ],
+          ),
         );
       },
     );
@@ -2001,10 +2174,25 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
     _future = _loadNotices();
   }
 
-  /// 필요한 변수는 전역 시스템 공지와 갱신 시각이다.
-  /// 홈에서는 그룹 커뮤니티를 조회하지 않고 전역 공지만 최신순으로 정렬해 API 호출과 노출 범위를 줄인다.
+  /// 필요한 변수는 전체 공지와 현재 학생이 속한 학원 공지, 각 공지의 갱신 시각이다.
+  /// 작동 원리는 두 캐시 GET을 병렬 실행하고 중복을 제거한 뒤 최신순으로 정렬해 홈에는 상위 3개만 노출한다.
   Future<List<StudyGroupNotice>> _loadNotices() async {
-    final notices = await ApiClient.instance.listGlobalSystemNotices(limit: 20);
+    final results = await Future.wait<List<StudyGroupNotice>>([
+      ApiClient.instance
+          .listGlobalSystemNotices(limit: 20)
+          .onError((_, _) => const <StudyGroupNotice>[]),
+      ApiClient.instance
+          .listMySystemGroupNotices(limit: 20)
+          .onError((_, _) => const <StudyGroupNotice>[]),
+    ]);
+    final unique = <String, StudyGroupNotice>{};
+    for (final notice in results.expand((items) => items)) {
+      final key = notice.noticeId.isNotEmpty
+          ? notice.noticeId
+          : '${notice.scope}|${notice.groupId}|${notice.title}|${notice.updatedAt}';
+      unique[key] = notice;
+    }
+    final notices = unique.values.toList(growable: false);
     notices.sort((a, b) {
       final ad =
           DateTime.tryParse(a.updatedAt) ??
@@ -2023,10 +2211,8 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
       future: _future,
       builder: (context, snapshot) {
         final notices = snapshot.data ?? const <StudyGroupNotice>[];
-        return Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(minHeight: 332),
-          decoration: _cardDeco(radius: 26),
+        return StudentDensitySurface(
+          radius: 26,
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2039,9 +2225,7 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
                   ),
                   OutlinedButton(
-                    onPressed: () => notices.isEmpty
-                        ? _showPreviewNoticeDialog(context)
-                        : _showNoticeList(context, notices),
+                    onPressed: () => showStudentNotifications(context),
                     child: const Text('전체 보기'),
                   ),
                 ],
@@ -2060,30 +2244,24 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
     AsyncSnapshot<List<StudyGroupNotice>> snapshot,
     List<StudyGroupNotice> notices,
   ) {
-    if (snapshot.connectionState == ConnectionState.waiting ||
-        snapshot.hasError ||
-        notices.isEmpty) {
-      return const Column(
-        children: [
-          _NoticePreviewRow(
-            icon: '!',
-            title: '7월 서비스 업데이트 안내',
-            meta: '전체 공지 · 07.13',
-            active: true,
-          ),
-          SizedBox(height: 8),
-          _NoticePreviewRow(
-            icon: '◎',
-            title: '다음 수업 준비물',
-            meta: '중2 심화 스터디 · 07.12',
-          ),
-          SizedBox(height: 8),
-          _NoticePreviewRow(
-            icon: '!',
-            title: '아레나 시즌 일정',
-            meta: '전체 공지 · 07.10',
-          ),
-        ],
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 72),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (snapshot.hasError) {
+      return const _NoticePreviewRow(
+        icon: '!',
+        title: '공지를 불러오지 못했습니다.',
+        meta: '알림 센터에서 다시 확인해 주세요.',
+      );
+    }
+    if (notices.isEmpty) {
+      return const _NoticePreviewRow(
+        icon: '◎',
+        title: '새로운 공지가 없습니다.',
+        meta: '전체 공지 · 학원 공지',
       );
     }
     return Column(
@@ -2093,114 +2271,13 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
             icon: index == 1 ? '◎' : '!',
             title: notices[index].title,
             meta:
-                '${notices[index].scope == 'global' ? '전체 공지' : (notices[index].groupName ?? '그룹 공지')} · ${_noticeDateLabel(notices[index].updatedAt)}',
+                '${notices[index].scope == 'global' ? '전체 공지' : (notices[index].groupName ?? '학원 공지')} · ${_noticeDateLabel(notices[index].updatedAt)}',
             active: index == 0,
             onTap: () => _showNoticePreview(context, notices[index]),
           ),
           if (index != notices.take(3).length - 1) const SizedBox(height: 8),
         ],
       ],
-    );
-  }
-
-  /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리: 오프라인·미리보기 상태에서도 HTML과 동일한 공지 목록 모달을 제공한다.
-  void _showPreviewNoticeDialog(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 6, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              StudentDensityEyebrow('SYSTEM NOTICES'),
-              SizedBox(height: 8),
-              Text(
-                '공지사항',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-              ),
-              SizedBox(height: 18),
-              _NoticePreviewRow(
-                icon: '!',
-                title: '7월 서비스 업데이트 안내',
-                meta: '전체 공지 · 07.13',
-                active: true,
-              ),
-              SizedBox(height: 8),
-              _NoticePreviewRow(
-                icon: '◎',
-                title: '다음 수업 준비물',
-                meta: '중2 심화 스터디 · 07.12',
-              ),
-              SizedBox(height: 8),
-              _NoticePreviewRow(
-                icon: '!',
-                title: '아레나 시즌 일정',
-                meta: '전체 공지 · 07.10',
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showNoticeList(BuildContext context, List<StudyGroupNotice> notices) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        final scale = _uiScale(context);
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              20 * scale,
-              18 * scale,
-              20 * scale,
-              22 * scale,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '공지사항',
-                  style: _ts(size: 20 * scale, weight: FontWeight.w900),
-                ),
-                SizedBox(height: 12 * scale),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: notices.length,
-                    separatorBuilder: (_, _) => Divider(height: 1 * scale),
-                    itemBuilder: (context, index) {
-                      final notice = notices[index];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          notice.title,
-                          style: _ts(size: 14 * scale, weight: FontWeight.w800),
-                        ),
-                        subtitle: Text(
-                          '${notice.scope == 'global' ? '전체 공지' : (notice.groupName ?? '그룹 공지')} · ${_noticeDateLabel(notice.updatedAt)}\n${_noticePreviewText(notice.contentHtml)}',
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: _ts(size: 11 * scale, color: Colors.black54),
-                        ),
-                        onTap: () => _showNoticePreview(context, notice),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -2325,6 +2402,9 @@ class _NoticePreviewRow extends StatelessWidget {
 class _ChallengeAchievementCard extends StatelessWidget {
   const _ChallengeAchievementCard();
 
+  /// 필요한 변수는 활동 기록, 계정 레벨과 업적 카탈로그 평가 결과다.
+  /// 작동 원리: 보관함과 동일한 카탈로그로 획득 수, 곧 획득할 트로피, 획득한
+  /// 트로피를 계산해 홈 미리보기와 상세 보관함의 수치가 항상 일치하도록 한다.
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ActivitySnapshot>(
@@ -2334,13 +2414,26 @@ class _ChallengeAchievementCard extends StatelessWidget {
           valueListenable: ActivityStore.accountSummaryNotifier,
           builder: (context, account, __) {
             final accountLevel = account?.level ?? 0;
+            final allBadges = ActivityBadgeCatalog.evaluate(
+              snapshot,
+              accountLevel: accountLevel,
+            );
+            final earnedBadges = ActivityBadgeCatalog.earnedBadges(
+              snapshot,
+              accountLevel: accountLevel,
+            );
+            final nearBadges = ActivityBadgeCatalog.nextBadges(
+              snapshot,
+              accountLevel: accountLevel,
+              limit: 2,
+            );
             return LayoutBuilder(
               builder: (context, constraints) {
                 // 필요한 변수는 HTML 3열 배치에서 할당된 업적 카드 폭이다.
                 // 작동 원리: 좁은 PC 열에서 제목이 2줄이 되면 내용 높이를 늘려 오버플로를 방지한다.
                 final contentHeight = constraints.maxWidth < 360
-                    ? 260.0
-                    : 210.0;
+                    ? 340.0
+                    : 286.0;
                 return StudentDensitySurface(
                   padding: const EdgeInsets.all(20),
                   radius: 26,
@@ -2368,41 +2461,26 @@ class _ChallengeAchievementCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const _DashboardPill('8 / 24'),
+                            _DashboardPill(
+                              '${earnedBadges.length} / ${allBadges.length}',
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 22),
-                        Row(
-                          children: [
-                            _AchievementGem(
-                              label: accountLevel > 0 ? '$accountLevel' : '7',
-                              dark: true,
-                            ),
-                            const SizedBox(width: 10),
-                            _AchievementGem(
-                              label:
-                                  '${snapshot.totalSolvedCount.clamp(0, 99)}',
-                            ),
-                            const SizedBox(width: 10),
-                            const _AchievementGem(label: 'B'),
-                          ],
+                        const SizedBox(height: 16),
+                        _AchievementTrophySection(
+                          title: '곧 획득할 트로피',
+                          emptyLabel: '모든 트로피를 획득했어요.',
+                          trophies: nearBadges,
+                        ),
+                        const SizedBox(height: 12),
+                        _AchievementTrophySection(
+                          title: '획득한 트로피',
+                          emptyLabel: '첫 학습 기록으로 트로피를 모아보세요.',
+                          trophies: earnedBadges
+                              .take(3)
+                              .toList(growable: false),
                         ),
                         const Spacer(),
-                        const Text(
-                          '다음: 30일 연속 학습 · 12/30',
-                          style: TextStyle(
-                            color: StudentDensityTokens.muted,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        const LinearProgressIndicator(
-                          value: .4,
-                          minHeight: 6,
-                          color: StudentDensityTokens.dark,
-                          backgroundColor: Color(0xFFE4E4E7),
-                        ),
-                        const SizedBox(height: 8),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
@@ -2427,36 +2505,91 @@ class _ChallengeAchievementCard extends StatelessWidget {
   }
 }
 
-class _AchievementGem extends StatelessWidget {
-  const _AchievementGem({required this.label, this.dark = false});
+class _AchievementTrophySection extends StatelessWidget {
+  const _AchievementTrophySection({
+    required this.title,
+    required this.emptyLabel,
+    required this.trophies,
+  });
 
-  final String label;
-  final bool dark;
+  final String title;
+  final String emptyLabel;
+  final List<ActivityBadgeProgress> trophies;
 
-  /// 필요한 변수는 업적 값과 강조 여부다.
-  /// 작동 원리: HTML의 42px 원형 보석 배지를 흑백 표면과 이중 테두리로 재현한다.
+  /// 필요한 변수는 구분 제목, 비어 있을 때 안내 문구, 표시할 업적 진행 목록이다.
+  /// 작동 원리: 홈에는 최대 세 개의 트로피만 보여 주고 각 트로피의 현재 달성량을
+  /// 함께 표시해, 상세 보관함을 열기 전에도 다음 행동을 빠르게 파악하게 한다.
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: dark ? StudentDensityTokens.dark : Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: dark ? Colors.white : StudentDensityTokens.lineStrong,
-          width: 2,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 8)],
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: dark ? Colors.white : StudentDensityTokens.ink,
-          fontSize: 13,
-          fontWeight: FontWeight.w900,
-        ),
+        const SizedBox(height: 6),
+        if (trophies.isEmpty)
+          Text(
+            emptyLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 11,
+            ),
+          )
+        else
+          Row(
+            children: [
+              for (var index = 0; index < trophies.length; index++) ...[
+                Expanded(
+                  child: _AchievementTrophyPreview(progress: trophies[index]),
+                ),
+                if (index != trophies.length - 1) const SizedBox(width: 8),
+              ],
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class _AchievementTrophyPreview extends StatelessWidget {
+  const _AchievementTrophyPreview({required this.progress});
+
+  final ActivityBadgeProgress progress;
+
+  /// 필요한 변수는 업적의 현재 진행 상태와 트로피 정의다.
+  /// 작동 원리: 기존 트로피 위젯을 그대로 사용하고 이름·달성량만 작은 보조 정보로
+  /// 붙여 홈 카드에서도 트로피의 종류와 목표를 구분할 수 있게 한다.
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: '${progress.badge.title} · ${progress.progressText}',
+      child: Row(
+        children: [
+          ActivityBadgeIcon(progress: progress, size: 36),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              progress.progressText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: progress.isEarned
+                    ? progress.badge.color
+                    : StudentDensityTokens.muted,
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2477,6 +2610,42 @@ int _activityStreakDays(ActivitySnapshot snapshot) {
     cursor = cursor.subtract(const Duration(days: 1));
   }
   return streak;
+}
+
+/// 필요 변수는 표시할 달의 연도와 월이다.
+/// 작동 원리는 일요일 시작 월간 달력에 필요한 앞쪽 빈 칸과 실제 날짜를 계산하고,
+/// 마지막 주가 완성되도록 35칸 또는 42칸으로 반환한다.
+List<DateTime?> _homeMonthCells(DateTime month) {
+  final firstDay = DateTime(month.year, month.month);
+  final dayCount = DateTime(month.year, month.month + 1, 0).day;
+  final leadingBlankCount = firstDay.weekday % DateTime.daysPerWeek;
+  final usedCellCount = leadingBlankCount + dayCount;
+  final totalCellCount = ((usedCellCount + 6) ~/ 7) * 7;
+  return List<DateTime?>.generate(totalCellCount, (index) {
+    final day = index - leadingBlankCount + 1;
+    if (day < 1 || day > dayCount) return null;
+    return DateTime(month.year, month.month, day);
+  });
+}
+
+/// 필요 변수는 달력 기준 날짜다.
+/// 작동 원리는 HTML 시안의 영문 월·연도 eyebrow 형식으로 변환한다.
+String _homeMonthLabel(DateTime month) {
+  const labels = [
+    'JANUARY',
+    'FEBRUARY',
+    'MARCH',
+    'APRIL',
+    'MAY',
+    'JUNE',
+    'JULY',
+    'AUGUST',
+    'SEPTEMBER',
+    'OCTOBER',
+    'NOVEMBER',
+    'DECEMBER',
+  ];
+  return '${labels[month.month - 1]} ${month.year}';
 }
 
 class _ActivityHistoryCard extends StatefulWidget {
@@ -2516,7 +2685,8 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
     return ValueListenableBuilder<ActivitySnapshot>(
       valueListenable: ActivityStore.notifier,
       builder: (context, snapshot, _) {
-        final days = ActivityStore.recentDays(snapshot, 35);
+        final now = _dateOnly(DateTime.now());
+        final days = _homeMonthCells(now);
         return StudentDensitySurface(
           padding: const EdgeInsets.all(20),
           radius: 26,
@@ -2526,13 +2696,13 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        StudentDensityEyebrow('JULY 2026'),
-                        SizedBox(height: 8),
-                        Text(
+                        StudentDensityEyebrow(_homeMonthLabel(now)),
+                        const SizedBox(height: 8),
+                        const Text(
                           '일정 달력',
                           style: TextStyle(
                             fontSize: 24,
@@ -2549,52 +2719,64 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
                 ],
               ),
               const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  for (final label in ['월', '화', '수', '목', '금', '토', '일'])
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: StudentDensityTokens.muted,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 10),
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: days.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 7,
-                  mainAxisSpacing: 5,
-                  crossAxisSpacing: 5,
+                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 6,
+                  mainAxisExtent: 48,
                 ),
                 itemBuilder: (context, index) {
-                  final record = days[index];
-                  final active = record.score > 0;
-                  final day = record.dateKey
-                      .split('-')
-                      .last
-                      .replaceFirst(RegExp(r'^0'), '');
-                  return Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: active
-                          ? StudentDensityTokens.dark
-                          : StudentDensityTokens.surfaceMuted,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      day,
-                      style: TextStyle(
-                        color: active ? Colors.white : StudentDensityTokens.ink,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                  final date = days[index];
+                  final score = date == null
+                      ? 0
+                      : ActivityStore.scoreForDate(snapshot, date);
+                  final isToday = date == now;
+                  final hasActivity = score > 0;
+                  return Opacity(
+                    opacity: date == null ? .35 : 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isToday
+                            ? StudentDensityTokens.dark
+                            : StudentDensityTokens.surfaceMuted,
+                        border: Border.all(color: StudentDensityTokens.line),
+                        borderRadius: BorderRadius.circular(13),
                       ),
+                      child: date == null
+                          ? null
+                          : Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Text(
+                                  '${date.day}',
+                                  style: TextStyle(
+                                    color: isToday
+                                        ? Colors.white
+                                        : StudentDensityTokens.ink,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                if (hasActivity)
+                                  Positioned(
+                                    bottom: 5,
+                                    child: Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: BoxDecoration(
+                                        color: isToday
+                                            ? Colors.white
+                                            : StudentDensityTokens.dark,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                     ),
                   );
                 },

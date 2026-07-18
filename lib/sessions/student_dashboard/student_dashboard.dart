@@ -11,7 +11,6 @@ export 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 export 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 export 'package:s11/sessions/student_dashboard/ui/modals/social_modal.dart';
 export 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
-export 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 
 // UI - Pages
 export 'package:s11/sessions/student_dashboard/ui/pages/mainpage_widget.dart';

@@ -310,13 +310,13 @@ class _ActivityBadgeDialog extends StatelessWidget {
     final earnedCount = all.where((entry) => entry.isEarned).length;
     final groups = _groupBadgeProgress(all);
     final media = MediaQuery.of(context);
-    final width = math.min(media.size.width - 28, 980.0);
-    final height = math.min(media.size.height - 42, 760.0);
+    final width = math.min(media.size.width - 56, 1224.0);
+    final height = math.min(media.size.height - 42, 862.0);
 
     return Dialog(
       insetPadding: const EdgeInsets.all(14),
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: SizedBox(
         width: width,
         height: height,
@@ -347,7 +347,7 @@ class _ActivityBadgeDialog extends StatelessWidget {
                           ),
                           SizedBox(height: 4 * scale),
                           Text(
-                            '총 ${ActivityBadgeCatalog.allBadges.length}종 · 획득 $earnedCount개 · 뱃지를 미리보려면 누르세요',
+                            '총 ${ActivityBadgeCatalog.allBadges.length}종 · 획득 $earnedCount개 · 잠긴 트로피를 누르면 미리볼 수 있어요',
                             style: _textStyle(
                               size: 12 * scale,
                               color: Colors.black54,
@@ -411,10 +411,10 @@ class _BadgeGroupCard extends StatelessWidget {
     final color = first.color;
 
     return Container(
-      padding: EdgeInsets.all(12 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8 * scale),
+        borderRadius: BorderRadius.circular(10 * scale),
         border: Border.all(color: color.withValues(alpha: 0.16)),
         boxShadow: [
           BoxShadow(
@@ -468,21 +468,21 @@ class _BadgeGroupCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 10 * scale),
+          SizedBox(height: 12 * scale),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final tile = _badgeTileSize(constraints.maxWidth, scale);
                 return Wrap(
-                  spacing: 8 * scale,
-                  runSpacing: 8 * scale,
+                  spacing: 10 * scale,
+                  runSpacing: 10 * scale,
                   children: [
                     for (final progress in group.items)
                       SizedBox(
                         width: tile,
                         child: _CompactBadgeTile(
                           progress: progress,
-                          iconSize: math.min(tile * 0.72, 40 * scale),
+                          iconSize: math.min(tile * 0.72, 54 * scale),
                         ),
                       ),
                   ],
@@ -891,7 +891,7 @@ ActivityBadgeProgress? _firstLocked(List<ActivityBadgeProgress> badges) {
 }
 
 double _badgeTileSize(double maxWidth, double scale) {
-  final gap = 8 * scale;
+  final gap = 10 * scale;
   final columns = maxWidth >= 300 * scale ? 6 : 4;
   return (maxWidth - gap * (columns - 1)) / columns;
 }

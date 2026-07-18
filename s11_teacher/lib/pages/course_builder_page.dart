@@ -47,6 +47,7 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
   bool _advancedOpen = false;
   String _difficulty = '중';
   bool _wrongAnswerReviewEnabled = true;
+  bool _isPublic = false;
 
   bool _loading = false;
   bool _saving = false;
@@ -129,6 +130,7 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
         ? c['difficulty'].toString()
         : '중';
     _targetOvrCtrl.text = (c['target_ovr'] ?? 0).toString();
+    _isPublic = c['is_public'] == true || c['is_public'] == 1;
     final runtimeFlags = c['runtime_flags'] is Map
         ? Map<String, dynamic>.from(c['runtime_flags'] as Map)
         : const <String, dynamic>{};
@@ -1008,6 +1010,7 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
         curriculumDailyMaxModules: 0,
         moduleDeadlineDays: List<int>.filled(_modules.length, 0),
         wrongAnswerReviewEnabled: _wrongAnswerReviewEnabled,
+        isPublic: _isPublic,
       );
 
       if (_isEditing) {
@@ -1082,6 +1085,13 @@ class _CourseBuilderPageState extends State<CourseBuilderPage>
       children: [
         _sectionTitle('기본 정보', scale),
         _field(_titleCtrl, '코스 제목 *', scale),
+        SwitchListTile(
+          title: const Text('학생에게 공개'),
+          subtitle: const Text('켜면 학생 코스 탐색 화면에서 바로 찾고 수강할 수 있습니다.'),
+          value: _isPublic,
+          onChanged: (value) => setState(() => _isPublic = value),
+          activeThumbColor: kCourseLightGreen,
+        ),
         SwitchListTile(
           title: const Text('상세 옵션 펼치기'),
           subtitle: const Text('설명, 난이도, 목표 OVR을 함께 설정합니다.'),

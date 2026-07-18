@@ -161,6 +161,55 @@ class RedisArenaRepository:
         redis = await self._redis()
         return await redis.get(f"arena:user_match:{user_id}")
 
+    async def clear_active_match(self, user_id: str) -> None:
+        """필요 변수: 사용자 ID. 봇 대체로 더 이상 참여하지 않는 상대의 경기 연결만 제거한다."""
+
+        redis = await self._redis()
+        await redis.delete(f"arena:user_match:{user_id}")
+
+    async def touch_presence(self, match_id: str, user_id: str, ttl: int = 360) -> None:
+        """필요 변수: 경기·사용자·TTL. WebSocket 상태 신호를 짧은 만료 키로 공유한다."""
+
+        redis = await self._redis()
+        await redis.set(f"arena:presence:{match_id}:{user_id}", "1", ex=ttl)
+
+    async def has_presence(self, match_id: str, user_id: str) -> bool:
+        """필요 변수: 경기·사용자. 상대가 최근 6분 안에 연결 신호를 보냈는지 조회한다."""
+
+        redis = await self._redis()
+        return bool(await redis.exists(f"arena:presence:{match_id}:{user_id}"))
+
+    async def practice_match(self, user_id: str) -> str | None:
+        """필요 변수: 사용자 ID. 실제 매칭 대기 중 발급된 연습 경기 ID를 조회한다."""
+
+        redis = await self._redis()
+        return await redis.get(f"arena:user_practice:{user_id}")
+
+    async def save_practice(self, user_id: str, match_id: str) -> None:
+        """필요 변수: 사용자·연습 경기 ID. 여러 서버가 같은 연습 경기를 재사용하도록 연결을 저장한다."""
+
+        redis = await self._redis()
+        await redis.set(f"arena:user_practice:{user_id}", match_id, ex=1800)
+
+    async def detach_practice(self, user_id: str) -> None:
+        """필요 변수: 사용자 ID. 실제 경기 전환을 위해 연습 본문은 남기고 사용자 연결만 해제한다."""
+
+        redis = await self._redis()
+        await redis.delete(f"arena:user_practice:{user_id}")
+
+    async def discard_practice(self, user_id: str) -> None:
+        """필요 변수: 사용자 ID. 큐 취소나 실제 매칭 성립 시 연습 경기와 사용자 연결을 제거한다."""
+
+        redis = await self._redis()
+        script = """
+        local match_id = redis.call('GET', KEYS[1])
+        if not match_id then return 0 end
+        redis.call('DEL', KEYS[1])
+        redis.call('DEL', 'arena:match:' .. match_id)
+        return 1
+        """
+        await redis.eval(script, 1, f"arena:user_practice:{user_id}")
+
     async def queue_length(self, queue_type: str) -> int:
         """필요 변수: 큐 유형. 공유 정렬 집합의 현재 대기 인원을 반환한다."""
 
@@ -247,6 +296,7 @@ class RedisArenaRepository:
         redis = await self._redis()
         keys = [f"arena:user_match:{value}" for value in user_ids]
         keys.extend([f"arena:chat:{match_id}:0", f"arena:chat:{match_id}:1"])
+        keys.extend(f"arena:presence:{match_id}:{value}" for value in user_ids)
         if keys:
             await redis.delete(*keys)
 
@@ -279,25 +329,31 @@ class PostgresArenaRepository:
         return self._pool
 
     async def save_result(self, result: dict[str, Any]) -> None:
-        """필요 변수: 종료 결과·참가자·레이팅. 한 트랜잭션으로 경기 원문과 큐별 사용자 레이팅을 upsert한다."""
+        """필요 변수: 종료 결과·참가자·레이팅.
+
+        작동 원리: 경기 ID 최초 삽입에 성공한 트랜잭션만 전적과 레이팅을
+        반영해 여러 서버의 중복 종료가 보상을 두 번 지급하지 못하게 한다.
+        """
 
         pool = await self._ensure_pool()
         if pool is None:
             return
         async with pool.connection() as connection:
             async with connection.transaction():
-                await connection.execute(
+                cursor = await connection.execute(
                     """INSERT INTO arena_match
                     (match_id, queue_type, status, started_at, finished_at, winner_team, idempotency_key, result_json)
                     VALUES (%s, %s, 'finished', %s, %s, %s, %s, %s::jsonb)
-                    ON CONFLICT (match_id) DO UPDATE SET status='finished', finished_at=EXCLUDED.finished_at,
-                    winner_team=EXCLUDED.winner_team, result_json=EXCLUDED.result_json""",
+                    ON CONFLICT (match_id) DO NOTHING
+                    RETURNING match_id""",
                     (
                         result["match_id"], result["queue_type"], result["started_at"],
                         result["finished_at"], result.get("winner_team"), f"finish:{result['match_id']}",
                         json.dumps(result, ensure_ascii=False),
                     ),
                 )
+                if await cursor.fetchone() is None:
+                    return
                 for participant in result["participants"]:
                     await connection.execute(
                         """INSERT INTO arena_participant
@@ -310,6 +366,8 @@ class PostgresArenaRepository:
                             participant["contribution"], participant["rating_before"], participant["rating_after"],
                         ),
                     )
+                    if participant.get("is_bot"):
+                        continue
                     await connection.execute(
                         """INSERT INTO arena_rating (user_id, queue_type, rating, wins, losses, draws)
                         VALUES (%s, %s, %s, %s, %s, %s)
@@ -322,6 +380,43 @@ class PostgresArenaRepository:
                             int(participant["record"] == "draw"),
                         ),
                     )
+
+    async def profiles(
+        self,
+        user_ids: list[str],
+        queue_types: list[str],
+    ) -> dict[tuple[str, str], dict[str, Any]]:
+        """필요 변수: 사용자 ID와 큐 유형 목록.
+
+        작동 원리: 기본키 범위만 한 번 조회해 여러 사용자의 영속 레이팅·전적을
+        경기 생성 프로세스에 복원하며, 사용자별 반복 쿼리를 만들지 않는다.
+        """
+
+        pool = await self._ensure_pool()
+        if pool is None or not user_ids or not queue_types:
+            return {}
+        async with pool.connection() as connection:
+            cursor = await connection.execute(
+                """SELECT user_id, queue_type, rating, deviation, volatility,
+                          mu, sigma, wins, losses, draws
+                FROM arena_rating
+                WHERE user_id = ANY(%s) AND queue_type = ANY(%s)""",
+                (user_ids, queue_types),
+            )
+            rows = await cursor.fetchall()
+        return {
+            (str(row[0]), str(row[1])): {
+                "rating": float(row[2]),
+                "deviation": float(row[3]),
+                "volatility": float(row[4]),
+                "mu": float(row[5]),
+                "sigma": float(row[6]),
+                "wins": int(row[7]),
+                "losses": int(row[8]),
+                "draws": int(row[9]),
+            }
+            for row in rows
+        }
 
     async def get_result(self, match_id: str, user_id: str) -> dict[str, Any] | None:
         """필요 변수: 경기·사용자 ID. 참가 권한이 있는 영속 경기 결과만 반환한다."""
@@ -338,3 +433,25 @@ class PostgresArenaRepository:
             )
             row = await cursor.fetchone()
             return dict(row[0]) if row and row[0] else None
+
+    async def rankings(self, queue_type: str, limit: int = 100) -> list[dict[str, Any]]:
+        """필요 변수: 큐 유형·최대 행 수. 인덱스된 큐별 레이팅만 읽어 대결장 랭킹을 반환한다."""
+
+        pool = await self._ensure_pool()
+        if pool is None:
+            return []
+        async with pool.connection() as connection:
+            cursor = await connection.execute(
+                """SELECT user_id, rating, wins, losses, draws
+                FROM arena_rating WHERE queue_type=%s
+                ORDER BY rating DESC, updated_at ASC LIMIT %s""",
+                (queue_type, limit),
+            )
+            rows = await cursor.fetchall()
+            return [
+                {
+                    "user_id": str(row[0]), "rating": float(row[1]),
+                    "wins": int(row[2]), "losses": int(row[3]), "draws": int(row[4]),
+                }
+                for row in rows
+            ]

@@ -6,6 +6,7 @@ import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 class SchedulePage extends StatefulWidget {
@@ -115,12 +116,35 @@ class _SchedulePageState extends State<SchedulePage> {
     items: studentTopNavItems(context, active: StudentTopDestination.learning),
   );
 
-  /// 필요한 변수는 주간/월간 상태·선택 날짜·런타임 일정이다.
-  /// 작동 원리는 HTML의 소개, 보기 전환, 주간 타임라인, 오늘 요약 순서로 한 개 스크롤을 구성하는 것이다.
+  /// 필요한 변수는 화면 너비·주간/월간 상태·선택 날짜·런타임 일정이다.
+  /// 작동 원리는 780px 이하에서는 일정과 요약을 세로로, PC에서는 시안 비율의 2열로 배치하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final scheduleCard = _loading
+        ? const _ScheduleLoadingCard()
+        : _error != null
+        ? _EmptyScheduleCard(message: _error!)
+        : _weekly
+        ? _WeeklyScheduleCard(
+            weekStart: _weekStart,
+            selectedDate: _selectedDate,
+            schedule: _schedule,
+            onSelectDate: (date) => setState(() => _selectedDate = date),
+            onMoveWeek: _moveWeek,
+          )
+        : _MonthlyScheduleCard(
+            selectedDate: _selectedDate,
+            schedule: _schedule,
+            onSelectDate: (date) => setState(() => _selectedDate = date),
+          );
+    final summaryCard = _TodaySummaryCard(
+      selectedDate: _selectedDate,
+      schedule: _schedule,
+    );
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
+      backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
@@ -130,63 +154,51 @@ class _SchedulePageState extends State<SchedulePage> {
               child: RefreshIndicator(
                 onRefresh: _loadRuntimeSchedule,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                  padding: EdgeInsets.zero,
                   children: [
-                    Text(
-                      _monthLabel(_selectedDate).toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.7,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
+                    StudentDensityPage(
+                      padding: EdgeInsets.fromLTRB(
+                        studentDensityHorizontalPadding(context),
+                        studentDensityVerticalPadding(context),
+                        studentDensityHorizontalPadding(context),
+                        40,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          StudentDensityPageHeader(
+                            eyebrow: _monthLabel(_selectedDate),
+                            title: '학습 일정',
+                            description: '주간의 하루 흐름과 월간 계획을 한 페이지에서 전환해 확인합니다.',
+                            action: _ScheduleModeSwitch(
+                              weekly: _weekly,
+                              onChanged: (value) =>
+                                  setState(() => _weekly = value),
+                            ),
+                          ),
+                          SizedBox(height: mobile ? 14 : 20),
+                          if (mobile)
+                            Column(
+                              key: const ValueKey('schedule-mobile-layout'),
+                              children: [
+                                scheduleCard,
+                                const SizedBox(height: 14),
+                                summaryCard,
+                              ],
+                            )
+                          else
+                            Row(
+                              key: const ValueKey('schedule-desktop-layout'),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(flex: 155, child: scheduleCard),
+                                const SizedBox(width: 14),
+                                Expanded(flex: 65, child: summaryCard),
+                              ],
+                            ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '학습 일정',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '주간의 하루 흐름과 월간 계획을 한 페이지에서 전환해 확인합니다.',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                    const SizedBox(height: 18),
-                    _ScheduleModeSwitch(
-                      weekly: _weekly,
-                      onChanged: (value) => setState(() => _weekly = value),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_loading)
-                      const Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (_error != null)
-                      _EmptyScheduleCard(message: _error!)
-                    else if (_weekly)
-                      _WeeklyScheduleCard(
-                        weekStart: _weekStart,
-                        selectedDate: _selectedDate,
-                        schedule: _schedule,
-                        onSelectDate: (date) =>
-                            setState(() => _selectedDate = date),
-                        onMoveWeek: _moveWeek,
-                      )
-                    else
-                      _MonthlyScheduleCard(
-                        selectedDate: _selectedDate,
-                        schedule: _schedule,
-                        onSelectDate: (date) => setState(() {
-                          _selectedDate = date;
-                          _weekly = true;
-                        }),
-                      ),
-                    const SizedBox(height: 12),
-                    _TodaySummaryCard(schedule: _schedule),
                   ],
                 ),
               ),
@@ -206,26 +218,29 @@ class _ScheduleModeSwitch extends StatelessWidget {
   /// 필요한 변수는 주간 선택 여부다.
   /// 작동 원리는 두 동일 너비 버튼 중 활성 보기만 검은 캡슐로 표시하는 것이다.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(5),
-    decoration: BoxDecoration(
-      color: const Color(0xFFE9E9EC),
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: const Color(0xFFDADADD)),
-    ),
-    child: Row(
-      children: [
-        _ModeButton(
-          label: '주간(일별)',
-          selected: weekly,
-          onTap: () => onChanged(true),
-        ),
-        _ModeButton(
-          label: '월간',
-          selected: !weekly,
-          onTap: () => onChanged(false),
-        ),
-      ],
+  Widget build(BuildContext context) => SizedBox(
+    width: isStudentDensityMobile(context) ? double.infinity : 252,
+    child: Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE9E9EC),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFDADADD)),
+      ),
+      child: Row(
+        children: [
+          _ModeButton(
+            label: '주간(일별)',
+            selected: weekly,
+            onTap: () => onChanged(true),
+          ),
+          _ModeButton(
+            label: '월간',
+            selected: !weekly,
+            onTap: () => onChanged(false),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -531,27 +546,63 @@ class _TimelineItem extends StatelessWidget {
 }
 
 class _TodaySummaryCard extends StatelessWidget {
-  const _TodaySummaryCard({required this.schedule});
+  const _TodaySummaryCard({required this.selectedDate, required this.schedule});
+  final DateTime selectedDate;
   final List<Map<String, dynamic>> schedule;
 
-  /// 필요한 변수는 오늘 일정 목록이다.
-  /// 작동 원리는 완료 개수와 전체 개수로 진행률을 계산해 HTML 오늘 요약 카드에 표시하는 것이다.
+  static const _weekdays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+
+  /// 필요한 변수는 선택 날짜와 해당 일정 목록이다.
+  /// 작동 원리는 완료율·간단 일정 목록·개인 일정 버튼을 PC 우측 또는 모바일 하단 요약 카드에 표시하는 것이다.
   @override
   Widget build(BuildContext context) {
     final completed = schedule
         .where((item) => item['completed'] == true)
         .length;
-    final total = schedule.isEmpty ? 3 : schedule.length;
+    final total = schedule.length;
     final progress = total == 0 ? 0.0 : completed / total;
+    final summaryItems = <Map<String, dynamic>>[
+      ...schedule.where(
+        (item) => (item['status']?.toString() ?? '').contains('진행'),
+      ),
+      ...schedule.where(
+        (item) => !(item['status']?.toString() ?? '').contains('진행'),
+      ),
+    ];
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '오늘 요약',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '오늘 요약',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F7F8),
+                  border: Border.all(color: const Color(0xFFE1E1E3)),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  _weekdays[selectedDate.weekday - 1],
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 18),
           Container(
@@ -595,6 +646,115 @@ class _TodaySummaryCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 14),
+          if (schedule.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Text(
+                  '선택한 날짜의 일정이 없습니다.',
+                  style: TextStyle(color: Colors.black45, fontSize: 12),
+                ),
+              ),
+            )
+          else
+            for (final item in summaryItems.take(3)) ...[
+              _SummaryTaskItem(data: item),
+              const SizedBox(height: 8),
+            ],
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('개인 일정 추가 기능을 준비 중입니다.')),
+              ),
+              icon: const Icon(Icons.add_rounded, size: 17),
+              label: const Text('개인 일정 추가'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+                backgroundColor: const Color(0xFF202022),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                textStyle: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryTaskItem extends StatelessWidget {
+  const _SummaryTaskItem({required this.data});
+  final Map<String, dynamic> data;
+
+  /// 필요한 변수는 일정 종류·제목·상세·상태다.
+  /// 작동 원리는 진행 중 일정은 검은 배경으로 강조하고 나머지는 얇은 테두리 행으로 요약한다.
+  @override
+  Widget build(BuildContext context) {
+    final title = data['title']?.toString() ?? '학습 일정';
+    final type = data['type']?.toString() ?? '과제';
+    final detail = data['detail']?.toString() ?? '오늘 학습';
+    final status = data['status']?.toString() ?? '예정';
+    final active = status.contains('진행');
+    final foreground = active ? Colors.white : Colors.black;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: active ? const Color(0xFF202022) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: active ? const Color(0xFF202022) : const Color(0xFFE0E0E2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: active ? Colors.white : const Color(0xFFF7F7F8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E2E4)),
+            ),
+            child: Text(
+              type,
+              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: foreground,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: active ? Colors.white60 : Colors.black45,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: foreground, size: 18),
         ],
       ),
     );
@@ -699,6 +859,20 @@ class _EmptyScheduleCard extends StatelessWidget {
     padding: const EdgeInsets.all(40),
     decoration: _cardDecoration(),
     child: Center(child: Text(message)),
+  );
+}
+
+class _ScheduleLoadingCard extends StatelessWidget {
+  const _ScheduleLoadingCard();
+
+  /// 필요한 변수는 없다.
+  /// 작동 원리는 데이터 조회 중에도 완성된 카드 영역을 유지해 PC 2열과 모바일 세로 배치의 흔들림을 줄이는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minHeight: 260),
+    decoration: _cardDecoration(),
+    alignment: Alignment.center,
+    child: const CircularProgressIndicator(color: Colors.black),
   );
 }
 

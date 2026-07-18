@@ -29,6 +29,66 @@ const _shadow = BoxShadow(
 
 int _courseNumber(Course course) => course.id.hashCode & 0xFFFF;
 
+/// 필요한 변수는 숫자 또는 문자열 형태로 온 서버 값과 기본값이다.
+/// 작동 원리: 비정상 값을 기본값으로 바꾸고 음수 시간을 막아 화면 계산이 안전하게 유지되도록 한다.
+int _runtimeSeconds(dynamic value, {int fallback = 0}) {
+  final parsed = value is num ? value.toInt() : int.tryParse('$value');
+  return parsed == null || parsed < 0 ? fallback : parsed;
+}
+
+/// 필요한 변수는 코스의 진행 상태에 저장된 교재 열람·문제 풀이 시간이다.
+/// 작동 원리: 서로 다른 모듈 유형의 누적 초를 안전하게 더해 현재 코스의 실제 학습 시간을 만든다.
+int _courseElapsedSeconds(Course course) {
+  final state = course.progressDetail;
+  var total = 0;
+  final textbookViews = state['textbook_view'];
+  if (textbookViews is Map) {
+    for (final entry in textbookViews.values) {
+      if (entry is Map) {
+        total += _runtimeSeconds(entry['total_open_seconds']);
+      }
+    }
+  }
+  final moduleResults = state['module_results'];
+  if (moduleResults is Map) {
+    for (final result in moduleResults.values) {
+      if (result is Map) {
+        total += _runtimeSeconds(result['latest_elapsed_seconds']);
+      }
+    }
+  }
+  return total;
+}
+
+/// 필요한 변수는 초 단위의 누적 학습 시간이다.
+/// 작동 원리: 서버가 보관한 시간을 0 이상으로 보정한 뒤 화면에서 읽기 쉬운 시:분:초로 변환한다.
+String _formatCourseElapsedTime(int seconds) {
+  final safeSeconds = seconds < 0 ? 0 : seconds;
+  final hours = safeSeconds ~/ 3600;
+  final minutes = (safeSeconds % 3600) ~/ 60;
+  final remainingSeconds = safeSeconds % 60;
+  if (hours > 0) {
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+  return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+}
+
+/// 필요한 변수는 활성 단원의 상세 정보와 코스 태그·제목이다.
+/// 작동 원리: 단원에 명시된 주제를 우선 표시하고, 없을 때만 코스 태그와 제목 순으로 자연스럽게 대체한다.
+String _currentLearningTopic(Course course, CourseUnit? unit) {
+  final detail = unit?.detail;
+  if (detail is Map) {
+    for (final key in const ['topic', 'section_title', 'subject', 'category']) {
+      final value = detail[key]?.toString().trim() ?? '';
+      if (value.isNotEmpty) return value;
+    }
+  }
+  if (course.focusTags.isNotEmpty && course.focusTags.first.trim().isNotEmpty) {
+    return course.focusTags.first.trim();
+  }
+  return course.title.trim().isNotEmpty ? course.title.trim() : '학습 과정';
+}
+
 class CourseLearningPage extends StatefulWidget {
   const CourseLearningPage({super.key, required this.course});
 
@@ -727,8 +787,12 @@ class _CurrentLearning extends StatelessWidget {
         ? detail['description']?.toString().trim()
         : null;
     final description = rawDescription == null || rawDescription.isEmpty
-        ? '두 점의 변화량을 비교해 직선의 기울기를 이해합니다. 중단한 위치부터 이어집니다.'
+        ? (course.description.trim().isNotEmpty
+              ? course.description.trim()
+              : '중단한 현재 학습 위치부터 이어서 진행합니다.')
         : rawDescription;
+    final elapsedSeconds = _courseElapsedSeconds(course);
+    final progress = course.progress.clamp(0.0, 1.0);
     final main = Padding(
       padding: EdgeInsets.all(mobile ? 18 : 30),
       child: Row(
@@ -757,11 +821,11 @@ class _CurrentLearning extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 StudentDensityEyebrow(
-                  'UNIT ${(index + 1).toString().padLeft(2, '0')} · 그래프 이해',
+                  'UNIT ${(index + 1).toString().padLeft(2, '0')} · ${_currentLearningTopic(course, unit)}',
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  unit?.title ?? '기울기의 의미',
+                  unit?.title.isNotEmpty == true ? unit!.title : course.title,
                   style: TextStyle(
                     fontSize: mobile ? 24 : 34,
                     fontWeight: FontWeight.w900,
@@ -825,13 +889,13 @@ class _CurrentLearning extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 9),
-          const Text(
-            '05:12',
+          Text(
+            _formatCourseElapsedTime(elapsedSeconds),
             style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
-          const LinearProgressIndicator(
-            value: .62,
+          LinearProgressIndicator(
+            value: progress,
             minHeight: 7,
             color: StudentDensityTokens.dark,
             backgroundColor: StudentDensityTokens.line,

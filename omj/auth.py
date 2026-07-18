@@ -4,15 +4,13 @@ import hmac
 import json
 import os
 import re
-import sqlite3
 import threading
 import time
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from infra.db.connection import connect_sqlite
-from storage.storage import DB_PATH
+from infra.db import postgres_compat as db
 from env_loader import load_env
 
 load_env()
@@ -36,6 +34,7 @@ _DEV_JWT_SECRET = os.environ.get("OMJ_JWT_DEV_SECRET") or _DEFAULT_DEV_JWT_SECRE
 _SQLITE_TIMEOUT_SECONDS = float(os.environ.get("OMJ_SQLITE_TIMEOUT_SECONDS", "30"))
 _USER_TABLE_READY: set[str] = set()
 _USER_TABLE_LOCK = threading.Lock()
+_POSTGRES_READY_KEY = "postgres"
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9]{4,16}$")
 PASSWORD_RE = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$")
@@ -183,15 +182,16 @@ def _b64url_decode(data: str) -> bytes:
 # ============
 
 
-def _connect() -> sqlite3.Connection:
-    return connect_sqlite(DB_PATH)
+def _connect() -> db.Connection:
+    """필요 변수: DATABASE_URL. 작동 원리: 인증 저장소용 PostgreSQL 풀 연결을 반환한다."""
+    return db.connect()
 
 
 def _ensure_user_table() -> None:
-    if DB_PATH in _USER_TABLE_READY:
+    if _POSTGRES_READY_KEY in _USER_TABLE_READY:
         return
     with _USER_TABLE_LOCK:
-        if DB_PATH in _USER_TABLE_READY:
+        if _POSTGRES_READY_KEY in _USER_TABLE_READY:
             return
         conn = _connect()
         conn.execute("PRAGMA journal_mode = WAL")
@@ -242,7 +242,7 @@ def _ensure_user_table() -> None:
             cur.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'student'")
         conn.commit()
         conn.close()
-        _USER_TABLE_READY.add(DB_PATH)
+        _USER_TABLE_READY.add(_POSTGRES_READY_KEY)
 
 
 def get_user_id_by_username(username: str) -> Optional[str]:
@@ -357,7 +357,7 @@ def register_user(
             ),
         )
         conn.commit()
-    except sqlite3.IntegrityError as exc:
+    except db.IntegrityError as exc:
         conn.rollback()
         # Unique username violation
         raise ValueError("username already exists") from exc
@@ -383,7 +383,7 @@ def authenticate_user(*, username: str, password: str) -> Optional[str]:
     conn.close()
     if not row:
         return None
-    user_id, stored_hash, salt = row
+    user_id, stored_hash, salt = row[0], row[1], row[2]
     computed = _hash_password(password, salt)
     if hmac.compare_digest(stored_hash, computed):
         return user_id
@@ -462,7 +462,7 @@ def register_teacher(
             ),
         )
         conn.commit()
-    except sqlite3.IntegrityError as exc:
+    except db.IntegrityError as exc:
         conn.rollback()
         raise ValueError("email already registered") from exc
     finally:
@@ -506,7 +506,9 @@ def _promote_existing_teacher_account(
         conn.close()
         return None
 
-    user_id, username, stored_name, grade, stored_email, role, stored_hash, salt = row
+    user_id, username, stored_name, grade, stored_email, role, stored_hash, salt = (
+        row[index] for index in range(8)
+    )
     computed = _hash_password(password, salt)
     if not hmac.compare_digest(stored_hash, computed):
         conn.close()
@@ -568,7 +570,9 @@ def authenticate_teacher(*, email: str, password: str) -> Optional[dict]:
     if not row:
         conn.close()
         return None
-    user_id, username, name, grade, stored_email, role, stored_hash, salt = row
+    user_id, username, name, grade, stored_email, role, stored_hash, salt = (
+        row[index] for index in range(8)
+    )
     computed = _hash_password(password, salt)
     if not hmac.compare_digest(stored_hash, computed):
         conn.close()
@@ -749,7 +753,7 @@ def update_user_profile(
     try:
         cur.execute(f"UPDATE users SET {sets} WHERE user_id = ?", params)
         conn.commit()
-    except sqlite3.IntegrityError as exc:
+    except db.IntegrityError as exc:
         conn.rollback()
         if "UNIQUE" in str(exc).upper():
             raise ValueError("username already exists") from exc
@@ -783,7 +787,7 @@ def delete_user_account(user_id: str, *, password: str) -> None:
         conn.close()
         raise ValueError("user not found")
 
-    stored_hash, salt = row
+    stored_hash, salt = row[0], row[1]
     computed = _hash_password(password, salt)
     if not hmac.compare_digest(stored_hash, computed):
         conn.close()

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 
 Future<Course?> showCurriculumModal({required BuildContext context}) {
@@ -137,49 +138,84 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
         final maxH = constraints.maxHeight.isFinite
             ? constraints.maxHeight
             : 600.0;
-        final width = math.min(980.0, maxW * 0.95);
-        final height = math.min(560.0, maxH * 0.9);
+        final mobile = maxW <= StudentDensityTokens.mobileBreakpoint;
+        final width = math.min(980.0, maxW * (mobile ? 0.94 : 0.90));
+        final height = math.min(600.0, maxH * (mobile ? 0.92 : 0.86));
         final scale = (width / 980.0).clamp(0.7, 1.0);
 
         return Container(
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18 * scale),
+            color: StudentDensityTokens.surface,
+            borderRadius: BorderRadius.circular(mobile ? 24 : 30),
+            border: Border.all(color: StudentDensityTokens.line),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 48,
+                offset: Offset(0, 18),
+              ),
+            ],
           ),
           child: Column(
             children: [
               Padding(
-                padding: EdgeInsets.all(18 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: mobile ? 16 : 28,
+                  vertical: mobile ? 14 : 18,
+                ),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: Icon(Icons.close, size: 26 * scale),
+                    IconButton.filledTonal(
+                      style: IconButton.styleFrom(
+                        backgroundColor: StudentDensityTokens.surfaceMuted,
+                        foregroundColor: StudentDensityTokens.ink,
+                        minimumSize: const Size(40, 40),
+                      ),
+                      icon: Icon(Icons.close_rounded, size: 21 * scale),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
-                    SizedBox(width: 8 * scale),
-                    Text(
-                      '코스를 선택하세요',
-                      style: TextStyle(
-                        fontSize: 22 * scale,
-                        fontWeight: FontWeight.w600,
+                    SizedBox(width: mobile ? 12 : 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (!mobile)
+                            const StudentDensityEyebrow('learning path'),
+                          if (!mobile) const SizedBox(height: 4),
+                          Text(
+                            '코스를 선택하세요',
+                            style: TextStyle(
+                              color: StudentDensityTokens.ink,
+                              fontSize: (mobile ? 19 : 24) * scale,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const Spacer(),
                     if (_courses.isNotEmpty)
                       TextButton.icon(
                         onPressed: () => setState(() => _editMode = !_editMode),
                         icon: Icon(
-                          _editMode ? Icons.check : Icons.edit,
-                          size: 18 * scale,
+                          _editMode ? Icons.check_rounded : Icons.edit_outlined,
+                          size: 17 * scale,
                         ),
                         label: Text(_editMode ? '완료' : '편집'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: StudentDensityTokens.ink,
+                          textStyle: TextStyle(
+                            fontSize: 13 * scale,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, color: StudentDensityTokens.lineStrong),
               Expanded(
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
@@ -205,10 +241,15 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                         ),
                       )
                     : ListView.separated(
-                        padding: EdgeInsets.all(20 * scale),
+                        padding: EdgeInsets.fromLTRB(
+                          mobile ? 16 : 26,
+                          mobile ? 16 : 20,
+                          mobile ? 16 : 26,
+                          16,
+                        ),
                         itemCount: _courses.length,
                         separatorBuilder: (_, __) =>
-                            SizedBox(height: 14 * scale),
+                            SizedBox(height: mobile ? 10 : 12),
                         itemBuilder: (context, index) {
                           final course = _courses[index];
                           return _CourseSelectCard(
@@ -221,13 +262,29 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
               ),
               if (!_loading)
                 Padding(
-                  padding: EdgeInsets.only(bottom: 18 * scale),
-                  child: Text(
-                    '최대 4개의 코스를 수강할 수 있습니다.',
-                    style: TextStyle(
-                      fontSize: 12 * scale,
-                      color: Colors.black54,
-                    ),
+                  padding: EdgeInsets.fromLTRB(
+                    mobile ? 16 : 26,
+                    10,
+                    mobile ? 16 : 26,
+                    mobile ? 16 : 20,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        size: 15,
+                        color: StudentDensityTokens.muted,
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        '최대 4개의 코스를 수강할 수 있습니다.',
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          color: StudentDensityTokens.muted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -253,7 +310,7 @@ class _EmptyCourses extends StatelessWidget {
             style: TextStyle(fontSize: 14 * scale, color: Colors.black87),
           ),
           SizedBox(height: 12 * scale),
-          ElevatedButton(
+          StudentDensityButton(
             onPressed: () {
               final navigator = Navigator.of(context, rootNavigator: true);
               navigator.pop();
@@ -263,15 +320,8 @@ class _EmptyCourses extends StatelessWidget {
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B402B),
-              foregroundColor: Colors.white,
-              minimumSize: Size(180 * scale, 42 * scale),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12 * scale),
-              ),
-            ),
-            child: const Text('+ 코스 수강하러 가기'),
+            label: '+ 코스 수강하러 가기',
+            primary: true,
           ),
         ],
       ),
@@ -296,76 +346,85 @@ class _CourseSelectCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16 * scale),
+      borderRadius: BorderRadius.circular(20 * scale),
       child: Container(
-        padding: EdgeInsets.all(16 * scale),
+        padding: EdgeInsets.all(18 * scale),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6F6F6),
-          borderRadius: BorderRadius.circular(16 * scale),
+          color: StudentDensityTokens.surfaceMuted,
+          borderRadius: BorderRadius.circular(20 * scale),
+          border: Border.all(color: StudentDensityTokens.line),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.title,
-                    style: TextStyle(
-                      fontSize: 18 * scale,
-                      fontWeight: FontWeight.w600,
-                    ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 440;
+            final details = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  course.title,
+                  style: TextStyle(
+                    color: StudentDensityTokens.ink,
+                    fontSize: 18 * scale,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
                   ),
-                  SizedBox(height: 6 * scale),
-                  Text(
-                    course.description,
-                    style: TextStyle(
-                      fontSize: 12 * scale,
-                      color: Colors.black87,
-                    ),
+                ),
+                SizedBox(height: 6 * scale),
+                Text(
+                  course.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12 * scale,
+                    color: StudentDensityTokens.muted,
+                    height: 1.4,
                   ),
-                  SizedBox(height: 12 * scale),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6 * scale),
-                    child: LinearProgressIndicator(
-                      value: course.progress,
-                      minHeight: 6 * scale,
-                      backgroundColor: const Color(0xFFE2E2E2),
-                      color: const Color(0xFF45BF63),
-                    ),
+                ),
+                SizedBox(height: 14 * scale),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6 * scale),
+                  child: LinearProgressIndicator(
+                    value: course.progress,
+                    minHeight: 6 * scale,
+                    backgroundColor: const Color(0xFFE5E5E8),
+                    color: StudentDensityTokens.dark,
                   ),
-                  SizedBox(height: 6 * scale),
-                  Text(
-                    '진행률 $progressPercent%',
-                    style: TextStyle(
-                      fontSize: 11 * scale,
-                      color: Colors.black54,
-                    ),
+                ),
+                SizedBox(height: 6 * scale),
+                Text(
+                  '진행률 $progressPercent%',
+                  style: TextStyle(
+                    fontSize: 11 * scale,
+                    color: StudentDensityTokens.muted,
+                    fontWeight: FontWeight.w600,
                   ),
-                ],
-              ),
-            ),
-            SizedBox(width: 12 * scale),
-            ElevatedButton(
+                ),
+              ],
+            );
+            final action = StudentDensityButton(
+              label: course.isDemo ? '맛보기' : '선택',
               onPressed: onTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B402B),
-                foregroundColor: Colors.white,
-                minimumSize: Size(120 * scale, 40 * scale),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12 * scale),
-                ),
-              ),
-              child: Text(
-                course.isDemo ? '맛보기' : '선택',
-                style: TextStyle(
-                  fontSize: 12 * scale,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+              primary: true,
+            );
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  details,
+                  SizedBox(height: 16 * scale),
+                  action,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: details),
+                SizedBox(width: 20 * scale),
+                SizedBox(width: 108 * scale, child: action),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -392,6 +451,12 @@ class _EditableCourseTile extends StatelessWidget {
     return Card(
       key: key,
       margin: EdgeInsets.symmetric(vertical: 6 * scale),
+      color: StudentDensityTokens.surfaceMuted,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18 * scale),
+        side: const BorderSide(color: StudentDensityTokens.line),
+      ),
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(
           horizontal: 12 * scale,
@@ -399,15 +464,22 @@ class _EditableCourseTile extends StatelessWidget {
         ),
         leading: ReorderableDragStartListener(
           index: index,
-          child: const Icon(Icons.drag_handle),
+          child: const Icon(Icons.drag_handle_rounded),
         ),
         title: Text(
           course.title,
-          style: TextStyle(fontSize: 16 * scale, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: StudentDensityTokens.ink,
+            fontSize: 16 * scale,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         subtitle: Text(
           '진행률 $progressPercent%',
-          style: TextStyle(fontSize: 12 * scale, color: Colors.black54),
+          style: TextStyle(
+            fontSize: 12 * scale,
+            color: StudentDensityTokens.muted,
+          ),
         ),
         trailing: IconButton(
           icon: const Icon(Icons.delete, color: Colors.redAccent),

@@ -1,10 +1,7 @@
-import sqlite3
+from infra.db import postgres_compat as db
 import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-
-from storage.storage import DB_PATH
-
 
 def _now_iso() -> str:
     return datetime.utcnow().isoformat(timespec="seconds") + "Z"
@@ -15,7 +12,7 @@ def _cutoff_iso(days: int) -> str:
 
 
 def init_habit_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -41,7 +38,7 @@ def init_habit_db() -> None:
 def _purge_old(days: int = 60) -> None:
     init_habit_db()
     cutoff = _cutoff_iso(days)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM user_habit WHERE updated_at < ?", (cutoff,))
     conn.commit()
@@ -60,7 +57,7 @@ def record_problem_attempt(
     init_habit_db()
     _purge_old()
     now_iso = now_iso or _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -113,7 +110,7 @@ def record_exam_attempt(*, user_id: str, exam_id: str, now_iso: Optional[str] = 
     init_habit_db()
     _purge_old()
     now_iso = now_iso or _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -135,7 +132,7 @@ def record_textbook_view(*, user_id: str, textbook_id: str, now_iso: Optional[st
     init_habit_db()
     _purge_old()
     now_iso = now_iso or _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -162,7 +159,7 @@ def list_problem_history(
 ) -> List[Dict[str, str | int]]:
     init_habit_db()
     _purge_old(days)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     params = [user_id]
     query = """

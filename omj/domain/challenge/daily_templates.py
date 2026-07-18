@@ -23,6 +23,32 @@ DAILY_DIFFICULTY_QUOTA = {
 }
 
 
+# 필요 변수: DB에 저장된 quest_type.
+# 작동 원리: 신뢰 가능한 서버 학습 이벤트만 일일 퀘스트 진행에 연결해
+# 클라이언트가 진행값을 임의로 올릴 수 없도록 감지 기준을 고정한다.
+DAILY_QUEST_DETECTORS: dict[str, dict[str, str]] = {
+    "course_stage_progress": {"source": "course_runtime", "event": "course_module_completed", "mode": "increment"},
+    "solve_n_problems": {"source": "course_runtime", "event": "problem_solved", "mode": "increment"},
+    "exam_accuracy_threshold": {"source": "course_runtime", "event": "exam_accuracy", "mode": "threshold"},
+    "textbook_read_complete": {"source": "course_runtime", "event": "textbook_completed", "mode": "increment"},
+    "weakness_review_n_problems": {"source": "course_runtime", "event": "wrong_answer_solved", "mode": "increment"},
+    "exam_attempt": {"source": "course_runtime", "event": "exam_attempt", "mode": "increment"},
+    "wrong_answer_correct": {"source": "course_runtime", "event": "wrong_answer_correct", "mode": "increment"},
+    "exam_perfect_score": {"source": "course_runtime", "event": "exam_perfect", "mode": "increment"},
+    "focus_minutes": {"source": "course_runtime", "event": "focus_minutes", "mode": "increment"},
+    "activity_score_reach": {"source": "course_runtime", "event": "activity_score", "mode": "increment"},
+}
+
+
+def daily_quest_detector(quest_type: str) -> dict[str, str] | None:
+    """필요 변수: 일일 퀘스트 종류.
+    작동 원리: 지원되는 종류에만 서버 감지 규칙의 복사본을 반환해, 감지기가 없는
+    템플릿은 배정 대상에서 제외한다.
+    """
+    detector = DAILY_QUEST_DETECTORS.get(quest_type)
+    return dict(detector) if detector else None
+
+
 DEFAULT_DAILY_CHALLENGE_TEMPLATES: list[dict[str, Any]] = [
     {
         "template_key": "easy_attendance_check",

@@ -98,7 +98,7 @@ class AIFlowApp extends StatelessWidget {
       initialRoute: initialToken.isNotEmpty
           ? AppRoutes.studentDashboard
           : AppRoutes.landing,
-      routes: appRoutes(context, isAuthenticated: initialToken.isNotEmpty),
+      routes: appRoutes(),
       onGenerateRoute: onGenerateAppRoute,
     );
   }

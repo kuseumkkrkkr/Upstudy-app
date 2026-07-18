@@ -21,10 +21,9 @@ class _ExamGradingReportPage extends StatelessWidget {
   final Future<bool> Function()? onRetryModuleSubmission;
   final String? examId;
 
-  /// 채점 결과를 성취도와 문항별 검토 흐름으로 묶어 보여줍니다.
-  ///
-  /// [results]의 채점 상태를 집계해 상단 요약과 아래 문항 목록에 같은
-  /// 색상 체계를 적용하므로, 사용자가 전체 결과와 개별 원인을 빠르게 연결합니다.
+  /// 필요한 변수는 채점 결과, 합격 기준과 화면 너비다.
+  /// 작동 원리: 학생 시안의 종이형 표면과 흑백 상태 체계를 사용하되, 결과 집계와
+  /// 문항별 Flow 이동은 기존 시험 채점 흐름의 데이터를 그대로 연결한다.
   @override
   Widget build(BuildContext context) {
     final total = totalQuestions > 0 ? totalQuestions : results.length;
@@ -44,72 +43,77 @@ class _ExamGradingReportPage extends StatelessWidget {
     final progress = total > 0 ? processed / total : 0.0;
     final score = total > 0 ? correctCount / total : 0.0;
 
+    final mobile = isStudentDensityMobile(context);
+    final summary = _buildSummary(
+      total: total,
+      processed: processed,
+      progress: progress,
+      graded: gradedCount,
+      empty: emptyCount,
+      errors: errorCount,
+      ungraded: ungraded,
+    );
+    final questions = _buildQuestionSection(context);
+
     return Scaffold(
+      backgroundColor: StudentDensityTokens.background,
       appBar: AppBar(
         title: const Text('시험 결과'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
+        centerTitle: false,
+        backgroundColor: StudentDensityTokens.surface,
+        foregroundColor: StudentDensityTokens.ink,
+        surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: StudentDensityTokens.lineStrong),
+        ),
       ),
-      backgroundColor: AppColors.background,
       body: ListView(
-        padding: EdgeInsets.zero,
         children: [
-          _buildHero(
-            total: total,
-            correct: correctCount,
-            incorrect: incorrectCount,
-            score: score,
-            examId: examId,
-            passRate: passRate,
-            passed: passed,
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+          StudentDensityPage(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildProgressSection(
+                StudentDensityPageHeader(
+                  eyebrow: 'EXAM REVIEW',
+                  title: passed ? '시험을 통과했어요.' : '시험 결과를 확인하세요.',
+                  description: '문항별 채점 결과와 풀이 흐름을 한 번에 검토할 수 있어요.',
+                  action: examId == null || examId!.isEmpty
+                      ? null
+                      : _ExamIdLabel(examId: examId!),
+                ),
+                SizedBox(height: mobile ? 22 : 30),
+                _buildScorePaper(
                   total: total,
-                  processed: processed,
-                  progress: progress,
-                  graded: gradedCount,
-                  empty: emptyCount,
-                  errors: errorCount,
-                  ungraded: ungraded,
+                  correct: correctCount,
+                  incorrect: incorrectCount,
+                  score: score,
                 ),
-                const SizedBox(height: 28),
-                Text(
-                  '문항별 결과',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+                SizedBox(height: mobile ? 14 : 20),
+                if (mobile) ...[
+                  summary,
+                  const SizedBox(height: 14),
+                  questions,
+                ] else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 340, child: summary),
+                      const SizedBox(width: 20),
+                      Expanded(child: questions),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '문항을 눌러 채점 상세와 풀이 흐름을 확인하세요.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.black54),
-                ),
-                const SizedBox(height: 12),
-                if (results.isEmpty)
-                  _buildEmptyState()
-                else
-                  ...results.map(
-                    (result) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _buildResultTile(context, result),
-                    ),
+                SizedBox(height: mobile ? 14 : 20),
+                StudentDensitySurface(
+                  padding: const EdgeInsets.all(18),
+                  radius: StudentDensityTokens.radiusMedium,
+                  child: ModuleSubmissionFooter(
+                    passed: passed,
+                    submissionRequired: moduleSubmissionRequired,
+                    initialSubmissionSucceeded: moduleSubmissionSucceeded,
+                    onRetry: onRetryModuleSubmission,
+                    onComplete: () => Navigator.of(context).pop(true),
                   ),
-                const SizedBox(height: 20),
-                ModuleSubmissionFooter(
-                  passed: passed,
-                  submissionRequired: moduleSubmissionRequired,
-                  initialSubmissionSucceeded: moduleSubmissionSucceeded,
-                  onRetry: onRetryModuleSubmission,
-                  onComplete: () => Navigator.of(context).pop(true),
                 ),
               ],
             ),
@@ -119,102 +123,108 @@ class _ExamGradingReportPage extends StatelessWidget {
     );
   }
 
-  /// 시험의 핵심 점수를 한눈에 전달하는 상단 영역입니다.
-  ///
-  /// 정답률을 큰 숫자와 보조 지표로 제한해, 채점 정보가 과도하게 분산되지 않도록 합니다.
-  Widget _buildHero({
+  /// 필요한 변수는 총 문항, 정오답 수, 정답률과 통과 기준이다.
+  /// 작동 원리: 시험지 제목 영역처럼 넓은 단색 종이 표면에 점수와 최소 상태만 배치한다.
+  Widget _buildScorePaper({
     required int total,
     required int correct,
     required int incorrect,
     required double score,
-    required int passRate,
-    required bool passed,
-    String? examId,
   }) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
-      ),
+    return StudentDensitySurface(
+      color: StudentDensityTokens.dark,
+      radius: StudentDensityTokens.radiusExtraLarge,
+      padding: const EdgeInsets.all(28),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '채점이 완료되었어요',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${(score * 100).round()}점',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 42,
-              height: 1.1,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '$total문제 중 $correct문제 정답',
-            style: const TextStyle(color: Colors.white, fontSize: 15),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            passed ? '통과 · 기준 $passRate점' : '미통과 · 기준 $passRate점',
-            style: TextStyle(
-              color: passed ? const Color(0xFF9DE7AE) : const Color(0xFFFFB1A8),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (examId != null && examId.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              '시험 ID ${examId.substring(0, math.min(8, examId.length))}',
-              style: const TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-          ],
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildHeroStat('정답', correct, const Color(0xFF9DE7AE)),
-              Container(width: 1, height: 26, color: Colors.white24),
-              _buildHeroStat('오답', incorrect, const Color(0xFFFFB1A8)),
-            ],
+          const StudentDensityEyebrow('FINAL SCORE', color: Color(0xFFA1A1AA)),
+          const SizedBox(height: 18),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 560;
+              final scoreBlock = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${(score * 100).round()}점',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 64,
+                      height: .95,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -3,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text('$total문제 중 $correct문제 정답', style: _paperMetaStyle),
+                ],
+              );
+              final statBlock = Wrap(
+                spacing: 26,
+                runSpacing: 14,
+                children: [
+                  _buildPaperStat('정답', correct),
+                  _buildPaperStat('오답', incorrect),
+                  _buildPaperStat(
+                    '미응답',
+                    math.max(0, total - correct - incorrect),
+                  ),
+                ],
+              );
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [scoreBlock, const SizedBox(height: 24), statBlock],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: scoreBlock),
+                  statBlock,
+                ],
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  /// 상단의 정답·오답 지표를 동일한 폭으로 배치합니다.
-  Widget _buildHeroStat(String label, int count, Color color) {
-    return SizedBox(
-      width: 100,
-      child: Column(
-        children: [
-          Text(
-            '$count',
-            style: TextStyle(
-              color: color,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
+  static const TextStyle _paperMetaStyle = TextStyle(
+    color: Color(0xFFD4D4D8),
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+  );
 
-  /// 처리 상태를 진행 막대와 간결한 지표로 표시합니다.
-  Widget _buildProgressSection({
+  /// 필요한 변수는 상태명과 집계 수다.
+  /// 작동 원리: 점수 영역의 보조 지표를 동일한 작은 숫자·라벨 조합으로 맞춘다.
+  Widget _buildPaperStat(String label, int count) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFA1A1AA),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
+  );
+
+  /// 필요한 변수는 채점 처리 상태와 문항 수 집계다.
+  /// 작동 원리: 종이형 요약 카드 안에 진행률과 예외 상태만 남겨 재검토 우선순위를 빠르게 만든다.
+  Widget _buildSummary({
     required int total,
     required int processed,
     required double progress,
@@ -223,56 +233,53 @@ class _ExamGradingReportPage extends StatelessWidget {
     required int errors,
     required int ungraded,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+    return StudentDensitySurface(
+      padding: const EdgeInsets.all(20),
+      radius: StudentDensityTokens.radiusMedium,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const StudentDensityEyebrow('GRADING STATUS'),
+          const SizedBox(height: 10),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                '채점 현황',
-                style: TextStyle(fontWeight: FontWeight.w800),
+              const Expanded(
+                child: Text(
+                  '채점 현황',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
+                  ),
+                ),
               ),
               Text(
                 '$processed / $total',
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 7,
-              backgroundColor: const Color(0xFFE9EEE9),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.primaryLight,
+              minHeight: 8,
+              backgroundColor: StudentDensityTokens.surfaceMuted,
+              valueColor: const AlwaysStoppedAnimation(
+                StudentDensityTokens.dark,
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Wrap(
-            spacing: 14,
-            runSpacing: 8,
+            spacing: 12,
+            runSpacing: 10,
             children: [
-              _buildStatusText('채점 완료', graded, AppColors.primary),
-              if (empty > 0)
-                _buildStatusText('미응답', empty, const Color(0xFFE08C1A)),
-              if (errors > 0)
-                _buildStatusText('오류', errors, const Color(0xFFD94B42)),
-              if (ungraded > 0)
-                _buildStatusText('미채점', ungraded, Colors.blueGrey),
+              _buildStatusText('채점 완료', graded),
+              if (empty > 0) _buildStatusText('미응답', empty),
+              if (errors > 0) _buildStatusText('오류', errors),
+              if (ungraded > 0) _buildStatusText('미채점', ungraded),
             ],
           ),
         ],
@@ -280,110 +287,127 @@ class _ExamGradingReportPage extends StatelessWidget {
     );
   }
 
-  /// 보조 상태를 점과 텍스트로 표현해 칩 형태의 시각적 분절을 줄입니다.
-  Widget _buildStatusText(String label, int count, Color color) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
-        width: 7,
-        height: 7,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      ),
-      const SizedBox(width: 6),
-      Text(
-        '$label $count',
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    ],
-  );
-
-  /// 채점 결과가 없을 때 목록의 빈 이유를 명확히 안내합니다.
-  Widget _buildEmptyState() => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(vertical: 40),
-    alignment: Alignment.center,
+  /// 필요한 변수는 보조 상태의 라벨과 개수다.
+  /// 작동 원리: 색에 의존하지 않는 테두리 배지로 상태를 전달해 종이형 시안과 접근성을 함께 유지한다.
+  Widget _buildStatusText(String label, int count) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
     decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.border),
+      border: Border.all(color: StudentDensityTokens.lineStrong),
+      borderRadius: BorderRadius.circular(99),
     ),
-    child: const Text(
-      '표시할 문항별 결과가 없습니다.',
-      style: TextStyle(color: Colors.black54),
+    child: Text(
+      '$label $count',
+      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
     ),
   );
 
-  /// 문항 상태에 맞는 색상과 상세 정보를 하나의 확장 행에 제공합니다.
+  /// 필요한 변수는 문항별 채점 결과다.
+  /// 작동 원리: 문항 목록을 종이형 카드에 묶고 확장된 항목에서만 상세 상태와 Flow 이동을 노출한다.
+  Widget _buildQuestionSection(BuildContext context) => StudentDensitySurface(
+    padding: const EdgeInsets.all(20),
+    radius: StudentDensityTokens.radiusMedium,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const StudentDensityEyebrow('QUESTION REVIEW'),
+        const SizedBox(height: 10),
+        const Text(
+          '문항별 결과',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.2,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          '문항을 눌러 채점 상세와 풀이 흐름을 확인하세요.',
+          style: TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (results.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(
+              child: Text(
+                '표시할 문항별 결과가 없습니다.',
+                style: TextStyle(color: StudentDensityTokens.muted),
+              ),
+            ),
+          )
+        else
+          ...results.map(
+            (result) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildResultTile(context, result),
+            ),
+          ),
+      ],
+    ),
+  );
+
+  /// 필요한 변수는 문항 채점 상태와 선택적인 풀이 데이터다.
+  /// 작동 원리: 정오답을 아이콘과 텍스트로 함께 제공하고, Flow 데이터가 있을 때만 분석 화면 진입을 허용한다.
   Widget _buildResultTile(BuildContext context, _GradeResult result) {
     final statusLabel = result.empty
         ? '미응답'
         : result.error != null
         ? '오류'
         : '채점 완료';
-    final statusColor = result.empty
-        ? Colors.orange
-        : result.error != null
-        ? Colors.redAccent
-        : const Color(0xFF1B402B);
     final gradingStatus = result.empty
         ? '미응답'
         : result.error != null
         ? '채점 실패'
         : '채점 성공';
-    final gradingColor = result.empty
-        ? Colors.orange
-        : result.error != null
-        ? Colors.redAccent
-        : const Color(0xFF1B402B);
     final correctnessLabel = result.isCorrect == true
         ? '정답'
         : result.isCorrect == false
         ? '오답'
         : '판정 불가';
-    final correctnessColor = result.isCorrect == true
-        ? const Color(0xFF2E7D32)
-        : result.isCorrect == false
-        ? const Color(0xFFD32F2F)
-        : Colors.black45;
-
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        color: StudentDensityTokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(StudentDensityTokens.radiusSmall),
+        border: Border.all(color: StudentDensityTokens.line),
       ),
       child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        iconColor: AppColors.primary,
+        iconColor: StudentDensityTokens.ink,
         leading: CircleAvatar(
-          backgroundColor: statusColor.withValues(alpha: 0.15),
+          backgroundColor: StudentDensityTokens.dark,
           child: Icon(
             result.isCorrect == true
                 ? Icons.check_rounded
-                : Icons.remove_rounded,
-            color: statusColor,
+                : result.isCorrect == false
+                ? Icons.close_rounded
+                : Icons.more_horiz_rounded,
+            color: Colors.white,
           ),
         ),
         title: Text(
           '문제 ${result.itemIndex}',
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: const TextStyle(fontWeight: FontWeight.w900),
         ),
         subtitle: Text(
           statusLabel,
-          style: TextStyle(color: statusColor, fontSize: 12),
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         children: [
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildStatusChip('채점', gradingStatus, gradingColor),
-              _buildStatusChip('결과', correctnessLabel, correctnessColor),
+              _buildStatusChip('채점', gradingStatus),
+              _buildStatusChip('결과', correctnessLabel),
             ],
           ),
           const SizedBox(height: 8),
@@ -397,7 +421,10 @@ class _ExamGradingReportPage extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 '경고: ${result.warnings.join(', ')}',
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: StudentDensityTokens.muted,
+                ),
               ),
             ),
           ],
@@ -420,8 +447,13 @@ class _ExamGradingReportPage extends StatelessWidget {
                 icon: const Icon(Icons.account_tree_outlined, size: 18),
                 label: const Text('플로우 차트 보기'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1B402B),
-                  side: const BorderSide(color: Color(0xFF1B402B)),
+                  foregroundColor: StudentDensityTokens.ink,
+                  side: const BorderSide(
+                    color: StudentDensityTokens.lineStrong,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
@@ -431,25 +463,48 @@ class _ExamGradingReportPage extends StatelessWidget {
     );
   }
 
-  /// 펼친 문항의 상태 값을 읽기 쉬운 작은 배지로 표시합니다.
-  Widget _buildStatusChip(String label, String value, Color color) {
+  /// 필요한 변수는 문항 상태 라벨과 표시값이다.
+  /// 작동 원리: 색상 의미를 제거한 테두리 칩으로 상태를 읽을 수 있게 한다.
+  Widget _buildStatusChip(String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: StudentDensityTokens.lineStrong),
       ),
       child: Text(
         '$label: $value',
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
       ),
     );
   }
+}
+
+/// 필요한 변수는 시험 식별자 문자열이다.
+/// 작동 원리: 긴 식별자는 앞부분만 표시해 상단 정보 계층을 방해하지 않도록 한다.
+class _ExamIdLabel extends StatelessWidget {
+  const _ExamIdLabel({required this.examId});
+
+  final String examId;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    decoration: BoxDecoration(
+      color: StudentDensityTokens.surface,
+      border: Border.all(color: StudentDensityTokens.lineStrong),
+      borderRadius: BorderRadius.circular(99),
+    ),
+    child: Text(
+      'EXAM ${examId.substring(0, math.min(8, examId.length)).toUpperCase()}',
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w900,
+        letterSpacing: .5,
+      ),
+    ),
+  );
 }
 
 class ModuleSubmissionFooter extends StatefulWidget {
@@ -503,8 +558,11 @@ class _ModuleSubmissionFooterState extends State<ModuleSubmissionFooter> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF4E5),
-              borderRadius: BorderRadius.circular(12),
+              color: StudentDensityTokens.surfaceMuted,
+              border: Border.all(color: StudentDensityTokens.lineStrong),
+              borderRadius: BorderRadius.circular(
+                StudentDensityTokens.radiusSmall,
+              ),
             ),
             child: const Text(
               '시험 결과는 저장됐지만 코스 진도 제출에 실패했습니다. 다시 제출해 주세요.',
@@ -521,6 +579,14 @@ class _ModuleSubmissionFooterState extends State<ModuleSubmissionFooter> {
                   )
                 : const Icon(Icons.refresh_rounded),
             label: Text(_retrying ? '다시 제출 중' : '코스 진도 다시 제출'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: StudentDensityTokens.ink,
+              side: const BorderSide(color: StudentDensityTokens.lineStrong),
+              minimumSize: const Size.fromHeight(46),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
           ),
           const SizedBox(height: 10),
         ],
@@ -529,11 +595,16 @@ class _ModuleSubmissionFooterState extends State<ModuleSubmissionFooter> {
               ? widget.onComplete
               : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            elevation: 0,
+            backgroundColor: StudentDensityTokens.dark,
             foregroundColor: Colors.white,
-            disabledBackgroundColor: const Color(0xFFE3E8E3),
-            disabledForegroundColor: Colors.black38,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            disabledBackgroundColor: const Color(0xFFE4E4E7),
+            disabledForegroundColor: StudentDensityTokens.muted,
+            minimumSize: const Size.fromHeight(48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            textStyle: const TextStyle(fontWeight: FontWeight.w900),
           ),
           child: Text(
             widget.passed

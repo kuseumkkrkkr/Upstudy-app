@@ -1,7 +1,6 @@
-import os
-import tempfile
 import unittest
-from pathlib import Path
+import uuid
+from unittest.mock import patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -13,25 +12,24 @@ from storage import student_account_store
 
 class AccountActivityScoreTests(unittest.TestCase):
     def setUp(self) -> None:
-        fd, path = tempfile.mkstemp(suffix=".db")
-        os.close(fd)
-        self._db_file = Path(path)
-        self._old_db = student_account_store.DB_PATH
-        student_account_store.DB_PATH = str(self._db_file)
         student_account_store.init_student_account_db()
         self.app = FastAPI()
         self.app.include_router(account_router)
         self.client = TestClient(self.app)
-        self.headers = {
-            "Authorization": f"Bearer {auth.create_token('student-activity-1', 'student')}"
-        }
+        self.user_id = f"account-worker-{uuid.uuid4().hex}"
+        self.headers = {"Authorization": f"Bearer {auth.create_token(self.user_id, 'admin')}"}
+        self._role_patcher = patch.object(auth, "get_user_role", return_value="admin")
+        self._role_patcher.start()
 
     def tearDown(self) -> None:
-        student_account_store.DB_PATH = self._old_db
-        try:
-            self._db_file.unlink(missing_ok=True)
-        except PermissionError:
-            pass
+        self._role_patcher.stop()
+        pool = student_account_store.postgres_problem_store.get_pool()
+        with pool.connection() as conn, conn.cursor() as cur:
+            cur.execute("DELETE FROM student_point_ledger WHERE user_id = %s", (self.user_id,))
+            cur.execute("DELETE FROM student_activity_score_ledger WHERE user_id = %s", (self.user_id,))
+            cur.execute("DELETE FROM student_daily_point_usage WHERE user_id = %s", (self.user_id,))
+            cur.execute("DELETE FROM student_account_stats WHERE user_id = %s", (self.user_id,))
+            conn.commit()
 
     def test_activity_score_endpoint_accumulates_once_per_ref(self) -> None:
         payload = {

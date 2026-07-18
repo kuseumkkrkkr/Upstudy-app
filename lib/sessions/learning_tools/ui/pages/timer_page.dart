@@ -200,7 +200,7 @@ class _TimerPageState extends State<TimerPage> {
         : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF7F7F7),
       body: SafeArea(
         child: Column(
           children: [
@@ -243,7 +243,7 @@ class _TimerPageState extends State<TimerPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: const Color(0xFFE4E4E7)),
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
@@ -271,15 +271,15 @@ class _TimerPageState extends State<TimerPage> {
 
   Widget _buildDisplayCard(ColorScheme cs, double? progress) {
     final seconds = _isTimerMode ? _remainingSeconds : _elapsedSeconds;
-    final accentSoft = AppColors.primary.withValues(alpha: 0.08);
+    const accentSoft = Color(0xFFF4F4F5);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE4E4E7)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x12000000),
@@ -297,7 +297,9 @@ class _TimerPageState extends State<TimerPage> {
                 width: 10,
                 height: 10,
                 decoration: BoxDecoration(
-                  color: _running ? AppColors.primary : const Color(0xFFC8CDD2),
+                  color: _running
+                      ? const Color(0xFF09090B)
+                      : const Color(0xFFD4D4D8),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -307,7 +309,9 @@ class _TimerPageState extends State<TimerPage> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: _running ? AppColors.primary : cs.onSurfaceVariant,
+                  color: _running
+                      ? const Color(0xFF09090B)
+                      : cs.onSurfaceVariant,
                 ),
               ),
               const Spacer(),
@@ -325,7 +329,7 @@ class _TimerPageState extends State<TimerPage> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: const Color(0xFF09090B),
                   ),
                 ),
               ),
@@ -365,7 +369,7 @@ class _TimerPageState extends State<TimerPage> {
                 minHeight: 10,
                 backgroundColor: const Color(0xFFE9EDF0),
                 valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
+                  Color(0xFF09090B),
                 ),
               ),
             ),
@@ -377,7 +381,7 @@ class _TimerPageState extends State<TimerPage> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: Color(0xFF09090B),
                   ),
                 ),
                 const Spacer(),
@@ -399,8 +403,8 @@ class _TimerPageState extends State<TimerPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE4E4E7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,8 +484,8 @@ class _TimerPageState extends State<TimerPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE4E4E7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -599,28 +603,46 @@ class _TimerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
+      height: 82,
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'LEARNING TOOL · SESSION',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                    color: Color(0xFF71717A),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '타이머',
+                  style: AppTypography.title(context).copyWith(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1,
+                  ),
+                ),
+              ],
+            ),
+          ),
           IconButton(
             onPressed: onBack,
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF3B3B3B),
+            icon: const Icon(Icons.close_rounded),
+            style: IconButton.styleFrom(
+              shape: const CircleBorder(
+                side: BorderSide(color: Color(0xFFE4E4E7)),
+              ),
             ),
           ),
-          Expanded(
-            child: Text(
-              '타이머',
-              textAlign: TextAlign.center,
-              style: AppTypography.title(
-                context,
-              ).copyWith(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: 48),
         ],
       ),
     );
@@ -651,7 +673,7 @@ class _ModeToggleButton extends StatelessWidget {
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? AppColors.primary : Colors.transparent,
+            color: selected ? const Color(0xFF09090B) : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
@@ -660,7 +682,7 @@ class _ModeToggleButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 18,
-                color: selected ? Colors.white : AppColors.primary,
+                color: selected ? Colors.white : const Color(0xFF52525B),
               ),
               const SizedBox(width: 6),
               Text(
@@ -668,7 +690,7 @@ class _ModeToggleButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : AppColors.primary,
+                  color: selected ? Colors.white : const Color(0xFF52525B),
                 ),
               ),
             ],
@@ -699,7 +721,7 @@ class _TimeInputField extends StatelessWidget {
       decoration: BoxDecoration(
         color: enabled ? const Color(0xFFF7F8F9) : const Color(0xFFF0F2F3),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: const Color(0xFFE4E4E7)),
       ),
       child: Column(
         children: [
@@ -757,18 +779,16 @@ class _PresetChip extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
+            color: const Color(0xFFF4F4F5),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.14),
-            ),
+            border: Border.all(color: const Color(0xFFE4E4E7)),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: const Color(0xFF27272A),
             ),
           ),
         ),
@@ -795,10 +815,10 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foreground = enabled
-        ? (filled ? Colors.white : AppColors.primary)
+        ? (filled ? Colors.white : const Color(0xFF27272A))
         : const Color(0xFF98A1A8);
     final background = enabled
-        ? (filled ? AppColors.primary : Colors.white)
+        ? (filled ? const Color(0xFF09090B) : Colors.white)
         : const Color(0xFFF0F2F3);
 
     return SizedBox(
@@ -815,7 +835,7 @@ class _ActionButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: filled ? AppColors.primary : AppColors.border,
+              color: filled ? const Color(0xFF09090B) : const Color(0xFFE4E4E7),
             ),
           ),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),

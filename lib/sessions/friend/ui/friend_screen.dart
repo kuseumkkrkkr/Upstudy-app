@@ -4,11 +4,6 @@
 
 part of 'package:s11/sessions/friend/friend.dart';
 
-// ── 색상 토큰 (원본 유지)
-// Renamed to avoid duplicate symbol when this part is combined with other files
-const Color _greenColor = Color(0xFF1B4D3E);
-const Color _bgGreyFriend = Color(0xFFF4F6F2);
-
 // ── 추가 디자인 토큰 ──────────────────────────────────────────
 const Color _green50 = Color(0xFFEAF3DE);
 const Color _green600 = Color(0xFF3B6D11);
@@ -59,6 +54,7 @@ class _SocialNoticeRow extends StatelessWidget {
     required this.count,
     this.onTap,
     this.last = false,
+    this.horizontal = false,
   });
   final IconData icon;
   final String title;
@@ -66,6 +62,7 @@ class _SocialNoticeRow extends StatelessWidget {
   final int count;
   final VoidCallback? onTap;
   final bool last;
+  final bool horizontal;
 
   /// 필요한 변수는 소식 아이콘·문구·개수·선택 콜백이다.
   /// 작동 원리는 아이콘과 숫자를 검은 원형으로 대응시켜 새 소식 우선순위를 드러내는 것이다.
@@ -73,12 +70,19 @@ class _SocialNoticeRow extends StatelessWidget {
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
     child: Container(
-      height: 72,
+      height: horizontal ? 86 : 72,
       padding: const EdgeInsets.symmetric(horizontal: 18),
       decoration: BoxDecoration(
         border: last
             ? null
-            : const Border(bottom: BorderSide(color: Color(0xFFE6E6E8))),
+            : Border(
+                bottom: horizontal
+                    ? BorderSide.none
+                    : const BorderSide(color: Color(0xFFE6E6E8)),
+                right: horizontal
+                    ? const BorderSide(color: Color(0xFFE6E6E8))
+                    : BorderSide.none,
+              ),
       ),
       child: Row(
         children: [
@@ -263,8 +267,8 @@ class _SocialPersonRow extends StatelessWidget {
 
 class _SoWidgetState extends State<SoWidget> {
   // ── 원본과 동일한 색상 참조 ──────────────────────────────────
-  static const Color primaryColor = _greenColor;
-  static const Color bgColor = _bgGreyFriend;
+  static const Color primaryColor = StudentDensityTokens.dark;
+  static const Color bgColor = StudentDensityTokens.background;
 
   static const List<IconData> _groupLogoIcons = [
     Icons.auto_awesome,
@@ -303,6 +307,7 @@ class _SoWidgetState extends State<SoWidget> {
   int _unreadMessages = 0;
   final Set<String> _unreadThreads = {};
   Map<String, TagRating> _tagRatings = {};
+  UserRating? _myRating;
   bool _loadingRatingSummary = true;
   String? _ratingSummaryError;
   final List<_GroupInfo> _groups = [];
@@ -390,9 +395,6 @@ class _SoWidgetState extends State<SoWidget> {
   Future<void> _refreshFriends() async {
     try {
       final profiles = await ApiClient.instance.listFriends();
-      final ovrByUserId = await _fetchOvrByUserIds(
-        profiles.map((p) => p.userId).toSet(),
-      );
       if (!mounted) return;
       setState(() {
         _friends = profiles
@@ -400,7 +402,7 @@ class _SoWidgetState extends State<SoWidget> {
               (profile) => _FriendInfo(
                 name: profile.username,
                 status: profile.status.isNotEmpty ? profile.status : '상태 없음',
-                ovr: ovrByUserId[profile.userId] ?? profile.ovr,
+                ovr: profile.ovr,
               ),
             )
             .toList();
@@ -409,26 +411,6 @@ class _SoWidgetState extends State<SoWidget> {
     } catch (e, st) {
       debugPrint('_refreshFriends error: $e\n$st');
     }
-  }
-
-  Future<Map<String, double>> _fetchOvrByUserIds(Set<String> userIds) async {
-    final ids = userIds.where((id) => id.trim().isNotEmpty).toList();
-    if (ids.isEmpty) return const {};
-    final entries = await Future.wait(
-      ids.map((id) async {
-        try {
-          final rating = await ApiClient.instance.fetchUserRatingByUserId(id);
-          return MapEntry(id, rating.ovr);
-        } catch (_) {
-          return null;
-        }
-      }),
-    );
-    final out = <String, double>{};
-    for (final entry in entries) {
-      if (entry != null) out[entry.key] = entry.value;
-    }
-    return out;
   }
 
   Future<void> _loadTagRatings() async {
@@ -458,69 +440,30 @@ class _SoWidgetState extends State<SoWidget> {
     if (_loadingRanks) return;
     setState(() => _loadingRanks = true);
     try {
-      final ranks = await ApiClient.instance.fetchFriendRankings();
-      final resolvedRanks = await Future.wait(
-        ranks.map((r) async {
-          final resolvedOvr = r.isMe
-              ? await _resolveMyOvr(fallback: r.visibleOvr)
-              : await _resolveUserOvrByUsername(
-                  username: r.username,
-                  fallback: r.visibleOvr,
-                );
-          return _FriendRank(
-            rank: r.rank,
-            name: r.username,
-            ovr: resolvedOvr,
-            delta: 0,
-            isMe: r.isMe,
-          );
-        }),
-      );
+      final ranksFuture = ApiClient.instance.fetchFriendRankings();
+      final ratingFuture = ApiClient.instance.fetchUserRating();
+      final ranks = await ranksFuture;
+      final myRating = await ratingFuture;
+      final resolvedRanks = ranks
+          .map(
+            (r) => _FriendRank(
+              rank: r.rank,
+              name: r.username,
+              ovr: r.visibleOvr,
+              delta: 0,
+              isMe: r.isMe,
+            ),
+          )
+          .toList(growable: false);
       if (!mounted) return;
       setState(() {
         _friendRanks = resolvedRanks;
+        _myRating = myRating;
       });
     } catch (e, st) {
       debugPrint('_loadFriendRanks error: $e\n$st');
     } finally {
       if (mounted) setState(() => _loadingRanks = false);
-    }
-  }
-
-  Future<double> _resolveMyOvr({required double fallback}) async {
-    try {
-      final mine = await ApiClient.instance.fetchUserRating();
-      return mine.ovr;
-    } catch (_) {
-      return fallback;
-    }
-  }
-
-  Future<double> _resolveUserOvrByUsername({
-    required String username,
-    required double fallback,
-  }) async {
-    final key = username.trim();
-    if (key.isEmpty) return fallback;
-    try {
-      final candidates = await ApiClient.instance.searchFriends(
-        query: key,
-        limit: 50,
-      );
-      FriendProfile? exact;
-      for (final candidate in candidates) {
-        if (candidate.username == key) {
-          exact = candidate;
-          break;
-        }
-      }
-      if (exact == null) return fallback;
-      final rating = await ApiClient.instance.fetchUserRatingByUserId(
-        exact.userId,
-      );
-      return rating.ovr;
-    } catch (_) {
-      return fallback;
     }
   }
 
@@ -540,7 +483,7 @@ class _SoWidgetState extends State<SoWidget> {
                 name: g.name,
                 description: g.description ?? '',
                 maxMembers: g.maxMembers,
-                members: g.memberIds.length,
+                members: g.members,
                 isPublic: g.isPublic,
                 logoIndex: g.logoIndex,
                 lockEnabled: g.lockEnabled,
@@ -901,6 +844,28 @@ class _SoWidgetState extends State<SoWidget> {
       : _tagOvrValue(rating).round().toString();
   double _visibleDelta(double rating, double delta) =>
       _tagOvrValue(rating) - _tagOvrValue(rating - delta);
+
+  /// 필요한 변수는 서버의 원본 레이팅이다.
+  /// 작동 원리는 학생 프로필과 같은 고정 경계로 A~E 티어를 계산해 화면 간 표시를 맞추는 것이다.
+  String _ratingTier(double? rating) {
+    if (rating == null || rating.isNaN || rating <= 0) return '--';
+    if (rating >= 2000) return 'A';
+    if (rating >= 1750) return 'B';
+    if (rating >= 1500) return 'C';
+    if (rating >= 1000) return 'D';
+    return 'E';
+  }
+
+  /// 필요한 변수는 서버가 내려준 친구 상태 문구다.
+  /// 작동 원리는 한글·영문 온라인 상태만 허용해 빈 상태나 오프라인을 온라인 수에 포함하지 않는 것이다.
+  bool _isOnlineStatus(String status) {
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'online' ||
+        normalized.contains('접속 중') ||
+        normalized.contains('접속중') ||
+        normalized.contains('학습 중') ||
+        normalized.contains('학습중');
+  }
 
   List<TagRating> _topByDelta(bool positive, {int take = 3}) {
     final items = _tagRatings.values
@@ -1334,10 +1299,10 @@ class _SoWidgetState extends State<SoWidget> {
       context: context,
       barrierLabel: 'dialog',
       barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.18),
+      barrierColor: Colors.black.withValues(alpha: 0.28),
       transitionDuration: const Duration(milliseconds: 160),
       pageBuilder: (_, __, ___) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Center(
           child: Material(color: Colors.transparent, child: child),
         ),
@@ -1350,21 +1315,28 @@ class _SoWidgetState extends State<SoWidget> {
   Widget _dialogShell({
     required String title,
     required Widget child,
-    double width = 1200,
-    double height = 680,
-    EdgeInsets padding = const EdgeInsets.all(22),
+    double width = 720,
+    double height = 700,
+    EdgeInsets padding = const EdgeInsets.fromLTRB(24, 18, 24, 24),
   }) {
     final screen = MediaQuery.of(context).size;
-    final resolvedWidth = min(width, screen.width * 0.96);
-    final resolvedHeight = min(height, screen.height * 0.92);
+    final resolvedWidth = min(width, screen.width * 0.94);
+    final resolvedHeight = min(height, screen.height * 0.9);
     return Container(
       width: resolvedWidth,
       constraints: BoxConstraints(maxHeight: resolvedHeight),
       padding: padding,
       decoration: BoxDecoration(
-        color: _surfaceWhite,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _borderColor),
+        color: StudentDensityTokens.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: StudentDensityTokens.line),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x26000000),
+            blurRadius: 48,
+            offset: Offset(0, 18),
+          ),
+        ],
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -1374,17 +1346,36 @@ class _SoWidgetState extends State<SoWidget> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const StudentDensityEyebrow('FRIENDS & SOCIAL'),
+                      const SizedBox(height: 7),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton.filledTonal(
+                  tooltip: '닫기',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  style: IconButton.styleFrom(
+                    backgroundColor: StudentDensityTokens.surfaceMuted,
+                    foregroundColor: StudentDensityTokens.ink,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
+            const Divider(height: 1, color: StudentDensityTokens.line),
+            const SizedBox(height: 18),
             child,
           ],
         ),
@@ -1424,9 +1415,6 @@ class _SoWidgetState extends State<SoWidget> {
                   query: keyword,
                   limit: 20,
                 );
-                final ovrByUserId = await _fetchOvrByUserIds(
-                  profiles.map((p) => p.userId).toSet(),
-                );
                 if (!context.mounted) return;
                 setModalState(() {
                   results = profiles
@@ -1434,7 +1422,7 @@ class _SoWidgetState extends State<SoWidget> {
                         (p) => _FriendInfo(
                           name: p.username,
                           status: p.status.isNotEmpty ? p.status : '상태 없음',
-                          ovr: ovrByUserId[p.userId] ?? p.ovr,
+                          ovr: p.ovr,
                         ),
                       )
                       .toList();
@@ -1732,10 +1720,12 @@ class _SoWidgetState extends State<SoWidget> {
 
   void _openMessageThread(_MessageInfo info) {
     _markMessagesRead(thread: info.name);
+    final friend = _friends.where((item) => item.name == info.name).firstOrNull;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => StudentDirectChatPage(
           peerUsername: info.name,
+          peerStatus: friend?.status ?? '상태 정보 없음',
           onMessageSent: (message) => _upsertThreadPreview(
             info.name,
             message.text,
@@ -1950,7 +1940,7 @@ class _SoWidgetState extends State<SoWidget> {
                   name: group.name,
                   description: group.description ?? '',
                   maxMembers: group.maxMembers,
-                  members: group.memberIds.length,
+                  members: group.members,
                   isPublic: group.isPublic,
                   logoIndex: group.logoIndex,
                   lockEnabled: group.lockEnabled,
@@ -2243,8 +2233,12 @@ class _SoWidgetState extends State<SoWidget> {
     );
   }
 
-  void _openGroupModal(_GroupInfo group) =>
-      _showBlurDialog(_GroupDetailDialog(group: group));
+  /// 필요한 변수는 사용자가 선택한 그룹의 식별자다.
+  /// 작동 원리는 친구·소셜 화면의 그룹 카드를 누르면 목록을 다시 거치지 않고
+  /// 해당 그룹 ID를 그룹 공간 상세 화면으로 전달하는 것이다.
+  void _openGroupSpace(_GroupInfo group) {
+    Navigator.of(context).pushNamed('/group/detail', arguments: group.id);
+  }
 
   // ── 랭킹 뱃지 ───────────────────────────────────────────────
   Widget? _rankMedalOrNum(int rank) {
@@ -2283,111 +2277,126 @@ class _SoWidgetState extends State<SoWidget> {
   );
 
   // ══════════════════════════════════════════════════════════════
-  /// 필요한 변수는 친구·요청·안 읽은 대화 상태와 학생 내비게이션이다.
-  /// 작동 원리는 HTML의 소셜 요약, 최근 대화, 친구 상태 순서로 한 개 스크롤을 구성하는 것이다.
-  Widget _buildHtmlSocial(BuildContext context) => GestureDetector(
-    onTap: () => FocusScope.of(context).unfocus(),
-    child: Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Ios26TopBar(
-              brandColor: Colors.black,
-              showLevelIndicator: false,
-              onMenu: () => _scaffoldKey.currentState?.openDrawer(),
-              items: studentTopNavItems(
-                context,
-                active: StudentTopDestination.social,
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _refreshPageData,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
-                  children: [
-                    const Text(
-                      'FRIENDS & SOCIAL',
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.7,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '친구/소셜',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '새 소식을 먼저 처리하고 친구·그룹 학습으로 자연스럽게 이어집니다.',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(44),
-                        backgroundColor: const Color(0xFF202022),
-                      ),
-                      onPressed: _openAddFriendModal,
-                      child: const Text('친구 추가'),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSocialSummary(),
-                    const SizedBox(height: 16),
-                    _buildSocialDirectory(),
-                    const SizedBox(height: 16),
-                    _buildSocialRatingOverview(),
-                  ],
+  /// 필요한 변수는 화면 너비, 친구·그룹·알림 상태와 학생 내비게이션이다.
+  /// 작동 원리는 780px 이하는 세로 모바일 흐름으로, 그보다 넓으면 PC·가로 태블릿용 다열 흐름으로 재배치하는 것이다.
+  Widget _buildHtmlSocial(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: StudentDensityTokens.background,
+        drawer: const AppDrawer(),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Ios26TopBar(
+                brandColor: Colors.black,
+                showLevelIndicator: false,
+                onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.social,
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refreshPageData,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      StudentDensityPage(
+                        padding: EdgeInsets.fromLTRB(
+                          studentDensityHorizontalPadding(context),
+                          studentDensityVerticalPadding(context),
+                          studentDensityHorizontalPadding(context),
+                          48,
+                        ),
+                        child: Column(
+                          children: [
+                            StudentDensityPageHeader(
+                              eyebrow: 'FRIENDS & SOCIAL',
+                              title: '친구/소셜',
+                              description:
+                                  '새 소식을 먼저 처리하고 친구·그룹 학습으로 자연스럽게 이어집니다.',
+                              action: StudentDensityButton(
+                                label: '친구 추가',
+                                primary: true,
+                                onPressed: _openAddFriendModal,
+                              ),
+                            ),
+                            SizedBox(height: mobile ? 12 : 18),
+                            _buildSocialSummary(mobile: mobile),
+                            const SizedBox(height: 14),
+                            _buildSocialDirectory(mobile: mobile),
+                            const SizedBox(height: 14),
+                            _buildActiveGroups(mobile: mobile),
+                            const SizedBox(height: 14),
+                            _buildSocialRatingOverview(mobile: mobile),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   /// 필요한 변수는 받은 요청, 안 읽은 쪽지, 그룹 소식 개수다.
   /// 작동 원리는 새 소식을 세 행으로 표시하고 기존 요청·대화 동작에 연결하는 것이다.
-  Widget _buildSocialSummary() => Container(
+  Widget _buildSocialSummary({required bool mobile}) => Container(
     clipBehavior: Clip.antiAlias,
     decoration: _socialCardDecoration(),
-    child: Column(
+    child: Flex(
+      direction: mobile ? Axis.vertical : Axis.horizontal,
       children: [
-        _SocialNoticeRow(
-          icon: Icons.person_add_alt_1_outlined,
-          title: '친구 요청',
-          subtitle: '받은 요청 ${_pendingIncomingRequests.length} · 보낸 요청 1',
-          count: _pendingIncomingRequests.length,
-          onTap: _openAddFriendModal,
+        _socialAdaptiveChild(
+          mobile: mobile,
+          child: _SocialNoticeRow(
+            icon: Icons.person_add_alt_1_outlined,
+            title: '친구 요청',
+            subtitle:
+                '받은 요청 ${_pendingIncomingRequests.length} · 보낸 요청 ${_pendingOutgoingRequests.length}',
+            count:
+                _pendingIncomingRequests.length +
+                _pendingOutgoingRequests.length,
+            horizontal: !mobile,
+            onTap: _openAddFriendModal,
+          ),
         ),
-        _SocialNoticeRow(
-          icon: Icons.circle_outlined,
-          title: '안 읽은 쪽지',
-          subtitle: _messages.isEmpty
-              ? '새 쪽지 없음'
-              : '${_messages.first.name} 외 ${(_messages.length - 1).clamp(0, 99)}명',
-          count: _unreadMessages,
-          onTap: _messages.isEmpty
-              ? null
-              : () => _openMessageThread(_messages.first),
+        _socialAdaptiveChild(
+          mobile: mobile,
+          child: _SocialNoticeRow(
+            icon: Icons.circle_outlined,
+            title: '실시간 새 쪽지',
+            subtitle: _messages.isEmpty
+                ? '새 쪽지 없음'
+                : '${_messages.first.name} 외 ${(_messages.length - 1).clamp(0, 99)}명',
+            count: _unreadMessages,
+            horizontal: !mobile,
+            onTap: _messages.isEmpty
+                ? null
+                : () => _openMessageThread(_messages.first),
+          ),
         ),
-        _SocialNoticeRow(
-          icon: Icons.album_outlined,
-          title: '그룹 새 소식',
-          subtitle: '공지 2 · 메시지 3',
-          count: 5,
-          last: true,
-          onTap: () => Navigator.of(context).pushNamed('/groups'),
+        _socialAdaptiveChild(
+          mobile: mobile,
+          child: _SocialNoticeRow(
+            icon: Icons.album_outlined,
+            title: '내 스터디 그룹',
+            subtitle: _groups.isEmpty
+                ? '가입한 그룹 없음'
+                : '가입 그룹 ${_groups.length}개',
+            count: _groups.length,
+            horizontal: !mobile,
+            last: true,
+            onTap: () => Navigator.of(context).pushNamed('/groups'),
+          ),
         ),
       ],
     ),
@@ -2395,239 +2404,542 @@ class _SoWidgetState extends State<SoWidget> {
 
   /// 필요한 변수는 최근 대화와 친구 목록이다.
   /// 작동 원리는 각 목록을 선택 가능한 행으로 표시해 대화·친구 메뉴를 기존 로직으로 연다.
-  Widget _buildSocialDirectory() => Container(
+  Widget _buildSocialDirectory({required bool mobile}) => Container(
     clipBehavior: Clip.antiAlias,
     decoration: _socialCardDecoration(),
-    child: Column(
+    child: Flex(
+      direction: mobile ? Axis.vertical : Axis.horizontal,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SocialSectionHeader(
-          eyebrow: 'MESSAGE INBOX',
-          title: '최근 대화',
-          trailing: '${_messages.length}',
-        ),
-        for (final message in _messages.take(3))
-          _SocialPersonRow(
-            name: message.name,
-            subtitle: '${message.lastMessage} · ${message.timeAgo}',
-            trailing: _unreadThreads.contains(message.name) ? '2' : '›',
-            onTap: () => _openMessageThread(message),
+        _socialAdaptiveChild(
+          mobile: mobile,
+          child: _buildSocialDirectoryPanel(
+            eyebrow: 'MESSAGE INBOX',
+            title: '최근 대화',
+            trailing: '$_unreadMessages',
+            children: [
+              for (final message in _messages.take(3))
+                _SocialPersonRow(
+                  name: message.name,
+                  subtitle: '${message.lastMessage} · ${message.timeAgo}',
+                  trailing: _unreadThreads.contains(message.name)
+                      ? '새 쪽지'
+                      : '›',
+                  onTap: () => _openMessageThread(message),
+                ),
+              if (_messages.isEmpty) _socialEmptyRow('최근 대화가 없습니다.'),
+            ],
           ),
-        const Divider(height: 1),
-        _SocialSectionHeader(
-          eyebrow: 'FRIENDS',
-          title: '친구 상태',
-          trailing:
-              '온라인 ${_friends.where((friend) => friend.status.contains('중')).length}',
         ),
-        for (final friend in _friends.take(4))
-          _SocialPersonRow(
-            name: friend.name,
-            subtitle: friend.status,
-            trailing: '쪽지 ›',
-            onTap: () => _openFriendActionModal(friend),
+        Container(
+          width: mobile ? double.infinity : 1,
+          height: mobile ? 1 : 330,
+          color: const Color(0xFFE6E6E8),
+        ),
+        _socialAdaptiveChild(
+          mobile: mobile,
+          child: _buildSocialDirectoryPanel(
+            eyebrow: 'FRIENDS',
+            title: '친구 상태',
+            trailing:
+                '온라인 ${_friends.where((friend) => _isOnlineStatus(friend.status)).length}',
+            children: [
+              for (final friend in _friends.take(3))
+                _SocialPersonRow(
+                  name: friend.name,
+                  subtitle: friend.status,
+                  trailing: '쪽지 ›',
+                  onTap: () => _openFriendActionModal(friend),
+                ),
+              if (_friends.isEmpty) _socialEmptyRow('아직 등록된 친구가 없습니다.'),
+            ],
           ),
+        ),
       ],
     ),
   );
 
-  /// 필요한 변수는 친구 OVR 순위와 내 태그 레이팅 변화다.
-  /// 작동 원리는 HTML 하단처럼 흰 랭킹 카드와 검은 MY RATING 카드를 연속 배치하고 상세 모달로 연결하는 것이다.
-  Widget _buildSocialRatingOverview() {
-    final ranks = _friendRanks.isEmpty
-        ? const [
-            _FriendRank(rank: 1, name: '이수학', ovr: 19.8),
-            _FriendRank(rank: 2, name: '박함수', ovr: 19.1),
-            _FriendRank(rank: 3, name: '김학생 · 나', ovr: 18.6, isMe: true),
-          ]
-        : _friendRanks.take(3).toList(growable: false);
-    final rising = _tagRatings.values.where((item) => item.delta >= 0).toList()
-      ..sort((a, b) => b.delta.compareTo(a.delta));
-    final falling = _tagRatings.values.where((item) => item.delta < 0).toList()
-      ..sort((a, b) => a.delta.compareTo(b.delta));
-    final strong = rising.isEmpty ? null : rising.first;
-    final weak = falling.isEmpty ? null : falling.first;
-    final myRank = ranks.where((item) => item.isMe).firstOrNull;
-    final myOvr = myRank?.ovr ?? 18.6;
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: _socialCardDecoration(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'FRIEND OVR RANKING',
-                style: TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 1.7,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '친구 OVR 랭킹',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 14),
-              for (final rank in ranks)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: rank.isMe
-                        ? const Color(0xFFF0F0F2)
-                        : const Color(0xFFFAFAFB),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
+  /// 필요한 변수는 섹션 제목, 우측 요약과 사람 행 목록이다.
+  /// 작동 원리는 최근 대화와 친구 상태가 동일한 높이·간격 규칙을 공유하도록 패널 하나로 묶는 것이다.
+  Widget _buildSocialDirectoryPanel({
+    required String eyebrow,
+    required String title,
+    required String trailing,
+    required List<Widget> children,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _SocialSectionHeader(eyebrow: eyebrow, title: title, trailing: trailing),
+      ...children,
+      const SizedBox(height: 18),
+    ],
+  );
+
+  /// 필요한 변수는 모바일 여부와 반응형 영역의 자식이다.
+  /// 작동 원리는 세로 목록에서는 원래 높이를 유지하고 가로 목록에서만 남은 폭을 균등 분배한다.
+  Widget _socialAdaptiveChild({required bool mobile, required Widget child}) =>
+      mobile ? child : Expanded(child: child);
+
+  /// 필요한 변수는 비어 있는 목록을 설명할 문구다.
+  /// 작동 원리는 샘플 데이터를 대신 넣지 않고 실제 빈 상태를 목록 높이에 맞춰 안내하는 것이다.
+  Widget _socialEmptyRow(String message) => SizedBox(
+    height: 96,
+    child: Center(
+      child: Text(
+        message,
+        style: const TextStyle(fontSize: 12, color: StudentDensityTokens.muted),
+      ),
+    ),
+  );
+
+  /// 필요한 변수는 내 그룹 목록과 가로·세로 레이아웃 여부다.
+  /// 작동 원리는 시안처럼 그룹 진입·검색·생성 동작을 한 카드에 모으고 PC에서는 세 열, 모바일에서는 세로 행으로 배치한다.
+  Widget _buildActiveGroups({required bool mobile}) {
+    final visibleGroups = _groups.take(2).toList(growable: false);
+    final groupTiles = <Widget>[
+      for (var index = 0; index < visibleGroups.length; index++)
+        _buildSocialGroupTile(
+          group: visibleGroups[index],
+          index: index,
+          mobile: mobile,
+        ),
+      if (visibleGroups.isEmpty)
+        _socialAdaptiveChild(
+          mobile: mobile,
+          child: _socialEmptyRow('참여 중인 그룹이 없습니다.'),
+        ),
+      _buildMoreGroupsTile(mobile: mobile),
+    ];
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: _socialCardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(mobile ? 18 : 26),
+            child: Flex(
+              direction: mobile ? Axis.vertical : Axis.horizontal,
+              crossAxisAlignment: mobile
+                  ? CrossAxisAlignment.stretch
+                  : CrossAxisAlignment.end,
+              children: [
+                _socialAdaptiveChild(
+                  mobile: mobile,
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: 28,
-                        child: Text(
-                          '${rank.rank}',
-                          style: const TextStyle(fontWeight: FontWeight.w900),
-                        ),
-                      ),
-                      CircleAvatar(
-                        radius: 21,
-                        backgroundColor: const Color(0xFF202022),
-                        foregroundColor: Colors.white,
-                        child: Text(
-                          rank.name.isEmpty ? 'F' : rank.name.substring(0, 1),
-                          style: const TextStyle(fontWeight: FontWeight.w900),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              rank.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            Text(
-                              'B Tier · ${rank.ovr.toStringAsFixed(1)}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.black45,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      StudentDensityEyebrow('GROUP STUDY'),
+                      SizedBox(height: 10),
                       Text(
-                        rank.delta == 0 ? '—' : '+${rank.delta / 10}',
-                        style: const TextStyle(fontWeight: FontWeight.w900),
+                        '지금 활동 중인 그룹',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '그룹 문제풀기 · 그룹 시험지 · 그룹 채팅과 Flow 공유',
+                        style: TextStyle(fontSize: 11, color: Colors.black45),
                       ),
                     ],
                   ),
                 ),
-            ],
+                SizedBox(width: mobile ? 0 : 18, height: mobile ? 18 : 0),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    StudentDensityButton(
+                      label: '그룹 찾기·코드 참가',
+                      onPressed: _openGroupSearchModal,
+                    ),
+                    StudentDensityButton(
+                      label: '그룹 만들기',
+                      primary: true,
+                      onPressed: _openGroupCreateModal,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Flex(
+            direction: mobile ? Axis.vertical : Axis.horizontal,
+            children: groupTiles,
+          ),
+          Padding(
+            padding: EdgeInsets.all(mobile ? 18 : 24),
+            child: Flex(
+              direction: mobile ? Axis.vertical : Axis.horizontal,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _socialAdaptiveChild(
+                  mobile: mobile,
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '함께 학습하기',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        '문제 · 학생 답안을 제외한 시험지 · 필터 가능한 Flow · 그룹 최근 메시지 30개',
+                        style: TextStyle(fontSize: 10, color: Colors.black45),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: mobile ? 0 : 18, height: mobile ? 14 : 0),
+                StudentDensityButton(
+                  label: '그룹 공간 열기',
+                  primary: true,
+                  onPressed: () => Navigator.of(context).pushNamed('/groups'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요한 변수는 그룹 정보·순서·모바일 여부다.
+  /// 작동 원리는 그룹 요약 행을 기존 그룹 상세 모달에 연결하고 가로 화면에서는 동일 폭을 나눈다.
+  Widget _buildSocialGroupTile({
+    required _GroupInfo group,
+    required int index,
+    required bool mobile,
+  }) {
+    final tile = InkWell(
+      onTap: () => _openGroupSpace(group),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 92),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 17),
+        decoration: BoxDecoration(
+          border: Border(
+            right: mobile
+                ? BorderSide.none
+                : const BorderSide(color: Color(0xFFE6E6E8)),
+            bottom: mobile
+                ? const BorderSide(color: Color(0xFFE6E6E8))
+                : BorderSide.none,
           ),
         ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF171719),
-            borderRadius: BorderRadius.circular(24),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F4F6),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                '${index + 1}'.padLeft(2, '0'),
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    group.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${group.members}명 · ${group.description}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10, color: Colors.black45),
+                  ),
+                ],
+              ),
+            ),
+            const Text('›', style: TextStyle(fontWeight: FontWeight.w900)),
+          ],
+        ),
+      ),
+    );
+    return mobile ? tile : Expanded(child: tile);
+  }
+
+  /// 필요한 변수는 모바일 여부다.
+  /// 작동 원리는 그룹 검색·초대 코드 화면으로 가는 마지막 고정 행을 제공한다.
+  Widget _buildMoreGroupsTile({required bool mobile}) {
+    final tile = InkWell(
+      onTap: _openGroupSearchModal,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 92),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 17),
+        child: const Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: Color(0xFFF4F4F6),
+              child: Icon(Icons.add_rounded, color: Colors.black),
+            ),
+            SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '그룹 더 보기',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '검색 · 초대 코드 · 비밀번호 참가',
+                    style: TextStyle(fontSize: 10, color: Colors.black45),
+                  ),
+                ],
+              ),
+            ),
+            Text('›', style: TextStyle(fontWeight: FontWeight.w900)),
+          ],
+        ),
+      ),
+    );
+    return mobile ? tile : Expanded(child: tile);
+  }
+
+  /// 필요한 변수는 친구 OVR 순위와 내 태그 레이팅 변화다.
+  /// 작동 원리는 HTML 하단처럼 흰 랭킹 카드와 검은 MY RATING 카드를 연속 배치하고 상세 모달로 연결하는 것이다.
+  Widget _buildSocialRatingOverview({required bool mobile}) {
+    final ranks = _friendRanks.take(3).toList(growable: false);
+    final rising = _tagRatings.values.where((item) => item.delta >= 0).toList()
+      ..sort((a, b) => b.delta.compareTo(a.delta));
+    final falling = _tagRatings.values.where((item) => item.delta < 0).toList()
+      ..sort((a, b) => a.delta.compareTo(b.delta));
+    final strong = _topByScore(true, take: 1).firstOrNull;
+    final weak = _topByScore(false, take: 1).firstOrNull;
+    final risingTag = rising.firstOrNull;
+    final fallingTag = falling.firstOrNull;
+    final myRank = _friendRanks.where((item) => item.isMe).firstOrNull;
+    final myOvr = _myRating?.ovr ?? myRank?.ovr;
+    final myTier = _ratingTier(_myRating?.rating);
+    final ratingDelta = _myRating?.ovrDelta;
+    return Flex(
+      direction: mobile ? Axis.vertical : Axis.horizontal,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _socialAdaptiveChild(
+          mobile: mobile,
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: _socialCardDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'FRIEND OVR RANKING',
+                  style: TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 1.7,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '친구 OVR 랭킹',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 14),
+                if (ranks.isEmpty)
+                  _socialEmptyRow('표시할 친구 랭킹이 없습니다.')
+                else
+                  for (final rank in ranks)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: rank.isMe
+                            ? const Color(0xFFF0F0F2)
+                            : const Color(0xFFFAFAFB),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 28,
+                            child: Text(
+                              '${rank.rank}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          CircleAvatar(
+                            radius: 21,
+                            backgroundColor: const Color(0xFF202022),
+                            foregroundColor: Colors.white,
+                            child: Text(
+                              rank.name.isEmpty
+                                  ? 'F'
+                                  : rank.name.substring(0, 1),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  rank.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                Text(
+                                  'OVR ${rank.ovr.toStringAsFixed(1)}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.black45,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            rank.delta == 0 ? '—' : '+${rank.delta / 10}',
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ],
+                      ),
+                    ),
+              ],
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'MY RATING',
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 10,
-                  letterSpacing: 1.7,
-                  fontWeight: FontWeight.w900,
+        ),
+        SizedBox(height: mobile ? 12 : 0, width: mobile ? 0 : 14),
+        _socialAdaptiveChild(
+          mobile: mobile,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF171719),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'MY RATING',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 10,
+                    letterSpacing: 1.7,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      myOvr.toStringAsFixed(1),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 46,
-                        fontWeight: FontWeight.w900,
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        myOvr?.toStringAsFixed(1) ?? '--',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 46,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    width: 62,
-                    height: 62,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 3),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Text(
-                      'B',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900,
+                    Container(
+                      width: 62,
+                      height: 62,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white, width: 3),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Text(
+                        myTier,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const Text(
-                'B Tier · 전날 대비 +0.3',
-                style: TextStyle(color: Colors.white54),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _SocialRatingMetric(
-                          label: '강점',
-                          value: strong == null
-                              ? '#일차함수 19.2'
-                              : '#${strong.tag} ${strong.rating.toStringAsFixed(1)}',
-                        ),
-                        _SocialRatingMetric(
-                          label: '약점',
-                          value: weak == null
-                              ? '#기하 16.4'
-                              : '#${weak.tag} ${weak.rating.toStringAsFixed(1)}',
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Expanded(
-                    child: Column(
-                      children: [
-                        _SocialRatingMetric(label: '상승', value: '#그래프 +0.8'),
-                        _SocialRatingMetric(label: '하락', value: '#확률 -0.2'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
+                  ],
                 ),
-                onPressed: () => showRatingDetailModal(context: context),
-                child: const Text('내 평점 상세'),
-              ),
-            ],
+                Text(
+                  ratingDelta == null
+                      ? '$myTier Tier · 변화 데이터 없음'
+                      : '$myTier Tier · 전날 대비 ${ratingDelta >= 0 ? '+' : ''}${ratingDelta.toStringAsFixed(1)}',
+                  style: const TextStyle(color: Colors.white54),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _SocialRatingMetric(
+                            label: '강점',
+                            value: strong == null
+                                ? '--'
+                                : '#${strong.tag} ${strong.rating.toStringAsFixed(1)}',
+                          ),
+                          _SocialRatingMetric(
+                            label: '약점',
+                            value: weak == null
+                                ? '--'
+                                : '#${weak.tag} ${weak.rating.toStringAsFixed(1)}',
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _SocialRatingMetric(
+                            label: '상승',
+                            value: risingTag == null
+                                ? '--'
+                                : '#${risingTag.tag} +${risingTag.delta.toStringAsFixed(1)}',
+                          ),
+                          _SocialRatingMetric(
+                            label: '하락',
+                            value: fallingTag == null
+                                ? '--'
+                                : '#${fallingTag.tag} ${fallingTag.delta.toStringAsFixed(1)}',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () => showRatingDetailModal(context: context),
+                  child: const Text('내 평점 상세'),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -3331,7 +3643,7 @@ class _SoWidgetState extends State<SoWidget> {
                                                     _groupLogoIcons.length];
                                             return InkWell(
                                               onTap: () =>
-                                                  _openGroupModal(group),
+                                                  _openGroupSpace(group),
                                               borderRadius:
                                                   BorderRadius.circular(14),
                                               child: Container(

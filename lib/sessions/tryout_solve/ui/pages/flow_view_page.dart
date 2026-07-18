@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/business/repositories/problem_bookmark_store.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/data/models/concept_textbooks.dart';
+import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
@@ -56,6 +60,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
   bool _chatActive = false;
   bool _showSharedAnalysis = false;
   bool _formulaModalVisible = false;
+  bool _fullScreen = false;
   Offset _formulaModalOffset = const Offset(24, 120);
 
   Future<void> _bookmarkProblem() async {
@@ -93,6 +98,37 @@ class _FlowViewPageState extends State<FlowViewPage> {
     if (widget.sharedMode) {
       _chatActive = false;
     }
+  }
+
+  /// 필요한 변수는 전체화면 상태와 시스템 UI 설정이다.
+  /// 작동 원리는 Flow에 집중할 때만 상단 시스템 영역을 숨기고, 종료 즉시 기본 화면 상태로 복구하는 것이다.
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  /// 필요한 변수는 전체화면 여부다.
+  /// 작동 원리는 일반 화면의 양쪽 상세 패널을 축약 도구로 바꾸고 캔버스에 가능한 넓은 폭을 제공하는 것이다.
+  Future<void> _toggleFullScreen() async {
+    final next = !_fullScreen;
+    await SystemChrome.setEnabledSystemUIMode(
+      next ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+    );
+    if (mounted) setState(() => _fullScreen = next);
+  }
+
+  /// 필요한 변수는 현재 Navigator의 이전 화면 유무와 전체화면 상태다.
+  /// 작동 원리는 제출 직후 진입한 Flow에서 이전 풀이 화면으로 즉시 돌아가고, 직접 진입한 경우에는 학생 홈으로 안전하게 빠져나가게 하는 것이다.
+  Future<void> _returnToPreviousPage() async {
+    if (_fullScreen) await _toggleFullScreen();
+    if (!mounted) return;
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+    navigator.pushReplacementNamed('/student/dashboard');
   }
 
   void _shareToGroupStudy() async {
@@ -217,69 +253,29 @@ class _FlowViewPageState extends State<FlowViewPage> {
     final allFormulas = questData['all_formulas'];
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF4F4F5),
+      backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
       body: SafeArea(
         child: Stack(
           children: [
-            Column(
-              children: [
-                _buildFlowChrome(),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // 필요한 변수는 작업 영역 폭이다.
-                      // 작동 원리는 HTML 시안의 PC 3열 기준을 1180px에 맞추고, 그 아래에서는 그래프 우선 단일 열로 전환하는 것이다.
-                      final isWide = constraints.maxWidth >= 1180;
-                      if (isWide) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SizedBox(
-                              width: _chatActive ? 300 : 280,
-                              child: _buildLeftPanel(
-                                questTitleBlocks,
-                                questAnswerBlocks,
-                                questAnswerRiddle,
-                              ),
-                            ),
-                            const VerticalDivider(width: 1, thickness: 1),
-                            Expanded(child: _buildCanvasPanel()),
-                            const VerticalDivider(width: 1, thickness: 1),
-                            SizedBox(
-                              width: _chatActive ? 300 : 340,
-                              child: _buildDetailPanel(),
-                            ),
-                          ],
-                        );
-                      }
-
-                      // 필요한 변수는 좁은 화면 폭과 그래프·제출 요약 패널이다.
-                      // 모바일에서는 핵심 학습 흐름인 그래프를 먼저 보여주고 제출 요약을 아래로 보낸다.
-                      return ListView(
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 28),
-                        children: [
-                          _buildCanvasPanel(
-                            height: math.max(
-                              500,
-                              math.min(680, constraints.maxHeight * .72),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          _buildLeftPanel(
-                            questTitleBlocks,
-                            questAnswerBlocks,
-                            questAnswerRiddle,
-                          ),
-                          const SizedBox(height: 14),
-                          _buildDetailPanel(),
-                        ],
-                      );
-                    },
+            _fullScreen
+                ? _buildFocusWorkspace(
+                    questTitleBlocks,
+                    questAnswerBlocks,
+                    questAnswerRiddle,
+                  )
+                : Column(
+                    children: [
+                      _buildFlowChrome(),
+                      Expanded(
+                        child: _buildFlowWorkspace(
+                          questTitleBlocks,
+                          questAnswerBlocks,
+                          questAnswerRiddle,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
             if (widget.sharedMode && _formulaModalVisible)
               Positioned(
                 left: _formulaModalOffset.dx,
@@ -305,91 +301,256 @@ class _FlowViewPageState extends State<FlowViewPage> {
     );
   }
 
+  /// 필요한 변수는 문제·정답 블록과 현재 화면 폭이다.
+  /// 작동 원리는 세로 길이는 페이지 스크롤에 맡기고, 카드형 좌우 정보는 긴 Flow를 읽는 동안 같은 문맥으로 따라오게 배치하는 것이다.
+  Widget _buildFlowWorkspace(
+    List<ContentBlock> questTitleBlocks,
+    List<ContentBlock> questAnswerBlocks,
+    List<ContentBlock> questAnswerRiddle,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 1040;
+        if (isWide) {
+          return _buildStickyDesktopWorkspace(
+            questTitleBlocks,
+            questAnswerBlocks,
+            questAnswerRiddle,
+          );
+        }
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: studentDensityHorizontalPadding(context),
+            vertical: 18,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: StudentDensityTokens.desktopMaxWidth,
+              ),
+              child: Column(
+                children: [
+                  _buildCanvasPanel(),
+                  const SizedBox(height: 14),
+                  _buildLeftPanel(
+                    questTitleBlocks,
+                    questAnswerBlocks,
+                    questAnswerRiddle,
+                  ),
+                  const SizedBox(height: 14),
+                  _buildDetailPanel(),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 필요한 변수는 좌우 패널의 문제·정답 블록과 화면 크기다.
+  /// 작동 원리는 중앙 Flow만 세로로 스크롤하고 좌우 패널은 고정해, 긴 풀이를 읽을 때도 문제와 선택 노드의 값이 화면을 따라오게 하는 것이다.
+  Widget _buildStickyDesktopWorkspace(
+    List<ContentBlock> questTitleBlocks,
+    List<ContentBlock> questAnswerBlocks,
+    List<ContentBlock> questAnswerRiddle,
+  ) {
+    final leftWidth = _chatActive ? 300.0 : 272.0;
+    final rightWidth = _chatActive ? 300.0 : 316.0;
+    const gap = 16.0;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: StudentDensityTokens.desktopMaxWidth,
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  leftWidth + gap,
+                  18,
+                  rightWidth + gap,
+                  18,
+                ),
+                child: _buildCanvasPanel(),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              top: 18,
+              bottom: 18,
+              width: leftWidth,
+              child: SingleChildScrollView(
+                child: _buildLeftPanel(
+                  questTitleBlocks,
+                  questAnswerBlocks,
+                  questAnswerRiddle,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              top: 18,
+              bottom: 18,
+              width: rightWidth,
+              child: SingleChildScrollView(child: _buildDetailPanel()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 문제·정답 정보와 선택 노드다.
+  /// 작동 원리는 전체화면에서는 Flow만 넓게 표시하고, 양쪽 정보는 여닫는 축약 컨테이너로 전환하는 것이다.
+  Widget _buildFocusWorkspace(
+    List<ContentBlock> questTitleBlocks,
+    List<ContentBlock> questAnswerBlocks,
+    List<ContentBlock> questAnswerRiddle,
+  ) => Stack(
+    children: [
+      Positioned.fill(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(12),
+          child: _buildCanvasPanel(fullScreen: true),
+        ),
+      ),
+      Positioned(
+        top: 20,
+        left: 20,
+        child: _buildCompactPanelButton(
+          label: '문제 정보',
+          icon: Icons.menu_book_outlined,
+          onPressed: () => _showFocusPanel(
+            _buildLeftPanel(
+              questTitleBlocks,
+              questAnswerBlocks,
+              questAnswerRiddle,
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        top: 20,
+        right: 20,
+        child: _buildCompactPanelButton(
+          label: _selected == null ? '노드 상세' : '선택한 노드',
+          icon: Icons.account_tree_outlined,
+          onPressed: () => _showFocusPanel(_buildDetailPanel()),
+        ),
+      ),
+    ],
+  );
+
+  /// 필요한 변수는 축약 컨테이너의 라벨·아이콘·열기 콜백이다.
+  /// 작동 원리는 전체화면의 보조 정보를 작은 반투명 도구로 남겨 Flow 읽기 폭을 보존하는 것이다.
+  Widget _buildCompactPanelButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) => Material(
+    color: Colors.white.withValues(alpha: .94),
+    borderRadius: BorderRadius.circular(18),
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18),
+            const SizedBox(width: 7),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  /// 필요한 변수는 전체화면에서 열 보조 패널이다.
+  /// 작동 원리는 축약 컨테이너를 탭하면 하단 시트로 원래 문제·노드 상세 기능을 그대로 제공하는 것이다.
+  void _showFocusPanel(Widget panel) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: .55,
+        minChildSize: .3,
+        maxChildSize: .9,
+        builder: (context, controller) => SingleChildScrollView(
+          controller: controller,
+          padding: const EdgeInsets.all(14),
+          child: panel,
+        ),
+      ),
+    );
+  }
+
   /// 필요한 변수는 공유 모드·공유/북마크 콜백과 현재 Navigator다.
-  /// 작동 원리는 HTML의 전역 상단 바 아래에 SOLUTION FLOW 제목과 두 주요 행동을 배치하는 것이다.
+  /// 작동 원리는 학생 화면의 공통 여백·제목·캡슐 버튼 규칙으로 Flow의 진입부를 구성하는 것이다.
   Widget _buildFlowChrome() {
     return Column(
       children: [
         Ios26TopBar(
           brandColor: Colors.black,
           showLevelIndicator: false,
-          onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+          onBack: _returnToPreviousPage,
           items: const [],
         ),
         Container(
           width: double.infinity,
-          decoration: const BoxDecoration(
-            color: Color(0xFFF8F8F9),
-            border: Border(bottom: BorderSide(color: Color(0xFFE0E0E2))),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'SOLUTION FLOW',
-                style: TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 1.7,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Flow 분석',
-                style: TextStyle(
-                  fontSize: 32,
-                  letterSpacing: -1.1,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                '제출 결과를 짧게 확인한 뒤 기준 분기형 Flow에서 틀린 단계와 정답 풀이를 분석합니다.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black45,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: widget.sharedMode
-                          ? _toggleFormulaModal
-                          : _shareToGroupStudy,
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(46),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(widget.sharedMode ? '공식 정보' : '그룹에 공유'),
-                    ),
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _bookmarkProblem,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF202022),
-                        minimumSize: const Size.fromHeight(46),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: const Text('문제 북마크'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          color: StudentDensityTokens.background,
+          child: StudentDensityPage(
+            padding: EdgeInsets.fromLTRB(
+              studentDensityHorizontalPadding(context),
+              24,
+              studentDensityHorizontalPadding(context),
+              18,
+            ),
+            child: StudentDensityPageHeader(
+              eyebrow: 'Solution flow',
+              title: '풀이 흐름 분석',
+              description: '내 풀이의 흐름을 따라가며 놓친 단계와 다음 학습 포인트를 확인하세요.',
+              action: _buildFlowActions(),
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  /// 필요한 변수는 공유 여부와 각 행동 콜백이다.
+  /// 작동 원리는 공통 학생 버튼을 사용해 보조 행동과 핵심 행동의 우선순위를 일관되게 표시하는 것이다.
+  Widget _buildFlowActions() {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 310),
+      child: Row(
+        children: [
+          Expanded(
+            child: StudentDensityButton(
+              label: widget.sharedMode ? '공식 정보' : '그룹 공유',
+              icon: widget.sharedMode
+                  ? Icons.functions
+                  : Icons.ios_share_outlined,
+              onPressed: widget.sharedMode
+                  ? _toggleFormulaModal
+                  : _shareToGroupStudy,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: StudentDensityButton(
+              label: '북마크',
+              icon: Icons.bookmark_add_outlined,
+              primary: true,
+              onPressed: _bookmarkProblem,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -406,117 +567,101 @@ class _FlowViewPageState extends State<FlowViewPage> {
         : questAnswerBlocks;
     final showAnswer = _allStepsCorrect;
     final questData = widget.quest['data'] as Map<String, dynamic>? ?? {};
-    return Container(
-      margin: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE0E0E2)),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.menu_book_outlined, color: Colors.black87),
-                const SizedBox(width: 8),
+    return _buildFlowSurface(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.menu_book_outlined,
+                color: StudentDensityTokens.ink,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                '문제 정보',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -.3,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: _bookmarkProblem,
+                tooltip: '문제 북마크',
+                icon: const Icon(Icons.bookmark_add_outlined),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            '문제 지문',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          ContentBlocksView(
+            blocks: titleBlocks,
+            textStyle: const TextStyle(fontSize: 14, height: 1.45),
+            latexStyle: const TextStyle(fontSize: 14, height: 1.45),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            '문제 정답',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showAnswer)
+                ContentBlocksView(
+                  blocks: answerBlocks,
+                  textStyle: const TextStyle(fontSize: 14, height: 1.45),
+                  latexStyle: const TextStyle(fontSize: 14, height: 1.45),
+                )
+              else
                 const Text(
-                  '문제 정보',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  '정답은 정답 제출 후 확인 가능합니다.',
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: _bookmarkProblem,
-                  tooltip: '문제 북마크',
-                  icon: const Icon(Icons.bookmark_add_outlined),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              '문제 지문',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            ContentBlocksView(
-              blocks: titleBlocks,
-              textStyle: const TextStyle(fontSize: 14, height: 1.45),
-              latexStyle: const TextStyle(fontSize: 14, height: 1.45),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              '문제 정답',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (showAnswer)
-                  ContentBlocksView(
-                    blocks: answerBlocks,
-                    textStyle: const TextStyle(fontSize: 14, height: 1.45),
-                    latexStyle: const TextStyle(fontSize: 14, height: 1.45),
-                  )
-                else
-                  const Text(
-                    '정답은 정답 제출 후 확인 가능합니다.',
-                    style: TextStyle(fontSize: 13, color: Colors.black54),
+              const SizedBox(height: 12),
+              if (!widget.sharedMode)
+                StudentDensityButton(
+                  onPressed: () => _openInstantChat(
+                    questTitleBlocks,
+                    showAnswer
+                        ? (questAnswerBlocks.isNotEmpty
+                              ? questAnswerBlocks
+                              : questAnswerRiddle)
+                        : <ContentBlock>[],
+                    questData['all_formulas'],
                   ),
+                  primary: true,
+                  icon: Icons.chat_bubble_outline,
+                  label: showAnswer ? '질문하기 · AI 채팅' : '질문하기 · 정답 비공개',
+                )
+              else ...[
+                StudentDensityButton(
+                  onPressed: () => setState(() => _showSharedAnalysis = true),
+                  primary: true,
+                  icon: Icons.analytics_outlined,
+                  label: '왜 틀렸는지 분석',
+                ),
                 const SizedBox(height: 12),
-                if (!widget.sharedMode)
-                  ElevatedButton.icon(
-                    onPressed: () => _openInstantChat(
-                      questTitleBlocks,
-                      showAnswer
-                          ? (questAnswerBlocks.isNotEmpty
-                                ? questAnswerBlocks
-                                : questAnswerRiddle)
-                          : <ContentBlock>[],
-                      questData['all_formulas'],
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF202022),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.chat_bubble_outline),
-                    label: Text(
-                      showAnswer ? '질문하기 (AI 채팅 열기)' : '질문하기 (정답 비공개)',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  )
-                else ...[
-                  ElevatedButton.icon(
-                    onPressed: () => setState(() => _showSharedAnalysis = true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF202022),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.analytics_outlined),
-                    label: const Text('왜 틀렸는지 분석'),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_showSharedAnalysis) _buildSharedAnalysisCard(questData),
-                ],
+                if (_showSharedAnalysis) _buildSharedAnalysisCard(questData),
               ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCanvasPanel({double? height}) {
+  /// 필요한 변수는 그래프 실제 높이와 전체화면 여부다.
+  /// 작동 원리는 그래프의 세로 길이만큼 카드 높이를 자연스럽게 늘려 바깥 페이지가 세로 스크롤을 담당하게 하는 것이다.
+  Widget _buildCanvasPanel({bool fullScreen = false}) {
     final content = _graph.nodes.isEmpty
         ? const Center(child: Text('No flow data.'))
         : _FlowCanvas(
@@ -525,36 +670,45 @@ class _FlowViewPageState extends State<FlowViewPage> {
             nodeStates: _nodeStates,
             onNodeTap: (node) => setState(() => _selected = node),
           );
-    return Container(
-      margin: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE0E0E2)),
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return _buildFlowSurface(
+      padding: const EdgeInsets.all(12),
       child: SizedBox(
-        height: height,
+        height: math.max(500, _graph.size.height + 72),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_nodeStates.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 6,
-                  children: const [
-                    _LegendChip(label: '정답', color: Color(0xFF202022)),
-                    _LegendChip(label: '오답', color: Color(0xFF7A7A80)),
-                    _LegendChip(label: '이후 단계', color: Color(0xFFB3B3B8)),
+                padding: const EdgeInsets.fromLTRB(6, 4, 6, 10),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _LegendChip(label: '정답', color: Color(0xFF202022)),
+                          _LegendChip(label: '오답', color: Color(0xFF7A7A80)),
+                          _LegendChip(label: '이후 단계', color: Color(0xFFB3B3B8)),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: fullScreen ? '전체화면 닫기' : '전체화면 보기',
+                      onPressed: _toggleFullScreen,
+                      icon: Icon(
+                        fullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                        size: 20,
+                      ),
+                    ),
                   ],
                 ),
               ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(6),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(18),
                   child: CustomPaint(
                     painter: const _FlowDotGridPainter(),
                     child: ColoredBox(
@@ -576,15 +730,10 @@ class _FlowViewPageState extends State<FlowViewPage> {
     final nodeState = node == null
         ? _FlowNodeState.normal
         : _nodeStates[node.id] ?? _FlowNodeState.normal;
-    return Container(
-      margin: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE0E0E2)),
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return _buildFlowSurface(
+      padding: const EdgeInsets.all(20),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         child: node == null
             ? const Center(child: Text('노드를 선택해주세요'))
             : SingleChildScrollView(
@@ -616,6 +765,17 @@ class _FlowViewPageState extends State<FlowViewPage> {
       ),
     );
   }
+
+  /// 필요한 변수는 카드 본문과 안쪽 여백이다.
+  /// 작동 원리는 학생 화면 전체에서 쓰는 흰 표면·옅은 경계·넉넉한 반경을 Flow의 세 패널에도 동일하게 적용하는 것이다.
+  Widget _buildFlowSurface({
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(20),
+  }) => StudentDensitySurface(
+    padding: padding,
+    radius: StudentDensityTokens.radius,
+    child: child,
+  );
 
   void _openInstantChat(
     List<ContentBlock> questTitleBlocks,
@@ -765,22 +925,29 @@ class _FlowViewPageState extends State<FlowViewPage> {
             runSpacing: 8,
             children: tags
                 .map(
-                  (tag) => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F8FB),
+                  (tag) => Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _openConceptTextbook(tag),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE5E8EF)),
-                    ),
-                    child: Text(
-                      tag,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1F2A44),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7F8FB),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE5E8EF)),
+                        ),
+                        child: Text(
+                          tag,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F2A44),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -790,44 +957,47 @@ class _FlowViewPageState extends State<FlowViewPage> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        onTap: () {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('개념 상세보기로 넘어가기')));
-        },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFDFEFF),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE6EAF2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '관련 개념',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-              const SizedBox(height: 6),
-              content,
-              const SizedBox(height: 6),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.open_in_new, size: 14, color: Colors.black45),
-                  SizedBox(width: 4),
-                  Text(
-                    '개념 상세보기로 넘어가기',
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
-                ],
-              ),
-            ],
-          ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDFEFF),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE6EAF2)),
         ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '관련 개념',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 6),
+            content,
+            const SizedBox(height: 6),
+            const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.open_in_new, size: 14, color: Colors.black45),
+                SizedBox(width: 4),
+                Text(
+                  '태그를 선택하면 개념교재로 이동합니다',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 Flow 노드에 연결된 개념 태그다.
+  /// 작동 원리는 태그 하나로 구성한 기본 개념교재를 열어 선택한 개념의 첫 지면부터 바로 읽게 하는 것이다.
+  void _openConceptTextbook(String tag) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BookWidget(book: buildConceptBook([tag])),
       ),
     );
   }
@@ -1084,123 +1254,51 @@ class _FlowCanvas extends StatefulWidget {
 }
 
 class _FlowCanvasState extends State<_FlowCanvas> {
-  final TransformationController _controller = TransformationController();
-  Size? _initializedViewport;
-  double _scale = .75;
-
-  /// 필요한 변수는 확대·이동 변환 컨트롤러다.
-  /// 작동 원리는 Flow 화면 종료 시 컨트롤러 리스너를 정리한다.
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  /// 필요한 변수는 현재 변환 행렬과 확대 배율 변화량이다.
-  /// 작동 원리는 화면 중심을 유지한 채 60%~250% 범위에서 HTML 확대·축소 버튼을 동작시키는 것이다.
-  void _zoom(double factor) {
-    final current = _scale;
-    final next = (current * factor).clamp(0.6, 2.5);
-    if ((next - current).abs() < .001) return;
-    final factorValue = next / current;
-    _controller.value = _controller.value.clone()
-      ..scaleByDouble(factorValue, factorValue, 1, 1);
-    _scale = next;
-    setState(() {});
-  }
-
-  /// 필요한 변수는 현재 뷰포트와 그래프 크기다.
-  /// 작동 원리는 초기 75% 배율과 중앙 정렬을 복원해 HTML의 초기화 버튼과 동일하게 동작하는 것이다.
-  void _reset(Size viewport) {
-    const scale = .75;
-    final dx = (viewport.width - widget.graph.size.width * scale) / 2;
-    _controller.value = Matrix4.diagonal3Values(scale, scale, 1)
-      ..setTranslationRaw(dx, 38, 0);
-    _scale = scale;
-    setState(() {});
-  }
-
-  /// 필요한 변수는 현재 뷰포트 폭과 그래프 전체 크기다.
-  /// 작동 원리는 60% 축척에서 루트 노드가 중앙에 오도록 첫 변환만 계산하고 이후 사용자 이동은 보존한다.
+  /// 필요한 변수는 그래프의 실제 가로·세로 크기다.
+  /// 작동 원리는 세로 이동은 상위 페이지 스크롤에 넘기고, 화면보다 넓어진 Flow만 가로 스크롤로 탐색하게 하는 것이다.
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final viewport = Size(constraints.maxWidth, constraints.maxHeight);
-        if (_initializedViewport != viewport) {
-          const initialScale = 0.75;
-          final dx =
-              (viewport.width - widget.graph.size.width * initialScale) / 2;
-          _controller.value = Matrix4.diagonal3Values(
-            initialScale,
-            initialScale,
-            1,
-          )..setTranslationRaw(dx, 38, 0);
-          _initializedViewport = viewport;
-        }
-        return Stack(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: widget.graph.size.width,
+        height: widget.graph.size.height,
+        child: Stack(
           children: [
-            InteractiveViewer(
-              transformationController: _controller,
-              boundaryMargin: const EdgeInsets.all(200),
-              constrained: false,
-              minScale: 0.6,
-              maxScale: 2.5,
-              child: SizedBox(
-                width: widget.graph.size.width,
-                height: widget.graph.size.height,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _FlowEdgePainter(
-                          edges: widget.graph.edges,
-                          positions: widget.graph.positions,
-                          nodeSizes: widget.graph.nodeSizes,
-                        ),
-                      ),
-                    ),
-                    ...widget.graph.nodes.values.map((node) {
-                      final position = widget.graph.positions[node.id];
-                      if (position == null) return const SizedBox.shrink();
-                      final nodeSize =
-                          widget.graph.nodeSizes[node.id] ??
-                          const Size(
-                            _FlowGraphBuilder.nodeWidth,
-                            _FlowGraphBuilder.nodeMinHeight,
-                          );
-                      return Positioned(
-                        left: position.dx,
-                        top: position.dy,
-                        width: nodeSize.width,
-                        height: nodeSize.height,
-                        child: _FlowNodeCard(
-                          node: node,
-                          selected: widget.selected?.id == node.id,
-                          state:
-                              widget.nodeStates[node.id] ??
-                              _FlowNodeState.normal,
-                          onTap: () => widget.onNodeTap(node),
-                        ),
-                      );
-                    }),
-                  ],
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _FlowEdgePainter(
+                  edges: widget.graph.edges,
+                  positions: widget.graph.positions,
+                  nodeSizes: widget.graph.nodeSizes,
                 ),
               ),
             ),
-            Positioned(
-              left: 8,
-              top: 8,
-              child: _FlowZoomControls(
-                scale: _scale,
-                onZoomOut: () => _zoom(.8),
-                onZoomIn: () => _zoom(1.25),
-                onReset: () => _reset(viewport),
-              ),
-            ),
+            ...widget.graph.nodes.values.map((node) {
+              final position = widget.graph.positions[node.id];
+              if (position == null) return const SizedBox.shrink();
+              final nodeSize =
+                  widget.graph.nodeSizes[node.id] ??
+                  const Size(
+                    _FlowGraphBuilder.nodeWidth,
+                    _FlowGraphBuilder.nodeMinHeight,
+                  );
+              return Positioned(
+                left: position.dx,
+                top: position.dy,
+                width: nodeSize.width,
+                height: nodeSize.height,
+                child: _FlowNodeCard(
+                  node: node,
+                  selected: widget.selected?.id == node.id,
+                  state: widget.nodeStates[node.id] ?? _FlowNodeState.normal,
+                  onTap: () => widget.onNodeTap(node),
+                ),
+              );
+            }),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -1422,53 +1520,6 @@ class _FlowDotGridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FlowDotGridPainter oldDelegate) => false;
-}
-
-class _FlowZoomControls extends StatelessWidget {
-  const _FlowZoomControls({
-    required this.scale,
-    required this.onZoomOut,
-    required this.onZoomIn,
-    required this.onReset,
-  });
-
-  final double scale;
-  final VoidCallback onZoomOut;
-  final VoidCallback onZoomIn;
-  final VoidCallback onReset;
-
-  /// 필요한 변수는 현재 배율과 축소·확대·초기화 콜백이다.
-  /// 작동 원리는 HTML 캔버스 좌측 상단의 네 개 소형 컨트롤을 같은 순서로 표시하는 것이다.
-  @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white.withValues(alpha: .94),
-    borderRadius: BorderRadius.circular(10),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          tooltip: '축소',
-          visualDensity: VisualDensity.compact,
-          onPressed: onZoomOut,
-          icon: const Icon(Icons.remove, size: 16),
-        ),
-        Text(
-          '${(scale * 100).round()}%',
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
-        ),
-        IconButton(
-          tooltip: '확대',
-          visualDensity: VisualDensity.compact,
-          onPressed: onZoomIn,
-          icon: const Icon(Icons.add, size: 16),
-        ),
-        TextButton(
-          onPressed: onReset,
-          child: const Text('초기화', style: TextStyle(fontSize: 10)),
-        ),
-      ],
-    ),
-  );
 }
 
 class _FlowEdge {

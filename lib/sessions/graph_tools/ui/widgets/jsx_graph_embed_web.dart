@@ -7,13 +7,29 @@ import 'package:flutter/material.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 import 'package:s11/sessions/graph_tools/shared/jsx_graph_html_builder.dart';
 
-Widget buildJsxGraphEmbedImpl(AiFlowGraphDocument document, {Key? key}) =>
-    _JsxGraphEmbedWeb(key: key, document: document);
+Widget buildJsxGraphEmbedImpl(
+  AiFlowGraphDocument document, {
+  Key? key,
+  bool showParameterControls = true,
+  bool directManipulationMode = false,
+}) => _JsxGraphEmbedWeb(
+  key: key,
+  document: document,
+  showParameterControls: showParameterControls,
+  directManipulationMode: directManipulationMode,
+);
 
 class _JsxGraphEmbedWeb extends StatefulWidget {
-  const _JsxGraphEmbedWeb({super.key, required this.document});
+  const _JsxGraphEmbedWeb({
+    super.key,
+    required this.document,
+    required this.showParameterControls,
+    required this.directManipulationMode,
+  });
 
   final AiFlowGraphDocument document;
+  final bool showParameterControls;
+  final bool directManipulationMode;
 
   @override
   State<_JsxGraphEmbedWeb> createState() => _JsxGraphEmbedWebState();
@@ -36,7 +52,14 @@ class _JsxGraphEmbedWebState extends State<_JsxGraphEmbedWeb> {
       ..style.width = '100%'
       ..style.height = '100%'
       ..style.display = 'block';
-    _iframe.setAttribute('srcdoc', buildAiFlowGraphHtml(widget.document));
+    _iframe.setAttribute(
+      'srcdoc',
+      buildAiFlowGraphHtml(
+        widget.document,
+        showParameterControls: widget.showParameterControls,
+        directManipulationMode: widget.directManipulationMode,
+      ),
+    );
 
     ui_web.platformViewRegistry.registerViewFactory(_viewType, (int viewId) {
       return _iframe;
@@ -51,6 +74,15 @@ class _JsxGraphEmbedWebState extends State<_JsxGraphEmbedWeb> {
       _payloadJson = nextPayloadJson;
       _iframe.contentWindow?.postMessage(_payloadJson.toJS, '*'.toJS);
     }
+  }
+
+  /// 필요한 변수는 현재 iframe DOM 요소다.
+  /// 작동 원리는 교재 페이지를 떠날 때 플랫폼 뷰를 즉시 숨기고 DOM에서 제거해 다음 Flutter 장면에 합성 레이어가 남지 않게 한다.
+  @override
+  void dispose() {
+    _iframe.style.display = 'none';
+    _iframe.remove();
+    super.dispose();
   }
 
   @override

@@ -114,6 +114,8 @@ def _difficulty_label(difficulty: str) -> str:
 
 
 def _normalize_daily_items(data: dict[str, Any]) -> dict[str, Any]:
+    # revision은 클라이언트가 보던 퀘스트 상태와 서버 원본을 비교하는 단조 증가 버전이다.
+    data["revision"] = max(1, int(data.get("revision") or 1))
     items = data.get("items")
     if not isinstance(items, list):
         data["items"] = []
@@ -140,6 +142,16 @@ def _normalize_daily_items(data: dict[str, Any]) -> dict[str, Any]:
             and not bool(item.get("reward_claimed"))
         )
     return data
+
+
+def _save_daily_quests(user_id: str, course_id: str, data: dict[str, Any]) -> None:
+    """필요 변수: 사용자·코스·당일 서버 퀘스트 원본이다.
+    작동 원리: 상태가 바뀔 때만 revision을 증가시켜 이후 보상 요청이 오래된 캐시를
+    제출하면 서버가 즉시 거부하고 최신 원본을 다시 받게 한다.
+    """
+    data["revision"] = max(1, int(data.get("revision") or 1)) + 1
+    key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
+    set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False, separators=(",", ":")))
 
 
 def _with_account_summary(data: dict[str, Any], user_id: str) -> dict[str, Any]:
@@ -277,6 +289,7 @@ def _build_daily_items_from_templates(
             {
                 "id": f"{day}-{index + 1}-{template.get('template_key')}",
                 "template_key": str(template.get("template_key") or ""),
+                "detector": dict(template.get("detector") or {}),
                 "quest_type": str(template.get("quest_type") or ""),
                 "title": str(template.get("title") or ""),
                 "description": str(template.get("description") or ""),
@@ -309,12 +322,17 @@ def _load_or_create_daily_quests(user_id: str, course_id: str) -> dict[str, Any]
             if isinstance(data, dict) and isinstance(data.get("items"), list):
                 normalized = _normalize_daily_items(data)
                 if normalized != data:
-                    set_user_kv(user_id, key, json.dumps(normalized, ensure_ascii=False))
+                    set_user_kv(user_id, key, json.dumps(normalized, ensure_ascii=False, separators=(",", ":")))
                 return normalized
         except json.JSONDecodeError:
             pass
 
-    all_templates = repo.list_daily_challenge_templates(enabled=True)
+    # 감지 규칙이 없는 종류는 실제 진행을 만들 수 없으므로 당일 배정에서 제외한다.
+    all_templates = [
+        template
+        for template in repo.list_daily_challenge_templates(enabled=True)
+        if isinstance(template.get("detector"), dict) and template["detector"].get("event")
+    ]
     templates = list(all_templates)
     configured_types = challenge_settings.get("available_types") or []
     if isinstance(configured_types, list) and configured_types:
@@ -340,6 +358,7 @@ def _load_or_create_daily_quests(user_id: str, course_id: str) -> dict[str, Any]
     created = {
         "course_id": course_id,
         "date": day,
+        "revision": 1,
         "items": _build_daily_items_from_templates(
             templates=templates,
             course=course,
@@ -348,7 +367,7 @@ def _load_or_create_daily_quests(user_id: str, course_id: str) -> dict[str, Any]
             day=day,
         ),
     }
-    set_user_kv(user_id, key, json.dumps(created, ensure_ascii=False))
+    set_user_kv(user_id, key, json.dumps(created, ensure_ascii=False, separators=(",", ":")))
     return created
 
 
@@ -379,19 +398,74 @@ def apply_daily_quest_event(user_id: str, body: Dict[str, Any]) -> tuple[dict[st
         updated = True
 
     if updated:
-        key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
-        set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
+        _save_daily_quests(user_id, course_id, data)
     response = _with_account_summary(data, user_id)
     return response, updated
+
+
+def record_daily_quest_activity(
+    user_id: str,
+    course_id: str,
+    signals: dict[str, int],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    """필요 변수: 사용자·코스·서버가 확인한 활동 신호·발생 역할(source).
+    작동 원리: 코스 런타임처럼 신뢰된 서버 역할에서만 템플릿의 detector와 신호를
+    대조해 진행도를 갱신한다. 외부 클라이언트 요청으로는 이 함수를 호출하지 않는다.
+    """
+    if not course_id or not signals:
+        return _with_account_summary(_load_or_create_daily_quests(user_id, course_id), user_id)
+
+    data = _load_or_create_daily_quests(user_id, course_id)
+    updated = False
+    for item in data.get("items", []):
+        if not isinstance(item, dict) or item.get("status") == "completed":
+            continue
+        detector = item.get("detector")
+        if not isinstance(detector, dict) or detector.get("source") != source:
+            continue
+        event = str(detector.get("event") or "")
+        value = max(0, int(signals.get(event) or 0))
+        if not event or value <= 0:
+            continue
+        target = max(1, int(item.get("target") or 1))
+        current = max(0, int(item.get("progress") or 0))
+        if detector.get("mode") == "threshold":
+            next_progress = max(current, min(value, target))
+        else:
+            next_progress = min(target, current + value)
+        if next_progress == current:
+            continue
+        item["progress"] = next_progress
+        if next_progress >= target:
+            item["status"] = "completed"
+            item["claim_status"] = "ready"
+            item["claimable"] = not bool(item.get("reward_claimed"))
+        updated = True
+
+    if updated:
+        _save_daily_quests(user_id, course_id, data)
+    return _with_account_summary(data, user_id)
 
 
 def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
     course_id = str(body.get("course_id") or "")
     quest_id = str(body.get("quest_id") or "")
+    expected_revision = body.get("revision")
     if not course_id or not quest_id:
         raise HTTPException(status_code=400, detail="course_id and quest_id are required")
 
     data = _load_or_create_daily_quests(user_id, course_id)
+    try:
+        revision_matches = int(expected_revision) == int(data.get("revision") or 1)
+    except (TypeError, ValueError):
+        revision_matches = False
+    if not revision_matches:
+        raise HTTPException(
+            status_code=409,
+            detail="Daily quest state is stale. Refresh required.",
+        )
     for item in data.get("items", []):
         if item.get("id") == quest_id:
             target = max(1, int(item.get("target") or 1))
@@ -399,8 +473,7 @@ def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
             if not is_completed:
                 item["claim_status"] = "verification_required"
                 item["claimable"] = False
-                key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
-                set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
+                _save_daily_quests(user_id, course_id, data)
                 return _with_account_summary(data, user_id)
 
             reward = student_account_store.award_daily_quest_points(
@@ -419,8 +492,7 @@ def complete_daily_quest(user_id: str, body: Dict[str, Any]) -> dict[str, Any]:
             )
             item["claim_status"] = "claimed"
             item["claimable"] = False
-            key = _daily_kv_key(course_id, str(data.get("date") or _daily_today()))
-            set_user_kv(user_id, key, json.dumps(data, ensure_ascii=False))
+            _save_daily_quests(user_id, course_id, data)
             response = _with_account_summary(data, user_id)
             response["account"] = reward
             return response

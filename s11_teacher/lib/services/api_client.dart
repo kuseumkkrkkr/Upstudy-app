@@ -1515,6 +1515,8 @@ class ApiClient {
   final http.Client _client = http.Client();
   String? _token;
   bool _loadedPersistedToken = false;
+  Future<String?>? _persistedTokenLoad;
+  Future<String>? _anonymousTokenLoad;
 
   void _assertBaseUrlConfigured() {
     final isLocal =
@@ -1528,11 +1530,13 @@ class ApiClient {
 
   Future<void> setToken(String token, {String? username, String? role}) async {
     _token = token;
+    _loadedPersistedToken = true;
     await AuthStorage.instance.saveToken(token, username: username, role: role);
   }
 
   Future<void> clearToken() async {
     _token = null;
+    _loadedPersistedToken = false;
     await AuthStorage.instance.clear();
   }
 
@@ -1543,14 +1547,50 @@ class ApiClient {
     if (_token != null) {
       return _token!;
     }
-    if (!_loadedPersistedToken) {
-      _loadedPersistedToken = true;
-      final stored = await AuthStorage.instance.readToken();
-      if (stored != null && stored.isNotEmpty) {
-        _token = stored;
-        return stored;
+    final stored = await _loadPersistedToken();
+    if (stored != null && stored.isNotEmpty) return stored;
+
+    final inFlight = _anonymousTokenLoad;
+    if (inFlight != null) return inFlight;
+    final request = _requestAnonymousToken();
+    _anonymousTokenLoad = request;
+    try {
+      return await request;
+    } finally {
+      if (identical(_anonymousTokenLoad, request)) {
+        _anonymousTokenLoad = null;
       }
     }
+  }
+
+  /// 필요 변수: 저장소의 JWT와 현재 메모리 JWT.
+  /// 작동 원리: 최초 저장소 읽기를 하나의 Future로 합쳐 동시 초기 요청의 익명 토큰 덮어쓰기를 막는다.
+  Future<String?> _loadPersistedToken() async {
+    if (_token != null) return _token;
+    if (_loadedPersistedToken) return null;
+
+    final inFlight = _persistedTokenLoad;
+    if (inFlight != null) return inFlight;
+    final request = AuthStorage.instance.readToken().then((stored) {
+      _loadedPersistedToken = true;
+      if (_token == null && stored != null && stored.isNotEmpty) {
+        _token = stored;
+      }
+      return _token;
+    });
+    _persistedTokenLoad = request;
+    try {
+      return await request;
+    } finally {
+      if (identical(_persistedTokenLoad, request)) {
+        _persistedTokenLoad = null;
+      }
+    }
+  }
+
+  /// 필요 변수: 익명 인증 API 응답과 현재 메모리 JWT.
+  /// 작동 원리: 익명 토큰 요청을 한 번만 수행하고 그 사이 교사 JWT가 설정되면 교사 JWT를 보존한다.
+  Future<String> _requestAnonymousToken() async {
     final uri = ApiContract.uri(ApiPaths.authAnonymous);
     final response = await _client.post(uri);
     if (response.statusCode != 200) {
@@ -1561,12 +1601,17 @@ class ApiClient {
     if (token == null || token.isEmpty) {
       throw Exception('Token missing in response');
     }
+    if (_token != null) return _token!;
     _token = token;
     return token;
   }
 
   Future<String> _ensureTeacherToken() async {
     _assertBaseUrlConfigured();
+    final role = await AuthStorage.instance.readRole();
+    if (role != 'teacher' && role != 'admin') {
+      throw Exception('Teacher login required');
+    }
     final stored = await AuthStorage.instance.readToken();
     if (stored != null && stored.isNotEmpty) {
       _loadedPersistedToken = true;

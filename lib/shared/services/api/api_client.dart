@@ -28,6 +28,27 @@ class ApiResponse<T> {
   }
 }
 
+/// 필요한 변수는 API 목록 원본, 행 변환 함수와 조회 출처다.
+/// 작동 원리는 각 행의 형변환·모델 생성을 독립 처리해 손상된 사용자 관련 행 하나가 전체 목록을 폐기하지 않게 하는 것이다.
+List<T> _parseListItemsSafely<T>(
+  Iterable<dynamic> items,
+  T Function(Map<String, dynamic>) parser, {
+  required String source,
+}) {
+  final parsed = <T>[];
+  for (final item in items) {
+    try {
+      parsed.add(parser(Map<String, dynamic>.from(item as Map)));
+    } catch (error) {
+      log(
+        'API 목록 행을 건너뜁니다: source=$source error=${error.runtimeType}',
+        name: 'ApiClient',
+      );
+    }
+  }
+  return parsed;
+}
+
 class _CachedApiResponse {
   _CachedApiResponse({
     required this.savedAt,
@@ -94,6 +115,7 @@ class StudyGroup {
   final List<String> memberIds;
   final String? password;
   final DateTime? createdAt;
+  final String creatorId;
 
   StudyGroup({
     required this.id,
@@ -109,6 +131,7 @@ class StudyGroup {
     this.memberIds = const [],
     this.password,
     this.createdAt,
+    this.creatorId = '',
   });
 
   String get groupId => id;
@@ -132,7 +155,23 @@ class StudyGroup {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : null,
+      creatorId: (json['creator_id'] ?? '').toString(),
     );
+  }
+}
+
+class StudyGroupMember {
+  final String userId;
+  final String username;
+
+  const StudyGroupMember({required this.userId, required this.username});
+
+  /// 필요한 변수는 서버가 반환한 사용자 ID와 닉네임이다.
+  /// 작동 원리는 닉네임이 비어 있거나 이전 서버 응답일 때 사용자 ID를 대체값으로 사용해 멤버 행이 비어 보이지 않게 하는 것이다.
+  factory StudyGroupMember.fromJson(Map<String, dynamic> json) {
+    final userId = (json['user_id'] ?? json['id'] ?? '').toString();
+    final username = (json['username'] ?? json['name'] ?? userId).toString();
+    return StudyGroupMember(userId: userId, username: username);
   }
 }
 
@@ -168,30 +207,65 @@ class StudyGroupInviteMeta {
   }
 }
 
+class StudyGroupSchedule {
+  final String scheduleId;
+  final String groupId;
+  final String title;
+  final String scheduledDate;
+  final String? scheduledTime;
+  final String createdAt;
+
+  const StudyGroupSchedule({
+    required this.scheduleId,
+    required this.groupId,
+    required this.title,
+    required this.scheduledDate,
+    this.scheduledTime,
+    required this.createdAt,
+  });
+
+  /// 필요한 변수는 서버 일정 JSON이다.
+  /// 작동 원리는 서버가 만료된 항목을 제거한 뒤 반환한 필드만 모델로 변환한다.
+  factory StudyGroupSchedule.fromJson(Map<String, dynamic> json) {
+    return StudyGroupSchedule(
+      scheduleId: (json['schedule_id'] ?? '').toString(),
+      groupId: (json['group_id'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      scheduledDate: (json['scheduled_date'] ?? '').toString(),
+      scheduledTime: json['scheduled_time']?.toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
+    );
+  }
+}
+
 class FriendProfile {
   final String userId;
   final String username;
-  final String? displayName;
-  final int? rating;
-  final DateTime? lastActive;
+  final String? name;
+  final String? profileImage;
+  final double ovr;
+  final String status;
 
   FriendProfile({
     required this.userId,
     required this.username,
-    this.displayName,
-    this.rating,
-    this.lastActive,
+    this.name,
+    this.profileImage,
+    this.ovr = 0,
+    this.status = '',
   });
 
   factory FriendProfile.fromJson(Map<String, dynamic> json) {
     return FriendProfile(
       userId: json['user_id'] ?? json['id'] ?? '',
       username: json['username'] ?? '',
-      displayName: json['display_name'],
-      rating: json['rating'],
-      lastActive: json['last_active'] != null
-          ? DateTime.tryParse(json['last_active'])
-          : null,
+      name: (json['name'] ?? json['display_name'])?.toString(),
+      profileImage: json['profile_image']?.toString(),
+      ovr:
+          (json['ovr'] as num?)?.toDouble() ??
+          (json['rating'] as num?)?.toDouble() ??
+          0,
+      status: (json['status'] ?? '').toString(),
     );
   }
 }
@@ -201,6 +275,9 @@ class FriendRequest {
   final String fromUserId;
   final String toUserId;
   final String status;
+  final String username;
+  final String direction;
+  final String? message;
   final DateTime? createdAt;
 
   FriendRequest({
@@ -208,6 +285,9 @@ class FriendRequest {
     required this.fromUserId,
     required this.toUserId,
     required this.status,
+    this.username = '',
+    this.direction = 'incoming',
+    this.message,
     this.createdAt,
   });
 
@@ -217,11 +297,16 @@ class FriendRequest {
       fromUserId: json['from_user_id'] ?? '',
       toUserId: json['to_user_id'] ?? '',
       status: json['status'] ?? 'pending',
+      username: (json['username'] ?? '').toString(),
+      direction: (json['direction'] ?? 'incoming').toString(),
+      message: json['message']?.toString(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : null,
     );
   }
+
+  String get id => requestId;
 }
 
 class SharedFlowItem {
@@ -232,6 +317,13 @@ class SharedFlowItem {
   final String refId;
   final String? title;
   final DateTime? createdAt;
+  final int codebaseId;
+  final int seed;
+  final String statusJson;
+  final String allFormulas;
+  final String answerRiddle;
+  final List<String> tags;
+  final int? difficulty;
 
   SharedFlowItem({
     required this.id,
@@ -241,6 +333,13 @@ class SharedFlowItem {
     required this.refId,
     this.title,
     this.createdAt,
+    this.codebaseId = 0,
+    this.seed = 0,
+    this.statusJson = '{}',
+    this.allFormulas = '',
+    this.answerRiddle = '',
+    this.tags = const [],
+    this.difficulty,
   });
 
   factory SharedFlowItem.fromJson(Map<String, dynamic> json) {
@@ -255,6 +354,16 @@ class SharedFlowItem {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : null,
+      codebaseId: (json['codebase_id'] as num?)?.toInt() ?? 0,
+      seed: (json['seed'] as num?)?.toInt() ?? 0,
+      statusJson: json['status_json']?.toString() ?? '{}',
+      allFormulas: json['all_formulas']?.toString() ?? '',
+      answerRiddle: json['answer_riddle']?.toString() ?? '',
+      tags: (json['tags'] as List? ?? const [])
+          .map((tag) => tag.toString())
+          .where((tag) => tag.isNotEmpty)
+          .toList(),
+      difficulty: (json['difficulty'] as num?)?.toInt(),
     );
   }
 }
@@ -451,8 +560,13 @@ class AccountSummary {
 class DailyQuestBundle {
   final List<DailyQuestItem> items;
   final AccountSummary account;
+  final int revision;
 
-  const DailyQuestBundle({required this.items, required this.account});
+  const DailyQuestBundle({
+    required this.items,
+    required this.account,
+    this.revision = 1,
+  });
 
   factory DailyQuestBundle.fromJson(Map<String, dynamic> json) {
     final items = (json['items'] as List<dynamic>? ?? const [])
@@ -463,7 +577,11 @@ class DailyQuestBundle {
     final account = accountRaw is Map
         ? AccountSummary.fromJson(Map<String, dynamic>.from(accountRaw))
         : const AccountSummary();
-    return DailyQuestBundle(items: items, account: account);
+    return DailyQuestBundle(
+      items: items,
+      account: account,
+      revision: (json['revision'] as num?)?.toInt() ?? 1,
+    );
   }
 }
 
@@ -645,6 +763,18 @@ class UserProfile {
       email: email ?? this.email,
     );
   }
+}
+
+class MarketplaceListingPage {
+  const MarketplaceListingPage({
+    required this.items,
+    required this.total,
+    this.nextOffset,
+  });
+
+  final List<Map<String, dynamic>> items;
+  final int total;
+  final int? nextOffset;
 }
 
 // ---------------------------------------------------------------------------
@@ -1071,6 +1201,26 @@ class StudentAssignmentTask {
   }
 }
 
+class StudentScheduleTask {
+  const StudentScheduleTask({
+    required this.taskId,
+    required this.date,
+    required this.title,
+  });
+
+  final String taskId;
+  final String date;
+  final String title;
+
+  factory StudentScheduleTask.fromJson(Map<String, dynamic> json) {
+    return StudentScheduleTask(
+      taskId: json['task_id']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+    );
+  }
+}
+
 class SubmissionReport {
   final String reportId;
   final String submissionId;
@@ -1243,6 +1393,10 @@ class ApiClient {
   static final Map<String, _CachedApiResponse> _memoryCache = {};
   static final Map<String, Future<http.Response>> _inflightCacheRequests = {};
   int _cacheGeneration = 0;
+
+  /// 필요한 변수는 메모리에 적재된 현재 JWT다.
+  /// 작동 원리: 라우트가 생성되는 순간 토큰 존재 여부를 동기적으로 확인해, 앱 시작 후 로그인한 세션도 즉시 반영한다.
+  bool get hasAuthenticatedSession => _token?.trim().isNotEmpty ?? false;
 
   Future<String> _ensureToken() async {
     if (_token != null) return _token!;
@@ -1676,6 +1830,75 @@ class ApiClient {
     return res.data ?? const [];
   }
 
+  /// 필요한 변수는 그룹 ID다.
+  /// 작동 원리는 캐시 없이 일정 API를 호출해 서버의 당일 만료 처리가 즉시 화면에
+  /// 반영되도록 한다.
+  Future<List<StudyGroupSchedule>> listStudyGroupSchedules(
+    String groupId,
+  ) async {
+    final res = await _get(
+      '/social/study-groups/$groupId/schedules',
+      parser: (d) => ((d['schedules'] as List?) ?? const [])
+          .map(
+            (item) => StudyGroupSchedule.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(growable: false),
+      useCache: false,
+    );
+    return res.data ?? const [];
+  }
+
+  /// 필요한 변수는 그룹 ID, 일정 제목, YYYY-MM-DD 날짜와 선택 HH:MM 시간이다.
+  /// 작동 원리는 서버에 그룹장 권한 검증을 요청하고 성공한 신규 일정만 반환한다.
+  Future<StudyGroupSchedule> createStudyGroupSchedule({
+    required String groupId,
+    required String title,
+    required String scheduledDate,
+    String? scheduledTime,
+  }) async {
+    final res = await _post(
+      '/social/study-groups/$groupId/schedules',
+      {
+        'title': title.trim(),
+        'scheduled_date': scheduledDate,
+        if (scheduledTime != null && scheduledTime.trim().isNotEmpty)
+          'scheduled_time': scheduledTime.trim(),
+      },
+      parser: (d) =>
+          StudyGroupSchedule.fromJson(Map<String, dynamic>.from(d as Map)),
+    );
+    return res.data ??
+        StudyGroupSchedule(
+          scheduleId: '',
+          groupId: groupId,
+          title: title,
+          scheduledDate: scheduledDate,
+          scheduledTime: scheduledTime,
+          createdAt: '',
+        );
+  }
+
+  /// 필요한 변수는 조회할 소셜 그룹 ID다.
+  /// 작동 원리는 소셜 그룹 멤버 API의 사용자 ID·닉네임을 그대로 모델로 변환하고 짧은 메모리 캐시로 반복 시트 열기 요청을 줄이는 것이다.
+  Future<List<StudyGroupMember>> listStudyGroupMembers(String groupId) async {
+    final res = await _get(
+      '/social/study-groups/$groupId/members',
+      parser: (data) {
+        final items = data is List ? data : const <dynamic>[];
+        return _parseListItemsSafely<StudyGroupMember>(
+          items,
+          StudyGroupMember.fromJson,
+          source: 'study_group_members',
+        );
+      },
+      useCache: true,
+      cacheTtl: const Duration(seconds: 30),
+    );
+    return res.data ?? const [];
+  }
+
   Future<StudyGroup> createStudyGroup({
     required String name,
     String? description,
@@ -1751,9 +1974,11 @@ class ApiClient {
     final res = await _get(
       '/social/friends',
       parser: (d) {
-        return (d['friends'] as List)
-            .map((e) => FriendProfile.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<FriendProfile>(
+          (d['friends'] as List<dynamic>?) ?? const [],
+          FriendProfile.fromJson,
+          source: 'friend_list',
+        );
       },
       useCache: true,
       cacheTtl: const Duration(minutes: 1),
@@ -1765,9 +1990,11 @@ class ApiClient {
     final res = await _get(
       '/social/friend-requests',
       parser: (d) {
-        return (d['requests'] as List)
-            .map((e) => FriendRequest.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<FriendRequest>(
+          (d['requests'] as List<dynamic>?) ?? const [],
+          FriendRequest.fromJson,
+          source: 'friend_request_list',
+        );
       },
       useCache: true,
       cacheTtl: const Duration(minutes: 1),
@@ -1784,26 +2011,31 @@ class ApiClient {
     final res = await _post(
       '/social/friend-requests',
       {
-        'to_user_id': target,
-        if (username != null && username.trim().isNotEmpty)
-          'username': username.trim(),
+        'username': target,
         if (message != null && message.trim().isNotEmpty)
           'message': message.trim(),
       },
       parser: (d) =>
           FriendRequest.fromJson(Map<String, dynamic>.from(d as Map)),
     );
+    await invalidateCachePath('/social/friend-requests');
     return res.data ??
         FriendRequest(
           requestId: '',
           fromUserId: '',
           toUserId: target,
           status: 'pending',
+          username: target,
+          direction: 'outgoing',
+          message: message,
         );
   }
 
   Future<void> acceptFriendRequest(String requestId) async {
     await _post('/social/friend-requests/$requestId/accept', {});
+    await invalidateCachePath('/social/friend-requests');
+    await invalidateCachePath('/social/friends');
+    await invalidateCachePath('/social/friends/rankings');
   }
 
   Future<List<SharedFlowItem>> listSharedFlows(
@@ -1992,6 +2224,94 @@ class ApiClient {
       cacheTtl: const Duration(seconds: 30),
     );
     return res.data ?? const <Map<String, dynamic>>[];
+  }
+
+  /// 필요한 변수는 마켓 검색·필터와 페이지 위치다.
+  /// 작동 원리는 서버가 조건에 맞는 소량의 목록만 반환하게 해 전체 마켓 원장을 내려받지 않는 것이다.
+  Future<MarketplaceListingPage> listMarketplaceListings({
+    String? query,
+    String? kind,
+    String? gradeBand,
+    String? price,
+    int offset = 0,
+    int limit = 20,
+  }) async {
+    final response = await _get<MarketplaceListingPage>(
+      '/marketplace/listings',
+      query: {
+        if (query != null && query.trim().isNotEmpty) 'query': query.trim(),
+        if (kind != null && kind.trim().isNotEmpty) 'kind': kind.trim(),
+        if (gradeBand != null && gradeBand.trim().isNotEmpty)
+          'grade_band': gradeBand.trim(),
+        if (price != null && price.trim().isNotEmpty) 'price': price.trim(),
+        'offset': '$offset',
+        'limit': '$limit',
+      },
+      parser: (data) {
+        final map = data is Map
+            ? Map<String, dynamic>.from(data)
+            : const <String, dynamic>{};
+        final rawItems = map['items'];
+        final items = rawItems is List
+            ? rawItems
+                  .whereType<Map>()
+                  .map((item) => Map<String, dynamic>.from(item))
+                  .toList(growable: false)
+            : const <Map<String, dynamic>>[];
+        return MarketplaceListingPage(
+          items: items,
+          total: int.tryParse(map['total']?.toString() ?? '') ?? items.length,
+          nextOffset: int.tryParse(map['next_offset']?.toString() ?? ''),
+        );
+      },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
+    );
+    return response.data ?? const MarketplaceListingPage(items: [], total: 0);
+  }
+
+  /// 필요한 변수는 로그인 사용자의 보유 마켓 자료다.
+  /// 작동 원리는 서버가 미완료 자료를 먼저, 이수 완료 자료를 마지막에 반환하게 해 학습 모달에 그대로 표시하는 것이다.
+  Future<List<Map<String, dynamic>>> listOwnedMarketplaceItems() async {
+    final response = await _get<Map<String, dynamic>>(
+      '/marketplace/my-items',
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+      useCache: false,
+    );
+    final rawItems = response.data?['items'];
+    return rawItems is List
+        ? rawItems
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(growable: false)
+        : const <Map<String, dynamic>>[];
+  }
+
+  /// 필요한 변수는 구매할 공개 상품 ID다.
+  /// 작동 원리는 서버에서 코인 차감과 보유 등록을 멱등 처리하고 갱신된 상품을 반환하는 것이다.
+  Future<Map<String, dynamic>> purchaseMarketplaceListing(
+    String listingId,
+  ) async {
+    final response = await _post<Map<String, dynamic>>(
+      '/marketplace/listings/${Uri.encodeComponent(listingId)}/purchase',
+      const <String, dynamic>{},
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
+
+  /// 필요한 변수는 보유 상품 ID·현재 문제 위치·완료 여부다.
+  /// 작동 원리는 중단 시 위치를 저장하고 마지막 문제까지 끝내면 이수 완료 상태로 바꾸는 것이다.
+  Future<void> updateMarketplaceProgress({
+    required String listingId,
+    required int progressIndex,
+    required bool completed,
+  }) async {
+    await _post<Map<String, dynamic>>(
+      '/marketplace/my-items/${Uri.encodeComponent(listingId)}/progress',
+      {'progress_index': progressIndex, 'completed': completed},
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+    );
   }
 
   Future<Map<String, dynamic>> generateQuest({
@@ -2316,7 +2636,11 @@ class ApiClient {
     return _get(
       '/academy',
       parser: (d) {
-        return (d['items'] as List).map((e) => Academy.fromJson(e)).toList();
+        return _parseListItemsSafely<Academy>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          Academy.fromJson,
+          source: 'academy_list',
+        );
       },
       useCache: true,
       cacheTtl: const Duration(minutes: 10),
@@ -2389,9 +2713,11 @@ class ApiClient {
     return _get(
       '/academy/groups',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => AcademyGroup.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<AcademyGroup>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          AcademyGroup.fromJson,
+          source: 'academy_groups',
+        );
       },
       query: {
         if (academyId != null) 'academy_id': academyId,
@@ -2486,9 +2812,11 @@ class ApiClient {
     return _get(
       '/academy/groups/$groupId/members',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => AcademyGroupMember.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<AcademyGroupMember>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          AcademyGroupMember.fromJson,
+          source: 'academy_group_members',
+        );
       },
       useCache: true,
       cacheTtl: const Duration(seconds: 45),
@@ -2530,9 +2858,11 @@ class ApiClient {
     return _get(
       '/academy/attendance',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => AttendanceLog.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<AttendanceLog>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          AttendanceLog.fromJson,
+          source: 'academy_attendance',
+        );
       },
       query: {
         if (groupId != null) 'group_id': groupId,
@@ -2605,9 +2935,11 @@ class ApiClient {
     return _get(
       '/academy/tuition',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => TuitionPayment.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<TuitionPayment>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          TuitionPayment.fromJson,
+          source: 'academy_tuition',
+        );
       },
       query: {
         if (academyId != null) 'academy_id': academyId,
@@ -2663,9 +2995,11 @@ class ApiClient {
     return _get(
       '/academy/ledger',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => FinanceLedger.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<FinanceLedger>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          FinanceLedger.fromJson,
+          source: 'academy_ledger',
+        );
       },
       query: {
         if (academyId != null) 'academy_id': academyId,
@@ -2730,9 +3064,11 @@ class ApiClient {
     return _get(
       '/academy/consult',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => ParentConsultNote.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<ParentConsultNote>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          ParentConsultNote.fromJson,
+          source: 'academy_consult',
+        );
       },
       query: {
         if (academyId != null) 'academy_id': academyId,
@@ -2774,9 +3110,11 @@ class ApiClient {
     return _get(
       '/academy/assignments',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => GroupAssignment.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<GroupAssignment>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          GroupAssignment.fromJson,
+          source: 'academy_assignments',
+        );
       },
       query: {
         if (groupId != null) 'group_id': groupId,
@@ -2793,9 +3131,11 @@ class ApiClient {
     return _get(
       '/academy/assignments/my',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => StudentAssignmentTask.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<StudentAssignmentTask>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          StudentAssignmentTask.fromJson,
+          source: 'student_assignments',
+        );
       },
       query: {if (kind != null) 'kind': kind},
       useCache: true,
@@ -2834,6 +3174,21 @@ class ApiClient {
     return _put('/academy/students/me/schedule', {'tasks_by_date': payload});
   }
 
+  /// 필요한 변수는 로그인 토큰과 개인 일정 API 응답이다.
+  /// 작동 원리: 홈 카드에 필요한 일정만 단일 GET 요청으로 읽고 짧은 캐시로 중복 진입을 줄인다.
+  Future<ApiResponse<List<StudentScheduleTask>>> listMyStudentSchedule() {
+    return _get(
+      '/academy/students/me/schedule',
+      parser: (d) => _parseListItemsSafely<StudentScheduleTask>(
+        (d['items'] as List<dynamic>?) ?? const [],
+        StudentScheduleTask.fromJson,
+        source: 'student_schedule',
+      ),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 1),
+    );
+  }
+
   static String _dateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
@@ -2848,9 +3203,11 @@ class ApiClient {
     return _get(
       '/academy/submissions',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => GroupSubmission.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<GroupSubmission>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          GroupSubmission.fromJson,
+          source: 'academy_submissions',
+        );
       },
       query: {
         if (assignmentId != null) 'assignment_id': assignmentId,
@@ -2944,9 +3301,11 @@ class ApiClient {
     return _get(
       '/academy/timetable/preferences',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => TimetablePreference.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<TimetablePreference>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          TimetablePreference.fromJson,
+          source: 'academy_timetable_preferences',
+        );
       },
       query: {
         if (groupId != null) 'group_id': groupId,
@@ -2979,9 +3338,11 @@ class ApiClient {
     return _get(
       '/academy/timetable/plans/$groupId',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => TimetablePlan.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<TimetablePlan>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          TimetablePlan.fromJson,
+          source: 'academy_timetable_plans',
+        );
       },
       useCache: true,
       cacheTtl: const Duration(minutes: 10),
@@ -3019,9 +3380,11 @@ class ApiClient {
     return _get(
       '/academy/snapshots',
       parser: (d) {
-        return (d['items'] as List)
-            .map((e) => StudentOverviewSnapshot.fromJson(e))
-            .toList();
+        return _parseListItemsSafely<StudentOverviewSnapshot>(
+          (d['items'] as List<dynamic>?) ?? const [],
+          StudentOverviewSnapshot.fromJson,
+          source: 'academy_snapshots',
+        );
       },
       query: {
         if (userId != null) 'user_id': userId,
@@ -3356,6 +3719,7 @@ class GroupSharedExam {
 class StudyGroupMessage {
   final String messageId;
   final String userId;
+  final String senderName;
   final String text;
   final String messageType;
   final Map<String, dynamic>? payload;
@@ -3363,6 +3727,7 @@ class StudyGroupMessage {
   const StudyGroupMessage({
     this.messageId = '',
     this.userId = '',
+    this.senderName = '',
     this.text = '',
     this.messageType = 'text',
     this.payload,
@@ -3476,14 +3841,7 @@ extension ExamItemCompat on ExamItem {
 extension SharedFlowItemCompat on SharedFlowItem {
   String get shareId => id;
   String get userId => senderId;
-  List<String> get tags => const [];
-  int? get difficulty => null;
-  int get codebaseId => 0;
-  int get seed => 0;
   String get questId => refId;
-  String get statusJson => '{}';
-  String get allFormulas => '';
-  String get answerRiddle => '';
   String get questTitle => title ?? '';
 }
 
@@ -3508,18 +3866,6 @@ extension StudyGroupCompat on StudyGroup {
   int? get logoIndex => null;
   bool get lockEnabled => false;
   int get members => memberCount;
-}
-
-extension FriendProfileCompat on FriendProfile {
-  String get status => '';
-  double get ovr => (rating ?? 0).toDouble();
-}
-
-extension FriendRequestCompat on FriendRequest {
-  String get id => requestId;
-  String get username => toUserId.isNotEmpty ? toUserId : fromUserId;
-  String get direction => 'incoming';
-  String? get message => null;
 }
 
 extension ApiClientLegacyCompat on ApiClient {
@@ -4064,12 +4410,13 @@ extension ApiClientLegacyCompat on ApiClient {
 
   Future<DailyQuestBundle> fetchDailyQuestBundle({
     required String courseId,
+    bool forceRefresh = false,
   }) async {
     final res = await _get<Map<String, dynamic>>(
       '/challenges/daily-quests',
       query: {'course_id': courseId},
       parser: (d) => Map<String, dynamic>.from(d as Map),
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(seconds: 20),
     );
     return DailyQuestBundle.fromJson(res.data ?? const <String, dynamic>{});
@@ -4104,10 +4451,12 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<List<DailyQuestItem>> completeDailyQuest({
     required String courseId,
     required String questId,
+    required int revision,
   }) async {
     final bundle = await completeDailyQuestBundle(
       courseId: courseId,
       questId: questId,
+      revision: revision,
     );
     return bundle.items;
   }
@@ -4115,10 +4464,11 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<DailyQuestBundle> completeDailyQuestBundle({
     required String courseId,
     required String questId,
+    required int revision,
   }) async {
     final res = await _post<Map<String, dynamic>>(
       '/challenges/daily-quests/complete',
-      {'course_id': courseId, 'quest_id': questId},
+      {'course_id': courseId, 'quest_id': questId, 'revision': revision},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return DailyQuestBundle.fromJson(res.data ?? const <String, dynamic>{});
@@ -4453,15 +4803,14 @@ extension ApiClientLegacyCompat on ApiClient {
       '/social/friends/rankings',
       parser: (d) {
         final items = (d['ranks'] as List<dynamic>?) ?? const [];
-        return items.map((e) {
-          final m = e as Map<String, dynamic>;
+        return _parseListItemsSafely<FriendRank>(items, (m) {
           return FriendRank(
             rank: (m['rank'] as int?) ?? 0,
             username: (m['username'] ?? '').toString(),
             visibleOvr: (m['visible_ovr'] as num?)?.toDouble() ?? 0.0,
             isMe: m['is_me'] == true,
           );
-        }).toList();
+        }, source: 'friend_rankings');
       },
       useCache: true,
       cacheTtl: const Duration(minutes: 1),
@@ -4471,10 +4820,12 @@ extension ApiClientLegacyCompat on ApiClient {
 
   Future<void> declineFriendRequest(String requestId) async {
     await _post('/social/friend-requests/$requestId/decline', {});
+    await invalidateCachePath('/social/friend-requests');
   }
 
   Future<void> cancelFriendRequest(String requestId) async {
     await _post('/social/friend-requests/$requestId/cancel', {});
+    await invalidateCachePath('/social/friend-requests');
   }
 
   Future<List<DirectMessage>> fetchConversationThreads({
@@ -4488,9 +4839,11 @@ extension ApiClientLegacyCompat on ApiClient {
       query: query,
       parser: (d) {
         final items = (d['messages'] as List<dynamic>?) ?? const [];
-        return items
-            .map((e) => DirectMessage.fromJson(e as Map<String, dynamic>))
-            .toList();
+        return _parseListItemsSafely<DirectMessage>(
+          items,
+          DirectMessage.fromJson,
+          source: 'conversation_threads',
+        );
       },
       useCache: true,
       cacheTtl: const Duration(seconds: 10),
@@ -4514,9 +4867,11 @@ extension ApiClientLegacyCompat on ApiClient {
       query: query,
       parser: (d) {
         final items = (d['messages'] as List<dynamic>?) ?? const [];
-        return items
-            .map((e) => DirectMessage.fromJson(e as Map<String, dynamic>))
-            .toList();
+        return _parseListItemsSafely<DirectMessage>(
+          items,
+          DirectMessage.fromJson,
+          source: 'direct_messages',
+        );
       },
       useCache: true,
       cacheTtl: const Duration(seconds: 10),
@@ -4528,18 +4883,46 @@ extension ApiClientLegacyCompat on ApiClient {
     String? to,
     String? peerUsername,
     required String text,
-  }) async => DirectMessage(
-    id: '',
-    from: '',
-    to: to ?? peerUsername ?? '',
-    text: text,
-    createdAt: DateTime.now(),
-    isMine: true,
-  );
+  }) async {
+    final target = (to ?? peerUsername ?? '').trim();
+    final res = await _post(
+      '/social/messages',
+      {'peer': target, 'text': text.trim()},
+      parser: (d) =>
+          DirectMessage.fromJson(Map<String, dynamic>.from(d as Map)),
+    );
+    await invalidateCachePath('/social/conversations');
+    await invalidateCachePath('/social/messages');
+    return res.data ??
+        DirectMessage(
+          id: '',
+          from: '',
+          to: target,
+          text: text.trim(),
+          createdAt: DateTime.now(),
+          isMine: true,
+        );
+  }
 
-  Future<void> deleteConversation([String? peerUsername, String? peer]) async {}
+  /// 필요한 변수는 삭제할 대화 상대의 사용자명이다.
+  /// 작동 원리는 서버 대화 삭제 API를 호출한 뒤 쪽지 캐시를 함께 비우는 것이다.
+  Future<void> deleteConversation([String? peerUsername, String? peer]) async {
+    final target = (peerUsername ?? peer ?? '').trim();
+    if (target.isEmpty) return;
+    await _post('/social/messages/${Uri.encodeComponent(target)}/delete', {});
+    await invalidateCachePath('/social/conversations');
+    await invalidateCachePath('/social/messages');
+  }
 
-  Future<void> removeFriend(String username) async {}
+  /// 필요한 변수는 삭제할 친구의 사용자명이다.
+  /// 작동 원리는 서버 친구 삭제 API를 호출하고 친구·랭킹 캐시를 무효화하는 것이다.
+  Future<void> removeFriend(String username) async {
+    final target = username.trim();
+    if (target.isEmpty) return;
+    await _post('/social/friends/remove', {'username': target});
+    await invalidateCachePath('/social/friends');
+    await invalidateCachePath('/social/friends/rankings');
+  }
 
   Future<List<FriendProfile>> searchFriends({String? query, int? limit}) async {
     final q = (query ?? '').trim();
@@ -4549,12 +4932,11 @@ extension ApiClientLegacyCompat on ApiClient {
       {'query': q, 'limit': limit ?? 20},
       parser: (d) {
         final users = (d['users'] as List<dynamic>?) ?? const [];
-        return users
-            .map(
-              (e) =>
-                  FriendProfile.fromJson(Map<String, dynamic>.from(e as Map)),
-            )
-            .toList();
+        return _parseListItemsSafely<FriendProfile>(
+          users,
+          FriendProfile.fromJson,
+          source: 'friend_search',
+        );
       },
     );
     return res.data ?? const [];
@@ -4685,8 +5067,8 @@ extension ApiClientLegacyCompat on ApiClient {
             );
           })
           .toList(),
-      useCache: true,
-      cacheTtl: const Duration(minutes: 2),
+      // 하루 보존 리소스는 만료 후 로컬 캐시에서 다시 노출되지 않도록 항상 서버에서 확인한다.
+      useCache: false,
     );
     return res.data ?? const [];
   }
@@ -4712,8 +5094,8 @@ extension ApiClientLegacyCompat on ApiClient {
             );
           })
           .toList(),
-      useCache: true,
-      cacheTtl: const Duration(minutes: 2),
+      // 하루 보존 리소스는 만료 후 로컬 캐시에서 다시 노출되지 않도록 항상 서버에서 확인한다.
+      useCache: false,
     );
     return res.data ?? const [];
   }
@@ -4778,6 +5160,7 @@ extension ApiClientLegacyCompat on ApiClient {
           return StudyGroupMessage(
             messageId: (m['message_id'] ?? '').toString(),
             userId: (m['user_id'] ?? '').toString(),
+            senderName: (m['sender_name'] ?? '').toString(),
             text: (m['text'] ?? '').toString(),
             messageType: (m['message_type'] ?? 'text').toString(),
             payload: m['payload'] is Map
@@ -4787,8 +5170,8 @@ extension ApiClientLegacyCompat on ApiClient {
           );
         }).toList();
       },
-      useCache: true,
-      cacheTtl: const Duration(seconds: 10),
+      // 채팅은 서버 만료 정책을 즉시 반영해야 하므로 영구 SharedPreferences 캐시를 사용하지 않는다.
+      useCache: false,
     );
     return res.data ?? const [];
   }
@@ -4805,6 +5188,7 @@ extension ApiClientLegacyCompat on ApiClient {
         return StudyGroupMessage(
           messageId: (m['message_id'] ?? '').toString(),
           userId: (m['user_id'] ?? '').toString(),
+          senderName: (m['sender_name'] ?? '').toString(),
           text: (m['text'] ?? '').toString(),
           messageType: (m['message_type'] ?? 'text').toString(),
           payload: m['payload'] is Map

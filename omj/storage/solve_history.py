@@ -1,10 +1,7 @@
 import json
-import sqlite3
+from infra.db import postgres_compat as db
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
-
-from storage.storage import DB_PATH
-
 
 # 필요 변수: 이의신청 확인에 필요한 최근 풀이 기록의 보관 일수와 최대 건수.
 # 작동 원리: 서버는 최근 7일분만 유지하고, 저장 직후 만료 행을 삭제해 장기 영구 적재를 막는다.
@@ -23,7 +20,7 @@ def _cutoff(days: int) -> str:
 
 
 def init_solve_history_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -67,7 +64,7 @@ def _compress_payload(raw: Dict[str, Any]) -> Dict[str, Any]:
 
 def _purge_and_compress(user_id: str, *, delete_after_max: bool = True) -> None:
     init_solve_history_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     # 7일 정책에서는 압축 보관 구간이 없으며, 만료 행만 삭제한다.
     cutoff_full = _cutoff(_RETENTION_FULL_DAYS)
@@ -128,7 +125,7 @@ def save_solve_history(
 ) -> None:
     """Persist full solve payload then enforce retention/compression policy."""
     init_solve_history_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -172,7 +169,7 @@ def list_solve_history(
     days = max(1, min(days, _RETENTION_MAX_DAYS))
     limit = max(1, min(limit, _MAX_RECORDS_PER_USER))
     cutoff = _cutoff(days)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     where = ["user_id = ?", "created_at >= ?"]
     params: list[Any] = [user_id, cutoff]
@@ -222,7 +219,7 @@ def recent_correct_codebases(
     """
     init_solve_history_db()
     cutoff = _cutoff(days)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -271,7 +268,7 @@ def is_latest_fully_correct(
     Check the most recent solve record for the given target and see if all steps were correct.
     """
     init_solve_history_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     where = ["user_id = ?", "kind = ?"]
     params: list[Any] = [user_id, kind]

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/services/textbook_reader_preferences.dart';
@@ -17,11 +18,15 @@ class ProfilePage extends StatefulWidget {
   const ProfilePage({
     super.key,
     this.initialProfile,
+    this.initialRating,
+    this.initialTotalSolvedCount,
     this.initialTextbookPageMode,
     this.showDeleteDialogOnStart = false,
   });
 
   final UserProfile? initialProfile;
+  final UserRating? initialRating;
+  final int? initialTotalSolvedCount;
   final bool? initialTextbookPageMode;
   final bool showDeleteDialogOnStart;
 
@@ -49,6 +54,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _errorText;
   UserProfile? _profile;
   String? _originalUsername;
+  UserRating? _rating;
+  int? _totalSolvedCount;
 
   @override
   void initState() {
@@ -59,6 +66,8 @@ class _ProfilePageState extends State<ProfilePage> {
       return;
     }
     _applyProfile(initial);
+    _rating = widget.initialRating;
+    _totalSolvedCount = widget.initialTotalSolvedCount;
     _textbookPageMode = widget.initialTextbookPageMode ?? _textbookPageMode;
     _loading = false;
     if (widget.showDeleteDialogOnStart) {
@@ -95,18 +104,26 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  /// 필요한 변수는 인증된 사용자 프로필·레이팅과 사용자별 활동 기록이다.
+  /// 작동 원리는 서로 독립적인 조회를 병렬 실행하고, 통계 조회 하나가 실패해도 프로필 편집은 계속 제공하는 것이다.
   Future<void> _loadProfile() async {
     try {
-      final results = await Future.wait<Object>([
+      final results = await Future.wait<Object?>([
         ApiClient.instance.getMyProfile(),
         TextbookReaderPreferences.loadPageMode(),
+        _loadRating(),
+        _loadActivity(),
       ]);
       final profile = results[0] as UserProfile;
       final textbookPageMode = results[1] as bool;
+      final rating = results[2] as UserRating?;
+      final activity = results[3] as ActivitySnapshot?;
       if (!mounted) return;
       setState(() {
         _textbookPageMode = textbookPageMode;
         _applyProfile(profile);
+        _rating = rating;
+        _totalSolvedCount = activity?.totalSolvedCount;
         _loading = false;
       });
     } catch (error) {
@@ -115,6 +132,26 @@ class _ProfilePageState extends State<ProfilePage> {
         _errorText = error.toString();
         _loading = false;
       });
+    }
+  }
+
+  /// 필요한 변수는 현재 인증 토큰이다.
+  /// 작동 원리는 서버 레이팅 조회 실패를 null로 격리해 계정 정보 로드를 막지 않는 것이다.
+  Future<UserRating?> _loadRating() async {
+    try {
+      return await ApiClient.instance.fetchUserRating();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 필요한 변수는 현재 로그인 사용자명과 UTF-8 활동 저장 데이터이다.
+  /// 작동 원리는 사용자 범위로 분리된 활동 스냅샷을 읽고 손상·조회 오류는 null로 격리하는 것이다.
+  Future<ActivitySnapshot?> _loadActivity() async {
+    try {
+      return await ActivityStore.load();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -467,6 +504,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       name: name,
                       username: _usernameController.text,
                       grade: _gradeController.text,
+                      track: _trackController.text,
+                      subject: _subjectController.text,
+                      school: _schoolController.text,
+                      rating: _rating,
+                      totalSolvedCount: _totalSolvedCount,
                     ),
                     const SizedBox(height: 12),
                     Container(
@@ -715,6 +757,11 @@ class _ProfilePageState extends State<ProfilePage> {
                             name: name,
                             username: _usernameController.text,
                             grade: _gradeController.text,
+                            track: _trackController.text,
+                            subject: _subjectController.text,
+                            school: _schoolController.text,
+                            rating: _rating,
+                            totalSolvedCount: _totalSolvedCount,
                           ),
                           const SizedBox(height: 14),
                           Row(
@@ -1364,98 +1411,154 @@ class _ProfileHero extends StatelessWidget {
     required this.name,
     required this.username,
     required this.grade,
+    required this.track,
+    required this.subject,
+    required this.school,
+    required this.rating,
+    required this.totalSolvedCount,
   });
   final String name;
   final String username;
   final String grade;
+  final String track;
+  final String subject;
+  final String school;
+  final UserRating? rating;
+  final int? totalSolvedCount;
 
-  /// 필요한 변수는 이름·아이디·학년이다.
-  /// 작동 원리는 초성, 학습 메타, OVR·티어·누적 풀이를 어두운 HTML 계정 카드에 집약하는 것이다.
+  /// 필요한 변수는 사용자 프로필·서버 레이팅·사용자별 누적 풀이 수이다.
+  /// 작동 원리는 실제 학습 메타와 통계를 어두운 HTML 계정 카드에 집약하고 미조회 값은 --로 명확히 구분하는 것이다.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-    decoration: BoxDecoration(
-      color: const Color(0xFF202022),
-      borderRadius: BorderRadius.circular(38),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Center(
-          child: Text(
-            'STUDENT PROFILE',
-            style: TextStyle(
-              color: Colors.white38,
-              fontSize: 10,
-              letterSpacing: 1.6,
-              fontWeight: FontWeight.w900,
+  Widget build(BuildContext context) {
+    final schoolLabel = school.trim().isEmpty ? '학교 미설정' : school.trim();
+    final profileMeta = [
+      track.trim(),
+      subject.trim(),
+    ].where((value) => value.isNotEmpty).join('   ');
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF202022),
+        borderRadius: BorderRadius.circular(38),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(
+            child: Text(
+              'STUDENT PROFILE',
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 10,
+                letterSpacing: 1.6,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Container(
-              width: 68,
-              height: 68,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Text(
-                name.isEmpty ? '?' : name.characters.first,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Container(
+                width: 68,
+                height: 68,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Text(
+                  name.isEmpty ? '?' : name.characters.first,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    '@$username · AIFlow 중학교 $grade',
-                    style: const TextStyle(color: Colors.white38, fontSize: 11),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    '학교 과정   수학   개인 학습 생활',
-                    style: TextStyle(color: Colors.white54, fontSize: 9),
-                  ),
-                ],
+                    const SizedBox(height: 18),
+                    Text(
+                      '@$username · $schoolLabel${grade.trim().isEmpty ? '' : ' ${grade.trim()}'}',
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      profileMeta.isEmpty ? '학습 과정 미설정' : profileMeta,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 22),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.white12),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Row(
-            children: [
-              _ProfileMetric(label: '현재 OVR', value: '18.6'),
-              _ProfileMetric(label: '티어', value: 'B'),
-              _ProfileMetric(label: '누적 풀이', value: '128'),
             ],
           ),
-        ),
-      ],
-    ),
+          const SizedBox(height: 22),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                _ProfileMetric(
+                  label: '현재 OVR',
+                  value: _formatProfileOvr(rating?.ovr),
+                ),
+                _ProfileMetric(
+                  label: '티어',
+                  value: _profileTier(rating?.rating),
+                ),
+                _ProfileMetric(
+                  label: '누적 풀이',
+                  value: totalSolvedCount?.toString() ?? '--',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+const double _profileRatingFloor = 1200;
+const double _profileOvrDivider = 128;
+
+/// 필요한 변수는 서버의 원본 OVR 값이다.
+/// 작동 원리는 레거시 표시 OVR은 그대로 쓰고 원본 레이팅 축은 대시보드와 같은 공식으로 환산하는 것이다.
+String _formatProfileOvr(double? value) {
+  if (value == null || value.isNaN || value <= 0) return '--';
+  if (value < _profileRatingFloor) return value.toStringAsFixed(1);
+  return ((value - _profileRatingFloor) / _profileOvrDivider).toStringAsFixed(
+    1,
   );
+}
+
+/// 필요한 변수는 서버의 현재 사용자 레이팅이다.
+/// 작동 원리는 서버 아레나와 동일한 고정 경계로 A~E 티어를 계산해 화면 간 등급 불일치를 막는 것이다.
+String _profileTier(double? rating) {
+  if (rating == null || rating.isNaN || rating <= 0) return '--';
+  if (rating >= 2000) return 'A';
+  if (rating >= 1750) return 'B';
+  if (rating >= 1500) return 'C';
+  if (rating >= 1000) return 'D';
+  return 'E';
 }
 
 class _ProfileMetric extends StatelessWidget {

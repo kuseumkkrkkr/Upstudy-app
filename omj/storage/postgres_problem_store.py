@@ -21,6 +21,14 @@ def _env_int(name: str, default: int, minimum: int = 1) -> int:
         return max(minimum, default)
 
 
+def _env_float(name: str, default: float, minimum: float = 0.1) -> float:
+    """필요 변수: 환경 변수명·기본값·최솟값. 작동 원리: 연결 대기시간 설정을 양수 실수로 안전하게 보정한다."""
+    try:
+        return max(minimum, float(os.getenv(name, str(default))))
+    except (TypeError, ValueError):
+        return max(minimum, default)
+
+
 class PostgresProblemStore:
     """DATABASE_URL이 설정된 환경에서만 PostgreSQL 영속 저장소를 사용한다."""
 
@@ -63,7 +71,8 @@ class PostgresProblemStore:
                     conninfo=database_url,
                     min_size=1,
                     max_size=_env_int("POSTGRES_POOL_MAX_SIZE", 20, minimum=4),
-                    timeout=1,
+                    # 자동 재로딩 직후에는 백그라운드 연결 생성이 startup 검사보다 늦을 수 있다.
+                    timeout=_env_float("POSTGRES_POOL_ACQUIRE_TIMEOUT_SEC", 10.0),
                     open=True,
                 )
                 self._pool_failed_at = 0.0
@@ -260,7 +269,7 @@ class PostgresProblemStore:
             return False
 
     def _submit_bounded(self, function: Any, /, **kwargs: Any) -> bool:
-        """필요 변수: DB 기록 함수와 인자. 작동 원리: 대기열 상한을 넘으면 즉시 SQLite 경로만 유지해 메모리 무한 증가를 막는다."""
+        """필요 변수: DB 기록 함수와 인자. 작동 원리: 대기열 상한을 넘으면 추가 작업을 거부해 메모리 무한 증가를 막는다."""
         if not self._write_slots.acquire(blocking=False):
             return False
         try:
@@ -272,7 +281,7 @@ class PostgresProblemStore:
             return False
 
     def enqueue_problem_upsert(self, quest: dict[str, Any]) -> bool:
-        """필요 변수: SQLite 저장이 끝난 문제. 작동 원리: 요청 지연 없이 제한된 큐로 PostgreSQL 이중 기록을 수행한다."""
+        """필요 변수: 저장할 문제. 작동 원리: 요청 지연 없이 제한된 큐로 PostgreSQL 기록을 수행한다."""
         if not os.getenv("DATABASE_URL", "").strip():
             return False
         return self._submit_bounded(self.upsert_problem, quest=quest)
@@ -314,8 +323,103 @@ class PostgresProblemStore:
                 )
         return snapshot
 
+    def get_problem(self, quest_id: str) -> Optional[dict[str, Any]]:
+        """필요 변수: 문제 ID와 PostgreSQL 연결 풀.
+        작동 원리: 단일 JSONB payload를 기본키로 조회해 원래 문제 계약으로 반환한다.
+        """
+        pool = self.get_pool()
+        with pool.connection() as conn, conn.cursor() as cur:
+            cur.execute("SELECT payload FROM problem_payload WHERE quest_id = %s", (quest_id,))
+            row = cur.fetchone()
+        payload = row[0] if row else None
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        return dict(payload) if isinstance(payload, dict) else None
+
+    def search_problems(
+        self,
+        *,
+        hash_tag: Optional[str] = None,
+        quest_id: Optional[str] = None,
+        text_query: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict[str, Any]:
+        """필요 변수: 선택 검색 조건과 페이지 정보.
+        작동 원리: JSONB 태그와 payload 텍스트를 PostgreSQL에서 필터링하고 같은 연결에서 총수를 계산한다.
+        """
+        from psycopg.types.json import Jsonb
+
+        clauses = ["quality_status = 'approved'"]
+        params: list[Any] = []
+        tags = [
+            value.strip().lstrip("#").lower()
+            for value in (hash_tag or "").replace(";", ",").split(",")
+            if value.strip()
+        ]
+        if tags:
+            clauses.append("tags @> %s")
+            params.append(Jsonb(tags))
+        if quest_id and quest_id.strip():
+            clauses.append("quest_id ILIKE %s")
+            params.append(f"%{quest_id.strip()}%")
+        if text_query and text_query.strip():
+            clauses.append("payload::text ILIKE %s")
+            params.append(f"%{text_query.strip()}%")
+
+        safe_page = max(1, int(page))
+        safe_size = max(1, min(int(page_size), 200))
+        offset = (safe_page - 1) * safe_size
+        where = " AND ".join(clauses)
+        pool = self.get_pool()
+        with pool.connection() as conn, conn.cursor() as cur:
+            cur.execute(f"SELECT COUNT(*) FROM problem_payload WHERE {where}", params)
+            total_row = cur.fetchone()
+            cur.execute(
+                f"""SELECT payload FROM problem_payload
+                    WHERE {where}
+                    ORDER BY updated_at DESC, quest_id DESC
+                    LIMIT %s OFFSET %s""",
+                [*params, safe_size, offset],
+            )
+            rows = cur.fetchall()
+        quests: list[dict[str, Any]] = []
+        for row in rows:
+            payload = row[0]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            if isinstance(payload, dict):
+                quests.append(dict(payload))
+        return {
+            "quests": quests,
+            "total": int(total_row[0]) if total_row else 0,
+            "page": safe_page,
+            "page_size": safe_size,
+        }
+
+    def update_problem_mcq(
+        self,
+        quest_id: str,
+        *,
+        quest_options: list[Any],
+        choice_answer_index: int,
+        meta: Optional[dict[str, Any]] = None,
+    ) -> bool:
+        """필요 변수: 문제 ID·선택지·정답 인덱스·메타데이터.
+        작동 원리: 기존 JSONB payload의 MCQ 필드만 바꾼 뒤 PostgreSQL UPSERT로 저장한다.
+        """
+        payload = self.get_problem(quest_id)
+        if payload is None:
+            return False
+        data = payload.setdefault("data", {})
+        data["question_type"] = "multiple_choice"
+        data["quest_options"] = quest_options
+        data["choice_answer_index"] = int(choice_answer_index)
+        data["meta"] = meta or {}
+        return self.upsert_problem(payload, strict=False)
+
     def problem_history_keys(self) -> set[tuple[str, int, int]]:
-        """필요 변수: PostgreSQL 풀이 이력. 작동 원리: SQLite 과거 variant가 모두 이관됐는지 검증할 복합 키 집합을 읽는다."""
+        """필요 변수: PostgreSQL 풀이 이력. 작동 원리: 과거 variant가 모두 이관됐는지 검증할 복합 키 집합을 읽는다."""
         pool = self._get_pool()
         if pool is None:
             raise RuntimeError("PostgreSQL connection pool is unavailable")

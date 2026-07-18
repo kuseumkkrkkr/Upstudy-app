@@ -10,7 +10,11 @@ from datetime import datetime, timezone
 from typing import Any, List, Optional
 
 from domain.challenge.models import Challenge, StudentChallengeProgress
-from domain.challenge.daily_templates import DEFAULT_DAILY_CHALLENGE_TEMPLATES, POINTS_BY_DIFFICULTY
+from domain.challenge.daily_templates import (
+    DEFAULT_DAILY_CHALLENGE_TEMPLATES,
+    POINTS_BY_DIFFICULTY,
+    daily_quest_detector,
+)
 from storage.storage import DB_PATH
 
 
@@ -69,12 +73,33 @@ def _ensure_challenge_tables() -> None:
             target INTEGER NOT NULL DEFAULT 1,
             reward_points INTEGER NOT NULL DEFAULT 0,
             module_types_json TEXT NOT NULL DEFAULT '[]',
+            detector_json TEXT NOT NULL DEFAULT '{}',
             enabled INTEGER NOT NULL DEFAULT 1,
             sort_order INTEGER NOT NULL DEFAULT 0,
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
         """
     )
+    # 기존 SQLite 설치에도 감지 규칙 열을 안전하게 추가한다.
+    columns = {row[1] for row in cur.execute("PRAGMA table_info(daily_challenge_template)")}
+    if "detector_json" not in columns:
+        cur.execute(
+            "ALTER TABLE daily_challenge_template ADD COLUMN detector_json TEXT NOT NULL DEFAULT '{}'"
+        )
+    # 기존 템플릿도 종류에 맞는 서버 감지 규칙을 한 번만 채운다.
+    for quest_type, detector in ((key, daily_quest_detector(key)) for key in (
+        "course_stage_progress", "solve_n_problems", "exam_accuracy_threshold",
+        "textbook_read_complete", "weakness_review_n_problems", "exam_attempt",
+        "wrong_answer_correct", "exam_perfect_score", "focus_minutes", "activity_score_reach",
+    )):
+        cur.execute(
+            """
+            UPDATE daily_challenge_template
+            SET detector_json = ?
+            WHERE quest_type = ? AND (detector_json IS NULL OR detector_json IN ('', '{}'))
+            """,
+            (json.dumps(detector, ensure_ascii=False), quest_type),
+        )
     cur.execute(
         """
         CREATE INDEX IF NOT EXISTS idx_daily_challenge_template_enabled_diff
@@ -109,6 +134,7 @@ def _seed_default_daily_templates(cur: sqlite3.Cursor) -> None:
                 int(template.get("target") or 1),
                 int(template.get("reward_points") or POINTS_BY_DIFFICULTY[difficulty]),
                 json.dumps(template.get("module_types") or [], ensure_ascii=False),
+                json.dumps(daily_quest_detector(str(template["quest_type"])) or {}, ensure_ascii=False),
                 1,
                 index,
                 _now_iso(),
@@ -118,9 +144,9 @@ def _seed_default_daily_templates(cur: sqlite3.Cursor) -> None:
         """
         INSERT INTO daily_challenge_template (
             template_key, title, description, quest_type, difficulty, target,
-            reward_points, module_types_json, enabled, sort_order, updated_at
+            reward_points, module_types_json, detector_json, enabled, sort_order, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         rows,
     )
@@ -146,7 +172,7 @@ def list_daily_challenge_templates(
         rows = conn.execute(
             f"""
             SELECT id, template_key, title, description, quest_type, difficulty,
-                   target, reward_points, module_types_json, enabled, sort_order, updated_at
+                   target, reward_points, module_types_json, detector_json, enabled, sort_order, updated_at
             FROM daily_challenge_template
             {where_sql}
             ORDER BY difficulty, sort_order, id
@@ -178,6 +204,7 @@ def upsert_daily_challenge_template(payload: dict[str, Any]) -> dict[str, Any]:
         max(1, int(payload.get("target") or 1)),
         max(0, int(payload.get("reward_points") or POINTS_BY_DIFFICULTY[difficulty])),
         json.dumps([str(t) for t in module_types if str(t).strip()], ensure_ascii=False),
+        json.dumps(daily_quest_detector(str(payload.get("quest_type") or template_key)) or {}, ensure_ascii=False),
         1 if payload.get("enabled", True) else 0,
         int(payload.get("sort_order") or 0),
         now,
@@ -187,9 +214,9 @@ def upsert_daily_challenge_template(payload: dict[str, Any]) -> dict[str, Any]:
             """
             INSERT INTO daily_challenge_template (
                 template_key, title, description, quest_type, difficulty, target,
-                reward_points, module_types_json, enabled, sort_order, updated_at
+                reward_points, module_types_json, detector_json, enabled, sort_order, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(template_key) DO UPDATE SET
                 title = excluded.title,
                 description = excluded.description,
@@ -198,6 +225,7 @@ def upsert_daily_challenge_template(payload: dict[str, Any]) -> dict[str, Any]:
                 target = excluded.target,
                 reward_points = excluded.reward_points,
                 module_types_json = excluded.module_types_json,
+                detector_json = excluded.detector_json,
                 enabled = excluded.enabled,
                 sort_order = excluded.sort_order,
                 updated_at = excluded.updated_at
@@ -525,6 +553,14 @@ def _row_to_daily_template(row: Any) -> dict[str, Any]:
         module_types = []
     if not isinstance(module_types, list):
         module_types = []
+    try:
+        detector = json.loads(row[9] or "{}")
+    except json.JSONDecodeError:
+        detector = {}
+    if not isinstance(detector, dict):
+        detector = {}
+    # 과거에 생성된 행은 열 추가 전에는 감지 규칙이 비어 있으므로 종류 기준으로 보정한다.
+    detector = detector or daily_quest_detector(str(row[4])) or {}
     return {
         "id": row[0],
         "template_key": row[1],
@@ -535,7 +571,8 @@ def _row_to_daily_template(row: Any) -> dict[str, Any]:
         "target": int(row[6] or 1),
         "reward_points": int(row[7] or 0),
         "module_types": [str(item) for item in module_types],
-        "enabled": bool(row[9]),
-        "sort_order": int(row[10] or 0),
-        "updated_at": row[11],
+        "detector": detector,
+        "enabled": bool(row[10]),
+        "sort_order": int(row[11] or 0),
+        "updated_at": row[12],
     }

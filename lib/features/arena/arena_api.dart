@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/api_contract.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -28,6 +29,9 @@ class ArenaApi {
   ArenaApi._();
 
   static final ArenaApi instance = ArenaApi._();
+
+  /// 경기 결과 수신 횟수. 대결장 뒤 화면이 즉시 최신 레이팅을 다시 읽도록 알린다.
+  final ValueNotifier<int> resultRevision = ValueNotifier<int>(0);
 
   // POST 응답을 Map 형태로 정규화한다.
   // 필요 변수: path(요청 경로), body(요청 본문).
@@ -88,6 +92,12 @@ class ArenaApi {
         forceRefresh: forceRefresh,
       );
 
+  /// 필요한 변수: 대결 큐 유형. 봇을 제외한 실제 참가자 랭킹을 짧게 조회한다.
+  Future<Map<String, dynamic>> rankings(String queueType) => _getCached(
+    '/arena/rankings?queue_type=$queueType',
+    cacheTtl: const Duration(seconds: 30),
+  );
+
   // 매칭 큐 참가.
   // 필요 변수: queueType(큐 타입).
   // 동작: 즉시 상태 변경이 필요해 POST로 즉시 반영한다.
@@ -107,9 +117,10 @@ class ArenaApi {
   // 매칭 큐 취소.
   // 필요 변수: 없음.
   // 동작: 큐 상태 변경이 즉시 반영되어야 하므로 캐시 미적용 POST로 처리한다.
-  Future<void> cancel() async {
-    await _postRequest('/arena/queue/cancel');
+  Future<Map<String, dynamic>> cancel() async {
+    final result = await _postRequest('/arena/queue/cancel');
     await ApiClient.instance.invalidateCachePath('/arena');
+    return result;
   }
 
   // 특정 매치 상태 조회.
@@ -150,6 +161,23 @@ class ArenaApi {
       'idempotency_key': '${DateTime.now().microsecondsSinceEpoch}-$questionId',
     },
   );
+
+  /// 필요한 변수: 종료된 경기 ID.
+  /// 작동 원리: 캐시를 사용하지 않고 참가자 전용 결과·문항별 분석을 즉시 조회한다.
+  Future<Map<String, dynamic>> matchResult(String matchId) async {
+    final result = await _getCached(
+      '/arena/matches/$matchId/result',
+      useCache: false,
+    );
+    await invalidateSummary();
+    return result;
+  }
+
+  /// 필요한 변수 없음. 경기 종료 뒤 요약·랭킹이 이전 레이팅을 재사용하지 않도록 아레나 캐시를 비운다.
+  Future<void> invalidateSummary() async {
+    await ApiClient.instance.invalidateCachePath('/arena');
+    resultRevision.value++;
+  }
 
   // 매치 채팅 전송.
   // 필요 변수: matchId, message.

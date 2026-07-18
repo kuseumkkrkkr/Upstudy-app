@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:s11/app/router.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
@@ -24,7 +25,9 @@ import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
+import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
+import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
 import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
 
@@ -451,7 +454,7 @@ void main() {
     expect(find.text('페이지 미리보기'), findsOneWidget);
   });
 
-  testWidgets('500px 아레나는 HTML 랭크 프로필과 인원별 대결 큐를 유지한다', (tester) async {
+  testWidgets('500px 아레나는 두 인원 대결 큐를 함께 보여 준다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -497,10 +500,8 @@ void main() {
     await tester.drag(find.byType(ListView).first, const Offset(0, -700));
     await tester.pump();
     expect(find.text('대결 방식 선택'), findsOneWidget);
-    expect(find.text('1v1 시험 대결'), findsOneWidget);
-    await tester.tap(find.text('2 VS 2'));
-    await tester.pump();
-    expect(find.text('2v2 OX 대결'), findsOneWidget);
+    expect(find.text('1v1 문제풀이'), findsOneWidget);
+    expect(find.text('2v2 문제풀이'), findsOneWidget);
   });
 
   testWidgets('500px 마켓은 HTML 검색·필터·추천 상세 흐름을 유지한다', (tester) async {
@@ -515,15 +516,17 @@ void main() {
           initialData: [
             {
               'id': 'q1',
-              'type': 'quest',
+              'kind': 'problem_set',
               'title': '중2 함수 실전 100제',
-              'subtitle': '평점 4.9 · 1,200P',
+              'price_points': 1200,
+              'item_count': 100,
             },
             {
               'id': 'b1',
-              'type': 'textbook',
-              'title': '개념이 보이는 그래프',
-              'subtitle': '무료 · 42쪽',
+              'kind': 'course',
+              'title': '개념이 보이는 그래프 코스',
+              'price_points': 0,
+              'item_count': 20,
             },
           ],
         ),
@@ -533,9 +536,9 @@ void main() {
 
     expect(find.text('COMMUNITY'), findsOneWidget);
     expect(find.text('마켓'), findsOneWidget);
-    expect(find.text('문제 · 교재 · 태그 검색'), findsOneWidget);
+    expect(find.text('시험지 · 문제세트 · 코스 · 태그 검색'), findsOneWidget);
     expect(find.text('중2 함수 실전 100제'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ChoiceChip, '교재'));
+    await tester.tap(find.widgetWithText(ChoiceChip, '코스'));
     await tester.pump();
     expect(find.text('중2 함수 실전 100제'), findsNothing);
     await tester.tap(find.widgetWithText(ChoiceChip, '필터+'));
@@ -547,8 +550,8 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, '무료'));
     await tester.tap(find.text('필터 적용'));
     await tester.pumpAndSettle();
-    expect(find.text('개념이 보이는 그래프'), findsOneWidget);
-    await tester.tap(find.text('개념이 보이는 그래프'));
+    expect(find.text('개념이 보이는 그래프 코스'), findsOneWidget);
+    await tester.tap(find.text('개념이 보이는 그래프 코스'));
     await tester.pumpAndSettle();
     expect(find.text('확인'), findsOneWidget);
   });
@@ -730,7 +733,9 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
-        routes: {'/study-center': (_) => const SizedBox.shrink()},
+        routes: {
+          '/student/dashboard': (_) => const Scaffold(body: Text('학생 홈 도착')),
+        },
         home: const StudentLearningToolsPage(),
       ),
     );
@@ -739,6 +744,50 @@ void main() {
     expect(find.text('빠른 노트'), findsOneWidget);
     expect(find.text('집중 타이머'), findsOneWidget);
     expect(find.text('집중 모드'), findsOneWidget);
+    await tester.tap(find.text('홈으로 돌아가기'));
+    await tester.pumpAndSettle();
+    expect(find.text('학생 홈 도착'), findsOneWidget);
+    expect(find.byType(StudentLearningToolsPage), findsNothing);
+  });
+
+  testWidgets('실행 중 로그인한 세션은 학생 홈 명명 라우트에 즉시 반영된다', (tester) async {
+    await ApiClient.instance.clearToken();
+    addTearDown(ApiClient.instance.clearToken);
+
+    late BuildContext routeContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            routeContext = context;
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    final routes = appRoutes();
+    expect(
+      routes[AppRoutes.studentDashboard]!(routeContext),
+      isA<LandingPage>(),
+    );
+
+    await ApiClient.instance.setToken('runtime-login-token');
+    expect(
+      routes[AppRoutes.studentDashboard]!(routeContext),
+      isA<MainStudentPage>(),
+    );
+  });
+
+  testWidgets('500px 학습 도구 타이머 모달을 실행한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      const MaterialApp(home: StudentLearningToolsPage()),
+    );
+    await tester.pump();
     await tester.tap(find.text('집중 타이머'));
     await tester.pumpAndSettle();
     expect(find.text('스톱워치'), findsOneWidget);
@@ -940,7 +989,7 @@ void main() {
     expect(find.text('닫기'), findsOneWidget);
   });
 
-  testWidgets('390px 아레나는 단일 열과 안전한 인원 전환을 유지한다', (tester) async {
+  testWidgets('390px 아레나는 단일 열에서 두 인원 큐를 함께 유지한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -958,10 +1007,8 @@ void main() {
     );
     await tester.drag(find.byType(ListView).first, const Offset(0, -620));
     await tester.pump();
-    await tester.tap(find.text('2 VS 2'));
-    await tester.pump();
-    expect(find.text('2v2 시험 대결'), findsOneWidget);
-    expect(find.text('2v2 OX 대결'), findsOneWidget);
+    expect(find.text('1v1 문제풀이'), findsOneWidget);
+    expect(find.text('2v2 문제풀이'), findsOneWidget);
   });
 
   testWidgets('1280px 아레나는 HTML형 양열 overview와 큐 그리드를 사용한다', (tester) async {
@@ -985,10 +1032,10 @@ void main() {
       find.byKey(const ValueKey('arena-desktop-queue-grid')),
       findsOneWidget,
     );
-    final exam = tester.getTopLeft(find.text('1v1 시험 대결'));
-    final ox = tester.getTopLeft(find.text('1v1 OX 대결'));
-    expect((exam.dx - ox.dx).abs(), greaterThan(180));
-    expect((exam.dy - ox.dy).abs(), lessThan(40));
+    final duel = tester.getTopLeft(find.text('1v1 문제풀이'));
+    final team = tester.getTopLeft(find.text('2v2 문제풀이'));
+    expect((duel.dx - team.dx).abs(), greaterThan(180));
+    expect((duel.dy - team.dy).abs(), lessThan(40));
   });
 
   testWidgets('390px 마켓은 검색과 필터를 세로로 쌓는다', (tester) async {
@@ -1003,9 +1050,10 @@ void main() {
           initialData: [
             {
               'id': 'q1',
-              'type': 'quest',
+              'kind': 'problem_set',
               'title': '중2 함수 실전 100제',
-              'subtitle': '평점 4.9 · 1,200P',
+              'price_points': 1200,
+              'item_count': 100,
             },
           ],
         ),
@@ -1038,9 +1086,10 @@ void main() {
           initialData: [
             {
               'id': 'q1',
-              'type': 'quest',
+              'kind': 'problem_set',
               'title': '중2 함수 실전 100제',
-              'subtitle': '평점 4.9 · 1,200P',
+              'price_points': 1200,
+              'item_count': 100,
             },
           ],
         ),
@@ -1138,6 +1187,17 @@ void main() {
     expect(find.text('개념 변화'), findsOneWidget);
     expect(find.text('과목별 OVR 레이더 차트'), findsOneWidget);
     expect(find.text('MAX 25.0'), findsOneWidget);
+
+    await tester.tap(find.text('세부 해시태그 검색'));
+    await tester.pumpAndSettle();
+    expect(find.text('CONCEPT SEARCH'), findsOneWidget);
+    expect(find.text('빠른 탐색'), findsOneWidget);
+    expect(find.text('추천 개념'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), '함수');
+    await tester.pump();
+    expect(find.text('검색 결과'), findsOneWidget);
+    expect(find.text('함수'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

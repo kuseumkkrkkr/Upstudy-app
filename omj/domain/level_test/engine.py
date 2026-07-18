@@ -13,14 +13,14 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional
 
-from domain.level_test import static_store
 from domain.level_test.models import LevelTestResult, PowerTest, SpeedTest
+from storage.postgres_level_test_store import postgres_level_test_store
 from services.ai.prompts import level_test_power_prompt, level_test_speed_prompt
 from services.ai.providers.base import AIProvider
 
 
 PLACEMENT_QUESTION_COUNT = 50
-PLACEMENT_VERSION = static_store.EXPECTED_TEMPLATE_VERSION
+PLACEMENT_VERSION = "placement-static-v1"
 
 def generate_speed_test(
     user_id: str,
@@ -248,23 +248,23 @@ def aggregate_results(
 
 
 def build_placement_template_items(template_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    """필요 변수: 선택적 정적 시험지 ID. 작동 원리: 일반 문제 생성 없이 전용 DB의 완성된 50개 슬롯만 반환한다."""
+    """필요 변수: 선택적 PostgreSQL 시험지 ID. 작동 원리: 일반 문제 생성 없이 PostgreSQL의 완성된 슬롯만 반환한다."""
     selected_id = template_id
     if not selected_id:
-        template_ids = static_store.list_template_ids()
+        template_ids = postgres_level_test_store.list_template_ids()
         selected_id = template_ids[0] if template_ids else None
     if not selected_id:
-        raise RuntimeError("level-test static DB contains no active template")
-    items = static_store.get_template_items(selected_id)
+        raise RuntimeError("PostgreSQL level-test contains no active template")
+    items = postgres_level_test_store.get_template_items(selected_id)
     if len(items) != PLACEMENT_QUESTION_COUNT:
-        raise RuntimeError(f"level-test static template is incomplete: {selected_id}")
+        raise RuntimeError(f"PostgreSQL level-test template is incomplete: {selected_id}")
     return items
 
 
 def quest_payloads_for_template_items(items: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """필요 변수: 정적 슬롯 목록. 작동 원리: 전용 DB를 한 번만 조회해 슬롯 순서를 유지한 완전한 문제 payload를 결합한다."""
+    """필요 변수: PostgreSQL 슬롯 목록. 작동 원리: 이미 결합된 payload는 유지하고 누락 시 PostgreSQL에서 일괄 결합한다."""
     item_list = list(items)
-    quests = static_store.get_quests_by_ids(
+    quests = postgres_level_test_store.get_problem_payloads(
         str(item.get("quest_id") or "") for item in item_list
     )
     payloads: List[Dict[str, Any]] = []
@@ -272,5 +272,5 @@ def quest_payloads_for_template_items(items: Iterable[Dict[str, Any]]) -> List[D
         quest_id = str(item.get("quest_id") or "")
         quest = quests.get(quest_id)
         if quest:
-            payloads.append({**item, "quest": quest})
+            payloads.append({**item, "quest": item.get("quest") or quest})
     return payloads

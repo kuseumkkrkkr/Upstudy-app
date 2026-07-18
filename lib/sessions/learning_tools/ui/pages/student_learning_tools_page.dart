@@ -37,6 +37,14 @@ Future<void> showStudentToolModal(BuildContext context, Widget page) {
 class StudentLearningToolsPage extends StatelessWidget {
   const StudentLearningToolsPage({super.key});
 
+  /// 필요한 변수는 현재 Navigator와 학생 홈 명명 라우트다.
+  /// 작동 원리: 도구 화면까지 쌓인 경로를 제거하고 인증된 학생 홈을 새 루트로 열어 뒤로가기와 인증 분기를 안정화한다.
+  void _goHome(BuildContext context) {
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false);
+  }
+
   /// 필요한 변수는 현재 Navigator와 도구 화면이다.
   /// 작동 원리는 원래 페이지 기능을 유지하면서 모바일은 거의 전체 높이, PC는 940px 폭 모달로 연다.
   Future<void> _openTool(BuildContext context, Widget page) {
@@ -86,8 +94,7 @@ class StudentLearningToolsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   FilledButton(
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed('/study-center'),
+                    onPressed: () => _goHome(context),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF202022),
                       minimumSize: const Size.fromHeight(46),

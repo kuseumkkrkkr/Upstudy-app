@@ -13,8 +13,8 @@ import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/exam_paper_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/business/usecases/heatmap_engine.dart';
-import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/flow_view_page.dart';
 
 part 'package:s11/sessions/exam_paper/business/exam_paper_state.dart';
@@ -40,6 +40,7 @@ class ExamPaperPage extends StatefulWidget {
     this.timeLimitMinutes,
     this.pageCountHint = 0,
     this.initialPageIndex = 0,
+    this.marketplaceListingId,
   });
 
   final String? examId;
@@ -50,6 +51,7 @@ class ExamPaperPage extends StatefulWidget {
   final int? timeLimitMinutes;
   final int pageCountHint;
   final int initialPageIndex;
+  final String? marketplaceListingId;
 
   @override
   State<ExamPaperPage> createState() => _ExamPaperPageState();

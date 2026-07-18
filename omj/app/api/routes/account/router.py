@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
 from auth import decode_token, resolve_token_payload_user
+from app.api.routes.auth.middleware import require_role
 from app.schemas.common import ApiResponse, JobStatus
 from storage.student_account_store import add_activity_score, get_account_summary
 from storage.system_notice_store import (
@@ -82,8 +83,12 @@ async def get_my_account_summary(
 async def record_my_activity_score(
     body: ActivityScoreRecordRequest,
     request: Request,
-    _user=Depends(_require_account_user),
+    _user=Depends(require_role("admin")),
 ):
+    """필요 변수: 관리자/신뢰 서버가 검증한 활동 원본이다.
+    작동 원리: 학생 앱의 임의 경험치 제출을 차단하고, 내부 서버 역할만
+    고유 참조값으로 경험치와 레벨 코인을 기록할 수 있게 한다.
+    """
     user_id: str = request.state.user_id
     data = add_activity_score(
         user_id=user_id,

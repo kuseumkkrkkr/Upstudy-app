@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'arena_api.dart';
+import 'package:s11/shared/data/models/content_block.dart';
+import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
@@ -28,19 +31,25 @@ class _ArenaPageState extends State<ArenaPage> {
   String? _waitingQueue;
   String? _error;
   Timer? _matchPoller;
-  String _selectedMode = 'duel';
 
   @override
   void initState() {
     super.initState();
+    ArenaApi.instance.resultRevision.addListener(_refreshAfterResult);
     _summary = widget.initialSummary;
     if (_summary == null) _load();
   }
 
   @override
   void dispose() {
+    ArenaApi.instance.resultRevision.removeListener(_refreshAfterResult);
     _matchPoller?.cancel();
     super.dispose();
+  }
+
+  /// 필요한 변수 없음. 결과 화면이 캐시 무효화를 알리면 뒤쪽 대결장 카드의 레이팅·전적을 즉시 갱신한다.
+  void _refreshAfterResult() {
+    if (mounted) unawaited(_load());
   }
 
   /// 필요한 변수 없음. 레이팅 요약을 서버에서 다시 읽는다.
@@ -53,7 +62,8 @@ class _ArenaPageState extends State<ArenaPage> {
     }
   }
 
-  /// 필요한 변수: 선택한 큐 ID. 매칭을 시작하고 즉시 성립하면 경기 화면으로 이동한다.
+  /// 필요한 변수: 선택한 큐 ID.
+  /// 작동 원리: 실제 매치가 없으면 서버가 발급한 연습 경기로 즉시 들어가고, 없을 때만 기존 폴링을 사용한다.
   Future<void> _join(String queueType) async {
     setState(() {
       _waitingQueue = queueType;
@@ -63,21 +73,18 @@ class _ArenaPageState extends State<ArenaPage> {
       final result = await ArenaApi.instance.join(queueType);
       if (!mounted) return;
       final matchId = result['match_id']?.toString();
-      if (matchId != null && matchId.isNotEmpty) {
-        await _openMatch(matchId);
+      final practiceMatchId = result['practice_match_id']?.toString();
+      final entryMatchId = matchId?.isNotEmpty == true
+          ? matchId
+          : practiceMatchId;
+      if (entryMatchId != null && entryMatchId.isNotEmpty) {
+        await _openMatch(entryMatchId);
       } else {
-        _matchPoller?.cancel();
-        _matchPoller = Timer.periodic(const Duration(seconds: 2), (_) async {
-          final summary = await ArenaApi.instance.summary(forceRefresh: true);
-          final active = summary['active_match_id']?.toString();
-          if (active != null && active.isNotEmpty && mounted) {
-            _matchPoller?.cancel();
-            await _openMatch(active);
-          }
-        });
+        _scheduleMatchPoll(queueType);
       }
     } catch (error) {
       if (mounted) {
+        _matchPoller?.cancel();
         setState(() {
           _waitingQueue = null;
           _error = error.toString();
@@ -86,20 +93,56 @@ class _ArenaPageState extends State<ArenaPage> {
     }
   }
 
-  /// 필요한 변수 없음. 현재 매칭 대기를 서버와 화면에서 함께 취소한다.
-  Future<void> _cancel() async {
+  /// 필요한 변수: 참가한 큐 ID.
+  /// 작동 원리: 이전 요청과 겹치지 않는 단발 타이머로 기존 서버 매칭 결과를 2초마다 확인한다.
+  void _scheduleMatchPoll(String queueType) {
     _matchPoller?.cancel();
-    await ArenaApi.instance.cancel();
-    if (mounted) setState(() => _waitingQueue = null);
+    _matchPoller = Timer(const Duration(seconds: 2), () async {
+      if (!mounted || _waitingQueue != queueType) return;
+      try {
+        final summary = await ArenaApi.instance.summary(forceRefresh: true);
+        final active = summary['active_match_id']?.toString();
+        if (active != null && active.isNotEmpty && mounted) {
+          await _openMatch(active);
+          return;
+        }
+      } catch (error) {
+        if (mounted) setState(() => _error = error.toString());
+      }
+      if (mounted && _waitingQueue == queueType) _scheduleMatchPoll(queueType);
+    });
   }
 
-  /// 필요한 변수: 성립된 경기 ID. 대기 상태를 정리하고 경기 화면을 연다.
+  /// 필요한 변수 없음. 현재 매칭 대기를 서버와 화면에서 함께 취소한다.
+  Future<void> _cancel() async {
+    final queueType = _waitingQueue;
+    _matchPoller?.cancel();
+    try {
+      await ArenaApi.instance.cancel();
+      if (mounted) {
+        setState(() {
+          _waitingQueue = null;
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _error = error.toString());
+        if (queueType != null && _waitingQueue == queueType) {
+          _scheduleMatchPoll(queueType);
+        }
+      }
+    }
+  }
+
+  /// 필요한 변수: 성립된 경기 ID. 대기 상태를 정리하고 매치 성립 안내를 거쳐 경기 화면을 연다.
   Future<void> _openMatch(String matchId) async {
     _matchPoller?.cancel();
     if (!mounted) return;
-    setState(() => _waitingQueue = null);
+    setState(() {
+      _waitingQueue = null;
+    });
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => ArenaMatchPage(matchId: matchId)),
+      MaterialPageRoute<void>(builder: (_) => ArenaReadyPage(matchId: matchId)),
     );
     await _load();
   }
@@ -116,15 +159,26 @@ class _ArenaPageState extends State<ArenaPage> {
       _summary?['profile'] as Map? ??
           (queues.isEmpty ? const {} : queues.first),
     );
-    final rating = (profile['rating'] as num? ?? 1580).round();
-    final wins = (profile['wins'] as num? ?? 18).round();
-    final losses = (profile['losses'] as num? ?? 9).round();
-    final draws = (profile['draws'] as num? ?? 2).round();
-    final tier = profile['tier']?.toString() ?? 'B';
+    final rating = (profile['rating'] as num? ?? 1500).round();
+    final wins = (profile['wins'] as num? ?? 0).round();
+    final losses = (profile['losses'] as num? ?? 0).round();
+    final draws = (profile['draws'] as num? ?? 0).round();
+    final tier = profile['tier']?.toString() ?? 'E';
+    final recentResults = List<String>.from(
+      profile['recent_results'] as List? ?? const [],
+    );
+    final resumableMatchId =
+        (_summary?['active_match_id'] ?? _summary?['active_practice_match_id'])
+            ?.toString();
     final total = math.max(1, wins + losses + draws);
     final winRate = wins / total * 100;
+    // 시험 대결용 1v1·2v2 큐를 함께 보여 주어 선택 영역의 빈 공간을 없앤다.
     final visibleQueues = queues
-        .where((queue) => queue['queue_type']?.toString().startsWith(_selectedMode) ?? false)
+        .where(
+          (queue) =>
+              queue['queue_type'] == 'duel_exam' ||
+              queue['queue_type'] == 'team_exam',
+        )
         .toList(growable: false);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
@@ -143,7 +197,12 @@ class _ArenaPageState extends State<ArenaPage> {
               child: RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
-                  padding: EdgeInsets.fromLTRB(desktop ? 40 : 14, 24, desktop ? 40 : 14, 40),
+                  padding: EdgeInsets.fromLTRB(
+                    desktop ? 40 : 14,
+                    24,
+                    desktop ? 40 : 14,
+                    40,
+                  ),
                   children: [
                     Center(
                       child: ConstrainedBox(
@@ -159,17 +218,35 @@ class _ArenaPageState extends State<ArenaPage> {
                               draws: draws,
                               winRate: winRate,
                               desktop: desktop,
+                              recentResults: recentResults,
+                              onTierTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => ArenaRankingPage(
+                                    queueType:
+                                        profile['queue_type']?.toString() ??
+                                        'duel_exam',
+                                  ),
+                                ),
+                              ),
                             ),
+                            if (resumableMatchId != null &&
+                                resumableMatchId.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: _ResumeMatchBanner(
+                                  onResume: () => _openMatch(resumableMatchId),
+                                ),
+                              ),
                             if (_error != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 12),
-                                child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                                child: Text(
+                                  _error!,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
                               ),
                             const SizedBox(height: 56),
-                            _ArenaMatchHeader(
-                              selectedMode: _selectedMode,
-                              onModeChanged: (mode) => setState(() => _selectedMode = mode),
-                            ),
+                            const _ArenaMatchHeader(),
                             const SizedBox(height: 20),
                             if (_summary == null)
                               const Center(child: CircularProgressIndicator())
@@ -183,14 +260,31 @@ class _ArenaPageState extends State<ArenaPage> {
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 children: [
-                                  for (var index = 0; index < visibleQueues.length; index++)
+                                  for (
+                                    var index = 0;
+                                    index < visibleQueues.length;
+                                    index++
+                                  )
                                     _QueueCard(
                                       data: visibleQueues[index],
                                       desktop: true,
-                                      featured: index == 0,
-                                      waiting: _waitingQueue == visibleQueues[index]['queue_type'],
-                                      disabled: _waitingQueue != null && _waitingQueue != visibleQueues[index]['queue_type'],
-                                      onJoin: () => _join(visibleQueues[index]['queue_type'].toString()),
+                                      // 1v1은 어둡게 강조하고 2v2는 밝게 반전한다.
+                                      featured:
+                                          visibleQueues[index]['queue_type'] ==
+                                          'duel_exam',
+                                      waiting:
+                                          _waitingQueue ==
+                                          visibleQueues[index]['queue_type'],
+                                      disabled:
+                                          visibleQueues[index]['coming_soon'] ==
+                                              true ||
+                                          (_waitingQueue != null &&
+                                              _waitingQueue !=
+                                                  visibleQueues[index]['queue_type']),
+                                      onJoin: () => _join(
+                                        visibleQueues[index]['queue_type']
+                                            .toString(),
+                                      ),
                                       onCancel: _cancel,
                                     ),
                                 ],
@@ -199,13 +293,30 @@ class _ArenaPageState extends State<ArenaPage> {
                               Column(
                                 key: const ValueKey('arena-mobile-queue-list'),
                                 children: [
-                                  for (var index = 0; index < visibleQueues.length; index++)
+                                  for (
+                                    var index = 0;
+                                    index < visibleQueues.length;
+                                    index++
+                                  )
                                     _QueueCard(
                                       data: visibleQueues[index],
-                                      featured: index == 0,
-                                      waiting: _waitingQueue == visibleQueues[index]['queue_type'],
-                                      disabled: _waitingQueue != null && _waitingQueue != visibleQueues[index]['queue_type'],
-                                      onJoin: () => _join(visibleQueues[index]['queue_type'].toString()),
+                                      // 모바일에서도 두 모드의 반전 색상 규칙을 유지한다.
+                                      featured:
+                                          visibleQueues[index]['queue_type'] ==
+                                          'duel_exam',
+                                      waiting:
+                                          _waitingQueue ==
+                                          visibleQueues[index]['queue_type'],
+                                      disabled:
+                                          visibleQueues[index]['coming_soon'] ==
+                                              true ||
+                                          (_waitingQueue != null &&
+                                              _waitingQueue !=
+                                                  visibleQueues[index]['queue_type']),
+                                      onJoin: () => _join(
+                                        visibleQueues[index]['queue_type']
+                                            .toString(),
+                                      ),
                                       onCancel: _cancel,
                                     ),
                                 ],
@@ -236,6 +347,8 @@ class _ArenaHero extends StatelessWidget {
     required this.draws,
     required this.winRate,
     required this.desktop,
+    required this.recentResults,
+    required this.onTierTap,
   });
 
   final String tier;
@@ -245,6 +358,8 @@ class _ArenaHero extends StatelessWidget {
   final int draws;
   final double winRate;
   final bool desktop;
+  final List<String> recentResults;
+  final VoidCallback onTierTap;
 
   /// 필요한 변수는 티어·레이팅·승패무·승률이다.
   /// 작동 원리는 HTML의 랭크 소개와 검은 프로필 카드를 한 덩어리로 구성해 첫 화면 정보 밀도를 고정하는 것이다.
@@ -258,16 +373,26 @@ class _ArenaHero extends StatelessWidget {
       children: [
         const Text(
           'RANKED MATCH',
-          style: TextStyle(fontSize: 10, letterSpacing: 1.6, color: Colors.black54, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.6,
+            color: Colors.black54,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         SizedBox(height: desktop ? 38 : 44),
         Text(
           '실력으로 증명하는\n20분.',
-          style: TextStyle(fontSize: desktop ? 58 : 42, height: .98, letterSpacing: desktop ? -3.1 : -2.2, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: desktop ? 58 : 42,
+            height: .98,
+            letterSpacing: desktop ? -3.1 : -2.2,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         SizedBox(height: desktop ? 30 : 46),
         const Text(
-          '시험 대결은 객관식 5문항과 단답형 5문항, OX 대결은 10문항으로 진행됩니다.',
+          '시험 대결은 객관식 5문항과 숫자 단답형 5문항, OX 대결은 10문항으로 진행됩니다.',
           style: TextStyle(fontSize: 15, height: 1.8, color: Colors.black54),
         ),
         const SizedBox(height: 34),
@@ -275,18 +400,41 @@ class _ArenaHero extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('$tier TIER까지', style: const TextStyle(fontSize: 11)),
-            Text('${math.max(0, nextTierRating - rating)}점', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
+            Text(
+              '${math.max(0, nextTierRating - rating)}점',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+            ),
           ],
         ),
         const SizedBox(height: 8),
-        LinearProgressIndicator(value: progress, minHeight: 7, borderRadius: BorderRadius.circular(99), color: Colors.black, backgroundColor: const Color(0xFFE8E8EB)),
+        LinearProgressIndicator(
+          value: progress,
+          minHeight: 7,
+          borderRadius: BorderRadius.circular(99),
+          color: Colors.black,
+          backgroundColor: const Color(0xFFE8E8EB),
+        ),
         const SizedBox(height: 8),
-        Text('현재 $rating · 다음 티어 $nextTierRating', style: const TextStyle(fontSize: 10, color: Colors.black45)),
+        Text(
+          '현재 $rating · 다음 티어 $nextTierRating',
+          style: const TextStyle(fontSize: 10, color: Colors.black45),
+        ),
       ],
     );
-    final profile = _ArenaProfileCard(tier: tier, rating: rating, wins: wins, losses: losses, draws: draws, winRate: winRate);
+    final profile = _ArenaProfileCard(
+      tier: tier,
+      rating: rating,
+      wins: wins,
+      losses: losses,
+      draws: draws,
+      winRate: winRate,
+      recentResults: recentResults,
+      onTierTap: onTierTap,
+    );
     return Container(
-      key: ValueKey(desktop ? 'arena-desktop-overview' : 'arena-mobile-overview'),
+      key: ValueKey(
+        desktop ? 'arena-desktop-overview' : 'arena-mobile-overview',
+      ),
       padding: const EdgeInsets.fromLTRB(26, 28, 26, 14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -296,55 +444,57 @@ class _ArenaHero extends StatelessWidget {
       child: desktop
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [Expanded(flex: 6, child: copy), const SizedBox(width: 30), SizedBox(width: 400, child: profile)],
+              children: [
+                Expanded(flex: 6, child: copy),
+                const SizedBox(width: 30),
+                SizedBox(width: 400, child: profile),
+              ],
             )
-          : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [copy, const SizedBox(height: 34), profile]),
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [copy, const SizedBox(height: 34), profile],
+            ),
     );
   }
 }
 
-/// 필요한 변수: 선택한 경기 인원과 변경 콜백.
-/// 작동 원리: HTML의 1 VS 1·2 VS 2 캡슐 탭으로 같은 큐 데이터 중 해당 인원 경기만 노출한다.
+/// 필요한 변수 없음.
+/// 작동 원리: 1v1·2v2 큐가 동시에 배치됨을 안내해 두 카드의 관계를 명확히 한다.
 class _ArenaMatchHeader extends StatelessWidget {
-  const _ArenaMatchHeader({required this.selectedMode, required this.onModeChanged});
-
-  final String selectedMode;
-  final ValueChanged<String> onModeChanged;
+  const _ArenaMatchHeader();
 
   @override
   Widget build(BuildContext context) {
-    final desktop = MediaQuery.sizeOf(context).width >= 1000;
-    final switcher = Container(
-      decoration: BoxDecoration(color: const Color(0xFFE8E8EB), borderRadius: BorderRadius.circular(999)),
-      padding: const EdgeInsets.all(4),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        _ArenaModeButton(label: '1 VS 1', selected: selectedMode == 'duel', onTap: () => onModeChanged('duel')),
-        _ArenaModeButton(label: '2 VS 2', selected: selectedMode == 'team', onTap: () => onModeChanged('team')),
-      ]),
+    final copy = const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'CHOOSE YOUR MATCH',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.8,
+            color: Colors.black54,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        SizedBox(height: 12),
+        Text(
+          '대결 방식 선택',
+          style: TextStyle(
+            fontSize: 38,
+            letterSpacing: -1.8,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          '1v1과 2v2의 레이팅·전적은 각각 독립적으로 기록됩니다.',
+          style: TextStyle(color: Colors.black54),
+        ),
+      ],
     );
-    final copy = const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('CHOOSE YOUR MATCH', style: TextStyle(fontSize: 10, letterSpacing: 1.8, color: Colors.black54, fontWeight: FontWeight.w900)),
-      SizedBox(height: 12),
-      Text('대결 방식 선택', style: TextStyle(fontSize: 38, letterSpacing: -1.8, fontWeight: FontWeight.w900)),
-      SizedBox(height: 8),
-      Text('각 방식의 레이팅과 전적은 독립적으로 기록됩니다.', style: TextStyle(color: Colors.black54)),
-    ]);
-    return desktop ? Row(crossAxisAlignment: CrossAxisAlignment.end, children: [Expanded(child: copy), switcher]) : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [copy, const SizedBox(height: 18), switcher]);
+    return copy;
   }
-}
-
-class _ArenaModeButton extends StatelessWidget {
-  const _ArenaModeButton({required this.label, required this.selected, required this.onTap});
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => TextButton(
-    onPressed: onTap,
-    style: TextButton.styleFrom(backgroundColor: selected ? Colors.black : Colors.transparent, foregroundColor: selected ? Colors.white : Colors.black54, minimumSize: const Size(108, 42), shape: const StadiumBorder()),
-    child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
-  );
 }
 
 /// 필요한 변수: 데스크톱 여부.
@@ -355,13 +505,49 @@ class _ArenaRules extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const rules = [('01', '동일 문항', '모든 참가자가 같은 문제를 풉니다.'), ('02', '20분 제한', '서버 시간을 기준으로 동시에 종료됩니다.'), ('03', '재시도 제한', '남은 횟수가 모두에게 표시됩니다.'), ('04', '채팅 파쇄', '팀 채팅은 경기 종료 즉시 삭제됩니다.')];
+    const rules = [
+      ('01', '동일 문항', '모든 참가자가 같은 문제를 풉니다.'),
+      ('02', '20분 제한', '서버 시간을 기준으로 동시에 종료됩니다.'),
+      ('03', '재시도 제한', '남은 횟수가 모두에게 표시됩니다.'),
+      ('04', '채팅 파쇄', '팀 채팅은 경기 종료 즉시 삭제됩니다.'),
+    ];
     return Container(
       padding: EdgeInsets.all(desktop ? 34 : 22),
-      decoration: BoxDecoration(color: const Color(0xFFEEEEF1), borderRadius: BorderRadius.circular(30), border: Border.all(color: const Color(0xFFE2E2E2))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEEEF1),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: const Color(0xFFE2E2E2)),
+      ),
       child: desktop
-          ? Row(children: [const Expanded(child: _ArenaRulesTitle()), const SizedBox(width: 28), Expanded(flex: 3, child: Row(children: [for (final rule in rules) Expanded(child: _ArenaRule(rule: rule))]))])
-          : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const _ArenaRulesTitle(), const SizedBox(height: 22), GridView.count(crossAxisCount: 2, childAspectRatio: 1.25, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), children: [for (final rule in rules) _ArenaRule(rule: rule)])]),
+          ? Row(
+              children: [
+                const Expanded(child: _ArenaRulesTitle()),
+                const SizedBox(width: 28),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    children: [
+                      for (final rule in rules)
+                        Expanded(child: _ArenaRule(rule: rule)),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _ArenaRulesTitle(),
+                const SizedBox(height: 22),
+                GridView.count(
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.25,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [for (final rule in rules) _ArenaRule(rule: rule)],
+                ),
+              ],
+            ),
     );
   }
 }
@@ -369,14 +555,66 @@ class _ArenaRules extends StatelessWidget {
 class _ArenaRulesTitle extends StatelessWidget {
   const _ArenaRulesTitle();
   @override
-  Widget build(BuildContext context) => const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('FAIR PLAY PROTOCOL', style: TextStyle(fontSize: 9, letterSpacing: 1.4, color: Colors.black54, fontWeight: FontWeight.w900)), SizedBox(height: 10), Text('모두에게 같은 조건', style: TextStyle(fontSize: 26, height: 1.05, fontWeight: FontWeight.w900))]);
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'FAIR PLAY PROTOCOL',
+        style: TextStyle(
+          fontSize: 9,
+          letterSpacing: 1.4,
+          color: Colors.black54,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      SizedBox(height: 10),
+      Text(
+        '모두에게 같은 조건',
+        style: TextStyle(
+          fontSize: 26,
+          height: 1.05,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ],
+  );
 }
 
 class _ArenaRule extends StatelessWidget {
   const _ArenaRule({required this.rule});
   final (String, String, String) rule;
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [Text(rule.$1, style: const TextStyle(fontSize: 9, color: Colors.black45, fontWeight: FontWeight.w900)), const SizedBox(height: 22), Text(rule.$2, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)), const SizedBox(height: 7), Text(rule.$3, style: const TextStyle(fontSize: 9, height: 1.4, color: Colors.black54))]));
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          rule.$1,
+          style: const TextStyle(
+            fontSize: 9,
+            color: Colors.black45,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          rule.$2,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          rule.$3,
+          style: const TextStyle(
+            fontSize: 9,
+            height: 1.4,
+            color: Colors.black54,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ArenaProfileCard extends StatelessWidget {
@@ -387,6 +625,8 @@ class _ArenaProfileCard extends StatelessWidget {
     required this.losses,
     required this.draws,
     required this.winRate,
+    required this.recentResults,
+    required this.onTierTap,
   });
 
   final String tier;
@@ -395,6 +635,8 @@ class _ArenaProfileCard extends StatelessWidget {
   final int losses;
   final int draws;
   final double winRate;
+  final List<String> recentResults;
+  final VoidCallback onTierTap;
 
   /// 필요한 변수는 개인 아레나 전적이다.
   /// 작동 원리는 티어 배지·점수·네 통계·최근 전적을 HTML의 어두운 프로필 카드 안에 배치하는 것이다.
@@ -427,7 +669,15 @@ class _ArenaProfileCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              TierBadge(tier: tier, size: 80),
+              Semantics(
+                button: true,
+                label: '대결장 랭킹 열기',
+                child: InkWell(
+                  onTap: onTierTap,
+                  borderRadius: BorderRadius.circular(40),
+                  child: TierBadge(tier: tier, size: 80),
+                ),
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -444,7 +694,7 @@ class _ArenaProfileCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$tier TIER · 상위 18%',
+                      '$tier TIER · 티어를 눌러 랭킹 보기',
                       style: const TextStyle(
                         color: Colors.white54,
                         fontSize: 10,
@@ -474,25 +724,35 @@ class _ArenaProfileCard extends StatelessWidget {
                 style: TextStyle(color: Colors.white38, fontSize: 10),
               ),
               const Spacer(),
-              for (final result in ['W', 'W', 'L', 'W', 'D'])
-                Container(
-                  width: 25,
-                  height: 25,
-                  margin: const EdgeInsets.only(left: 6),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: result == 'W' ? Colors.white : Colors.white12,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    result,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: result == 'W' ? Colors.black : Colors.white54,
+              if (recentResults.isEmpty)
+                const Text(
+                  '아직 경기 전적이 없습니다.',
+                  style: TextStyle(color: Colors.white38, fontSize: 10),
+                )
+              else
+                for (final result in recentResults.reversed.take(5))
+                  Container(
+                    width: 25,
+                    height: 25,
+                    margin: const EdgeInsets.only(left: 6),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: result == 'win' ? Colors.white : Colors.white12,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      result == 'win'
+                          ? '승'
+                          : result == 'loss'
+                          ? '패'
+                          : '무',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: result == 'win' ? Colors.black : Colors.white54,
+                      ),
                     ),
                   ),
-                ),
             ],
           ),
         ],
@@ -562,15 +822,14 @@ class _QueueCard extends StatelessWidget {
 
   String get _label =>
       const {
-        'duel_exam': '1v1 시험 대결',
-        'duel_ox': '1v1 OX 대결',
-        'team_exam': '2v2 시험 대결',
-        'team_ox': '2v2 OX 대결',
+        'duel_exam': '1v1 문제풀이',
+        'team_exam': '2v2 문제풀이',
       }[data['queue_type']] ??
       '대결';
 
   @override
   Widget build(BuildContext context) {
+    final comingSoon = data['coming_soon'] == true;
     final tier = data['tier']?.toString() ?? 'C';
     final foreground = featured ? Colors.white : Colors.black;
     final muted = featured ? Colors.white54 : Colors.black54;
@@ -580,28 +839,84 @@ class _QueueCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: featured ? const Color(0xFF171719) : Colors.white,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: featured ? const Color(0xFF171719) : const Color(0xFFE1E1E3)),
+          border: Border.all(
+            color: featured ? const Color(0xFF171719) : const Color(0xFFE1E1E3),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Container(width: 56, height: 56, alignment: Alignment.center, decoration: BoxDecoration(color: featured ? Colors.white : const Color(0xFFF4F4F6), borderRadius: BorderRadius.circular(18)), child: TierBadge(tier: tier, size: 42)),
-              const Spacer(),
-              Text('● LIVE QUEUE', style: TextStyle(fontSize: 9, color: muted, letterSpacing: 1.1, fontWeight: FontWeight.w900)),
-            ]),
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: featured ? Colors.white : const Color(0xFFF4F4F6),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: TierBadge(tier: tier, size: 42),
+                ),
+                const Spacer(),
+                Text(
+                  comingSoon ? '● COMING SOON' : '● LIVE QUEUE',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: muted,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 28),
-            Text(_label, style: TextStyle(fontSize: 28, letterSpacing: -1.2, color: foreground, fontWeight: FontWeight.w900)),
+            Text(
+              _label,
+              style: TextStyle(
+                fontSize: 28,
+                letterSpacing: -1.2,
+                color: foreground,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(_queueDescription, style: TextStyle(fontSize: 11, height: 1.5, color: muted)),
+            Text(
+              _queueDescription,
+              style: TextStyle(fontSize: 11, height: 1.5, color: muted),
+            ),
             const Spacer(),
-            Row(children: [
-              _QueueStat(label: '예상 대기', value: '${data['estimated_wait_seconds'] ?? 0}초', color: foreground),
-              const SizedBox(width: 30),
-              _QueueStat(label: '내 전적', value: '${data['wins'] ?? 0}승 ${data['losses'] ?? 0}패', color: foreground),
-            ]),
+            Row(
+              children: [
+                _QueueStat(
+                  label: '예상 대기',
+                  value: '${data['estimated_wait_seconds'] ?? 0}초',
+                  color: foreground,
+                ),
+                const SizedBox(width: 30),
+                _QueueStat(
+                  label: '내 전적',
+                  value: '${data['wins'] ?? 0}승 ${data['losses'] ?? 0}패',
+                  color: foreground,
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
-            SizedBox(width: double.infinity, child: FilledButton(onPressed: disabled ? null : (waiting ? onCancel : onJoin), style: FilledButton.styleFrom(backgroundColor: featured ? Colors.white : Colors.black, foregroundColor: featured ? Colors.black : Colors.white, minimumSize: const Size.fromHeight(48), shape: const StadiumBorder()), child: Text(waiting ? '매칭 취소' : '매칭 시작  →'))),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: disabled ? null : (waiting ? onCancel : onJoin),
+                style: FilledButton.styleFrom(
+                  backgroundColor: featured ? Colors.white : Colors.black,
+                  foregroundColor: featured ? Colors.black : Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: const StadiumBorder(),
+                ),
+                child: Text(
+                  comingSoon ? '준비 중' : (waiting ? '매칭 취소' : '매칭 시작  →'),
+                ),
+              ),
+            ),
           ],
         ),
       );
@@ -612,7 +927,9 @@ class _QueueCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: featured ? const Color(0xFF171719) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: featured ? const Color(0xFF171719) : const Color(0xFFE1E1E3)),
+        border: Border.all(
+          color: featured ? const Color(0xFF171719) : const Color(0xFFE1E1E3),
+        ),
       ),
       child: Row(
         children: [
@@ -651,29 +968,50 @@ class _QueueCard extends StatelessWidget {
               ),
             ),
             onPressed: disabled ? null : (waiting ? onCancel : onJoin),
-            child: Text(waiting ? '취소' : '매칭'),
+            child: Text(comingSoon ? '준비 중' : (waiting ? '취소' : '매칭')),
           ),
         ],
       ),
     );
   }
 
-  String get _queueDescription => const {
-    'duel_exam': '객관식 5 + 단답형 5 · 제한 시간 20분',
-    'duel_ox': '빠르게 판단하는 OX 10문항 · 제한 시간 8분',
-    'team_exam': '팀 합산 점수 · 객관식 5 + 단답형 5',
-    'team_ox': '팀 합산 점수 · OX 10문항 · 팀 채팅',
-  }[data['queue_type']] ?? '같은 조건에서 실력을 겨룹니다.';
+  String get _queueDescription =>
+      const {
+        'duel_exam': '객관식 5 + 숫자 단답형 5 · 제한 시간 20분',
+        'team_exam': '팀 합산 문제풀이 모드는 준비 중입니다.',
+      }[data['queue_type']] ??
+      '같은 조건에서 실력을 겨룹니다.';
 }
 
 class _QueueStat extends StatelessWidget {
-  const _QueueStat({required this.label, required this.value, required this.color});
+  const _QueueStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
   final String label;
   final String value;
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: TextStyle(fontSize: 9, color: color.withValues(alpha: .5))), const SizedBox(height: 5), Text(value, style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w900))]);
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: TextStyle(fontSize: 9, color: color.withValues(alpha: .5)),
+      ),
+      const SizedBox(height: 5),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 14,
+          color: color,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ],
+  );
 }
 
 /// 필요한 변수: A~E 티어와 크기.
@@ -763,6 +1101,348 @@ class _TierBadgePainter extends CustomPainter {
 
 /// 필요한 변수: 서버가 발급한 경기 ID.
 /// 남은 시간, 동일 문항, 문자열 입력, 팀 점수와 2v2 채팅을 제공한다.
+/// 필요한 변수: 재개하거나 새로 성립한 경기 ID.
+/// 작동 원리: 경기 상태를 한 번 확인해 상대·규칙을 보여준 뒤 3초 후 풀이 화면으로 전환한다.
+class ArenaReadyPage extends StatefulWidget {
+  const ArenaReadyPage({super.key, required this.matchId});
+  final String matchId;
+
+  @override
+  State<ArenaReadyPage> createState() => _ArenaReadyPageState();
+}
+
+class _ArenaReadyPageState extends State<ArenaReadyPage> {
+  Map<String, dynamic>? _state;
+  int _countdown = 3;
+  int _cancelRemaining = 3;
+  Timer? _timer;
+  Timer? _statePoller;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepare();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _statePoller?.cancel();
+    super.dispose();
+  }
+
+  /// 필요한 변수: 현재 연습 경기 ID와 서버 취소 결과.
+  /// 작동 원리: 3초 준비 구간의 연습 경기와 실제 사용자 큐를 함께 취소하고
+  /// 실전 매칭이 이미 성립했다면 해당 경기 화면으로 이동한다.
+  Future<void> _cancelWaiting() async {
+    try {
+      final result = await ArenaApi.instance.cancel();
+      if (!mounted) return;
+      final activeMatchId = result['active_match_id']?.toString();
+      if (result['cancelled'] != true &&
+          activeMatchId != null &&
+          activeMatchId.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('경기가 이미 시작되어 취소할 수 없습니다.')),
+        );
+        return;
+      }
+      if (result['cancelled'] != true) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('매칭 취소 가능 시간이 지났습니다.')));
+        return;
+      }
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('매칭 상태가 바뀌었습니다. 잠시 후 다시 확인해 주세요.')),
+        );
+      }
+    }
+  }
+
+  /// 필요한 변수: 경기 ID. 서버 상태를 읽은 뒤 화면에 진입 카운트다운을 시작한다.
+  Future<void> _prepare() async {
+    try {
+      final state = await ArenaApi.instance.matchState(widget.matchId);
+      if (!mounted) return;
+      if (state['finished'] == true) {
+        final result = await ArenaApi.instance.matchResult(widget.matchId);
+        if (!mounted) return;
+        await Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                ArenaResultPage(matchId: widget.matchId, initialResult: result),
+          ),
+        );
+        return;
+      }
+      setState(() => _state = state);
+      final practice = state['practice'] == true;
+      _countdown = practice ? 5 : 3;
+      if (practice) _pollForHumanMatch();
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) return;
+        if (_countdown <= 1) {
+          timer.cancel();
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) => ArenaMatchPage(matchId: widget.matchId),
+            ),
+          );
+        } else {
+          setState(() {
+            _countdown--;
+            if (_cancelRemaining > 0) _cancelRemaining--;
+          });
+        }
+      });
+    } catch (_) {
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+
+  /// 필요한 변수: 연습 경기 ID. 5초 대기 중 실제 상대 경기로 교체되었는지 1초마다 확인한다.
+  void _pollForHumanMatch() {
+    _statePoller?.cancel();
+    _statePoller = Timer.periodic(const Duration(seconds: 1), (_) async {
+      if (!mounted) return;
+      try {
+        final state = await ArenaApi.instance.matchState(widget.matchId);
+        if (state['finished'] == true) {
+          _statePoller?.cancel();
+          _timer?.cancel();
+          final result = await ArenaApi.instance.matchResult(widget.matchId);
+          if (mounted) {
+            await Navigator.of(context).pushReplacement(
+              MaterialPageRoute<void>(
+                builder: (_) => ArenaResultPage(
+                  matchId: widget.matchId,
+                  initialResult: result,
+                ),
+              ),
+            );
+          }
+          return;
+        }
+        final replacement = state['replacement_match_id']?.toString();
+        if (replacement != null &&
+            replacement.isNotEmpty &&
+            replacement != widget.matchId) {
+          _statePoller?.cancel();
+          _timer?.cancel();
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute<void>(
+                builder: (_) => ArenaReadyPage(matchId: replacement),
+              ),
+            );
+          }
+        }
+      } catch (_) {
+        // 일시적 폴링 실패는 다음 주기에 재시도한다.
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final practice = _state?['practice'] == true;
+    final participants = _state?['participants'] as List? ?? const [];
+    Map<String, dynamic>? opponent;
+    for (final raw in participants) {
+      if (raw is Map && raw['team'] != _state?['team']) {
+        opponent = Map<String, dynamic>.from(raw);
+        break;
+      }
+    }
+    return Scaffold(
+      backgroundColor: const Color(0xFF171719),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'MATCH FOUND',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  practice ? '연습 상대와 준비 완료' : '상대가 매칭되었습니다',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const TierBadge(tier: 'E', size: 72),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 22),
+                      child: Text(
+                        'VS',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    TierBadge(
+                      tier: practice
+                          ? (_state?['bot_tier']?.toString() ?? 'C')
+                          : 'E',
+                      size: 72,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  practice
+                      ? '5초 동안 실제 상대를 찾고, 봇전 승리 시 +${(_state?['bot_win_rating_reward'] as num? ?? 20).round()} 레이팅을 받습니다.'
+                      : '동일한 10문항으로 승부합니다.',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                if (opponent != null && !practice) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '상대 ${opponent['user_id']}',
+                    style: const TextStyle(color: Colors.white38, fontSize: 12),
+                  ),
+                ],
+                const SizedBox(height: 32),
+                Text(
+                  '$_countdown',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 64,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pushReplacement(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ArenaMatchPage(matchId: widget.matchId),
+                    ),
+                  ),
+                  child: const Text(
+                    '바로 시작',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                if (_cancelRemaining > 0)
+                  TextButton.icon(
+                    onPressed: _cancelWaiting,
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    label: Text(
+                      '매칭 취소 ($_cancelRemaining)',
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요한 변수: 재개할 경기 콜백. 진행 중인 실전·봇전을 홈에서 다시 열 수 있게 표시한다.
+class _ResumeMatchBanner extends StatelessWidget {
+  const _ResumeMatchBanner({required this.onResume});
+  final VoidCallback onResume;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xFF171719),
+    borderRadius: BorderRadius.circular(18),
+    child: ListTile(
+      leading: const Icon(Icons.play_circle_fill, color: Colors.white),
+      title: const Text(
+        '진행 중인 경기가 있습니다',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+      ),
+      subtitle: const Text(
+        '실수로 나간 경기로 돌아갈 수 있습니다.',
+        style: TextStyle(color: Colors.white54),
+      ),
+      trailing: FilledButton(onPressed: onResume, child: const Text('경기 계속하기')),
+    ),
+  );
+}
+
+/// 필요한 변수: 선택한 큐. 실제 참가자 레이팅만 서버에서 읽어 티어 선택의 랭킹 화면을 제공한다.
+class ArenaRankingPage extends StatefulWidget {
+  const ArenaRankingPage({super.key, required this.queueType});
+  final String queueType;
+
+  @override
+  State<ArenaRankingPage> createState() => _ArenaRankingPageState();
+}
+
+class _ArenaRankingPageState extends State<ArenaRankingPage> {
+  Map<String, dynamic>? _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  /// 필요한 변수: 선택 큐. 캐시된 랭킹을 불러와 봇 없이 사용자만 표시한다.
+  Future<void> _load() async {
+    final value = await ArenaApi.instance.rankings(widget.queueType);
+    if (mounted) setState(() => _data = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _data?['items'] as List? ?? const [];
+    return Scaffold(
+      appBar: AppBar(title: const Text('대결장 랭킹')),
+      body: _data == null
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.separated(
+              padding: const EdgeInsets.all(20),
+              itemCount: items.length,
+              separatorBuilder: (_, _) => const Divider(),
+              itemBuilder: (_, index) {
+                final item = Map<String, dynamic>.from(items[index] as Map);
+                return ListTile(
+                  leading: Text(
+                    '${index + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  title: Text(item['user_id']?.toString() ?? ''),
+                  subtitle: Text(
+                    '${item['wins'] ?? 0}승 ${item['losses'] ?? 0}패 ${item['draws'] ?? 0}무',
+                  ),
+                  trailing: Text(
+                    _formatArenaRating(
+                      (item['rating'] as num? ?? 1500).round(),
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
 class ArenaMatchPage extends StatefulWidget {
   const ArenaMatchPage({super.key, required this.matchId});
   final String matchId;
@@ -777,9 +1457,13 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
   final _answer = TextEditingController();
   final _chat = TextEditingController();
   Timer? _timer;
+  Timer? _fallbackPoller;
   ArenaSocket? _socket;
   StreamSubscription<Map<String, dynamic>>? _socketSubscription;
   String? _feedback;
+  bool _switchingMatch = false;
+  bool _submitting = false;
+  bool _showingResult = false;
 
   @override
   void initState() {
@@ -790,6 +1474,7 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _fallbackPoller?.cancel();
     _socketSubscription?.cancel();
     _socket?.close();
     _answer.dispose();
@@ -809,10 +1494,82 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
       _socket = socket;
       _socketSubscription = socket.events.listen(
         _handleSocketEvent,
-        onError: (_) => _load(),
+        onError: (_) => _startFallbackPolling(),
+        onDone: _startFallbackPolling,
       );
     } catch (_) {
       await _load();
+      _startFallbackPolling();
+    }
+  }
+
+  /// 필요한 변수 없음.
+  /// 작동 원리: WebSocket 장애 때만 단발 REST 조회를 2초 간격으로 이어 실제 경기 교체를 놓치지 않는다.
+  void _startFallbackPolling() {
+    _fallbackPoller?.cancel();
+    _fallbackPoller = Timer(const Duration(seconds: 2), () async {
+      if (!mounted || _switchingMatch || _showingResult) return;
+      try {
+        await _load();
+      } catch (error) {
+        if (mounted) setState(() => _feedback = error.toString());
+      }
+      if (mounted && !_switchingMatch && !_showingResult) {
+        _startFallbackPolling();
+      }
+    });
+  }
+
+  /// 필요한 변수는 최신 경기 상태다.
+  /// 작동 원리는 서버가 반환한 제출 완료 문항을 건너뛰고 아직 풀지 않은 첫 문항만 화면에 고정하는 것이다.
+  void _applyMatchState(Map<String, dynamic> value) {
+    final questions = value['questions'] as List? ?? const [];
+    final submitted = (value['submitted_question_ids'] as List? ?? const [])
+        .map((item) => item.toString())
+        .toSet();
+    var nextIndex = questions.length;
+    for (var index = 0; index < questions.length; index++) {
+      final question = questions[index];
+      if (question is Map && !submitted.contains(question['id']?.toString())) {
+        nextIndex = index;
+        break;
+      }
+    }
+    setState(() {
+      _state = value;
+      _remaining = (value['remaining_seconds'] as num?)?.toInt() ?? 0;
+      _index = nextIndex;
+      _submitting = false;
+    });
+  }
+
+  /// 필요한 변수는 선택적으로 WebSocket이 전달한 종료 결과다.
+  /// 작동 원리는 모든 타이머·소켓을 닫고 결과를 한 번만 조회한 뒤 현재 경기 화면을 분석 화면으로 즉시 교체하는 것이다.
+  Future<void> _openResult([Map<String, dynamic>? initialResult]) async {
+    if (_showingResult || !mounted) return;
+    _showingResult = true;
+    _timer?.cancel();
+    _fallbackPoller?.cancel();
+    await _socketSubscription?.cancel();
+    await _socket?.close();
+    try {
+      final result =
+          initialResult ?? await ArenaApi.instance.matchResult(widget.matchId);
+      if (initialResult != null) {
+        await ArenaApi.instance.invalidateSummary();
+      }
+      if (!mounted) return;
+      await Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              ArenaResultPage(matchId: widget.matchId, initialResult: result),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      _showingResult = false;
+      setState(() => _feedback = '경기는 종료됐지만 결과를 불러오지 못했습니다: $error');
+      _startFallbackPolling();
     }
   }
 
@@ -824,45 +1581,90 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
     final rawData = event['data'];
     if (type == 'match_state' && rawData is Map) {
       final value = Map<String, dynamic>.from(rawData);
-      setState(() {
-        _state = value;
-        _remaining = (value['remaining_seconds'] as num?)?.toInt() ?? 0;
-      });
-      _startLocalTimer();
+      final replacementMatchId = value['replacement_match_id']?.toString();
+      if (replacementMatchId != null &&
+          replacementMatchId.isNotEmpty &&
+          replacementMatchId != widget.matchId) {
+        unawaited(_replaceWithHumanMatch(replacementMatchId));
+        return;
+      }
+      _applyMatchState(value);
+      if (value['finished'] == true) {
+        unawaited(_openResult());
+      } else {
+        _startLocalTimer();
+      }
     } else if (type == 'answer_result' && rawData is Map) {
       final result = Map<String, dynamic>.from(rawData);
       setState(() {
-        _feedback = result['correct'] == true
-            ? '정답입니다!'
-            : '오답 · ${result['attempts_remaining']}회 남음';
+        _feedback = result['correct'] == true ? '정답입니다!' : '오답입니다.';
+        _submitting = false;
+        _index++;
         _answer.clear();
       });
+      if (result['finished'] == true) unawaited(_openResult());
+    } else if (type == 'match_finished' && rawData is Map) {
+      unawaited(_openResult(Map<String, dynamic>.from(rawData)));
     } else if (type == 'error') {
-      setState(() => _feedback = event['message']?.toString());
+      setState(() {
+        _submitting = false;
+        _feedback = event['message']?.toString();
+      });
     }
   }
 
   /// 필요한 변수는 현재 남은 시간이다. 서버 상태 사이 구간만 1초 단위로 보간한다.
   void _startLocalTimer() {
     _timer ??= Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && _remaining > 0) setState(() => _remaining--);
+      if (!mounted || _showingResult) return;
+      if (_remaining > 0) {
+        setState(() => _remaining--);
+        if (_remaining == 0) unawaited(_load());
+      }
     });
   }
 
   Future<void> _load() async {
     final value = await ArenaApi.instance.matchState(widget.matchId);
     if (!mounted) return;
-    setState(() {
-      _state = value;
-      _remaining = value['remaining_seconds'] as int? ?? 0;
-    });
-    _startLocalTimer();
+    final replacementMatchId = value['replacement_match_id']?.toString();
+    if (replacementMatchId != null &&
+        replacementMatchId.isNotEmpty &&
+        replacementMatchId != widget.matchId) {
+      await _replaceWithHumanMatch(replacementMatchId);
+      return;
+    }
+    _applyMatchState(value);
+    if (value['finished'] == true) {
+      await _openResult();
+    } else {
+      _startLocalTimer();
+    }
   }
 
+  /// 필요한 변수: 서버가 성립시킨 실제 사용자 경기 ID.
+  /// 작동 원리: 연습 소켓과 타이머를 먼저 닫고 현재 라우트를 동일한 실전 경기 화면으로 교체한다.
+  Future<void> _replaceWithHumanMatch(String matchId) async {
+    if (_switchingMatch || !mounted) return;
+    _switchingMatch = true;
+    _timer?.cancel();
+    _fallbackPoller?.cancel();
+    await _socketSubscription?.cancel();
+    await _socket?.close();
+    if (!mounted) return;
+    await Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => ArenaMatchPage(matchId: matchId)),
+    );
+  }
+
+  /// 필요한 변수: 사용자가 입력하거나 선택한 답안.
+  /// 작동 원리: 소켓이 연결된 경우 단일 프레임으로 보내고, 장애 복구 중에는 REST로 동일한 멱등 제출을 수행한다.
   Future<void> _submit(String answer) async {
+    if (_submitting || _showingResult || answer.trim().isEmpty) return;
     final questions = _state?['questions'] as List? ?? const [];
-    if (questions.isEmpty) return;
+    if (questions.isEmpty || _index >= questions.length) return;
     final question = Map<String, dynamic>.from(questions[_index] as Map);
+    setState(() => _submitting = true);
     try {
       final socket = _socket;
       if (socket != null) {
@@ -882,14 +1684,22 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
       );
       if (!mounted) return;
       setState(() {
-        _feedback = result['correct'] == true
-            ? '정답입니다!'
-            : '오답 · ${result['attempts_remaining']}회 남음';
+        _feedback = result['correct'] == true ? '정답입니다!' : '오답입니다.';
+        _submitting = false;
         _answer.clear();
       });
-      await _load();
+      if (result['finished'] == true) {
+        await _openResult();
+      } else {
+        await _load();
+      }
     } catch (error) {
-      if (mounted) setState(() => _feedback = error.toString());
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _feedback = error.toString();
+        });
+      }
     }
   }
 
@@ -902,106 +1712,745 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
     if (questions.isEmpty) {
       return const Scaffold(body: Center(child: Text('경기 문항을 불러오지 못했습니다.')));
     }
+    final allAnswered = _index >= questions.length;
+    final submittedCount =
+        (_state!['submitted_question_ids'] as List? ?? const []).length;
+    final progressCount = math.max(
+      submittedCount,
+      math.min(_index, questions.length),
+    );
+    final canSubmit = !allAnswered && !_submitting && !_showingResult;
     final question = Map<String, dynamic>.from(
       questions[math.min(_index, questions.length - 1)] as Map,
     );
     final choices = question['choices'] as List? ?? const [];
     final teamMode = _state!['queue_type'].toString().startsWith('team_');
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          '${(_remaining ~/ 60).toString().padLeft(2, '0')}:${(_remaining % 60).toString().padLeft(2, '0')} · ${_index + 1}/10',
+    final practice = _state!['practice'] == true;
+    final desktop = MediaQuery.sizeOf(context).width >= 900;
+    final scores = Map<String, dynamic>.from(
+      _state!['scores'] as Map? ?? const {},
+    );
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F4F6),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF4F4F6),
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: true,
+          title: Text(
+            '${(_remaining ~/ 60).toString().padLeft(2, '0')}:${(_remaining % 60).toString().padLeft(2, '0')} · ${math.min(_index + 1, questions.length)}/${questions.length}',
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          actions: [
+            if (teamMode && !desktop)
+              IconButton(
+                tooltip: '팀 채팅',
+                onPressed: _showTeamChat,
+                icon: const Icon(Icons.forum_outlined),
+              ),
+          ],
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1380),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                desktop ? 28 : 14,
+                8,
+                desktop ? 28 : 14,
+                20,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE1E1E3)),
+                      ),
+                      child: ListView(
+                        padding: const EdgeInsets.all(24),
+                        children: [
+                          _ArenaScoreBoard(
+                            scores: scores,
+                            team: (_state!['team'] as num? ?? 0).toInt(),
+                            practice: practice,
+                            botTier: _state!['bot_tier']?.toString(),
+                            botWinReward:
+                                (_state!['bot_win_rating_reward'] as num? ?? 20)
+                                    .round(),
+                            botActivity: _state!['bot_activity'] as Map?,
+                          ),
+                          const SizedBox(height: 20),
+                          if (allAnswered) ...[
+                            const _ArenaWaitingForResult(),
+                            const SizedBox(height: 18),
+                          ],
+                          Text(
+                            question['tags']?.toString() ?? '',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ContentBlocksView(
+                            blocks: parseTextWithLatex(
+                              question['prompt'].toString(),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            latexStyle: const TextStyle(
+                              fontSize: 23,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            spacing: 12,
+                            // 서버가 보존한 수식 블록을 문제 문장 안에서 자연스럽게 이어 그린다.
+                            inline: true,
+                          ),
+                          const SizedBox(height: 20),
+                          if (choices.isNotEmpty)
+                            ...choices.map((raw) {
+                              final value = Map<String, dynamic>.from(
+                                raw as Map,
+                              );
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: OutlinedButton(
+                                  onPressed: canSubmit
+                                      ? () => _submit(value['id'].toString())
+                                      : null,
+                                  child: ContentBlocksView(
+                                    blocks: parseTextWithLatex(
+                                      value['label'].toString(),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    latexStyle: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          if (choices.isEmpty)
+                            TextField(
+                              controller: _answer,
+                              enabled: canSubmit,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9+\-.]'),
+                                ),
+                              ],
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              onSubmitted: _submit,
+                              decoration: const InputDecoration(
+                                labelText: '숫자 정답 직접 입력',
+                                helperText: '정수 또는 소수를 키보드로 입력하세요.',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          if (choices.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: FilledButton(
+                                onPressed: canSubmit
+                                    ? () => _submit(_answer.text)
+                                    : null,
+                                child: Text(_submitting ? '제출 중…' : '제출'),
+                              ),
+                            ),
+                          if (_feedback != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: Text(_feedback!),
+                            ),
+                          const SizedBox(height: 18),
+                          LinearProgressIndicator(
+                            value: questions.isEmpty
+                                ? 0
+                                : progressCount / questions.length,
+                            minHeight: 6,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '$progressCount/${questions.length} 제출 완료 · 제출한 문제로 돌아갈 수 없습니다.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF6E6E73),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (teamMode && desktop) ...[
+                    const SizedBox(width: 14),
+                    SizedBox(
+                      width: 300,
+                      child: _TeamChat(
+                        matchId: widget.matchId,
+                        messages: _state!['chat'] as List? ?? const [],
+                        controller: _chat,
+                        onSent: _load,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-      body: Row(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                Text(
-                  question['tags']?.toString() ?? '',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+    );
+  }
+
+  /// 필요한 변수: 현재 팀 경기 상태와 채팅 컨트롤러.
+  /// 작동 원리: 좁은 화면에서는 문제 영역을 보존하고 팀 채팅을 하단 시트로 분리한다.
+  Future<void> _showTeamChat() => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.72,
+      child: _TeamChat(
+        matchId: widget.matchId,
+        messages: _state?['chat'] as List? ?? const [],
+        controller: _chat,
+        onSent: _load,
+      ),
+    ),
+  );
+}
+
+/// 필요한 변수: 종료 경기 ID와 선택적으로 이미 수신한 결과.
+/// 작동 원리: 승패·레이팅 변동을 먼저 보여 주고 같은 화면 아래에 문항별 제출·정답 분석을 이어서 표시한다.
+class ArenaResultPage extends StatefulWidget {
+  const ArenaResultPage({super.key, required this.matchId, this.initialResult});
+
+  final String matchId;
+  final Map<String, dynamic>? initialResult;
+
+  @override
+  State<ArenaResultPage> createState() => _ArenaResultPageState();
+}
+
+class _ArenaResultPageState extends State<ArenaResultPage> {
+  Map<String, dynamic>? _result;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _result = widget.initialResult;
+    if (_result == null) unawaited(_load());
+  }
+
+  /// 필요한 변수는 종료 경기 ID다.
+  /// 작동 원리는 참가자 전용 결과 API를 캐시 없이 읽고 실패 시 재시도 가능한 오류를 보존하는 것이다.
+  Future<void> _load() async {
+    try {
+      final value = await ArenaApi.instance.matchResult(widget.matchId);
+      if (mounted) {
+        setState(() {
+          _result = value;
+          _error = null;
+        });
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
+  }
+
+  /// 필요한 변수는 결과 참가자 목록과 현재 사용자 ID다.
+  /// 작동 원리는 viewer ID를 우선하고 없으면 봇이 아닌 참가자를 선택해 내 레이팅 결과를 찾는 것이다.
+  Map<String, dynamic> _myParticipant(Map<String, dynamic> result) {
+    final viewerId = result['viewer_user_id']?.toString();
+    final participants = result['participants'] as List? ?? const [];
+    for (final raw in participants) {
+      if (raw is Map && raw['user_id']?.toString() == viewerId) {
+        return Map<String, dynamic>.from(raw);
+      }
+    }
+    for (final raw in participants) {
+      if (raw is Map && raw['is_bot'] != true) {
+        return Map<String, dynamic>.from(raw);
+      }
+    }
+    return const <String, dynamic>{};
+  }
+
+  /// 필요한 변수는 로드된 종료 결과다.
+  /// 작동 원리는 승패 요약과 문항 분석을 하나의 스크롤 화면으로 반응형 배치하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final result = _result;
+    if (result == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('경기 결과')),
+        body: Center(
+          child: _error == null
+              ? const CircularProgressIndicator()
+              : FilledButton.icon(
+                  onPressed: _load,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('결과 다시 불러오기'),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  question['prompt'].toString(),
-                  style: const TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (choices.isNotEmpty)
-                  ...choices.map((raw) {
-                    final value = Map<String, dynamic>.from(raw as Map);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: OutlinedButton(
-                        onPressed: () => _submit(value['id'].toString()),
-                        child: Text(value['label'].toString()),
-                      ),
-                    );
-                  }),
-                if (choices.isEmpty)
-                  TextField(
-                    controller: _answer,
-                    onSubmitted: _submit,
-                    decoration: const InputDecoration(
-                      labelText: '정답 입력',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                if (choices.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: FilledButton(
-                      onPressed: () => _submit(_answer.text),
-                      child: const Text('제출'),
-                    ),
-                  ),
-                if (_feedback != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(_feedback!),
-                  ),
-                const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ),
+      );
+    }
+    final mine = _myParticipant(result);
+    final viewerTeam =
+        (result['viewer_team'] as num?)?.toInt() ??
+        (mine['team'] as num?)?.toInt() ??
+        0;
+    final analysis = result['analysis'] as List? ?? const [];
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F4F6),
+      appBar: AppBar(
+        title: const Text('경기 종료'),
+        backgroundColor: const Color(0xFFF4F4F6),
+        surfaceTintColor: Colors.transparent,
+      ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    IconButton(
-                      onPressed: _index > 0
-                          ? () => setState(() => _index--)
-                          : null,
-                      icon: const Icon(Icons.chevron_left),
+                    _ArenaResultSummary(result: result, mine: mine),
+                    const SizedBox(height: 20),
+                    Text(
+                      '문항별 결과 분석',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
                     ),
-                    IconButton(
-                      onPressed: _index + 1 < questions.length
-                          ? () => setState(() => _index++)
-                          : null,
-                      icon: const Icon(Icons.chevron_right),
+                    const SizedBox(height: 6),
+                    const Text(
+                      '제출한 답안은 한 번만 판정되며, 미제출 문항도 함께 표시됩니다.',
+                      style: TextStyle(color: Color(0xFF6E6E73)),
+                    ),
+                    const SizedBox(height: 14),
+                    for (final raw in analysis)
+                      if (raw is Map)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _ArenaAnalysisCard(
+                            item: Map<String, dynamic>.from(raw),
+                            viewerTeam: viewerTeam,
+                          ),
+                        ),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.sports_esports),
+                      label: const Text('대결장으로 돌아가기'),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          if (teamMode)
-            SizedBox(
-              width: 280,
-              child: _TeamChat(
-                matchId: widget.matchId,
-                messages: _state!['chat'] as List? ?? const [],
-                controller: _chat,
-                onSent: _load,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요한 변수: 전체 결과와 현재 사용자 참가 결과.
+/// 작동 원리는 종료 사유·승패·점수·레이팅 증감을 한 카드에서 즉시 인지할 수 있게 조합하는 것이다.
+class _ArenaResultSummary extends StatelessWidget {
+  const _ArenaResultSummary({required this.result, required this.mine});
+
+  final Map<String, dynamic> result;
+  final Map<String, dynamic> mine;
+
+  /// 필요한 변수는 내 전적·레이팅과 양 팀 점수다. 종료 핵심 정보를 어두운 결과 카드로 렌더링한다.
+  @override
+  Widget build(BuildContext context) {
+    final record = mine['record']?.toString() ?? 'draw';
+    final title = record == 'win'
+        ? '승리'
+        : record == 'loss'
+        ? '패배'
+        : '무승부';
+    final color = record == 'win'
+        ? const Color(0xFF55D98A)
+        : record == 'loss'
+        ? const Color(0xFFFF8A8A)
+        : Colors.white70;
+    final delta = (mine['rating_delta'] as num? ?? 0).round();
+    final team = (mine['team'] as num? ?? 0).toInt();
+    final scores = Map<String, dynamic>.from(
+      result['scores'] as Map? ?? const {},
+    );
+    final myScore = Map<String, dynamic>.from(
+      scores['$team'] as Map? ?? const {},
+    );
+    final opponentScore = Map<String, dynamic>.from(
+      scores['${1 - team}'] as Map? ?? const {},
+    );
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF171719),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          Text(
+            result['practice'] == true ? 'BOT MATCH RESULT' : 'MATCH RESULT',
+            style: const TextStyle(
+              color: Colors.white54,
+              letterSpacing: 1.8,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: TextStyle(
+              color: color,
+              fontSize: 38,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _arenaFinishReasonLabel(result['finish_reason']?.toString()),
+            style: const TextStyle(color: Colors.white60),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _ArenaScore(
+                label: '나',
+                score: (myScore['correct'] as num? ?? 0).toInt(),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 30),
+                child: Text('VS', style: TextStyle(color: Colors.white38)),
+              ),
+              _ArenaScore(
+                label: result['practice'] == true ? '봇' : '상대',
+                score: (opponentScore['correct'] as num? ?? 0).toInt(),
+              ),
+            ],
+          ),
+          const Divider(height: 32, color: Colors.white12),
+          Text(
+            '${delta >= 0 ? '+' : ''}$delta 레이팅',
+            style: TextStyle(
+              color: delta > 0
+                  ? const Color(0xFF7FE1A1)
+                  : delta < 0
+                  ? const Color(0xFFFF9A9A)
+                  : Colors.white70,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${(mine['rating_before'] as num? ?? 1500).round()} → ${(mine['rating_after'] as num? ?? 1500).round()}',
+            style: const TextStyle(color: Colors.white54),
+          ),
         ],
       ),
     );
   }
+}
+
+/// 필요한 변수: 한 문항의 종료 분석과 현재 팀 번호.
+/// 작동 원리는 수식 문제·내 답·정답·정오답 상태를 한 카드에서 비교하게 만드는 것이다.
+class _ArenaAnalysisCard extends StatelessWidget {
+  const _ArenaAnalysisCard({required this.item, required this.viewerTeam});
+
+  final Map<String, dynamic> item;
+  final int viewerTeam;
+
+  /// 필요한 변수는 현재 팀의 제출 답안과 공개된 정답이다. 정오답 색상과 수식 본문을 함께 렌더링한다.
+  @override
+  Widget build(BuildContext context) {
+    final answers = Map<String, dynamic>.from(
+      item['team_answers'] as Map? ?? const {},
+    );
+    final rawAnswer = answers['$viewerTeam'];
+    final answer = rawAnswer is Map
+        ? Map<String, dynamic>.from(rawAnswer)
+        : null;
+    final correct = answer?['correct'] == true;
+    final statusColor = answer == null
+        ? const Color(0xFF8E8E93)
+        : correct
+        ? const Color(0xFF17883E)
+        : const Color(0xFFC62828);
+    final status = answer == null
+        ? '미제출'
+        : correct
+        ? '정답'
+        : '오답';
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE1E1E3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${item['position'] ?? '-'}번',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
+              Text(
+                status,
+                style: TextStyle(
+                  color: statusColor,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ContentBlocksView(
+            blocks: parseTextWithLatex(item['prompt']?.toString() ?? ''),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+            latexStyle: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _ArenaRenderedAnswerLine(
+            label: '내 답',
+            value: answer?['answer_label']?.toString() ?? '제출하지 않음',
+            color: statusColor,
+          ),
+          const SizedBox(height: 5),
+          _ArenaRenderedAnswerLine(
+            label: '정답',
+            value: item['correct_answer_label']?.toString() ?? '-',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 필요한 변수: 답안 종류 라벨·수식 포함 값·선택 색상.
+/// 작동 원리는 결과 분석의 답안도 문제 본문과 같은 인라인 수식 렌더러로 표시하는 것이다.
+class _ArenaRenderedAnswerLine extends StatelessWidget {
+  const _ArenaRenderedAnswerLine({
+    required this.label,
+    required this.value,
+    this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color? color;
+
+  /// 필요한 변수는 라벨과 수식 포함 답안 값이다. 라벨 옆 남은 폭에서 인라인 수식을 자동 줄바꿈한다.
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        '$label: ',
+        style: TextStyle(color: color, fontWeight: FontWeight.w800),
+      ),
+      Expanded(
+        child: ContentBlocksView(
+          blocks: parseTextWithLatex(value),
+          textStyle: TextStyle(color: color, fontWeight: FontWeight.w800),
+          latexStyle: TextStyle(color: color, fontWeight: FontWeight.w800),
+        ),
+      ),
+    ],
+  );
+}
+
+/// 필요한 변수: 서버 종료 사유 코드.
+/// 작동 원리는 내부 코드를 학생이 이해할 수 있는 즉시 종료 설명으로 변환하는 것이다.
+String _arenaFinishReasonLabel(String? reason) => switch (reason) {
+  'anti_cheat_speed' => '비정상적인 초고속 제출이 감지되어 종료됐습니다.',
+  'inactive_forfeit' => '상대 이탈로 몰수 종료됐습니다.',
+  'time_expired' => '경기 시간이 종료됐습니다.',
+  'all_questions_answered' => '한쪽이 모든 문항을 제출해 종료됐습니다.',
+  'decisive_lead' => '남은 문항으로 역전할 수 없어 조기 종료됐습니다.',
+  _ => '최종 점수로 경기가 종료됐습니다.',
+};
+
+/// 필요한 변수 없음.
+/// 작동 원리는 모든 답안을 제출한 짧은 전환 구간에 추가 입력을 막고 서버 결과 확정을 안내하는 것이다.
+class _ArenaWaitingForResult extends StatelessWidget {
+  const _ArenaWaitingForResult();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF0F7FF),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: const Row(
+      children: [
+        SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            '모든 답안을 제출했습니다. 경기 결과를 확정하고 있습니다.',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// 필요한 변수: 서버 팀 점수·연습 여부·봇 티어·최근 봇 응답.
+/// 작동 원리: 실제 경기와 같은 점수판을 사용하고 연습 중에는 사람 매칭 상태와 봇 정오답을 함께 표시한다.
+class _ArenaScoreBoard extends StatelessWidget {
+  const _ArenaScoreBoard({
+    required this.scores,
+    required this.team,
+    required this.practice,
+    required this.botTier,
+    required this.botWinReward,
+    required this.botActivity,
+  });
+
+  final Map<String, dynamic> scores;
+  final int team;
+  final bool practice;
+  final String? botTier;
+  final int botWinReward;
+  final Map? botActivity;
+
+  @override
+  Widget build(BuildContext context) {
+    final mine = Map<String, dynamic>.from(scores['$team'] as Map? ?? const {});
+    final opponent = Map<String, dynamic>.from(
+      scores['${1 - team}'] as Map? ?? const {},
+    );
+    final activity = botActivity == null
+        ? '봇이 첫 답안을 푸는 중입니다.'
+        : '${botActivity!['question_number']}번 · ${botActivity!['correct'] == true ? '정답' : '오답'}';
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF171719),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          if (practice) ...[
+            Row(
+              children: [
+                const Icon(Icons.sync, size: 16, color: Colors.white70),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${botTier ?? 'C'} 티어 봇전 · 승리 +$botWinReward 레이팅',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  activity,
+                  style: TextStyle(
+                    color: botActivity?['correct'] == false
+                        ? const Color(0xFFFF9A9A)
+                        : const Color(0xFF7FE1A1),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24, color: Colors.white12),
+          ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _ArenaScore(
+                label: '나',
+                score: (mine['correct'] as num? ?? 0).toInt(),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 28),
+                child: Text('VS', style: TextStyle(color: Colors.white38)),
+              ),
+              _ArenaScore(
+                label: practice ? '연습 봇' : '상대 팀',
+                score: (opponent['correct'] as num? ?? 0).toInt(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArenaScore extends StatelessWidget {
+  const _ArenaScore({required this.label, required this.score});
+
+  final String label;
+  final int score;
+
+  /// 필요한 변수: 팀 이름과 정답 수.
+  /// 작동 원리: 서버가 집계한 점수를 동일한 폭으로 표시해 실전과 연습의 점수 구조를 통일한다.
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+      const SizedBox(height: 4),
+      Text(
+        '$score',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 26,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ],
+  );
 }
 
 class _TeamChat extends StatelessWidget {

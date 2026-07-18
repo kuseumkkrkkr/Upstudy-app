@@ -95,7 +95,8 @@ class _TeacherRegisterPageState extends State<TeacherRegisterPage> {
             backgroundColor: _themeColor,
           ),
         );
-        Navigator.pop(context);
+        // 가입 API가 저장한 교사 토큰을 새 인증 래퍼가 즉시 확인하도록 루트 스택을 다시 만든다.
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       }
     } catch (e) {
       setState(() {

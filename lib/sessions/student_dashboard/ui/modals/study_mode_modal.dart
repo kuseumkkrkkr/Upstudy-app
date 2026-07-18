@@ -1,129 +1,173 @@
 import 'package:flutter/material.dart';
 import 'package:s11/sessions/course/ui/modals/course_mode.dart';
 import 'package:s11/sessions/course/ui/modals/resume_mode.dart';
-import 'package:s11/sessions/exam_paper/ui/modals/exam_mode.dart';
 import 'package:s11/sessions/textbook/ui/modals/book_mode.dart';
-import 'package:s11/sessions/tryout_solve/ui/modals/problem_solve_mode.dart';
-import 'package:s11/sessions/review_course/review_course.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/owned_marketplace_modal.dart';
+import 'package:s11/features/wrong_answer/wrong_answer.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 
 /// 필요한 변수는 학생 홈 context다.
-/// 작동 원리는 HTML 액션 패널과 같은 세로형 학습 메뉴를 화면 중앙에 열어 기존 목적지 콜백을 유지하는 것이다.
-Future<T?> showStudyModeModal<T>({required BuildContext context}) {
-  return showIos26Modal<T>(
-    context: context,
-    maxWidth: 720,
-    maxHeight: 900,
-    mobileFullScreen: true,
-    child: const StudypageCopyWidget(),
-  );
+/// 작동 원리는 학습 메뉴와 보유 세트 메뉴를 한 번에 하나씩 열고, 보유 세트에서
+/// 뒤로가면 학습 메뉴를 다시 열어 겹친 다이얼로그와 불필요한 라우트 누적을 막는 것이다.
+Future<T?> showStudyModeModal<T>({required BuildContext context}) async {
+  while (context.mounted) {
+    final destination = await showIos26Modal<_ModeDestination>(
+      context: context,
+      maxWidth: 980,
+      maxHeight: 490,
+      mobileFullScreen: true,
+      child: const StudypageCopyWidget(),
+    );
+    if (!context.mounted) return null;
+
+    final kind = switch (destination) {
+      _ModeDestination.ownedProblemSet => 'problem_set',
+      _ModeDestination.ownedExam => 'exam',
+      _ => null,
+    };
+    if (kind == null) return null;
+
+    final result = await showOwnedMarketplaceModal(
+      context: context,
+      kind: kind,
+    );
+    if (!context.mounted || result == OwnedMarketplaceModalResult.itemOpened) {
+      return null;
+    }
+  }
+  return null;
 }
 
 class StudypageCopyWidget extends StatelessWidget {
   const StudypageCopyWidget({super.key});
 
-  /// 필요한 변수는 여섯 학습 모드와 현재 Navigator다.
-  /// 작동 원리는 HTML과 동일한 제목·설명·세로 목록을 만들고 각 행을 기존 학습 기능으로 연결하는 것이다.
+  /// 필요한 변수는 화면 너비, 여섯 학습 모드와 현재 Navigator다.
+  /// 작동 원리는 세로 화면에서는 한 줄 목록, 가로 화면에서는 3열 카드로 시안의 정보 밀도를 맞추고 문제세트·시험지는 마켓 탐색으로 연결하는 것이다.
   @override
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width <= 780;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(mobile ? 0 : 28),
-      child: Material(
-        color: const Color(0xFFF9F9FA),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 18, 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'STUDY MODE',
-                          style: TextStyle(
-                            color: Colors.black45,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.4,
+    return SizedBox(
+      width: mobile ? double.infinity : 980,
+      height: mobile ? double.infinity : 490,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(mobile ? 0 : 28),
+        child: Material(
+          color: const Color(0xFFF9F9FA),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 18, 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'STUDY MODE',
+                            style: TextStyle(
+                              color: Colors.black45,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.4,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          '학습하기',
-                          style: TextStyle(
-                            fontSize: 30,
-                            height: 1,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1.2,
+                          SizedBox(height: 6),
+                          Text(
+                            '학습하기',
+                            style: TextStyle(
+                              fontSize: 30,
+                              height: 1,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1.2,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  IconButton.outlined(
-                    tooltip: '닫기',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: Color(0xFFE4E4E6)),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 38, 24, 20),
-              child: Text(
-                '시작할 학습 유형을 선택하세요.',
-                style: TextStyle(color: Colors.black54, fontSize: 14),
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-                itemCount: _kModes.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final mode = _kModes[index];
-                  return _ModeCard(
-                    icon: mode.icon,
-                    label: mode.label,
-                    description: mode.description,
-                    onTap: _actionFor(context, mode.destination),
-                  );
-                },
-              ),
-            ),
-            const Divider(height: 1, color: Color(0xFFE4E4E6)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('닫기'),
+                    IconButton.outlined(
+                      tooltip: '닫기',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              const Divider(height: 1, color: Color(0xFFE4E4E6)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 38, 24, 20),
+                child: Text(
+                  mobile
+                      ? '시작할 학습 유형을 선택하세요.'
+                      : '기존 앱과 동일하게 학습 유형을 먼저 고른 뒤 해당 전체 화면으로 이동합니다.',
+                  style: const TextStyle(color: Colors.black54, fontSize: 14),
+                ),
+              ),
+              Expanded(
+                child: mobile
+                    ? ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+                        itemCount: _kModes.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) =>
+                            _buildModeCard(context, _kModes[index]),
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 2.9,
+                            ),
+                        itemCount: _kModes.length,
+                        itemBuilder: (context, index) =>
+                            _buildModeCard(context, _kModes[index]),
+                      ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE4E4E6)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('닫기'),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  /// 필요한 변수는 화면 문맥과 선택할 학습 모드다.
+  /// 작동 원리는 모드 데이터와 이동 콜백을 하나의 카드로 조합해 가로·세로 배치에서 같은 동작을 보장하는 것이다.
+  Widget _buildModeCard(BuildContext context, _StudyMode mode) {
+    return _ModeCard(
+      icon: mode.icon,
+      label: mode.label,
+      description: mode.description,
+      onTap: _actionFor(context, mode.destination),
+    );
+  }
+
   /// 필요한 변수는 화면 context와 학습 목적지다.
-  /// 작동 원리는 시각 행과 기존 코스·복습·문제·시험·교재 기능 사이의 콜백을 한곳에서 결정하는 것이다.
+  /// 작동 원리는 시각 행과 기존 코스·복습·마켓·교재 기능 사이의 콜백을 한곳에서 결정하는 것이다.
   VoidCallback? _actionFor(BuildContext context, _ModeDestination destination) {
     return switch (destination) {
       _ModeDestination.resume => buildResumeAction(context),
       _ModeDestination.course => buildCourseAction(context),
-      _ModeDestination.tryout => buildProblemSolveAction(context),
-      _ModeDestination.exam => buildExamAction(context),
+      _ModeDestination.ownedProblemSet || _ModeDestination.ownedExam => () {
+        Navigator.of(context).pop(destination);
+      },
       _ModeDestination.book => buildBookAction(context),
-      _ModeDestination.weaknessReview => () => showReviewCoursePage(
+      _ModeDestination.weaknessReview => () => showWrongAnswerReviewPreview(
         context: context,
       ),
       _ModeDestination.none => null,
@@ -151,16 +195,16 @@ const _kModes = [
     destination: _ModeDestination.weaknessReview,
   ),
   _StudyMode(
-    icon: Icons.north_west_sharp,
-    label: '문제풀기',
-    description: '문제 유형 선택 후 풀이',
-    destination: _ModeDestination.tryout,
+    icon: Icons.inventory_2_outlined,
+    label: '문제세트',
+    description: '보유 문제세트 이어풀기',
+    destination: _ModeDestination.ownedProblemSet,
   ),
   _StudyMode(
-    icon: Icons.texture,
-    label: '시험',
-    description: '시험지 선택 후 시작',
-    destination: _ModeDestination.exam,
+    icon: Icons.assignment_outlined,
+    label: '시험지',
+    description: '보유 시험지 이어풀기',
+    destination: _ModeDestination.ownedExam,
   ),
   _StudyMode(
     icon: Icons.menu_book_outlined,
@@ -175,8 +219,8 @@ enum _ModeDestination {
   resume,
   course,
   weaknessReview,
-  tryout,
-  exam,
+  ownedProblemSet,
+  ownedExam,
   book,
 }
 
@@ -206,6 +250,8 @@ class _ModeCard extends StatelessWidget {
   final String description;
   final VoidCallback? onTap;
 
+  /// 필요한 변수는 모드 아이콘·이름·설명·선택 콜백이다.
+  /// 작동 원리는 가로 화면의 그리드와 세로 화면의 목록에서 공용 카드 규격을 사용해 시안의 버튼 모양을 유지하는 것이다.
   @override
   Widget build(BuildContext context) {
     return InkWell(

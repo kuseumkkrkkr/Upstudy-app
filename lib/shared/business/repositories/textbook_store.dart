@@ -122,6 +122,20 @@ class TextbookStore {
       final target = category.trim();
       filtered = filtered.where((book) => book.category == target).toList();
     }
+    // 기본 공통교재는 서버 상태와 무관하게 앱에 내장된 개념서 목록을 함께 제공한다.
+    // 원격 교재와 ID가 겹치면 원격 교재를 우선해 교사 제작 교재를 덮어쓰지 않는다.
+    if ((category == null || category == 'common') && tags.isEmpty) {
+      final conceptIds = kConceptTextbooks.keys.toSet();
+      filtered = filtered
+          .where((book) => !conceptIds.contains(book.id))
+          .toList(growable: false);
+      final existingIds = filtered.map((book) => book.id).toSet();
+      final conceptBook = kAllConceptBook;
+      filtered = [
+        ...filtered,
+        if (!existingIds.contains(conceptBook.id)) conceptBook,
+      ];
+    }
     if (tags.isNotEmpty) {
       filtered = filtered
           .where((book) => _matchesTags(book.tags, tags))
@@ -131,6 +145,11 @@ class TextbookStore {
   }
 
   static Future<BookData?> getById(String id) async {
+    // 내장 개념서는 네트워크와 로컬 캐시를 거치지 않고 즉시 반환한다.
+    // 교재보기에서 기본 개념서를 열 때 불필요한 DB/API 요청을 만들지 않는다.
+    final concept = kConceptTextbooks[id];
+    if (concept != null) return concept;
+    if (id == 'concept_book_common') return kAllConceptBook;
     final cached = await _loadCachedBook(id);
     if (cached != null) return cached;
     final remote = await _fetchRemoteBook(id);
@@ -201,6 +220,17 @@ class TextbookStore {
         ? updated.sublist(updated.length - maxLibraryItems)
         : updated;
     await saveLibraryMeta(trimmed);
+  }
+
+  // 필요 변수: 보관함에서 제거할 교재 ID. 작동 원리: 교재 원본은 지우지 않고
+  // 사용자 보관함 메타데이터에서만 제외해 다시 내려받거나 마켓에서 찾을 수 있게 한다.
+  static Future<void> removeFromLibrary(String bookId) async {
+    final id = bookId.trim();
+    if (id.isEmpty) return;
+    final items = await loadLibrary();
+    await saveLibraryMeta(
+      items.where((item) => item.id != id).toList(growable: false),
+    );
   }
 
   static Future<void> download(BookData book) async {

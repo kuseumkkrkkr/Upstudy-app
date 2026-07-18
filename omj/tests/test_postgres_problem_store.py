@@ -128,6 +128,30 @@ class PostgresProblemStoreTests(unittest.TestCase):
             self.assertIsNone(store._get_pool())
         self.assertEqual(len(attempts), 1)
 
+    def test_pool_uses_configured_acquire_timeout(self) -> None:
+        """필요 변수: 풀 획득 제한시간 환경 변수. 작동 원리: 자동 재시작 직후 연결 준비를 기다릴 설정이 풀 생성에 전달되는지 검증한다."""
+        captured = {}
+
+        class FakePool:
+            def __init__(self, **kwargs):
+                captured.update(kwargs)
+
+        module = types.SimpleNamespace(ConnectionPool=FakePool)
+        store = PostgresProblemStore()
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "DATABASE_URL": "postgresql://example",
+                    "POSTGRES_POOL_ACQUIRE_TIMEOUT_SEC": "7.5",
+                },
+                clear=True,
+            ),
+            patch.dict(sys.modules, {"psycopg_pool": module}),
+        ):
+            self.assertIsNotNone(store._get_pool())
+        self.assertEqual(captured["timeout"], 7.5)
+
     def test_bounded_dual_write_queue_rejects_overflow(self) -> None:
         """필요 변수: 포화 큐. 작동 원리: DB 지연 시 작업을 무한 적재하지 않고 SQLite 성공 경로를 보존한다."""
         store = PostgresProblemStore()
@@ -269,12 +293,12 @@ class PostgresProblemStoreTests(unittest.TestCase):
     def test_postgres_readiness_requires_verified_database_and_redis(self) -> None:
         """필요 변수: PostgreSQL 운영 모드와 세 저장소 상태. 작동 원리: 이관 표식 또는 Redis가 없으면 배포 준비 상태를 거부한다."""
         environment = {
+            "DATABASE_URL": "postgresql://example.invalid/omj",
             "PROBLEM_CACHE_BACKEND": "postgres",
             "PROBLEM_CACHE_VERIFIED": "false",
         }
         with (
             patch.dict(os.environ, environment, clear=True),
-            patch.object(readiness, "_sqlite_ping", return_value=True),
             patch.object(readiness.postgres_problem_store, "ping", return_value=True),
             patch.object(readiness.postgres_problem_store, "has_verified_migration", return_value=True),
             patch.object(readiness.problem_runtime_cache, "ping", return_value=True),

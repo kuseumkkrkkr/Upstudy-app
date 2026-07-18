@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
+import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/ui/modal/level_detail_modal.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
@@ -42,11 +45,12 @@ class Ios26TopBar extends StatelessWidget {
     this.trailing,
     this.showLevelIndicator = true,
     this.showUtilityActions = true,
-    this.profileLabel = '김학생',
+    this.profileLabel,
     this.onSearch,
     this.onNotifications,
     this.onProfile,
     this.leftInset,
+    this.showMenuWithBack = false,
   });
 
   final Color brandColor;
@@ -60,11 +64,27 @@ class Ios26TopBar extends StatelessWidget {
   final Widget? trailing;
   final bool showLevelIndicator;
   final bool showUtilityActions;
-  final String profileLabel;
+  final String? profileLabel;
   final VoidCallback? onSearch;
   final VoidCallback? onNotifications;
   final VoidCallback? onProfile;
   final double? leftInset;
+  final bool showMenuWithBack;
+
+  /// 필요한 변수는 상단 바 자신이 가진 Scaffold 문맥과 선택적 기존 메뉴 콜백이다.
+  /// 작동 원리: 상단 바 아래의 Drawer를 먼저 직접 열어, 부모 화면의 오래된 문맥이 전달돼도 전체 메뉴가 열리게 한다.
+  void _handleMenuTap(BuildContext context) {
+    final scaffoldState = Scaffold.maybeOf(context);
+    if (scaffoldState?.hasDrawer ?? false) {
+      if (scaffoldState!.isDrawerOpen) {
+        Navigator.of(context).pop();
+      } else {
+        scaffoldState.openDrawer();
+      }
+      return;
+    }
+    onMenu?.call();
+  }
 
   /// 필요 변수: 현재 화면 폭과 전달받은 메뉴·행동 목록.
   /// 작동 원리: HTML처럼 PC는 브랜드·중앙 캡슐 메뉴·우측 행동을, 모바일은 햄버거와 행동만 분리 정렬합니다.
@@ -75,7 +95,8 @@ class Ios26TopBar extends StatelessWidget {
     final barHeight = compact ? 58.0 : 68.0;
     final effectiveLeftInset = leftInset ?? (compact ? 12.0 : 40.0);
     final showBackButton = onBack != null;
-    final showMenuButton = onMenu != null && !showBackButton;
+    final showMenuButton =
+        onMenu != null && (!showBackButton || showMenuWithBack);
     final hasLeadingControl = showBackButton || showMenuButton;
 
     return ClipRRect(
@@ -106,13 +127,15 @@ class Ios26TopBar extends StatelessWidget {
                         icon: Icons.arrow_back_ios_new_rounded,
                         tooltip: '뒤로가기',
                         onTap: onBack,
-                      )
-                    else if (showMenuButton)
+                      ),
+                    if (showBackButton && showMenuButton)
+                      SizedBox(width: compact ? 7 : 8),
+                    if (showMenuButton)
                       _TopCircleButton(
                         key: const ValueKey('student-mobile-menu'),
                         icon: Icons.menu_rounded,
                         tooltip: '전체 메뉴',
-                        onTap: onMenu,
+                        onTap: () => _handleMenuTap(context),
                       ),
                     if (hasLeadingControl) SizedBox(width: compact ? 7 : 10),
                     GestureDetector(
@@ -157,7 +180,11 @@ class Ios26TopBar extends StatelessWidget {
               ),
               if (items.isNotEmpty && !compact)
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  // 앱바와 캡슐 사이의 상하 여백이 드러나도록 시안보다 세로 패딩만 얇게 유지한다.
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.68),
                     borderRadius: BorderRadius.circular(999),
@@ -191,7 +218,7 @@ class Ios26TopBar extends StatelessWidget {
                       ),
                       if (!compact) ...[
                         const SizedBox(width: 8),
-                        _CompactProfile(
+                        _StoredProfile(
                           label: profileLabel,
                           onTap:
                               onProfile ??
@@ -231,6 +258,45 @@ class Ios26TopBar extends StatelessWidget {
   }
 }
 
+class _StoredProfile extends StatefulWidget {
+  const _StoredProfile({required this.label, required this.onTap});
+
+  final String? label;
+  final VoidCallback onTap;
+
+  /// 필요 변수는 호출 화면이 전달한 이름과 로컬에 저장된 로그인 아이디다.
+  /// 작동 원리는 이름을 우선 표시하고, 없으면 DB 요청 없이 저장된 아이디를 한 번만 읽는 것이다.
+  @override
+  State<_StoredProfile> createState() => _StoredProfileState();
+}
+
+class _StoredProfileState extends State<_StoredProfile> {
+  String? _storedUsername;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadStoredUsername());
+  }
+
+  /// 필요 변수는 AuthStorage에 보관된 현재 계정 아이디다.
+  /// 작동 원리는 공백을 제거한 유효한 아이디만 상태에 반영해 앱바를 한 번 갱신하는 것이다.
+  Future<void> _loadStoredUsername() async {
+    final username = (await AuthStorage.instance.readUsername())?.trim();
+    if (!mounted || username == null || username.isEmpty) return;
+    setState(() => _storedUsername = username);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final suppliedLabel = widget.label?.trim();
+    final label = suppliedLabel?.isNotEmpty == true
+        ? suppliedLabel!
+        : (_storedUsername ?? '사용자');
+    return _CompactProfile(label: label, onTap: widget.onTap);
+  }
+}
+
 /// 필요한 변수는 현재 Navigator 문맥이다.
 /// 작동 원리는 HTML QUICK FIND와 같은 검색 시트를 열고 코스·교재·친구·마켓 명명 라우트로 연결하는 것이다.
 void showStudentQuickSearch(BuildContext context) {
@@ -250,7 +316,8 @@ void showStudentNotifications(BuildContext context) {
 }
 
 /// 필요한 변수는 현재 Navigator 문맥과 검색·알림 패널 본문이다.
-/// 작동 원리: HTML처럼 PC에서는 오른쪽 560px, 모바일에서는 전체 화면 패널을 슬라이드 전환으로 연다.
+/// 작동 원리: 전체 메뉴와 겹치지 않도록 검색과 알림은 PC에서 오른쪽 560px,
+/// 모바일에서는 오른쪽에서 들어오는 전체 화면 패널로 연다.
 Future<void> _showStudentUtilityPanel({
   required BuildContext context,
   required Widget child,
@@ -360,11 +427,13 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
 
 class _StudentNotificationSnapshot {
   const _StudentNotificationSnapshot({
-    required this.notices,
+    required this.globalNotices,
+    required this.academyNotices,
     required this.friendRequests,
   });
 
-  final List<StudyGroupNotice> notices;
+  final List<StudyGroupNotice> globalNotices;
+  final List<StudyGroupNotice> academyNotices;
   final List<FriendRequest> friendRequests;
 }
 
@@ -382,27 +451,56 @@ class _StudentNotificationsSheetState
     extends State<_StudentNotificationsSheet> {
   late final Future<_StudentNotificationSnapshot> _future = _load();
 
-  /// 필요한 변수는 전역 공지와 친구 요청 API다.
-  /// 작동 원리는 두 GET을 병렬 실행해 상단 바 클릭당 화면 갱신을 한 번으로 제한하는 것이다.
+  /// 필요한 변수는 전체 공지, 내 학원 공지, 친구 요청 API다.
+  /// 작동 원리는 세 GET을 병렬 실행해 순차 요청 없이 알림 패널을 한 번에 갱신하는 것이다.
   Future<_StudentNotificationSnapshot> _load() async {
     final results = await Future.wait<Object>([
-      ApiClient.instance.listGlobalSystemNotices(limit: 8),
-      ApiClient.instance.listFriendRequests(),
+      ApiClient.instance
+          .listGlobalSystemNotices(limit: 8)
+          .onError((_, _) => const <StudyGroupNotice>[]),
+      ApiClient.instance
+          .listMySystemGroupNotices(limit: 12)
+          .onError((_, _) => const <StudyGroupNotice>[]),
+      ApiClient.instance.listFriendRequests().onError(
+        (_, _) => const <FriendRequest>[],
+      ),
     ]);
     return _StudentNotificationSnapshot(
-      notices: results[0] as List<StudyGroupNotice>,
-      friendRequests: results[1] as List<FriendRequest>,
+      globalNotices: results[0] as List<StudyGroupNotice>,
+      academyNotices: results[1] as List<StudyGroupNotice>,
+      friendRequests: results[2] as List<FriendRequest>,
     );
   }
 
-  /// 필요한 변수는 공지·친구 요청 비동기 결과다.
-  /// 작동 원리는 HTML LIVE STATUS처럼 요청 수와 최신 공지를 한 시트에 표시하고 실패는 재진입 가능한 안내로 남긴다.
+  /// 필요한 변수는 소셜 알림 상태와 전체·학원 공지·친구 요청 비동기 결과다.
+  /// 작동 원리는 알림과 공지를 구역으로 나누고 공지를 누르면 실제 본문을 같은 패널 위에서 확인한다.
   @override
   Widget build(BuildContext context) => _StudentUtilitySheet(
     kicker: 'LIVE STATUS',
     title: '알림 센터',
     description: '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
     children: [
+      const _UtilitySectionTitle('알림'),
+      ValueListenableBuilder<SocialNotificationSnapshot>(
+        valueListenable: SocialNotificationStore.notifier,
+        builder: (context, social, _) => Column(
+          children: [
+            _UtilityNoticeRow(
+              title: '새 메시지',
+              detail: social.unreadMessages == 0
+                  ? '읽지 않은 메시지가 없습니다.'
+                  : '친구와 그룹에서 도착한 메시지를 확인하세요.',
+              meta: '${social.unreadMessages}',
+            ),
+            if (social.friendRemovals > 0)
+              _UtilityNoticeRow(
+                title: '친구 상태 변경',
+                detail: '친구 목록에서 변경된 관계를 확인하세요.',
+                meta: '${social.friendRemovals}',
+              ),
+          ],
+        ),
+      ),
       FutureBuilder<_StudentNotificationSnapshot>(
         future: _future,
         builder: (context, snapshot) {
@@ -421,6 +519,7 @@ class _StudentNotificationsSheetState
           }
           final data = snapshot.data!;
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _UtilityNoticeRow(
                 title: '친구 요청',
@@ -429,15 +528,25 @@ class _StudentNotificationsSheetState
                     : '받은 요청을 친구/소셜에서 확인하세요.',
                 meta: '${data.friendRequests.length}',
               ),
-              for (final notice in data.notices)
+              const SizedBox(height: 24),
+              const _UtilitySectionTitle('공지'),
+              for (final notice in data.globalNotices)
                 _UtilityNoticeRow(
                   title: notice.title.isEmpty ? '시스템 공지' : notice.title,
-                  detail: notice.contentHtml
-                      .replaceAll(RegExp('<[^>]*>'), ' ')
-                      .trim(),
-                  meta: notice.createdAt.isEmpty ? '공지' : notice.createdAt,
+                  detail: _plainNoticeContent(notice.contentHtml),
+                  meta: '전체 공지',
+                  onTap: () => showStudentNoticeDetail(context, notice),
                 ),
-              if (data.notices.isEmpty)
+              for (final notice in data.academyNotices)
+                _UtilityNoticeRow(
+                  title: notice.title.isEmpty ? '학원 공지' : notice.title,
+                  detail: _plainNoticeContent(notice.contentHtml),
+                  meta: notice.groupName?.trim().isNotEmpty == true
+                      ? notice.groupName!.trim()
+                      : '학원 공지',
+                  onTap: () => showStudentNoticeDetail(context, notice),
+                ),
+              if (data.globalNotices.isEmpty && data.academyNotices.isEmpty)
                 const _UtilityNoticeRow(
                   title: '확인할 공지가 없습니다.',
                   detail: '새 공지가 도착하면 이곳에 표시됩니다.',
@@ -545,42 +654,143 @@ class _UtilityNoticeRow extends StatelessWidget {
     required this.title,
     required this.detail,
     required this.meta,
+    this.onTap,
   });
 
   final String title;
   final String detail;
   final String meta;
+  final VoidCallback? onTap;
 
   /// 필요한 변수는 알림 제목·본문·메타다.
   /// 작동 원리는 각 알림을 얇은 구분선과 우측 상태로 압축해 공지 수가 늘어도 빠르게 스캔하게 한다.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 14),
-    decoration: const BoxDecoration(
-      border: Border(bottom: BorderSide(color: Color(0xFFE4E4E6))),
+  Widget build(BuildContext context) {
+    final row = Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE4E4E6))),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  detail,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            meta,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+          ),
+          if (onTap != null) ...[
+            const SizedBox(width: 5),
+            const Icon(Icons.chevron_right_rounded, size: 16),
+          ],
+        ],
+      ),
+    );
+    if (onTap == null) return row;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(onTap: onTap, child: row),
+    );
+  }
+}
+
+class _UtilitySectionTitle extends StatelessWidget {
+  const _UtilitySectionTitle(this.title);
+
+  final String title;
+
+  /// 필요한 변수는 알림 패널의 구역 제목이다.
+  /// 작동 원리는 알림과 공지 목록의 시작점을 작은 굵은 라벨로 구분하는 것이다.
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      title,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
+        letterSpacing: .4,
+      ),
     ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
+  );
+}
+
+/// 필요한 변수는 HTML이 포함될 수 있는 공지 본문이다.
+/// 작동 원리는 기본 태그와 엔티티를 제거해 목록과 간단 상세에서 읽을 수 있는 UTF-8 텍스트로 바꾼다.
+String _plainNoticeContent(String contentHtml) {
+  return contentHtml
+      .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+      .replaceAll(RegExp('<[^>]*>'), ' ')
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll(RegExp(r'[ \t]+'), ' ')
+      .trim();
+}
+
+/// 필요한 변수는 현재 화면 문맥과 선택한 전체 또는 학원 공지다.
+/// 작동 원리는 알림 사이드바 위에 제목, 출처, 실제 본문을 표시해 목록에서 바로 열람하게 한다.
+Future<void> showStudentNoticeDetail(
+  BuildContext context,
+  StudyGroupNotice notice,
+) {
+  final source = notice.scope == 'global'
+      ? '전체 공지'
+      : (notice.groupName?.trim().isNotEmpty == true
+            ? notice.groupName!.trim()
+            : '학원 공지');
+  final content = _plainNoticeContent(notice.contentHtml);
+  return showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(notice.title.isEmpty ? '공지사항' : notice.title),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 520),
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-              const SizedBox(height: 4),
               Text(
-                detail,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
+                source,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SelectableText(
+                content.isEmpty ? '공지 본문이 없습니다.' : content,
+                style: const TextStyle(fontSize: 14, height: 1.65),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 12),
-        Text(
-          meta,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('닫기'),
         ),
       ],
     ),
@@ -709,14 +919,15 @@ class _NavChip extends StatelessWidget {
   final Ios26NavItem item;
 
   /// 필요 변수: `item.label`, `item.active`, `item.onTap`이다.
-  /// 작동 원리: 캡슐 버튼 내부를 `Center`로 감싸 텍스트가 위로 치우치지 않게 하고, 활성 상태는 배경과 글자색만 바꾼다.
+  /// 작동 원리: 30px 높이의 캡슐 안에서 텍스트를 중앙 정렬하고, 활성 상태는 배경과 글자색만 바꾼다.
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      key: ValueKey('student-top-nav-${item.label}'),
       borderRadius: BorderRadius.circular(999),
       onTap: item.onTap,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 34),
+        height: 30,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 15),
         decoration: BoxDecoration(

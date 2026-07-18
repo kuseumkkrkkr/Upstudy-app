@@ -13,7 +13,9 @@ import 'package:s11/shared/business/repositories/bookmark_store.dart';
 import 'package:s11/shared/services/storage/local_db.dart';
 import 'package:s11/shared/business/repositories/textbook_store.dart';
 import 'package:s11/shared/services/textbook_reader_preferences.dart';
-import 'package:s11/shared/ui/graphs/graph_selector.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
+import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 
 // 필요 변수: 교재 목록·선택 태그·카테고리. 작동 원리: 블러 배경 위에 필터된 교재함 모달을 연다.
 Future<T?> showBookLibraryModal<T>({
@@ -70,10 +72,16 @@ Future<T?> showCommonBookLibraryModal<T>({
 }
 
 class BookWidget extends StatefulWidget {
-  const BookWidget({super.key, this.book, this.initialEntryIndex});
+  const BookWidget({
+    super.key,
+    this.book,
+    this.initialEntryIndex,
+    this.persistenceEnabled = true,
+  });
 
   final BookData? book;
   final int? initialEntryIndex;
+  final bool persistenceEnabled;
 
   static String routeName = 'book';
   static String routePath = '/book';
@@ -247,51 +255,107 @@ class BookLibraryModal extends StatelessWidget {
   final String? category;
 
   @override
+  /// 필요한 변수는 화면 크기와 교재 목록이다.
+  /// 작동 원리는 데스크톱에서는 집중형 다이얼로그를, 작은 화면에서는 여백을 보존한 전체 높이 패널을 사용해 같은 교재함 흐름을 제공하는 것이다.
   Widget build(BuildContext context) {
-    return Container(
-      width: 1000,
-      height: 650,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: IconButton(
-                  icon: const Icon(Icons.close, size: 26),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 640;
+        final width = compact
+            ? constraints.maxWidth - 24
+            : constraints.maxWidth.clamp(720.0, 1120.0) * .82;
+        final height = compact
+            ? constraints.maxHeight - 24
+            : constraints.maxHeight.clamp(560.0, 760.0) * .82;
+        return Container(
+          width: width,
+          height: height,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFCFDFC),
+            borderRadius: BorderRadius.circular(compact ? 24 : 28),
+            border: Border.all(color: const Color(0x1A1F4D38)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x550A1D14),
+                blurRadius: 48,
+                offset: Offset(0, 20),
               ),
-              Text(
-                headerTitle,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildHeader(context, compact: compact),
+              const Divider(height: 1, color: Color(0xFFE0E8E2)),
+              Expanded(
+                child: _BookLibraryLoader(
+                  onSelect: (book) {
+                    final navigator = Navigator.of(
+                      context,
+                      rootNavigator: true,
+                    );
+                    navigator.pop();
+                    navigator.push(
+                      MaterialPageRoute(builder: (_) => BookWidget(book: book)),
+                    );
+                  },
+                  books: books,
+                  title: libraryTitle,
+                  selectedTags: selectedTags,
+                  notice: notice,
+                  category: category,
                 ),
               ),
             ],
           ),
-          const Divider(height: 1),
+        );
+      },
+    );
+  }
+
+  /// 필요한 변수는 모달 제목과 작은 화면 여부다.
+  /// 작동 원리는 닫기·현재 위치·교재 수 안내를 한 행에 묶어 목록을 읽기 전에 화면 목적을 명확히 하는 것이다.
+  Widget _buildHeader(BuildContext context, {required bool compact}) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        compact ? 12 : 20,
+        12,
+        compact ? 16 : 24,
+        12,
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: '닫기',
+            icon: const Icon(Icons.close_rounded, size: 24),
+            color: const Color(0xFF1F4D38),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const SizedBox(width: 6),
           Expanded(
-            child: _BookLibraryLoader(
-              onSelect: (book) {
-                final navigator = Navigator.of(context, rootNavigator: true);
-                navigator.pop();
-                navigator.push(
-                  MaterialPageRoute(builder: (_) => BookWidget(book: book)),
-                );
-              },
-              books: books,
-              title: libraryTitle,
-              selectedTags: selectedTags,
-              notice: notice,
-              category: category,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  headerTitle,
+                  style: TextStyle(
+                    color: const Color(0xFF183C2C),
+                    fontSize: compact ? 20 : 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  '학습 중인 교재와 공개 교재를 한 곳에서 이어 읽어요.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF68766E)),
+                ),
+              ],
             ),
           ),
+          if (!compact)
+            const Icon(Icons.auto_stories_rounded, color: Color(0xFF3DBE68)),
         ],
       ),
     );
@@ -395,15 +459,11 @@ class _BookLibraryBody extends StatelessWidget {
   final ValueChanged<BookData>? onDownload;
 
   @override
+  /// 필요한 변수는 교재 메타데이터·진행률·선택 태그다.
+  /// 작동 원리는 목록 전체를 한 번만 순회해 표지, 학습 상태, 재개 행동을 같은 카드에 배치하고 교재 수가 많아도 지연 렌더링을 유지하는 것이다.
   Widget build(BuildContext context) {
-    const primary = Color(0xFF202022);
-    const primaryLight = Color(0xFF707075);
-    const border = Color(0xFFE0E3E7);
-    const shadow = BoxShadow(
-      blurRadius: 4,
-      color: Color(0x22000000),
-      offset: Offset(0, 2),
-    );
+    const primaryLight = Color(0xFF3DBE68);
+    const border = Color(0xFFDCE7DE);
     final hasTags = selectedTags.isNotEmpty;
     final showNotice = notice != null && notice!.trim().isNotEmpty;
 
@@ -503,24 +563,39 @@ class _BookLibraryBody extends StatelessWidget {
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
+                            color: const Color(0xFFFFFFFF),
+                            borderRadius: BorderRadius.circular(18),
                             border: Border.all(color: border, width: 1),
-                            boxShadow: const [shadow],
+                            boxShadow: const [
+                              BoxShadow(
+                                blurRadius: 12,
+                                color: Color(0x120B301E),
+                                offset: Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: Row(
                             children: [
                               Container(
-                                width: 58,
-                                height: 74,
+                                width: 62,
+                                height: 80,
                                 decoration: BoxDecoration(
                                   color: book.coverColor ?? primaryLight,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x220B301E),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(
-                                  Icons.menu_book,
-                                  color: Colors.white,
-                                  size: 28,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.auto_stories_rounded,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -543,7 +618,7 @@ class _BookLibraryBody extends StatelessWidget {
                                         color: Colors.black54,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 10),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(6),
                                       child: LinearProgressIndicator(
@@ -552,7 +627,7 @@ class _BookLibraryBody extends StatelessWidget {
                                         backgroundColor: const Color(
                                           0xFFE8E8E8,
                                         ),
-                                        color: primary,
+                                        color: primaryLight,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -605,9 +680,9 @@ class _BookLibraryBody extends StatelessWidget {
                                 ),
                               if (showDownload) const SizedBox(width: 10),
                               const Icon(
-                                Icons.arrow_forward_ios,
-                                size: 16,
-                                color: Colors.black26,
+                                Icons.arrow_forward_rounded,
+                                size: 20,
+                                color: Color(0xFF6B8D78),
                               ),
                             ],
                           ),
@@ -806,10 +881,10 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
 enum _ToolMode { none, pen, highlighter, eraser }
 
 class _BookWidgetState extends State<BookWidget> {
-  static const Color kPrimary = Color(0xFF202022);
-  static const Color kPrimaryLight = Color(0xFF707075);
-  static const Color kBg = Color(0xFFF8F8F8);
-  static const Color kBorder = Color(0xFFE0E3E7);
+  static const Color kPrimary = StudentDensityTokens.ink;
+  static const Color kBg = StudentDensityTokens.background;
+  static const Color kCanvas = Color(0xFFE9EAED);
+  static const Color kBorder = Color(0xFFE2E2E7);
 
   static const double _eraserRadius = 24;
   static const double _minPointDistance = 1.2;
@@ -836,7 +911,7 @@ class _BookWidgetState extends State<BookWidget> {
     false,
   );
   bool _loadingFullBook = false;
-  bool _pageMode = false;
+  bool _pageMode = true;
   String _currentBookId = '';
   String _currentBookTitle = '';
   BookData? _currentBook;
@@ -864,8 +939,10 @@ class _BookWidgetState extends State<BookWidget> {
   void initState() {
     super.initState();
     _initializeIfNeeded(attachListeners: true);
-    _loadBookmarks();
-    _loadReaderPreference();
+    if (widget.persistenceEnabled) {
+      _loadBookmarks();
+      _loadReaderPreference();
+    }
   }
 
   @override
@@ -895,10 +972,10 @@ class _BookWidgetState extends State<BookWidget> {
       _currentBook = null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _contentController.jumpTo(0);
+        if (_contentController.hasClients) _contentController.jumpTo(0);
         _initializeIfNeeded();
       });
-      _loadBookmarks();
+      if (widget.persistenceEnabled) _loadBookmarks();
     }
   }
 
@@ -906,7 +983,7 @@ class _BookWidgetState extends State<BookWidget> {
   void dispose() {
     _annotationSaveTimer?.cancel();
     _scrollThrottleTimer?.cancel();
-    unawaited(_persistAnnotations());
+    if (widget.persistenceEnabled) unawaited(_persistAnnotations());
     _tocController.dispose();
     _contentController.dispose();
     _readerPageController.dispose();
@@ -918,7 +995,7 @@ class _BookWidgetState extends State<BookWidget> {
 
   bool get _supportsAnnotations => true;
 
-  bool get _canPersistAnnotations => !kIsWeb;
+  bool get _canPersistAnnotations => widget.persistenceEnabled && !kIsWeb;
 
   bool get _isDrawingTool => _toolMode != _ToolMode.none;
 
@@ -987,7 +1064,7 @@ class _BookWidgetState extends State<BookWidget> {
       _currentBook = book;
       _currentBookId = book.id;
       _currentBookTitle = book.title;
-      _recordBookView(book);
+      if (widget.persistenceEnabled) _recordBookView(book);
       _chapters = book.chapters;
       _contentEntries = _buildContentEntries(_chapters);
       _rebuildReaderPages();
@@ -995,11 +1072,15 @@ class _BookWidgetState extends State<BookWidget> {
         _contentEntries.length,
         (_) => GlobalKey(),
       );
-      _chapterExpanded = List<bool>.filled(_chapters.length, true);
+      // 처음에는 장 제목만 보여 주어 본문 선택지를 한눈에 파악하게 한다.
+      // 현재 절로 이동하면 _setActiveReaderPage/_handleTocTap이 해당 장만 연다.
+      _chapterExpanded = List<bool>.filled(_chapters.length, false);
       _pendingInitialEntryIndex ??= widget.initialEntryIndex;
       _initialized = true;
-      _loadAnnotations();
-      _ensureFullBookLoaded();
+      if (widget.persistenceEnabled) {
+        _loadAnnotations();
+        _ensureFullBookLoaded();
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _cacheSectionOffsets();
         _applyInitialScroll();
@@ -1088,7 +1169,8 @@ class _BookWidgetState extends State<BookWidget> {
           _contentEntries.length,
           (_) => GlobalKey(),
         );
-        _chapterExpanded = List<bool>.filled(_chapters.length, true);
+        // 교재를 다시 불러와도 목차는 접힌 상태로 시작해 모바일·데스크톱 밀도를 맞춘다.
+        _chapterExpanded = List<bool>.filled(_chapters.length, false);
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _cacheSectionOffsets();
@@ -1839,12 +1921,26 @@ class _BookWidgetState extends State<BookWidget> {
             children: [
               _buildHeader(context),
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSidebar(context),
-                    Expanded(child: _buildContent(context)),
-                  ],
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact =
+                        constraints.maxWidth <=
+                        StudentDensityTokens.mobileBreakpoint;
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!compact) _buildSidebar(context),
+                              Expanded(child: _buildContent(context)),
+                            ],
+                          ),
+                        ),
+                        if (compact) _buildMobileReaderRail(),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -1854,49 +1950,375 @@ class _BookWidgetState extends State<BookWidget> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  /// 필요한 변수는 현재 페이지·전체 페이지 수와 목차 항목이다.
+  /// 작동 원리: 모바일에서는 사이드바를 숨기되 하단에 진행률과 목차 진입점을 고정해
+  /// 읽는 중에도 페이지 이동과 장 선택을 잃지 않게 한다.
+  Widget _buildMobileReaderRail() {
+    final total = _pageMode ? _readerPages.length : _contentEntries.length;
+    final current = total == 0
+        ? 0
+        : (_pageMode ? _activeReaderPageIndex + 1 : _activeEntryIndex + 1)
+              .clamp(1, total);
+    final progress = total == 0 ? 0.0 : current / total;
+
     return Container(
-      height: 80,
-      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: kBorder)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            iconSize: 36,
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF3B3B3B)),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-          const Text(
-            'AIFlow',
-            style: TextStyle(
-              color: kPrimary,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(
-            width: 168,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _pageMode ? '페이지' : '스크롤',
+                  '학습 진행  $current/${total == 0 ? 0 : total}',
                   style: const TextStyle(
-                    color: kPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    color: StudentDensityTokens.muted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                Switch.adaptive(
-                  value: _pageMode,
-                  onChanged: (value) => unawaited(_setPageMode(value)),
-                  activeThumbColor: kPrimaryLight,
+                const SizedBox(height: 5),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    minHeight: 5,
+                    value: progress,
+                    backgroundColor: StudentDensityTokens.surfaceMuted,
+                    valueColor: const AlwaysStoppedAnimation(Colors.black),
+                  ),
                 ),
-                const SizedBox(width: 8),
               ],
             ),
           ),
+          const SizedBox(width: 12),
+          OutlinedButton.icon(
+            onPressed: _openMobileToc,
+            icon: const Icon(Icons.menu_book_outlined, size: 15),
+            label: const Text('목차'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.black,
+              minimumSize: const Size(80, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 11),
+              side: const BorderSide(color: Colors.black),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  /// 필요한 변수는 현재 목차의 보이는 항목과 선택 콜백이다.
+  /// 작동 원리: 모바일 하단 목차 버튼을 누르면 장·절만 담은 바텀시트를 열고,
+  /// 항목 선택 뒤에는 기존 페이지 이동 로직을 재사용한다.
+  Future<void> _openMobileToc() async {
+    final entries = _visibleTocEntries();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.sizeOf(sheetContext).height * .72,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 16, 10),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '목차',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: '목차 닫기',
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: entries.length,
+                  itemBuilder: (context, index) {
+                    final entry = entries[index];
+                    final isChapter = entry.level == 0;
+                    final active = entry.entryIndex == _activeEntryIndex;
+                    return ListTile(
+                      contentPadding: EdgeInsets.fromLTRB(
+                        isChapter ? 20 : 42,
+                        2,
+                        16,
+                        2,
+                      ),
+                      leading: Icon(
+                        isChapter
+                            ? Icons.menu_book_outlined
+                            : Icons.article_outlined,
+                        color: active ? kPrimary : Colors.black45,
+                        size: 18,
+                      ),
+                      title: Text(
+                        entry.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: active ? kPrimary : Colors.black87,
+                          fontSize: isChapter ? 14 : 13,
+                          fontWeight: isChapter || active
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        _handleTocTap(entry);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 현재 교재 제목·페이지 진행률·보기 모드와 화면 너비다.
+  /// 작동 원리: 학생 디자인의 학습 헤더를 유지하면서 모바일에서는 핵심 조작만 남기고,
+  /// 데스크톱에서는 교재 식별·진행률·북마크·보기 전환·학습 완료를 한 줄에 배치한다.
+  Widget _buildHeader(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact =
+            constraints.maxWidth <= StudentDensityTokens.mobileBreakpoint;
+        final totalPages = _readerPages.length;
+        final currentPage = totalPages == 0
+            ? 0
+            : (_activeReaderPageIndex + 1).clamp(1, totalPages);
+        final progress = totalPages == 0 ? 0.0 : currentPage / totalPages;
+        return Container(
+          height: compact ? 62 : 68,
+          padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 22),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: kBorder)),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: '교재함으로 돌아가기',
+                iconSize: compact ? 27 : 30,
+                icon: const Icon(Icons.arrow_back_rounded, color: kPrimary),
+                onPressed: () => Navigator.maybePop(context),
+              ),
+              const SizedBox(width: 4),
+              Container(
+                width: compact ? 30 : 34,
+                height: compact ? 30 : 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'A',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: compact ? 15 : 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: compact ? 1 : 2,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _currentBookTitle.isEmpty ? '교재 읽기' : _currentBookTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: compact ? 13 : 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (!compact)
+                      Text(
+                        'p. $currentPage / $totalPages · 학습 위치를 이어 읽기',
+                        style: const TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 10,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (!compact) ...[
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${(progress * 100).round()}%',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 150,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                minHeight: 6,
+                                value: progress,
+                                backgroundColor:
+                                    StudentDensityTokens.surfaceMuted,
+                                valueColor: const AlwaysStoppedAnimation(
+                                  Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                _headerAction(
+                  icon: _isBookmarked(_activeEntryIndex)
+                      ? Icons.bookmark
+                      : Icons.bookmark_border,
+                  onTap: _contentEntries.isEmpty ? null : _handleAddBookmark,
+                ),
+                const SizedBox(width: 8),
+                _headerViewMode(compact: compact),
+                const SizedBox(width: 8),
+                if (!compact)
+                  FilledButton(
+                    onPressed: () {},
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(88, 34),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: const Text(
+                      '학습 완료',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 필요한 변수는 버튼 아이콘과 탭 동작이다.
+  /// 작동 원리: 리더 헤더의 작은 조작 버튼을 공통 외형으로 렌더링한다.
+  Widget _headerAction({required IconData icon, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: SizedBox(
+        width: 36,
+        height: 36,
+        child: Icon(icon, color: Colors.black, size: 21),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 현재 지면/스크롤 모드와 화면 너비다.
+  /// 작동 원리: 기준 디자인의 두 상태 토글을 유지하되 작은 화면에서는 텍스트를 감춘다.
+  Widget _headerViewMode({required bool compact}) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: kBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _headerModeIcon(
+            icon: Icons.view_carousel_outlined,
+            active: _pageMode,
+            onTap: () => unawaited(_setPageMode(true)),
+          ),
+          if (!compact)
+            _headerModeIcon(
+              icon: Icons.view_agenda_outlined,
+              active: !_pageMode,
+              onTap: () => unawaited(_setPageMode(false)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요한 변수는 보기 모드의 아이콘·활성 상태·탭 동작이다.
+  /// 작동 원리: 활성 모드만 검은 원형 배경으로 강조해 현재 읽기 방식을 즉시 보여 준다.
+  Widget _headerModeIcon({
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: active ? Colors.black : Colors.transparent,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: active ? Colors.white : Colors.black54,
+          size: 17,
+        ),
       ),
     );
   }
@@ -1910,12 +2332,15 @@ class _BookWidgetState extends State<BookWidget> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
-              width: collapsed ? 0 : 260,
+              width: collapsed ? 0 : 280,
               child: ClipRect(
                 child: collapsed
                     ? const SizedBox.shrink()
                     : Container(
-                        color: Colors.white,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          border: Border(right: BorderSide(color: kBorder)),
+                        ),
                         child: Column(
                           children: [
                             _buildTocHeader(),
@@ -1946,12 +2371,31 @@ class _BookWidgetState extends State<BookWidget> {
 
   Widget _buildTocHeader() {
     return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 68,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       alignment: Alignment.centerLeft,
-      child: const Text(
-        '목차',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: kBorder)),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CONTENTS',
+            style: TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
+            ),
+          ),
+          SizedBox(height: 3),
+          Text(
+            '목차',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          ),
+        ],
       ),
     );
   }
@@ -1977,32 +2421,100 @@ class _BookWidgetState extends State<BookWidget> {
               final activeChapterIndex = hasActiveEntry
                   ? _contentEntries[activeEntryIndex].chapterIndex
                   : -1;
-              final isActive = isChapter
-                  ? entry.chapterIndex == activeChapterIndex
-                  : entry.entryIndex == activeEntryIndex;
+              final isCurrentChapter =
+                  isChapter && entry.chapterIndex == activeChapterIndex;
+              final isCurrentSection =
+                  !isChapter && entry.entryIndex == activeEntryIndex;
+              final editorialPage =
+                  entry.entryIndex >= 0 &&
+                      entry.entryIndex < _contentEntries.length
+                  ? _contentEntries[entry.entryIndex].editorialPage
+                  : null;
+              final selectedIconColor = isCurrentSection
+                  ? kPrimary
+                  : StudentDensityTokens.muted;
+
               return InkWell(
                 onTap: () => _handleTocTap(entry),
                 child: Container(
-                  height: isChapter ? 52 : 40,
+                  height: isChapter ? 58 : 44,
                   padding: EdgeInsets.only(
-                    left: isChapter ? 16 : 32,
-                    right: 12,
+                    left: isChapter ? 18 : 34,
+                    right: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: isActive ? kPrimary : Colors.white,
-                    border: const Border(
-                      bottom: BorderSide(color: kBorder, width: 1),
+                    color: isChapter
+                        ? isCurrentChapter
+                              ? kPrimary
+                              : Colors.white
+                        : isCurrentSection
+                        ? StudentDensityTokens.surfaceMuted
+                        : Colors.white,
+                    border: Border(
+                      left: BorderSide(
+                        color: isCurrentSection || isCurrentChapter
+                            ? kPrimary
+                            : Colors.transparent,
+                        width: 3,
+                      ),
+                      bottom: const BorderSide(color: kBorder, width: 1),
                     ),
                   ),
                   child: Row(
                     children: [
+                      if (isChapter)
+                        Container(
+                          width: 34,
+                          height: 19,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: isCurrentChapter
+                                ? const Color(0x33FFFFFF)
+                                : StudentDensityTokens.surfaceMuted,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'CH${entry.chapterIndex + 1}',
+                            style: TextStyle(
+                              color: isCurrentChapter
+                                  ? Colors.white
+                                  : StudentDensityTokens.muted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: .2,
+                            ),
+                          ),
+                        ),
+                      if (isChapter) const SizedBox(width: 8),
+                      Icon(
+                        isChapter
+                            ? Icons.menu_book_rounded
+                            : (editorialPage != null
+                                  ? _bookPageTemplateIcon(
+                                      editorialPage.template,
+                                    )
+                                  : Icons.article_outlined),
+                        size: 15,
+                        color: isChapter
+                            ? isCurrentChapter
+                                  ? Colors.white
+                                  : StudentDensityTokens.muted
+                            : selectedIconColor,
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           entry.title,
                           style: TextStyle(
-                            color: isActive ? Colors.white : Colors.black,
-                            fontSize: isChapter ? 15 : 13,
-                            fontWeight: isChapter
+                            color: isChapter
+                                ? isCurrentChapter
+                                      ? Colors.white
+                                      : Colors.black87
+                                : isCurrentSection
+                                ? kPrimary
+                                : StudentDensityTokens.ink,
+                            fontSize: isChapter ? 14 : 13,
+                            fontWeight: isChapter || isCurrentSection
                                 ? FontWeight.w700
                                 : FontWeight.w500,
                           ),
@@ -2014,7 +2526,13 @@ class _BookWidgetState extends State<BookWidget> {
                               ? Icons.keyboard_arrow_down_sharp
                               : Icons.keyboard_arrow_right_sharp,
                           size: 22,
-                          color: isActive ? Colors.white : Colors.black,
+                          color: isChapter
+                              ? isCurrentChapter
+                                    ? Colors.white
+                                    : StudentDensityTokens.muted
+                              : isCurrentSection
+                              ? kPrimary
+                              : StudentDensityTokens.ink,
                         ),
                     ],
                   ),
@@ -2089,15 +2607,11 @@ class _BookWidgetState extends State<BookWidget> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  _navIcon(
-                    Icons.search_sharp,
-                    kPrimaryLight,
-                    onTap: _openSearch,
-                  ),
+                  _navIcon(Icons.search_sharp, kPrimary, onTap: _openSearch),
                   const SizedBox(width: 8),
                   _navIcon(
                     Icons.arrow_back_ios_sharp,
-                    kPrimaryLight,
+                    StudentDensityTokens.surfaceMuted,
                     onTap: _goToPreviousEntry,
                   ),
                   const SizedBox(width: 8),
@@ -2106,7 +2620,7 @@ class _BookWidgetState extends State<BookWidget> {
                     height: 36,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(width: 1, color: kBorder),
                     ),
                     alignment: Alignment.center,
@@ -2118,7 +2632,7 @@ class _BookWidgetState extends State<BookWidget> {
                   const SizedBox(width: 8),
                   _navIcon(
                     Icons.arrow_forward_ios_sharp,
-                    kPrimaryLight,
+                    StudentDensityTokens.surfaceMuted,
                     onTap: _goToNextEntry,
                   ),
                 ],
@@ -2137,7 +2651,7 @@ class _BookWidgetState extends State<BookWidget> {
     Color? foreground,
   }) {
     final bg = active ? kPrimary : Colors.white;
-    final fg = foreground ?? (active ? Colors.white : kPrimary);
+    final fg = foreground ?? (active ? Colors.white : StudentDensityTokens.ink);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -2145,7 +2659,7 @@ class _BookWidgetState extends State<BookWidget> {
         height: 36,
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: kBorder, width: 1),
         ),
         child: Icon(icon, color: fg, size: 20),
@@ -2154,6 +2668,7 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   Widget _navIcon(IconData icon, Color bg, {VoidCallback? onTap}) {
+    final foreground = bg == kPrimary ? Colors.white : StudentDensityTokens.ink;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -2161,9 +2676,10 @@ class _BookWidgetState extends State<BookWidget> {
         height: 36,
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: bg == kPrimary ? kPrimary : kBorder),
         ),
-        child: Icon(icon, color: Colors.white, size: 20),
+        child: Icon(icon, color: foreground, size: 19),
       ),
     );
   }
@@ -2176,6 +2692,11 @@ class _BookWidgetState extends State<BookWidget> {
         height: 80,
         decoration: const BoxDecoration(
           color: Colors.white,
+          border: Border(
+            top: BorderSide(color: kBorder),
+            right: BorderSide(color: kBorder),
+            bottom: BorderSide(color: kBorder),
+          ),
           borderRadius: BorderRadius.only(
             topRight: Radius.circular(16),
             bottomRight: Radius.circular(16),
@@ -2265,55 +2786,139 @@ class _BookWidgetState extends State<BookWidget> {
     }
 
     return Container(
-      color: const Color(0xFFE9EEE8),
+      color: kCanvas,
       child: Column(
         children: [
           Container(
-            height: 46,
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: const BoxDecoration(
-              color: Color(0xFFF7F8F2),
+              color: Colors.white,
               border: Border(bottom: BorderSide(color: kBorder)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.picture_as_pdf_rounded, color: kPrimary),
-                const SizedBox(width: 8),
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: StudentDensityTokens.surfaceMuted,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.menu_book_outlined,
+                    size: 17,
+                    color: kPrimary,
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'READING',
+                        style: TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      Text(
+                        _currentBookTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: kPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: StudentDensityTokens.surfaceMuted,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                   child: Text(
-                    _currentBookTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    '${pageIndex + 1} / ${pages.length}',
                     style: const TextStyle(
-                      color: kPrimary,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                ),
-                Text(
-                  '${pageIndex + 1} / ${pages.length}',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
           ),
           Expanded(
-            child: PageView.builder(
-              controller: _readerPageController,
-              itemCount: pages.length,
-              onPageChanged: _setActiveReaderPage,
-              itemBuilder: (context, index) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: _BookPaperPage(
-                      page: pages[index],
-                      pageNumber: index + 1,
-                      totalPages: pages.length,
-                      resolveImage: _resolveImageProvider,
-                      buildParagraph: _buildLatexAware,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final showPageButtons = constraints.maxWidth >= 860;
+                return Stack(
+                  children: [
+                    PageView.builder(
+                      controller: _readerPageController,
+                      itemCount: pages.length,
+                      onPageChanged: _setActiveReaderPage,
+                      itemBuilder: (context, index) {
+                        return Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: showPageButtons ? 72 : 18,
+                              vertical: 18,
+                            ),
+                            child: _BookPaperPage(
+                              page: pages[index],
+                              pageNumber: index + 1,
+                              totalPages: pages.length,
+                              resolveImage: _resolveImageProvider,
+                              buildParagraph: (text) => _buildLatexAware(
+                                text,
+                                compact: pages[index].editorialPage != null,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
+                    if (showPageButtons) ...[
+                      Positioned(
+                        left: 20,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: _buildPageTurnButton(
+                            icon: Icons.arrow_back_rounded,
+                            tooltip: '이전 페이지',
+                            enabled: pageIndex > 0,
+                            onTap: _goToPreviousEntry,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 20,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: _buildPageTurnButton(
+                            icon: Icons.arrow_forward_rounded,
+                            tooltip: '다음 페이지',
+                            enabled: pageIndex < pages.length - 1,
+                            onTap: _goToNextEntry,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 );
               },
             ),
@@ -2323,13 +2928,43 @@ class _BookWidgetState extends State<BookWidget> {
     );
   }
 
+  /// 필요한 변수는 이동 방향·활성 여부·페이지 이동 콜백이다.
+  /// 작동 원리는 넓은 화면에서 종이 양옆에 중성 버튼을 고정해 스와이프 없이도 다음 지면으로 이동하게 한다.
+  Widget _buildPageTurnButton({
+    required IconData icon,
+    required String tooltip,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: enabled ? Colors.white : const Color(0x66FFFFFF),
+        shape: const CircleBorder(side: BorderSide(color: kBorder)),
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(
+              icon,
+              size: 20,
+              color: enabled
+                  ? StudentDensityTokens.ink
+                  : StudentDensityTokens.faint,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   static const double _viewportOverscan = 800.0; // ~50 lines worth of pixels
 
   Widget _buildContentBlock(int i) {
     final entry = _contentEntries[i];
-    final graphWidget = _currentBook != null && i == _contentEntries.length - 1
-        ? selectGraphForTags(_currentBook!.tags)
-        : null;
+    final graphDocument = entry.graph;
 
     // Viewport culling: skip rendering far outside visible area
     if (_contentController.hasClients && _sectionOffsets.length > i) {
@@ -2370,7 +3005,11 @@ class _BookWidgetState extends State<BookWidget> {
               padding: const EdgeInsets.only(bottom: 10),
               child: RepaintBoundary(child: _buildLatexAware(paragraph)),
             ),
-          if (graphWidget != null) ...[const SizedBox(height: 16), graphWidget],
+          for (final visual in entry.visuals) _BookVisualCard(visual: visual),
+          if (graphDocument != null) ...[
+            const SizedBox(height: 16),
+            _TextbookGraphCard(document: graphDocument),
+          ],
           for (final image in entry.images)
             if (image.trim().isNotEmpty)
               Padding(
@@ -2400,12 +3039,25 @@ class _BookWidgetState extends State<BookWidget> {
   final Map<String, List<ContentBlock>> _latexCache =
       <String, List<ContentBlock>>{};
 
-  Widget _buildLatexAware(String text) {
+  Widget _buildLatexAware(String text, {bool compact = false}) {
+    final isCompactWidth = MediaQuery.sizeOf(context).width < 420;
     final blocks = _latexCache.putIfAbsent(
       text,
       () => parseTextWithLatex(text),
     );
-    return ContentBlocksView(inline: true, blocks: blocks);
+    return ContentBlocksView(
+      inline: true,
+      blocks: blocks,
+      textStyle: TextStyle(
+        fontSize: (isCompactWidth || compact) ? 12 : 13,
+        height: compact ? 1.4 : 1.45,
+        color: const Color(0xFF242526),
+      ),
+      latexStyle: TextStyle(
+        fontSize: (isCompactWidth || compact) ? 12 : 13,
+        color: const Color(0xFF242526),
+      ),
+    );
   }
 
   ImageProvider _resolveImageProvider(String source) {
@@ -2424,13 +3076,17 @@ class _BookWidgetState extends State<BookWidget> {
     for (var i = 0; i < _contentEntries.length; i++) {
       final entry = _contentEntries[i];
       if (entry.level == 0) {
+        final chapter = _chapters[entry.chapterIndex];
+        final chapterHasChildren = chapter.pages.isNotEmpty
+            ? chapter.pages.length > 1
+            : chapter.sections.isNotEmpty;
         entries.add(
           _TocEntry(
             entryIndex: i,
             chapterIndex: entry.chapterIndex,
             level: 0,
             title: entry.title,
-            hasChildren: _chapters[entry.chapterIndex].sections.isNotEmpty,
+            hasChildren: chapterHasChildren,
           ),
         );
       } else if (_chapterExpanded[entry.chapterIndex]) {
@@ -2456,6 +3112,9 @@ class _ContentEntry {
     required this.title,
     required this.paragraphs,
     required this.images,
+    this.graph,
+    this.visuals = const [],
+    this.editorialPage,
   });
 
   final int chapterIndex;
@@ -2463,26 +3122,581 @@ class _ContentEntry {
   final String title;
   final List<String> paragraphs;
   final List<String> images;
+  final AiFlowGraphDocument? graph;
+  final List<BookVisual> visuals;
+  final BookPage? editorialPage;
 }
 
 class _ParsedBookPage {
   const _ParsedBookPage({
     required this.entryIndex,
+    required this.chapterIndex,
     required this.chapterTitle,
+    required this.chapterNumber,
     required this.title,
     required this.paragraphs,
     required this.images,
     required this.partNumber,
     required this.partTotal,
+    this.graph,
+    this.visuals = const [],
+    this.editorialPage,
   });
 
   final int entryIndex;
+  final int chapterIndex;
   final String chapterTitle;
+  final int chapterNumber;
   final String title;
   final List<String> paragraphs;
   final List<String> images;
   final int partNumber;
   final int partTotal;
+  final AiFlowGraphDocument? graph;
+  final List<BookVisual> visuals;
+  final BookPage? editorialPage;
+}
+
+/// 필요한 변수는 절의 JSXGraph 문서다.
+/// 작동 원리는 실제 지면 안에 그래프와 조작 안내를 함께 배치해 설명과 실험을 한 시야에서 연결하는 것이다.
+class _TextbookGraphCard extends StatelessWidget {
+  const _TextbookGraphCard({required this.document});
+
+  final AiFlowGraphDocument document;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 640;
+    return Container(
+      height: compact ? 192 : 228,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: StudentDensityTokens.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 11, 14, 9),
+            decoration: const BoxDecoration(
+              color: StudentDensityTokens.surfaceMuted,
+              border: Border(
+                bottom: BorderSide(color: StudentDensityTokens.line),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.tune_rounded,
+                  size: 15,
+                  color: StudentDensityTokens.ink,
+                ),
+                SizedBox(width: 7),
+                Text(
+                  'INTERACTIVE FIGURE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    letterSpacing: .8,
+                    fontWeight: FontWeight.w800,
+                    color: StudentDensityTokens.ink,
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '슬라이더로 그래프의 변화를 관찰하세요.',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: StudentDensityTokens.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(child: buildJsxGraphEmbed(document)),
+        ],
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 시각 블록의 종류와 표시 데이터다.
+/// 작동 원리는 공식·표·풀이 단계·부호표를 텍스트와 분리된 카드로 보여 주어 실제 교재의 편집 지면을 만든다.
+class _BookVisualCard extends StatelessWidget {
+  const _BookVisualCard({required this.visual});
+
+  final BookVisual visual;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = switch (visual.kind) {
+      'formula' => _buildFormula(),
+      'table' || 'signChart' => _buildTable(),
+      'steps' || 'flow' => _buildSequence(),
+      'image' => _buildImage(),
+      _ => _buildCallout(),
+    };
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: StudentDensityTokens.line),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 3,
+            decoration: const BoxDecoration(
+              color: StudentDensityTokens.ink,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          visual.title,
+                          style: const TextStyle(
+                            color: StudentDensityTokens.ink,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        visual.kind.toUpperCase(),
+                        style: const TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 9,
+                          letterSpacing: .7,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  content,
+                  if (visual.caption.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      visual.caption,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 11,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormula() {
+    final blocks = parseTextWithLatex(r'$' + visual.formula + r'$');
+    return Center(
+      child: ContentBlocksView(
+        inline: false,
+        blocks: blocks,
+        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        latexStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+
+  Widget _buildTable() {
+    final rows = visual.rows.isEmpty ? [visual.items] : visual.rows;
+    return Table(
+      border: TableBorder.all(color: StudentDensityTokens.lineStrong),
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        for (final row in rows)
+          TableRow(
+            children: [
+              for (final cell in row)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    cell,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12, height: 1.3),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSequence() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (var index = 0; index < visual.items.length; index++)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: index == visual.items.length - 1
+                  ? StudentDensityTokens.ink
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: StudentDensityTokens.lineStrong),
+            ),
+            child: Text(
+              '${index + 1}. ${visual.items[index]}',
+              style: TextStyle(
+                color: index == visual.items.length - 1
+                    ? Colors.white
+                    : StudentDensityTokens.ink,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildImage() {
+    if (visual.imageSource.trim().isEmpty) return _buildCallout();
+    return Image(
+      image: AssetImage(visual.imageSource),
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) =>
+          const Text('그림 자료를 불러올 수 없습니다.'),
+    );
+  }
+
+  Widget _buildCallout() {
+    return Text(
+      visual.caption.isEmpty ? visual.formula : visual.caption,
+      style: const TextStyle(fontSize: 13, height: 1.5),
+    );
+  }
+}
+
+class _EditorialPageBody extends StatelessWidget {
+  const _EditorialPageBody({
+    required this.page,
+    required this.buildParagraph,
+    this.compact = false,
+  });
+
+  final BookPage page;
+  final Widget Function(String text) buildParagraph;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final gap = compact ? 5.0 : 7.0;
+    return SingleChildScrollView(
+      // 분할 추정치보다 실제 수식·한글 줄바꿈 높이가 커지는 마지막 경우에도
+      // RenderFlex overflow를 내지 않고 지면 안에서만 안전하게 읽게 한다.
+      physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var index = 0; index < page.blocks.length; index++) ...[
+            _BookContentBlockView(
+              block: page.blocks[index],
+              buildParagraph: buildParagraph,
+              compact: compact,
+            ),
+            if (index != page.blocks.length - 1) SizedBox(height: gap),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 명시적 지면의 역할이다.
+/// 작동 원리는 역할마다 익숙한 아이콘을 연결해 목차에서 학습 흐름을 빠르게 파악하게 한다.
+IconData _bookPageTemplateIcon(BookPageTemplate template) => switch (template) {
+  BookPageTemplate.opening => Icons.flag_outlined,
+  BookPageTemplate.concept => Icons.menu_book_outlined,
+  BookPageTemplate.principle => Icons.account_tree_outlined,
+  BookPageTemplate.experiment => Icons.tune_rounded,
+  BookPageTemplate.example => Icons.edit_note_rounded,
+  BookPageTemplate.solution => Icons.fact_check_outlined,
+  BookPageTemplate.practice => Icons.assignment_outlined,
+  BookPageTemplate.summary => Icons.checklist_rounded,
+};
+
+String _bookPageTemplateLabel(BookPageTemplate template) => switch (template) {
+  BookPageTemplate.opening => '도입',
+  BookPageTemplate.concept => '개념',
+  BookPageTemplate.principle => '원리',
+  BookPageTemplate.experiment => '실험',
+  BookPageTemplate.example => '예제 1',
+  BookPageTemplate.solution => '예제 2',
+  BookPageTemplate.practice => '연습',
+  BookPageTemplate.summary => '정리',
+};
+
+/// 필요한 변수는 한 지면의 의미 블록과 LaTeX 본문 렌더러다.
+/// 작동 원리는 정의·예제·풀이·주의 등 역할별 색과 위계를 적용하고,
+/// 명시적 페이지에서는 내부 스크롤 없이 저자가 정한 순서 그대로 배치한다.
+class _BookContentBlockView extends StatelessWidget {
+  const _BookContentBlockView({
+    required this.block,
+    required this.buildParagraph,
+    this.compact = false,
+  });
+
+  final BookContentBlock block;
+  final Widget Function(String text) buildParagraph;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    if (block.type == BookContentBlockType.graph && block.graph != null) {
+      return _TextbookGraphCard(document: block.graph!);
+    }
+    if (block.type == BookContentBlockType.visual && block.visual != null) {
+      return _BookVisualCard(visual: block.visual!);
+    }
+    if (block.type == BookContentBlockType.formula) {
+      return _formulaCard(context);
+    }
+    if (block.type == BookContentBlockType.paragraph) {
+      return _plainParagraph();
+    }
+
+    final palette = _paletteFor(block.type);
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        compact ? 10 : 14,
+        compact ? 8 : 12,
+        compact ? 10 : 14,
+        compact ? 9 : 13,
+      ),
+      decoration: BoxDecoration(
+        color: palette.$1,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: palette.$3),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (block.title.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(_iconFor(block.type), size: 14, color: palette.$2),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    block.title,
+                    style: TextStyle(
+                      color: palette.$2,
+                      fontSize: compact ? 10 : 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: compact ? 6 : 8),
+          ],
+          if (block.text.isNotEmpty) buildParagraph(block.text),
+          if (block.items.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < block.items.length; index++)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      top: index == 0 ? 0 : (compact ? 3 : 5),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 19,
+                          height: 19,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: palette.$2.withValues(alpha: .1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              color: palette.$2,
+                              fontSize: compact ? 7 : 9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: compact ? 6 : 8),
+                        Expanded(child: buildParagraph(block.items[index])),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _plainParagraph() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (block.title.isNotEmpty) ...[
+        Text(
+          block.title,
+          style: const TextStyle(
+            color: StudentDensityTokens.ink,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
+      if (block.text.isNotEmpty) buildParagraph(block.text),
+    ],
+  );
+
+  Widget _formulaCard(BuildContext context) {
+    final blocks = parseTextWithLatex(r'$' + block.formula + r'$');
+    final isCompact =
+        MediaQuery.sizeOf(context).width < 560 ||
+        block.title.isNotEmpty && block.title.length > 24;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 16,
+        vertical: isCompact ? 11 : 13,
+      ),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surfaceMuted,
+        border: Border.all(color: StudentDensityTokens.lineStrong),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 3,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: StudentDensityTokens.ink,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  bottomLeft: Radius.circular(8),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 9),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (block.title.isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        block.title,
+                        style: const TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 9,
+                          letterSpacing: .4,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: ContentBlocksView(
+                      inline: false,
+                      blocks: blocks,
+                      latexStyle: TextStyle(
+                        fontSize: isCompact ? 16 : 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  (Color, Color, Color) _paletteFor(BookContentBlockType type) =>
+      switch (type) {
+        BookContentBlockType.question => (
+          const Color(0xFFF5F3EC),
+          const Color(0xFF745B18),
+          const Color(0x22745B18),
+        ),
+        BookContentBlockType.hint || BookContentBlockType.thinking => (
+          const Color(0xFFF1F5F8),
+          const Color(0xFF38627A),
+          const Color(0x2238627A),
+        ),
+        BookContentBlockType.answer || BookContentBlockType.verification => (
+          const Color(0xFFF1F3F9),
+          const Color(0xFF4C5D87),
+          const Color(0x224C5D87),
+        ),
+        BookContentBlockType.misconception => (
+          const Color(0xFFFFF3F1),
+          const Color(0xFFA24738),
+          const Color(0x22A24738),
+        ),
+        _ => (
+          StudentDensityTokens.surfaceMuted,
+          StudentDensityTokens.ink,
+          StudentDensityTokens.lineStrong,
+        ),
+      };
+
+  IconData _iconFor(BookContentBlockType type) => switch (type) {
+    BookContentBlockType.question => Icons.help_outline_rounded,
+    BookContentBlockType.thinking => Icons.lightbulb_outline_rounded,
+    BookContentBlockType.solutionStep ||
+    BookContentBlockType.derivation => Icons.format_list_numbered_rounded,
+    BookContentBlockType.verification => Icons.fact_check_outlined,
+    BookContentBlockType.hint => Icons.tips_and_updates_outlined,
+    BookContentBlockType.answer => Icons.check_circle_outline_rounded,
+    BookContentBlockType.misconception => Icons.warning_amber_rounded,
+    BookContentBlockType.definition => Icons.menu_book_outlined,
+    _ => Icons.auto_awesome_outlined,
+  };
 }
 
 class _BookPaperPage extends StatelessWidget {
@@ -2504,133 +3718,278 @@ class _BookPaperPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth.clamp(260.0, 820.0).toDouble();
-        final maxHeight = constraints.maxHeight;
-        var width = maxWidth;
-        var height = width / 0.707;
-        if (height > maxHeight) {
-          height = maxHeight;
-          width = height * 0.707;
-        }
+        final editorialPage = page.editorialPage;
 
-        return SizedBox(
-          width: width,
-          height: height,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFEFA),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0x22000000)),
-              boxShadow: const [
-                BoxShadow(
-                  blurRadius: 24,
-                  color: Color(0x26000000),
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                width < 420 ? 22 : 42,
-                width < 420 ? 24 : 38,
-                width < 420 ? 22 : 42,
-                24,
+        final maxWidth = constraints.maxWidth;
+        final maxHeight = constraints.maxHeight;
+        final hasDenseEditorialBlock =
+            editorialPage?.blocks.any(
+              (block) =>
+                  block.visual != null ||
+                  block.graph != null ||
+                  block.formula.isNotEmpty ||
+                  block.rows.isNotEmpty,
+            ) ??
+            false;
+        final hasManyItems =
+            editorialPage?.blocks.any((block) => block.items.length >= 4) ??
+            false;
+        final estimatedEditorialChars =
+            editorialPage?.blocks.fold<int>(
+              0,
+              (sum, block) =>
+                  sum +
+                  block.title.length +
+                  block.text.length +
+                  block.formula.length +
+                  block.rows.fold<int>(
+                    0,
+                    (rowSum, row) =>
+                        rowSum + row.fold<int>(0, (cSum, c) => cSum + c.length),
+                  ) +
+                  block.items.fold<int>(
+                    0,
+                    (itemSum, item) => itemSum + item.length,
+                  ),
+            ) ??
+            0;
+        final isDensePage =
+            editorialPage != null &&
+            (editorialPage.blocks.length >= 5 ||
+                hasDenseEditorialBlock ||
+                hasManyItems ||
+                estimatedEditorialChars > 700 ||
+                editorialPage.blocks.length >= 6 &&
+                    editorialPage.blocks
+                            .where(
+                              (item) =>
+                                  item.type == BookContentBlockType.question,
+                            )
+                            .length >=
+                        2 &&
+                    editorialPage.blocks.fold<int>(
+                          0,
+                          (sum, block) =>
+                              sum +
+                              block.title.length +
+                              block.text.length +
+                              block.formula.length,
+                        ) >
+                        900);
+
+        final isCompact = maxWidth < 560.0 || isDensePage;
+        final width = isCompact ? maxWidth : 820.0.clamp(420.0, maxWidth);
+        final height = isCompact ? maxHeight : maxHeight.clamp(420.0, 900.0);
+        final textScale = isCompact ? (maxWidth < 560.0 ? 0.9 : 0.94) : 1.0;
+
+        return MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: SizedBox(
+            width: width,
+            height: height,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: StudentDensityTokens.line),
+                boxShadow: const [
+                  BoxShadow(
+                    blurRadius: 34,
+                    color: Color(0x1F000000),
+                    offset: Offset(0, 16),
+                  ),
+                ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    page.chapterTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    page.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _BookWidgetState.kPrimary,
-                      fontSize: 24,
-                      height: 1.25,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (page.partTotal > 1) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      '${page.partNumber} / ${page.partTotal}',
-                      style: const TextStyle(
-                        color: Colors.black45,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (final paragraph in page.paragraphs)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: RepaintBoundary(
-                                child: buildParagraph(paragraph),
-                              ),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  width < 420 ? 16 : 42,
+                  width < 420 ? 16 : 32,
+                  width < 420 ? 16 : 42,
+                  isCompact ? 14 : 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'CH ${page.chapterNumber.toString().padLeft(2, '0')}  ·  ${page.chapterTitle}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w600,
                             ),
-                          for (final image in page.images)
-                            if (image.trim().isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image(
-                                    image: resolveImage(image),
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, _, __) => Container(
-                                      height: 160,
-                                      color: const Color(0xFFEDEDED),
-                                      alignment: Alignment.center,
-                                      child: const Text(
-                                        '이미지를 불러올 수 없습니다.',
-                                        style: TextStyle(color: Colors.black54),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                          ),
+                        ),
+                        Text(
+                          'P  ${pageNumber.toString().padLeft(2, '0')}',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            color: Colors.black38,
+                            letterSpacing: .8,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isCompact ? 4 : 6),
+                    const Divider(height: 1, color: Color(0x22000000)),
+                    if (editorialPage != null) ...[
+                      SizedBox(height: isCompact ? 8 : 10),
+                      Row(
+                        children: [
+                          Icon(
+                            _bookPageTemplateIcon(editorialPage.template),
+                            size: 14,
+                            color: StudentDensityTokens.ink,
+                          ),
+                          const SizedBox(width: 7),
+                          Text(
+                            _bookPageTemplateLabel(editorialPage.template),
+                            style: const TextStyle(
+                              color: StudentDensityTokens.ink,
+                              fontSize: 10,
+                              letterSpacing: .4,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            '$pageNumber / $totalPages',
+                            style: const TextStyle(
+                              color: StudentDensityTokens.muted,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
+                    ] else ...[
+                      SizedBox(height: isCompact ? 8 : 12),
                       Text(
-                        'AIFlow',
-                        style: TextStyle(
-                          color: Colors.black.withValues(alpha: 0.38),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '$pageNumber / $totalPages',
+                        'CH ${page.chapterNumber.toString().padLeft(2, '0')} | ${page.partNumber}/${page.partTotal}',
                         style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          color: StudentDensityTokens.muted,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
                         ),
                       ),
                     ],
-                  ),
-                ],
+                    SizedBox(height: isCompact ? 8 : 12),
+                    if (editorialPage != null &&
+                        editorialPage.kicker.isNotEmpty) ...[
+                      Text(
+                        editorialPage.kicker,
+                        style: const TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 10,
+                          letterSpacing: .5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: isCompact ? 4 : 6),
+                    ],
+                    Text(
+                      page.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _BookWidgetState.kPrimary,
+                        height: 1.25,
+                        fontWeight: FontWeight.w800,
+                      ).copyWith(fontSize: isCompact ? 22 : 24),
+                    ),
+                    if (page.partTotal > 1) ...[
+                      SizedBox(height: isCompact ? 3 : 4),
+                      Text(
+                        '${page.partNumber} / ${page.partTotal}',
+                        style: const TextStyle(
+                          color: Colors.black45,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: isCompact ? 8 : 12),
+                    Expanded(
+                      child: editorialPage != null
+                          ? _EditorialPageBody(
+                              page: editorialPage,
+                              buildParagraph: buildParagraph,
+                              compact: isCompact,
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (final paragraph in page.paragraphs)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: RepaintBoundary(
+                                      child: buildParagraph(paragraph),
+                                    ),
+                                  ),
+                                for (final visual in page.visuals)
+                                  _BookVisualCard(visual: visual),
+                                if (page.graph != null) ...[
+                                  const SizedBox(height: 8),
+                                  _TextbookGraphCard(document: page.graph!),
+                                ],
+                                for (final image in page.images)
+                                  if (image.trim().isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 12,
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image(
+                                          image: resolveImage(image),
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (context, _, __) =>
+                                              Container(
+                                                height: 160,
+                                                color: const Color(0xFFEDEDED),
+                                                alignment: Alignment.center,
+                                                child: const Text(
+                                                  '이미지를 불러올 수 없습니다.',
+                                                  style: TextStyle(
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Text(
+                          'AIFlow',
+                          style: TextStyle(
+                            color: Colors.black.withValues(alpha: 0.38),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$pageNumber / $totalPages',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -2894,6 +4253,22 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
   final entries = <_ContentEntry>[];
   for (var i = 0; i < chapters.length; i++) {
     final chapter = chapters[i];
+    if (chapter.pages.isNotEmpty) {
+      for (var pageIndex = 0; pageIndex < chapter.pages.length; pageIndex++) {
+        final page = chapter.pages[pageIndex];
+        entries.add(
+          _ContentEntry(
+            chapterIndex: i,
+            level: pageIndex == 0 ? 0 : 1,
+            title: page.title,
+            paragraphs: _editorialPageSearchText(page),
+            images: const [],
+            editorialPage: page,
+          ),
+        );
+      }
+      continue;
+    }
     entries.add(
       _ContentEntry(
         chapterIndex: i,
@@ -2901,6 +4276,7 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
         title: chapter.title,
         paragraphs: chapter.intro,
         images: const [],
+        visuals: chapter.visuals,
       ),
     );
     for (final section in chapter.sections) {
@@ -2911,6 +4287,8 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
           title: section.title,
           paragraphs: section.paragraphs,
           images: section.images,
+          graph: section.graph,
+          visuals: section.visuals,
         ),
       );
     }
@@ -2925,6 +4303,16 @@ List<_ParsedBookPage> _paginateContentEntries(List<_ContentEntry> entries) {
   const maxPageChars = 780;
   final pages = <_ParsedBookPage>[];
   final chapterTitles = <int, String>{};
+  final chapterSectionTitles = <int, List<String>>{};
+
+  // 장 소개가 비어도 첫 지면이 비어 보이지 않도록, 각 장의 절 제목을 한 번만 수집한다.
+  // 이 선행 순회는 이후 페이지 분할 중 목록 재검색을 막아 큰 교재에서도 선형 시간을 유지한다.
+  for (final entry in entries) {
+    if (entry.level != 1) continue;
+    chapterSectionTitles
+        .putIfAbsent(entry.chapterIndex, () => <String>[])
+        .add(entry.title);
+  }
 
   for (var entryIndex = 0; entryIndex < entries.length; entryIndex++) {
     final entry = entries[entryIndex];
@@ -2933,8 +4321,24 @@ List<_ParsedBookPage> _paginateContentEntries(List<_ContentEntry> entries) {
     }
     final chapterTitle = chapterTitles[entry.chapterIndex] ?? entry.title;
 
+    if (entry.editorialPage != null) {
+      pages.addAll(
+        _splitEditorialPage(
+          entryIndex: entryIndex,
+          entry: entry,
+          chapterTitle: chapterTitle,
+        ),
+      );
+      continue;
+    }
+
+    final chapterSections =
+        chapterSectionTitles[entry.chapterIndex] ?? const <String>[];
+    final fallbackIntro = entry.level == 0 && chapterSections.isNotEmpty
+        ? '${entry.title} 단원에서는 ${chapterSections.join(', ')} 내용을 순서대로 학습합니다. 목차에서 원하는 절을 선택하거나 다음 페이지로 이동해 시작하세요.'
+        : '내용이 비어 있습니다.';
     final paragraphs = entry.paragraphs.isEmpty
-        ? <String>['내용이 비어 있습니다.']
+        ? <String>[fallbackIntro]
         : entry.paragraphs;
     final chunks = <List<String>>[];
     var current = <String>[];
@@ -2969,12 +4373,16 @@ List<_ParsedBookPage> _paginateContentEntries(List<_ContentEntry> entries) {
       pages.add(
         _ParsedBookPage(
           entryIndex: entryIndex,
+          chapterIndex: entry.chapterIndex,
           chapterTitle: chapterTitle,
+          chapterNumber: entry.chapterIndex + 1,
           title: entry.title,
           paragraphs: chunks[i],
           images: const [],
           partNumber: i + 1,
           partTotal: partTotal,
+          graph: i == 0 ? entry.graph : null,
+          visuals: i == 0 ? entry.visuals : const [],
         ),
       );
     }
@@ -2983,7 +4391,9 @@ List<_ParsedBookPage> _paginateContentEntries(List<_ContentEntry> entries) {
       pages.add(
         _ParsedBookPage(
           entryIndex: entryIndex,
+          chapterIndex: entry.chapterIndex,
           chapterTitle: chapterTitle,
+          chapterNumber: entry.chapterIndex + 1,
           title: entry.title,
           paragraphs: const ['이미지 자료'],
           images: [entry.images[i]],
@@ -2996,6 +4406,205 @@ List<_ParsedBookPage> _paginateContentEntries(List<_ContentEntry> entries) {
 
   return pages;
 }
+
+/// 필요한 변수: 에디토리얼 지면, 해당 항목 인덱스, 장 제목.
+/// 작동 원리: 블록 단위로 밀도를 계산해 한 페이지 허용치 초과 시 다음 지면으로 분할한다.
+List<_ParsedBookPage> _splitEditorialPage({
+  required int entryIndex,
+  required _ContentEntry entry,
+  required String chapterTitle,
+}) {
+  final page = entry.editorialPage!;
+  // 필요한 변수는 에디토리얼 지면 하나의 허용 밀도다.
+  // 작동 원리: 390x844 모바일에서도 렌더 오버플로우가 생기지 않도록
+  // 데스크톱 기준 상한도 약간 더 보수적으로 낮춰 분할 기준을 강화한다.
+  // 실제 모바일 지면의 줄바꿈·수식·그래프 여백을 감안한 보수적 상한이다.
+  const maxChars = 960;
+  final chunks = _splitEditorialBlocksForRender(
+    page.blocks,
+    maxChars: maxChars,
+  );
+  final partTotal = chunks.isEmpty ? 1 : chunks.length;
+
+  final parsed = <_ParsedBookPage>[];
+  for (var i = 0; i < partTotal; i++) {
+    final blocks = chunks.isEmpty ? page.blocks : chunks[i];
+    parsed.add(
+      _ParsedBookPage(
+        entryIndex: entryIndex,
+        chapterIndex: entry.chapterIndex,
+        chapterTitle: chapterTitle,
+        chapterNumber: entry.chapterIndex + 1,
+        title: page.title,
+        paragraphs: const [],
+        images: const [],
+        partNumber: i + 1,
+        partTotal: partTotal,
+        editorialPage: BookPage(
+          id: '${page.id}#p${i + 1}',
+          template: page.template,
+          title: page.title,
+          kicker: partTotal > 1
+              ? '${page.kicker} (${i + 1}/$partTotal)'
+              : page.kicker,
+          blocks: blocks,
+        ),
+      ),
+    );
+  }
+  return parsed;
+}
+
+/// 필요한 변수: 렌더 대상 블록 목록과 한 페이지 상한치.
+/// 작동 원리: 블록 텍스트와 항목의 길이를 더한 값을 근사치로 사용해
+/// 페이지를 여러 파트로 분할한다.
+List<List<BookContentBlock>> _splitEditorialBlocksForRender(
+  List<BookContentBlock> blocks, {
+  required int maxChars,
+}) {
+  final result = <List<BookContentBlock>>[];
+  var current = <BookContentBlock>[];
+  var currentScore = 0;
+
+  void flush() {
+    if (current.isEmpty) return;
+    result.add(current);
+    current = <BookContentBlock>[];
+    currentScore = 0;
+  }
+
+  for (final block in blocks) {
+    final split = _splitEditorialBlock(block, maxChars: maxChars);
+    for (final piece in split) {
+      final score = _estimateEditorialBlockScore(piece);
+
+      if (current.isNotEmpty && currentScore + score > maxChars) {
+        flush();
+      }
+
+      current.add(piece);
+      currentScore += score;
+
+      if (currentScore >= maxChars * 0.9 && split.length > 1) {
+        flush();
+      }
+    }
+  }
+  flush();
+  return result;
+}
+
+/// 필요한 변수: 단일 블록.
+/// 작동 원리: 텍스트는 제목/본문/항목 수치로, 시각/그래프는 보수적으로 고정값으로
+/// 환산해 한 블록의 렌더 높이 추정을 수행한다.
+int _estimateEditorialBlockScore(BookContentBlock block) {
+  var score = block.title.length + block.text.length + block.formula.length;
+  score += block.rows.fold<int>(
+    0,
+    (sum, row) =>
+        sum + row.fold<int>(0, (inner, cell) => inner + cell.length + 6),
+  );
+  score += block.items.fold<int>(0, (sum, item) => sum + item.length + 12);
+
+  if (block.graph != null) score += 800;
+  if (block.visual != null) score += 500;
+  if (block.type == BookContentBlockType.formula) score += 320;
+  return score;
+}
+
+/// 필요한 변수: 단일 블록과 한 페이지 상한치.
+/// 작동 원리: 분할 가능한 블록은 타입 특성에 맞춰 조각을 나누고,
+/// 시각/그래프 블록은 블록 단위로 유지한다.
+List<BookContentBlock> _splitEditorialBlock(
+  BookContentBlock block, {
+  required int maxChars,
+}) {
+  if (_estimateEditorialBlockScore(block) <= maxChars) return [block];
+
+  if (block.items.isNotEmpty && block.items.length > 1) {
+    final result = <BookContentBlock>[];
+    var currentItems = <String>[];
+    var currentScore = 0;
+
+    BookContentBlock makePiece() {
+      final isFirst = result.isEmpty;
+      return BookContentBlock(
+        type: block.type,
+        // 제목·설명·수식은 첫 조각에만 두어 분할 후 내용이 중복되지 않게 한다.
+        title: isFirst ? block.title : '',
+        text: isFirst ? block.text : '',
+        formula: isFirst ? block.formula : '',
+        items: List<String>.of(currentItems),
+        rows: isFirst ? block.rows : const [],
+      );
+    }
+
+    for (final item in block.items) {
+      final itemScore = item.length + 12;
+      if (currentItems.isNotEmpty && currentScore + itemScore > maxChars) {
+        result.add(makePiece());
+        currentItems = <String>[];
+        currentScore = 0;
+      }
+      currentItems.add(item);
+      currentScore += itemScore;
+    }
+    if (currentItems.isNotEmpty) {
+      result.add(makePiece());
+    }
+    return result;
+  }
+
+  if (block.text.isNotEmpty) {
+    final pieces = _splitParagraphForPage(block.text, 250);
+    if (pieces.length > 1) {
+      return pieces
+          .map(
+            (text) => BookContentBlock(
+              type: block.type,
+              title: block.title,
+              text: text,
+              formula: block.formula,
+              items: block.items,
+              rows: block.rows,
+              visual: block.visual,
+              graph: block.graph,
+            ),
+          )
+          .toList(growable: false);
+    }
+  }
+
+  if (block.formula.isNotEmpty) {
+    final parts = _splitParagraphForPage(block.formula, 100);
+    return parts
+        .map(
+          (formula) => BookContentBlock(
+            type: block.type,
+            title: block.title,
+            text: block.text,
+            formula: formula,
+            items: block.items,
+            rows: block.rows,
+            visual: block.visual,
+            graph: block.graph,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  return [block];
+}
+
+List<String> _editorialPageSearchText(BookPage page) => [
+  if (page.kicker.isNotEmpty) page.kicker,
+  for (final block in page.blocks) ...[
+    if (block.title.isNotEmpty) block.title,
+    if (block.text.isNotEmpty) block.text,
+    if (block.formula.isNotEmpty) block.formula,
+    ...block.items,
+  ],
+];
 
 List<String> _splitParagraphForPage(String paragraph, int maxChars) {
   final text = paragraph.trim();

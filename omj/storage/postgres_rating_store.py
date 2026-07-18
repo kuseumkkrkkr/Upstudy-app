@@ -16,25 +16,9 @@ logger = logging.getLogger(__name__)
 class PostgresRatingStore:
     """학생 레이팅의 잠금·중복방지·일괄 갱신을 한 PostgreSQL 트랜잭션으로 제공한다."""
 
-    @staticmethod
-    def _postgres_configured() -> bool:
-        """필요 변수: DATABASE_URL 환경 변수. 작동 원리: URL이 있을 때만 PostgreSQL 경로를 선택한다."""
-        return bool(os.getenv("DATABASE_URL", "").strip())
-
-    @staticmethod
-    def _sqlite_store() -> Any:
-        """필요 변수: 없음. 작동 원리: PostgreSQL 미설정 환경에서 공유 SQLite fallback 저장소를 지연 로드한다."""
-        from storage.sqlite_rating_store import sqlite_rating_store
-
-        return sqlite_rating_store
-
     @contextmanager
     def transaction(self) -> Iterator[Any]:
-        """필요 변수: DATABASE_URL·공유 연결 풀. 작동 원리: PostgreSQL 설정 시 PostgreSQL을, 미설정 시 SQLite를 같은 트랜잭션 계약으로 사용한다."""
-        if not self._postgres_configured():
-            with self._sqlite_store().transaction() as cur:
-                yield cur
-            return
+        """필요 변수: DATABASE_URL·공유 연결 풀. 작동 원리: PostgreSQL 트랜잭션과 dict 행 커서를 제공한다."""
         from psycopg.rows import dict_row
 
         pool = postgres_problem_store.get_pool()
@@ -45,16 +29,10 @@ class PostgresRatingStore:
 
     def require_ready(self) -> bool:
         """필요 변수: DATABASE_URL·003_rating_runtime.sql 적용 상태.
-        작동 원리: PostgreSQL을 명시한 경우에만 연결과 핵심 테이블을 검사하고,
-        미설정 환경에서는 SQLite fallback을 유지한 채 서버를 시작한다.
+        작동 원리: 설정과 핵심 테이블을 검사하며 하나라도 없으면 서버 시작을 중단한다.
         """
         if not os.getenv("DATABASE_URL", "").strip():
-            self._sqlite_store().ensure_ready()
-            logger.info(
-                "PostgreSQL rating store disabled: DATABASE_URL is not configured; "
-                "using the SQLite fallback"
-            )
-            return False
+            raise RuntimeError("DATABASE_URL is required for the rating store")
 
         try:
             with self.transaction() as cur:
@@ -71,8 +49,6 @@ class PostgresRatingStore:
 
     def get_or_create_user(self, cur: Any, user_id: str, *, for_update: bool) -> Dict[str, Any]:
         """필요 변수: 사용자 ID·트랜잭션 커서. 작동 원리: 기본 레이팅 행을 원자적으로 만든 뒤 선택적으로 행 잠금을 건다."""
-        if getattr(cur, "_is_sqlite_rating_cursor", False):
-            return self._sqlite_store().get_or_create_user(cur, user_id, for_update=for_update)
         cur.execute(
             """INSERT INTO user_rating (user_id, rating, ovr, ovr_prev)
                VALUES (%s, %s, %s, %s) ON CONFLICT (user_id) DO NOTHING""",
@@ -87,10 +63,6 @@ class PostgresRatingStore:
 
     def claim_submission(self, cur: Any, *, user_id: str, submission_id: str, quest_id: str) -> Optional[Dict[str, Any]]:
         """필요 변수: 사용자·제출·문제 ID. 작동 원리: 복합 기본키로 최초 제출만 선점하고 재전송에는 저장된 동일 응답을 반환한다."""
-        if getattr(cur, "_is_sqlite_rating_cursor", False):
-            return self._sqlite_store().claim_submission(
-                cur, user_id=user_id, submission_id=submission_id, quest_id=quest_id
-            )
         cur.execute(
             """INSERT INTO rating_submission (user_id, submission_id, quest_id)
                VALUES (%s, %s, %s) ON CONFLICT (user_id, submission_id) DO NOTHING
@@ -112,11 +84,6 @@ class PostgresRatingStore:
 
     def save_submission_response(self, cur: Any, *, user_id: str, submission_id: str, response: Dict[str, Any]) -> None:
         """필요 변수: 선점된 제출 키·응답. 작동 원리: 같은 트랜잭션 안에서 재전송용 결과 스냅샷을 완성한다."""
-        if getattr(cur, "_is_sqlite_rating_cursor", False):
-            self._sqlite_store().save_submission_response(
-                cur, user_id=user_id, submission_id=submission_id, response=response
-            )
-            return
         from psycopg.types.json import Jsonb
 
         cur.execute(
@@ -126,8 +93,6 @@ class PostgresRatingStore:
 
     def get_tag_stats(self, cur: Any, user_id: str, tags: Iterable[str]) -> Dict[str, Dict[str, Any]]:
         """필요 변수: 사용자 ID·정규화 태그. 작동 원리: 이번 계산에 필요한 태그 행만 잠가 동시 갱신 손실을 막는다."""
-        if getattr(cur, "_is_sqlite_rating_cursor", False):
-            return self._sqlite_store().get_tag_stats(cur, user_id, tags)
         tag_list = list(tags)
         if not tag_list:
             return {}
@@ -140,9 +105,6 @@ class PostgresRatingStore:
 
     def upsert_tag_stats(self, cur: Any, rows: List[Dict[str, Any]]) -> None:
         """필요 변수: 태그별 계산 결과. 작동 원리: 한 번의 executemany로 시도 수와 현재·직전 레이팅을 갱신한다."""
-        if getattr(cur, "_is_sqlite_rating_cursor", False):
-            self._sqlite_store().upsert_tag_stats(cur, rows)
-            return
         if not rows:
             return
         cur.executemany(
@@ -157,8 +119,6 @@ class PostgresRatingStore:
 
     def compute_ovr(self, cur: Any, user_id: str, fallback: float) -> float:
         """필요 변수: 태그별 레이팅·시도 수. 작동 원리: 태그당 최대 C_MAX까지만 신뢰 가중치를 주어 소표본 태그의 과대영향을 제한한다."""
-        if getattr(cur, "_is_sqlite_rating_cursor", False):
-            return self._sqlite_store().compute_ovr(cur, user_id, fallback)
         cur.execute(
             """SELECT COALESCE(
                     SUM(rating * LEAST(attempts, %s)) / NULLIF(SUM(LEAST(attempts, %s)), 0), %s
@@ -170,9 +130,6 @@ class PostgresRatingStore:
 
     def update_user(self, cur: Any, values: Dict[str, Any]) -> None:
         """필요 변수: 계산이 끝난 사용자 레이팅 상태. 작동 원리: 단일 행 UPDATE로 원점수·OVR·최근 50문항 통계를 함께 기록한다."""
-        if getattr(cur, "_is_sqlite_rating_cursor", False):
-            self._sqlite_store().update_user(cur, values)
-            return
         from psycopg.types.json import Jsonb
 
         cur.execute(
@@ -188,15 +145,11 @@ class PostgresRatingStore:
 
     def fetch_user(self, user_id: str) -> Dict[str, Any]:
         """필요 변수: 사용자 ID. 작동 원리: 사용자 행이 없으면 기본값으로 만든 후 최신 상태를 반환한다."""
-        if not self._postgres_configured():
-            return self._sqlite_store().fetch_user(user_id)
         with self.transaction() as cur:
             return self.get_or_create_user(cur, user_id, for_update=False)
 
     def list_tag_stats(self, user_id: str) -> List[Dict[str, Any]]:
         """필요 변수: 사용자 ID. 작동 원리: 태그 레이팅을 높은 순으로 한 번에 조회한다."""
-        if not self._postgres_configured():
-            return self._sqlite_store().list_tag_stats(user_id)
         with self.transaction() as cur:
             cur.execute(
                 """SELECT tag, attempts, rating, rating_prev FROM user_tag_rating

@@ -1,5 +1,6 @@
 ﻿import base64
 import json
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from storage.storage import get_quest
@@ -12,11 +13,14 @@ from services.ai.sam_client import (
     is_sam_configured,
 )
 from services.ai.prompts import solve_grading_prompt, solve_ocr_prompt
+from services.ocr.texteller_grid import extract_math_with_texteller_grid
 
 load_env()
 
 
 ANALYSIS_MODEL = DEFAULT_ANALYSIS_MODEL
+# 로컬 TexTeller 실패 때만 사용하는 Qwen 비전 OCR 모델이다.
+QWEN_OCR_MODEL = os.getenv("OMJ_OCR_QWEN_MODEL", "fw-qwen3.7-plus")
 
 _DEFAULT_OCR_PROMPT = solve_ocr_prompt()
 _DEFAULT_GRADING_PROMPT = solve_grading_prompt()
@@ -43,6 +47,7 @@ def analyze_submission(
         quest_models = _extract_models_from_payload(payload)
 
     warnings: List[str] = []
+    ocr_debug_details: Dict[str, Any] = {"source": "request_payload", "warnings": []}
 
     analysis_prompt = _normalize_optional_text(payload.get("analysis_prompt")) or _DEFAULT_GRADING_PROMPT
     analysis_model = _normalize_optional_text(payload.get("analysis_model")) or ANALYSIS_MODEL
@@ -72,6 +77,11 @@ def analyze_submission(
         )
         ocr_all_formulas = _normalize_ocr_list(ocr_result.get("all_formulas"))
         ocr_purple_formulas = _normalize_ocr_list(ocr_result.get("purple_formulas"))
+        warnings.extend(_normalize_warning_list(ocr_result.get("warnings")))
+        ocr_debug_details = {
+            "source": ocr_result.get("ocr_source", "qwen_vision"),
+            "warnings": _normalize_warning_list(ocr_result.get("warnings")),
+        }
 
     clean_payload = _build_grading_context(
         quest if isinstance(quest, dict) else None,
@@ -138,6 +148,7 @@ def analyze_submission(
             heatmap_image_bytes=heatmap_image_bytes,
             ocr_all_formulas=ocr_all_formulas,
             ocr_purple_formulas=ocr_purple_formulas,
+            ocr_details=ocr_debug_details,
         )
         if debug_mode
         else None
@@ -164,7 +175,8 @@ def analyze_pregrade(
     debug_mode = _parse_debug_flag(payload.get("debug"))
     warnings: List[str] = []
     analysis_prompt = _normalize_optional_text(payload.get("analysis_prompt")) or _DEFAULT_OCR_PROMPT
-    analysis_model = _normalize_optional_text(payload.get("analysis_model")) or ANALYSIS_MODEL
+    # Qwen은 TexTeller가 실패한 요청에만 사용하고 채점 모델은 OCR 문자열만 받는다.
+    analysis_model = _normalize_optional_text(payload.get("ocr_analysis_model")) or QWEN_OCR_MODEL
     gen_config = _normalize_gen_config(payload.get("gen_config"))
 
     if student_work_image_bytes is None and payload.get("student_work_image"):
@@ -172,6 +184,10 @@ def analyze_pregrade(
     if heatmap_image_bytes is None and payload.get("heatmap_image"):
         heatmap_image_bytes = _decode_base64(payload.get("heatmap_image"))
 
+    # OCR은 창작이 아니라 전사 작업이므로 Qwen 응답 편차를 최소화한다.
+    ocr_gen_config = dict(gen_config or {})
+    ocr_gen_config.setdefault("temperature", 0.0)
+    ocr_gen_config.setdefault("top_p", 0.1)
     prompt = _augment_ocr_prompt(
         analysis_prompt=analysis_prompt,
     )
@@ -180,32 +196,62 @@ def analyze_pregrade(
         images.append(student_work_image_bytes)
     if heatmap_image_bytes:
         images.append(heatmap_image_bytes)
-    result_json, warning = _generate_json_with_images(
-        prompt=prompt,
-        model=analysis_model,
-        images=images,
-        gen_config=gen_config,
+    texteller_result = extract_math_with_texteller_grid(
+        student_work_image_bytes or b"",
+        payload.get("writing_events"),
     )
-    if warning:
-        warnings.append(warning)
-    all_formulas = _normalize_ocr_list(result_json.get("all_formulas"))
-    purple_formulas = _normalize_ocr_list(result_json.get("purple_formulas"))
-    all_ocr = result_json.get("all_ocr")
-    hit_mapped = result_json.get("hit_mapped")
-    user_answer = result_json.get("user_answer")
+    if texteller_result.get("accepted"):
+        result_json: Dict[str, Any] = {}
+        warning: Optional[str] = None
+        ocr_result = texteller_result
+    else:
+        # TexTeller가 실패·포화·비정상 출력일 때만 Qwen이 원본 이미지 OCR을 담당한다.
+        warnings.extend(_normalize_warning_list(texteller_result.get("warnings")))
+        result_json, warning = _generate_json_with_images(
+            prompt=prompt,
+            model=analysis_model,
+            images=images,
+            gen_config=ocr_gen_config,
+        )
+        qwen_formulas = _normalize_ocr_list(result_json.get("all_formulas"))
+        qwen_purple = _normalize_ocr_list(result_json.get("purple_formulas"))
+        if warning:
+            warnings.append(f"Qwen OCR failed: {warning}")
+        elif not qwen_formulas:
+            warnings.append("Qwen OCR returned no formulas")
+        ocr_result = {
+            **result_json,
+            "all_formulas": qwen_formulas,
+            "purple_formulas": qwen_purple,
+            "ocr_source": "qwen_vision" if qwen_formulas else "qwen_vision_empty",
+            "accepted": bool(qwen_formulas),
+        }
+    warnings.extend(_normalize_warning_list(ocr_result.get("warnings")))
+    all_formulas = _normalize_ocr_list(ocr_result.get("all_formulas"))
+    purple_formulas = _normalize_ocr_list(ocr_result.get("purple_formulas"))
+    all_ocr = ocr_result.get("all_ocr")
+    hit_mapped = ocr_result.get("hit_mapped")
+    user_answer = ocr_result.get("user_answer")
     print(
-        "[ocr payload] all_formulas=%s purple_formulas=%s"
-        % (len(all_formulas), len(purple_formulas))
+        "[ocr payload] source=%s all_formulas=%s purple_formulas=%s"
+        % (ocr_result.get("ocr_source"), len(all_formulas), len(purple_formulas))
     )
     debug_info = (
         _build_debug_info(
             prompt=prompt,
             model=analysis_model,
-            gen_config=gen_config,
+            gen_config=ocr_gen_config,
             payload=payload,
             result_json=result_json,
             student_work_image_bytes=student_work_image_bytes,
             heatmap_image_bytes=heatmap_image_bytes,
+            ocr_all_formulas=all_formulas,
+            ocr_purple_formulas=purple_formulas,
+            ocr_details={
+                "source": ocr_result.get("ocr_source", "qwen_vision"),
+                "texteller": texteller_result,
+                "warnings": warnings,
+            },
         )
         if debug_mode
         else None
@@ -217,7 +263,7 @@ def analyze_pregrade(
         "hit_mapped": hit_mapped,
         "user_answer": user_answer,
         "warnings": warnings,
-        "ocr_source": "sam",
+        "ocr_source": str(ocr_result.get("ocr_source") or "qwen_vision_empty"),
         "debug": debug_info,
     }
 
@@ -257,6 +303,15 @@ def _generate_json_with_images(
     except Exception as exc:
         return {}, f"grading request failed: {exc}"
     return {}, "grading returned invalid format"
+
+
+def _normalize_warning_list(value: Any) -> List[str]:
+    """필요 변수: 경고 문자열 또는 목록. 작동 원리: API 응답·디버그 화면이 안전하게 표시할 문자열 목록으로 정리한다."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+    return [str(value)] if str(value).strip() else []
 
 
 def _normalize_status_list(value: Any, flow_count: int) -> List[Dict[str, Any]]:
@@ -450,6 +505,7 @@ def _build_debug_info(
     heatmap_image_bytes: Optional[bytes] = None,
     ocr_all_formulas: Optional[List[str]] = None,
     ocr_purple_formulas: Optional[List[str]] = None,
+    ocr_details: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     return {
         "model": model,
@@ -460,6 +516,7 @@ def _build_debug_info(
         "ocr": {
             "all_formulas": ocr_all_formulas or [],
             "purple_formulas": ocr_purple_formulas or [],
+            **(ocr_details or {}),
         },
         "image_sizes": {
             "student_work": len(student_work_image_bytes or b""),

@@ -66,32 +66,6 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
     }
   }
 
-  Future<void> _continueAsGuest() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      await ApiClient.instance.requireToken();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/');
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = _getErrorMessage(e);
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   String _getErrorMessage(Object error) {
     final message = error.toString().toLowerCase();
     if (message.contains('unauthorized') ||
@@ -347,13 +321,6 @@ class _TeacherLoginPageState extends State<TeacherLoginPage> {
                   )
                 : null,
           ),
-          const SizedBox(height: 12),
-          _LoginAction(
-            label: '게스트로 계속하기',
-            icon: Icons.person_outline_rounded,
-            dark: false,
-            onTap: _isLoading ? null : _continueAsGuest,
-          ),
           const SizedBox(height: 24),
           Wrap(
             alignment: WrapAlignment.center,
@@ -524,14 +491,12 @@ class _LoginAction extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onTap,
-    this.dark = true,
     this.child,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback? onTap;
-  final bool dark;
   final Widget? child;
 
   @override
@@ -539,7 +504,7 @@ class _LoginAction extends StatelessWidget {
     return Opacity(
       opacity: onTap == null ? 0.48 : 1,
       child: Material(
-        color: dark ? const Color(0xFF111113) : const Color(0xFFF3F3F4),
+        color: const Color(0xFF111113),
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           onTap: onTap,
@@ -549,7 +514,6 @@ class _LoginAction extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 18),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
-              border: dark ? null : Border.all(color: AppColors.surfaceBorder),
             ),
             child:
                 child ??
@@ -559,13 +523,13 @@ class _LoginAction extends StatelessWidget {
                     Icon(
                       icon,
                       size: 20,
-                      color: dark ? Colors.white : Colors.black,
+                      color: Colors.white,
                     ),
                     const SizedBox(width: 10),
                     Text(
                       label,
                       style: TextStyle(
-                        color: dark ? Colors.white : Colors.black,
+                        color: Colors.white,
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),

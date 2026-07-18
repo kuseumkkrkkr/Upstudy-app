@@ -1,11 +1,9 @@
 import json
-import sqlite3
+from infra.db import postgres_compat as db
 import time
 import uuid
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-DB_PATH = str((Path(__file__).resolve().parent.parent / "textbook.db"))
 PUBLIC_MANUAL_TEXTBOOK_ID = "public_manual_textbook"
 TEACHER_MANUAL_TEXTBOOK_ID = "teacher_manual_default"
 TEACHER_PROBLEM_GENERATION_MANUAL_TEXTBOOK_ID = "teacher_problem_generation_manual"
@@ -20,7 +18,8 @@ def is_teacher_manual_textbook(textbook_id: Any) -> bool:
 
 
 def init_textbook_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
+    """필요 변수: 공용 DB 연결 설정. 작동 원리: 교재 테이블과 기본 교재를 멱등하게 준비한다."""
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -31,13 +30,18 @@ def init_textbook_db() -> None:
             category TEXT NOT NULL DEFAULT 'custom',
             tags TEXT NOT NULL DEFAULT '[]',
             chapters TEXT NOT NULL,
-            cover_color INTEGER,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
+            cover_color BIGINT,
+            created_at BIGINT NOT NULL,
+            updated_at BIGINT NOT NULL,
             created_by TEXT
         )
         """
     )
+    # 기존 PostgreSQL 테이블의 32비트 정수 컬럼도 밀리초·ARGB 값을 담도록 승격한다.
+    for column in ("cover_color", "created_at", "updated_at"):
+        cur.execute(
+            f"ALTER TABLE textbooks ALTER COLUMN {column} TYPE BIGINT"
+        )
     conn.commit()
     _ensure_public_manual_textbook(cur)
     _ensure_teacher_manual_textbook(cur)
@@ -52,7 +56,7 @@ def list_textbooks(
     textbook_ids: Optional[List[str]] = None,
     include_teacher_manual: bool = False,
 ) -> List[Dict[str, Any]]:
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     params: List[Any] = []
     query = """
@@ -92,7 +96,7 @@ def list_textbooks(
 
 
 def get_textbook(textbook_id: str) -> Optional[Dict[str, Any]]:
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -130,7 +134,7 @@ def create_textbook(payload: Dict[str, Any], created_by: str) -> Dict[str, Any]:
     textbook_id = payload.get("textbook_id") or str(uuid.uuid4())
     now_ms = int(time.time() * 1000)
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -158,19 +162,18 @@ def create_textbook(payload: Dict[str, Any], created_by: str) -> Dict[str, Any]:
     return get_textbook(textbook_id) or {}
 
 
-def _row_to_textbook(row: sqlite3.Row | tuple) -> Dict[str, Any]:
-    (
-        textbook_id,
-        title,
-        subtitle,
-        category,
-        tags_raw,
-        chapters_raw,
-        cover_color,
-        created_at,
-        updated_at,
-        created_by,
-    ) = row
+def _row_to_textbook(row: db.Row | tuple) -> Dict[str, Any]:
+    """필요 변수: 교재 조회 결과 행. 작동 원리: 튜플·호환 Row 모두 숫자 인덱스로 값을 읽어 모델로 변환한다."""
+    textbook_id = row[0]
+    title = row[1]
+    subtitle = row[2]
+    category = row[3]
+    tags_raw = row[4]
+    chapters_raw = row[5]
+    cover_color = row[6]
+    created_at = row[7]
+    updated_at = row[8]
+    created_by = row[9]
     tags = _normalize_string_list(tags_raw)
     chapters = _normalize_chapters(chapters_raw)
     return {
@@ -263,7 +266,7 @@ def _normalize_string_list(value: Any) -> List[str]:
     return [str(value).strip()]
 
 
-def _ensure_public_manual_textbook(cur: sqlite3.Cursor) -> None:
+def _ensure_public_manual_textbook(cur: db.Cursor) -> None:
     now_ms = int(time.time() * 1000)
     chapters = [
         {
@@ -348,7 +351,7 @@ def _ensure_public_manual_textbook(cur: sqlite3.Cursor) -> None:
     )
 
 
-def _ensure_teacher_manual_textbook(cur: sqlite3.Cursor) -> None:
+def _ensure_teacher_manual_textbook(cur: db.Cursor) -> None:
     now_ms = int(time.time() * 1000)
     chapters = [
         {
@@ -409,7 +412,7 @@ def _ensure_teacher_manual_textbook(cur: sqlite3.Cursor) -> None:
     )
 
 
-def _ensure_teacher_problem_generation_manual_textbook(cur: sqlite3.Cursor) -> None:
+def _ensure_teacher_problem_generation_manual_textbook(cur: db.Cursor) -> None:
     now_ms = int(time.time() * 1000)
     chapters = [
         {

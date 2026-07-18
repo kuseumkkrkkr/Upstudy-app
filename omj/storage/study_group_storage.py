@@ -1,10 +1,33 @@
 import hashlib
 import sqlite3
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Dict, List, Optional, Tuple
 
 from storage.storage import DB_PATH
+
+_GROUP_CONTENT_RETENTION_DAYS = 1
+
+
+def _purge_expired_group_content(conn: sqlite3.Connection) -> None:
+    """하루가 지난 채팅과 공유 링크를 같은 트랜잭션에서 정리한다."""
+    cutoff = f"-{_GROUP_CONTENT_RETENTION_DAYS} day"
+    for table in (
+        "study_group_messages",
+        "study_group_shared_problems",
+        "study_group_shared_exams",
+        "study_group_shared_flows",
+    ):
+        exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (table,),
+        ).fetchone()
+        if not exists:
+            continue
+        conn.execute(
+            f"DELETE FROM {table} WHERE datetime(created_at) < datetime('now', ?)",
+            (cutoff,),
+        )
 
 
 def _normalize_invite_code(value: Optional[str]) -> Optional[str]:
@@ -205,6 +228,22 @@ def init_study_group_db() -> None:
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_shared_exams_group ON study_group_shared_exams (group_id, datetime(created_at) DESC)"
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS study_group_schedules (
+            schedule_id TEXT PRIMARY KEY,
+            group_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            scheduled_date TEXT NOT NULL,
+            scheduled_time TEXT,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_group_schedules_active "
+        "ON study_group_schedules (group_id, scheduled_date, scheduled_time)"
+    )
     conn.commit()
     conn.close()
 
@@ -403,6 +442,94 @@ def create_study_group(
 def _get_conn() -> sqlite3.Connection:
     init_study_group_db()
     return sqlite3.connect(DB_PATH)
+
+
+def _purge_past_group_schedules(conn: sqlite3.Connection) -> None:
+    """필요 변수: 열린 DB 연결과 서버의 오늘 날짜다.
+
+    작동 원리: 일정 날짜가 오늘보다 과거인 행을 조회 전 같은 트랜잭션에서 삭제해
+    지난 일정이 어떤 API 응답으로도 다시 노출되지 않게 한다.
+    """
+    conn.execute(
+        "DELETE FROM study_group_schedules WHERE scheduled_date < ?",
+        (date.today().isoformat(),),
+    )
+
+
+def create_group_schedule(
+    group_id: str,
+    title: str,
+    scheduled_date: str,
+    scheduled_time: Optional[str] = None,
+) -> Dict[str, object]:
+    """필요 변수: 그룹 ID, 일정 제목, YYYY-MM-DD 날짜와 선택 HH:MM 시간이다.
+
+    작동 원리: 과거 날짜는 저장 전에 거부하고, 유효한 당일·미래 일정만 UUID로
+    저장한다. 권한 검사는 라우터가 그룹 생성자와 대조해 담당한다.
+    """
+    normalized_title = title.strip()
+    if not normalized_title:
+        raise ValueError("schedule title is required")
+    try:
+        target_date = date.fromisoformat(scheduled_date)
+    except ValueError as exc:
+        raise ValueError("scheduled_date must be YYYY-MM-DD") from exc
+    if target_date < date.today():
+        raise ValueError("past schedules cannot be created")
+    normalized_time = (scheduled_time or "").strip() or None
+    if normalized_time:
+        try:
+            datetime.strptime(normalized_time, "%H:%M")
+        except ValueError as exc:
+            raise ValueError("scheduled_time must be HH:MM") from exc
+    item = {
+        "schedule_id": str(uuid.uuid4()),
+        "group_id": group_id,
+        "title": normalized_title,
+        "scheduled_date": target_date.isoformat(),
+        "scheduled_time": normalized_time,
+        "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+    }
+    conn = _get_conn()
+    try:
+        _purge_past_group_schedules(conn)
+        conn.execute(
+            """INSERT INTO study_group_schedules
+               (schedule_id, group_id, title, scheduled_date, scheduled_time, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            tuple(item.values()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return item
+
+
+def list_active_group_schedules(group_id: str) -> List[Dict[str, object]]:
+    """필요 변수: 그룹 ID와 서버의 오늘 날짜다.
+
+    작동 원리: 먼저 지난 일정을 삭제한 뒤 당일 이후 일정만 시간순으로 반환한다.
+    따라서 클라이언트 캐시 여부와 관계없이 과거 일정은 서버에서 차단된다.
+    """
+    conn = _get_conn()
+    try:
+        _purge_past_group_schedules(conn)
+        rows = conn.execute(
+            """SELECT schedule_id, group_id, title, scheduled_date, scheduled_time, created_at
+               FROM study_group_schedules WHERE group_id = ?
+               ORDER BY scheduled_date ASC, COALESCE(scheduled_time, '23:59') ASC""",
+            (group_id,),
+        ).fetchall()
+        conn.commit()
+        return [
+            {
+                "schedule_id": row[0], "group_id": row[1], "title": row[2],
+                "scheduled_date": row[3], "scheduled_time": row[4], "created_at": row[5],
+            }
+            for row in rows
+        ]
+    finally:
+        conn.close()
 
 
 def count_groups_created_by_user(user_id: str) -> int:
@@ -675,6 +802,7 @@ def append_group_message(
     now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     message_id = str(uuid.uuid4())
     try:
+        _purge_expired_group_content(conn)
         conn.execute(
             """
             INSERT INTO study_group_messages
@@ -742,6 +870,7 @@ def list_group_messages(
     params = params + (limit,)
     conn = _get_conn()
     try:
+        _purge_expired_group_content(conn)
         cur = conn.execute(query, params)
         rows = cur.fetchall()
     finally:
@@ -1024,6 +1153,7 @@ def share_group_problem(group_id: str, user_id: str, codebase_id: int, seed: int
     share_id = str(uuid.uuid4())
     conn = _get_conn()
     try:
+        _purge_expired_group_content(conn)
         conn.execute(
             """
             INSERT INTO study_group_shared_problems (share_id, group_id, user_id, codebase_id, seed, created_at)
@@ -1072,6 +1202,7 @@ def list_shared_group_problems(group_id: str, *, limit: int = 30) -> List[Dict[s
         limit = 30
     conn = _get_conn()
     try:
+        _purge_expired_group_content(conn)
         cur = conn.execute(
             """
             SELECT share_id, user_id, codebase_id, seed, created_at
@@ -1196,6 +1327,7 @@ def list_shared_group_flows(
         limit = 50
     conn = sqlite3.connect(DB_PATH)
     try:
+        _purge_expired_group_content(conn)
         clauses = ["group_id = ?"]
         params: List[object] = [group_id]
         if user_id:
@@ -1271,6 +1403,7 @@ def get_shared_flow(share_id: str) -> Optional[Dict[str, object]]:
     _ensure_shared_flows_table()
     conn = sqlite3.connect(DB_PATH)
     try:
+        _purge_expired_group_content(conn)
         cur = conn.execute(
             """
             SELECT share_id, group_id, user_id, codebase_id, seed, quest_id, quest_title, status_json, all_formulas, answer_riddle, tags, difficulty, created_at
@@ -1332,6 +1465,7 @@ def share_group_exam(
     share_id = str(uuid.uuid4())
     conn = _get_conn()
     try:
+        _purge_expired_group_content(conn)
         conn.execute(
             """
             INSERT INTO study_group_shared_exams
@@ -1382,6 +1516,7 @@ def list_shared_group_exams(group_id: str, *, limit: int = 5) -> List[Dict[str, 
         limit = 50
     conn = _get_conn()
     try:
+        _purge_expired_group_content(conn)
         cur = conn.execute(
             """
             SELECT share_id, user_id, exam_id, seed, title, sender_name, created_at

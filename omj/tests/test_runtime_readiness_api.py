@@ -10,18 +10,20 @@ import server
 
 
 class RuntimeReadinessApiTests(unittest.TestCase):
-    """필요 변수: 저장소 운영 모드. 작동 원리: 로드밸런서 준비 주소가 안전한 SQLite와 미검증 PostgreSQL을 구분하는지 검증한다."""
+    """필요 변수: 저장소 운영 모드. 작동 원리: PostgreSQL 미설정·미검증 인스턴스를 로드밸런서에서 차단하는지 검증한다."""
 
     def setUp(self) -> None:
         """필요 변수: FastAPI 앱. 작동 원리: 실제 네트워크 없이 준비 상태 응답을 호출한다."""
         self.client = TestClient(server.app)
 
-    def test_sqlite_fallback_is_ready(self) -> None:
-        """필요 변수: SQLite 기본 모드. 작동 원리: 정상 fallback DB는 200 응답으로 배포 가능 상태를 알린다."""
-        with patch.dict(os.environ, {"PROBLEM_CACHE_BACKEND": "sqlite"}, clear=True):
+    def test_missing_postgres_configuration_is_not_ready(self) -> None:
+        """필요 변수: 비어 있는 배포 환경. 작동 원리: DB 시크릿이 없으면 503으로 트래픽 진입을 막는다."""
+        with patch.dict(os.environ, {}, clear=True):
             response = self.client.get("/health/ready")
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["ready"])
+        self.assertEqual(response.status_code, 503)
+        detail = response.json()["detail"]
+        self.assertFalse(detail["ready"])
+        self.assertFalse(detail["database_configured"])
 
     def test_unverified_postgres_is_not_ready(self) -> None:
         """필요 변수: 감사 표식 없는 PostgreSQL 모드. 작동 원리: 잘못된 조기 전환을 503으로 로드밸런서에서 차단한다."""

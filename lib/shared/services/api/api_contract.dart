@@ -17,9 +17,6 @@ class ApiContract {
   );
 
   /// Path-level compatibility overrides for backend contract changes.
-  ///
-  /// Example:
-  /// `/courses/my`: `/courses/enrolled`
   static const Map<String, String> pathOverrides = <String, String>{};
 
   static Uri uri(String path, {Map<String, String>? query}) {
@@ -78,11 +75,11 @@ class ApiPaths {
   static const authTeacherRegister = '/auth/teacher/register';
 
   static const courses = '/courses';
-  static const coursesMy = '/courses/my';
   static const coursesEnrolled = '/courses/enrolled';
   static const coursesEnrollments = '/courses/enrolled';
   static const coursesEnrollmentReorder = '/courses/enrollments/reorder';
   static const coursesHashTags = '/courses/hash-tags';
+  static const questGenerationTags = '/quests/generation-tags';
   static const coursesV2 = '/courses/v2';
   static const courseRuntimeNext = '/courses/v2/runtime/next';
   static const courseRuntimeSubmit = '/courses/v2/runtime/submit';

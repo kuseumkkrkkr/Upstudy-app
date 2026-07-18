@@ -4,6 +4,33 @@ import '../../data/models/course.dart';
 import 'api_contract.dart';
 import 'api_client.dart';
 
+/// 필요한 변수는 생성 태그 레지스트리의 과목명·표시명·태그 목록이다.
+/// 작동 원리: 백엔드 fix_gen.py가 관리하는 과목별 허용 태그를 화면 검색 필터에 전달한다.
+class GenerationTagGroup {
+  const GenerationTagGroup({
+    required this.name,
+    required this.label,
+    required this.tags,
+  });
+
+  final String name;
+  final String label;
+  final List<String> tags;
+
+  /// 필요한 변수는 서버 그룹 JSON이다.
+  /// 작동 원리: 비어 있거나 형식이 다른 항목을 빈 문자열로 안전하게 변환해 화면 필터가 깨지지 않게 한다.
+  static GenerationTagGroup fromJson(Map<String, dynamic> json) {
+    return GenerationTagGroup(
+      name: json['name']?.toString() ?? '',
+      label: json['label']?.toString() ?? json['name']?.toString() ?? '',
+      tags: (json['tags'] as List<dynamic>? ?? const <dynamic>[])
+          .map((tag) => tag.toString().trim())
+          .where((tag) => tag.isNotEmpty)
+          .toList(growable: false),
+    );
+  }
+}
+
 class CourseService {
   CourseService._();
 
@@ -41,6 +68,8 @@ class CourseService {
       parser: (d) {
         if (d is Map<String, dynamic>) return d;
         if (d is Map) return Map<String, dynamic>.from(d);
+        // V2 응답은 공통 파서가 data 배열을 먼저 해제하므로 목록임을 유지해 다시 감싼다.
+        if (d is List) return <String, dynamic>{'data': d};
         return const <String, dynamic>{};
       },
       useCache: useCache,
@@ -49,10 +78,14 @@ class CourseService {
     return response.data ?? const <String, dynamic>{};
   }
 
+  /// 필요한 변수는 검색·태그·추천 조건과 페이지 크기·시작 위치다.
+  /// 작동 원리: V2 목록 API에 limit/offset을 전달해 필요한 코스만 받고, 구형 API일 때도 같은 범위만 반환한다.
   static Future<List<Course>> fetchCourses({
     String? keyword,
     String? tag,
     double? recommendOvr,
+    int limit = 50,
+    int offset = 0,
   }) async {
     final params = <String, String>{};
     if (keyword != null && keyword.trim().isNotEmpty) {
@@ -62,6 +95,8 @@ class CourseService {
     if (recommendOvr != null) {
       params['recommend_for_ovr'] = recommendOvr.round().toString();
     }
+    params['limit'] = limit.clamp(1, 200).toString();
+    params['offset'] = offset.clamp(0, 2000).toString();
 
     final v2Uri = ApiContract.uri(
       ApiPaths.coursesV2,
@@ -72,10 +107,9 @@ class CourseService {
         v2Uri,
         cacheTtl: const Duration(minutes: 5),
       );
-      final items = _extractCourseItems(payload);
-      if (items.isNotEmpty) {
-        return items.map((item) => _courseFromJson(item)).toList();
-      }
+      return _extractCourseItems(
+        payload,
+      ).map((item) => _courseFromJson(item)).toList(growable: false);
     } on ApiException {
       // v2 API가 응답을 주지 않거나 상태가 다를 때 레거시 API로 폴백한다.
     }
@@ -104,39 +138,32 @@ class CourseService {
     final courses = (resp['courses'] as List<dynamic>? ?? [])
         .map((item) => _courseFromJson(Map<String, dynamic>.from(item as Map)))
         .toList();
-    return courses;
+    return courses.skip(offset).take(limit).toList(growable: false);
   }
 
+  /// 필요한 변수는 `/quests/generation-tags`의 과목별 태그 응답이다.
+  /// 작동 원리: fix_gen.py 레지스트리를 1시간 캐시해 코스 검색 UI가 별도 태그 목록을 중복 보관하지 않게 한다.
+  static Future<List<GenerationTagGroup>> fetchGenerationTagGroups() async {
+    final payload = await _getCachedJson(
+      ApiContract.uri(ApiPaths.questGenerationTags),
+      cacheTtl: const Duration(hours: 1),
+    );
+    final groups = payload['groups'] as List<dynamic>? ?? const <dynamic>[];
+    return groups
+        .whereType<Map>()
+        .map(
+          (group) =>
+              GenerationTagGroup.fromJson(Map<String, dynamic>.from(group)),
+        )
+        .where((group) => group.name.isNotEmpty && group.tags.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  /// 필요한 변수는 로그인 토큰과 등록·V2 런타임·학원 과제의 코스 응답이다.
+  /// 작동 원리: 서버에 없는 레거시 `/courses/my`를 요청하지 않고, 등록 코스를
+  /// 우선 조회한 뒤 사용자의 실제 학습 경로만 순서대로 보완한다.
   static Future<List<Course>> fetchMyCourses() async {
     final token = await ApiClient.instance.requireToken();
-    final uri = ApiContract.uri(ApiPaths.coursesMy);
-    try {
-      final payload = await _getCachedJson(
-        uri,
-        cacheTtl: const Duration(minutes: 2),
-      );
-      final courses = (payload['courses'] as List<dynamic>? ?? [])
-          .map(
-            (item) => _courseFromJson(Map<String, dynamic>.from(item as Map)),
-          )
-          .toList();
-      if (courses.isEmpty) {
-        final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
-        if (fromEnrollments.isNotEmpty) return fromEnrollments;
-        final fromV2Runtime = await _fallbackMyCoursesFromV2Runtime(token);
-        if (fromV2Runtime.isNotEmpty) return fromV2Runtime;
-        final assigned = await _fallbackMyCoursesFromAcademyAssignments(token);
-        if (assigned.isNotEmpty) return assigned;
-      }
-      return courses;
-    } on ApiException catch (e) {
-      if (e.statusCode != 404) {
-        throw Exception('Failed to load my courses: ${e.statusCode}');
-      }
-    }
-
-    // Older/local servers may not expose /courses/my. Try enrollments,
-    // then fall back to other 목록 API.
     final fromEnrollments = await _fallbackMyCoursesFromEnrollments(token);
     if (fromEnrollments.isNotEmpty) return fromEnrollments;
     final fromV2Runtime = await _fallbackMyCoursesFromV2Runtime(token);

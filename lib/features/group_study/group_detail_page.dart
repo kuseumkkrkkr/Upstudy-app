@@ -7,7 +7,9 @@ import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/business/repositories/exam_paper_store.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/sessions/tryout_solve/ui/pages/shared_flow_view_page.dart';
 
 class GroupDetailPage extends StatefulWidget {
   const GroupDetailPage({
@@ -22,7 +24,7 @@ class GroupDetailPage extends StatefulWidget {
 
   final String groupId;
   final Object? initialGroup;
-  final List<AcademyGroupMember>? initialMembers;
+  final List<StudyGroupMember>? initialMembers;
   final List<SolveHistoryItem>? initialShareHistory;
   final List<ExamPaperEntry>? initialShareExams;
   final List<StudyGroupMessage>? initialChatMessages;
@@ -33,9 +35,10 @@ class GroupDetailPage extends StatefulWidget {
 
 class _GroupDetailPageState extends State<GroupDetailPage> {
   StudyGroup? _group;
-  List<AcademyGroupMember> _members = const [];
+  List<StudyGroupMember> _members = const [];
   List<SharedFlowItem> _sharedFlows = const [];
   List<GroupSharedExam> _sharedExams = const [];
+  List<StudyGroupSchedule> _schedules = const [];
   bool _loadingResources = false;
   bool _loading = true;
   String? _error;
@@ -43,55 +46,20 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   List<String> _flowTags = const [];
   String _flowUserId = '';
   int? _flowRecentDays;
+  String _currentUserId = '';
 
   /// 필요한 변수는 선택적 그룹·멤버 초기값이다.
   /// 작동 원리는 초기값이 있으면 즉시 렌더하고 실제 진입은 그룹과 멤버 GET을 병렬 실행하는 것이다.
   @override
   void initState() {
     super.initState();
+    unawaited(_loadCurrentUser());
     if (widget.initialGroup != null) {
       _group = _coerceGroup(widget.initialGroup!);
       _members = widget.initialMembers ?? const [];
-      _sharedFlows = [
-        SharedFlowItem(
-          id: 'preview-flow-1',
-          groupId: widget.groupId,
-          senderId: '김학생',
-          kind: 'flow',
-          refId: 'preview-quest-1',
-          title: '두 점을 지나는 일차함수',
-          createdAt: DateTime(2026, 7, 15, 14, 32),
-        ),
-        SharedFlowItem(
-          id: 'preview-flow-2',
-          groupId: widget.groupId,
-          senderId: '이수학',
-          kind: 'flow',
-          refId: 'preview-quest-2',
-          title: '그래프의 평행이동',
-          createdAt: DateTime(2026, 7, 14, 19, 10),
-        ),
-        SharedFlowItem(
-          id: 'preview-flow-3',
-          groupId: widget.groupId,
-          senderId: '최도형',
-          kind: 'flow',
-          refId: 'preview-quest-3',
-          title: '두 직선의 교점',
-          createdAt: DateTime(2026, 7, 12, 17, 40),
-        ),
-      ];
-      _sharedExams = const [
-        GroupSharedExam(
-          id: 'preview-exam-1',
-          shareId: 'preview-share-1',
-          examId: 'preview-exam-1',
-          title: '일차함수 주간 테스트',
-          senderName: '김학생',
-          createdAt: '2026-07-15 14:32',
-        ),
-      ];
       _loading = false;
+      unawaited(_loadResources());
+      unawaited(_loadSchedules());
     } else {
       unawaited(_load());
     }
@@ -122,18 +90,18 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     try {
       final responses = await Future.wait<Object>([
         ApiClient.instance.listStudyGroups(),
-        ApiClient.instance.listGroupMembers(widget.groupId),
+        ApiClient.instance.listStudyGroupMembers(widget.groupId),
       ]);
       if (!mounted) return;
       final groups = responses[0] as List<StudyGroup>;
-      final membersResponse =
-          responses[1] as ApiResponse<List<AcademyGroupMember>>;
+      final members = responses[1] as List<StudyGroupMember>;
       setState(() {
         _group = groups.where((item) => item.id == widget.groupId).firstOrNull;
-        _members = membersResponse.data ?? const [];
+        _members = members;
         _loading = false;
       });
       unawaited(_loadResources());
+      unawaited(_loadSchedules());
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -141,6 +109,134 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         _loading = false;
       });
     }
+  }
+
+  /// 필요한 변수는 로그인 세션의 내 프로필이다.
+  /// 작동 원리는 현재 사용자 ID를 한 번만 가져와 그룹 생성자에게만 일정 추가
+  /// 버튼을 보이게 하며, 서버 권한 검증은 별도로 유지한다.
+  Future<void> _loadCurrentUser() async {
+    try {
+      final profile = await ApiClient.instance.getMyProfile();
+      if (mounted) setState(() => _currentUserId = profile.userId);
+    } catch (_) {
+      // 권한 버튼만 숨기고 그룹 조회는 계속 진행한다.
+    }
+  }
+
+  /// 필요한 변수는 그룹 ID다.
+  /// 작동 원리는 캐시 없는 일정 조회 결과만 반영해 이미 지난 일정이 화면에 남지
+  /// 않도록 하며, 만료 삭제는 서버가 일관되게 처리한다.
+  Future<void> _loadSchedules() async {
+    try {
+      final schedules = await ApiClient.instance.listStudyGroupSchedules(
+        widget.groupId,
+      );
+      if (!mounted) return;
+      setState(() => _schedules = schedules);
+    } catch (_) {
+      // 일정 조회 실패가 그룹 본문과 자료 조회를 막지 않도록 조용히 유지한다.
+    }
+  }
+
+  /// 필요한 변수는 입력한 제목, 날짜와 선택 시간이다.
+  /// 작동 원리는 그룹장에게만 입력 UI를 제공하되 실제 생성 권한은 서버가 다시
+  /// 검증하고, 성공 응답만 현재 일정 목록에 삽입한다.
+  Future<void> _openScheduleComposer() async {
+    final group = _group;
+    if (group == null || group.memberIds.isEmpty) return;
+    final titleController = TextEditingController();
+    var selectedDate = DateTime.now();
+    TimeOfDay? selectedTime;
+    final created = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 8,
+            bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                '그룹 일정 추가',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: '일정 제목'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    setSheetState(() => selectedDate = picked);
+                  }
+                },
+                child: Text(
+                  '${selectedDate.year}.${selectedDate.month}.${selectedDate.day}',
+                ),
+              ),
+              OutlinedButton(
+                onPressed: () async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: selectedTime ?? TimeOfDay.now(),
+                  );
+                  if (picked != null) {
+                    setSheetState(() => selectedTime = picked);
+                  }
+                },
+                child: Text(
+                  selectedTime == null
+                      ? '시간 선택 (선택)'
+                      : selectedTime!.format(context),
+                ),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  try {
+                    await ApiClient.instance.createStudyGroupSchedule(
+                      groupId: widget.groupId,
+                      title: titleController.text,
+                      scheduledDate:
+                          '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                      scheduledTime: selectedTime == null
+                          ? null
+                          : '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}',
+                    );
+                    if (context.mounted) {
+                      Navigator.of(context).pop(true);
+                    }
+                  } catch (error) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('일정을 추가하지 못했습니다: $error')),
+                      );
+                    }
+                  }
+                },
+                child: const Text('추가'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    titleController.dispose();
+    if (created == true) await _loadSchedules();
   }
 
   /// 필요한 변수는 그룹 ID와 현재 자료 탭이다.
@@ -209,13 +305,14 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         groupId: widget.groupId,
         groupName: _group?.name ?? '그룹',
         memberCount: _members.length,
+        currentUserId: _currentUserId,
         initialMessages: widget.initialChatMessages,
       ),
     );
   }
 
-  /// 필요한 변수는 현재 그룹 멤버 목록이다.
-  /// 작동 원리는 HTML 그룹 멤버 모달처럼 역할·접속 상태를 목록으로 표시한다.
+  /// 필요한 변수는 현재 그룹의 사용자 ID·닉네임 목록이다.
+  /// 작동 원리는 소셜 그룹 API가 반환한 실제 계정 ID와 닉네임을 그대로 목록에 표시해 예비 하드코딩 멤버를 제거하는 것이다.
   void _openMembers() {
     showModalBottomSheet<void>(
       context: context,
@@ -228,15 +325,15 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         children: [
           for (final member in _members)
             _GroupActionRow(
-              title: member.userId,
-              detail: member.role,
-              meta: member.status,
+              title: member.username,
+              detail: '사용자 ID · ${member.userId}',
+              meta: '멤버',
             ),
           if (_members.isEmpty)
             const _GroupActionRow(
-              title: '김학생 · 나',
-              detail: '멤버 · 온라인',
-              meta: 'B',
+              title: '표시할 멤버가 없습니다.',
+              detail: '그룹 멤버 정보를 불러오지 못했거나 아직 참여자가 없습니다.',
+              meta: '',
             ),
         ],
       ),
@@ -344,6 +441,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   @override
   Widget build(BuildContext context) {
     final group = _group;
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
@@ -369,66 +467,59 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                   : RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
                         children: [
-                          const Text(
-                            'GROUP SPACE',
-                            style: TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 1.7,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w900,
+                          StudentDensityPage(
+                            padding: EdgeInsets.fromLTRB(
+                              studentDensityHorizontalPadding(context),
+                              studentDensityVerticalPadding(context),
+                              studentDensityHorizontalPadding(context),
+                              48,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            group?.name ?? '그룹 스터디',
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _GroupDetailHeader(
+                                  mobile: mobile,
+                                  title: group?.name ?? '그룹 스터디',
+                                  memberCount: _members.length,
+                                  onBack: () =>
+                                      Navigator.of(context).maybePop(),
+                                  onMembers: _openMembers,
+                                  onChat: _openChat,
+                                ),
+                                SizedBox(height: mobile ? 14 : 18),
+                                _GroupHero(
+                                  group: group,
+                                  memberCount: _members.length,
+                                  schedules: _schedules,
+                                  canCreateSchedule:
+                                      group?.creatorId == _currentUserId &&
+                                      _currentUserId.isNotEmpty,
+                                  onCreateSchedule: _openScheduleComposer,
+                                  onMembers: _openMembers,
+                                ),
+                                const SizedBox(height: 12),
+                                _ResourceSwitch(
+                                  showExamPapers: _showExamPapers,
+                                  flowCount: _sharedFlows.length,
+                                  examCount: _sharedExams.length,
+                                  onChanged: (value) =>
+                                      setState(() => _showExamPapers = value),
+                                ),
+                                const SizedBox(height: 12),
+                                _SharedResourcesCard(
+                                  showExamPapers: _showExamPapers,
+                                  loading: _loadingResources,
+                                  flows: _sharedFlows,
+                                  exams: _sharedExams,
+                                  flowTags: _flowTags,
+                                  recentDays: _flowRecentDays,
+                                  onFilter: _openResourceFilter,
+                                  onShare: _openShareResource,
+                                  onDeleteFlow: _deleteFlow,
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '공지와 함께 만든 학습 자료를 확인하고, 채팅은 필요할 때 모달로 엽니다.',
-                            style: TextStyle(color: Colors.black45),
-                          ),
-                          const SizedBox(height: 16),
-                          OutlinedButton(
-                            onPressed: () => Navigator.of(context).maybePop(),
-                            child: const Text('그룹 목록'),
-                          ),
-                          const SizedBox(height: 8),
-                          FilledButton(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF202022),
-                            ),
-                            onPressed: _openChat,
-                            child: Text('채팅 열기 · ${_members.length}'),
-                          ),
-                          const SizedBox(height: 12),
-                          _GroupHero(
-                            group: group,
-                            memberCount: _members.length,
-                            onMembers: _openMembers,
-                          ),
-                          const SizedBox(height: 12),
-                          _ResourceSwitch(
-                            showExamPapers: _showExamPapers,
-                            flowCount: _sharedFlows.length,
-                            examCount: _sharedExams.length,
-                            onChanged: (value) =>
-                                setState(() => _showExamPapers = value),
-                          ),
-                          const SizedBox(height: 12),
-                          _SharedResourcesCard(
-                            showExamPapers: _showExamPapers,
-                            loading: _loadingResources,
-                            flows: _sharedFlows,
-                            exams: _sharedExams,
-                            onFilter: _openResourceFilter,
-                            onShare: _openShareResource,
-                            onDeleteFlow: _deleteFlow,
                           ),
                         ],
                       ),
@@ -441,107 +532,200 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   }
 }
 
+class _GroupDetailHeader extends StatelessWidget {
+  const _GroupDetailHeader({
+    required this.mobile,
+    required this.title,
+    required this.memberCount,
+    required this.onBack,
+    required this.onMembers,
+    required this.onChat,
+  });
+
+  final bool mobile;
+  final String title;
+  final int memberCount;
+  final VoidCallback onBack;
+  final VoidCallback onMembers;
+  final VoidCallback onChat;
+
+  /// 필요한 변수는 화면 형태, 그룹명·멤버 수와 세 가지 이동 동작이다.
+  /// 작동 원리는 모바일은 제목 아래 전폭 버튼을, PC는 제목 오른쪽의 압축 제어부를 배치해 화면 폭별 정보 우선순위를 분리한다.
+  @override
+  Widget build(BuildContext context) {
+    final copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const StudentDensityEyebrow('STUDY GROUP'),
+        const SizedBox(height: 7),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: mobile ? 30 : 42,
+            height: 1.08,
+            fontWeight: FontWeight.w900,
+            letterSpacing: mobile ? -1.2 : -2.1,
+          ),
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          '함께 공부하고, 풀이를 나누는 우리만의 학습 공간',
+          style: TextStyle(color: Colors.black45, fontSize: 13),
+        ),
+      ],
+    );
+    final actions = Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        StudentDensityButton(label: '그룹 목록', onPressed: onBack),
+        StudentDensityButton(label: '멤버 $memberCount명', onPressed: onMembers),
+        StudentDensityButton(label: '채팅 열기', primary: true, onPressed: onChat),
+      ],
+    );
+    if (mobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [copy, const SizedBox(height: 18), actions],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(child: copy),
+        const SizedBox(width: 24),
+        actions,
+      ],
+    );
+  }
+}
+
 class _GroupHero extends StatelessWidget {
   const _GroupHero({
     required this.group,
     required this.memberCount,
+    required this.schedules,
+    required this.canCreateSchedule,
+    required this.onCreateSchedule,
     required this.onMembers,
   });
   final StudyGroup? group;
   final int memberCount;
+  final List<StudyGroupSchedule> schedules;
+  final bool canCreateSchedule;
+  final VoidCallback onCreateSchedule;
   final VoidCallback onMembers;
 
-  /// 필요한 변수는 그룹 정보와 현재 멤버 수다.
-  /// 작동 원리는 공개·정원·과목 메타와 오늘 공지를 하나의 둥근 그룹 카드에 배치하는 것이다.
+  /// 필요한 변수는 그룹 메타, 서버 일정, 생성자 권한이다.
+  /// 작동 원리는 교사 계정이 만든 그룹은 흰 컨테이너로 구분하고, 만료 정리된
+  /// 일정만 표시한다. 일정 추가 동작은 그룹장에게만 제공한다.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0xFFE0E0E2)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: const Color(0xFF202022),
-                borderRadius: BorderRadius.circular(14),
+  Widget build(BuildContext context) {
+    final teacherGroup = group?.isTeacherGroup == true;
+    final foreground = teacherGroup ? Colors.black : Colors.white;
+    final muted = teacherGroup ? Colors.black54 : Colors.white70;
+    final schedule = schedules.isEmpty ? null : schedules.first;
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: teacherGroup ? Colors.white : const Color(0xFF202022),
+        borderRadius: BorderRadius.circular(24),
+        border: teacherGroup
+            ? Border.all(color: const Color(0xFFE0E0E3))
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .14),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(Icons.auto_awesome_rounded, color: foreground),
               ),
-              child: const Text(
-                '함',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        _MetaPill(
+                          label: group?.isPublic == true ? '공개 그룹' : '비공개 그룹',
+                          dark: true,
+                        ),
+                        _MetaPill(
+                          label: '$memberCount / ${group?.maxMembers ?? 20}명',
+                          dark: true,
+                        ),
+                        _MetaPill(
+                          label: group?.isTeacherGroup == true
+                              ? '교사 그룹'
+                              : '스터디 그룹',
+                          dark: !teacherGroup,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      group?.description ?? '',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: foreground,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      _MetaPill(
-                        label: group?.isPublic == true ? '공개 그룹' : '비공개 그룹',
-                      ),
-                      _MetaPill(
-                        label: '$memberCount / ${group?.maxMembers ?? 20}명',
-                      ),
-                      _MetaPill(
-                        label: group?.isTeacherGroup == true
-                            ? '교사 그룹'
-                            : '그룹장 이수학',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    group?.description ?? '함수와 도형을 함께 공부하는 중학교 스터디',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const Divider(height: 28, color: Color(0xFFE2E2E4)),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: onMembers,
-            icon: const Icon(Icons.group_outlined, size: 17),
-            label: const Text('멤버 보기'),
+            ],
           ),
-        ),
-        const Row(
-          children: [
-            Expanded(
-              child: Text(
-                '오늘 20시 일차함수 챌린지',
-                style: TextStyle(fontWeight: FontWeight.w900),
+          Divider(
+            height: 30,
+            color: teacherGroup
+                ? const Color(0xFFE0E0E3)
+                : const Color(0xFF3A3A3D),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  schedule == null
+                      ? '등록된 그룹 일정이 없습니다.'
+                      : '${schedule.scheduledDate}${schedule.scheduledTime == null ? '' : ' ${schedule.scheduledTime}'} ${schedule.title}',
+                  style: TextStyle(
+                    color: foreground,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
-            ),
-            Text(
-              '시험지는 19:50에 공유됩니다.',
-              style: TextStyle(fontSize: 9, color: Colors.black45),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+              if (canCreateSchedule)
+                TextButton(
+                  onPressed: onCreateSchedule,
+                  child: Text('일정 추가', style: TextStyle(color: foreground)),
+                ),
+              TextButton.icon(
+                onPressed: onMembers,
+                icon: const Icon(
+                  Icons.group_outlined,
+                  size: 17,
+                  color: Colors.grey,
+                ),
+                label: Text('멤버 보기', style: TextStyle(color: muted)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ResourceSwitch extends StatelessWidget {
@@ -560,23 +744,22 @@ class _ResourceSwitch extends StatelessWidget {
   /// 작동 원리는 그룹 문제풀이와 시험지를 두 칸 카드로 전환하고 활성 자료만 검게 표시하는 것이다.
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(5),
+    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
     decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFE0E0E2)),
+      color: const Color(0xFFE9E9EC),
+      borderRadius: BorderRadius.circular(15),
     ),
     child: Row(
       children: [
         _ResourceButton(
           label: '그룹 문제풀기',
-          subtitle: '공유 Flow $flowCount',
+          subtitle: '$flowCount개',
           selected: !showExamPapers,
           onTap: () => onChanged(false),
         ),
         _ResourceButton(
           label: '그룹 시험지',
-          subtitle: '공유 $examCount',
+          subtitle: '$examCount개',
           selected: showExamPapers,
           onTap: () => onChanged(true),
         ),
@@ -605,10 +788,10 @@ class _ResourceButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: selected ? const Color(0xFF202022) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,6 +824,8 @@ class _SharedResourcesCard extends StatelessWidget {
     required this.loading,
     required this.flows,
     required this.exams,
+    required this.flowTags,
+    required this.recentDays,
     required this.onFilter,
     required this.onShare,
     required this.onDeleteFlow,
@@ -649,43 +834,33 @@ class _SharedResourcesCard extends StatelessWidget {
   final bool loading;
   final List<SharedFlowItem> flows;
   final List<GroupSharedExam> exams;
+  final List<String> flowTags;
+  final int? recentDays;
   final VoidCallback onFilter;
   final VoidCallback onShare;
   final Future<void> Function(String shareId) onDeleteFlow;
 
-  /// 필요한 변수는 선택 공유 Flow와 현재 문맥이다.
-  /// 작동 원리는 서버 원문을 조회한 뒤 문제 제목·공유자·공유 ID를 읽기 전용 상세 모달로 표시하는 것이다.
+  /// 필요한 변수는 공유 Flow의 식별자와 제목이다.
+  /// 작동 원리는 공유 상세 페이지에서 문제 원문을 재현하고, 그 위에 공유된 풀이 과정을 함께 보여주는 것이다.
   Future<void> _openFlow(BuildContext context, SharedFlowItem flow) async {
-    try {
-      final detail = flow.id.isEmpty
-          ? flow
-          : await ApiClient.instance.getSharedFlow(flow.id);
-      if (!context.mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(detail.title ?? '공유 Flow'),
-          content: Text(
-            '공유자 ${detail.senderId.isEmpty ? '그룹 멤버' : detail.senderId}\n문제 ${detail.refId}\n공유 ID ${detail.id}',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('닫기'),
-            ),
-          ],
-        ),
-      );
-    } catch (error) {
-      if (!context.mounted) return;
+    if (flow.id.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Flow를 열지 못했습니다: $error')));
+      ).showSnackBar(const SnackBar(content: Text('아직 열 수 없는 미리보기 자료입니다.')));
+      return;
     }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SharedFlowViewPage(
+          shareId: flow.id,
+          title: flow.title ?? '공유된 문제 풀이',
+        ),
+      ),
+    );
   }
 
-  /// 필요한 변수는 현재 선택 자료 탭이다.
-  /// 작동 원리는 공유 풀이 또는 시험지의 대표 항목을 필터·공유 버튼과 함께 큰 콘텐츠 카드로 표시하는 것이다.
+  /// 필요한 변수는 현재 선택 자료 탭과 공유 목록이다.
+  /// 작동 원리는 문제 원문을 열 수 있다는 목적을 제목·행동 버튼에 명확히 드러내고, 공유 자료를 빠르게 훑을 수 있는 카드 목록으로 표시하는 것이다.
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(18),
@@ -711,13 +886,27 @@ class _SharedResourcesCard extends StatelessWidget {
           showExamPapers ? '그룹 시험지' : '그룹 문제풀이',
           style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
         ),
+        const SizedBox(height: 6),
+        Text(
+          showExamPapers
+              ? '그룹 멤버가 공유한 시험지를 확인하세요.'
+              : '문제 원문과 멤버의 풀이 과정을 함께 확인하세요.',
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
         const SizedBox(height: 28),
         Row(
           children: [
             Expanded(
               child: OutlinedButton(
                 onPressed: onFilter,
-                child: const Text('필터'),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.tune_rounded, size: 18),
+                    SizedBox(width: 6),
+                    Text('필터'),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -734,13 +923,12 @@ class _SharedResourcesCard extends StatelessWidget {
         ),
         if (!showExamPapers) ...[
           const SizedBox(height: 8),
-          const Wrap(
+          Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
-              _MetaPill(label: '#일차함수 ×'),
-              _MetaPill(label: '최근 7일 ×'),
-              _MetaPill(label: '전체 해제'),
+              for (final tag in flowTags) _MetaPill(label: '#$tag'),
+              if (recentDays != null) _MetaPill(label: '최근 $recentDays일'),
             ],
           ),
         ],
@@ -757,7 +945,7 @@ class _SharedResourcesCard extends StatelessWidget {
           for (final exam in exams)
             _SharedResourceTile(
               title: exam.title.isEmpty ? '그룹 시험지' : exam.title,
-              tags: '답안 제외 · ${exam.examId}',
+              tags: '시험지 · 답안 제외',
               sender: exam.senderName,
               createdAt: exam.createdAt,
               onOpen: () => showDialog<void>(
@@ -780,7 +968,9 @@ class _SharedResourcesCard extends StatelessWidget {
           for (final flow in flows)
             _SharedResourceTile(
               title: flow.title ?? '공유 Flow',
-              tags: '#일차함수   #기울기',
+              tags: flow.tags.isEmpty
+                  ? '문제와 풀이 과정 공유'
+                  : flow.tags.map((tag) => '#$tag').join('  '),
               sender: flow.senderId.isEmpty ? '그룹 멤버' : flow.senderId,
               createdAt: flow.createdAt?.toIso8601String() ?? '',
               onDelete: flow.id.isEmpty ? null : () => onDeleteFlow(flow.id),
@@ -809,39 +999,85 @@ class _SharedResourceTile extends StatelessWidget {
   final VoidCallback? onDelete;
 
   /// 필요한 변수는 공유 자료 제목·태그·작성자·시각과 열람·삭제 콜백이다.
-  /// 작동 원리는 HTML Flow 카드처럼 메타와 소유자 행동을 구분선 안에 한 항목으로 표시하는 것이다.
+  /// 작동 원리는 자료 성격과 핵심 행동을 분리해, 한 번의 탭으로 문제와 풀이를 열 수 있게 표시하는 것이다.
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
     margin: const EdgeInsets.only(bottom: 10),
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: const Color(0xFFFAFAFB),
-      border: Border.all(color: const Color(0xFFE0E0E2)),
+      color: const Color(0xFFF8F8FA),
+      border: Border.all(color: const Color(0xFFE4E4E8)),
+      borderRadius: BorderRadius.circular(16),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 8),
-        Text(tags, style: const TextStyle(fontSize: 10, color: Colors.black45)),
-        const Divider(height: 28),
         Row(
           children: [
-            Expanded(
-              child: Text(
-                '$sender · $createdAt',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10, color: Colors.black45),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAEAFF),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: const Icon(
+                Icons.auto_stories_outlined,
+                color: Color(0xFF4B53A8),
               ),
             ),
-            if (onDelete != null)
-              TextButton(onPressed: onDelete, child: const Text('공유 취소')),
-            TextButton(onPressed: onOpen, child: const Text('열람')),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Text(
+          tags,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF62626A)),
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            Text(
+              '$sender · $createdAt',
+              style: const TextStyle(fontSize: 11, color: Colors.black45),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onDelete != null)
+                  TextButton.icon(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.close_rounded, size: 16),
+                    label: const Text('공유 취소'),
+                  ),
+                FilledButton.icon(
+                  onPressed: onOpen,
+                  icon: const Icon(Icons.visibility_outlined, size: 17),
+                  label: const Text('문제·풀이 보기'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF202022),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ],
@@ -854,12 +1090,14 @@ class _GroupChatSheet extends StatefulWidget {
     required this.groupId,
     required this.groupName,
     required this.memberCount,
+    required this.currentUserId,
     this.initialMessages,
   });
 
   final String groupId;
   final String groupName;
   final int memberCount;
+  final String currentUserId;
   final List<StudyGroupMessage>? initialMessages;
 
   /// 필요한 변수는 그룹·멤버·선택적 초기 메시지다.
@@ -877,6 +1115,134 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
   bool _loadingPrevious = false;
   bool _sending = false;
   String? _error;
+
+  /// 필요한 변수는 서버의 ISO-8601 시간 문자열이다.
+  /// 작동 원리는 당일 메시지는 현지 시각만, 다른 날짜의 메시지는 월/일만 반환해 채팅 행을 짧게 표시하는 것이다.
+  String _formatMessageTime(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    final local = parsed.toLocal();
+    final now = DateTime.now();
+    if (local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day) {
+      final hour = local.hour.toString().padLeft(2, '0');
+      final minute = local.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+    return '${local.month}/${local.day}';
+  }
+
+  /// 필요한 변수는 메시지 시간 문자열이다.
+  /// 작동 원리는 메시지 목록의 날짜가 바뀌는 지점에만 날짜 구분선을 표시해 실제 메신저처럼 대화를 묶는 것이다.
+  String _messageDateKey(String raw) {
+    final parsed = DateTime.tryParse(raw)?.toLocal();
+    if (parsed == null) return raw;
+    return '${parsed.year}-${parsed.month}-${parsed.day}';
+  }
+
+  /// 필요한 변수는 표시할 닉네임이다.
+  /// 작동 원리는 서버 닉네임을 우선 사용하고, 구형 응답에는 안전한 대체 문구를 적용하는 것이다.
+  String _senderName(StudyGroupMessage message) {
+    if (message.senderName.trim().isNotEmpty) return message.senderName.trim();
+    if (message.userId.trim().isNotEmpty) return message.userId.trim();
+    return '그룹 멤버';
+  }
+
+  /// 필요한 변수는 닉네임이다.
+  /// 작동 원리는 긴 닉네임도 작은 원형 아바타 안에서 식별 가능하도록 첫 글자만 반환하는 것이다.
+  String _avatarLetter(String name) => name.characters.first.toUpperCase();
+
+  /// 필요한 변수는 메시지와 말풍선 방향·색상이다.
+  /// 작동 원리는 본인 메시지는 오른쪽, 다른 멤버 메시지는 왼쪽에 배치하고 닉네임·본문·시각을 하나의 말풍선으로 묶는 것이다.
+  Widget _buildMessageBubble(StudyGroupMessage message) {
+    final isMine =
+        widget.currentUserId.isNotEmpty &&
+        message.userId == widget.currentUserId;
+    final sender = _senderName(message);
+    final bubbleColor = isMine ? const Color(0xFF202022) : Colors.white;
+    final textColor = isMine ? Colors.white : const Color(0xFF202124);
+    final timeColor = isMine ? Colors.white60 : Colors.black38;
+    final bubble = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 315),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 12, 8),
+        decoration: BoxDecoration(
+          color: bubbleColor,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(isMine ? 18 : 5),
+            bottomRight: Radius.circular(isMine ? 5 : 18),
+          ),
+          boxShadow: isMine
+              ? null
+              : const [
+                  BoxShadow(
+                    color: Color(0x0D000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isMine)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  sender,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF62626A),
+                  ),
+                ),
+              ),
+            Text(
+              message.text,
+              style: TextStyle(color: textColor, fontSize: 14, height: 1.35),
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Text(
+                _formatMessageTime(message.createdAt),
+                style: TextStyle(fontSize: 10, color: timeColor),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (isMine) {
+      return Align(alignment: Alignment.centerRight, child: bubble);
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: Color(0xFFE4E5FF),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            _avatarLetter(sender),
+            style: const TextStyle(
+              color: Color(0xFF4B53A8),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        bubble,
+      ],
+    );
+  }
 
   /// 필요한 변수는 선택적 초기 메시지 또는 그룹 메시지 API다.
   /// 작동 원리는 시트가 열릴 때 최근 30개만 불러와 첫 렌더의 DB·네트워크 부하를 제한하는 것이다.
@@ -908,7 +1274,17 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
     } catch (_) {
       _error = '최근 대화를 불러오지 못했습니다.';
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        // 실제 메신저처럼 입장 직후 가장 최근 메시지 위치를 보여준다.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(
+              _scrollController.position.maxScrollExtent,
+            );
+          }
+        });
+      }
     }
   }
 
@@ -980,126 +1356,206 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
   }
 
   /// 필요한 변수는 로딩·메시지·입력·전송 상태다.
-  /// 작동 원리는 HTML 그룹 채팅의 상태 행, 최근 대화, 고정 작성기를 720px 이내 시트에 배치하는 것이다.
+  /// 작동 원리는 전체 높이의 메신저 화면 안에 헤더·대화 목록·고정 입력창을 분리해 실제 채팅방의 시각적 위계를 만드는 것이다.
   @override
-  Widget build(BuildContext context) => SafeArea(
-    child: Padding(
-      padding: EdgeInsets.fromLTRB(
-        18,
-        0,
-        18,
-        MediaQuery.viewInsetsOf(context).bottom + 18,
-      ),
-      child: SizedBox(
-        height: 620,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'GROUP CHAT',
-              style: TextStyle(
-                fontSize: 10,
-                letterSpacing: 1.7,
-                color: Colors.black54,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${widget.groupName} 채팅',
-              style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              '${widget.memberCount}명 · 최근 30개부터 표시 · 최대 500개',
-              style: const TextStyle(color: Colors.black45),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: _messages.isEmpty || _loadingPrevious
-                    ? null
-                    : _loadPrevious,
-                child: Text(_loadingPrevious ? '불러오는 중…' : '이전 메시지 더보기'),
-              ),
-            ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null && _messages.isEmpty
-                  ? Center(child: Text(_error!))
-                  : _messages.isEmpty
-                  ? const Center(child: Text('첫 메시지를 남겨 보세요.'))
-                  : ListView.separated(
-                      controller: _scrollController,
-                      itemCount: _messages.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final message = _messages[index];
-                        return Container(
-                          padding: const EdgeInsets.all(13),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F5F7),
-                            borderRadius: BorderRadius.circular(16),
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return SafeArea(
+      child: Container(
+        height: MediaQuery.sizeOf(context).height * .88,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF5F6FA),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 14, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF202022),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.groups_rounded,
+                        color: Colors.white,
+                        size: 23,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.groupName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(height: 3),
+                          Text(
+                            '${widget.memberCount}명 · 최근 30개부터 표시',
+                            style: const TextStyle(
+                              color: Colors.black45,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: '이전 메시지 불러오기',
+                      onPressed: _messages.isEmpty || _loadingPrevious
+                          ? null
+                          : _loadPrevious,
+                      icon: const Icon(Icons.history_rounded),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE5E6EB)),
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null && _messages.isEmpty
+                    ? Center(child: Text(_error!))
+                    : _messages.isEmpty
+                    ? const Center(child: Text('첫 메시지를 남겨 보세요.'))
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+                        itemCount: _messages.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 18),
+                                child: TextButton.icon(
+                                  onPressed: _loadingPrevious
+                                      ? null
+                                      : _loadPrevious,
+                                  icon: const Icon(
+                                    Icons.keyboard_arrow_up_rounded,
+                                  ),
+                                  label: Text(
+                                    _loadingPrevious ? '불러오는 중…' : '이전 메시지 더보기',
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          final message = _messages[index - 1];
+                          final previous = index > 1
+                              ? _messages[index - 2]
+                              : null;
+                          final showDate =
+                              previous == null ||
+                              _messageDateKey(previous.createdAt) !=
+                                  _messageDateKey(message.createdAt);
+                          return Column(
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      message.userId.isEmpty
-                                          ? '그룹 멤버'
-                                          : message.userId,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w900,
+                              if (showDate)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 14),
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE8E9EF),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 5,
+                                      ),
+                                      child: Text(
+                                        _formatMessageTime(message.createdAt),
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.black54,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                  Text(
-                                    message.createdAt,
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.black45,
-                                    ),
-                                  ),
-                                ],
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _buildMessageBubble(message),
                               ),
-                              const SizedBox(height: 5),
-                              Text(message.text),
                             ],
+                          );
+                        },
+                      ),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Color(0xFFE5E6EB))),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        minLines: 1,
+                        maxLines: 4,
+                        textInputAction: TextInputAction.newline,
+                        decoration: InputDecoration(
+                          hintText: '메시지를 입력하세요',
+                          filled: true,
+                          fillColor: const Color(0xFFF3F4F7),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
-                        );
-                      },
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(22),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
                     ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _controller,
-              minLines: 1,
-              maxLines: 3,
-              onSubmitted: (_) => _send(),
-              decoration: InputDecoration(
-                hintText: '그룹에 메시지를 입력하세요',
-                suffixIcon: IconButton(
-                  tooltip: '메시지 전송',
-                  onPressed: _sending ? null : _send,
-                  icon: _sending
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send_rounded),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      tooltip: '메시지 전송',
+                      onPressed: _sending ? null : _send,
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFF202022),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: const Color(0xFFBFC0C5),
+                      ),
+                      icon: _sending
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.arrow_upward_rounded),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _GroupShareSheet extends StatefulWidget {
@@ -1396,8 +1852,9 @@ class _GroupActionRow extends StatelessWidget {
 }
 
 class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.label});
+  const _MetaPill({required this.label, this.dark = false});
   final String label;
+  final bool dark;
 
   /// 필요한 변수는 그룹 메타 레이블이다.
   /// 작동 원리는 작은 회색 캡슐로 공개·정원·그룹장 정보를 압축한다.
@@ -1405,12 +1862,18 @@ class _MetaPill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
     decoration: BoxDecoration(
-      color: const Color(0xFFF5F5F6),
+      color: dark
+          ? Colors.white.withValues(alpha: .14)
+          : const Color(0xFFF5F5F6),
       borderRadius: BorderRadius.circular(99),
     ),
     child: Text(
       label,
-      style: const TextStyle(fontSize: 8, color: Colors.black54),
+      style: TextStyle(
+        fontSize: 8,
+        color: dark ? Colors.white70 : Colors.black54,
+        fontWeight: dark ? FontWeight.w700 : FontWeight.normal,
+      ),
     ),
   );
 }

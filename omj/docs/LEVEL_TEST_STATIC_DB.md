@@ -1,6 +1,8 @@
-# 레벨테스트 정적 DB 운영 계약
+# 레벨테스트 PostgreSQL 운영 계약
 
-레벨테스트 문제 원본은 `omj/data/level_test_static.db` 하나만 사용한다. 일반 문제은행 `quests.db`에는 세션·답안·최종 레이팅 같은 사용자 운영 데이터만 저장하며, 레벨테스트 문제와 시험지 슬롯은 저장하지 않는다.
+Placement 레벨테스트는 PostgreSQL의 `problem_payload`, `level_test_template`, `level_test_template_item`, `level_test_session`, `level_test_answer`를 사용한다. 런타임은 SQLite 파일이나 일반 `quests.db`를 조회하지 않는다.
+
+기존 `level_test_static.db`는 PostgreSQL 이관 스크립트의 일회성 입력 형식으로만 유지한다.
 
 ## 문항 구성
 
@@ -28,7 +30,6 @@ python omj/scripts/migrate_level_test_to_static_db.py
 
 ## 런타임 특성
 
-- SQLite `mode=ro`와 `PRAGMA query_only=ON`을 함께 사용한다.
-- 서버 시작 시 무결성·버전·JSON payload를 검증하고 메모리에 한 번 적재한다.
+- PostgreSQL 공유 연결 풀과 트랜잭션을 사용한다.
 - 학생 요청에서는 일반 문제은행이나 문제 생성 모델로 폴백하지 않는다.
-- 정적 DB가 없거나 손상되면 서버 준비 단계가 실패하며, 임의 문제를 대신 생성하지 않는다.
+- `008_level_test.sql`이 적용되지 않으면 readiness가 실패한다.

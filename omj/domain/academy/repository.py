@@ -1,19 +1,15 @@
-"""SQLite CRUD repository for the Academy domain.
+"""PostgreSQL CRUD repository for the Academy domain.
 
-Uses raw sqlite3 (no ORM) against the shared ``quests.db`` file,
-following the pattern established in ``omj/storage/storage.py``.
+기존 동기 CRUD 계약을 유지하면서 공유 PostgreSQL 연결 풀을 사용한다.
 
 All public functions call ``_ensure_academy_tables()`` idempotently
 before executing queries.
 """
 import json
-import sqlite3
+from infra.db import postgres_compat as db
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any
-
-from storage.storage import DB_PATH
-
 
 def _normalize_user_ids(user_ids: Optional[List[str]]) -> List[str]:
     if not user_ids:
@@ -35,7 +31,7 @@ def _normalize_user_ids(user_ids: Optional[List[str]]) -> List[str]:
 
 def _ensure_academy_tables() -> None:
     """Create academy-related tables if they do not yet exist."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
 
     cur.execute(
@@ -434,8 +430,8 @@ def _generate_id() -> str:
     return str(uuid.uuid4())
 
 
-def _row_to_dict(cur: sqlite3.Cursor, row: sqlite3.Row) -> Dict[str, Any]:
-    """Convert a sqlite3 Row to a plain dict using cursor description."""
+def _row_to_dict(cur: db.Cursor, row: db.Row) -> Dict[str, Any]:
+    """Convert a db Row to a plain dict using cursor description."""
     return {
         desc[0]: value for desc, value in zip(cur.description, row)
     }
@@ -455,7 +451,7 @@ def create_academy(
     _ensure_academy_tables()
     academy_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -479,8 +475,8 @@ def create_academy(
 
 def get_academy(academy_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM academy WHERE academy_id = ?", (academy_id,))
     row = cur.fetchone()
@@ -490,8 +486,8 @@ def get_academy(academy_id: str) -> Optional[Dict[str, Any]]:
 
 def list_academies() -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM academy ORDER BY created_at DESC")
     rows = cur.fetchall()
@@ -528,7 +524,7 @@ def update_academy(
     fields.append("updated_at = ?")
     values.append(now)
     values.append(academy_id)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         f"UPDATE academy SET {', '.join(fields)} WHERE academy_id = ?",
@@ -541,7 +537,7 @@ def update_academy(
 
 def delete_academy(academy_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM academy WHERE academy_id = ?", (academy_id,))
     conn.commit()
@@ -572,7 +568,7 @@ def create_group(
     _ensure_academy_tables()
     group_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -611,8 +607,8 @@ def create_group(
 
 def get_group(group_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM academy_group WHERE group_id = ?", (group_id,))
     row = cur.fetchone()
@@ -631,8 +627,8 @@ def list_groups(
     searchable: Optional[bool] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -723,7 +719,7 @@ def update_group(
     if not fields:
         return get_group(group_id)
     values.append(group_id)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         f"UPDATE academy_group SET {', '.join(fields)} WHERE group_id = ?",
@@ -736,7 +732,7 @@ def update_group(
 
 def delete_group(group_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM academy_group WHERE group_id = ?", (group_id,))
     conn.commit()
@@ -752,7 +748,7 @@ def delete_group(group_id: str) -> bool:
 def count_groups_for_user(user_id: str, group_type: Optional[str] = None) -> int:
     """Count active academy group memberships for a user."""
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     if group_type:
         cur.execute(
@@ -780,7 +776,7 @@ def count_groups_for_user(user_id: str, group_type: Optional[str] = None) -> int
 def count_groups_created_by_user(user_id: str, academy_id: str) -> int:
     """Count groups created by a user within an academy."""
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -797,7 +793,7 @@ def count_groups_created_by_user(user_id: str, academy_id: str) -> int:
 def get_group_member_count(group_id: str) -> int:
     """Count active members in a group."""
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         "SELECT COUNT(*) FROM academy_group_member WHERE group_id = ? AND status = 'active'",
@@ -822,7 +818,7 @@ def add_group_member(
     _ensure_academy_tables()
     member_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -845,8 +841,8 @@ def add_group_member(
 
 def get_group_member(member_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM academy_group_member WHERE member_id = ?", (member_id,))
     row = cur.fetchone()
@@ -860,8 +856,8 @@ def list_group_members(
     status: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -886,7 +882,7 @@ def list_group_members(
 
 def is_active_group_member(*, group_id: str, user_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -904,7 +900,7 @@ def is_active_group_member(*, group_id: str, user_id: str) -> bool:
 
 def is_active_academy_teacher(*, academy_id: str, user_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -926,7 +922,7 @@ def is_active_academy_teacher(*, academy_id: str, user_id: str) -> bool:
 
 def is_active_academy_member(*, academy_id: str, user_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -948,7 +944,7 @@ def is_active_academy_member(*, academy_id: str, user_id: str) -> bool:
 def remove_group_member(member_id: str, reason: Optional[str] = None) -> bool:
     _ensure_academy_tables()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     # Get member info before removing
     cur.execute(
@@ -981,7 +977,7 @@ def remove_group_member(member_id: str, reason: Optional[str] = None) -> bool:
 def update_member_status(member_id: str, status: str) -> Optional[Dict[str, Any]]:
     """Update member status (e.g., pending -> active)."""
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         "UPDATE academy_group_member SET status = ? WHERE member_id = ?",
@@ -1007,7 +1003,7 @@ def log_member_event(
     _ensure_academy_tables()
     event_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -1036,8 +1032,8 @@ def list_member_events(
     limit: int = 100,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -1076,7 +1072,7 @@ def record_attendance(
     _ensure_academy_tables()
     log_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -1101,8 +1097,8 @@ def record_attendance(
 
 def get_attendance_log(log_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM attendance_log WHERE log_id = ?", (log_id,))
     row = cur.fetchone()
@@ -1119,8 +1115,8 @@ def list_attendance(
     date_to: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -1159,8 +1155,8 @@ def list_attendance_for_teacher(
     date_to: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = [
         "m.user_id = ?",
@@ -1216,7 +1212,7 @@ def update_attendance(
     if not fields:
         return get_attendance_log(log_id)
     values.append(log_id)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         f"UPDATE attendance_log SET {', '.join(fields)} WHERE log_id = ?",
@@ -1229,7 +1225,7 @@ def update_attendance(
 
 def delete_attendance(log_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM attendance_log WHERE log_id = ?", (log_id,))
     conn.commit()
@@ -1246,7 +1242,7 @@ def get_attendance_stats(
     """Get attendance statistics for a user in a group over N days."""
     _ensure_academy_tables()
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
 
     # Total records in period
@@ -1329,7 +1325,7 @@ def create_tuition_payment(
     _ensure_academy_tables()
     payment_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -1355,8 +1351,8 @@ def create_tuition_payment(
 
 def get_tuition_payment(payment_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM tuition_payment WHERE payment_id = ?", (payment_id,))
     row = cur.fetchone()
@@ -1371,8 +1367,8 @@ def list_tuition_payments(
     month_label: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -1403,8 +1399,8 @@ def list_tuition_payments_for_teacher(
     month_label: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = [
         """
@@ -1469,7 +1465,7 @@ def update_tuition_payment(
     if not fields:
         return get_tuition_payment(payment_id)
     values.append(payment_id)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         f"UPDATE tuition_payment SET {', '.join(fields)} WHERE payment_id = ?",
@@ -1482,7 +1478,7 @@ def update_tuition_payment(
 
 def delete_tuition_payment(payment_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM tuition_payment WHERE payment_id = ?", (payment_id,))
     conn.commit()
@@ -1494,8 +1490,8 @@ def delete_tuition_payment(payment_id: str) -> bool:
 def get_tuition_summary(academy_id: str, month_label: str) -> Dict[str, Any]:
     """Get tuition summary for an academy in a given month."""
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute(
         """
@@ -1538,7 +1534,7 @@ def create_ledger_entry(
     _ensure_academy_tables()
     ledger_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -1563,8 +1559,8 @@ def create_ledger_entry(
 
 def get_ledger_entry(ledger_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM finance_ledger WHERE ledger_id = ?", (ledger_id,))
     row = cur.fetchone()
@@ -1580,8 +1576,8 @@ def list_ledger_entries(
     transaction_date_to: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -1616,8 +1612,8 @@ def list_ledger_entries_for_teacher(
     transaction_date_to: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = [
         """
@@ -1685,7 +1681,7 @@ def update_ledger_entry(
     if not fields:
         return get_ledger_entry(ledger_id)
     values.append(ledger_id)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         f"UPDATE finance_ledger SET {', '.join(fields)} WHERE ledger_id = ?",
@@ -1698,7 +1694,7 @@ def update_ledger_entry(
 
 def delete_ledger_entry(ledger_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM finance_ledger WHERE ledger_id = ?", (ledger_id,))
     conn.commit()
@@ -1714,7 +1710,7 @@ def get_ledger_summary(
 ) -> Dict[str, Any]:
     """Get ledger summary (income, expense, net) for an academy."""
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     conditions = ["academy_id = ?"]
     params: List[Any] = [academy_id]
@@ -1764,7 +1760,7 @@ def create_consult_note(
     _ensure_academy_tables()
     note_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -1791,8 +1787,8 @@ def create_consult_note(
 
 def get_consult_note(note_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM parent_consult_note WHERE note_id = ?", (note_id,))
     row = cur.fetchone()
@@ -1806,8 +1802,8 @@ def list_consult_notes(
     student_user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -1834,8 +1830,8 @@ def list_consult_notes_for_teacher(
     student_user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = [
         """
@@ -1901,7 +1897,7 @@ def update_consult_note(
     if not fields:
         return get_consult_note(note_id)
     values.append(note_id)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         f"UPDATE parent_consult_note SET {', '.join(fields)} WHERE note_id = ?",
@@ -1914,7 +1910,7 @@ def update_consult_note(
 
 def delete_consult_note(note_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM parent_consult_note WHERE note_id = ?", (note_id,))
     conn.commit()
@@ -1941,7 +1937,7 @@ def create_assignment(
     _ensure_academy_tables()
     assignment_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -1972,7 +1968,7 @@ def create_assignment(
 
 def _active_group_user_ids(group_id: str) -> List[str]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -2017,7 +2013,7 @@ def _auto_create_submissions(
         user_ids = list(active_users)
 
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     submissions: List[Dict[str, Any]] = []
     for user_id in user_ids:
@@ -2044,8 +2040,8 @@ def _auto_create_submissions(
 
 def get_assignment(assignment_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM group_assignment WHERE assignment_id = ?", (assignment_id,))
     row = cur.fetchone()
@@ -2058,8 +2054,8 @@ def list_assignments(
     kind: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -2086,8 +2082,8 @@ def list_assignments_for_teacher(
     kind: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = [
         "m.user_id = ?",
@@ -2118,8 +2114,8 @@ def list_assignments_for_teacher(
 
 def list_my_assignments(user_id: str, kind: Optional[str] = None) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     params: List[Any] = [user_id]
     kind_sql = ""
@@ -2170,7 +2166,7 @@ def update_assignment(
     if not fields:
         return get_assignment(assignment_id)
     values.append(assignment_id)
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         f"UPDATE group_assignment SET {', '.join(fields)} WHERE assignment_id = ?",
@@ -2184,7 +2180,7 @@ def update_assignment(
 
 def delete_assignment(assignment_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM group_submission WHERE assignment_id = ?", (assignment_id,))
     cur.execute("DELETE FROM group_assignment WHERE assignment_id = ?", (assignment_id,))
@@ -2226,7 +2222,7 @@ def replace_student_schedule_tasks(
                     "updated_at": now,
                 }
             )
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         "DELETE FROM student_schedule_task WHERE user_id = ? AND source = ?",
@@ -2263,8 +2259,8 @@ def list_student_schedule_tasks(
     limit: int = 100,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute(
         """
@@ -2294,7 +2290,7 @@ def create_submission(
     _ensure_academy_tables()
     submission_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -2317,8 +2313,8 @@ def create_submission(
 
 def get_submission(submission_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM group_submission WHERE submission_id = ?", (submission_id,))
     row = cur.fetchone()
@@ -2332,8 +2328,8 @@ def list_submissions(
     status: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -2364,8 +2360,8 @@ def list_submissions_for_teacher(
     status: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = [
         "m.user_id = ?",
@@ -2405,7 +2401,7 @@ def update_submission_status(
 ) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     if data_json is not None:
         cur.execute(
@@ -2438,7 +2434,7 @@ def create_submission_report(
     report_id = _generate_id()
     now = _now_iso()
     weak_tags_json = json.dumps(weak_tags, ensure_ascii=False) if weak_tags else None
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -2462,8 +2458,8 @@ def create_submission_report(
 
 def get_submission_report(report_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM submission_report WHERE report_id = ?", (report_id,))
     row = cur.fetchone()
@@ -2482,8 +2478,8 @@ def get_submission_report(report_id: str) -> Optional[Dict[str, Any]]:
 
 def get_report_by_submission(submission_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM submission_report WHERE submission_id = ?", (submission_id,))
     row = cur.fetchone()
@@ -2502,7 +2498,7 @@ def get_report_by_submission(submission_id: str) -> Optional[Dict[str, Any]]:
 
 def delete_submission_report(report_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM submission_report WHERE report_id = ?", (report_id,))
     conn.commit()
@@ -2526,7 +2522,7 @@ def create_timetable_preference(
     _ensure_academy_tables()
     preference_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -2553,8 +2549,8 @@ def list_timetable_preferences(
     user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -2576,8 +2572,8 @@ def list_timetable_preferences(
 
 def get_timetable_preference(preference_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM timetable_preference WHERE preference_id = ?", (preference_id,))
     row = cur.fetchone()
@@ -2587,7 +2583,7 @@ def get_timetable_preference(preference_id: str) -> Optional[Dict[str, Any]]:
 
 def delete_timetable_preference(preference_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM timetable_preference WHERE preference_id = ?", (preference_id,))
     conn.commit()
@@ -2609,7 +2605,7 @@ def create_timetable_plan(
     _ensure_academy_tables()
     plan_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -2632,8 +2628,8 @@ def create_timetable_plan(
 
 def get_timetable_plan(plan_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM timetable_plan WHERE plan_id = ?", (plan_id,))
     row = cur.fetchone()
@@ -2647,8 +2643,8 @@ def get_timetable_plan(plan_id: str) -> Optional[Dict[str, Any]]:
 
 def list_timetable_plans(group_id: str) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute(
         "SELECT * FROM timetable_plan WHERE group_id = ? ORDER BY generated_at DESC",
@@ -2667,7 +2663,7 @@ def list_timetable_plans(group_id: str) -> List[Dict[str, Any]]:
 def apply_timetable_plan(plan_id: str) -> Optional[Dict[str, Any]]:
     """Mark a timetable plan as applied and update the group's schedule."""
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     # Get plan
     cur.execute("SELECT group_id, plan_json FROM timetable_plan WHERE plan_id = ?", (plan_id,))
@@ -2698,7 +2694,7 @@ def apply_timetable_plan(plan_id: str) -> Optional[Dict[str, Any]]:
 
 def delete_timetable_plan(plan_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM timetable_plan WHERE plan_id = ?", (plan_id,))
     conn.commit()
@@ -2826,7 +2822,7 @@ def create_snapshot(
     _ensure_academy_tables()
     snapshot_id = _generate_id()
     now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -2853,8 +2849,8 @@ def create_snapshot(
 
 def get_snapshot(snapshot_id: str) -> Optional[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM student_overview_snapshot WHERE snapshot_id = ?", (snapshot_id,))
     row = cur.fetchone()
@@ -2870,8 +2866,8 @@ def list_snapshots(
     limit: int = 50,
 ) -> List[Dict[str, Any]]:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = db.connect()
+    conn.row_factory = db.Row
     cur = conn.cursor()
     conditions: List[str] = []
     params: List[Any] = []
@@ -2896,7 +2892,7 @@ def list_snapshots(
 
 def delete_snapshot(snapshot_id: str) -> bool:
     _ensure_academy_tables()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute("DELETE FROM student_overview_snapshot WHERE snapshot_id = ?", (snapshot_id,))
     conn.commit()

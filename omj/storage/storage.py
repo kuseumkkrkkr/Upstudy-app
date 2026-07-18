@@ -439,13 +439,20 @@ def store_data(storage_data: Dict[str, Any]) -> bool:
         conn.close()
         conn = None
 
-        # PostgreSQL 전환 기간에는 SQLite 저장 성공 후 동일 payload를 비동기로도 읽을 수 있게 이중 기록한다.
-        try:
-            from storage.postgres_problem_store import postgres_problem_store
+        # 필요한 변수는 PROBLEM_DUAL_WRITE_ENABLED와 검수된 문제 payload다.
+        # 작동 원리는 운영에서는 SQLite 커밋 뒤 PostgreSQL 비동기 이중 기록을 유지하고,
+        # 로컬 직접 생산은 이를 꺼서 외부 DB 장애가 프로세스 종료를 지연하지 않게 한다.
+        dual_write_enabled = os.getenv(
+            "PROBLEM_DUAL_WRITE_ENABLED",
+            "true",
+        ).strip().lower() in {"1", "true", "yes", "on"}
+        if dual_write_enabled:
+            try:
+                from storage.postgres_problem_store import postgres_problem_store
 
-            postgres_problem_store.enqueue_problem_upsert(storage_data)
-        except Exception:
-            pass
+                postgres_problem_store.enqueue_problem_upsert(storage_data)
+            except Exception:
+                pass
 
         if os.getenv("QUEST_STORE_LOGS", "").strip().lower() in {"1", "true", "yes"}:
             print(f"데이터베이스 저장 완료 (Quest ID: {quest_id})")
@@ -889,7 +896,7 @@ def claim_cached_quests(
     if not user_id or not tags or question_count < 1:
         return [], {"queued": 0, "cached": 0, "match_stage": 0}
 
-    # DATABASE_URL이 있으면 PostgreSQL+Redis를 우선 사용하고, 연결·마이그레이션 전에는 기존 SQLite로 안전하게 되돌린다.
+    # PostgreSQL·Redis가 준비되지 않으면 로컬 저장소로 우회하지 않고 요청을 실패시킨다.
     try:
         from storage.postgres_problem_store import postgres_problem_store
 
@@ -903,8 +910,11 @@ def claim_cached_quests(
         )
         if postgres_result is not None:
             return postgres_result
-    except Exception:
-        pass
+        raise RuntimeError("PostgreSQL problem cache backend is not enabled")
+    except Exception as exc:
+        raise RuntimeError(
+            "PostgreSQL problem cache is required and no fallback is available"
+        ) from exc
 
     # 서버 시작 시 스키마를 준비하므로 정상 요청에서는 DDL을 반복하지 않는다.
     if not _CACHE_SCHEMA_READY:

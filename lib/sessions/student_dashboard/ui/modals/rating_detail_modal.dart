@@ -188,7 +188,10 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
     );
   }
 
+  /// 필요한 변수는 전체 검색 문자열이다.
+  /// 작동 원리: 마지막 해시태그 뒤의 작성 중인 단어만 검색어로 사용하고, 공백으로 확정된 태그는 검색 조건에서 제외한다.
   String _currentQuery(String text) {
+    if (text.isNotEmpty && RegExp(r'\s$').hasMatch(text)) return '';
     final trimmed = text.trimRight();
     if (trimmed.isEmpty) return '';
     final lastHash = trimmed.lastIndexOf('#');
@@ -209,12 +212,88 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
     return result;
   }
 
+  /// 필요한 변수는 현재 검색어·전체 개념 태그·사용자 레이팅이다.
+  /// 작동 원리: 검색 전에는 실제 풀이 이력이 많은 개념을 먼저, 검색 중에는 완전 일치와 접두어 일치를 우선 노출한다.
   List<String> _filteredTags() {
     final query = _normalize(_currentQuery(_searchController.text));
     if (query.isEmpty) {
-      return _allTags;
+      final ratedTags = _tagRatings.values.toList()
+        ..sort((a, b) {
+          final attempts = b.attempts.compareTo(a.attempts);
+          return attempts != 0 ? attempts : b.rating.compareTo(a.rating);
+        });
+      final visible = <String>[];
+      final seen = <String>{};
+      for (final rating in ratedTags) {
+        final label = _labelForTag(rating.tag);
+        if (seen.add(_normalize(label))) visible.add(label);
+      }
+      for (final tag in _allTags) {
+        if (seen.add(_normalize(tag))) visible.add(tag);
+      }
+      return visible;
     }
-    return _allTags.where((tag) => _normalize(tag).contains(query)).toList();
+    final matches = _allTags
+        .where((tag) => _normalize(tag).contains(query))
+        .toList();
+    matches.sort((a, b) {
+      final aValue = _normalize(a);
+      final bValue = _normalize(b);
+      final aRank = aValue == query
+          ? 0
+          : aValue.startsWith(query)
+          ? 1
+          : 2;
+      final bRank = bValue == query
+          ? 0
+          : bValue.startsWith(query)
+          ? 1
+          : 2;
+      final rank = aRank.compareTo(bRank);
+      return rank != 0 ? rank : aValue.length.compareTo(bValue.length);
+    });
+    return matches;
+  }
+
+  /// 필요한 변수는 사용자가 누른 태그와 현재 입력 문자열이다.
+  /// 작동 원리: 작성 중인 마지막 검색어를 선택 태그로 교체하고 다음 검색을 바로 입력할 수 있게 공백을 붙인다.
+  void _selectSearchTag(String tag) {
+    final normalizedTag = tag.startsWith('#') ? tag : '#$tag';
+    final text = _searchController.text;
+    final lastHash = text.lastIndexOf('#');
+    final prefix = lastHash >= 0 ? text.substring(0, lastHash) : '';
+    final nextText =
+        '${prefix.trimRight()}${prefix.trim().isEmpty ? '' : ' '}$normalizedTag ';
+    _searchController.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: nextText.length),
+    );
+    setState(() {});
+    _searchFocusNode.requestFocus();
+  }
+
+  /// 필요한 변수는 제거할 태그와 현재 입력 문자열이다.
+  /// 작동 원리: 선택 칩과 일치하는 해시태그 토큰만 제거하고 나머지 검색 조건은 유지한다.
+  void _removeSearchTag(String tag) {
+    final target = _normalize(tag);
+    final remaining = _selectedTags(
+      _searchController.text,
+    ).where((item) => _normalize(item) != target);
+    final nextText = remaining.isEmpty ? '' : '${remaining.join(' ')} ';
+    _searchController.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: nextText.length),
+    );
+    setState(() {});
+    _searchFocusNode.requestFocus();
+  }
+
+  /// 필요한 변수는 검색 컨트롤러다.
+  /// 작동 원리: 입력과 선택 태그를 한 번에 비우고 추천 개념 목록으로 복귀한다.
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {});
+    _searchFocusNode.requestFocus();
   }
 
   String _labelForTag(String tag) {
@@ -389,6 +468,13 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
                                   tagRatings: _tagRatings,
                                   isLoading: _loadingRatings,
                                   onChanged: () => setState(() {}),
+                                  onTagTap: _selectSearchTag,
+                                  onTagRemoved: _removeSearchTag,
+                                  onClear: _clearSearch,
+                                  quickTags: conceptTagData
+                                      .take(6)
+                                      .map((tag) => tag.displayName)
+                                      .toList(),
                                 )
                               : _OverviewBody(
                                   scale: scale,
@@ -791,6 +877,10 @@ class _SearchBody extends StatelessWidget {
     required this.tagRatings,
     required this.isLoading,
     required this.onChanged,
+    required this.onTagTap,
+    required this.onTagRemoved,
+    required this.onClear,
+    required this.quickTags,
   });
 
   final double scale;
@@ -801,92 +891,476 @@ class _SearchBody extends StatelessWidget {
   final Map<String, TagRating> tagRatings;
   final bool isLoading;
   final VoidCallback onChanged;
+  final ValueChanged<String> onTagTap;
+  final ValueChanged<String> onTagRemoved;
+  final VoidCallback onClear;
+  final List<String> quickTags;
 
+  /// 필요한 변수는 검색 입력·선택 태그·검색 결과·레이팅 데이터다.
+  /// 작동 원리: 검색 도구와 결과 영역을 분리하고, 넓은 화면에서는 결과 카드를 2열로 배치해 탐색 밀도를 높인다.
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '해시태그를 입력하면 해당 개념의 점수를 조회합니다. #을 추가하면 새로운 해시태그로 인식됩니다.',
-          style: TextStyle(fontSize: 12 * scale, color: Colors.black54),
-        ),
-        SizedBox(height: 10 * scale),
-        TextField(
-          controller: controller,
-          focusNode: focusNode,
-          minLines: 1,
-          maxLines: 3,
-          onChanged: (_) => onChanged(),
-          decoration: InputDecoration(
-            hintText: '#함수 #도함수',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * scale),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useGrid = constraints.maxWidth >= 760;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _ConceptSearchPanel(
+              scale: scale,
+              controller: controller,
+              focusNode: focusNode,
+              selectedTags: selectedTags,
+              quickTags: quickTags,
+              onChanged: onChanged,
+              onTagTap: onTagTap,
+              onTagRemoved: onTagRemoved,
+              onClear: onClear,
             ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 14 * scale,
-              vertical: 12 * scale,
-            ),
-          ),
-        ),
-        if (selectedTags.isNotEmpty) ...[
-          SizedBox(height: 12 * scale),
-          Wrap(
-            spacing: 8 * scale,
-            runSpacing: 8 * scale,
-            children: selectedTags
-                .map(
-                  (tag) => Chip(
-                    label: Text(tag),
-                    backgroundColor: const Color(0xFFEFF5F0),
+            SizedBox(height: 14 * scale),
+            Row(
+              children: [
+                Text(
+                  controller.text.trim().isEmpty ? '추천 개념' : '검색 결과',
+                  style: TextStyle(
+                    color: const Color(0xFF111113),
+                    fontSize: 16 * scale,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -.4,
                   ),
-                )
-                .toList(),
-          ),
-        ],
-        SizedBox(height: 16 * scale),
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              borderRadius: BorderRadius.circular(12 * scale),
-            ),
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : suggestions.isEmpty
-                ? Center(
-                    child: Text(
-                      '검색 결과가 없습니다.',
-                      style: TextStyle(
-                        fontSize: 14 * scale,
-                        color: Colors.black54,
-                      ),
+                ),
+                SizedBox(width: 8 * scale),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 8 * scale,
+                    vertical: 4 * scale,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE9E9EC),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${suggestions.length}개',
+                    style: TextStyle(
+                      color: const Color(0xFF5F5F66),
+                      fontSize: 10 * scale,
+                      fontWeight: FontWeight.w800,
                     ),
-                  )
-                : ListView.separated(
-                    itemCount: suggestions.length,
-                    separatorBuilder: (_, __) => Divider(height: 1 * scale),
-                    itemBuilder: (context, index) {
-                      final tag = suggestions[index];
-                      final key = _normalize(tag);
-                      final rating = tagRatings[key]?.rating;
-                      return ListTile(
-                        title: Text(tag),
-                        trailing: rating == null
-                            ? const SizedBox(width: 40, height: 40)
-                            : _TagRatingProgressBar(
-                                rating: rating,
-                                size: 36 * scale,
-                                strokeWidth: 4 * scale,
-                              ),
-                      );
-                    },
                   ),
-          ),
-        ),
-      ],
+                ),
+                const Spacer(),
+                Text(
+                  'OVR · 최근 변화 · 풀이 수',
+                  style: TextStyle(
+                    color: const Color(0xFF85858C),
+                    fontSize: 10 * scale,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 9 * scale),
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : suggestions.isEmpty
+                  ? _EmptySearchResult(scale: scale)
+                  : GridView.builder(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: useGrid ? 2 : 1,
+                        mainAxisExtent: 108 * scale,
+                        crossAxisSpacing: 10 * scale,
+                        mainAxisSpacing: 10 * scale,
+                      ),
+                      itemCount: suggestions.length,
+                      itemBuilder: (context, index) {
+                        final tag = suggestions[index];
+                        return _ConceptResultCard(
+                          scale: scale,
+                          tag: tag,
+                          rating: tagRatings[_normalize(tag)],
+                          isSelected: selectedTags.any(
+                            (item) => _normalize(item) == _normalize(tag),
+                          ),
+                          onTap: () => onTagTap(tag),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
+}
+
+class _ConceptSearchPanel extends StatelessWidget {
+  const _ConceptSearchPanel({
+    required this.scale,
+    required this.controller,
+    required this.focusNode,
+    required this.selectedTags,
+    required this.quickTags,
+    required this.onChanged,
+    required this.onTagTap,
+    required this.onTagRemoved,
+    required this.onClear,
+  });
+
+  final double scale;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final List<String> selectedTags;
+  final List<String> quickTags;
+  final VoidCallback onChanged;
+  final ValueChanged<String> onTagTap;
+  final ValueChanged<String> onTagRemoved;
+  final VoidCallback onClear;
+
+  /// 필요한 변수는 입력 컨트롤러·빠른 탐색 태그·현재 선택 태그다.
+  /// 작동 원리: 한 카드 안에서 검색, 추천 진입, 선택 조건 해제를 연속적으로 처리한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.all(14 * scale),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18 * scale),
+      border: Border.all(color: const Color(0xFFD8D8DC)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          height: 48 * scale,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F4F6),
+            borderRadius: BorderRadius.circular(12 * scale),
+            border: Border.all(color: const Color(0xFFE0E0E4)),
+          ),
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            maxLines: 1,
+            textInputAction: TextInputAction.search,
+            onChanged: (_) => onChanged(),
+            style: TextStyle(fontSize: 15 * scale, fontWeight: FontWeight.w700),
+            decoration: InputDecoration(
+              hintText: '개념명 검색 · 예: 함수, 도함수, 다항식',
+              hintStyle: TextStyle(
+                color: const Color(0xFF99999F),
+                fontSize: 13 * scale,
+                fontWeight: FontWeight.w500,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                size: 21 * scale,
+                color: const Color(0xFF111113),
+              ),
+              suffixIcon: controller.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: '검색 초기화',
+                      onPressed: onClear,
+                      icon: Icon(Icons.close_rounded, size: 18 * scale),
+                    ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(vertical: 14 * scale),
+            ),
+          ),
+        ),
+        SizedBox(height: 10 * scale),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 7 * scale,
+          runSpacing: 7 * scale,
+          children: [
+            Text(
+              selectedTags.isEmpty ? '빠른 탐색' : '선택한 태그',
+              style: TextStyle(
+                color: const Color(0xFF77777F),
+                fontSize: 10 * scale,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            for (final tag in selectedTags.isEmpty ? quickTags : selectedTags)
+              _SearchTagChip(
+                scale: scale,
+                label: tag,
+                isSelected: selectedTags.isNotEmpty,
+                onTap: () =>
+                    selectedTags.isEmpty ? onTagTap(tag) : onTagRemoved(tag),
+              ),
+            if (selectedTags.isNotEmpty)
+              TextButton(
+                onPressed: onClear,
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF77777F),
+                  padding: EdgeInsets.symmetric(horizontal: 5 * scale),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  '전체 해제',
+                  style: TextStyle(
+                    fontSize: 10 * scale,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+class _SearchTagChip extends StatelessWidget {
+  const _SearchTagChip({
+    required this.scale,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final double scale;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 태그명·선택 상태·탭 동작이다.
+  /// 작동 원리: 추천 태그는 밝게, 선택 태그는 반전해 검색 조건의 상태를 즉시 구분한다.
+  @override
+  Widget build(BuildContext context) => Material(
+    color: isSelected ? const Color(0xFF111113) : const Color(0xFFF4F4F6),
+    borderRadius: BorderRadius.circular(30),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(30),
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: 10 * scale,
+          vertical: 6 * scale,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : const Color(0xFF333337),
+                fontSize: 10 * scale,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (isSelected) ...[
+              SizedBox(width: 4 * scale),
+              Icon(
+                Icons.close_rounded,
+                color: Colors.white70,
+                size: 12 * scale,
+              ),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _ConceptResultCard extends StatelessWidget {
+  const _ConceptResultCard({
+    required this.scale,
+    required this.tag,
+    required this.rating,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final double scale;
+  final String tag;
+  final TagRating? rating;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 개념 태그·레이팅·선택 상태다.
+  /// 작동 원리: 태그명, OVR, 최근 변화, 풀이 수를 한 카드에 정렬하고 카드 전체를 선택 영역으로 사용한다.
+  @override
+  Widget build(BuildContext context) {
+    final value = rating;
+    final ovr = value == null ? null : _tagOvrValue(value.rating);
+    final delta = value == null
+        ? null
+        : _visibleDelta(value.rating, value.delta);
+    final progress = ovr == null ? 0.0 : (ovr / 25).clamp(0.0, 1.0);
+    final deltaText = delta == null
+        ? '기록 없음'
+        : '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}';
+
+    return Material(
+      color: isSelected ? const Color(0xFF111113) : Colors.white,
+      borderRadius: BorderRadius.circular(16 * scale),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16 * scale),
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.all(14 * scale),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16 * scale),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF111113)
+                  : const Color(0xFFD8D8DC),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 28 * scale,
+                    height: 28 * scale,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: .12)
+                          : const Color(0xFFF0F0F2),
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Text(
+                      '#',
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF111113),
+                        fontSize: 13 * scale,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 9 * scale),
+                  Expanded(
+                    child: Text(
+                      tag.replaceFirst('#', ''),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF111113),
+                        fontSize: 13 * scale,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -.2,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    ovr?.toStringAsFixed(1) ?? '--',
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF111113),
+                      fontSize: 19 * scale,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(width: 4 * scale),
+                  Text(
+                    'OVR',
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white54
+                          : const Color(0xFF85858C),
+                      fontSize: 8 * scale,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  Text(
+                    deltaText,
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white70
+                          : const Color(0xFF55555B),
+                      fontSize: 10 * scale,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    ' 최근 변화',
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white38
+                          : const Color(0xFF929299),
+                      fontSize: 9 * scale,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    value == null ? '아직 풀이 기록 없음' : '${value.attempts}회 풀이',
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white54
+                          : const Color(0xFF77777F),
+                      fontSize: 9 * scale,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8 * scale),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 3 * scale,
+                  color: isSelected ? Colors.white : const Color(0xFF111113),
+                  backgroundColor: isSelected
+                      ? Colors.white.withValues(alpha: .18)
+                      : const Color(0xFFE9E9EC),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptySearchResult extends StatelessWidget {
+  const _EmptySearchResult({required this.scale});
+
+  final double scale;
+
+  /// 필요한 변수는 화면 배율이다.
+  /// 작동 원리: 결과가 없을 때 원인과 다음 입력 행동을 함께 안내해 검색 흐름이 끊기지 않게 한다.
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.search_off_rounded, size: 34 * scale, color: Colors.black26),
+        SizedBox(height: 10 * scale),
+        Text(
+          '일치하는 개념이 없습니다',
+          style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.w900),
+        ),
+        SizedBox(height: 5 * scale),
+        Text(
+          '# 없이 핵심 단어만 입력해 보세요.',
+          style: TextStyle(fontSize: 11 * scale, color: Colors.black45),
+        ),
+      ],
+    ),
+  );
 }
 
 class _TagDeltaCard extends StatelessWidget {

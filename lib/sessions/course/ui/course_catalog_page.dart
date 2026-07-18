@@ -27,6 +27,7 @@ typedef CourseFeedLoader =
 
 const double _ratingOvrFloor = 1200;
 const double _ratingOvrDivider = 128;
+const int _coursePageSize = 6;
 
 /// 필요한 변수는 서버 레이팅 또는 이미 환산된 OVR 값이다.
 /// 작동 원리: 원시 레이팅은 OVR로 환산하고 작은 값은 화면 표시값으로 그대로 사용한다.
@@ -35,6 +36,65 @@ String _formatVisibleOvr(num value) {
   if (raw.isNaN || raw <= 0) return '18.6';
   if (raw < _ratingOvrFloor) return raw.toStringAsFixed(1);
   return ((raw - _ratingOvrFloor) / _ratingOvrDivider).toStringAsFixed(1);
+}
+
+class _RecommendedCourse {
+  const _RecommendedCourse({required this.course, this.matchScore});
+
+  final Course course;
+  final int? matchScore;
+}
+
+/// 필요한 변수는 추천 기준 OVR과 노출할 코스 목록이다.
+/// 작동 원리: 코스 목표 OVR과 학생 기준값의 차이를 후보군 안에서 0~100 적합도로 환산하고, 가까운 코스를 먼저 배치한다.
+List<_RecommendedCourse> _buildRecommendedCourses(
+  List<Course> courses,
+  double? recommendOvr,
+) {
+  final candidates = courses
+      .where((course) => !course.isCompleted)
+      .toList(growable: false);
+  if (recommendOvr == null || recommendOvr <= 0) {
+    return candidates
+        .take(4)
+        .map((course) => _RecommendedCourse(course: course))
+        .toList(growable: false);
+  }
+
+  final distances = <String, double>{
+    for (final course in candidates)
+      if (course.targetOvr > 0)
+        course.id: (course.targetOvr - recommendOvr).abs(),
+  };
+  if (distances.isEmpty) {
+    return candidates
+        .take(4)
+        .map((course) => _RecommendedCourse(course: course))
+        .toList(growable: false);
+  }
+
+  final values = distances.values;
+  final nearest = values.reduce((left, right) => left < right ? left : right);
+  final farthest = values.reduce((left, right) => left > right ? left : right);
+  final range = farthest - nearest;
+  final recommended = candidates.map((course) {
+    final distance = distances[course.id];
+    final score = distance == null
+        ? null
+        : range == 0
+        ? 100
+        : ((farthest - distance) / range * 100).round();
+    return _RecommendedCourse(course: course, matchScore: score);
+  }).toList();
+  recommended.sort((left, right) {
+    final leftScore = left.matchScore;
+    final rightScore = right.matchScore;
+    if (leftScore == null && rightScore == null) return 0;
+    if (leftScore == null) return 1;
+    if (rightScore == null) return -1;
+    return rightScore.compareTo(leftScore);
+  });
+  return recommended.take(4).toList(growable: false);
 }
 
 class CourseCatalogPage extends StatefulWidget {
@@ -49,13 +109,25 @@ class CourseCatalogPage extends StatefulWidget {
 class _CourseCatalogPageState extends State<CourseCatalogPage> {
   final TextEditingController _searchController = TextEditingController();
   Future<List<Course>>? _future;
+  Future<List<GenerationTagGroup>>? _tagGroupsFuture;
   double? _lastRecommend;
   String _filter = '전체';
+  String? _subjectName;
+  String? _tag;
+  List<Course> _loadedCourses = const <Course>[];
+  int _publicCourseOffset = 0;
+  bool _hasMoreCourses = false;
+  bool _loadingMoreCourses = false;
 
   @override
   void initState() {
     super.initState();
     RatingStore.notifier.addListener(_handleRatingChange);
+    _tagGroupsFuture = widget.courseFeedLoader == null
+        ? CourseService.fetchGenerationTagGroups().catchError(
+            (_) => const <GenerationTagGroup>[],
+          )
+        : Future.value(const <GenerationTagGroup>[]);
     _load();
   }
 
@@ -87,6 +159,8 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     final keyword = _searchController.text.trim();
     final recommend = _currentRecommendOvr();
     _lastRecommend = recommend;
+    _publicCourseOffset = 0;
+    _hasMoreCourses = false;
     setState(() {
       _future = (widget.courseFeedLoader ?? _loadCourseFeed)(
         keyword: keyword,
@@ -104,6 +178,8 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     final publicCourses = await CourseService.fetchCourses(
       keyword: keyword.isEmpty ? null : keyword,
       recommendOvr: recommend,
+      limit: _coursePageSize,
+      offset: _publicCourseOffset,
     );
     final mine = await CourseService.fetchMyCourses().catchError(
       (_) => const <Course>[],
@@ -114,7 +190,44 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
       if (keyword.isNotEmpty && !_matchesKeyword(course, keyword)) continue;
       byId[course.id] = course;
     }
-    return byId.values.toList(growable: false);
+    final courses = byId.values.toList(growable: false);
+    _loadedCourses = courses;
+    _publicCourseOffset = publicCourses.length;
+    _hasMoreCourses = publicCourses.length == _coursePageSize;
+    return courses;
+  }
+
+  /// 필요한 변수는 현재 검색 조건·공개 코스 페이지 오프셋·이미 받은 목록이다.
+  /// 작동 원리: 서버에 다음 6개만 요청하고 ID 중복을 제거해 기존 카드 뒤에 추가한다.
+  Future<void> _loadMoreCourses() async {
+    if (_loadingMoreCourses ||
+        !_hasMoreCourses ||
+        widget.courseFeedLoader != null) {
+      return;
+    }
+    setState(() => _loadingMoreCourses = true);
+    try {
+      final nextCourses = await CourseService.fetchCourses(
+        keyword: _searchController.text.trim().isEmpty
+            ? null
+            : _searchController.text.trim(),
+        recommendOvr: _currentRecommendOvr(),
+        limit: _coursePageSize,
+        offset: _publicCourseOffset,
+      );
+      final byId = <String, Course>{
+        for (final course in _loadedCourses) course.id: course,
+        for (final course in nextCourses)
+          if (course.id.trim().isNotEmpty) course.id: course,
+      };
+      _publicCourseOffset += nextCourses.length;
+      _hasMoreCourses = nextCourses.length == _coursePageSize;
+      _loadedCourses = byId.values.toList(growable: false);
+      if (!mounted) return;
+      setState(() => _future = Future.value(_loadedCourses));
+    } finally {
+      if (mounted) setState(() => _loadingMoreCourses = false);
+    }
   }
 
   /// 필요한 변수는 코스 제목·설명·태그와 검색어다.
@@ -129,7 +242,19 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
 
   /// 필요한 변수는 현재 필터와 코스 상태다.
   /// 작동 원리: HTML 필터 문구를 등록·추천·완료 상태에 대응시켜 화면 목록만 즉시 좁힌다.
-  bool _matchesFilter(Course course) {
+  bool _matchesFilter(Course course, GenerationTagGroup? subject) {
+    final courseTags = course.focusTags
+        .map(_normalizedTag)
+        .where((tag) => tag.isNotEmpty)
+        .toSet();
+    if (_tag != null && !courseTags.contains(_normalizedTag(_tag!))) {
+      return false;
+    }
+    if (_tag == null &&
+        subject != null &&
+        !subject.tags.map(_normalizedTag).any(courseTags.contains)) {
+      return false;
+    }
     return switch (_filter) {
       '수강 중' => course.isEnrolled && !course.isCompleted,
       '추천' => !course.isCompleted,
@@ -137,6 +262,20 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
       '완료 코스' => course.isCompleted,
       _ => true,
     };
+  }
+
+  /// 필요한 변수는 태그 원문이다.
+  /// 작동 원리: # 유무와 공백 차이를 제거해 코스 태그와 fix_gen.py 태그를 같은 기준으로 비교한다.
+  String _normalizedTag(String tag) =>
+      tag.trim().replaceFirst(RegExp(r'^#'), '').toLowerCase();
+
+  /// 필요한 변수는 선택 과목·태그다.
+  /// 작동 원리: 과목을 바꾸면 하위 태그 선택을 초기화하고, 서버 요청 없이 이미 받은 코스 목록을 즉시 필터링한다.
+  void _selectTagFilter(String? subjectName, String? tag) {
+    setState(() {
+      _subjectName = subjectName;
+      _tag = tag;
+    });
   }
 
   /// 필요한 변수는 선택 코스의 등록·완료 상태다.
@@ -170,77 +309,106 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
               ),
             ),
             Expanded(
-              child: FutureBuilder<List<Course>>(
-                future: _future,
-                builder: (context, snapshot) {
-                  final allCourses = snapshot.data ?? const <Course>[];
-                  final courses = allCourses
-                      .where(_matchesFilter)
+              child: FutureBuilder<List<GenerationTagGroup>>(
+                future: _tagGroupsFuture,
+                builder: (context, tagSnapshot) {
+                  final tagGroups =
+                      tagSnapshot.data ?? const <GenerationTagGroup>[];
+                  final matchingSubjects = tagGroups
+                      .where((item) => item.name == _subjectName)
                       .toList(growable: false);
-                  final active = allCourses
-                      .where(
-                        (course) => course.isEnrolled && !course.isCompleted,
-                      )
-                      .take(2)
-                      .toList(growable: false);
-                  final recommended = allCourses
-                      .where((course) => !course.isCompleted)
-                      .take(4)
-                      .toList(growable: false);
-                  return SingleChildScrollView(
-                    key: ValueKey(
-                      mobile
-                          ? 'course-catalog-mobile'
-                          : 'course-catalog-desktop',
-                    ),
-                    child: StudentDensityPage(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _CoursePageHead(rating: rating),
-                          const SizedBox(height: 16),
-                          _CourseSearchDock(
-                            controller: _searchController,
-                            filter: _filter,
-                            onFilter: (value) =>
-                                setState(() => _filter = value),
-                            onSearch: _load,
-                          ),
-                          const SizedBox(height: 12),
-                          _ResumeCourses(
-                            courses: active,
-                            loading:
-                                snapshot.connectionState ==
-                                ConnectionState.waiting,
-                            onOpen: _openCourse,
-                            onReorder: () => showCourseReorderDialog(
-                              context,
-                              courses: active,
-                              onSaved: _load,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          if (recommended.isNotEmpty)
-                            _RecommendationSection(
-                              courses: recommended,
-                              onOpen: _openCourse,
-                              onCompare: () => showCourseCompareDialog(
-                                context,
-                                courses: recommended,
+                  final subject = matchingSubjects.isEmpty
+                      ? null
+                      : matchingSubjects.first;
+                  return FutureBuilder<List<Course>>(
+                    future: _future,
+                    builder: (context, snapshot) {
+                      final allCourses = snapshot.data ?? const <Course>[];
+                      final courses = allCourses
+                          .where((course) => _matchesFilter(course, subject))
+                          .toList(growable: false);
+                      // 공개 목록은 페이지당 6개만 추가 노출해 한 화면에 전체 재고를 렌더링하지 않는다.
+                      final libraryCourses = _publicCourseOffset == 0
+                          ? courses
+                          : courses
+                                .take(_publicCourseOffset)
+                                .toList(growable: false);
+                      final active = allCourses
+                          .where(
+                            (course) =>
+                                course.isEnrolled && !course.isCompleted,
+                          )
+                          .take(2)
+                          .toList(growable: false);
+                      final recommended = _buildRecommendedCourses(
+                        allCourses,
+                        _lastRecommend,
+                      );
+                      return SingleChildScrollView(
+                        key: ValueKey(
+                          mobile
+                              ? 'course-catalog-mobile'
+                              : 'course-catalog-desktop',
+                        ),
+                        child: StudentDensityPage(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _CoursePageHead(rating: rating),
+                              const SizedBox(height: 16),
+                              _CourseSearchDock(
+                                controller: _searchController,
+                                filter: _filter,
+                                tagGroups: tagGroups,
+                                subjectName: _subjectName,
+                                tag: _tag,
+                                onFilter: (value) =>
+                                    setState(() => _filter = value),
+                                onTagFilter: _selectTagFilter,
+                                onSearch: _load,
                               ),
-                            ),
-                          const SizedBox(height: 14),
-                          _CourseLibrary(
-                            courses: courses,
-                            loading:
-                                snapshot.connectionState ==
-                                ConnectionState.waiting,
-                            mobile: mobile,
-                            onOpen: _openCourse,
+                              const SizedBox(height: 12),
+                              _ResumeCourses(
+                                courses: active,
+                                loading:
+                                    snapshot.connectionState ==
+                                    ConnectionState.waiting,
+                                onOpen: _openCourse,
+                                onReorder: () => showCourseReorderDialog(
+                                  context,
+                                  courses: active,
+                                  onSaved: _load,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              if (recommended.isNotEmpty)
+                                _RecommendationSection(
+                                  courses: recommended,
+                                  onOpen: _openCourse,
+                                  onCompare: () => showCourseCompareDialog(
+                                    context,
+                                    courses: recommended
+                                        .map((item) => item.course)
+                                        .toList(growable: false),
+                                  ),
+                                ),
+                              const SizedBox(height: 14),
+                              _CourseLibrary(
+                                courses: libraryCourses,
+                                loading:
+                                    snapshot.connectionState ==
+                                    ConnectionState.waiting,
+                                mobile: mobile,
+                                onOpen: _openCourse,
+                                hasMore: _hasMoreCourses,
+                                loadingMore: _loadingMoreCourses,
+                                onLoadMore: _loadMoreCourses,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -359,96 +527,144 @@ class _CourseSearchDock extends StatelessWidget {
   const _CourseSearchDock({
     required this.controller,
     required this.filter,
+    required this.tagGroups,
+    required this.subjectName,
+    required this.tag,
     required this.onFilter,
+    required this.onTagFilter,
     required this.onSearch,
   });
 
-  static const filters = ['전체', '수강 중', '추천', '배정됨', '완료 코스', '#중2', '#함수'];
+  static const filters = ['전체', '수강 중', '추천', '배정됨', '완료 코스'];
 
   final TextEditingController controller;
   final String filter;
+  final List<GenerationTagGroup> tagGroups;
+  final String? subjectName;
+  final String? tag;
   final ValueChanged<String> onFilter;
+  final void Function(String? subjectName, String? tag) onTagFilter;
   final VoidCallback onSearch;
 
-  /// 필요한 변수는 검색어·선택 필터·검색 콜백이다.
-  /// 작동 원리: HTML처럼 검색 필드와 가로 스크롤 필터를 하나의 흰 도크 안에 배치한다.
+  /// 필요한 변수는 검색어·상태 필터·fix_gen.py 과목별 태그 목록이다.
+  /// 작동 원리: 외부 표면 하나만 사용하고 과목을 먼저 고른 뒤 해당 태그만 노출해 검색 조건을 명확히 한다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     return StudentDensitySurface(
       radius: 20,
-      padding: EdgeInsets.all(mobile ? 8 : 10),
+      padding: EdgeInsets.all(mobile ? 12 : 14),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(14, 5, 5, 5),
-            decoration: BoxDecoration(
-              color: StudentDensityTokens.surfaceMuted,
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: StudentDensityTokens.line),
-            ),
-            child: mobile
-                ? Column(
-                    children: [
-                      _SearchInput(controller: controller, onSearch: onSearch),
-                      const SizedBox(height: 6),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: onSearch,
-                          child: const Text('검색'),
-                        ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: _SearchInput(
-                          controller: controller,
-                          onSearch: onSearch,
-                        ),
-                      ),
-                      FilledButton(
+          mobile
+              ? Column(
+                  children: [
+                    _SearchInput(controller: controller, onSearch: onSearch),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
                         onPressed: onSearch,
                         child: const Text('검색'),
                       ),
-                    ],
-                  ),
-          ),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: _SearchInput(
+                        controller: controller,
+                        onSearch: onSearch,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(onPressed: onSearch, child: const Text('검색')),
+                  ],
+                ),
           const SizedBox(height: 8),
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              // 모바일도 모든 조건을 가로 스크롤로 제공해 완료 코스 탐색이 숨지 않게 한다.
-              itemCount: filters.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 5),
-              itemBuilder: (context, index) {
-                final label = filters[index];
-                final selected = label == filter;
-                return ChoiceChip(
-                  label: Text(label),
-                  selected: selected,
-                  onSelected: (_) => onFilter(label),
-                  showCheckmark: false,
-                  side: BorderSide.none,
-                  backgroundColor: Colors.transparent,
-                  selectedColor: StudentDensityTokens.dark,
-                  labelStyle: TextStyle(
-                    color: selected ? Colors.white : StudentDensityTokens.muted,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
+          Wrap(
+            spacing: 5,
+            runSpacing: 5,
+            children: [
+              for (final label in filters)
+                _FilterChip(
+                  label: label,
+                  selected: label == filter,
+                  onSelected: () => onFilter(label),
+                ),
+              if (tagGroups.isNotEmpty) ...[
+                _FilterChip(
+                  label: '전체 과목',
+                  selected: subjectName == null,
+                  onSelected: () => onTagFilter(null, null),
+                ),
+                for (final group in tagGroups)
+                  _FilterChip(
+                    label: group.label,
+                    selected: group.name == subjectName,
+                    onSelected: () => onTagFilter(group.name, null),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 7),
-                );
-              },
-            ),
+              ],
+            ],
           ),
+          if (tagGroups.isNotEmpty) ...[
+            if (subjectName != null) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 5,
+                runSpacing: 5,
+                children: [
+                  for (final group in tagGroups.where(
+                    (item) => item.name == subjectName,
+                  ))
+                    for (final item in group.tags)
+                      _FilterChip(
+                        label: '#$item',
+                        selected: item == tag,
+                        onSelected: () =>
+                            onTagFilter(group.name, item == tag ? null : item),
+                      ),
+                ],
+              ),
+            ],
+          ],
         ],
       ),
     );
   }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  /// 필요한 변수는 라벨·선택 여부·선택 콜백이다.
+  /// 작동 원리: 상태와 과목·태그 필터가 같은 밀도와 색상 규칙을 공유하도록 공통 칩으로 렌더링한다.
+  @override
+  Widget build(BuildContext context) => ChoiceChip(
+    label: Text(label),
+    selected: selected,
+    onSelected: (_) => onSelected(),
+    showCheckmark: false,
+    side: BorderSide.none,
+    backgroundColor: StudentDensityTokens.surfaceMuted,
+    selectedColor: StudentDensityTokens.dark,
+    labelStyle: TextStyle(
+      color: selected ? Colors.white : StudentDensityTokens.muted,
+      fontSize: 10,
+      fontWeight: FontWeight.w800,
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 7),
+  );
 }
 
 class _SearchInput extends StatelessWidget {
@@ -701,9 +917,13 @@ class _CourseRowCopy extends StatelessWidget {
           course.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.1,
+            fontWeight: FontWeight.w900,
+          ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 3),
         Text(
           meta,
           maxLines: 1,
@@ -711,6 +931,7 @@ class _CourseRowCopy extends StatelessWidget {
           style: const TextStyle(
             color: StudentDensityTokens.muted,
             fontSize: 9,
+            height: 1.1,
           ),
         ),
       ],
@@ -760,12 +981,12 @@ class _RecommendationSection extends StatelessWidget {
     required this.onCompare,
   });
 
-  final List<Course> courses;
+  final List<_RecommendedCourse> courses;
   final ValueChanged<Course> onOpen;
   final VoidCallback onCompare;
 
-  /// 필요한 변수는 추천 코스 목록과 이동 콜백이다.
-  /// 작동 원리: 첫 추천은 큰 91점 카드, 나머지는 우측 대안 목록으로 배치하고 모바일에서는 세로로 쌓는다.
+  /// 필요한 변수는 실제 추천 코스 목록과 이동 콜백이다.
+  /// 작동 원리: 첫 추천은 큰 적합도 카드, 나머지는 우측 대안 목록으로 배치하고 모바일에서는 세로로 쌓는다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
@@ -773,28 +994,30 @@ class _RecommendationSection extends StatelessWidget {
     final main = StudentDensitySurface(
       padding: EdgeInsets.zero,
       child: InkWell(
-        onTap: () => onOpen(primary),
+        onTap: () => onOpen(primary.course),
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: mobile ? 330 : 260),
           child: Padding(
             padding: EdgeInsets.all(mobile ? 28 : 32),
             child: mobile
                 ? _RecommendationCopy(
-                    course: primary,
-                    onOpen: () => onOpen(primary),
+                    course: primary.course,
+                    matchScore: primary.matchScore,
+                    onOpen: () => onOpen(primary.course),
                     onCompare: onCompare,
                   )
                 : Row(
                     children: [
                       Expanded(
                         child: _RecommendationCopy(
-                          course: primary,
-                          onOpen: () => onOpen(primary),
+                          course: primary.course,
+                          matchScore: primary.matchScore,
+                          onOpen: () => onOpen(primary.course),
                           onCompare: onCompare,
                         ),
                       ),
                       const SizedBox(width: 24),
-                      const _RecommendationScore(),
+                      _RecommendationScore(score: primary.matchScore),
                     ],
                   ),
           ),
@@ -825,9 +1048,9 @@ class _RecommendationSection extends StatelessWidget {
           const SizedBox(height: 12),
           for (var index = 1; index < courses.length; index++)
             _AlternativeRow(
-              course: courses[index],
-              score: 91 - index * 7,
-              onTap: () => onOpen(courses[index]),
+              course: courses[index].course,
+              score: courses[index].matchScore,
+              onTap: () => onOpen(courses[index].course),
             ),
         ],
       ),
@@ -849,23 +1072,27 @@ class _RecommendationSection extends StatelessWidget {
 class _RecommendationCopy extends StatelessWidget {
   const _RecommendationCopy({
     required this.course,
+    required this.matchScore,
     required this.onOpen,
     required this.onCompare,
   });
 
   final Course course;
+  final int? matchScore;
   final VoidCallback onOpen;
   final VoidCallback onCompare;
 
-  /// 필요한 변수는 첫 추천 코스다.
-  /// 작동 원리: 시안의 큰 추천 제목과 설명·메타데이터·행동을 구성한다.
+  /// 필요한 변수는 첫 추천 코스와 OVR 기반 적합도다.
+  /// 작동 원리: 실제 코스 정보와 계산된 적합도를 큰 추천 제목·설명·메타데이터·행동으로 구성한다.
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const StudentDensityEyebrow('BEST MATCH · 91%'),
+        StudentDensityEyebrow(
+          matchScore == null ? 'BEST MATCH' : 'BEST MATCH · $matchScore%',
+        ),
         const SizedBox(height: 30),
         Text(
           '다음 코스로\n${course.title}은 어때요?',
@@ -927,10 +1154,12 @@ class _RecommendationCopy extends StatelessWidget {
 }
 
 class _RecommendationScore extends StatelessWidget {
-  const _RecommendationScore();
+  const _RecommendationScore({required this.score});
 
-  /// 필요한 변수는 고정 추천 점수 91이다.
-  /// 작동 원리: 검은 직사각 표면 안에 동심원과 큰 점수를 겹쳐 추천 시각을 만든다.
+  final int? score;
+
+  /// 필요한 변수는 목표 OVR 차이로 계산한 추천 적합도다.
+  /// 작동 원리: 적합도가 있을 때만 검은 직사각 표면 안에 동심원과 큰 점수를 겹쳐 표시한다.
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -949,9 +1178,9 @@ class _RecommendationScore extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white24),
         ),
-        child: const Text(
-          '91',
-          style: TextStyle(
+        child: Text(
+          score?.toString() ?? '—',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 66,
             fontWeight: FontWeight.w900,
@@ -971,7 +1200,7 @@ class _AlternativeRow extends StatelessWidget {
   });
 
   final Course course;
-  final int score;
+  final int? score;
   final VoidCallback onTap;
 
   /// 필요한 변수는 대안 코스·점수·진입 콜백이다.
@@ -996,7 +1225,7 @@ class _AlternativeRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Text(
-                '$score',
+                score?.toString() ?? '—',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -1019,12 +1248,18 @@ class _CourseLibrary extends StatelessWidget {
     required this.loading,
     required this.mobile,
     required this.onOpen,
+    required this.hasMore,
+    required this.loadingMore,
+    required this.onLoadMore,
   });
 
   final List<Course> courses;
   final bool loading;
   final bool mobile;
   final ValueChanged<Course> onOpen;
+  final bool hasMore;
+  final bool loadingMore;
+  final Future<void> Function() onLoadMore;
 
   /// 필요한 변수는 필터된 전체 코스·로딩 상태·화면 폭이다.
   /// 작동 원리: PC 3열, 모바일 1열 카드 그리드로 공개·배정·완료 코스를 표시한다.
@@ -1110,6 +1345,15 @@ class _CourseLibrary extends StatelessWidget {
               );
             },
           ),
+        if (hasMore) ...[
+          const SizedBox(height: 20),
+          Center(
+            child: OutlinedButton(
+              onPressed: loadingMore ? null : onLoadMore,
+              child: Text(loadingMore ? '불러오는 중...' : '코스 더보기'),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1190,7 +1434,7 @@ class CourseCard extends StatelessWidget {
         : course.isEnrolled
         ? '수강 중'
         : '공개';
-    final score = course.targetOvr > 0 ? '${course.targetOvr}' : '—';
+    final score = course.targetOvr > 0 ? '${course.targetOvr}' : 'OVR 미설정';
     if (joinedMobileList) {
       return Material(
         color: StudentDensityTokens.surface,

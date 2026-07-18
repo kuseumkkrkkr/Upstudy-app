@@ -8,6 +8,9 @@ from typing import Any
 
 
 QUEUE_TYPES = {"duel_exam", "duel_ox", "team_exam", "team_ox"}
+# 공개 화면은 문제풀이 대결만 노출하고, 2v2는 준비 완료 전까지 서버도 참가를 막는다.
+PUBLIC_QUEUE_TYPES = ("duel_exam", "team_exam")
+JOINABLE_QUEUE_TYPES = {"duel_exam"}
 
 
 def utc_now() -> datetime:
@@ -67,8 +70,20 @@ class ArenaMatch:
     duration_seconds: int = 1200
     attempts: dict[tuple[int, str], int] = field(default_factory=dict)
     solved: dict[tuple[int, str], tuple[str, float]] = field(default_factory=dict)
+    answers: dict[tuple[int, str], dict[str, Any]] = field(default_factory=dict)
     xp_applied: set[tuple[str, str, str]] = field(default_factory=set)
     finished: bool = False
+    practice: bool = False
+    bot_fallback: bool = False
+    bot_user_id: str | None = None
+    bot_tier: str | None = None
+    bot_plan: dict[str, tuple[float, bool]] = field(default_factory=dict)
+    bot_events: list[dict[str, Any]] = field(default_factory=list)
+    connected_users: set[str] = field(default_factory=set)
+    last_seen_at: dict[str, float] = field(default_factory=dict)
+    submission_events: dict[str, list[tuple[float, str]]] = field(default_factory=dict)
+    forfeit_winner_team: int | None = None
+    finish_reason: str | None = None
 
     def team_members(self, team: int) -> list[str]:
         """필요 변수: 팀 번호. 해당 팀 사용자 ID를 반환한다."""

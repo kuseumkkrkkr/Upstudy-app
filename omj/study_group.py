@@ -12,6 +12,7 @@ from storage.study_group_storage import (
     add_group_exam,
     append_group_message,
     create_study_group,
+    create_group_schedule,
     delete_group_notice_by_title,
     get_group,
     get_group_by_invite_code,
@@ -22,6 +23,7 @@ from storage.study_group_storage import (
     list_group_notices,
     list_group_exams,
     list_group_messages,
+    list_active_group_schedules,
     list_groups_for_user,
     list_system_notices_for_user,
     list_shared_group_exams,
@@ -111,10 +113,30 @@ class StudyGroupMessageRequest(BaseModel):
     text: str = Field(min_length=1)
 
 
+class StudyGroupScheduleCreateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    scheduled_date: str = Field(min_length=10, max_length=10)
+    scheduled_time: Optional[str] = Field(default=None, max_length=5)
+
+
+class StudyGroupScheduleResponse(BaseModel):
+    schedule_id: str
+    group_id: str
+    title: str
+    scheduled_date: str
+    scheduled_time: Optional[str] = None
+    created_at: str
+
+
+class StudyGroupScheduleListResponse(BaseModel):
+    schedules: List[StudyGroupScheduleResponse]
+
+
 class StudyGroupMessageResponse(BaseModel):
     message_id: str
     group_id: str
     user_id: str
+    sender_name: str = ""
     text: str
     message_type: str = "text"
     payload: Optional[dict] = None
@@ -286,6 +308,19 @@ def _to_group_response(group: dict) -> StudyGroupResponse:
         creator_id=group["creator_id"],
         member_ids=group.get("member_ids", []),
     )
+
+
+def _assert_group_owner(user_id: str, group_id: str) -> None:
+    """필요 변수: 로그인 사용자 ID와 그룹 ID다.
+
+    작동 원리: 멤버 역할이 아닌 생성자 ID를 그룹 원장과 직접 비교해, 그룹장만
+    일정을 추가할 수 있게 한다. 관리자 계정도 임의 그룹의 일정을 만들 수 없다.
+    """
+    group = get_group(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="group not found")
+    if str(group.get("creator_id") or "") != user_id:
+        raise HTTPException(status_code=403, detail="Only the group owner can create schedules")
 
 
 @study_group_router.post("", response_model=StudyGroupResponse, status_code=201)
@@ -751,6 +786,56 @@ def delete_group_notice_handler(
 
 
 @study_group_router.get(
+    "/{group_id}/schedules",
+    response_model=StudyGroupScheduleListResponse,
+)
+def list_group_schedules_handler(
+    group_id: str,
+    user_id: str = Depends(_get_user_id),
+) -> StudyGroupScheduleListResponse:
+    """필요 변수: 그룹 ID와 로그인 사용자 ID다.
+
+    작동 원리: 멤버 여부를 확인한 후 저장소의 만료 정리를 거친 당일·미래 일정만
+    반환한다. 응답에는 과거 일정이 절대 포함되지 않는다.
+    """
+    _assert_group_member(user_id, group_id)
+    return StudyGroupScheduleListResponse(
+        schedules=[
+            StudyGroupScheduleResponse(**item)
+            for item in list_active_group_schedules(group_id)
+        ]
+    )
+
+
+@study_group_router.post(
+    "/{group_id}/schedules",
+    response_model=StudyGroupScheduleResponse,
+    status_code=201,
+)
+def create_group_schedule_handler(
+    group_id: str,
+    payload: StudyGroupScheduleCreateRequest,
+    user_id: str = Depends(_get_user_id),
+) -> StudyGroupScheduleResponse:
+    """필요 변수: 그룹 ID, 일정 입력값과 로그인 사용자 ID다.
+
+    작동 원리: 그룹 생성자만 통과시키고 날짜 검증·만료 정책은 저장소에 위임한다.
+    클라이언트의 버튼 노출과 무관하게 서버가 최종 권한을 보장한다.
+    """
+    _assert_group_owner(user_id, group_id)
+    try:
+        item = create_group_schedule(
+            group_id=group_id,
+            title=payload.title,
+            scheduled_date=payload.scheduled_date,
+            scheduled_time=payload.scheduled_time,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return StudyGroupScheduleResponse(**item)
+
+
+@study_group_router.get(
     "/{group_id}/messages",
     response_model=StudyGroupMessagesResponse,
 )
@@ -764,18 +849,25 @@ def list_group_messages_handler(
     if group_id not in member_group_ids:
         raise HTTPException(status_code=403, detail="Not a member of the group")
     messages = list_group_messages(group_id=group_id, limit=limit, before=before)
-    mapped = [
-        StudyGroupMessageResponse(
-            message_id=msg["message_id"],
-            group_id=msg["group_id"],
-            user_id=msg["user_id"],
-            text=msg["text"],
-            message_type=str(msg.get("message_type") or "text"),
-            payload=json.loads(msg["payload"]) if msg.get("payload") else None,
-            created_at=msg["created_at"],
+    profile_cache = {}
+    mapped = []
+    for msg in messages:
+        user_id = msg["user_id"]
+        profile = profile_cache.setdefault(user_id, get_user_by_id(user_id) or {})
+        mapped.append(
+            StudyGroupMessageResponse(
+                message_id=msg["message_id"],
+                group_id=msg["group_id"],
+                user_id=user_id,
+                sender_name=str(
+                    profile.get("name") or profile.get("username") or user_id
+                ),
+                text=msg["text"],
+                message_type=str(msg.get("message_type") or "text"),
+                payload=json.loads(msg["payload"]) if msg.get("payload") else None,
+                created_at=msg["created_at"],
+            )
         )
-        for msg in messages
-    ]
     return StudyGroupMessagesResponse(messages=mapped)
 
 
@@ -797,7 +889,11 @@ def post_group_message_handler(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return StudyGroupMessageResponse(**message)
+    profile = get_user_by_id(message["user_id"]) or {}
+    return StudyGroupMessageResponse(
+        **message,
+        sender_name=str(profile.get("name") or profile.get("username") or message["user_id"]),
+    )
 
 
 @study_group_router.put(

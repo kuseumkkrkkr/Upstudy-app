@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
@@ -23,19 +24,45 @@ class _MarketplacePageState extends State<MarketplacePage> {
   String _filter = '전체';
   String _courseFilter = '전체 과정';
   String _priceFilter = '전체 가격';
+  String? _recommendationGrade;
+  String? _recommendationGradeFilter;
+  int? _nextOffset;
+  int _total = 0;
   bool _loading = false;
   String? _error;
 
+  static const _corners = <_MarketplaceCorner>[
+    _MarketplaceCorner(
+      title: '시험지',
+      description: '완성된 시험지를 찾아 학습에 담아보세요.',
+      icon: Icons.assignment_outlined,
+      filter: '시험지',
+    ),
+    _MarketplaceCorner(
+      title: '문제세트',
+      description: '주제와 난이도에 맞는 문제세트를 둘러보세요.',
+      icon: Icons.inventory_2_outlined,
+      filter: '문제세트',
+    ),
+    _MarketplaceCorner(
+      title: '코스',
+      description: '학습 순서가 구성된 코스를 둘러보세요.',
+      icon: Icons.route_outlined,
+      filter: '코스',
+    ),
+  ];
+
   /// 필요한 변수는 선택적 미리보기 데이터다.
-  /// 작동 원리는 고정 데이터가 있으면 네트워크를 건너뛰고, 실제 화면은 문제·교재를 한 번씩 병렬 조회하는 것이다.
+  /// 작동 원리는 고정 데이터가 있으면 네트워크를 건너뛰고, 실제 화면은 사용자 학년과 첫 페이지 자료만 조회하는 것이다.
   @override
   void initState() {
     super.initState();
     final initialData = widget.initialData;
     if (initialData != null) {
       _items = initialData.map(_MarketItem.fromMap).toList(growable: false);
+      _total = _items.length;
     } else {
-      unawaited(_search());
+      unawaited(_loadInitialResults());
     }
   }
 
@@ -47,9 +74,34 @@ class _MarketplacePageState extends State<MarketplacePage> {
     super.dispose();
   }
 
-  /// 필요한 변수는 검색어와 문제·교재 API다.
-  /// 작동 원리는 버튼을 누른 시점에 두 GET을 병렬 실행하고 교재는 클라이언트에서 제목·태그를 한 번 필터링하는 것이다.
-  Future<void> _search() async {
+  /// 필요한 변수는 사용자 프로필과 마켓 검색 API다.
+  /// 작동 원리는 가입 정보의 과정·학년을 추천 조건으로 사용해 특정 학년 문구를 화면에 고정하지 않는 것이다.
+  Future<void> _loadInitialResults() async {
+    try {
+      final profile = await ApiClient.instance.getMyProfile();
+      final track = profile.track?.trim() ?? '';
+      final grade = profile.grade?.trim() ?? '';
+      // 관리자·비표준 프로필 값은 학년 조건으로 보내면 전체 마켓이 비게 된다.
+      _recommendationGradeFilter = _isLearnerGrade(grade) ? grade : null;
+      _recommendationGrade = [
+        track,
+        _recommendationGradeFilter ?? '',
+      ].where((value) => value.isNotEmpty).join(' ');
+    } catch (_) {
+      // 프로필 조회 실패 시에도 검색 기능은 사용 가능해야 한다.
+    }
+    await _search();
+  }
+
+  /// 필요한 변수는 프로필에서 받은 학년 문자열이다.
+  /// 작동 원리는 실제 학습자 학년 형식만 추천 SQL 조건으로 허용하고 admin·빈 값은 전체 자료를 보여 주는 것이다.
+  bool _isLearnerGrade(String value) {
+    return RegExp(r'^(초|중|고)\s?[1-3](?:-[1-3])?$').hasMatch(value);
+  }
+
+  /// 필요한 변수는 검색어·서버 필터·페이지 위치다.
+  /// 작동 원리는 필터를 서버에 전달하고 첫 페이지 또는 다음 페이지만 합쳐 전체 목록 전송과 렌더링을 막는 것이다.
+  Future<void> _search({bool append = false}) async {
     if (_loading) return;
     setState(() {
       _loading = true;
@@ -57,27 +109,26 @@ class _MarketplacePageState extends State<MarketplacePage> {
     });
     final query = _queryController.text.trim();
     try {
-      final results = await Future.wait<Object>([
-        ApiClient.instance.searchQuests(
-          text: query.isEmpty ? null : query,
-          pageSize: 12,
-        ),
-        ApiClient.instance.listTextbooks(),
-      ]);
-      final quests = results[0] as List<Map<String, dynamic>>;
-      final textbooks = results[1] as List<Map<String, dynamic>>;
-      final normalized = query.toLowerCase();
-      final items = <_MarketItem>[
-        ...quests.map((item) => _MarketItem.fromQuest(item)),
-        ...textbooks
-            .map((item) => _MarketItem.fromTextbook(item))
-            .where(
-              (item) =>
-                  normalized.isEmpty || item.searchText.contains(normalized),
-            ),
-      ];
+      final page = await ApiClient.instance.listMarketplaceListings(
+        query: query.isEmpty ? null : query,
+        kind: _apiKind,
+        gradeBand: _courseFilter == '전체 과정'
+            ? _recommendationGradeFilter
+            : _courseFilter,
+        price: switch (_priceFilter) {
+          '무료' => 'free',
+          '유료' => 'paid',
+          _ => null,
+        },
+        offset: append ? (_nextOffset ?? 0) : 0,
+      );
+      final items = page.items.map(_MarketItem.fromMap).toList(growable: false);
       if (!mounted) return;
-      setState(() => _items = items);
+      setState(() {
+        _items = append ? [..._items, ...items] : items;
+        _nextOffset = page.nextOffset;
+        _total = page.total;
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() => _error = '마켓 자료를 불러오지 못했습니다.');
@@ -86,30 +137,30 @@ class _MarketplacePageState extends State<MarketplacePage> {
     }
   }
 
-  List<_MarketItem> get _filteredItems {
+  String? get _apiKind => switch (_filter) {
+    '시험지' => 'exam',
+    '문제세트' => 'problem_set',
+    '코스' => 'course',
+    _ => null,
+  };
+
+  String get _recommendationTitle {
+    final grade = _recommendationGrade?.trim() ?? '';
+    return grade.isEmpty ? '맞춤 추천' : '$grade 추천';
+  }
+
+  /// 필요한 변수는 위젯에 주입된 미리보기 자료다.
+  /// 작동 원리는 네트워크를 쓰지 않는 미리보기·테스트만 로컬 필터를 허용하고 실제 마켓은 항상 서버 필터를 사용하게 하는 것이다.
+  List<_MarketItem> get _initialFilteredItems {
+    if (widget.initialData == null) return _items;
     return _items
-        .where((item) {
-          return switch (_filter) {
-            '문제' => item.type == _MarketItemType.quest,
-            '교재' => item.type == _MarketItemType.textbook,
-            _ => true,
-          };
-        })
         .where(
           (item) =>
-              _courseFilter == '전체 과정' ||
-              item.searchText.contains(_courseFilter.toLowerCase()),
+              _filter == '전체' ||
+              (_filter == '시험지' && item.type == _MarketItemType.exam) ||
+              (_filter == '문제세트' && item.type == _MarketItemType.problemSet) ||
+              (_filter == '코스' && item.type == _MarketItemType.course),
         )
-        .where((item) {
-          if (_priceFilter == '무료') {
-            return item.subtitle.contains('무료') || item.subtitle.contains('0P');
-          }
-          if (_priceFilter == '유료') {
-            return !item.subtitle.contains('무료') &&
-                !item.subtitle.contains('0P');
-          }
-          return true;
-        })
         .toList(growable: false);
   }
 
@@ -132,6 +183,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
       _courseFilter = result.$2;
       _priceFilter = result.$3;
     });
+    if (widget.initialData == null) unawaited(_search());
   }
 
   /// 필요한 변수는 검색 패널이 전달한 기본 필터명이다.
@@ -142,56 +194,50 @@ class _MarketplacePageState extends State<MarketplacePage> {
       return;
     }
     setState(() => _filter = value);
+    if (widget.initialData == null) unawaited(_search());
   }
 
-  /// 필요한 변수는 현재 항목의 제목·유형·설명·가격이다.
-  /// 작동 원리는 상세 버튼에서 같은 데이터를 바텀시트로 확장해 목록 위치를 잃지 않게 하는 것이다.
-  void _openItem(_MarketItem item) {
+  /// 필요한 변수는 선택한 마켓 항목의 메타데이터다.
+  /// 작동 원리는 목록에서 이미 받은 데이터를 사용해 유형별 미리보기만 표시하고, 추가 DB 요청은 발생시키지 않는 것이다.
+  Future<void> _openItem(_MarketItem item) async {
+    final previewIds = item.problemIds.take(3).toList(growable: false);
+    final problems = <Map<String, dynamic>>[];
+    if (previewIds.isNotEmpty) {
+      final results = await Future.wait(
+        previewIds.map((id) async {
+          try {
+            return await ApiClient.instance.searchQuests(
+              questId: id,
+              pageSize: 1,
+            );
+          } catch (_) {
+            return const <Map<String, dynamic>>[];
+          }
+        }),
+      );
+      for (final result in results) {
+        if (result.isNotEmpty) problems.add(result.first);
+      }
+    }
+    if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 4, 22, 26),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.typeLabel.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 1.5,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black45,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                item.title,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                item.subtitle,
-                style: const TextStyle(color: Colors.black54),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(backgroundColor: Colors.black),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('확인'),
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (_) => _MarketplacePreviewSheet(
+        item: item,
+        problems: problems,
+        onPurchase: item.owned
+            ? null
+            : () async {
+                await ApiClient.instance.purchaseMarketplaceListing(item.id);
+                if (!mounted) return;
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('내 학습 자료에 담았습니다.')),
+                );
+                unawaited(_search());
+              },
       ),
     );
   }
@@ -218,7 +264,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
   /// 작동 원리는 HTML 마켓의 1280px 검색 한 줄·결과 카드와 780px 이하 단일 열을 같은 데이터·동작으로 재배치하는 것이다.
   @override
   Widget build(BuildContext context) {
-    final items = _filteredItems;
+    final items = _initialFilteredItems;
     final desktop = MediaQuery.sizeOf(context).width >= 1000;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
@@ -231,7 +277,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
               child: RefreshIndicator(
                 onRefresh: _search,
                 child: ListView(
-                  padding: EdgeInsets.fromLTRB(desktop ? 40 : 14, 24, desktop ? 40 : 14, 40),
+                  padding: EdgeInsets.fromLTRB(
+                    desktop ? 40 : 14,
+                    24,
+                    desktop ? 40 : 14,
+                    40,
+                  ),
                   children: [
                     Center(
                       child: ConstrainedBox(
@@ -239,12 +290,36 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('COMMUNITY', style: TextStyle(fontSize: 10, letterSpacing: 1.7, color: Colors.black54, fontWeight: FontWeight.w900)),
+                            const Text(
+                              'COMMUNITY',
+                              style: TextStyle(
+                                fontSize: 10,
+                                letterSpacing: 1.7,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
                             const SizedBox(height: 8),
-                            Text('마켓', style: TextStyle(fontSize: desktop ? 50 : 32, letterSpacing: desktop ? -2.4 : -1.4, fontWeight: FontWeight.w900)),
+                            Text(
+                              '마켓',
+                              style: TextStyle(
+                                fontSize: desktop ? 50 : 32,
+                                letterSpacing: desktop ? -2.4 : -1.4,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
                             const SizedBox(height: 6),
-                            const Text('필요한 문제와 교재를 찾아 내 학습으로 연결합니다.', style: TextStyle(color: Colors.black45)),
+                            const Text(
+                              '필요한 학습 자료를 찾아 내 학습으로 연결합니다.',
+                              style: TextStyle(color: Colors.black45),
+                            ),
                             const SizedBox(height: 28),
+                            _MarketplaceCorners(
+                              corners: _corners,
+                              selected: _filter,
+                              onSelected: _handleFilterChanged,
+                            ),
+                            const SizedBox(height: 12),
                             _SearchPanel(
                               controller: _queryController,
                               loading: _loading,
@@ -255,11 +330,36 @@ class _MarketplacePageState extends State<MarketplacePage> {
                             ),
                             const SizedBox(height: 12),
                             if (_error != null)
-                              Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: const TextStyle(color: Colors.red))),
-                            _RecommendationCard(items: items.take(3).toList(), onOpen: _openItem),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Text(
+                                  _error!,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            _RecommendationCard(
+                              items: items.take(3).toList(),
+                              title: _recommendationTitle,
+                              total: _total,
+                              onOpen: _openItem,
+                            ),
                             if (items.length > 3) ...[
                               const SizedBox(height: 12),
-                              _MoreResultsCard(items: items.skip(3).toList(), onOpen: _openItem),
+                              _MoreResultsCard(
+                                items: items.skip(3).toList(),
+                                onOpen: _openItem,
+                              ),
+                            ],
+                            if (_nextOffset != null) ...[
+                              const SizedBox(height: 12),
+                              Center(
+                                child: OutlinedButton(
+                                  onPressed: _loading
+                                      ? null
+                                      : () => unawaited(_search(append: true)),
+                                  child: Text(_loading ? '불러오는 중' : '더 보기'),
+                                ),
+                              ),
                             ],
                           ],
                         ),
@@ -274,6 +374,155 @@ class _MarketplacePageState extends State<MarketplacePage> {
       ),
     );
   }
+}
+
+class _MarketplaceCorners extends StatelessWidget {
+  const _MarketplaceCorners({
+    required this.corners,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<_MarketplaceCorner> corners;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  /// 필요한 변수는 마켓에서 제공할 코너 목록과 화면 너비다.
+  /// 작동 원리는 시험지·문제세트·코스를 동일한 카드 규격으로 보여 주고 좁은 화면에서는 세로로 재배치하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final desktop = MediaQuery.sizeOf(context).width >= 760;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE0E0E2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'MARKET CORNERS',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 1.6,
+              color: Colors.black54,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '마켓 코너',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 16),
+          desktop
+              ? Row(
+                  children: [
+                    for (var index = 0; index < corners.length; index++) ...[
+                      Expanded(
+                        child: _MarketplaceCornerCard(
+                          corner: corners[index],
+                          selected: selected == corners[index].filter,
+                          onTap: () => onSelected(corners[index].filter),
+                        ),
+                      ),
+                      if (index != corners.length - 1)
+                        const SizedBox(width: 10),
+                    ],
+                  ],
+                )
+              : Column(
+                  children: [
+                    for (var index = 0; index < corners.length; index++) ...[
+                      _MarketplaceCornerCard(
+                        corner: corners[index],
+                        selected: selected == corners[index].filter,
+                        onTap: () => onSelected(corners[index].filter),
+                      ),
+                      if (index != corners.length - 1)
+                        const SizedBox(height: 10),
+                    ],
+                  ],
+                ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketplaceCornerCard extends StatelessWidget {
+  const _MarketplaceCornerCard({
+    required this.corner,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _MarketplaceCorner corner;
+  final bool selected;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 코너의 제목·설명·아이콘이다.
+  /// 작동 원리는 새 자료 탐색 기능을 연결하기 전에도 각 마켓 영역의 목적을 독립 카드로 명확히 안내하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? Colors.white : Colors.black;
+    return Material(
+      key: ValueKey('market-corner-${corner.filter}'),
+      color: selected ? const Color(0xFF202022) : const Color(0xFFF7F7F8),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(corner.icon, size: 22, color: foreground),
+                  const Spacer(),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Text(
+                corner.title,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                corner.description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: foreground.withValues(alpha: .58),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketplaceCorner {
+  const _MarketplaceCorner({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.filter,
+  });
+
+  final String title;
+  final String description;
+  final IconData icon;
+  final String filter;
 }
 
 class _SearchPanel extends StatelessWidget {
@@ -303,27 +552,59 @@ class _SearchPanel extends StatelessWidget {
       textInputAction: TextInputAction.search,
       onSubmitted: (_) => onSearch(),
       decoration: InputDecoration(
-        hintText: '문제 · 교재 · 태그 검색',
+        hintText: '시험지 · 문제세트 · 코스 · 태그 검색',
         prefixIcon: const Icon(Icons.search_rounded),
         filled: true,
         fillColor: const Color(0xFFF7F7F8),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFDEDEE1))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.black, width: 1.2)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFDEDEE1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.black, width: 1.2),
+        ),
       ),
     );
     final button = FilledButton(
-      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF202022), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF202022),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
       onPressed: loading ? null : onSearch,
       child: Text(loading ? '검색 중' : '검색'),
     );
     final filters = Wrap(
-      key: ValueKey(desktop ? 'market-desktop-filters' : 'market-mobile-filters'),
+      key: ValueKey(
+        desktop ? 'market-desktop-filters' : 'market-mobile-filters',
+      ),
       spacing: 8,
       runSpacing: 8,
-      children: ['전체', '문제', '교재', '필터+'].map((label) => ChoiceChip(label: Text(label), selected: filter == label, showCheckmark: false, selectedColor: Colors.black, side: BorderSide(color: filter == label ? Colors.black : const Color(0xFFDEDEE1)), labelStyle: TextStyle(color: filter == label ? Colors.white : Colors.black, fontSize: 11, fontWeight: FontWeight.w800), onSelected: (_) => onFilterChanged(label))).toList(growable: false),
+      children: ['전체', '시험지', '문제세트', '코스', '필터+']
+          .map(
+            (label) => ChoiceChip(
+              label: Text(label),
+              selected: filter == label,
+              showCheckmark: false,
+              selectedColor: Colors.black,
+              side: BorderSide(
+                color: filter == label ? Colors.black : const Color(0xFFDEDEE1),
+              ),
+              labelStyle: TextStyle(
+                color: filter == label ? Colors.white : Colors.black,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+              onSelected: (_) => onFilterChanged(label),
+            ),
+          )
+          .toList(growable: false),
     );
     return Container(
-      key: ValueKey(desktop ? 'market-desktop-search-panel' : 'market-mobile-search-panel'),
+      key: ValueKey(
+        desktop ? 'market-desktop-search-panel' : 'market-mobile-search-panel',
+      ),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -331,15 +612,39 @@ class _SearchPanel extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE0E0E2)),
       ),
       child: desktop
-          ? Row(children: [Expanded(child: field), const SizedBox(width: 8), button, const SizedBox(width: 12), Flexible(child: filters)])
-          : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [field, const SizedBox(height: 8), SizedBox(width: double.infinity, child: button), const SizedBox(height: 8), Align(alignment: Alignment.centerLeft, child: filters)]),
+          ? Row(
+              children: [
+                Expanded(child: field),
+                const SizedBox(width: 8),
+                button,
+                const SizedBox(width: 12),
+                Flexible(child: filters),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                field,
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity, child: button),
+                const SizedBox(height: 8),
+                Align(alignment: Alignment.centerLeft, child: filters),
+              ],
+            ),
     );
   }
 }
 
 class _RecommendationCard extends StatelessWidget {
-  const _RecommendationCard({required this.items, required this.onOpen});
+  const _RecommendationCard({
+    required this.items,
+    required this.title,
+    required this.total,
+    required this.onOpen,
+  });
   final List<_MarketItem> items;
+  final String title;
+  final int total;
   final ValueChanged<_MarketItem> onOpen;
 
   /// 필요한 변수는 최대 세 추천 자료다.
@@ -358,11 +663,11 @@ class _RecommendationCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'RECOMMENDED',
                       style: TextStyle(
                         fontSize: 10,
@@ -371,10 +676,10 @@ class _RecommendationCard extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      '중학교 2학년 추천',
-                      style: TextStyle(
+                      title,
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
                       ),
@@ -382,10 +687,10 @@ class _RecommendationCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _CountBadge(count: items.length),
+              _CountBadge(count: total),
             ],
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 18),
           if (items.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
@@ -445,10 +750,13 @@ class _MarketRow extends StatelessWidget {
   final ValueChanged<_MarketItem> onOpen;
 
   /// 필요한 변수는 자료 정보와 대표 강조 여부다.
-  /// 작동 원리는 첫 추천만 검은 배경으로 강조하고 나머지는 같은 높이의 흰 행으로 정렬하는 것이다.
+  /// 작동 원리는 유형·제목·학습 조건·가격을 서로 다른 시각 계층으로 나누고,
+  /// 행 전체를 하나의 큰 클릭 영역으로 제공해 긴 목록에서도 빠르게 훑게 하는 것이다.
   @override
   Widget build(BuildContext context) {
     final foreground = featured ? Colors.white : Colors.black;
+    final muted = featured ? Colors.white70 : const Color(0xFF68686D);
+    final surface = featured ? Colors.white : const Color(0xFFF5F5F6);
     return Material(
       color: featured ? const Color(0xFF202022) : Colors.transparent,
       borderRadius: BorderRadius.circular(14),
@@ -456,59 +764,112 @@ class _MarketRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: () => onOpen(item),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: featured ? Colors.white : const Color(0xFFF5F5F6),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE0E0E2)),
+                  color: surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: featured ? Colors.white : const Color(0xFFE0E0E2),
+                  ),
                 ),
-                child: Icon(item.icon, size: 18, color: Colors.black),
+                child: Icon(
+                  item.icon,
+                  size: 21,
+                  color: featured ? Colors.black : const Color(0xFF303034),
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.typeLabel,
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: foreground.withValues(alpha: .5),
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: featured
+                                ? Colors.white.withValues(alpha: .16)
+                                : const Color(0xFFEDEDEF),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            item.typeLabel,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: featured ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Flexible(
+                          child: Text(
+                            item.pricePoints == 0
+                                ? '무료'
+                                : '${item.pricePoints}P',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: muted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 6),
                     Text(
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: foreground,
-                        fontSize: 16,
+                        fontSize: 17,
+                        height: 1.15,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
+                    const SizedBox(height: 5),
                     Text(
                       item.subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 9,
-                        color: foreground.withValues(alpha: .5),
+                        fontSize: 12,
+                        color: muted,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-              Text(
-                '보기 ›',
-                style: TextStyle(
-                  color: foreground,
-                  fontWeight: FontWeight.w900,
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: featured ? Colors.white : Colors.black,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '열기',
+                  style: TextStyle(
+                    color: featured ? Colors.black : Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ],
@@ -587,19 +948,19 @@ class _MarketFilterSheetState extends State<_MarketFilterSheet> {
             ),
             const SizedBox(height: 5),
             const Text(
-              '카테고리와 과정, 가격 조건으로 문제와 교재를 좁힙니다.',
+              '카테고리와 과정, 가격 조건으로 마켓 자료를 좁힙니다.',
               style: TextStyle(color: Colors.black45),
             ),
             const SizedBox(height: 18),
             _FilterGroup(
               label: '카테고리',
-              values: const ['전체', '문제', '교재'],
+              values: const ['전체', '시험지', '문제세트', '코스'],
               selected: _type,
               onSelected: (value) => setState(() => _type = value),
             ),
             _FilterGroup(
               label: '과정',
-              values: const ['전체 과정', '중학교', '고등학교'],
+              values: const ['전체 과정', '고1', '고2', '고3'],
               selected: _course,
               onSelected: (value) => setState(() => _course = value),
             ),
@@ -675,64 +1036,354 @@ class _FilterGroup extends StatelessWidget {
   );
 }
 
-enum _MarketItemType { quest, textbook }
+enum _MarketItemType { exam, problemSet, course }
 
 class _MarketItem {
   const _MarketItem({
     required this.id,
     required this.type,
     required this.title,
+    required this.description,
     required this.subtitle,
+    required this.pricePoints,
+    required this.problemIds,
+    this.owned = false,
+    this.progressIndex = 0,
+    this.completed = false,
   });
 
   final String id;
   final _MarketItemType type;
   final String title;
+  final String description;
   final String subtitle;
+  final int pricePoints;
+  final List<String> problemIds;
+  final bool owned;
+  final int progressIndex;
+  final bool completed;
 
-  String get typeLabel => type == _MarketItemType.quest ? '문제' : '교재';
-  IconData get icon => type == _MarketItemType.quest
-      ? Icons.edit_outlined
-      : Icons.menu_book_outlined;
+  String get typeLabel => switch (type) {
+    _MarketItemType.exam => '시험지',
+    _MarketItemType.problemSet => '문제세트',
+    _MarketItemType.course => '코스',
+  };
+  IconData get icon => switch (type) {
+    _MarketItemType.exam => Icons.assignment_outlined,
+    _MarketItemType.problemSet => Icons.inventory_2_outlined,
+    _MarketItemType.course => Icons.route_outlined,
+  };
   String get searchText => '$title $subtitle'.toLowerCase();
 
-  /// 필요한 변수는 서버 문제 응답이다.
-  /// 작동 원리는 헤더·정보·본문에서 식별자·제목·태그를 안전하게 추출하는 것이다.
-  factory _MarketItem.fromQuest(Map<String, dynamic> json) {
-    final header = Map<String, dynamic>.from(
-      json['header'] as Map? ?? const {},
-    );
-    final info = Map<String, dynamic>.from(json['info'] as Map? ?? const {});
-    final data = Map<String, dynamic>.from(json['data'] as Map? ?? const {});
-    final tags = (info['hash_tag'] as List? ?? const []).join(' · ');
+  /// 필요한 변수는 마켓 목록 API 또는 미리보기 일반 맵이다.
+  /// 작동 원리는 kind·수량·가격·학년 정보를 한 줄 카드 모델로 안전하게 정규화하는 것이다.
+  factory _MarketItem.fromMap(Map<String, dynamic> json) {
+    final kind = json['kind']?.toString() ?? json['type']?.toString() ?? '';
+    final type = switch (kind) {
+      'exam' => _MarketItemType.exam,
+      'course' => _MarketItemType.course,
+      _ => _MarketItemType.problemSet,
+    };
+    final pricePoints =
+        int.tryParse(json['price_points']?.toString() ?? '') ?? 0;
+    final itemCount = int.tryParse(json['item_count']?.toString() ?? '') ?? 0;
+    final gradeBand = json['grade_band']?.toString() ?? '';
+    final difficulty = json['difficulty']?.toString() ?? '';
+    final priceLabel = pricePoints == 0 ? '무료' : '${pricePoints}P';
+    final details = [
+      if (gradeBand.isNotEmpty) gradeBand,
+      if (difficulty.isNotEmpty) difficulty,
+      if (itemCount > 0) '$itemCount문항',
+      priceLabel,
+    ].join(' · ');
     return _MarketItem(
-      id: header['quest_id']?.toString() ?? json['quest_id']?.toString() ?? '',
-      type: _MarketItemType.quest,
-      title:
-          data['quest_title']?.toString() ??
-          info['title']?.toString() ??
-          '수학 문제',
-      subtitle: tags.isEmpty ? '문제 자료' : tags,
+      id: json['id']?.toString() ?? '',
+      type: type,
+      title: json['title']?.toString() ?? '학습 자료',
+      description: json['description']?.toString() ?? '',
+      subtitle: details.isEmpty
+          ? json['description']?.toString() ?? ''
+          : details,
+      pricePoints: pricePoints,
+      problemIds: (json['problem_ids'] is List
+          ? (json['problem_ids'] as List)
+                .map((id) => id.toString())
+                .where((id) => id.isNotEmpty)
+                .toList(growable: false)
+          : const <String>[]),
+      owned: json['owned'] == true,
+      progressIndex:
+          int.tryParse(json['progress_index']?.toString() ?? '') ?? 0,
+      completed: json['status']?.toString() == 'completed',
+    );
+  }
+}
+
+class _MarketplacePreviewSheet extends StatelessWidget {
+  const _MarketplacePreviewSheet({
+    required this.item,
+    required this.problems,
+    this.onPurchase,
+  });
+
+  final _MarketItem item;
+  final List<Map<String, dynamic>> problems;
+  final Future<void> Function()? onPurchase;
+
+  /// 필요한 변수는 선택한 자료의 유형·제목·설명·요약 정보다.
+  /// 작동 원리는 유형별 미리보기 영역과 공통 메타데이터를 한 시트에 배치해 사용자가 목록을 벗어나지 않고 내용을 확인하게 하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final previewLabel = switch (item.type) {
+      _MarketItemType.exam => '시험지 미리보기',
+      _MarketItemType.problemSet => '문제세트 미리보기',
+      _MarketItemType.course => '코스 미리보기',
+    };
+    final previewItems = problems.isNotEmpty
+        ? problems
+              .asMap()
+              .entries
+              .map(
+                (entry) => (
+                  (entry.key + 1).toString().padLeft(2, '0'),
+                  _problemTitle(entry.value),
+                ),
+              )
+              .toList(growable: false)
+        : switch (item.type) {
+            _MarketItemType.exam => const [('01', '시험 문제를 불러오지 못했습니다.')],
+            _MarketItemType.problemSet => const [('01', '문제 미리보기를 준비 중입니다.')],
+            _MarketItemType.course => const [('01', '코스에 포함된 문제를 불러오지 못했습니다.')],
+          };
+
+    return SafeArea(
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: .72,
+        minChildSize: .45,
+        maxChildSize: .9,
+        builder: (context, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.fromLTRB(22, 4, 22, 26),
+          children: [
+            Text(
+              previewLabel.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.5,
+                fontWeight: FontWeight.w900,
+                color: Colors.black45,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              item.title,
+              style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 8),
+            if (item.description.isNotEmpty)
+              Text(
+                item.description,
+                style: const TextStyle(color: Colors.black54),
+              ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _PreviewMetaChip(icon: item.icon, label: item.typeLabel),
+                _PreviewMetaChip(
+                  icon: Icons.info_outline,
+                  label: item.subtitle,
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F7F8),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFE0E0E2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '구성 미리보기',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 12),
+                  for (var index = 0; index < previewItems.length; index++) ...[
+                    _PreviewProblemCard(
+                      number: previewItems[index].$1,
+                      problem: problems.length > index ? problems[index] : null,
+                      fallbackTitle: previewItems[index].$2,
+                    ),
+                    if (index != previewItems.length - 1)
+                      const SizedBox(height: 9),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            if (item.owned)
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: item.completed
+                      ? const Color(0xFFEAF7EE)
+                      : const Color(0xFFF2F2F4),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  item.completed ? '이수 완료한 자료입니다.' : '내 학습 자료에 담긴 자료입니다.',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.black),
+                  onPressed: onPurchase,
+                  icon: const Icon(Icons.add_task_rounded),
+                  label: const Text('0코인으로 내 학습에 담기'),
+                ),
+              ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('닫기'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  /// 필요한 변수는 서버 교재 응답이다.
-  /// 작동 원리는 교재 식별자·제목·부제목을 목록 행 모델로 변환하는 것이다.
-  factory _MarketItem.fromTextbook(Map<String, dynamic> json) => _MarketItem(
-    id: json['textbook_id']?.toString() ?? json['id']?.toString() ?? '',
-    type: _MarketItemType.textbook,
-    title: json['title']?.toString() ?? '수학 교재',
-    subtitle: json['subtitle']?.toString() ?? '교재 자료',
-  );
+  /// 필요한 변수는 문제 원문 맵이다.
+  /// 작동 원리는 서버 응답의 data.quest_title을 우선 사용하고, 누락된 데이터는 안전한 안내 문구로 대체하는 것이다.
+  static String _problemTitle(Map<String, dynamic> problem) {
+    final data = problem['data'] is Map
+        ? Map<String, dynamic>.from(problem['data'] as Map)
+        : problem;
+    final rawTitle = data['quest_title'] ?? problem['quest_title'];
+    final title = parseContentBlocks(rawTitle)
+        .map((block) => block.content.trim())
+        .where((content) => content.isNotEmpty)
+        .join(' ');
+    if (title.isNotEmpty) return title;
+    return '문제 내용을 확인할 수 없습니다.';
+  }
 
-  /// 필요한 변수는 캡처·테스트용 일반 맵이다.
-  /// 작동 원리는 type 값에 따라 문제·교재를 구분하고 나머지 표시 필드를 그대로 읽는 것이다.
-  factory _MarketItem.fromMap(Map<String, dynamic> json) => _MarketItem(
-    id: json['id']?.toString() ?? '',
-    type: json['type'] == 'textbook'
-        ? _MarketItemType.textbook
-        : _MarketItemType.quest,
-    title: json['title']?.toString() ?? '학습 자료',
-    subtitle: json['subtitle']?.toString() ?? '',
+  /// 필요한 변수는 문제·선택지 안의 텍스트 또는 콘텐츠 블록이다.
+  /// 작동 원리는 수식 블록도 미리보기에서 깨지지 않도록 사람이 읽을 수 있는 문자열로만 변환하는 것이다.
+  static String _contentPreviewText(dynamic value) {
+    final text = parseContentBlocks(value)
+        .map((block) => block.content.trim())
+        .where((content) => content.isNotEmpty)
+        .join(' ');
+    return text.isEmpty ? value?.toString() ?? '' : text;
+  }
+}
+
+class _PreviewProblemCard extends StatelessWidget {
+  const _PreviewProblemCard({
+    required this.number,
+    required this.problem,
+    required this.fallbackTitle,
+  });
+
+  final String number;
+  final Map<String, dynamic>? problem;
+  final String fallbackTitle;
+
+  /// 필요한 변수는 문제 번호·문제 원문·대체 제목이다.
+  /// 작동 원리는 문제와 선택지를 표시만 하고 입력 위젯이나 정답 판정은 제공하지 않아 읽기 전용 미리보기를 유지하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final data = problem?['data'] is Map
+        ? Map<String, dynamic>.from(problem!['data'] as Map)
+        : problem;
+    final title = data == null
+        ? fallbackTitle
+        : _MarketplacePreviewSheet._problemTitle(problem!);
+    final options = data?['quest_options'] ?? data?['options'];
+    final optionItems = options is List
+        ? options
+              .map(_MarketplacePreviewSheet._contentPreviewText)
+              .toList(growable: false)
+        : const <String>[];
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE0E0E2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '문제 $number',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: Colors.black45,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+          ),
+          if (optionItems.isNotEmpty) ...[
+            const SizedBox(height: 9),
+            for (var index = 0; index < optionItems.length; index++)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${index + 1}. ${optionItems[index]}',
+                  style: const TextStyle(color: Colors.black54),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewMetaChip extends StatelessWidget {
+  const _PreviewMetaChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  /// 필요한 변수는 메타데이터 아이콘과 표시 문자열이다.
+  /// 작동 원리는 긴 자료 정보를 작은 캡슐 형태로 감싸 미리보기 상단에서 빠르게 인식하게 하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(99),
+      border: Border.all(color: const Color(0xFFE0E0E2)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+        ),
+      ],
+    ),
   );
 }

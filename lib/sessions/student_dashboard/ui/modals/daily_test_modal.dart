@@ -68,7 +68,7 @@ class _DailyTestModalState extends State<DailyTestModal> {
     }
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool forceRefresh = false}) async {
     final courseId = widget.courseId?.trim();
     if (courseId == null || courseId.isEmpty) {
       setState(() {
@@ -84,6 +84,7 @@ class _DailyTestModalState extends State<DailyTestModal> {
     try {
       final bundle = await ApiClient.instance.fetchDailyQuestBundle(
         courseId: courseId,
+        forceRefresh: forceRefresh,
       );
       if (!mounted) return;
       setState(() {
@@ -94,7 +95,7 @@ class _DailyTestModalState extends State<DailyTestModal> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = '일일 퀘스트를 불러오지 못했습니다.';
+        _error = '퀘스트를 불러오는데 실패했어요';
       });
     }
   }
@@ -107,6 +108,7 @@ class _DailyTestModalState extends State<DailyTestModal> {
       final bundle = await ApiClient.instance.completeDailyQuestBundle(
         courseId: courseId,
         questId: item.id,
+        revision: _bundle?.revision ?? 1,
       );
       if (!mounted) return;
       setState(() {
@@ -133,9 +135,12 @@ class _DailyTestModalState extends State<DailyTestModal> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _claimingQuestId = null);
+      // 서버 상태가 바뀌었거나 캐시가 오래됐으면 즉시 서버 원본으로 화면을 되돌린다.
+      await _load(forceRefresh: true);
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('보상 수령 실패')));
+      ).showSnackBar(const SnackBar(content: Text('상태가 변경되어 최신 퀘스트로 갱신했습니다.')));
     }
   }
 

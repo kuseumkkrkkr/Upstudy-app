@@ -92,7 +92,11 @@ class DailyQuestPhase3Tests(unittest.TestCase):
 
         result = challenge_service.complete_daily_quest(
             user_id,
-            {'course_id': course_id, 'quest_id': first['id']},
+            {
+                'course_id': course_id,
+                'quest_id': first['id'],
+                'revision': data['revision'],
+            },
         )
 
         self.assertEqual(result['account']['total_points'], 0)
@@ -122,9 +126,13 @@ class DailyQuestPhase3Tests(unittest.TestCase):
         self.assertEqual(len(data['items']), 5)
         for item in data['items']:
             self.assertEqual(item['status'], 'completed')
-            challenge_service.complete_daily_quest(
+            data = challenge_service.complete_daily_quest(
                 user_id,
-                {'course_id': course_id, 'quest_id': item['id']},
+                {
+                    'course_id': course_id,
+                    'quest_id': item['id'],
+                    'revision': data['revision'],
+                },
             )
 
         summary = get_account_summary(user_id)

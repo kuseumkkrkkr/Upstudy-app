@@ -13,6 +13,8 @@ import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dar
 import 'package:s11/sessions/student_dashboard/ui/modals/social_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart';
+import 'package:s11/sessions/textbook/ui/pages/book_page.dart'
+    as textbook_reader;
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
@@ -39,6 +41,7 @@ import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
 import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/shared/data/models/course.dart';
+import 'package:s11/shared/data/models/concept_textbooks.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
@@ -278,33 +281,7 @@ Map<String, dynamic> _previewFlowQuest() => {
 
 /// 필요한 변수는 HTML 교재 리더에 표시할 장·절·본문이다.
 /// 작동 원리는 실제 교재 모델을 고정 입력으로 만들어 페이지 이동·필기·북마크 UI를 네트워크 없이 검증하는 것이다.
-BookData _previewTextbook() => const BookData(
-  id: 'preview-linear-textbook',
-  title: '중2 일차함수 개념서',
-  subtitle: '그래프와 기울기를 한 권으로 정리합니다.',
-  chapters: [
-    BookChapter(
-      title: '01 일차함수의 뜻',
-      intro: [
-        '두 변수 x, y 사이의 관계가 y = ax + b 꼴로 나타날 때 y는 x의 일차함수라고 합니다.',
-        '그래프 위의 두 점을 이용하면 변화량의 비로 기울기를 구할 수 있습니다.',
-      ],
-      sections: [
-        BookSection(
-          title: '기울기와 y절편',
-          paragraphs: [
-            '기울기 a는 x가 1만큼 증가할 때 y가 얼마나 변하는지를 나타냅니다.',
-            'y절편 b는 그래프가 y축과 만나는 점의 y좌표입니다.',
-          ],
-        ),
-        BookSection(
-          title: '그래프 해석하기',
-          paragraphs: ['기울기가 양수이면 오른쪽으로 갈수록 그래프가 올라가고, 음수이면 내려갑니다.'],
-        ),
-      ],
-    ),
-  ],
-);
+BookData _previewTextbook() => kConceptTextbooks['두점을지나는직선']!;
 
 /// 필요한 변수는 아레나 프로필과 네 대결 큐다.
 /// 작동 원리는 실제 아레나 위젯에 운영 응답과 같은 맵을 주입해 네트워크 없이 랭크 화면을 검증하는 것이다.
@@ -392,15 +369,19 @@ class StudentDensityPreviewApp extends StatelessWidget {
       'graph' => const JsxGraphPage(embedEnabled: false),
       'chat' => const StudentDirectChatPage(peerUsername: '이수학', preview: true),
       'textbooks' => const BookWidget(previewMode: true),
+      'textbook-library' => const _TextbookLibraryPreview(),
+      'textbook-reader-library' => textbook_reader.BookWidget(
+        book: _previewTextbook(),
+      ),
       'textbook-reader' => TeacherCourseTextbookReaderPage(
         courseId: 'preview-course',
         moduleId: 'preview-module',
         textbookId: 'preview-linear-textbook',
         pageFrom: 1,
-        pageTo: 3,
-        minMinutes: 20,
+        pageTo: 4,
+        minMinutes: 8,
         previewBook: _previewTextbook(),
-        previewElapsedSeconds: 18 * 60,
+        previewElapsedSeconds: 5 * 60 + 12,
       ),
       'exam-paper' => const ExamPaperPage(
         timeLimitMinutes: 43,
@@ -411,22 +392,25 @@ class StudentDensityPreviewApp extends StatelessWidget {
       'marketplace' => const MarketplacePage(
         initialData: [
           {
-            'id': 'market-quest-1',
-            'type': 'quest',
-            'title': '중2 함수 실전 100제',
-            'subtitle': '평점 4.9 · 1,200P',
+            'id': 'market-exam-1',
+            'kind': 'exam',
+            'title': '공통수학 기초 진단 A',
+            'price_points': 0,
+            'item_count': 10,
           },
           {
-            'id': 'market-book-1',
-            'type': 'textbook',
-            'title': '개념이 보이는 그래프',
-            'subtitle': '무료 · 42쪽',
+            'id': 'market-course-1',
+            'kind': 'course',
+            'title': '공통수학 기초 완성',
+            'price_points': 900,
+            'item_count': 20,
           },
           {
-            'id': 'market-quest-2',
-            'type': 'quest',
-            'title': '확률 OX 문제 묶음',
-            'subtitle': '800P · 30문항',
+            'id': 'market-set-1',
+            'kind': 'problem_set',
+            'title': '다항식 기본기 5',
+            'price_points': 120,
+            'item_count': 5,
           },
         ],
       ),
@@ -625,6 +609,76 @@ class StudentDensityPreviewApp extends StatelessWidget {
   }
 }
 
+class _TextbookLibraryPreview extends StatefulWidget {
+  const _TextbookLibraryPreview();
+
+  /// 필요한 변수는 다이얼로그의 표시 여부다.
+  /// 작동 원리는 실제 교재함 모달을 첫 프레임 이후 한 번 열어 브라우저 캡처가 운영 경로와 같은 위젯을 기록하게 하는 것이다.
+  @override
+  State<_TextbookLibraryPreview> createState() =>
+      _TextbookLibraryPreviewState();
+}
+
+class _TextbookLibraryPreviewState extends State<_TextbookLibraryPreview> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openLibrary());
+  }
+
+  /// 필요한 변수는 공개 교재에 사용할 고정 장·절 데이터다.
+  /// 작동 원리는 네트워크 없이 세 가지 진행 상태를 주입해 목록 카드와 진행률 표시를 반복 가능하게 검증하는 것이다.
+  Future<void> _openLibrary() => textbook_reader.showBookLibraryModal<void>(
+    context: context,
+    books: [
+      BookData(
+        id: 'preview-linear',
+        title: '두 점을 지나는 직선',
+        subtitle: '좌표와 기울기를 연결하는 개념 교재',
+        chapters: _previewTextbook().chapters,
+        progress: .65,
+        progressLabel: '65% 완료 · 4쪽에서 이어 읽기',
+        coverColor: const Color(0xFF1F6B4F),
+      ),
+      BookData(
+        id: 'preview-graph',
+        title: '그래프를 읽는 법',
+        subtitle: '좌표평면과 변화량의 기초',
+        chapters: _previewTextbook().chapters,
+        progress: .24,
+        progressLabel: '24% 완료',
+        coverColor: const Color(0xFF2F8062),
+      ),
+      BookData(
+        id: 'preview-review',
+        title: '함수 개념 다시보기',
+        subtitle: '핵심 정의와 예제로 복습하기',
+        chapters: _previewTextbook().chapters,
+        progress: 0,
+        progressLabel: '새 교재',
+        coverColor: const Color(0xFF5B8E77),
+      ),
+    ],
+  );
+
+  /// 필요한 변수는 모달 뒤에 보일 배경이다.
+  /// 작동 원리는 실제 사용 환경처럼 교재함을 독립된 모달로 읽을 수 있도록 차분한 학습 대시보드 표면을 제공하는 것이다.
+  @override
+  Widget build(BuildContext context) => const Scaffold(
+    backgroundColor: Color(0xFFF1F5F1),
+    body: Center(
+      child: Text(
+        'AIFlow 학습 공간',
+        style: TextStyle(
+          color: Color(0xFF1F4D38),
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ),
+  );
+}
+
 class _PreviewActionLauncher extends StatefulWidget {
   const _PreviewActionLauncher({required this.action, required this.child});
 
@@ -727,16 +781,26 @@ class _PreviewActionLauncherState extends State<_PreviewActionLauncher> {
           ),
         );
       case 'today-tasks':
-        final today = DateUtils.dateOnly(DateTime.now());
         await showTodayTasksModal<void>(
           context: context,
-          tasksByDate: {
-            today: const ['개인 복습 20분'],
-          },
-          lockedTasksByDate: {
-            today: const ['문제 12개', '교재 3장 읽기'],
-          },
-          onTasksChanged: (_) {},
+          tasks: const [
+            TodayTaskEntry(
+              title: '개인 복습 20분',
+              caption: '오늘 학습 계획',
+              icon: Icons.auto_stories_rounded,
+            ),
+            TodayTaskEntry(
+              title: '문제 12개',
+              caption: '코스 학습',
+              icon: Icons.edit_note_rounded,
+            ),
+            TodayTaskEntry(
+              title: '교재 3장 읽기',
+              caption: '읽기 목표',
+              icon: Icons.menu_book_rounded,
+            ),
+          ],
+          onTaskTap: (_) {},
         );
     }
   }

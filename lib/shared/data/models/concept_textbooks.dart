@@ -1,7 +1,14 @@
 // 개념 교재 하드코딩 데이터 (자동생성 - 수정 가급적 금지)
 import 'textbook.dart';
+import 'package:flutter/material.dart';
+import 'concept_textbook_lessons.dart';
+import 'concept_textbook_curriculum.dart';
+import 'concept_textbook_visuals.dart';
+import 'concept_textbook_manuscripts.dart';
+import 'concept_textbook_units/coordinate_geometry.dart';
 
-final Map<String, BookData> kConceptTextbooks = {
+// 자동 생성 원문은 보존하고, 아래의 교재 빌더에서 UTF-8 문단·그래프·학습 단계를 정리한다.
+final Map<String, BookData> _rawConceptTextbooks = {
   '계차수열': BookData(
     id: 'concept_계차수열',
     title: '계차수열',
@@ -54,6 +61,7 @@ final Map<String, BookData> kConceptTextbooks = {
       BookChapter(
         title: '두점을지나는직선',
         intro: ['공통수학2 > 좌표평면 > 직선의방정식 > 두점을지나는직선 개념 학습'],
+        pages: buildTwoPointLinePilotPages(),
         sections: [
           BookSection(
             title: '두점을지나는직선',
@@ -4867,6 +4875,187 @@ final Map<String, BookData> kConceptTextbooks = {
   ),
 };
 
+/// 필요한 변수는 자동 생성된 원문 교재 맵이다.
+/// 작동 원리는 모든 교재를 한 번 순회하며 중첩 JSON 문단을 펼치고, 절마다 학습 목표·핵심 원리·예제 흐름과 선택적 JSXGraph를 연결하는 것이다.
+final Map<String, BookData> kConceptTextbooks = _buildEditorialConceptTextbooks(
+  _rawConceptTextbooks,
+);
+
+const Set<String> _pilotEditorialKeys = <String>{
+  '두점을지나는직선',
+};
+
+bool _isPilotEditorialConcept(String conceptKey) {
+  // 필요한 변수는 개념 키 목록이다.
+  // 작동 원리는 지정된 초벌 권역(1권 기준)만 수동 템플릿을 강제 유지하고
+  // 나머지는 공통 편집 엔진으로 동일한 지면 모델을 생성해 일관성을 유지한다.
+  return _pilotEditorialKeys.contains(conceptKey);
+}
+
+/// 필요한 변수는 개념 키, 제목, 태그, 원문 chapter이다.
+/// 작동 원리는 chapter에 수동 pages가 있으면 우선 사용하고,
+/// 없으면 새 편집 규칙 기반으로 즉시 8~10쪽의 명시 페이지를 생성한다.
+List<BookPage> _resolveChapterPages({
+  required String conceptKey,
+  required String conceptTitle,
+  required List<String> conceptTags,
+  required BookChapter chapter,
+}) {
+  if (chapter.pages.isNotEmpty) {
+    return chapter.pages;
+  }
+
+  if (_isPilotEditorialConcept(conceptKey)) {
+    return buildTwoPointLinePilotPages();
+  }
+
+  return buildConceptManuscriptPages(
+    key: conceptKey,
+    title: conceptTitle,
+    tags: conceptTags,
+  );
+}
+
+/// 필요한 변수는 전체 개념 교재 맵이다.
+/// 작동 원리는 200개 안팎의 소단원 교재를 하나의 목차 순서로 합쳐 기본 교재보기에서 단 한 권으로 노출하는 것이다.
+BookData buildAllConceptBook() {
+  final chapters = <BookChapter>[];
+  for (final book in kConceptTextbooks.values) {
+    chapters.addAll(book.chapters);
+  }
+  return BookData(
+    id: 'concept_book_common',
+    title: 'AIFlow 기본 개념서',
+    subtitle: '공통수학 전 범위 · 정의부터 원리·예제·풀이까지 한 권으로 학습',
+    category: 'common',
+    tags: const ['공통 개념', '기본 개념서'],
+    coverColor: const Color(0xFF1F6B4E),
+    chapters: chapters,
+  );
+}
+
+/// 기본 교재보기에서 재사용하는 통합 개념서 인스턴스다.
+/// 앱 실행 중 교재 목록을 다시 열어도 200개 단원을 매번 복제하지 않도록 한 번만 만든다.
+final BookData kAllConceptBook = buildAllConceptBook();
+
+String _buildEditorialChapterIntro({
+  required String conceptKey,
+  required String conceptTitle,
+}) {
+  // 필요한 변수는 개념 키와 제목이며, lessonForConcept를 통해 핵심 학습 목표를 얻는다.
+  // 작동 원리: 단순 소개 문장을 없애고 단원별로 달라지는 학습 지도 문장을 2~3줄 구성한다.
+  final lesson = lessonForConcept(conceptKey, conceptTitle);
+  final goal = lesson.objective;
+
+  final route = _buildLearningRoute(
+    key: conceptKey,
+    objective: goal,
+    title: conceptTitle,
+  );
+
+  final coreLine =
+      _buildCoreQuestion(conceptKey, conceptTitle, route, lesson.objective);
+
+  return '$goal\n\n$coreLine\n\n$route';
+}
+
+String _buildLearningRoute({
+  required String key,
+  required String title,
+  required String objective,
+}) {
+  // 필요한 변수는 개념 키·제목·목표 문장이다.
+  // 작동 원리는 목표(WHAT)와 실행 루트(HOW)를 분리해 초등 문장으로 보여주는 것이다.
+  if (key.contains('직선') || key.contains('좌표')) {
+    return '학습 루트: 점 정리 → 변화량 비율 설정 → 분기 판정(수직/수평) → 식 정리 → 역대입 검산';
+  }
+  if (key.contains('부등식') || key.contains('방정식')) {
+    return '학습 루트: 조건 기호화 → 근·경계 계산 → 구간/부호 판별 → 원식 대입 검산';
+  }
+  if (key.contains('수열') || key.contains('일반항') || key.contains('합')) {
+    return '학습 루트: 항의 규칙 탐색 → 일반항 설정 → 대표값 계산 → 전체 규칙과 일치 검산';
+  }
+  if (key.contains('함수') || key.contains('로그') || key.contains('지수')) {
+    return '학습 루트: 정의역 고정 → 공식 선택 → 그래프 변화 관찰 → 식·조건 동시 검증';
+  }
+  if (key.contains('미분') || key.contains('적분') || key.contains('극값')) {
+    return '학습 루트: 순간변화 설정 → 임계/해석 구간 분리 → 단위 확인 → 경계 검산';
+  }
+
+  if (objective.trim().isEmpty) {
+    return '학습 루트: 핵심 정의를 재정의 → 유도식 확인 → 변형 예제 적용 → 조건 점검';
+  }
+
+  return '학습 루트: $title의 핵심 정의를 먼저 정리하고, ${title}의 판단 근거를 적은 뒤 조건을 되돌려 검산한다.';
+}
+
+String _buildCoreQuestion(
+  String key,
+  String title,
+  String route,
+  String objective,
+) {
+  // 필요한 변수는 개념 키·제목·루트·학습 목표이다.
+  // 작동 원리는 학습자가 먼저 스스로 문장을 완성하고 들어오게 하는 도입 문장을 만든다.
+  if (title.trim().isEmpty) {
+    return '핵심 질문: 이 단원에서 어떤 값이 “고정”되고 어떤 값이 “변화”하는지 먼저 확인합시다.';
+  }
+  if (key.contains('직선') || key.contains('기울기')) {
+    return '핵심 질문: "두 점에서 직선의 방향(기울기)과 위치를 같이 정하면 분기 없이 항상 식을 완성할 수 있나?"';
+  }
+  if (route.contains('정의역')) {
+    return '핵심 질문: "조건을 기호로 놓치지 않고, ${title}의 정의역을 먼저 끝까지 끝내는 구조가 왜 필요한가?"';
+  }
+  if (objective.length > 20) {
+    return '핵심 질문: $objective';
+  }
+  return '핵심 질문: ${title}의 결론을 하나의 “조건 → 식 → 검산” 문장으로 말로 정리해 보세요.';
+}
+
+/// 필요한 변수는 원문 문단 목록, 절 제목, 교재 태그다.
+/// 작동 원리는 문단을 정의→원리→예제→풀이→정리 순서로 보강하되 이미 같은 안내가 있으면 중복하지 않는 것이다.
+Map<String, BookData> _buildEditorialConceptTextbooks(
+  Map<String, BookData> source,
+) {
+  return {
+    for (final entry in source.entries)
+      entry.key: BookData(
+        id: entry.value.id,
+        title: entry.value.title,
+        subtitle: entry.value.subtitle,
+        category: entry.value.category,
+        tags: entry.value.tags,
+        coverColor: entry.value.coverColor,
+        progress: entry.value.progress,
+        progressLabel: entry.value.progressLabel,
+        chapters: [
+          for (final chapter in entry.value.chapters)
+            BookChapter(
+              title: chapter.title,
+              intro: [
+                _buildEditorialChapterIntro(
+                  conceptKey: entry.key,
+                  conceptTitle: entry.value.title,
+                ),
+              ],
+              visuals: conceptVisualsFor(entry.key, 'overview'),
+              pages: _resolveChapterPages(
+                conceptKey: entry.key,
+                conceptTitle: entry.value.title,
+                conceptTags: entry.value.tags,
+                chapter: chapter,
+              ),
+              sections: buildExpandedConceptSections(
+                key: entry.key,
+                title: entry.value.title,
+                tags: entry.value.tags,
+              ),
+            ),
+        ],
+      ),
+  };
+}
+
 /// 태그 목록에 해당하는 개념 교재를 반환합니다.
 List<BookData> findConceptTextbooks(List<String> tags) {
   if (tags.isEmpty) {
@@ -4896,6 +5085,7 @@ List<BookData> findConceptTextbooks(List<String> tags) {
 /// 학습자의 태그들을 하나의 통합 교재(BookData)로 묶어 반환합니다.
 BookData buildConceptBook(List<String> tags) {
   final normalized = tags.map((t) => t.replaceFirst('#', '')).toList();
+  if (normalized.isEmpty) return kAllConceptBook;
   final List<BookChapter> chapters = [];
   final seen = <String>{};
   for (final tag in normalized) {
@@ -4907,7 +5097,8 @@ BookData buildConceptBook(List<String> tags) {
       continue;
     }
     for (final entry in kConceptTextbooks.entries) {
-      if (entry.value.tags.contains(tag) || entry.value.tags.contains('#' + tag)) {
+      if (entry.value.tags.contains(tag) ||
+          entry.value.tags.contains('#$tag')) {
         if (!seen.contains(entry.key)) {
           seen.add(entry.key);
           chapters.addAll(entry.value.chapters);
@@ -4915,10 +5106,10 @@ BookData buildConceptBook(List<String> tags) {
       }
     }
   }
-  final subtitle = normalized.take(3).join(', ') +
-      (normalized.length > 3 ? ' ...' : '');
+  final subtitle =
+      '${normalized.take(3).join(', ')}${normalized.length > 3 ? ' ...' : ''}';
   return BookData(
-    id: 'concept_study_' + normalized.join('_'),
+    id: 'concept_study_${normalized.join('_')}',
     title: '개념 학습',
     subtitle: subtitle,
     category: 'common',

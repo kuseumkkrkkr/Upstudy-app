@@ -72,7 +72,7 @@ async def get_daily_quests(
 async def apply_daily_quest_event(
     request: Request,
     body: dict[str, Any],
-    _user=Depends(require_role("student")),
+    _user=Depends(require_role("admin")),
 ):
     user_id: str = request.state.user_id
     data, _updated = service.apply_daily_quest_event(user_id, body)
@@ -105,7 +105,7 @@ async def list_daily_quest_templates(
 async def upsert_daily_quest_template(
     request: Request,
     body: dict[str, Any],
-    _user=Depends(require_role("teacher", "admin")),
+    _user=Depends(require_role("admin")),
 ):
     data = service.upsert_daily_challenge_template(body)
     return ApiResponse(status=JobStatus.done, data=data, message="Daily quest template saved")

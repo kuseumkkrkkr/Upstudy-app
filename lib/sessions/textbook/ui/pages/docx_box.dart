@@ -9,6 +9,7 @@ import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart'
     as exam_page;
+import 'package:s11/sessions/tryout_solve/ui/pages/solution_view_page.dart';
 import 'package:s11/shared/business/repositories/exam_paper_store.dart';
 import 'package:s11/shared/services/storage/local_db.dart';
 import 'package:s11/shared/business/repositories/textbook_store.dart';
@@ -94,6 +95,7 @@ class _BookWidgetState extends State<BookWidget> {
   BookData? _pinnedBook;
   List<BookData> _libraryBooks = const [];
   Course? _activeCourse;
+  List<Course> _activeCourses = const [];
   List<BookmarkItem> _bookBookmarks = const [];
   ProblemBookmarkSnapshot _problemBookmarks = const ProblemBookmarkSnapshot(
     serverItems: <ProblemBookmarkItem>[],
@@ -211,7 +213,10 @@ class _BookWidgetState extends State<BookWidget> {
       final courses = await CourseService.fetchMyCourses();
       if (!mounted) return;
       if (courses.isEmpty) {
-        setState(() => _activeCourse = null);
+        setState(() {
+          _activeCourse = null;
+          _activeCourses = const [];
+        });
         return;
       }
       final sorted = List<Course>.from(courses)
@@ -220,7 +225,12 @@ class _BookWidgetState extends State<BookWidget> {
           final bd = DateTime.tryParse(b.lastAction ?? '') ?? DateTime(1970);
           return bd.compareTo(ad);
         });
-      setState(() => _activeCourse = sorted.first);
+      setState(() {
+        _activeCourse = sorted.first;
+        _activeCourses = sorted.where((course) => !course.isCompleted).toList(
+          growable: false,
+        );
+      });
     } catch (_) {}
   }
 
@@ -368,13 +378,16 @@ class _BookWidgetState extends State<BookWidget> {
             children: [
               Builder(builder: (ctx) => _buildHeader(ctx)),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildHeroSection(context),
-                      _buildBottomSection(context),
-                    ],
-                  ),
+                // 필요 변수: 본문 섹션과 남은 화면 높이. 작동 원리: 항상 스크롤
+                // 가능한 뷰포트를 사용해 데스크톱 휠·트랙패드와 모바일 드래그가
+                // 짧은 화면에서도 같은 방식으로 다음 섹션까지 이동하게 한다.
+                child: CustomScrollView(
+                  primary: true,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildHeroSection(context)),
+                    SliverToBoxAdapter(child: _buildBottomSection(context)),
+                  ],
                 ),
               ),
             ],
@@ -404,169 +417,196 @@ class _BookWidgetState extends State<BookWidget> {
   // ══════════════════════════════════════════════════════════
   //  HERO SECTION
   // ══════════════════════════════════════════════════════════
-  /// 필요한 변수는 교재·시험지·북마크 수와 최근 방문 목록이다.
-  /// 작동 원리는 HTML 책가방의 요약·최근·자료 카드 순서를 유지하고, 넓은 화면에서는 요약 정보를 한 줄로 압축하는 것이다.
+  /// 필요한 변수는 교재·시험지·북마크 수와 화면 폭이다.
+  /// 작동 원리는 중복된 책가방 제목 행만 제거하고, 자료를 여는 최근·고정 및
+  /// 보관함 진입 기능은 레퍼런스 순서대로 유지하는 것이다.
   Widget _buildHeroSection(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final isCompact = width < 980;
-    final vertical = width < 860;
+    final vertical = width < 760;
+    final horizontalPadding = vertical ? 16.0 : 54.0;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        isCompact ? 10 : 14,
-        16,
-        isCompact ? 10 : 12,
-      ),
-      child: Column(
-        children: [
-          _buildSectionCard(
-            title: '',
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                isCompact ? 20 : 30,
-                isCompact ? 20 : 28,
-                isCompact ? 20 : 30,
-                20,
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= 720;
-                  final titleBlock = Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'MY LEARNING MATERIALS',
-                        style: TextStyle(
-                          color: Colors.black45,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        '책가방',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1.8,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        '최근 자료를 이어보거나 보관된 학습 자료를 찾으세요.',
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
-                      ),
-                    ],
-                  );
-                  final stats = ValueListenableBuilder<List<ExamPaperEntry>>(
-                    valueListenable: ExamPaperStore.notifier,
-                    builder: (_, exams, __) => Row(
-                      children: [
-                        Expanded(
-                          child: _LibraryStat(value: _bookCount, label: '교재'),
-                        ),
-                        Expanded(
-                          child: _LibraryStat(
-                            value: widget.previewMode
-                                ? _examCount
-                                : exams.length,
-                            label: '시험지',
-                          ),
-                        ),
-                        Expanded(
-                          child: _LibraryStat(
-                            value: _bookBookmarkCount + _problemBookmarkCount,
-                            label: '북마크',
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (!wide) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(child: titleBlock),
-                            _buildSearchBar(isCompact: true),
-                          ],
-                        ),
-                        const SizedBox(height: 22),
-                        stats,
-                      ],
-                    );
-                  }
-                  return Row(
-                    children: [
-                      Expanded(flex: 5, child: titleBlock),
-                      Expanded(flex: 4, child: stats),
-                      const SizedBox(width: 18),
-                      _buildSearchBar(),
-                    ],
-                  );
-                },
-              ),
-            ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1440),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            vertical ? 28 : 54,
+            horizontalPadding,
+            14,
           ),
-          const SizedBox(height: 12),
-          _buildSectionCard(
-            title: '',
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-              child: Column(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildLibraryOverview(vertical: vertical),
+              SizedBox(height: vertical ? 36 : 44),
+              const Divider(height: 1, color: Color(0xFFDCDCE0)),
+              SizedBox(height: vertical ? 28 : 22),
+              _buildRecentAndPinned(vertical: vertical),
+              const SizedBox(height: 14),
+              _buildLibraryActions(vertical: vertical),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 화면 방향과 검색·마켓 이동 콜백이다.
+  /// 작동 원리는 시안처럼 제목과 설명을 왼쪽에 두고, 모바일에서는 두 행동 버튼을 아래에 전체 폭으로 쌓는 것이다.
+  Widget _buildBookbagTitle({required bool vertical}) {
+    final copy = const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _BookbagEyebrow('STUDENT LIBRARY'),
+        SizedBox(height: 10),
+        Text(
+          '책가방',
+          style: TextStyle(
+            fontSize: 38,
+            height: 1,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.9,
+          ),
+        ),
+        SizedBox(height: 18),
+        Text(
+          '교재와 시험지, 책·문제 북마크를 빠르게 열고 마지막 위치에서 이어서 학습합니다.',
+          style: TextStyle(color: Color(0xFF77777E), fontSize: 14, height: 1.7),
+        ),
+      ],
+    );
+    final actions = Flex(
+      direction: vertical ? Axis.vertical : Axis.horizontal,
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: vertical
+          ? CrossAxisAlignment.stretch
+          : CrossAxisAlignment.center,
+      children: [
+        _BookbagButton(
+          label: '전체 검색',
+          primary: true,
+          onTap: () => _showGlobalSearch(context),
+        ),
+        SizedBox(width: vertical ? 0 : 10, height: vertical ? 10 : 0),
+        _BookbagButton(
+          label: '마켓플레이스',
+          onTap: () => Navigator.of(context).pushNamed('/marketplace'),
+        ),
+      ],
+    );
+    if (vertical) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [copy, const SizedBox(height: 20), actions],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(child: copy),
+        actions,
+      ],
+    );
+  }
+
+  /// 필요한 변수는 화면 방향과 네 종류의 실제 자료 개수다.
+  /// 작동 원리는 가로 화면에서 소개와 2x2 통계를 나란히, 세로 화면에서는 같은 통계를 소개 아래에 배치하는 것이다.
+  Widget _buildLibraryOverview({required bool vertical}) {
+    final intro = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _BookbagEyebrow('ALL LEARNING MATERIALS'),
+        SizedBox(height: vertical ? 42 : 58),
+        Text(
+          '찾고, 고정하고,\n바로 이어서.',
+          style: TextStyle(
+            fontSize: vertical ? 36 : 48,
+            height: 1.32,
+            fontWeight: FontWeight.w900,
+            letterSpacing: vertical ? -2.2 : -3.0,
+          ),
+        ),
+        SizedBox(height: vertical ? 46 : 68),
+        const Text(
+          '교재 목차와 요약, 시험지 내용까지 한 번에 검색할 수 있습니다.',
+          style: TextStyle(color: Color(0xFF77777E), fontSize: 14, height: 1.7),
+        ),
+      ],
+    );
+    final metrics = ValueListenableBuilder<List<ExamPaperEntry>>(
+      valueListenable: ExamPaperStore.notifier,
+      builder: (_, exams, __) => _BookbagMetrics(
+        bookCount: _bookCount,
+        examCount: widget.previewMode ? _examCount : exams.length,
+        bookBookmarkCount: _bookBookmarkCount,
+        problemBookmarkCount: _problemBookmarkCount,
+        onTextbooks: () => _showTextbookModal(context),
+        onExams: () => _showExamModal(context),
+        onBookBookmarks: () => _showBookmarkDetailModal(isBook: true),
+        onProblemBookmarks: () => _showBookmarkDetailModal(isBook: false),
+      ),
+    );
+    if (vertical) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          intro,
+          const SizedBox(height: 18),
+          Align(alignment: Alignment.centerRight, child: metrics),
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(child: intro),
+        const SizedBox(width: 32),
+        Align(alignment: Alignment.bottomRight, child: metrics),
+      ],
+    );
+  }
+
+  /// 필요한 변수는 최근 방문·고정 자료 목록과 화면 방향이다.
+  /// 작동 원리는 데스크톱에서 두 목록을 1:1로 나누고 모바일에서 한 카드 안에 위아래로 쌓는 것이다.
+  Widget _buildRecentAndPinned({required bool vertical}) {
+    final pinnedItems = _buildPinnedItems();
+    final recent = _bigColumn(
+      label: '최근 방문',
+      items: _recentItems,
+      isPinnedCol: false,
+    );
+    final pinned = _bigColumn(
+      label: '고정됨',
+      items: pinnedItems,
+      isPinnedCol: true,
+    );
+    return _buildSectionCard(
+      title: '',
+      child: Padding(
+        padding: EdgeInsets.all(vertical ? 20 : 22),
+        child: vertical
+            ? Column(
+                children: [
+                  recent,
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 22),
+                    child: Divider(height: 1, color: Color(0xFFE0E0E3)),
+                  ),
+                  pinned,
+                ],
+              )
+            : Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'RECENT',
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.4,
-                    ),
+                  Expanded(child: recent),
+                  const SizedBox(
+                    height: 190,
+                    child: VerticalDivider(width: 44, color: Color(0xFFE0E0E3)),
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          '최근 방문',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F3F5),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFE0E0E2)),
-                        ),
-                        child: Text(
-                          '${_recentItems.length}개',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _buildBigSection(isCompact: vertical),
+                  Expanded(child: pinned),
                 ],
               ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -585,6 +625,38 @@ class _BookWidgetState extends State<BookWidget> {
 
   /// 고정된 항목들을 BigSectionItem 목록으로 변환
   List<BigSectionItem> _buildPinnedItems() {
+    if (widget.previewMode) {
+      return const [
+        BigSectionItem(
+          id: 'preview-pinned-book',
+          title: '일차함수 개념서',
+          subtitle: '교재',
+          color: Color(0xFFF5F5F7),
+          type: BigItemType.textbook,
+        ),
+        BigSectionItem(
+          id: 'preview-pinned-exam',
+          title: '함수 형성평가',
+          subtitle: '시험지',
+          color: Color(0xFFF5F5F7),
+          type: BigItemType.exam,
+        ),
+        BigSectionItem(
+          id: 'preview-pinned-bookmark',
+          title: '기울기 핵심',
+          subtitle: '책 북마크',
+          color: Color(0xFFF5F5F7),
+          type: BigItemType.bookBookmark,
+        ),
+        BigSectionItem(
+          id: 'preview-pinned-problem',
+          title: '문제 1',
+          subtitle: '문제 북마크',
+          color: Color(0xFFF5F5F7),
+          type: BigItemType.problemBookmark,
+        ),
+      ];
+    }
     final items = <BigSectionItem>[];
 
     // 고정된 교재
@@ -665,98 +737,112 @@ class _BookWidgetState extends State<BookWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            color: const Color(0xFF66666C),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.8,
+                ),
+              ),
+            ),
+            _BookbagCountBadge(
+              label: isPinnedCol ? '${items.length}개' : '최대 4개',
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
         if (items.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              '아직 없어요',
-              style: TextStyle(color: const Color(0xFF77777D), fontSize: 13),
+          const SizedBox(
+            height: 126,
+            child: Center(
+              child: Text(
+                '아직 없어요',
+                style: TextStyle(color: Color(0xFF77777D), fontSize: 13),
+              ),
             ),
           )
         else
-          ...items
-              .take(4)
-              .map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 7),
-                  child: _bigCard(item: item, showPin: isPinnedCol),
-                ),
-              ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (constraints.maxWidth - 14) / 2;
+              return Wrap(
+                spacing: 14,
+                runSpacing: 0,
+                children: items
+                    .take(4)
+                    .map(
+                      (item) => SizedBox(
+                        width: itemWidth,
+                        child: _bigCard(item: item, showPin: isPinnedCol),
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
       ],
     );
   }
 
+  /// 필요한 변수는 자료 항목과 고정 표시 여부다.
+  /// 작동 원리는 시안의 작은 아이콘·제목·종류·고정 마름모를 한 행에 배치하고 누르면 실제 자료를 연다.
   Widget _bigCard({required BigSectionItem item, required bool showPin}) {
     final icon = _bigItemIcon(item.type);
-    return GestureDetector(
+    return InkWell(
       onTap: () => _openBigItem(item),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: Color(0xFFE0E0E2))),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 44,
-              decoration: BoxDecoration(
-                color: item.color,
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: Icon(icon, color: Colors.white, size: 17),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _LatexLine(
-                    item.title,
-                    style: const TextStyle(
-                      color: Color(0xFF1F2E27),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  _LatexLine(
-                    item.subtitle,
-                    style: TextStyle(
-                      color: const Color(0xFF707075),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (showPin) ...[
-              const SizedBox(width: 6),
+      child: SizedBox(
+        height: 72,
+        child: Container(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFE0E0E2))),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          child: Row(
+            children: [
               Container(
-                width: 7,
-                height: 7,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: BookWidget.brightGreen,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFD4D4D8),
-                    width: 0.6,
-                  ),
+                  color: const Color(0xFFF7F7F9),
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: const Color(0xFFDDDDE1)),
+                ),
+                child: Icon(icon, color: Colors.black, size: 19),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _LatexLine(
+                      item.title,
+                      style: const TextStyle(
+                        color: Color(0xFF171719),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    _LatexLine(
+                      item.subtitle,
+                      style: TextStyle(
+                        color: const Color(0xFF707075),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              if (showPin) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.diamond, size: 9, color: Colors.black),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -797,83 +883,193 @@ class _BookWidgetState extends State<BookWidget> {
   // ══════════════════════════════════════════════════════════
   //  BOTTOM SECTION
   // ══════════════════════════════════════════════════════════
-  /// 필요한 변수는 교재·시험지·책 북마크·문제 북마크 개수와 펼침 상태다.
-  /// 작동 원리는 HTML의 MY LIBRARY 단일 카드에서 네 자료 종류를 행으로 보여주고 선택한 종류만 미리보기를 펼치는 것이다.
-  Widget _buildBottomSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-      child: Column(
-        children: [
-          _buildSectionCard(
-            title: '',
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+  /// 필요한 변수는 화면 방향과 네 자료 보관함 열기 콜백이다.
+  /// 작동 원리는 데스크톱에서는 네 칸, 모바일에서는 네 행으로 자료별 설명과 진입 버튼을 배치하는 것이다.
+  Widget _buildLibraryActions({required bool vertical}) {
+    final actions = <Widget>[
+      _BookbagLibraryAction(
+        icon: Icons.menu_book_outlined,
+        title: '교재보기',
+        description: '제목·태그 검색, 교재 상세, 최근 읽기와 고정',
+        buttonLabel: '보관된 교재',
+        onTap: () => _showTextbookModal(context),
+      ),
+      _BookbagLibraryAction(
+        icon: Icons.description_outlined,
+        title: '시험지보기',
+        description: '시험지 검색, 응시 상태, 이어풀기와 고정',
+        buttonLabel: '보관된 시험지',
+        onTap: () => _showExamModal(context),
+      ),
+      _BookbagLibraryAction(
+        icon: Icons.bookmark,
+        title: '책 북마크',
+        description: '교재 장·절 위치 검색, 상세 보기와 고정',
+        buttonLabel: '책 북마크',
+        onTap: () => _showBookmarkDetailModal(isBook: true),
+      ),
+      _BookbagLibraryAction(
+        icon: Icons.edit_outlined,
+        title: '문제 북마크',
+        description: '서버·로컬 문항 병합, 출처 검색과 고정',
+        buttonLabel: '문제 북마크',
+        onTap: () => _showBookmarkDetailModal(isBook: false),
+      ),
+    ];
+    return _buildSectionCard(
+      title: '',
+      child: vertical
+          ? Column(
+              children: [
+                for (var index = 0; index < actions.length; index++) ...[
+                  actions[index],
+                  if (index < actions.length - 1)
+                    const Divider(height: 1, color: Color(0xFFE0E0E3)),
+                ],
+              ],
+            )
+          : IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'MY LIBRARY',
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    '내 자료',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 14),
-                  _LibraryLinkRow(
-                    icon: Icons.menu_book_outlined,
-                    label: '교재',
-                    detail: '최근 읽은 교재 ${_libraryBooks.take(2).length}개',
-                    count: _bookCount,
-                    onTap: () => _toggleLibrarySection('books'),
-                  ),
-                  if (_expandedLibrarySection == 'books')
-                    _buildCompactTextbookPreview(),
-                  ValueListenableBuilder<List<ExamPaperEntry>>(
-                    valueListenable: ExamPaperStore.notifier,
-                    builder: (_, exams, __) => _LibraryLinkRow(
-                      icon: Icons.description_outlined,
-                      label: '시험지',
-                      detail: '미응시 시험지 ${exams.take(2).length}개',
-                      count: widget.previewMode ? _examCount : exams.length,
-                      onTap: () => _toggleLibrarySection('exams'),
-                    ),
-                  ),
-                  if (_expandedLibrarySection == 'exams')
-                    _buildCompactExamPreview(),
-                  _LibraryLinkRow(
-                    icon: Icons.bookmark_outline_rounded,
-                    label: '책 북마크',
-                    detail: '고정된 위치 ${_pinnedBookBookmarkId == null ? 0 : 1}개',
-                    count: _bookBookmarkCount,
-                    onTap: () => _toggleLibrarySection('bookmarks'),
-                  ),
-                  if (_expandedLibrarySection == 'bookmarks')
-                    _buildBookmarkPanelContent(isBook: true),
-                  _LibraryLinkRow(
-                    icon: Icons.edit_outlined,
-                    label: '문제 북마크',
-                    detail: '저장된 문제 모음',
-                    count: _problemBookmarkCount,
-                    onTap: () => _toggleLibrarySection('problems'),
-                  ),
-                  if (_expandedLibrarySection == 'problems')
-                    _buildBookmarkPanelContent(isBook: false),
+                  for (var index = 0; index < actions.length; index++) ...[
+                    Expanded(child: actions[index]),
+                    if (index < actions.length - 1)
+                      const VerticalDivider(width: 1, color: Color(0xFFE0E0E3)),
+                  ],
                 ],
               ),
             ),
+    );
+  }
+
+  /// 필요한 변수는 진행 중인 코스와 화면 폭이다.
+  /// 작동 원리는 책가방 자료 카드 아래에 현재 코스·추천 코스·새 코스 찾기를 가로 또는 세로 목록으로 표시하는 것이다.
+  Widget _buildBottomSection(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final vertical = width < 760;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1440),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            vertical ? 16 : 54,
+            14,
+            vertical ? 16 : 54,
+            44,
           ),
-          const SizedBox(height: 10),
-          _buildSectionCard(title: '진행중인 코스', child: _buildCourseSection()),
-        ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Divider(height: 1, color: Color(0xFFDCDCE0)),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _BookbagEyebrow('ACTIVE COURSES'),
+                        SizedBox(height: 16),
+                        Text(
+                          '진행 중인 코스',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _BookbagButton(
+                    label: '코스 전체 보기',
+                    onTap: () => Navigator.of(context).pushNamed('/courses'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              _buildCourseStrip(vertical: vertical),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  /// 필요한 변수는 서버에서 조회한 미완료 코스 목록과 화면 방향이다.
+  /// 작동 원리는 최근 학습 순서의 실제 코스 최대 두 개를 표시하고, 데이터가 없으면 빈 상태와 탐색 동작만 제공하는 것이다.
+  Widget _buildCourseStrip({required bool vertical}) {
+    final items = <Widget>[
+      if (_activeCourses.isEmpty)
+        _BookbagCourseItem(
+          title: '진행 중인 코스가 없습니다',
+          detail: '나에게 맞는 코스를 찾아 학습을 시작하세요',
+          icon: Icons.school_outlined,
+          onTap: () => Navigator.of(context).pushNamed('/courses'),
+        )
+      else
+        for (final course in _activeCourses.take(2))
+          _BookbagCourseItem(
+            title: course.title,
+            detail: _courseProgressDetail(course),
+            icon: Icons.play_arrow_rounded,
+            onTap: () => Navigator.of(context).pushNamed('/courses'),
+          ),
+      _BookbagCourseItem(
+        title: '새 코스 찾기',
+        detail: 'OVR에 맞는 코스 탐색',
+        icon: Icons.add_rounded,
+        onTap: () => Navigator.of(context).pushNamed('/courses'),
+      ),
+    ];
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: Color(0xFFDCDCE0)),
+          bottom: BorderSide(color: Color(0xFFDCDCE0)),
+        ),
+      ),
+      child: vertical
+          ? Column(
+              children: [
+                for (var index = 0; index < items.length; index++) ...[
+                  items[index],
+                  if (index < items.length - 1)
+                    const Divider(height: 1, color: Color(0xFFE0E0E3)),
+                ],
+              ],
+            )
+          : Row(
+              children: [
+                for (var index = 0; index < items.length; index++) ...[
+                  Expanded(child: items[index]),
+                  if (index < items.length - 1)
+                    const SizedBox(
+                      height: 86,
+                      child: VerticalDivider(
+                        width: 1,
+                        color: Color(0xFFE0E0E3),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  /// 필요한 변수는 코스의 진행률과 유닛 상태다.
+  /// 작동 원리는 진행률을 서버 값에서 계산하고 활성 유닛이 있으면 다음 학습 항목을 함께 안내하는 것이다.
+  String _courseProgressDetail(Course course) {
+    final progress = (course.progress.clamp(0.0, 1.0) * 100).round();
+    final nextUnit = course.units.cast<CourseUnit?>().firstWhere(
+      (unit) => unit?.status == CourseUnitStatus.active,
+      orElse: () => null,
+    );
+    if (nextUnit == null || nextUnit.title.trim().isEmpty) {
+      return '진행률 $progress%';
+    }
+    return '진행률 $progress% · 다음: ${nextUnit.title}';
   }
 
   /// 필요한 변수는 선택한 자료 구역 ID와 현재 펼침 ID다.
@@ -1406,6 +1602,15 @@ class _BookWidgetState extends State<BookWidget> {
               for (final id in ids) {
                 await ExamPaperStore.remove(id);
               }
+            } else {
+              for (final id in ids) {
+                await TextbookStore.removeFromLibrary(id);
+                if (_pinnedBook?.id == id) {
+                  await LocalDb.instance.setString(_pinnedBookKey, '');
+                  _pinnedBook = null;
+                }
+              }
+              await _loadLibraryBooks();
             }
             selected.clear();
             editMode = false;
@@ -1417,7 +1622,11 @@ class _BookWidgetState extends State<BookWidget> {
               return ValueListenableBuilder<List<ExamPaperEntry>>(
                 valueListenable: ExamPaperStore.notifier,
                 builder: (context, items, _) {
-                  final ordered = List<ExamPaperEntry>.from(items);
+                  final query = _bookSearchQuery.value.trim().toLowerCase();
+                  final ordered = items.where((entry) {
+                    if (query.isEmpty) return true;
+                    return _examSearchText(entry).toLowerCase().contains(query);
+                  }).toList();
                   if (_pinnedExamId != null) {
                     ordered.sort((a, b) {
                       if (a.examId == _pinnedExamId) return -1;
@@ -1627,14 +1836,13 @@ class _BookWidgetState extends State<BookWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!isExam) ...[
-                    const SizedBox(height: 10),
-                    _searchField(
-                      controller: _bookSearchController,
-                      hintText: '교재 제목 또는 태그 검색',
-                      onChanged: (v) => _bookSearchQuery.value = v.trim(),
-                    ),
-                  ],
+                  const SizedBox(height: 10),
+                  _searchField(
+                    controller: _bookSearchController,
+                    hintText: isExam ? '시험지 내용 또는 유형 검색' : '교재 제목 또는 태그 검색',
+                    onChanged: (v) =>
+                        setState(() => _bookSearchQuery.value = v.trim()),
+                  ),
                   const SizedBox(height: 12),
                   Expanded(child: listWidget()),
                 ],
@@ -1647,6 +1855,7 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   void _showBookmarkDetailModal({required bool isBook}) {
+    final rootContext = context;
     final rawItems = isBook
         ? _bookBookmarks
               .map(
@@ -1655,6 +1864,7 @@ class _BookWidgetState extends State<BookWidget> {
                   'title': e.entryTitle,
                   'sub': e.bookTitle,
                   'created': e.createdAt,
+                  'bookmark': e,
                 },
               )
               .toList()
@@ -1671,9 +1881,12 @@ class _BookWidgetState extends State<BookWidget> {
                       : entry.value.source,
                   'search': entry.value.title,
                   'created': entry.value.createdAt,
+                  'bookmark': entry.value,
                 },
               )
               .toList();
+    final selected = <String>{};
+    var editMode = false;
 
     showIos26Modal<void>(
       context: context,
@@ -1696,6 +1909,29 @@ class _BookWidgetState extends State<BookWidget> {
                     .contains(q);
               }).toList();
 
+              Future<void> deleteSelected() async {
+                for (final id in selected) {
+                  if (isBook) {
+                    await BookmarkStore.remove(id);
+                    if (_pinnedBookBookmarkId == id) {
+                      await _pinBookmark(isBook: true, id: null);
+                    }
+                  } else {
+                    await ProblemBookmarkStore.remove(id);
+                    if (_pinnedProblemBookmarkId == id) {
+                      await _pinBookmark(isBook: false, id: null);
+                    }
+                  }
+                }
+                await _loadBookmarks();
+                rawItems.removeWhere(
+                  (item) => selected.contains(item['id']?.toString()),
+                );
+                selected.clear();
+                editMode = false;
+                setModalState(() {});
+              }
+
               Widget listWidget() {
                 if (visibleItems.isEmpty) {
                   return const Center(
@@ -1714,18 +1950,32 @@ class _BookWidgetState extends State<BookWidget> {
                     final id = item['id']?.toString();
                     final isPinned =
                         id != null && id.isNotEmpty && id == pinnedId;
+                    final checked = id != null && selected.contains(id);
 
                     return ListTile(
                       minVerticalPadding: 10,
-                      leading: CircleAvatar(
-                        backgroundColor: BookWidget.darkGreen,
-                        child: Icon(
-                          isBook
-                              ? Icons.bookmark_outline_rounded
-                              : Icons.quiz_outlined,
-                          color: Colors.white,
-                        ),
-                      ),
+                      leading: editMode
+                          ? Checkbox(
+                              value: checked,
+                              onChanged: id == null
+                                  ? null
+                                  : (value) => setModalState(() {
+                                      if (value == true) {
+                                        selected.add(id);
+                                      } else {
+                                        selected.remove(id);
+                                      }
+                                    }),
+                            )
+                          : CircleAvatar(
+                              backgroundColor: BookWidget.darkGreen,
+                              child: Icon(
+                                isBook
+                                    ? Icons.bookmark_outline_rounded
+                                    : Icons.quiz_outlined,
+                                color: Colors.white,
+                              ),
+                            ),
                       title: _LatexLine(
                         item['title']?.toString() ?? '-',
                         style: const TextStyle(
@@ -1756,24 +2006,63 @@ class _BookWidgetState extends State<BookWidget> {
                           ),
                         ],
                       ),
-                      trailing: IconButton(
-                        tooltip: isPinned ? '고정해제' : '고정',
-                        onPressed: id == null || id.isEmpty
-                            ? null
-                            : () async {
-                                await _pinBookmark(
-                                  isBook: isBook,
-                                  id: isPinned ? null : id,
+                      trailing: editMode
+                          ? null
+                          : IconButton(
+                              tooltip: isPinned ? '고정해제' : '고정',
+                              onPressed: id == null || id.isEmpty
+                                  ? null
+                                  : () async {
+                                      await _pinBookmark(
+                                        isBook: isBook,
+                                        id: isPinned ? null : id,
+                                      );
+                                      if (!mounted) return;
+                                      setModalState(() {});
+                                    },
+                              icon: Icon(
+                                isPinned
+                                    ? Icons.push_pin
+                                    : Icons.push_pin_outlined,
+                                color: BookWidget.primaryGreen,
+                                size: 20,
+                              ),
+                            ),
+                      onTap: editMode || id == null
+                          ? null
+                          : () {
+                              final bookmark = item['bookmark'];
+                              Navigator.of(dialogContext).pop();
+                              if (isBook && bookmark is BookmarkItem) {
+                                final book = _libraryBooks
+                                    .where(
+                                      (entry) => entry.id == bookmark.bookId,
+                                    )
+                                    .firstOrNull;
+                                if (book != null) {
+                                  Navigator.of(rootContext).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => book_page.BookWidget(
+                                        book: book,
+                                        initialEntryIndex: bookmark.entryIndex,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } else if (bookmark is ProblemBookmarkItem) {
+                                Navigator.of(rootContext).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => SolutionViewPage(
+                                      initialQuestId: bookmark.questId,
+                                      initialTextQuery: bookmark.questId == null
+                                          ? bookmark.title
+                                          : null,
+                                      autoSearch: true,
+                                    ),
+                                  ),
                                 );
-                                if (!mounted) return;
-                                setModalState(() {});
-                              },
-                        icon: Icon(
-                          isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                          color: BookWidget.primaryGreen,
-                          size: 20,
-                        ),
-                      ),
+                              }
+                            },
                     );
                   },
                 );
@@ -1782,6 +2071,23 @@ class _BookWidgetState extends State<BookWidget> {
               return Ios26ModalShell(
                 title: isBook ? '책 북마크' : '문제 북마크',
                 onClose: () => Navigator.of(dialogContext).pop(),
+                trailing: IconButton(
+                  tooltip: selected.isNotEmpty
+                      ? '선택 삭제'
+                      : (editMode ? '편집 종료' : '편집'),
+                  icon: Icon(
+                    selected.isNotEmpty
+                        ? Icons.delete_outline
+                        : Icons.edit_outlined,
+                    color: BookWidget.primaryGreen,
+                  ),
+                  onPressed: selected.isNotEmpty
+                      ? deleteSelected
+                      : () => setModalState(() {
+                          editMode = !editMode;
+                          if (!editMode) selected.clear();
+                        }),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -2285,6 +2591,294 @@ class _DocGhostCard extends StatelessWidget {
 }
 
 enum _TrackNode { done, current, next }
+
+class _BookbagEyebrow extends StatelessWidget {
+  const _BookbagEyebrow(this.label);
+
+  final String label;
+
+  /// 필요한 변수는 영문 구역 이름이다.
+  /// 작동 원리는 책가방 시안의 작은 대문자 구역 표식을 동일한 자간과 농도로 출력하는 것이다.
+  @override
+  Widget build(BuildContext context) => Text(
+    label,
+    style: const TextStyle(
+      color: Color(0xFF77777E),
+      fontSize: 10,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 1.5,
+    ),
+  );
+}
+
+class _BookbagButton extends StatelessWidget {
+  const _BookbagButton({
+    required this.label,
+    required this.onTap,
+    this.primary = false,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+  final bool primary;
+
+  /// 필요한 변수는 버튼 문구·강조 상태·실행 콜백이다.
+  /// 작동 원리는 검정 또는 옅은 회색 캡슐 버튼을 만들고 모든 화면 크기에서 최소 터치 높이를 보장하는 것이다.
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 46,
+    child: Material(
+      color: primary ? Colors.black : const Color(0xFFF7F7F9),
+      shape: StadiumBorder(
+        side: BorderSide(
+          color: primary ? Colors.black : const Color(0xFFDCDCE0),
+        ),
+      ),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: primary ? Colors.white : Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _BookbagMetrics extends StatelessWidget {
+  const _BookbagMetrics({
+    required this.bookCount,
+    required this.examCount,
+    required this.bookBookmarkCount,
+    required this.problemBookmarkCount,
+    required this.onTextbooks,
+    required this.onExams,
+    required this.onBookBookmarks,
+    required this.onProblemBookmarks,
+  });
+
+  final int bookCount;
+  final int examCount;
+  final int bookBookmarkCount;
+  final int problemBookmarkCount;
+  final VoidCallback onTextbooks;
+  final VoidCallback onExams;
+  final VoidCallback onBookBookmarks;
+  final VoidCallback onProblemBookmarks;
+
+  /// 필요한 변수는 네 자료 종류의 개수다.
+  /// 작동 원리는 중요도가 낮은 통계를 우측 구석의 작은 보조 텍스트로만 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: 10,
+    runSpacing: 4,
+    alignment: WrapAlignment.end,
+    children: [
+      _BookbagMetricText(label: '교재', value: bookCount, onTap: onTextbooks),
+      _BookbagMetricText(label: '시험지', value: examCount, onTap: onExams),
+      _BookbagMetricText(
+        label: '책 북마크',
+        value: bookBookmarkCount,
+        onTap: onBookBookmarks,
+      ),
+      _BookbagMetricText(
+        label: '문제 북마크',
+        value: problemBookmarkCount,
+        onTap: onProblemBookmarks,
+      ),
+    ],
+  );
+}
+
+class _BookbagMetricText extends StatelessWidget {
+  const _BookbagMetricText({
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String label;
+  final int value;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 자료 종류 이름과 해당 개수다.
+  /// 작동 원리는 한 항목을 작은 회색 보조 텍스트로 표시해 본문 시선을 방해하지 않는 것이다.
+  @override
+  Widget build(BuildContext context) => InkWell(
+    borderRadius: BorderRadius.circular(6),
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
+      child: Text(
+        '$label $value',
+        style: const TextStyle(
+          color: Color(0xFF8A8A91),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ),
+  );
+}
+
+class _BookbagCountBadge extends StatelessWidget {
+  const _BookbagCountBadge({required this.label});
+
+  final String label;
+
+  /// 필요한 변수는 목록 개수 문구다.
+  /// 작동 원리는 최근 방문과 고정 목록 제목 오른쪽에 작은 회색 캡슐을 표시하는 것이다.
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF7F7F9),
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: const Color(0xFFDCDCE0)),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: Color(0xFF66666D),
+        fontSize: 9,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
+}
+
+class _BookbagLibraryAction extends StatelessWidget {
+  const _BookbagLibraryAction({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.buttonLabel,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final String buttonLabel;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 자료 종류의 아이콘·제목·설명·버튼 문구와 열기 콜백이다.
+  /// 작동 원리는 시안의 네 자료 진입 칸을 만들고 하단 버튼으로 실제 보관함을 연다.
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.all(22),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F7F9),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: const Color(0xFFDCDCE0)),
+            ),
+            child: Icon(icon, size: 21, color: Colors.black),
+          ),
+        ),
+        const SizedBox(height: 38),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          description,
+          style: const TextStyle(
+            color: Color(0xFF77777E),
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _BookbagButton(label: buttonLabel, onTap: onTap),
+      ],
+    ),
+  );
+}
+
+class _BookbagCourseItem extends StatelessWidget {
+  const _BookbagCourseItem({
+    required this.title,
+    required this.detail,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final String detail;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 코스 제목·진행 설명·아이콘과 이동 콜백이다.
+  /// 작동 원리는 코스 스트립 한 칸을 만들고 누르면 코스 목록으로 이동한다.
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F7F9),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFDCDCE0)),
+            ),
+            child: Icon(icon, color: Colors.black, size: 23),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF77777E),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, size: 17, color: Colors.black54),
+        ],
+      ),
+    ),
+  );
+}
 
 class _LibraryStat extends StatelessWidget {
   const _LibraryStat({required this.value, required this.label});

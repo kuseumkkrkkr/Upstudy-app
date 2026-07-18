@@ -1,16 +1,15 @@
-import sqlite3
+from infra.db import postgres_compat as db
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from auth import init_user_db
-from storage.storage import DB_PATH
 
 
 def init_social_db() -> None:
     """Create social tables if missing (idempotent)."""
     init_user_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -47,8 +46,8 @@ def init_social_db() -> None:
         """
     )
     try:
-        cur.execute("ALTER TABLE messages ADD COLUMN is_mine INTEGER NOT NULL DEFAULT 0")
-    except sqlite3.OperationalError:
+        cur.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_mine INTEGER NOT NULL DEFAULT 0")
+    except db.OperationalError:
         pass
     cur.execute(
         """
@@ -82,7 +81,7 @@ def search_users_by_username(
     if not query:
         return []
     init_user_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     like_value = f"%{query.lower()}%"
     if exclude_user_id:
@@ -128,7 +127,7 @@ def get_user_by_username(username: str) -> Optional[Dict[str, Optional[str]]]:
     if not username:
         return None
     init_user_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -157,7 +156,7 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Optional[str]]]:
     if not user_id:
         return None
     init_user_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -183,7 +182,7 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Optional[str]]]:
 
 def get_friends(user_id: str) -> List[Dict[str, Optional[str]]]:
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -211,7 +210,7 @@ def get_friends(user_id: str) -> List[Dict[str, Optional[str]]]:
 
 
 def are_friends(user_id: str, friend_id: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         "SELECT 1 FROM friends WHERE user_id = ? AND friend_id = ?",
@@ -226,7 +225,7 @@ def get_friend_request_by_id(request_id: str) -> Optional[Dict[str, str]]:
     if not request_id:
         return None
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -252,7 +251,7 @@ def get_friend_request_by_id(request_id: str) -> Optional[Dict[str, str]]:
 
 def list_friend_requests_for_user(user_id: str) -> List[Dict[str, str]]:
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -287,7 +286,7 @@ def create_friend_request(
     if from_user_id == to_user_id:
         raise ValueError("cannot request yourself")
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     request_id = str(uuid.uuid4())
     created_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
@@ -314,7 +313,7 @@ def create_friend_request(
 
 def set_friend_request_status(request_id: str, status: str) -> Optional[Dict[str, str]]:
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -334,7 +333,7 @@ def add_friend(user_id: str, friend_id: str) -> None:
         raise ValueError("cannot friend yourself")
     init_social_db()
     created_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     try:
         cur.execute(
@@ -358,7 +357,7 @@ def add_friend(user_id: str, friend_id: str) -> None:
 
 def remove_friend(user_id: str, friend_id: str) -> None:
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     try:
         cur.execute(
@@ -378,7 +377,7 @@ def get_message_by_id(message_id: str) -> Optional[Dict[str, str]]:
     if not message_id:
         return None
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     cur.execute(
         """
@@ -404,7 +403,7 @@ def get_message_by_id(message_id: str) -> Optional[Dict[str, str]]:
 
 def delete_conversation(user_id: str, peer_id: str) -> None:
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     try:
         cur.execute(
@@ -428,7 +427,7 @@ def list_messages(
     before_message_id: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
 
     created_cutoff: Optional[str] = None
@@ -477,7 +476,7 @@ def append_message(
     max_total: int = 2000,
 ) -> None:
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
     try:
         cur.execute(
@@ -512,7 +511,7 @@ def list_conversations(
 ) -> List[Dict[str, str]]:
     """Return latest message per peer for this user, ordered by recency."""
     init_social_db()
-    conn = sqlite3.connect(DB_PATH)
+    conn = db.connect()
     cur = conn.cursor()
 
     cutoff_clause = ""

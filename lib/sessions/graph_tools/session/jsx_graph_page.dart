@@ -47,6 +47,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   bool _lockViewport = false;
   bool _degreeMode = false;
   bool _catalogDialogOpen = false;
+  bool _drawerOpen = false;
   bool _hasActiveExampleContext = true;
   String? _editorMessage;
 
@@ -54,7 +55,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   void initState() {
     super.initState();
     _selectedExample = aiFlowGraphExamples.first;
-    _loadExample(_selectedExample);
+    _startBlankGraph();
   }
 
   @override
@@ -63,6 +64,56 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       draft.dispose();
     }
     super.dispose();
+  }
+
+  /// 필요한 변수는 다음 수식 ID와 기본 그래프 설정이다.
+  /// 작동 원리는 교과 예제를 자동 적용하지 않고 빈 함수식 하나만 만들어
+  /// 사용자가 직접 그래프를 그리는 독립 작업 공간으로 시작하게 한다.
+  void _startBlankGraph() {
+    for (final draft in _drafts) {
+      draft.dispose();
+    }
+
+    _selectedExample = aiFlowGraphExamples.first;
+    final nextId = _nextDraftId++;
+    _drafts
+      ..clear()
+      ..add(
+        _GraphItemDraft(
+          localId: nextId,
+          itemId: 'custom-$nextId',
+          type: AiFlowGraphItemType.function,
+          label: '함수 1',
+          colorHex: _colorToHex(_kPalette[nextId % _kPalette.length]),
+          enabled: true,
+          expressionController: TextEditingController(),
+        ),
+      );
+    _parameters.clear();
+    _hasActiveExampleContext = false;
+    _showAxes = true;
+    _showGrid = true;
+    _lockViewport = false;
+    _degreeMode = false;
+    _editorMessage = null;
+  }
+
+  /// 필요한 변수는 현재 그래프 초안과 빈 그래프 초기화 함수다.
+  /// 작동 원리는 사용자가 새 그래프를 선택하면 기존 입력을 정리하고 빈 좌표평면으로 되돌린다.
+  void _resetToBlankGraph() {
+    setState(_startBlankGraph);
+  }
+
+  /// 필요한 변수는 Scaffold가 전달하는 전체 메뉴 열림 상태다.
+  /// 작동 원리는 메뉴가 열리는 동안 플랫폼 웹뷰를 트리에서 제외해
+  /// 그래프 레이어가 드로어의 터치를 가로채지 않게 하는 것이다.
+  void _handleDrawerChanged(bool isOpened) {
+    if (!mounted || _drawerOpen == isOpened) {
+      return;
+    }
+    setState(() {
+      _drawerOpen = isOpened;
+    });
   }
 
   void _loadExample(AiFlowGraphExample example) {
@@ -223,6 +274,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       key: _scaffoldKey,
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
+      onDrawerChanged: _handleDrawerChanged,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
@@ -237,7 +289,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                     builder: (context, constraints) {
                       final compact = constraints.maxWidth < 1120;
                       final graphPanel = _buildGraphPanel(isLinux: isLinux);
-                      final editorPanel = _buildEditorPanel(compact: compact);
+                      final editorPanel = _buildEditorPanel();
 
                       if (compact) {
                         return ListView(
@@ -254,7 +306,11 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                         children: [
                           Expanded(child: graphPanel),
                           const SizedBox(width: 14),
-                          SizedBox(width: 400, child: editorPanel),
+                          SizedBox(
+                            width: 400,
+                            height: constraints.maxHeight,
+                            child: editorPanel,
+                          ),
                         ],
                       );
                     },
@@ -268,44 +324,68 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     );
   }
 
-  /// 필요한 변수는 현재 Scaffold·Navigator와 예제 선택 콜백이다.
-  /// 작동 원리는 HTML처럼 전역 앱 바와 그래프 전용 뒤로가기·예제 바를 두 단으로 분리하는 것이다.
+  /// 필요한 변수는 현재 Scaffold·Navigator와 새 그래프·예제 콜백이다.
+  /// 작동 원리는 뒤로가기·전체 메뉴·작업 버튼을 공용 앱바 한 줄에 배치해
+  /// 그래프 전용 제목 바가 본문 공간을 차지하지 않게 하는 것이다.
   Widget _buildHeader() {
-    return Column(
-      children: [
-        Ios26TopBar(
-          brandColor: Colors.black,
-          showLevelIndicator: false,
-          onMenu: () => _scaffoldKey.currentState?.openDrawer(),
-          items: const [],
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 14, 12, 0),
-          child: _SurfaceCard(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                IconButton(
-                  tooltip: '그래프 닫기',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(Icons.chevron_left_rounded),
-                ),
-                const SizedBox(width: 4),
-                const Text(
-                  '그래프 그리기',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                ),
-                const Spacer(),
-                OutlinedButton.icon(
-                  onPressed: _showInfoDialog,
-                  icon: const Icon(Icons.info_outline_rounded, size: 17),
-                  label: const Text('예제'),
-                ),
-              ],
-            ),
+    final compact = MediaQuery.sizeOf(context).width < 720;
+    return Ios26TopBar(
+      brandColor: Colors.black,
+      showLevelIndicator: false,
+      showUtilityActions: false,
+      onBack: () => Navigator.of(context).maybePop(),
+      onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+      showMenuWithBack: true,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildAppBarAction(
+            compact: compact,
+            tooltip: '새 그래프',
+            icon: Icons.add_chart_rounded,
+            onPressed: _resetToBlankGraph,
           ),
-        ),
-      ],
+          const SizedBox(width: 6),
+          _buildAppBarAction(
+            compact: compact,
+            tooltip: '예제 불러오기',
+            icon: Icons.folder_open_outlined,
+            onPressed: _showInfoDialog,
+            outlined: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 필요한 변수는 화면 밀도·레이블·아이콘·콜백이다.
+  /// 작동 원리는 넓은 화면에서는 텍스트 버튼을, 좁은 화면에서는 동일한 도구 설명의
+  /// 아이콘 버튼을 보여 앱바가 넘치지 않게 하는 것이다.
+  Widget _buildAppBarAction({
+    required bool compact,
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool outlined = false,
+  }) {
+    if (compact) {
+      return IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 19),
+      );
+    }
+    if (outlined) {
+      return OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17),
+        label: Text(tooltip),
+      );
+    }
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 17),
+      label: Text(tooltip),
     );
   }
 
@@ -314,240 +394,188 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       padding: EdgeInsets.zero,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(26),
-        child: Column(
-          children: [
-            Container(
-              height: 60,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(bottom: BorderSide(color: _kBorder)),
-              ),
-              child: Row(
-                children: [
-                  const Text(
-                    '좌표평면',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                  ),
-                  const Spacer(),
-                  for (final icon in const [
-                    Icons.add,
-                    Icons.remove,
-                    Icons.home_outlined,
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(left: 7),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF6F6F8),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _kBorder),
-                        ),
-                        child: Icon(icon, size: 20),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: DecoratedBox(
-                decoration: const BoxDecoration(color: Color(0xFFFAFAFB)),
-                child: _catalogDialogOpen
-                    ? const _GraphHiddenWhileDialogOpen()
-                    : isLinux
-                    ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
-                    : widget.embedEnabled
-                    ? buildJsxGraphEmbed(_buildDocument())
-                    : const _GraphEmbedDisabledForTesting(),
-              ),
-            ),
-          ],
+        child: DecoratedBox(
+          decoration: const BoxDecoration(color: Color(0xFFFAFAFB)),
+          child: _catalogDialogOpen
+              ? const _GraphHiddenWhileDialogOpen()
+              : _drawerOpen
+              ? const SizedBox.expand(
+                  key: ValueKey('graph-embed-suspended-for-drawer'),
+                )
+              : isLinux
+              ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
+              : widget.embedEnabled
+              ? buildJsxGraphEmbed(
+                  _buildDocument(),
+                  showParameterControls: false,
+                  directManipulationMode: true,
+                )
+              : const _GraphEmbedDisabledForTesting(),
         ),
       ),
     );
   }
 
-  Widget _buildEditorPanel({required bool compact}) {
+  /// 필요한 변수는 현재 예제, 실습 매개변수, 수식 초안과 편집 옵션이다.
+  /// 작동 원리는 편집 패널의 모든 내용을 하나의 스크롤 영역에 배치해 수식이 늘어나도
+  /// 상단 정보부터 갱신 버튼까지 자연스럽게 이어서 탐색하도록 하는 것이다.
+  Widget _buildEditorPanel() {
     return _SurfaceCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_hasActiveExampleContext) ...[
-            Text(
-              _selectedExample.subject,
-              style: const TextStyle(
-                color: _kGreen,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _selectedExample.title,
-              style: const TextStyle(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '수식',
+              style: TextStyle(
                 color: _kGreen,
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              _selectedExample.summary,
-              style: const TextStyle(
-                color: _kMuted,
-                fontSize: 12.5,
-                height: 1.45,
-              ),
+            const Text(
+              '함수식을 직접 입력하고 좌표평면에서 결과를 확인하세요.',
+              style: TextStyle(color: _kMuted, fontSize: 12.5, height: 1.45),
             ),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _kSurfaceTint,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _kBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '현재 그래프 구성',
-                    style: TextStyle(
-                      color: _kGreen,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
+            if (_hasActiveExampleContext) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _kSurfaceTint,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _kBorder),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lightbulb_outline_rounded, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '예제에서 시작: ${_selectedExample.title}',
+                        style: const TextStyle(
+                          color: _kGreen,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _selectedExample.unit,
-                    style: const TextStyle(
-                      color: _kMuted,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
+                    IconButton(
+                      tooltip: '빈 그래프로 전환',
+                      onPressed: _resetToBlankGraph,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.close_rounded, size: 18),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _addFunctionDraft,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('식 추가'),
               ),
             ),
-            const SizedBox(height: 10),
-          ],
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: _addFunctionDraft,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('식 추가'),
-            ),
-          ),
-          if (_parameters.isNotEmpty) ...[
-            _PracticePanel(
-              parameters: _parameters,
-              onChanged: (parameter, value) {
-                setState(() {
-                  parameter.value = value;
-                });
-              },
-            ),
-            const SizedBox(height: 10),
-          ],
-          if (compact)
+            if (_parameters.isNotEmpty) ...[
+              _PracticePanel(
+                parameters: _parameters,
+                onChanged: (parameter, value) {
+                  setState(() {
+                    parameter.value = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _drafts.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) => _buildDraftTile(_drafts[index]),
-            )
-          else
-            Expanded(
-              child: ListView.separated(
-                itemCount: _drafts.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) =>
-                    _buildDraftTile(_drafts[index]),
-              ),
             ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilterChip(
-                label: const Text('축'),
-                selected: _showAxes,
-                onSelected: (value) {
-                  setState(() {
-                    _showAxes = value;
-                  });
-                },
-              ),
-              FilterChip(
-                label: const Text('격자'),
-                selected: _showGrid,
-                onSelected: (value) {
-                  setState(() {
-                    _showGrid = value;
-                  });
-                },
-              ),
-              FilterChip(
-                label: const Text('뷰 고정'),
-                selected: _lockViewport,
-                onSelected: (value) {
-                  setState(() {
-                    _lockViewport = value;
-                  });
-                },
-              ),
-              FilterChip(
-                label: Text(_degreeMode ? '도 단위' : '라디안'),
-                selected: _degreeMode,
-                onSelected: (value) {
-                  setState(() {
-                    _degreeMode = value;
-                  });
-                  _applyCurrentDrafts();
-                },
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilterChip(
+                  label: const Text('축'),
+                  selected: _showAxes,
+                  onSelected: (value) {
+                    setState(() {
+                      _showAxes = value;
+                    });
+                  },
+                ),
+                FilterChip(
+                  label: const Text('격자'),
+                  selected: _showGrid,
+                  onSelected: (value) {
+                    setState(() {
+                      _showGrid = value;
+                    });
+                  },
+                ),
+                FilterChip(
+                  label: const Text('뷰 고정'),
+                  selected: _lockViewport,
+                  onSelected: (value) {
+                    setState(() {
+                      _lockViewport = value;
+                    });
+                  },
+                ),
+                FilterChip(
+                  label: Text(_degreeMode ? '도 단위' : '라디안'),
+                  selected: _degreeMode,
+                  onSelected: (value) {
+                    setState(() {
+                      _degreeMode = value;
+                    });
+                    _applyCurrentDrafts();
+                  },
+                ),
+              ],
+            ),
+            if (_editorMessage != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _editorMessage!,
+                style: const TextStyle(
+                  color: Color(0xFFB33A3A),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
-          ),
-          if (_editorMessage != null) ...[
             const SizedBox(height: 10),
-            Text(
-              _editorMessage!,
-              style: const TextStyle(
-                color: Color(0xFFB33A3A),
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: _applyCurrentDrafts,
+                style: FilledButton.styleFrom(
+                  backgroundColor: _kGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.stacked_line_chart_rounded),
+                label: const Text('그래프 갱신'),
               ),
             ),
           ],
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              onPressed: _applyCurrentDrafts,
-              style: FilledButton.styleFrom(
-                backgroundColor: _kGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              icon: const Icon(Icons.stacked_line_chart_rounded),
-              label: const Text('그래프 갱신'),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -587,6 +615,7 @@ class _GraphCatalogDialog extends StatefulWidget {
 
 class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
   late final TextEditingController _searchController;
+  late AiFlowGraphSubjectCatalog _selectedCatalog;
   late String _selectedSubject;
   late String _selectedUnit;
   AiFlowGraphFormulaSummary? _selectedFormula;
@@ -596,7 +625,8 @@ class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
   @override
   void initState() {
     super.initState();
-    _selectedSubject = widget.initialExample.subject;
+    _selectedCatalog = _findCatalogForExample(widget.initialExample);
+    _selectedSubject = _selectedCatalog.subject;
     _selectedUnit = widget.initialExample.unit;
     _selectedExample = widget.initialExample;
     _searchController = TextEditingController();
@@ -608,8 +638,20 @@ class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
     super.dispose();
   }
 
-  AiFlowGraphSubjectCatalog get _subjectCatalog => aiFlowGraphCatalog
-      .firstWhere((subject) => subject.subject == _selectedSubject);
+  AiFlowGraphSubjectCatalog get _subjectCatalog => _selectedCatalog;
+
+  /// 필요한 변수는 처음 선택된 예제와 전체 과목 카탈로그다.
+  /// 작동 원리는 예제의 표시용 과목명이 아닌 예제 ID의 실제 포함 관계로 소속 카탈로그를 찾는다.
+  AiFlowGraphSubjectCatalog _findCatalogForExample(AiFlowGraphExample example) {
+    for (final catalog in aiFlowGraphCatalog) {
+      if (catalog.examples.any((item) => item.id == example.id)) {
+        return catalog;
+      }
+    }
+
+    // 페이지 초기 예제도 같은 목록에서 가져오므로 정상 데이터에서는 도달하지 않는다.
+    return aiFlowGraphCatalog.first;
+  }
 
   List<AiFlowGraphFormulaSummary> get _filteredFormulas {
     final query = _query.trim().toLowerCase();
@@ -633,12 +675,21 @@ class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
   }
 
   void _selectSubject(String subject) {
-    final catalog = aiFlowGraphCatalog.firstWhere(
-      (item) => item.subject == subject,
-    );
+    AiFlowGraphSubjectCatalog? catalog;
+    for (final item in aiFlowGraphCatalog) {
+      if (item.subject == subject) {
+        catalog = item;
+        break;
+      }
+    }
+    if (catalog == null) {
+      return;
+    }
+
     setState(() {
+      _selectedCatalog = catalog!;
       _selectedSubject = subject;
-      _selectedUnit = catalog.units.first;
+      _selectedUnit = catalog.units.isNotEmpty ? catalog.units.first : '';
       _query = '';
       _searchController.clear();
       _selectedFormula = catalog.formulas.isNotEmpty
@@ -1788,7 +1839,7 @@ class _MiniBadge extends StatelessWidget {
   }
 }
 
-class _FunctionDraftTile extends StatelessWidget {
+class _FunctionDraftTile extends StatefulWidget {
   const _FunctionDraftTile({
     required this.draft,
     required this.onChanged,
@@ -1803,6 +1854,45 @@ class _FunctionDraftTile extends StatelessWidget {
   final VoidCallback onRemove;
   final ValueChanged<String> onSubmitted;
 
+  @override
+  State<_FunctionDraftTile> createState() => _FunctionDraftTileState();
+}
+
+class _FunctionDraftTileState extends State<_FunctionDraftTile> {
+  late final FocusNode _expressionFocusNode;
+
+  _GraphItemDraft get draft => widget.draft;
+  VoidCallback get onChanged => widget.onChanged;
+  VoidCallback get onToggle => widget.onToggle;
+  VoidCallback get onRemove => widget.onRemove;
+  ValueChanged<String> get onSubmitted => widget.onSubmitted;
+
+  /// 필요한 변수는 수식 입력란의 포커스 상태다.
+  /// 작동 원리는 포커스 변경을 감지해 현재 편집 중인 카드에만 계산 입력 패드를 표시하는 것이다.
+  @override
+  void initState() {
+    super.initState();
+    _expressionFocusNode = FocusNode()..addListener(_handleFocusChange);
+  }
+
+  /// 필요한 변수는 [_expressionFocusNode]의 현재 포커스 값이다.
+  /// 작동 원리는 포커스가 들어오거나 빠질 때 위젯을 다시 그려 입력 패드 표시 여부를 갱신하는 것이다.
+  void _handleFocusChange() {
+    setState(() {});
+  }
+
+  /// 필요한 변수는 생성한 수식 입력 포커스 노드다.
+  /// 작동 원리는 리스너와 노드를 함께 정리해 화면을 반복해서 열어도 리소스가 남지 않게 하는 것이다.
+  @override
+  void dispose() {
+    _expressionFocusNode
+      ..removeListener(_handleFocusChange)
+      ..dispose();
+    super.dispose();
+  }
+
+  /// 필요한 변수는 수식 초안과 입력란 포커스 상태다.
+  /// 작동 원리는 입력란을 최대 네 줄까지 확장하고 포커스가 있을 때만 계산 입력 패드를 펼치는 것이다.
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1860,23 +1950,43 @@ class _FunctionDraftTile extends StatelessWidget {
               ),
             ],
           ),
-          TextField(
-            controller: draft.expressionController,
-            onChanged: (_) => onChanged(),
-            onSubmitted: onSubmitted,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              isDense: true,
-              hintText: '예: sin(x), x^2-1, log(x), sqrt(9-x^2)',
+          TextFieldTapRegion(
+            child: Column(
+              children: [
+                TextField(
+                  controller: draft.expressionController,
+                  focusNode: _expressionFocusNode,
+                  minLines: 2,
+                  maxLines: 4,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  onChanged: (_) => onChanged(),
+                  onSubmitted: onSubmitted,
+                  onTapOutside: (_) => _expressionFocusNode.unfocus(),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    hintText: '예: sin(x), x^2-1, log(x), sqrt(9-x^2)',
+                  ),
+                ),
+                _ExpressionPreview(controller: draft.expressionController),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 160),
+                  alignment: Alignment.topCenter,
+                  child: _expressionFocusNode.hasFocus
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: _CalculatorKeypad(
+                            onInsert: (token) {
+                              draft.insertToken(token);
+                              onChanged();
+                            },
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
             ),
-          ),
-          _ExpressionPreview(controller: draft.expressionController),
-          const SizedBox(height: 8),
-          _CalculatorKeypad(
-            onInsert: (token) {
-              draft.insertToken(token);
-              onChanged();
-            },
           ),
           if (draft.errorText != null)
             Text(

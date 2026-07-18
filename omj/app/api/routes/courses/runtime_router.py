@@ -9,6 +9,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, Request
 
 from app.api.routes.auth.middleware import require_role
+from app.api.routes.challenge import service as daily_quest_service
 from app.api.deps import get_current_user
 from app.schemas.common import ApiResponse
 from domain.course import engine
@@ -16,9 +17,15 @@ from domain.course import v2_repository as repo
 from domain.academy import repository as academy_repo
 from domain.course.v2_models import CourseModule, CourseModuleType
 from storage.textbook_storage import get_textbook, is_teacher_manual_textbook
-from storage.storage import get_quest, search_quests, update_quest_mcq
+from storage.postgres_problem_store import postgres_problem_store
 
 router = APIRouter(prefix="/courses/v2/runtime", tags=["courses-v2-runtime"])
+
+# 필요 변수: PostgreSQL 문제 저장소.
+# 작동 원리: 학생 런타임의 문제 조회·검색·MCQ 갱신이 로컬 파일 저장소를 거치지 않게 한다.
+get_quest = postgres_problem_store.get_problem
+search_quests = postgres_problem_store.search_problems
+update_quest_mcq = postgres_problem_store.update_problem_mcq
 
 
 def _wrap(data: Optional[object], message: Optional[str] = None) -> ApiResponse:
@@ -145,6 +152,61 @@ def _safe_int(value: Any, *, default: int | None = None) -> int | None:
         return int(str(value))
     except (TypeError, ValueError):
         return default
+
+
+def _daily_quest_signals_for_runtime_submit(
+    module: CourseModule,
+    *,
+    correct_count: int,
+    total_count: int,
+    elapsed_seconds: Optional[int],
+    module_completed_now: bool,
+) -> dict[str, int]:
+    """필요 변수: 완료한 모듈 종류·정답/전체 수·소요 시간·최초 완료 여부.
+    작동 원리: 런타임 서버가 판정한 결과만 일일 퀘스트 감지 신호로 변환한다.
+    같은 모듈의 최초 완료 신호는 한 번만 보내고, 실제 제출 문제 수는 풀이 유형에만 반영한다.
+    """
+    signals: dict[str, int] = {}
+    if module_completed_now:
+        signals["course_module_completed"] = 1
+
+    module_type = module.type
+    if module_type == CourseModuleType.problem_solve:
+        signals["problem_solved"] = max(0, total_count)
+        signals["activity_score"] = max(0, correct_count)
+    elif module_type == CourseModuleType.wrong_answer_review:
+        signals["wrong_answer_solved"] = max(0, total_count)
+        signals["wrong_answer_correct"] = max(0, correct_count)
+        signals["activity_score"] = max(0, correct_count)
+    elif module_type == CourseModuleType.exam_solve:
+        signals["exam_attempt"] = 1
+        signals["exam_accuracy"] = round((max(0, correct_count) / total_count) * 100) if total_count > 0 else 0
+        signals["activity_score"] = max(0, correct_count)
+        if total_count > 0 and correct_count >= total_count:
+            signals["exam_perfect"] = 1
+
+    if elapsed_seconds is not None and elapsed_seconds >= 60:
+        signals["focus_minutes"] = max(1, elapsed_seconds // 60)
+    return signals
+
+
+def _record_runtime_daily_quest_activity(
+    user_id: str,
+    course_id: str,
+    signals: dict[str, int],
+) -> None:
+    """필요 변수: 인증된 학생·코스 ID·런타임 검증 신호.
+    작동 원리: 일일 퀘스트 반영 실패가 코스 학습 결과를 되돌리지 않도록 독립적으로
+    기록하며, 빈 신호는 DB 요청 없이 건너뛴다.
+    """
+    if not signals:
+        return
+    daily_quest_service.record_daily_quest_activity(
+        user_id,
+        course_id,
+        signals,
+        source="course_runtime",
+    )
 
 
 def _textbook_page_count(textbook: dict[str, Any]) -> int:
@@ -791,7 +853,9 @@ async def runtime_submit(
     state["module_results"] = module_results
 
     completed_modules = list(state.get("completed_modules") or [])
+    module_completed_now = False
     if pass_result["passed"] and module_id not in completed_modules:
+        module_completed_now = True
         completed_modules.append(module_id)
         state["completed_modules"] = completed_modules
 
@@ -817,6 +881,17 @@ async def runtime_submit(
         )
 
     repo.upsert_runtime_state(target_user_id, course_id, state)
+    _record_runtime_daily_quest_activity(
+        target_user_id,
+        course_id,
+        _daily_quest_signals_for_runtime_submit(
+            module,
+            correct_count=correct_count,
+            total_count=total_count,
+            elapsed_seconds=elapsed_seconds,
+            module_completed_now=module_completed_now,
+        ),
+    )
 
     next_result = engine.next_module(course, module_id, state.get("module_results") or {})
     if state.get("paused"):
@@ -1146,9 +1221,11 @@ async def textbook_view_complete(
     module_state["progress"] = progress
 
     completed = bool(progress.get("completed"))
+    module_completed_now = False
     if completed:
         completed_modules = list(state.get("completed_modules") or [])
         if module.id and module.id not in completed_modules:
+            module_completed_now = True
             completed_modules.append(module.id)
             state["completed_modules"] = completed_modules
 
@@ -1164,6 +1241,16 @@ async def textbook_view_complete(
             state = _enforce_deadline_and_pause(course, module.id, state)
 
     repo.upsert_runtime_state(target_user_id, course_id, state)
+    if module_completed_now:
+        _record_runtime_daily_quest_activity(
+            target_user_id,
+            course_id,
+            {
+                "textbook_completed": 1,
+                "course_module_completed": 1,
+                "activity_score": 1,
+            },
+        )
 
     return _wrap(
         {

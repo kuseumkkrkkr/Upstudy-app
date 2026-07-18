@@ -1,6 +1,8 @@
 # Learning Tools Session
 
-This directory contains the session-based structure for learning tools.
+This directory contains the AI learning tutor and the remaining reusable learning-tool overlays.
+
+`/tools` now opens `ServerChatPage(standalone: true)` as the primary AI learning-tutor page. Problem-solving flows reuse the same page as an ephemeral overlay. The legacy tool pages remain available only for existing internal entry points.
 
 ## Structure
 

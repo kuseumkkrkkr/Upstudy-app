@@ -1,311 +1,148 @@
 import 'package:flutter/material.dart';
 
-import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
-import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
-import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
-import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
-import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/theme/app_colors.dart';
-import 'package:s11/shared/ui/modal/level_detail_modal.dart';
-import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/services/auth/auth_storage.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
 
-  static const Color _drawerBg = Color(0xFFF4F4F6);
-  static const Color _surface = StudentDensityTokens.surface;
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
 
-  /// 필요한 변수는 현재 화면 문맥과 학생 목적지 경로다.
-  /// 드로어를 먼저 닫고 루트 내비게이터의 명명 라우트로 이동해 모바일에서도 모든 상단 메뉴를 제공한다.
-  void _openRoute(BuildContext context, String route) {
-    final navigator = Navigator.of(context, rootNavigator: true);
-    Navigator.of(context).pop();
-    navigator.pushNamed(route);
+class _AppDrawerState extends State<AppDrawer> {
+  static const Color _background = Color(0xFFF4F4F6);
+  static const Color _ink = Color(0xFF09090B);
+  static const Color _muted = Color(0xFF71717A);
+  static const Color _faint = Color(0xFFA1A1AA);
+  static const Color _line = Color(0x1A09090B);
+
+  late final Future<_DrawerProfileData> _profile = _loadProfile();
+
+  /// 필요한 변수는 UTF-8로 저장된 로컬 사용자명이다.
+  /// 드로어를 열 때 서버·DB를 추가 조회하지 않고 저장값만 읽으며 실패하면 기본 학생명으로 복구한다.
+  Future<_DrawerProfileData> _loadProfile() async {
+    final username = (await AuthStorage.instance.readUsername().catchError(
+      (_) => null,
+    ))?.trim();
+    return _DrawerProfileData(
+      username: username == null || username.isEmpty ? '학생' : username,
+    );
   }
 
-  /// 필요한 변수는 인증된 학생 문맥·공용 명명 라우트·현재 화면 폭이다.
-  /// 핵심 학습·소셜 메뉴는 스크롤 영역에 두고, 시안의 `min(310px, 100vw - 40px)` 폭과 로그아웃 하단 고정을 유지한다.
+  /// 필요한 변수는 현재 드로어 문맥과 이동할 학생 화면 경로다.
+  /// 드로어를 먼저 닫은 뒤 현재 화면이 아닐 때만 루트 내비게이터에 명명 라우트를 추가한다.
+  void _openRoute(String route) {
+    final currentRoute = ModalRoute.of(context)?.settings.name;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    Navigator.of(context).pop();
+    if (currentRoute != route) {
+      navigator.pushNamed(route);
+    }
+  }
+
+  /// 필요한 변수는 현재 라우트와 메뉴가 담당하는 경로 목록이다.
+  /// 상세 화면에서도 해당 상위 메뉴를 검게 강조할 수 있도록 접두 경로까지 함께 비교한다.
+  bool _isActive(_DrawerDestination item) {
+    final route = ModalRoute.of(context)?.settings.name ?? '';
+    return item.activeRoutes.any(
+      (candidate) => route == candidate || route.startsWith('$candidate/'),
+    );
+  }
+
+  /// 필요한 변수는 화면 너비, 현재 라우트, 프로필 요약이다.
+  /// 최신 학생 시안의 작은 브랜드·이어 학습·그룹형 메뉴·하단 프로필 칩 순서로 드로어를 구성한다.
   @override
   Widget build(BuildContext context) {
     final drawerWidth = (MediaQuery.sizeOf(context).width - 40)
         .clamp(0, 310)
         .toDouble();
+
     return Drawer(
       width: drawerWidth,
-      backgroundColor: _drawerBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-      ),
+      elevation: 24,
+      backgroundColor: _background.withValues(alpha: 0.97),
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(),
       child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 20, 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Colors.white,
-                      semanticLabel: 'AIFlow 로고',
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'AIFlow',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 30,
-                      height: 1.0,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '학습을 더 깔끔하게 관리하세요.',
-                    style: TextStyle(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  const _DrawerAccountSummary(),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 20, 14, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _DrawerBrand(
+                onTap: () => _openRoute('/student/dashboard'),
+                onClose: () => Navigator.of(context).pop(),
               ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                children: [
-                  _DrawerItem(
-                    icon: Icons.home_outlined,
-                    title: '학습터',
-                    subtitle: '오늘 학습과 학습 도구',
-                    onTap: () => _openRoute(context, '/study-center'),
-                  ),
-                  _DrawerItem(
-                    icon: Icons.route_outlined,
-                    title: '코스',
-                    subtitle: '수강 코스와 새 코스 탐색',
-                    onTap: () => _openRoute(context, '/courses'),
-                  ),
-                  _DrawerItem(
-                    icon: Icons.menu_book_outlined,
-                    title: '책가방',
-                    subtitle: '교재와 시험지 모아보기',
-                    onTap: () => _openRoute(context, '/bookbag'),
-                  ),
-                  _DrawerItem(
-                    icon: Icons.people_outline_rounded,
-                    title: '친구/소셜',
-                    subtitle: '친구, 그룹, 학원 커뮤니티',
-                    onTap: () => _openRoute(context, '/social'),
-                  ),
-                  _DrawerItem(
-                    icon: Icons.storefront_outlined,
-                    title: '마켓플레이스',
-                    subtitle: '검색과 필터로 상품 찾기',
-                    onTap: () => _openRoute(context, '/marketplace'),
-                  ),
-                  _DrawerItem(
-                    icon: Icons.add_box_outlined,
-                    title: '학습 도구',
-                    subtitle: '노트·타이머·집중 모드',
-                    onTap: () => _openRoute(context, '/tools'),
-                  ),
-                  const Divider(height: 22, indent: 24, endIndent: 24),
-                  _DrawerItem(
-                    icon: Icons.smart_toy_outlined,
-                    title: 'AI 챗봇',
-                    subtitle: '짧게 묻고 바로 답을 받습니다',
-                    onTap: () {
-                      final navigator = Navigator.of(
-                        context,
-                        rootNavigator: true,
-                      );
-                      Navigator.of(context).pop();
-                      navigator.push(
-                        PageRouteBuilder(
-                          opaque: false,
-                          barrierDismissible: true,
-                          barrierLabel: '닫기',
-                          barrierColor: Colors.transparent,
-                          pageBuilder: (_, __, ___) => const ServerChatPage(),
-                          transitionsBuilder: (_, animation, __, child) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.person_outline_rounded,
-                    title: '프로필',
-                    subtitle: '회원정보 수정, ID/PW 변경',
-                    onTap: () {
-                      final navigator = Navigator.of(
-                        context,
-                        rootNavigator: true,
-                      );
-                      Navigator.of(context).pop();
-                      navigator.push(
-                        MaterialPageRoute(builder: (_) => const ProfilePage()),
-                      );
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.settings_outlined,
-                    title: '설정',
-                    subtitle: '알림과 라이선스를 정리합니다',
-                    onTap: () {
-                      final navigator = Navigator.of(
-                        context,
-                        rootNavigator: true,
-                      );
-                      Navigator.of(context).pop();
-                      navigator.push(
-                        MaterialPageRoute(builder: (_) => const SettingsPage()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              child: Material(
-                color: _surface,
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(22),
-                  side: const BorderSide(color: Color(0xFFE2E7DE)),
-                ),
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.logout_rounded,
-                    color: AppColors.primary,
-                  ),
-                  title: const Text(
-                    '로그아웃',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  onTap: () async {
-                    final navigator = Navigator.of(
-                      context,
-                      rootNavigator: true,
-                    );
-                    Navigator.of(context).pop();
-                    await ApiClient.instance.clearToken();
-                    navigator.pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LandingPage()),
-                      (route) => false,
-                    );
-                  },
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _ResumeCard(onTap: () => _openRoute('/courses')),
+                    for (final group in _navigationGroups)
+                      _DrawerGroup(
+                        group: group,
+                        isActive: _isActive,
+                        onTap: (item) => _openRoute(item.route),
+                      ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              FutureBuilder<_DrawerProfileData>(
+                future: _profile,
+                builder: (context, snapshot) => _ProfileChip(
+                  data: snapshot.data ?? const _DrawerProfileData(),
+                  onTap: () => _openRoute('/profile'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _DrawerAccountSummary extends StatefulWidget {
-  const _DrawerAccountSummary();
+class _DrawerBrand extends StatelessWidget {
+  const _DrawerBrand({required this.onTap, required this.onClose});
 
-  @override
-  State<_DrawerAccountSummary> createState() => _DrawerAccountSummaryState();
-}
+  final VoidCallback onTap;
+  final VoidCallback onClose;
 
-class _DrawerAccountSummaryState extends State<_DrawerAccountSummary> {
-  late final Future<AccountSummary> _summary = ApiClient.instance
-      .fetchAccountSummary();
-
+  /// 필요한 변수는 홈 이동과 드로어 닫기 콜백이다.
+  /// 최신 시안의 34px 검정 브랜드 마크와 STUDENT 보조 라벨을 한 줄 헤더로 표시한다.
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<AccountSummary>(
-      future: _summary,
-      builder: (context, snapshot) {
-        final account = snapshot.data;
-        if (account == null) {
-          return const SizedBox(height: 54);
-        }
-
-        return InkWell(
-          onTap: () => LevelDetailModal.show(context, account),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppDrawer._surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E7DE)),
-            ),
-            child: Column(
+    return Stack(
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: const Padding(
+            padding: EdgeInsets.fromLTRB(8, 6, 48, 18),
+            child: Row(
               children: [
-                Row(
+                _SquareIcon(icon: null, label: 'A'),
+                SizedBox(width: 11),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          value: account.levelProgress,
-                          minHeight: 8,
-                          backgroundColor: Colors.white,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.success,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
                     Text(
-                      'lv. ${account.level}',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.monetization_on_rounded,
-                      color: Color(0xFFD59B19),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${account.totalPoints}',
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 18,
+                      'AIFlow',
+                      style: TextStyle(
+                        color: _AppDrawerState._ink,
+                        fontSize: 17,
                         fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'STUDENT',
+                      style: TextStyle(
+                        color: _AppDrawerState._muted,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ],
@@ -313,81 +150,95 @@ class _DrawerAccountSummaryState extends State<_DrawerAccountSummary> {
               ],
             ),
           ),
-        );
-      },
+        ),
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+            tooltip: '메뉴 닫기',
+            onPressed: onClose,
+            icon: const Icon(Icons.close_rounded, size: 20),
+            style: IconButton.styleFrom(
+              fixedSize: const Size(38, 38),
+              backgroundColor: Colors.white.withValues(alpha: 0.76),
+              side: const BorderSide(color: _AppDrawerState._line),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _DrawerItem extends StatelessWidget {
-  const _DrawerItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+class _ResumeCard extends StatelessWidget {
+  const _ResumeCard({required this.onTap});
 
-  final IconData icon;
-  final String title;
-  final String subtitle;
   final VoidCallback onTap;
 
+  /// 필요한 변수는 코스 화면 이동 콜백이다.
+  /// 별도 DB 조회 없이 최신 시안의 검정 이어 학습 카드를 제공해 드로어를 열 때 추가 부하를 만들지 않는다.
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.fromLTRB(2, 2, 2, 9),
       child: Material(
-        color: Colors.transparent,
+        color: _AppDrawerState._ink,
+        elevation: 8,
+        shadowColor: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(20),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAFAF7),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFEAECE2)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: AppColors.primary),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
+          child: const SizedBox(
+            height: 82,
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  _SquareIcon(icon: Icons.play_arrow_rounded),
+                  SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '이어 학습',
+                          style: TextStyle(
+                            color: Color(0xFF8F8F98),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black.withValues(alpha: 0.55),
+                        SizedBox(height: 4),
+                        Text(
+                          '최근 코스에서 계속하기',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 4),
+                        Text(
+                          '코스 선택 후 학습을 이어갑니다',
+                          style: TextStyle(
+                            color: Color(0xFFA1A1AA),
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF6D756D),
-                ),
-              ],
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFF92929A),
+                    size: 20,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -396,6 +247,343 @@ class _DrawerItem extends StatelessWidget {
   }
 }
 
+class _DrawerGroup extends StatelessWidget {
+  const _DrawerGroup({
+    required this.group,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final _DrawerNavigationGroup group;
+  final bool Function(_DrawerDestination item) isActive;
+  final ValueChanged<_DrawerDestination> onTap;
+
+  /// 필요한 변수는 그룹 라벨, 메뉴 목록, 현재 경로 판별기다.
+  /// 메뉴를 42px 슬림 행으로 쌓고 현재 화면만 검정 캡슐로 강조한다.
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 5, bottom: 3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 5),
+            child: Text(
+              group.label,
+              style: const TextStyle(
+                color: _AppDrawerState._faint,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.1,
+              ),
+            ),
+          ),
+          for (final item in group.items)
+            _DrawerNavItem(
+              item: item,
+              active: isActive(item),
+              onTap: () => onTap(item),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerNavItem extends StatelessWidget {
+  const _DrawerNavItem({
+    required this.item,
+    required this.active,
+    required this.onTap,
+  });
+
+  final _DrawerDestination item;
+  final bool active;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 메뉴 아이콘·라벨·활성 상태와 이동 콜백이다.
+  /// 비활성 메뉴는 투명 배경, 활성 메뉴는 최신 시안과 같은 검정 배경과 흰 글자로 렌더한다.
+  @override
+  Widget build(BuildContext context) {
+    final foreground = active ? Colors.white : const Color(0xFF505057);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Material(
+        color: active ? _AppDrawerState._ink : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: SizedBox(
+            height: 42,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 11),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 21,
+                    child: Icon(item.icon, size: 19, color: foreground),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      item.label,
+                      style: TextStyle(
+                        color: foreground,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileChip extends StatelessWidget {
+  const _ProfileChip({required this.data, required this.onTap});
+
+  final _DrawerProfileData data;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 로컬 사용자명과 프로필 이동 콜백이다.
+  /// 구형 로그아웃 버튼 대신 최신 시안의 원형 아바타와 학생 요약 칩을 드로어 하단에 고정한다.
+  @override
+  Widget build(BuildContext context) {
+    final initial = data.username.characters.first.toUpperCase();
+    return Material(
+      color: Colors.white.withValues(alpha: 0.76),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            border: Border.all(color: _AppDrawerState._line),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: _AppDrawerState._ink,
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.username,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _AppDrawerState._ink,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    const Text(
+                      'AIFlow STUDENT',
+                      style: TextStyle(
+                        color: _AppDrawerState._muted,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: _AppDrawerState._muted,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SquareIcon extends StatelessWidget {
+  const _SquareIcon({this.icon, this.label});
+
+  final IconData? icon;
+  final String? label;
+
+  /// 필요한 변수는 선택적 아이콘 또는 한 글자 라벨이다.
+  /// 브랜드에는 검정 바탕을, 이어 학습 카드에는 흰 바탕을 적용하는 공용 34~38px 마크를 만든다.
+  @override
+  Widget build(BuildContext context) {
+    final isBrand = label != null;
+    return Container(
+      width: isBrand ? 34 : 38,
+      height: isBrand ? 34 : 38,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: isBrand ? _AppDrawerState._ink : Colors.white,
+        borderRadius: BorderRadius.circular(isBrand ? 12 : 13),
+      ),
+      child: icon != null
+          ? Icon(icon, color: _AppDrawerState._ink, size: 18)
+          : Text(
+              label!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+    );
+  }
+}
+
+class _DrawerProfileData {
+  const _DrawerProfileData({this.username = '학생'});
+
+  final String username;
+}
+
+class _DrawerNavigationGroup {
+  const _DrawerNavigationGroup({required this.label, required this.items});
+
+  final String label;
+  final List<_DrawerDestination> items;
+}
+
+class _DrawerDestination {
+  const _DrawerDestination({
+    required this.icon,
+    required this.label,
+    required this.route,
+    this.activeRoutes = const <String>[],
+  });
+
+  final IconData icon;
+  final String label;
+  final String route;
+  final List<String> activeRoutes;
+}
+
+const _navigationGroups = <_DrawerNavigationGroup>[
+  _DrawerNavigationGroup(
+    label: '오늘',
+    items: [
+      _DrawerDestination(
+        icon: Icons.home_outlined,
+        label: '홈',
+        route: '/student/dashboard',
+        activeRoutes: ['/student/dashboard', '/app'],
+      ),
+      _DrawerDestination(
+        icon: Icons.calendar_today_outlined,
+        label: '일정',
+        route: '/schedule',
+        activeRoutes: ['/schedule'],
+      ),
+    ],
+  ),
+  _DrawerNavigationGroup(
+    label: '학습',
+    items: [
+      _DrawerDestination(
+        icon: Icons.route_outlined,
+        label: '코스',
+        route: '/courses',
+        activeRoutes: ['/courses', '/course_runtime'],
+      ),
+      _DrawerDestination(
+        icon: Icons.menu_book_outlined,
+        label: '책가방',
+        route: '/bookbag',
+        activeRoutes: ['/bookbag'],
+      ),
+      _DrawerDestination(
+        icon: Icons.replay_rounded,
+        label: '오답 노트',
+        route: '/wrong_answers',
+        activeRoutes: ['/wrong_answers', '/wrong_answer_solve'],
+      ),
+      _DrawerDestination(
+        icon: Icons.speed_outlined,
+        label: '레벨 테스트',
+        route: '/level_test',
+        activeRoutes: ['/level_test'],
+      ),
+    ],
+  ),
+  _DrawerNavigationGroup(
+    label: '경쟁',
+    items: [
+      _DrawerDestination(
+        icon: Icons.emoji_events_outlined,
+        label: '대결',
+        route: '/arena',
+        activeRoutes: ['/arena'],
+      ),
+    ],
+  ),
+  _DrawerNavigationGroup(
+    label: '커뮤니티',
+    items: [
+      _DrawerDestination(
+        icon: Icons.people_outline_rounded,
+        label: '친구/소셜',
+        route: '/social',
+        activeRoutes: ['/social'],
+      ),
+      _DrawerDestination(
+        icon: Icons.groups_outlined,
+        label: '스터디 그룹',
+        route: '/groups',
+        activeRoutes: ['/groups', '/group'],
+      ),
+      _DrawerDestination(
+        icon: Icons.storefront_outlined,
+        label: '마켓플레이스',
+        route: '/marketplace',
+        activeRoutes: ['/marketplace'],
+      ),
+    ],
+  ),
+  _DrawerNavigationGroup(
+    label: '도구·설정',
+    items: [
+      _DrawerDestination(
+        icon: Icons.grid_view_outlined,
+        label: '학습 도구',
+        route: '/tools',
+        activeRoutes: ['/tools'],
+      ),
+      _DrawerDestination(
+        icon: Icons.settings_outlined,
+        label: '설정',
+        route: '/settings',
+        activeRoutes: ['/settings'],
+      ),
+    ],
+  ),
+];
+
+/// 필요한 변수는 드로어를 포함한 현재 Scaffold 문맥이다.
+/// 열림 상태면 닫고 닫힘 상태면 열어 공용 햄버거 버튼의 동작을 한곳에서 처리한다.
 void toggleAppDrawer(BuildContext context) {
   final scaffoldState = Scaffold.maybeOf(context);
   if (scaffoldState == null) {

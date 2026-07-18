@@ -1,9 +1,135 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import 'package:s11/sessions/review_course/review_course.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+
+/// 필요한 변수는 홈 학습 모달의 Navigator 문맥이다.
+/// 작동 원리는 기존 학습 모달을 닫은 뒤 실제 복습 데이터의 요약을 열고, 상세 화면은 오답 목록 라우트로 단일화하는 것이다.
+Future<T?> showWrongAnswerReviewPreview<T>({required BuildContext context}) {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  navigator.pop();
+  return showDialog<T>(
+    context: navigator.context,
+    builder: (_) => const _ReviewPreviewDialog(),
+  );
+}
+
+class _ReviewPreviewDialog extends StatelessWidget {
+  const _ReviewPreviewDialog();
+
+  /// 필요한 변수는 최근 풀이 이력과 누적 약점 태그다.
+  /// 작동 원리는 두 API 요청을 함께 조회해 모달에서는 최대 6문제와 최상위 약점만 빠르게 제시하는 것이다.
+  Future<List<Object>> _load() => Future.wait<Object>([
+    ApiClient.instance.fetchSolveHistory(days: 30, limit: 100, kind: 'problem'),
+    ApiClient.instance.fetchWeaknessTags(),
+  ]);
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: const Text(
+        '오늘의 복습',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+      content: SizedBox(
+        width: 390,
+        child: FutureBuilder<List<Object>>(
+          future: _load(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const SizedBox(
+                height: 120,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (snapshot.hasError || !snapshot.hasData) {
+              return const Text('복습 데이터를 불러오지 못했습니다. 상세 화면에서 다시 시도해 주세요.');
+            }
+            final history = snapshot.data![0] as List<SolveHistoryItem>;
+            final tags = snapshot.data![1] as List<WeaknessTag>;
+            final incorrect = history.where(_previewIncorrect).toList();
+            final items = incorrect.take(6).toList();
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '오늘은 ${items.length}문제만 다시 보면 돼요.',
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  tags.isEmpty
+                      ? '최근 오답을 먼저 복습해 보세요.'
+                      : '가장 약한 개념: ${tags.first.tag}',
+                  style: const TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 16),
+                for (final item in items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.replay_rounded, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item.questTitleRaw?.trim().isNotEmpty == true
+                                ? item.questTitleRaw!
+                                : '복습 문제',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (items.isEmpty) const Text('오늘 복습할 것이 없어요.'),
+              ],
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('닫기'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).pushNamed(WrongAnswerListPage.routeName);
+          },
+          child: const Text('상세보기'),
+        ),
+      ],
+    );
+  }
+}
+
+bool _previewIncorrect(SolveHistoryItem item) {
+  final data = item.data ?? const <String, dynamic>{};
+  final value = data['is_correct'] ?? data['correct'] ?? data['pass'];
+  if (value is bool) return !value;
+  return const {
+    'incorrect',
+    'wrong',
+    'fail',
+  }.contains((data['status'] ?? data['result'] ?? '').toString().toLowerCase());
+}
 
 /// HTML 시안의 오늘 복습 우선순위와 약점 요약을 제공하는 화면이다.
 class WrongAnswerListPage extends StatefulWidget {
@@ -18,79 +144,125 @@ class WrongAnswerListPage extends StatefulWidget {
 }
 
 class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
-  String _filter = '전체 8';
+  String _filter = '전체';
   bool _latestFirst = true;
+  bool _loading = true;
+  String? _error;
+  List<_ReviewItem> _items = const <_ReviewItem>[];
+  List<WeaknessTag> _weaknessTags = const <WeaknessTag>[];
 
-  static const _items = <_ReviewItem>[
-    _ReviewItem(
-      number: '01',
-      title: '두 직선의 교점 구하기',
-      source: '수학Ⅱ 실전 시험 · 오늘',
-      reason: '식의 이항 과정에서 부호를 반대로 바꿨어요.',
-      tags: ['#식정리', '#교점'],
-      attempts: '2회 틀림',
-    ),
-    _ReviewItem(
-      number: '02',
-      title: '일차함수의 기울기 판단',
-      source: '함수의 시작 코스 · 어제',
-      reason: 'Δy와 Δx의 순서를 바꾸는 실수가 반복됐어요.',
-      tags: ['#기울기', '#좌표해석'],
-      attempts: '3회 틀림',
-    ),
-    _ReviewItem(
-      number: '03',
-      title: '그래프의 평행이동',
-      source: '일일 테스트 · 7월 12일',
-      reason: '이동 방향은 맞았지만 상수항 계산을 놓쳤어요.',
-      tags: ['#평행이동'],
-      attempts: '1회 틀림',
-    ),
-    _ReviewItem(
-      number: '04',
-      title: '함숫값 계산',
-      source: '함수의 시작 코스 · 7월 11일',
-      reason: '복습에서 연속 두 번 정답을 맞혀 완료됐어요.',
-      tags: ['#대입'],
-      attempts: '복습 완료',
-      done: true,
-    ),
-  ];
+  /// 필요한 변수는 서버 풀이 이력과 약점 태그다.
+  /// 작동 원리는 최근 풀이를 문제별로 묶어 오답 횟수·최근 상태를 계산하고, 네트워크 실패는 빈 상태로 격리하는 것이다.
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final result = await Future.wait<Object>([
+        ApiClient.instance.fetchSolveHistory(
+          days: 30,
+          limit: 200,
+          kind: 'problem',
+        ),
+        ApiClient.instance.fetchWeaknessTags(),
+      ]);
+      if (!mounted) return;
+      final history = result[0] as List<SolveHistoryItem>;
+      setState(() {
+        _items = _itemsFromHistory(history);
+        _weaknessTags = result[1] as List<WeaknessTag>;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = '복습 데이터를 불러오지 못했습니다.';
+        _loading = false;
+      });
+    }
+  }
+
+  /// 필요한 변수는 최신순 풀이 이력이다.
+  /// 작동 원리는 같은 문제의 오답 수를 누적하고 마지막 결과가 정답이면 완료 항목으로 표시하는 것이다.
+  List<_ReviewItem> _itemsFromHistory(List<SolveHistoryItem> history) {
+    final grouped = <String, List<SolveHistoryItem>>{};
+    for (final item in history) {
+      final key = item.questId?.isNotEmpty == true
+          ? 'quest:${item.questId}'
+          : 'seed:${item.codebaseId}:${item.seed}';
+      if (key == 'seed:null:null') continue;
+      grouped.putIfAbsent(key, () => <SolveHistoryItem>[]).add(item);
+    }
+    final items = <_ReviewItem>[];
+    for (final entries in grouped.values) {
+      final latest = entries.first;
+      final incorrectCount = entries.where(_isIncorrect).length;
+      if (incorrectCount == 0) continue;
+      final title = latest.questTitleRaw?.trim();
+      final tags = latest.hashTags
+          .where((tag) => tag.trim().isNotEmpty)
+          .toList();
+      final done = !_isIncorrect(latest);
+      items.add(
+        _ReviewItem(
+          number: '${items.length + 1}'.padLeft(2, '0'),
+          title: title == null || title.isEmpty ? '복습 문제' : title,
+          source: '문제 풀이 · ${_dateLabel(latest.createdAt)}',
+          reason: done ? '최근 재풀이에서 정답을 맞혀 복습을 완료했어요.' : '최근 풀이에서 오답이었던 문제예요.',
+          tags: tags.isEmpty
+              ? const ['#복습']
+              : tags.map((tag) => tag.startsWith('#') ? tag : '#$tag').toList(),
+          attempts: done ? '복습 완료' : '$incorrectCount회 틀림',
+          done: done,
+        ),
+      );
+    }
+    return items;
+  }
+
+  bool _isIncorrect(SolveHistoryItem item) {
+    final data = item.data ?? const <String, dynamic>{};
+    final value = data['is_correct'] ?? data['correct'] ?? data['pass'];
+    if (value is bool) return !value;
+    return const {'incorrect', 'wrong', 'fail'}.contains(
+      (data['status'] ?? data['result'] ?? '').toString().toLowerCase(),
+    );
+  }
+
+  String _dateLabel(String value) {
+    final date = DateTime.tryParse(value)?.toLocal();
+    if (date == null) return '최근';
+    final today = DateTime.now();
+    if (date.year == today.year &&
+        date.month == today.month &&
+        date.day == today.day) {
+      return '오늘';
+    }
+    return '${date.month}월 ${date.day}일';
+  }
 
   /// 필요한 변수는 현재 화면 문맥과 선택 문제다.
-  /// 실제 문제 세션 연결 전까지 해설·재풀이 목적을 명확한 안내 대화상자로 전달한다.
+  /// 실제 이력과 약점 태그로 구성된 기존 복습 코스를 열어 풀이 흐름을 재사용한다.
   void _showReviewAction(String action, _ReviewItem? item) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(action),
-        content: Text(
-          item == null
-              ? '우선순위가 높은 복습 문제부터 문제 풀이 세션으로 연결합니다.'
-              : '${item.title}\n문제 풀이 세션에서 $action 기능을 이어갑니다.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
+    // 복습 코스는 실제 이력·약점 태그로 문제를 구성하고 기존 풀이 화면까지 연결한다.
+    unawaited(showReviewCoursePage(context: context));
   }
 
   /// 필요한 변수는 선택한 필터 이름이다.
   /// 완료 필터만 완료 문항으로 제한하고 나머지는 우선순위 목록을 유지한다.
   List<_ReviewItem> get _visibleItems {
-    if (_filter == '완료 2') return _items.where((item) => item.done).toList();
-    if (_filter == '반복 오답 3') {
-      return _items
-          .where(
-            (item) =>
-                item.attempts.startsWith('2') || item.attempts.startsWith('3'),
-          )
-          .toList();
+    if (_filter == '완료') return _items.where((item) => item.done).toList();
+    if (_filter == '반복 오답') {
+      return _items.where((item) => item.incorrectCount >= 2).toList();
     }
+    if (_filter == '최근 오답') return _items.where((item) => !item.done).toList();
     final items = List<_ReviewItem>.from(_items);
     return _latestFirst ? items : items.reversed.toList(growable: false);
   }
@@ -99,6 +271,8 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
   /// 공용 셸 아래에 HTML의 페이지 헤더, 검은 복습 히어로, 목록과 약점 카드를 순서대로 배치한다.
   @override
   Widget build(BuildContext context) {
+    final pending = _items.where((item) => !item.done).length;
+    final completed = _items.where((item) => item.done).length;
     return Scaffold(
       key: const ValueKey('wrong-answers-screen'),
       backgroundColor: StudentDensityTokens.background,
@@ -128,23 +302,36 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
                       ),
                       const SizedBox(height: 16),
                       _ReviewHero(
+                        pendingCount: pending,
+                        completedCount: completed,
+                        weaknessTags: _weaknessTags,
                         onStart: () => _showReviewAction('6문제 이어서 풀기', null),
                       ),
                       const SizedBox(height: 14),
                       LayoutBuilder(
                         builder: (context, constraints) {
                           final mobile = constraints.maxWidth <= 780;
-                          final list = _ReviewList(
-                            items: _visibleItems,
-                            filter: _filter,
-                            onFilter: (value) =>
-                                setState(() => _filter = value),
-                            latestFirst: _latestFirst,
-                            onSort: () =>
-                                setState(() => _latestFirst = !_latestFirst),
-                            onAction: _showReviewAction,
-                          );
-                          const side = _WeakPoints();
+                          final list = _loading
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(36),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              : _error != null
+                              ? _ReviewError(message: _error!, onRetry: _load)
+                              : _ReviewList(
+                                  items: _visibleItems,
+                                  filter: _filter,
+                                  onFilter: (value) =>
+                                      setState(() => _filter = value),
+                                  latestFirst: _latestFirst,
+                                  onSort: () => setState(
+                                    () => _latestFirst = !_latestFirst,
+                                  ),
+                                  onAction: _showReviewAction,
+                                );
+                          final side = _WeakPoints(tags: _weaknessTags);
                           if (mobile) {
                             return Column(
                               children: [
@@ -159,7 +346,7 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
                             children: [
                               Expanded(flex: 7, child: list),
                               const SizedBox(width: 14),
-                              const Expanded(flex: 3, child: side),
+                              Expanded(flex: 3, child: side),
                             ],
                           );
                         },
@@ -221,9 +408,17 @@ class _ReviewHeading extends StatelessWidget {
 }
 
 class _ReviewHero extends StatelessWidget {
-  const _ReviewHero({required this.onStart});
+  const _ReviewHero({
+    required this.onStart,
+    required this.pendingCount,
+    required this.completedCount,
+    required this.weaknessTags,
+  });
 
   final VoidCallback onStart;
+  final int pendingCount;
+  final int completedCount;
+  final List<WeaknessTag> weaknessTags;
 
   /// 필요한 변수는 복습 시작 콜백과 화면 폭이다.
   /// 오늘 분량·완료 링·주간 지표를 검은 단일 카드 안에 HTML 비율로 배치한다.
@@ -256,7 +451,7 @@ class _ReviewHero extends StatelessWidget {
                         ),
                         SizedBox(height: mobile ? 26 : 40),
                         Text(
-                          '오늘은 6문제만\n다시 보면 돼요.',
+                          '오늘은 ${pendingCount.clamp(0, 6)}문제만\n다시 보면 돼요.',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: mobile ? 34 : 52,
@@ -290,16 +485,24 @@ class _ReviewHero extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const _ReviewRing(),
+                  _ReviewRing(
+                    completed: completedCount,
+                    total: pendingCount + completedCount,
+                  ),
                 ],
               ),
             ),
             const Divider(height: 1, color: Colors.white12),
-            const Row(
+            Row(
               children: [
-                Expanded(child: _HeroMetric('이번 주 복습', '18문제')),
-                Expanded(child: _HeroMetric('다시 맞힌 비율', '76%')),
-                Expanded(child: _HeroMetric('가장 약한 개념', '기울기')),
+                Expanded(child: _HeroMetric('복습 대기', '$pendingCount문제')),
+                Expanded(child: _HeroMetric('복습 완료', '$completedCount문제')),
+                Expanded(
+                  child: _HeroMetric(
+                    '가장 약한 개념',
+                    weaknessTags.isEmpty ? '-' : weaknessTags.first.tag,
+                  ),
+                ),
               ],
             ),
           ],
@@ -310,7 +513,9 @@ class _ReviewHero extends StatelessWidget {
 }
 
 class _ReviewRing extends StatelessWidget {
-  const _ReviewRing();
+  const _ReviewRing({required this.completed, required this.total});
+  final int completed;
+  final int total;
 
   /// 필요한 변수는 오늘 완료 수 2/8이다.
   /// 원형 진행 테두리 안에 완료 수를 표시한다.
@@ -322,11 +527,11 @@ class _ReviewRing extends StatelessWidget {
       shape: BoxShape.circle,
       border: Border.all(color: Colors.white24, width: 8),
     ),
-    child: const Column(
+    child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          '2',
+          '$completed',
           style: TextStyle(
             color: Colors.white,
             fontSize: 38,
@@ -334,7 +539,10 @@ class _ReviewRing extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        Text('/ 8 완료', style: TextStyle(color: Colors.white60, fontSize: 8)),
+        Text(
+          '/ $total 완료',
+          style: const TextStyle(color: Colors.white60, fontSize: 8),
+        ),
       ],
     ),
   );
@@ -393,7 +601,7 @@ class _ReviewList extends StatelessWidget {
   /// HTML 필터 막대와 우선순위 행을 하나의 흰 카드로 표시한다.
   @override
   Widget build(BuildContext context) {
-    const filters = ['전체 8', '최근 오답 5', '반복 오답 3', '완료 2'];
+    const filters = ['전체', '최근 오답', '반복 오답', '완료'];
     return StudentDensitySurface(
       radius: 28,
       padding: const EdgeInsets.all(20),
@@ -428,10 +636,21 @@ class _ReviewList extends StatelessWidget {
             child: Text(latestFirst ? '최신순 ↕' : '오래된순 ↕'),
           ),
           const Divider(height: 28),
-          for (var index = 0; index < items.length; index++) ...[
-            _ReviewRow(item: items[index], onAction: onAction),
-            if (index != items.length - 1) const Divider(height: 28),
-          ],
+          if (items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 28),
+              child: Center(
+                child: Text(
+                  '오늘 복습할 것이 없어요.',
+                  style: TextStyle(color: StudentDensityTokens.muted),
+                ),
+              ),
+            )
+          else
+            for (var index = 0; index < items.length; index++) ...[
+              _ReviewRow(item: items[index], onAction: onAction),
+              if (index != items.length - 1) const Divider(height: 28),
+            ],
         ],
       ),
     );
@@ -568,30 +787,39 @@ class _ReviewActions extends StatelessWidget {
 }
 
 class _WeakPoints extends StatelessWidget {
-  const _WeakPoints();
+  const _WeakPoints({required this.tags});
+  final List<WeaknessTag> tags;
 
   /// 필요한 변수는 세 약점 이름과 비율이다.
   /// 데스크톱 우측 카드와 모바일 하단 카드에 진행 막대를 표시한다.
   @override
-  Widget build(BuildContext context) => StudentDensitySurface(
-    radius: 28,
-    padding: const EdgeInsets.all(20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        StudentDensityEyebrow('WEAK POINTS'),
-        SizedBox(height: 12),
-        Text(
-          '먼저 볼 개념',
-          style: TextStyle(fontSize: 23, fontWeight: FontWeight.w900),
-        ),
-        Divider(height: 28),
-        _WeakSkill('기울기와 변화량', 42),
-        _WeakSkill('식 정리', 31),
-        _WeakSkill('좌표 해석', 27),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final maxCount = tags.isEmpty ? 1 : tags.first.count.clamp(1, 999999);
+    return StudentDensitySurface(
+      radius: 28,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const StudentDensityEyebrow('WEAK POINTS'),
+          const SizedBox(height: 12),
+          const Text(
+            '먼저 볼 개념',
+            style: TextStyle(fontSize: 23, fontWeight: FontWeight.w900),
+          ),
+          const Divider(height: 28),
+          if (tags.isEmpty)
+            const Text(
+              '아직 누적된 약점 데이터가 없습니다.',
+              style: TextStyle(fontSize: 12, color: StudentDensityTokens.muted),
+            )
+          else
+            for (final tag in tags.take(3))
+              _WeakSkill(tag.tag, (tag.count / maxCount * 100).round()),
+        ],
+      ),
+    );
+  }
 }
 
 class _WeakSkill extends StatelessWidget {
@@ -675,4 +903,24 @@ class _ReviewItem {
   final List<String> tags;
   final String attempts;
   final bool done;
+  int get incorrectCount => int.tryParse(attempts.split('회').first) ?? 0;
+}
+
+class _ReviewError extends StatelessWidget {
+  const _ReviewError({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => StudentDensitySurface(
+    radius: 28,
+    padding: const EdgeInsets.all(24),
+    child: Column(
+      children: [
+        Text(message),
+        const SizedBox(height: 12),
+        OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
+      ],
+    ),
+  );
 }

@@ -139,10 +139,11 @@ def set_character(user_id: str, value: str) -> str:
 
 
 def get_character_profile(user_id: str) -> Dict[str, str]:
+    """필요 변수: 사용자 ID와 현재 채팅 모델명. 작동 원리: 고정 Gemma 캐릭터 정보에 실제 런타임 모델을 함께 반환한다."""
     return {
         "character": "gemma",
         "character_name": "AIFlow Chat",
-        "model": "",
+        "model": MODEL_NAME,
     }
 
 
@@ -599,6 +600,7 @@ def handle_chat_message(
     ephemeral: bool = False,
     include_user_data: bool = False,
 ) -> Dict[str, Any]:
+    """필요 변수: 사용자 입력·대화 맥락·저장 여부. 작동 원리: 제한과 캐시를 적용해 Gemma 응답을 생성하고 실제 모델명을 포함해 반환한다."""
     init()
     _ensure_not_blocked(user_id)
     text = (user_message or "").strip()
@@ -648,7 +650,7 @@ def handle_chat_message(
         "affection_breakdown": {},
         "character": "gemma",
         "character_name": "AIFlow Chat",
-        "model": "",
+        "model": MODEL_NAME,
         "stats": {},
         "history_size": 0 if ephemeral else history_size(user_id),
         "user_turns": 0,

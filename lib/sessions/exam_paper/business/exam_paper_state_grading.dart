@@ -269,6 +269,7 @@ mixin _ExamPaperGradingMixin
       relevant,
       targetRegion,
     );
+    final writingEvents = _buildOcrWritingEvents(relevant, targetRegion);
     if (mounted) {
       setState(() {
         _gradingPreviewBytes = imageBytes;
@@ -307,7 +308,7 @@ mixin _ExamPaperGradingMixin
       'reference_steps': referencePayload,
       'reference_flow_count': referencePayload.length,
       'recognized_text': const <dynamic>[],
-      'writing_events': const <dynamic>[],
+      'writing_events': writingEvents,
       'step_correctness': const <dynamic>[],
       'time_weakness': const <dynamic>[],
     };
@@ -412,6 +413,36 @@ mixin _ExamPaperGradingMixin
       }
     }
     return filtered;
+  }
+
+  /// 필요 변수: 채점 영역 안의 획과 영역 좌상단 좌표.
+  /// 작동 원리: PNG 렌더링과 동일한 상대 좌표로 획을 직렬화해 서버의 수식 그리딩에 전달한다.
+  List<Map<String, dynamic>> _buildOcrWritingEvents(
+    List<_Stroke> strokes,
+    Rect region,
+  ) {
+    final events = <Map<String, dynamic>>[];
+    for (var strokeId = 0; strokeId < strokes.length; strokeId++) {
+      final stroke = strokes[strokeId];
+      if (stroke.points.length < 2) {
+        continue;
+      }
+      events.add({
+        'stroke_id': strokeId,
+        'order': stroke.order,
+        'width': stroke.baseWidth,
+        'points': stroke.points
+            .map(
+              (point) => {
+                'x': point.position.dx - region.left,
+                'y': point.position.dy - region.top,
+                'pressure': point.pressure,
+              },
+            )
+            .toList(growable: false),
+      });
+    }
+    return events;
   }
 
   List<Map<String, dynamic>> _resolveStepCorrectness({
@@ -784,6 +815,18 @@ mixin _ExamPaperGradingMixin
       ),
     );
     if (completed == true && mounted) {
+      final listingId = widget.marketplaceListingId?.trim() ?? '';
+      if (listingId.isNotEmpty) {
+        unawaited(
+          ApiClient.instance
+              .updateMarketplaceProgress(
+                listingId: listingId,
+                progressIndex: _gradingTotal,
+                completed: true,
+              )
+              .catchError((_) {}),
+        );
+      }
       Navigator.of(context).pop();
     }
   }

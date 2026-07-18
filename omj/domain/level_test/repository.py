@@ -11,8 +11,8 @@ from contextlib import closing
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from domain.level_test import static_store
 from domain.level_test.models import LevelTestResult, PowerTest, SpeedTest
+from storage.postgres_level_test_store import postgres_level_test_store
 from storage.storage import DB_PATH
 
 
@@ -132,87 +132,31 @@ def _now_iso() -> str:
 
 
 def count_ready_placement_templates() -> int:
-    """필요 변수: 없음. 작동 원리: 일반 DB가 아닌 전용 정적 DB의 활성 폼 개수를 반환한다."""
-    return len(static_store.list_template_ids())
+    """필요 변수: 없음. 작동 원리: PostgreSQL의 활성 placement 폼 개수를 반환한다."""
+    return len(postgres_level_test_store.list_template_ids())
 
 
 def pick_ready_placement_template(user_id: str) -> Optional[Dict[str, Any]]:
-    """필요 변수: 사용자 ID. 작동 원리: 정적 폼 중 최근 3개를 피하고 전체 배정 횟수가 가장 적은 폼을 선택한다."""
-    _ensure_level_test_tables()
-    template_ids = static_store.list_template_ids()
-    if not template_ids:
+    """필요 변수: 사용자 ID. 작동 원리: PostgreSQL에서 최근 폼을 피하고 사용량이 적은 폼을 선택한다."""
+    template = postgres_level_test_store.pick_template(user_id)
+    if template is None:
         return None
-    placeholders = ",".join("?" for _ in template_ids)
-    with closing(sqlite3.connect(DB_PATH)) as connection:
-        recent = {
-            str(row[0])
-            for row in connection.execute(
-                """
-                SELECT template_id FROM level_test_session
-                WHERE user_id=? ORDER BY started_at DESC LIMIT 3
-                """,
-                (user_id,),
-            )
-        }
-        usage = {
-            str(row[0]): int(row[1])
-            for row in connection.execute(
-                f"""
-                SELECT template_id, COUNT(*) FROM level_test_session
-                WHERE template_id IN ({placeholders}) GROUP BY template_id
-                """,
-                template_ids,
-            )
-        }
-    candidates = [template_id for template_id in template_ids if template_id not in recent]
-    if not candidates:
-        candidates = template_ids
-    order = {template_id: index for index, template_id in enumerate(template_ids)}
-    selected_id = min(candidates, key=lambda value: (usage.get(value, 0), order[value]))
-    template = static_store.get_template(selected_id) or {}
-    return {**template, "template_id": selected_id, "status": "ready"}
+    return {**template, "status": "ready"}
 
 
 def get_placement_template_items(template_id: str) -> List[Dict[str, Any]]:
-    """필요 변수: 정적 시험지 ID. 작동 원리: 전용 정적 DB에서만 50개 슬롯을 읽는다."""
-    return static_store.get_template_items(template_id)
+    """필요 변수: PostgreSQL 시험지 ID. 작동 원리: 폼 슬롯과 문제 payload를 PostgreSQL에서 함께 읽는다."""
+    return postgres_level_test_store.get_template_items(template_id)
 
 
 def create_placement_session(*, user_id: str, template_id: str) -> str:
-    """필요 변수: 사용자 ID와 정적 폼 ID. 작동 원리: 전용 DB에 존재하는 폼만 운영 세션으로 기록한다."""
-    if static_store.get_template(template_id) is None:
-        raise ValueError(f"unknown static placement template: {template_id}")
-    _ensure_level_test_tables()
-    session_id = str(uuid.uuid4())
-    now = _now_iso()
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT INTO level_test_session (
-            session_id, user_id, template_id, status, started_at
-        )
-        VALUES (?, ?, ?, 'started', ?)
-        """,
-        (session_id, user_id, template_id, now),
-    )
-    conn.commit()
-    conn.close()
-    return session_id
+    """필요 변수: 사용자 ID와 PostgreSQL 폼 ID. 작동 원리: PostgreSQL 트랜잭션에서 운영 세션을 생성한다."""
+    return postgres_level_test_store.create_session(user_id=user_id, template_id=template_id)
 
 
 def get_placement_session(session_id: str) -> Optional[Dict[str, Any]]:
-    _ensure_level_test_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT * FROM level_test_session WHERE session_id = ?",
-        (session_id,),
-    )
-    row = cur.fetchone()
-    conn.close()
-    return dict(row) if row else None
+    """필요 변수: PostgreSQL 세션 ID. 작동 원리: 세션 소유자와 상태를 단건 조회한다."""
+    return postgres_level_test_store.get_session(session_id)
 
 
 def upsert_placement_answer(
@@ -225,69 +169,21 @@ def upsert_placement_answer(
     step_correctness: List[Dict[str, Any]],
     tags: List[str],
 ) -> None:
-    _ensure_level_test_tables()
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT INTO level_test_answer (
-            session_id, item_index, quest_id, is_correct, answer_time,
-            step_correctness_json, tags_json, submitted_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(session_id, item_index) DO UPDATE SET
-            quest_id = excluded.quest_id,
-            is_correct = excluded.is_correct,
-            answer_time = excluded.answer_time,
-            step_correctness_json = excluded.step_correctness_json,
-            tags_json = excluded.tags_json,
-            submitted_at = excluded.submitted_at
-        """,
-        (
-            session_id,
-            int(item_index),
-            quest_id,
-            1 if is_correct else 0,
-            answer_time,
-            json.dumps(step_correctness, ensure_ascii=False),
-            json.dumps(tags, ensure_ascii=False),
-            _now_iso(),
-        ),
+    """필요 변수: 세션·문항·답안. 작동 원리: PostgreSQL 복합키 UPSERT로 자동 저장 재시도를 멱등 처리한다."""
+    postgres_level_test_store.upsert_answer(
+        session_id=session_id,
+        item_index=item_index,
+        quest_id=quest_id,
+        is_correct=is_correct,
+        answer_time=answer_time,
+        step_correctness=step_correctness,
+        tags=tags,
     )
-    conn.commit()
-    conn.close()
 
 
 def list_placement_answers(session_id: str) -> List[Dict[str, Any]]:
-    _ensure_level_test_tables()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT *
-        FROM level_test_answer
-        WHERE session_id = ?
-        ORDER BY item_index ASC
-        """,
-        (session_id,),
-    )
-    rows = cur.fetchall()
-    conn.close()
-    answers = []
-    for row in rows:
-        answer = dict(row)
-        try:
-            answer["step_correctness"] = json.loads(answer.pop("step_correctness_json") or "[]")
-        except json.JSONDecodeError:
-            answer["step_correctness"] = []
-        try:
-            answer["tags"] = json.loads(answer.pop("tags_json") or "[]")
-        except json.JSONDecodeError:
-            answer["tags"] = []
-        answer["is_correct"] = bool(answer["is_correct"])
-        answers.append(answer)
-    return answers
+    """필요 변수: PostgreSQL 세션 ID. 작동 원리: JSONB 답안을 문항 순서로 일괄 조회한다."""
+    return postgres_level_test_store.list_answers(session_id)
 
 
 def complete_placement_session(
@@ -299,33 +195,15 @@ def complete_placement_session(
     strong_tags: List[Dict[str, Any]],
     weak_tags: List[Dict[str, Any]],
 ) -> None:
-    _ensure_level_test_tables()
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        UPDATE level_test_session
-        SET status = 'graded',
-            estimated_rating = ?,
-            estimated_ovr = ?,
-            confidence = ?,
-            strong_tags_json = ?,
-            weak_tags_json = ?,
-            submitted_at = ?
-        WHERE session_id = ?
-        """,
-        (
-            estimated_rating,
-            estimated_ovr,
-            confidence,
-            json.dumps(strong_tags, ensure_ascii=False),
-            json.dumps(weak_tags, ensure_ascii=False),
-            _now_iso(),
-            session_id,
-        ),
+    """필요 변수: 세션 채점 결과. 작동 원리: PostgreSQL에서 세션 상태와 결과를 함께 확정한다."""
+    postgres_level_test_store.complete_session(
+        session_id=session_id,
+        estimated_rating=estimated_rating,
+        estimated_ovr=estimated_ovr,
+        confidence=confidence,
+        strong_tags=strong_tags,
+        weak_tags=weak_tags,
     )
-    conn.commit()
-    conn.close()
 
 
 # ---------------------------------------------------------------------------

@@ -13,9 +13,9 @@ Provides CRUD + business-logic endpoints for:
 - StudentOverviewSnapshot (auto-build)
 """
 import json
+import logging
 import random
 import re
-import sqlite3
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Optional, List
@@ -26,20 +26,20 @@ from pydantic import BaseModel, Field
 from app.api.deps import get_current_user
 from domain.academy import repository as repo
 from domain.course import v2_repository as course_v2_repo
-from storage.social_storage import append_message, are_friends, get_user_by_id
+from storage.social_storage import append_message, are_friends, get_friends, get_user_by_id
 from storage.social_storage import search_users_by_username
 from storage.study_group_storage import append_group_message
-from storage.rating_storage import create_user, get_user, list_tag_stats
+from storage.postgres_rating_store import postgres_rating_store
 from storage.solve_history import list_solve_history
 from storage.level_test_analysis_storage import (
     list_level_test_analysis_summaries,
     save_level_test_analysis_session,
 )
-from storage.storage import DB_PATH
 from storage.weakness_storage import list_weakness_tags
 from services.ai.sam_client import generate_json, is_sam_configured
 
 router = APIRouter(prefix="/academy", tags=["academy"])
+logger = logging.getLogger(__name__)
 
 MAX_GROUPS_PER_USER = 3
 MAX_GROUPS_CREATED_PER_USER = 3
@@ -276,21 +276,68 @@ def _validate_course_assignment_scope(
         )
 
 
-def _enroll_course_v2_for_students(course_id: str, user_ids: List[str]) -> None:
+def _enroll_course_v2_for_students(course_id: str, user_ids: List[str]) -> List[str]:
+    """필요 변수: 배정할 코스 ID와 학생 사용자 ID 목록.
+
+    작동 원리: 학생별 런타임 조회·저장을 독립 처리해 한 학생의 오류는 기록하고
+    나머지 학생 배정은 계속 진행한다.
+    """
     course = course_v2_repo.get_course_v2(course_id)
     if course is None:
         raise HTTPException(status_code=404, detail="Course not found")
+    errors: List[str] = []
     for user_id in user_ids:
-        state = course_v2_repo.get_runtime_state(user_id, course_id)
-        if not state:
-            state = {
-                "status": "in_progress",
-                "assigned_by_teacher": True,
-                "assigned_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
-            }
-        else:
-            state["assigned_by_teacher"] = True
-        course_v2_repo.upsert_runtime_state(user_id, course_id, state)
+        try:
+            state = course_v2_repo.get_runtime_state(user_id, course_id)
+            if not state:
+                state = {
+                    "status": "in_progress",
+                    "assigned_by_teacher": True,
+                    "assigned_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                }
+            else:
+                state["assigned_by_teacher"] = True
+            course_v2_repo.upsert_runtime_state(user_id, course_id, state)
+        except Exception as exc:
+            logger.warning(
+                "코스 학생 배정을 건너뜁니다: course_id=%s user_id=%s error=%s",
+                course_id,
+                user_id,
+                type(exc).__name__,
+            )
+            errors.append(user_id)
+    return errors
+
+
+def _filter_accessible_snapshots(
+    rows: List[dict],
+    *,
+    caller_user_id: str,
+) -> List[dict]:
+    """필요 변수: 스냅샷 행과 요청 사용자 ID.
+
+    작동 원리: 친구 목록을 한 번만 조회해 접근 가능한 행을 선별하고, 친구 조회가
+    실패하면 정보 노출 없이 본인 행만 반환한다.
+    """
+    friend_ids: set[str] = set()
+    try:
+        friend_ids = {
+            str(friend.get("user_id") or "")
+            for friend in get_friends(caller_user_id)
+            if str(friend.get("user_id") or "")
+        }
+    except Exception as exc:
+        logger.warning(
+            "스냅샷 친구 목록 조회를 건너뜁니다: user_id=%s error=%s",
+            caller_user_id,
+            type(exc).__name__,
+        )
+    return [
+        row
+        for row in rows
+        if str(row.get("user_id") or "") == caller_user_id
+        or str(row.get("user_id") or "") in friend_ids
+    ]
 
 
 def _send_assignment_notice(
@@ -356,8 +403,54 @@ def _json_list(value: object) -> list:
         return []
 
 
+def _safe_number(value: Any, *, integer: bool = False) -> float | int:
+    """필요 변수: 숫자로 변환할 값과 정수 변환 여부.
+
+    작동 원리: 손상된 레이팅 숫자는 0으로 대체해 단일 필드 오류가 학생 분석
+    응답 전체로 전파되지 않게 한다.
+    """
+    try:
+        return int(value or 0) if integer else float(value or 0)
+    except (TypeError, ValueError, OverflowError):
+        return 0
+
+
+def _safe_student_lookup(
+    user_id: str,
+    *,
+    source: str,
+    lookup,
+    fallback: Any,
+) -> Any:
+    """필요 변수: 학생 ID, 조회 출처, 실행 함수와 안전한 대체값.
+
+    작동 원리: 서로 독립적인 분석 데이터 조회를 개별 실행해 실패한 출처만
+    대체값으로 넘기고 나머지 분석 결과는 보존한다.
+    """
+    try:
+        return lookup()
+    except Exception as exc:
+        logger.warning(
+            "학생 분석 조회를 건너뜁니다: user_id=%s source=%s error=%s",
+            user_id,
+            source,
+            type(exc).__name__,
+        )
+        return fallback
+
+
 def _assignment_progress_for_student(user_id: str) -> dict:
-    rows = repo.list_my_assignments(user_id=user_id)
+    """필요 변수: 학생 ID와 개인 과제·코스 런타임 저장소.
+
+    작동 원리: 과제 목록과 코스별 상태를 독립 처리해 한 코스 조회 오류가 다른
+    숙제·코스 진행도를 제거하지 않게 한다.
+    """
+    rows = _safe_student_lookup(
+        user_id,
+        source="assignments",
+        lookup=lambda: repo.list_my_assignments(user_id=user_id),
+        fallback=[],
+    ) or []
     homework = []
     courses = []
     for row in rows:
@@ -371,7 +464,16 @@ def _assignment_progress_for_student(user_id: str) -> dict:
             "status": row.get("submission_status") or "pending",
         }
         if kind == "course":
-            state = course_v2_repo.get_runtime_state(user_id, str(row.get("ref_id") or ""))
+            course_id = str(row.get("ref_id") or "")
+            state = _safe_student_lookup(
+                user_id,
+                source=f"course_runtime:{course_id}",
+                lookup=lambda course_id=course_id: course_v2_repo.get_runtime_state(
+                    user_id,
+                    course_id,
+                ),
+                fallback={},
+            ) or {}
             item["runtime_state"] = state
             item["progress"] = state.get("progress") or state.get("percent") or 0
             courses.append(item)
@@ -381,47 +483,77 @@ def _assignment_progress_for_student(user_id: str) -> dict:
 
 
 def _build_student_analysis(user_id: str) -> dict:
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    try:
-        rating = get_user(conn, user_id)
-        if not rating:
-            rating = create_user(conn, user_id=user_id, rating=1000.0)
-            conn.commit()
-        recent_results = _json_list(rating.get("recent_results"))
-        recent_count = int(rating.get("recent_count") or 0)
-        recent_sum = int(rating.get("recent_sum") or 0)
-        tag_stats = list_tag_stats(conn, user_id)
-    finally:
-        conn.close()
+    """필요 변수: 학생 사용자 ID와 PostgreSQL 레이팅 스키마.
+    작동 원리: 분석 출처별 오류를 격리하면서 레이팅·과제·학습 이력을 가능한 범위에서 합친다.
+    """
+    rating = _safe_student_lookup(
+        user_id,
+        source="rating",
+        lookup=lambda: postgres_rating_store.fetch_user(user_id),
+        fallback={},
+    ) or {}
+    recent_results = _json_list(rating.get("recent_results"))
+    recent_count = int(_safe_number(rating.get("recent_count"), integer=True))
+    recent_sum = int(_safe_number(rating.get("recent_sum"), integer=True))
+    tag_stats = _safe_student_lookup(
+        user_id,
+        source="tag_ratings",
+        lookup=lambda: postgres_rating_store.list_tag_stats(user_id),
+        fallback=[],
+    ) or []
 
     assignments = _assignment_progress_for_student(user_id)
+    rating_value = float(_safe_number(rating.get("rating")))
+    ovr = float(_safe_number(rating.get("ovr")))
+    ovr_prev = float(_safe_number(rating.get("ovr_prev")))
     return {
         "user_id": user_id,
         "rating": {
-            "rating": float(rating.get("rating") or 0),
-            "ovr": float(rating.get("ovr") or 0),
-            "ovr_prev": float(rating.get("ovr_prev") or 0),
-            "ovr_delta": float(rating.get("ovr") or 0) - float(rating.get("ovr_prev") or 0),
+            "rating": rating_value,
+            "ovr": ovr,
+            "ovr_prev": ovr_prev,
+            "ovr_delta": ovr - ovr_prev,
             "recent_accuracy": (recent_sum / recent_count) if recent_count > 0 else 0.0,
             "recent_results": recent_results,
             "recent_count": recent_count,
         },
-        "solve_history": list_solve_history(user_id=user_id, days=30, limit=20),
-        "level_test_analysis": list_level_test_analysis_summaries(user_id, limit=20),
-        "weakness_tags": list_weakness_tags(user_id)[:12],
+        "solve_history": _safe_student_lookup(
+            user_id,
+            source="solve_history",
+            lookup=lambda: list_solve_history(user_id=user_id, days=30, limit=20),
+            fallback=[],
+        ),
+        "level_test_analysis": _safe_student_lookup(
+            user_id,
+            source="level_test_analysis",
+            lookup=lambda: list_level_test_analysis_summaries(user_id, limit=20),
+            fallback=[],
+        ),
+        "weakness_tags": _safe_student_lookup(
+            user_id,
+            source="weakness_tags",
+            lookup=lambda: list_weakness_tags(user_id)[:12],
+            fallback=[],
+        ),
         "tag_ratings": [
             {
                 "tag": item.get("tag"),
                 "attempts": item.get("attempts"),
                 "rating": item.get("rating"),
-                "delta": float(item.get("rating") or 0) - float(item.get("rating_prev") or 0),
+                "delta": float(_safe_number(item.get("rating")))
+                - float(_safe_number(item.get("rating_prev"))),
             }
             for item in tag_stats[:12]
+            if isinstance(item, dict)
         ],
         "homework": assignments["homework"],
         "courses": assignments["courses"],
-        "student_schedule": repo.list_student_schedule_tasks(user_id=user_id, limit=100),
+        "student_schedule": _safe_student_lookup(
+            user_id,
+            source="student_schedule",
+            lookup=lambda: repo.list_student_schedule_tasks(user_id=user_id, limit=100),
+            fallback=[],
+        ),
     }
 
 
@@ -1348,7 +1480,9 @@ def create_assignment(body: AssignmentCreate, user: dict = Depends(get_current_u
     )
     target_user_ids = data.get("target_user_ids") or []
     if body.kind == "course":
-        _enroll_course_v2_for_students(body.ref_id, target_user_ids)
+        enrollment_errors = _enroll_course_v2_for_students(body.ref_id, target_user_ids)
+        if enrollment_errors:
+            data["enrollment_errors"] = enrollment_errors
     title = body.title or ("코스" if body.kind == "course" else "숙제")
     notice = body.message or f"{title} 배정이 도착했습니다."
     delivery_errors = _send_assignment_notice(
@@ -1441,6 +1575,17 @@ def sync_my_student_schedule(
         tasks_by_date=body.tasks_by_date,
         source="student",
     )
+    return ApiResponse(data={"items": items})
+
+
+@router.get("/students/me/schedule", response_model=ApiResponse)
+def list_my_student_schedule(user: dict = Depends(get_current_user)):
+    """필요 변수: 로그인한 학생 사용자 ID다.
+
+    작동 원리: 개인 일정 원장을 날짜순으로 한 번만 조회해 홈의 오늘 할 일 카드가
+    새로고침 뒤에도 사용자가 등록한 일정을 잃지 않도록 한다.
+    """
+    items = repo.list_student_schedule_tasks(user_id=user.get("user_id"))
     return ApiResponse(data={"items": items})
 
 
@@ -1699,11 +1844,7 @@ def list_snapshots(
         _ensure_friend_access_or_403(caller_user_id, user_id)
     data = repo.list_snapshots(user_id=user_id, academy_id=academy_id, group_id=group_id, limit=limit)
     if not user_id:
-        data = [
-            row
-            for row in data
-            if row.get("user_id") == caller_user_id or are_friends(caller_user_id, row.get("user_id"))
-        ]
+        data = _filter_accessible_snapshots(data, caller_user_id=str(caller_user_id or ""))
     return ApiResponse(data={"items": data})
 
 

@@ -55,6 +55,49 @@ class RatingAccessTests(unittest.TestCase):
         self.assertEqual(raised.exception.status_code, 403)
         fetch.assert_not_called()
 
+    def test_friend_rankings_skip_only_failed_user_rating(self) -> None:
+        """필요 변수: 정상 사용자 둘과 레이팅 조회가 실패하는 친구 한 명.
+
+        작동 원리: 실패한 친구만 결과에서 제외하고 정상 사용자는 OVR 순서로
+        계속 반환하는지 검증한다.
+        """
+        ratings = {
+            "requester-id": SimpleNamespace(ovr=1200.0),
+            "healthy-friend": SimpleNamespace(ovr=1500.0),
+        }
+
+        def fetch_rating(user_id: str):
+            if user_id == "broken-friend":
+                raise ValueError("invalid rating row")
+            return ratings[user_id]
+
+        with (
+            patch.object(
+                server,
+                "get_social_user_by_id",
+                return_value={"user_id": "requester-id", "username": "나"},
+            ),
+            patch.object(
+                server,
+                "get_friends",
+                return_value=[
+                    {"user_id": "broken-friend", "username": "오류 사용자"},
+                    {"user_id": "healthy-friend", "username": "정상 사용자"},
+                ],
+            ),
+            patch.object(server, "fetch_user_rating", side_effect=fetch_rating),
+        ):
+            response = server.list_friend_rankings("requester-id")
+
+        self.assertEqual(
+            [item.user_id for item in response.ranks],
+            ["healthy-friend", "requester-id"],
+        )
+        self.assertNotIn(
+            "broken-friend",
+            {item.user_id for item in response.ranks},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

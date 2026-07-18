@@ -124,8 +124,12 @@ class _NotepadPageState extends State<NotepadPage>
     final position = _scrollController.position;
     if (position.pixels > position.maxScrollExtent - 320 &&
         _canvasHeight < _maxHeight) {
-      setState(() => _canvasHeight = (_canvasHeight + _extendHeight)
-          .clamp(_baseHeight, _maxHeight));
+      setState(
+        () => _canvasHeight = (_canvasHeight + _extendHeight).clamp(
+          _baseHeight,
+          _maxHeight,
+        ),
+      );
     }
   }
 
@@ -328,150 +332,226 @@ class _NotepadPageState extends State<NotepadPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF5F5F7);
-    final paperColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
-    final sidebarBg = isDark ? const Color(0xFF2C2C2E) : Colors.white;
-    final sidebarBorder = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.06);
+    // 학습 도구 세션 레퍼런스에 맞춰 캔버스와 툴바를 중립 흑백으로 고정한다.
+    const bgColor = Color(0xFFF7F7F7);
+    const paperColor = Colors.white;
+    const sidebarBg = Colors.white;
+    const sidebarBorder = Color(0xFFE4E4E7);
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: Stack(
-        children: [
-          // 메인 캔버스 영역 (전체 화면, 사이드바 공간 제외)
-          Row(
-            children: [
-              Expanded(
-                child: Scrollbar(
-                  controller: _scrollController,
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    child: Container(
-                      margin: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: paperColor,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark
-                                ? Colors.black.withValues(alpha: 0.3)
-                                : Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Listener(
-                          behavior: HitTestBehavior.opaque,
-                          onPointerDown: (event) {
-                            _closeAllPanels();
-                            final pos = event.localPosition;
-                            if (_toolMode == _ToolMode.pen) {
-                              _startStroke(pos, event.pressure);
-                            } else {
-                              _startEraser(pos);
-                            }
-                          },
-                          onPointerMove: (event) {
-                            final pos = event.localPosition;
-                            if (_toolMode == _ToolMode.pen) {
-                              _updateStroke(pos, event.pressure);
-                            } else {
-                              _updateEraser(pos);
-                            }
-                          },
-                          onPointerUp: (_) {
-                            if (_toolMode == _ToolMode.pen) {
-                              _endStroke();
-                            } else {
-                              _finishEraser();
-                            }
-                          },
-                          onPointerCancel: (_) {
-                            if (_toolMode == _ToolMode.pen) {
-                              _endStroke();
-                            } else {
-                              _finishEraser();
-                            }
-                          },
-                          child: SizedBox(
-                            height: _canvasHeight,
-                            width: double.infinity,
-                            child: CustomPaint(
-                              painter: _NotepadPainter(
-                                strokes: _strokes,
-                                current: _currentStroke,
-                                toolMode: _toolMode,
-                                eraserRadius: _eraserRadius,
-                                eraserPosition: _eraserPosition,
-                                showLines: _showLines,
-                                isDark: isDark,
-                                repaint: _paintVersion,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _NotepadHeader(onClose: () => Navigator.maybePop(context)),
+            Expanded(
+              child: Stack(
+                children: [
+                  // 메인 캔버스 영역 (전체 화면, 사이드바 공간 제외)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Scrollbar(
+                          controller: _scrollController,
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            controller: _scrollController,
+                            child: Container(
+                              margin: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: paperColor,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: isDark
+                                        ? Colors.black.withValues(alpha: 0.3)
+                                        : Colors.black.withValues(alpha: 0.06),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Listener(
+                                  behavior: HitTestBehavior.opaque,
+                                  onPointerDown: (event) {
+                                    _closeAllPanels();
+                                    final pos = event.localPosition;
+                                    if (_toolMode == _ToolMode.pen) {
+                                      _startStroke(pos, event.pressure);
+                                    } else {
+                                      _startEraser(pos);
+                                    }
+                                  },
+                                  onPointerMove: (event) {
+                                    final pos = event.localPosition;
+                                    if (_toolMode == _ToolMode.pen) {
+                                      _updateStroke(pos, event.pressure);
+                                    } else {
+                                      _updateEraser(pos);
+                                    }
+                                  },
+                                  onPointerUp: (_) {
+                                    if (_toolMode == _ToolMode.pen) {
+                                      _endStroke();
+                                    } else {
+                                      _finishEraser();
+                                    }
+                                  },
+                                  onPointerCancel: (_) {
+                                    if (_toolMode == _ToolMode.pen) {
+                                      _endStroke();
+                                    } else {
+                                      _finishEraser();
+                                    }
+                                  },
+                                  child: SizedBox(
+                                    height: _canvasHeight,
+                                    width: double.infinity,
+                                    child: CustomPaint(
+                                      painter: _NotepadPainter(
+                                        strokes: _strokes,
+                                        current: _currentStroke,
+                                        toolMode: _toolMode,
+                                        eraserRadius: _eraserRadius,
+                                        eraserPosition: _eraserPosition,
+                                        showLines: _showLines,
+                                        isDark: isDark,
+                                        repaint: _paintVersion,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
+                      // 우측 사이드바 툴바 (56px)
+                      _RightSidebar(
+                        sidebarBg: sidebarBg,
+                        sidebarBorder: sidebarBorder,
+                        isDark: isDark,
+                        toolMode: _toolMode,
+                        penColor: _penColor,
+                        penWidth: _penWidth,
+                        showLines: _showLines,
+                        isHighlighter: _isHighlighter,
+                        showColorPanel: _showColorPanel,
+                        showWidthPanel: _showWidthPanel,
+                        showEraserPanel: _showEraserPanel,
+                        canUndo: _undoStack.isNotEmpty,
+                        canClear: _strokes.isNotEmpty,
+                        onToolChanged: (mode) {
+                          setState(() => _toolMode = mode);
+                          _closeAllPanels();
+                        },
+                        onColorTap: _toggleColorPanel,
+                        onWidthTap: _toggleWidthPanel,
+                        onEraserTap: _toggleEraserPanel,
+                        onHighlighterTap: _toggleHighlighter,
+                        onColorChanged: (color) =>
+                            setState(() => _penColor = color),
+                        onWidthChanged: (width) =>
+                            setState(() => _penWidth = width),
+                        onLinesChanged: (value) =>
+                            setState(() => _showLines = value),
+                        onUndo: _undo,
+                        onClear: _clearAll,
+                        onBack: () => Navigator.maybePop(context),
+                      ),
+                    ],
+                  ),
+                  // 웹에서는 저장 불가 알림
+                  if (!_canPersist)
+                    Positioned(
+                      bottom: 16,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black87,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            '웹에서는 저장되지 않습니다',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-              // 우측 사이드바 툴바 (56px)
-              _RightSidebar(
-                sidebarBg: sidebarBg,
-                sidebarBorder: sidebarBorder,
-                isDark: isDark,
-                toolMode: _toolMode,
-                penColor: _penColor,
-                penWidth: _penWidth,
-                showLines: _showLines,
-                isHighlighter: _isHighlighter,
-                showColorPanel: _showColorPanel,
-                showWidthPanel: _showWidthPanel,
-                showEraserPanel: _showEraserPanel,
-                canUndo: _undoStack.isNotEmpty,
-                canClear: _strokes.isNotEmpty,
-                onToolChanged: (mode) {
-                  setState(() => _toolMode = mode);
-                  _closeAllPanels();
-                },
-                onColorTap: _toggleColorPanel,
-                onWidthTap: _toggleWidthPanel,
-                onEraserTap: _toggleEraserPanel,
-                onHighlighterTap: _toggleHighlighter,
-                onColorChanged: (color) => setState(() => _penColor = color),
-                onWidthChanged: (width) => setState(() => _penWidth = width),
-                onLinesChanged: (value) => setState(() => _showLines = value),
-                onUndo: _undo,
-                onClear: _clearAll,
-                onBack: () => Navigator.maybePop(context),
-              ),
-            ],
-          ),
-          // 웹에서는 저장 불가 알림
-          if (!_canPersist)
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    '웹에서는 저장되지 않습니다',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ),
+                ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 노트패드 캔버스 위에 도구 이름과 세션 종료 동작을 고정한다.
+/// 필요한 변수: 종료 콜백. 작동 원리: 다른 학습 도구와 같은 흰색 헤더를 제공한다.
+class _NotepadHeader extends StatelessWidget {
+  const _NotepadHeader({required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 82,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7))),
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'LEARNING TOOL · SESSION',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                    color: Color(0xFF71717A),
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  '노트패드',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: onClose,
+            icon: const Icon(Icons.close_rounded),
+            style: IconButton.styleFrom(
+              shape: const CircleBorder(
+                side: BorderSide(color: Color(0xFFE4E4E7)),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -538,7 +618,9 @@ class _RightSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconColor = isDark ? Colors.white70 : const Color(0xFF8E8E93);
-    final selectedBg = isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE8F5E9);
+    final selectedBg = isDark
+        ? const Color(0xFF3A3A3C)
+        : const Color(0xFFE8F5E9);
     final selectedIconColor = const Color(0xFF1B402B);
 
     return Container(
@@ -576,7 +658,11 @@ class _RightSidebar extends StatelessWidget {
           _SidebarButton(
             icon: Icons.edit,
             tooltip: '펜',
-            selected: toolMode == _ToolMode.pen && !showColorPanel && !showWidthPanel && !isHighlighter,
+            selected:
+                toolMode == _ToolMode.pen &&
+                !showColorPanel &&
+                !showWidthPanel &&
+                !isHighlighter,
             selectedColor: selectedIconColor,
             selectedBg: selectedBg,
             iconColor: iconColor,
@@ -682,10 +768,7 @@ class _RightSidebar extends StatelessWidget {
               isDark: isDark,
               onWidthChanged: onWidthChanged,
             ),
-          if (showEraserPanel)
-            _EraserPanel(
-              isDark: isDark,
-            ),
+          if (showEraserPanel) _EraserPanel(isDark: isDark),
           const SizedBox(height: 8),
         ],
       ),
@@ -739,11 +822,7 @@ class _SidebarButton extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Icon(
-                icon,
-                size: 20,
-                color: selected ? selectedColor : iconColor,
-              ),
+              Icon(icon, size: 20, color: selected ? selectedColor : iconColor),
               // 색상 인디케이터
               if (accentColor != null)
                 Positioned(
@@ -909,11 +988,15 @@ class _WidthPanel extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(vertical: 2),
                 decoration: BoxDecoration(
                   color: penWidth == width
-                      ? (isDark ? const Color(0xFF4A4A4C) : const Color(0xFFE8F5E9))
+                      ? (isDark
+                            ? const Color(0xFF4A4A4C)
+                            : const Color(0xFFE8F5E9))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: penWidth == width ? selectedColor : Colors.transparent,
+                    color: penWidth == width
+                        ? selectedColor
+                        : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -922,7 +1005,9 @@ class _WidthPanel extends StatelessWidget {
                     width: width * 2.0,
                     height: width * 2.0,
                     decoration: BoxDecoration(
-                      color: penWidth == width ? selectedColor : (isDark ? Colors.white54 : const Color(0xFF8E8E93)),
+                      color: penWidth == width
+                          ? selectedColor
+                          : (isDark ? Colors.white54 : const Color(0xFF8E8E93)),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -941,9 +1026,7 @@ class _WidthPanel extends StatelessWidget {
 //=============================================================================
 
 class _EraserPanel extends StatelessWidget {
-  const _EraserPanel({
-    required this.isDark,
-  });
+  const _EraserPanel({required this.isDark});
 
   final bool isDark;
 
@@ -1005,7 +1088,9 @@ class _EraserPanel extends StatelessWidget {
             '${_NotepadPageState._eraserRadius.toInt()}',
             style: TextStyle(
               fontSize: 8,
-              color: isDark ? Colors.white.withValues(alpha: 0.4) : const Color(0xFFAAAAAA),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.4)
+                  : const Color(0xFFAAAAAA),
             ),
           ),
         ],
@@ -1131,9 +1216,11 @@ class _NotepadPainter extends CustomPainter {
       final linePaint = Paint()
         ..color = isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE8E8ED)
         ..strokeWidth = 0.8;
-      for (var y = _NotepadPageState._lineGap;
-          y < size.height;
-          y += _NotepadPageState._lineGap) {
+      for (
+        var y = _NotepadPageState._lineGap;
+        y < size.height;
+        y += _NotepadPageState._lineGap
+      ) {
         canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
       }
       // 세로 마진 라인
@@ -1194,10 +1281,7 @@ class _StrokePoint {
 class _StrokePainter extends CustomPainter {
   static const double _pressureMinFactor = 0.35;
 
-  _StrokePainter({
-    required this.strokes,
-    required this.currentStroke,
-  });
+  _StrokePainter({required this.strokes, required this.currentStroke});
 
   final List<_Stroke> strokes;
   final _Stroke? currentStroke;
@@ -1215,7 +1299,8 @@ class _StrokePainter extends CustomPainter {
 
     double pressureWidth(double baseWidth, double pressure) {
       final factor =
-          _pressureMinFactor + (1 - _pressureMinFactor) * pressure.clamp(0.0, 1.0);
+          _pressureMinFactor +
+          (1 - _pressureMinFactor) * pressure.clamp(0.0, 1.0);
       return baseWidth * factor;
     }
 

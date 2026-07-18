@@ -1,7 +1,7 @@
 part of 'package:s11/sessions/friend/friend.dart';
 
-const _green = Color(0xFF1B402B);
-const _bgGrey = Color(0xFFF7F7F7);
+const _green = StudentDensityTokens.dark;
+const _bgGrey = StudentDensityTokens.background;
 const _shadow = BoxShadow(
   blurRadius: 4,
   color: Color(0x33000000),

@@ -396,6 +396,21 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   String? _chatBefore;
   String? _myUsername;
 
+  /// 필요한 변수는 서버의 ISO-8601 시간 문자열이다.
+  /// 작동 원리는 당일은 시:분, 날짜가 바뀐 메시지는 월/일만 반환해 그룹 채팅을 간결하게 표시하는 것이다.
+  String _formatChatTime(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    final local = parsed.toLocal();
+    final now = DateTime.now();
+    if (local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day) {
+      return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    }
+    return '${local.month}/${local.day}';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1273,7 +1288,10 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                           msg.userId == _myUsername;
                       return _buildChatBubble(
                         text: msg.text,
-                        timeLabel: msg.createdAt,
+                        senderName: msg.senderName.isNotEmpty
+                            ? msg.senderName
+                            : msg.userId,
+                        timeLabel: _formatChatTime(msg.createdAt),
                         isMe: isMe,
                         messageType: msg.messageType,
                         payload: msg.payload,
@@ -1330,6 +1348,7 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
 
   Widget _buildChatBubble({
     required String text,
+    required String senderName,
     required String timeLabel,
     required bool isMe,
     required String messageType,
@@ -1379,6 +1398,16 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (senderName.isNotEmpty && !isMe)
+                  Text(
+                    senderName,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                if (senderName.isNotEmpty && !isMe) const SizedBox(height: 3),
                 Text(
                   displayText,
                   style: TextStyle(color: textColor, fontSize: 14, height: 1.3),

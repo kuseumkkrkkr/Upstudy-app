@@ -10,14 +10,14 @@ class StudentDirectChatPage extends StatefulWidget {
   const StudentDirectChatPage({
     super.key,
     required this.peerUsername,
-    this.peerTier = 'B Tier',
+    this.peerStatus = '상태 정보 없음',
     this.preview = false,
     this.onMessageSent,
     this.onThreadDeleted,
   });
 
   final String peerUsername;
-  final String peerTier;
+  final String peerStatus;
   final bool preview;
   final ValueChanged<DirectMessage>? onMessageSent;
   final VoidCallback? onThreadDeleted;
@@ -309,7 +309,7 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
                                         ),
                                         const SizedBox(height: 3),
                                         Text(
-                                          '온라인 · ${widget.peerTier}',
+                                          widget.peerStatus,
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Colors.black45,

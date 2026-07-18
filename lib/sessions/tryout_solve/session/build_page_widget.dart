@@ -302,6 +302,36 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     return results;
   }
 
+  /// 필요한 변수는 현재 문제의 풀이 단계와 각 단계의 분기 목록이다.
+  /// 작동 원리는 모든 단계와 분기를 순회해 hint_riddle을 순서대로 모아,
+  /// 힌트 버튼에서 문제에 등록된 힌트 전문을 빠짐없이 표시하는 것이다.
+  List<List<ContentBlock>> _currentQuestHintBlocks() {
+    final quest = _currentQuest;
+    if (quest == null) return const <List<ContentBlock>>[];
+    final solves = quest['solves'];
+    if (solves is! List) return const <List<ContentBlock>>[];
+
+    final hintGroups = <List<ContentBlock>>[];
+    void collectHints(dynamic steps) {
+      if (steps is List) {
+        for (final step in steps) {
+          collectHints(step);
+        }
+        return;
+      }
+      if (steps is! Map) return;
+
+      final hintBlocks = parseContentBlocks(steps['hint_riddle']);
+      if (hintBlocks.isNotEmpty) {
+        hintGroups.add(hintBlocks);
+      }
+      collectHints(steps['branches']);
+    }
+
+    collectHints(solves);
+    return hintGroups;
+  }
+
   int? _currentSelectedChoice() {
     if (_currentProblemIndex < 0 ||
         _currentProblemIndex >= _selectedChoices.length) {
@@ -1355,6 +1385,67 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     );
   }
 
+  /// 필요한 변수는 현재 문제의 모든 hint_riddle 콘텐츠 블록이다.
+  /// 작동 원리는 문제풀이 안내와 분리된 모달에서 각 힌트를 개조식으로 렌더링해
+  /// 학생이 힌트 버튼을 눌렀을 때 등록된 힌트 전문을 한 번에 확인하게 하는 것이다.
+  void _showHint() {
+    final hintGroups = _currentQuestHintBlocks();
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('힌트'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520, maxHeight: 360),
+          child: SingleChildScrollView(
+            child: hintGroups.isEmpty
+                ? const Text('이 문제에 등록된 힌트가 없습니다.')
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final hintBlocks in hintGroups)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: Text(
+                                  '•',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ContentBlocksView(
+                                  blocks: hintBlocks,
+                                  textStyle: const TextStyle(
+                                    fontSize: 16,
+                                    height: 1.5,
+                                  ),
+                                  latexStyle: const TextStyle(
+                                    fontSize: 16,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCanvasArea() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1569,7 +1660,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                           ),
                           if (!compact)
                             OutlinedButton(
-                              onPressed: _showSolveInfo,
+                              onPressed: _showHint,
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size(68, 46),
                                 shape: RoundedRectangleBorder(
@@ -1583,7 +1674,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                       if (compact) ...[
                         const SizedBox(height: 18),
                         OutlinedButton(
-                          onPressed: _showSolveInfo,
+                          onPressed: _showHint,
                           child: const Text('힌트 2'),
                         ),
                       ],
@@ -2354,7 +2445,36 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       'problem_index': _currentProblemIndex + 1,
       'problem_count': _problemCount,
       'hash_tags': _hashTags,
+      'writing_events': _buildOcrWritingEvents(),
     };
+  }
+
+  // 필요 변수: 현재 채점 화면의 완료된 펜 획.
+  // 작동 원리: 전체 풀이 PNG와 동일한 논리 좌표로 획을 직렬화해 서버의 수식 그리딩에 전달한다.
+  List<Map<String, dynamic>> _buildOcrWritingEvents() {
+    final events = <Map<String, dynamic>>[];
+    for (var strokeId = 0; strokeId < _strokes.length; strokeId++) {
+      final stroke = _strokes[strokeId];
+      if (stroke.points.length < 2) {
+        continue;
+      }
+      events.add({
+        'stroke_id': strokeId,
+        'order': stroke.order,
+        'width': stroke.baseWidth,
+        'points': stroke.points
+            .map(
+              (point) => {
+                'x': point.position.dx,
+                'y': point.position.dy,
+                'pressure': point.pressure,
+                'timestamp': point.timestamp,
+              },
+            )
+            .toList(growable: false),
+      });
+    }
+    return events;
   }
 
   Map<String, dynamic> _buildGenConfig() {

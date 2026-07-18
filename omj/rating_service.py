@@ -490,11 +490,11 @@ def apply_level_test_placement(
 
 
 def _build_placement_samples(answers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """필요 변수: 저장된 레벨테스트 답안. 작동 원리: 일반 문제은행을 보지 않고 전용 정적 DB의 문제·태그·보정 레이팅만 표본으로 만든다."""
-    from domain.level_test import static_store
+    """필요 변수: 저장된 레벨테스트 답안. 작동 원리: PostgreSQL 문제 payload의 검수 태그·보정 레이팅으로 표본을 만든다."""
+    from storage.postgres_level_test_store import postgres_level_test_store
 
     samples: List[Dict[str, Any]] = []
-    quests = static_store.get_quests_by_ids(
+    quests = postgres_level_test_store.get_problem_payloads(
         str(answer.get("quest_id") or "") for answer in answers
     )
     for answer in answers:
