@@ -40,6 +40,8 @@ USERNAME_RE = re.compile(r"^[A-Za-z0-9]{4,16}$")
 PASSWORD_RE = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 NAME_RE = re.compile(r"^[가-힣A-Za-z0-9 ]{1,20}$")
+# 학교 찾기 자동완성이 아직 연결되지 않은 가입 화면에서도 직접 입력을 허용한다.
+SCHOOL_NAME_RE = re.compile(r"^[가-힣A-Za-z0-9 .·()\-]{1,100}$")
 
 SCHOOL_CATALOG = [
     "서울예빛중학교",
@@ -82,10 +84,13 @@ def validate_name(name: str) -> Optional[str]:
 
 
 def validate_school(school: str) -> Optional[str]:
+    """필요 변수: 가입 화면에서 입력한 학교명.
+    작동 원리: 고정 카탈로그 대신 안전한 문자·길이만 검사해, 아직 등록되지 않은 학교도 회원가입을 막지 않는다.
+    """
     if not school or not school.strip():
         return "학교명을 입력해주세요"
-    if school.strip() not in SCHOOL_CATALOG:
-        return "서비스 대상 학교가 아닙니다"
+    if not SCHOOL_NAME_RE.match(school.strip()):
+        return "형식이 다릅니다"
     return None
 
 
