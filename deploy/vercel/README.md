@@ -67,13 +67,14 @@ GET https://YOUR-PROJECT.vercel.app/api/ocr/jobs/{job_id}
 
 ## 4. Flutter 앱
 
-현재 카나리 웹은 Vercel을 인증·OCR API 주소로 사용한다. 아직 이 경량 API에 포함되지 않은 코스·마켓 등은
-별도 전체 FastAPI 주소가 준비될 때까지 동작하지 않는다.
+현재 구성에서 Vercel은 OCR 큐 전용이다. 로그인·문제·코스·마켓·복습을 포함한 일반 앱 API는
+Lightning 공개 FastAPI 주소를 사용하고, OCR 분석만 Vercel 큐를 거쳐 Lightning worker로 전달한다.
+두 주소를 바꾸면 일반 기능이 빈 Vercel 경량 응답으로 향하므로 반드시 분리해 설정한다.
 
 ```powershell
 flutter build apk `
-  --dart-define=API_BASE_URL=https://YOUR-PROJECT.vercel.app `
-  --dart-define=OCR_QUEUE_BASE_URL=https://YOUR-PROJECT.vercel.app/api/ocr
+  --dart-define=API_BASE_URL=https://YOUR-LIGHTNING-PUBLIC-URL `
+  --dart-define=OCR_QUEUE_BASE_URL=https://YOUR-VERCEL-PROJECT.vercel.app/api/ocr
 ```
 
 `OCR_QUEUE_BASE_URL`을 생략하면 `ApiClient.submitSolveAnalysis()`는 기존 `/analysis/solve`를 호출한다.
