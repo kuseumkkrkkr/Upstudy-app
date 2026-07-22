@@ -61,7 +61,9 @@ class _OwnedMarketplaceModalState extends State<_OwnedMarketplaceModal> {
     final listingId =
         item['listing_id']?.toString() ?? item['id']?.toString() ?? '';
     final navigator = Navigator.of(context, rootNavigator: true);
-    Navigator.of(context).pop(OwnedMarketplaceModalResult.itemOpened);
+    // 동일한 루트 Navigator로 모달을 닫고 풀이 화면을 push해야 웹에서도
+    // 모달 아래의 학습 화면이 잘못 pop되지 않는다.
+    navigator.pop(OwnedMarketplaceModalResult.itemOpened);
     if (widget.kind == 'exam') {
       navigator.push(
         MaterialPageRoute(
