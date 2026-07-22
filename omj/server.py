@@ -1086,6 +1086,65 @@ def _exam_paper_runtime_items(exam_id: str) -> Optional[List[Dict[str, Any]]]:
     return items
 
 
+def _marketplace_exam_runtime_items(
+    user_id: str,
+    listing_id: str,
+) -> Optional[List[Dict[str, Any]]]:
+    """필요 변수는 로그인 사용자와 마켓 시험지 상품 ID다.
+    작동 원리는 보유 원장을 먼저 확인한 뒤 상품의 고정 문제 ID를 시험지 응답 형식으로
+    복원하는 것이다. 별도 생성 시험 레코드가 없는 마켓 시험지도 구매자에게만 공개한다.
+    """
+    from domain.marketplace import purchase_repository
+    from domain.marketplace import repository as marketplace_repository
+
+    listing = marketplace_repository.get_published(listing_id)
+    if listing is None or str(listing.get("kind") or "") != "exam":
+        return None
+
+    owned_listing_ids = {
+        str(purchase.get("listing_id") or "")
+        for purchase in purchase_repository.list_owned(user_id)
+    }
+    if listing_id not in owned_listing_ids:
+        return None
+
+    raw_problem_ids = listing.get("problem_ids")
+    if not isinstance(raw_problem_ids, list):
+        return []
+
+    items: List[Dict[str, Any]] = []
+    for index, raw_quest_id in enumerate(raw_problem_ids):
+        quest_id = str(raw_quest_id or "").strip()
+        if not quest_id:
+            continue
+        quest = get_quest(quest_id)
+        data = quest.get("data", {}) if quest else {}
+        hash_tags = data.get("hash_tag") or data.get("hash_tags") or []
+        if isinstance(hash_tags, str):
+            hash_tags = [hash_tags]
+        if not isinstance(hash_tags, list):
+            hash_tags = []
+        items.append(
+            {
+                "item_index": index,
+                "status": "done",
+                "subject_key": str(data.get("subject_key") or "math"),
+                "hash_tags": [str(tag) for tag in hash_tags],
+                "difficulty_tier": int(data.get("difficulty_tier") or 3),
+                "solves_count": int(data.get("solves_count") or 1),
+                "strategy_level": int(data.get("strategy_level") or 1),
+                "branch_conditions": int(data.get("branch_conditions") or 0),
+                "question_type": data.get("question_type"),
+                "quest_id": quest_id,
+                "flow_count": len(quest.get("solves", [])) if quest else None,
+                "codebase_id": data.get("codebase_id"),
+                "seed": data.get("seed"),
+                "error": None if quest else "quest not found",
+            }
+        )
+    return items
+
+
 def _extract_codebase_seed(payload: Dict[str, Any]) -> Tuple[Optional[int], Optional[int]]:
     data = payload.get("data")
     if not isinstance(data, dict):
@@ -4329,6 +4388,13 @@ def get_exam_handler(
     exam = get_exam(exam_id)
 
     if exam is None:
+        marketplace_items = _marketplace_exam_runtime_items(user_id, exam_id)
+        if marketplace_items is not None:
+            return ExamStatusResponse(
+                exam_id=exam_id,
+                status="done",
+                items=_resolve_items(marketplace_items),
+            )
         if not _can_access_exam_via_course(user_id, exam_id, course_id):
             raise HTTPException(status_code=404, detail="Exam not found")
         paper_items = _exam_paper_runtime_items(exam_id)
