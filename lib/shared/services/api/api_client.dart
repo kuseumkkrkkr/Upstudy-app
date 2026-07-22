@@ -4250,12 +4250,108 @@ extension ApiClientLegacyCompat on ApiClient {
     if (problemImage != null) {
       body['problem_image'] = base64Encode(problemImage);
     }
+    if (ApiContract.ocrQueueBaseUrl.trim().isNotEmpty) {
+      return _submitSolveAnalysisQueued(body);
+    }
     final res = await _post<Map<String, dynamic>>(
       '/analysis/solve',
       body,
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return SolveAnalysisResponse.fromJson(res.data ?? const {});
+  }
+
+  /// 필요한 변수는 기존 `/analysis/solve` JSON과 Vercel 큐 URL이다.
+  /// 작동 원리는 작업을 한 번 등록한 뒤 완료·실패까지 제한 시간 동안 폴링해 기존 응답 형식을 그대로 돌려주는 것이다.
+  Future<SolveAnalysisResponse> _submitSolveAnalysisQueued(
+    Map<String, dynamic> body,
+  ) async {
+    final token = await _ensureToken();
+    final base = ApiContract.ocrQueueBaseUrl.trim().replaceFirst(
+      RegExp(r'/+$'),
+      '',
+    );
+    final createUri = Uri.parse('$base/jobs');
+    final idempotencyKey = sha256
+        .convert(
+          utf8.encode(
+            '$token:${DateTime.now().microsecondsSinceEpoch}:${jsonEncode(body)}',
+          ),
+        )
+        .toString();
+    final created = await _httpClient.post(
+      createUri,
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'X-Idempotency-Key': idempotencyKey,
+      },
+      body: jsonEncode(<String, dynamic>{'mode': 'solve', 'payload': body}),
+    );
+    await _clearTokenOnUnauthorized(created);
+    final createdBody = _decodeQueueResponse(created);
+    final jobId = (createdBody['job_id'] ?? '').toString();
+    if (jobId.isEmpty) {
+      throw ApiException(
+        statusCode: created.statusCode,
+        message: 'OCR 작업 ID가 없습니다.',
+      );
+    }
+
+    const pollInterval = Duration(seconds: 1);
+    const maxPolls = 240;
+    for (var attempt = 0; attempt < maxPolls; attempt++) {
+      if (attempt > 0) await Future<void>.delayed(pollInterval);
+      final response = await _httpClient.get(
+        Uri.parse('$base/jobs/$jobId'),
+        headers: <String, String>{'Authorization': 'Bearer $token'},
+      );
+      await _clearTokenOnUnauthorized(response);
+      final job = _decodeQueueResponse(response);
+      final jobStatus = (job['status'] ?? '').toString();
+      if (jobStatus == 'completed') {
+        final result = job['result'];
+        if (result is Map) {
+          return SolveAnalysisResponse.fromJson(
+            Map<String, dynamic>.from(result),
+          );
+        }
+        throw ApiException(statusCode: 502, message: 'OCR 결과 형식이 잘못되었습니다.');
+      }
+      if (jobStatus == 'failed') {
+        throw ApiException(
+          statusCode: 502,
+          message: (job['error'] ?? 'OCR worker 처리 실패').toString(),
+        );
+      }
+    }
+    throw ApiException(statusCode: 504, message: 'OCR 처리 대기 시간이 초과되었습니다.');
+  }
+
+  /// 필요한 변수는 Vercel 큐 HTTP 응답이다.
+  /// 작동 원리는 UTF-8 JSON과 상태 코드를 함께 검증해 HTML 오류 페이지나 비정상 응답을 차단한다.
+  Map<String, dynamic> _decodeQueueResponse(http.Response response) {
+    final text = utf8.decode(response.bodyBytes);
+    dynamic decoded;
+    try {
+      decoded = text.trim().isEmpty ? <String, dynamic>{} : jsonDecode(text);
+    } catch (_) {
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: 'OCR 큐가 JSON이 아닌 응답을 반환했습니다.',
+      );
+    }
+    final body = decoded is Map
+        ? Map<String, dynamic>.from(decoded)
+        : <String, dynamic>{};
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: (body['detail'] ?? body['message'] ?? 'OCR 큐 요청 실패')
+            .toString(),
+      );
+    }
+    return body;
   }
 
   Future<UserRating> submitRating({

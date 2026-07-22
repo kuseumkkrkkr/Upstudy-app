@@ -16,6 +16,12 @@ class ApiContract {
     defaultValue: '',
   );
 
+  /// Vercel 비동기 OCR 큐 주소. 비어 있으면 기존 단일 FastAPI 경로를 유지한다.
+  static const String ocrQueueBaseUrl = String.fromEnvironment(
+    'OCR_QUEUE_BASE_URL',
+    defaultValue: '',
+  );
+
   /// Path-level compatibility overrides for backend contract changes.
   static const Map<String, String> pathOverrides = <String, String>{};
 
