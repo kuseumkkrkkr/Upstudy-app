@@ -13,6 +13,12 @@ def runtime_readiness() -> dict[str, Any]:
     작동 원리: PostgreSQL과 Redis 및 이관 감사가 모두 확인될 때만 준비 완료를 반환한다.
     """
     backend = os.getenv("PROBLEM_CACHE_BACKEND", "postgres").strip().lower() or "postgres"
+    # 카나리 단일 인스턴스는 Redis 캐시와 과거 문제 이관 감사 없이도 핵심 API를 검증한다.
+    canary_relaxed = os.getenv("CANARY_RELAXED_READINESS", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     database_configured = bool(os.getenv("DATABASE_URL", "").strip())
     verified = os.getenv("PROBLEM_CACHE_VERIFIED", "").strip().lower() in {"1", "true", "yes"}
     postgres_ok = postgres_problem_store.ping() if database_configured else False
@@ -26,15 +32,20 @@ def runtime_readiness() -> dict[str, Any]:
             level_test_ok = True
         except Exception:
             level_test_ok = False
-    ready = (
-        backend == "postgres"
-        and database_configured
-        and verified
-        and postgres_ok is True
-        and redis_ok is True
-        and audit_ok is True
-        and level_test_ok is True
-    )
+    if canary_relaxed:
+        # 필요한 변수: Supabase PostgreSQL과 레벨 테스트 스키마.
+        # 작동 원리: 임시 캐시 재시작을 허용하는 단일 카나리에서는 영속 DB 핵심 경로만 readiness로 본다.
+        ready = database_configured and postgres_ok is True and level_test_ok is True
+    else:
+        ready = (
+            backend == "postgres"
+            and database_configured
+            and verified
+            and postgres_ok is True
+            and redis_ok is True
+            and audit_ok is True
+            and level_test_ok is True
+        )
     return {
         "ready": ready,
         "problem_cache_backend": backend,
@@ -44,4 +55,5 @@ def runtime_readiness() -> dict[str, Any]:
         "redis": redis_ok,
         "migration_audit": audit_ok,
         "level_test_postgres": level_test_ok,
+        "canary_relaxed": canary_relaxed,
     }
