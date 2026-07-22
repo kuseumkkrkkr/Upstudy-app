@@ -29,6 +29,24 @@ Studio가 자동 시작될 때 worker도 함께 복구된다. 공개 포트는 8
 공개 포트 URL 끝에 `/wake`를 붙인 값을 Vercel의 `LIGHTNING_WAKE_URL`로 사용한다. `/health`가
 200인지 먼저 확인한다. 첫 호출은 Studio/모델 콜드 스타트 때문에 수 분 걸릴 수 있다.
 
+### 레벨테스트 초기 문제·템플릿 이관
+
+레벨테스트 시작 API는 PostgreSQL의 `problem_payload`, `level_test_template`,
+`level_test_template_item`을 사용한다. 새 Supabase 프로젝트에는 이 테이블의 기본 문제와
+템플릿이 없으므로, Lightning Studio에서 worker를 공개하기 전에 아래 작업을 한 번 실행한다.
+이관은 UPSERT 방식이므로 같은 명령을 다시 실행해도 안전하다.
+
+```bash
+cd /teamspace/studios/this_studio/aiflow-worker/omj
+python scripts/seed_level_test_static_db.py --db /tmp/aiflow-level-test-static.db
+python scripts/migrate_level_test_to_postgres.py --source /tmp/aiflow-level-test-static.db
+```
+
+첫 명령은 검수된 정적 문제 98개와 50문항짜리 템플릿 5개를 만들고 무결성을 검증한다.
+둘째 명령은 Studio Secret의 `DATABASE_URL`을 사용해 이를 Supabase PostgreSQL에 넣는다.
+완료 뒤 `POST /level-tests/placement/start`가 50개 문항을 반환하는지 확인한다. 생성한
+`/tmp` 파일은 이관 뒤 보관할 필요가 없으며 Git에 추가하지 않는다.
+
 ## 3. Vercel
 
 Vercel에서 이 저장소의 `vercel` 브랜치와 저장소 루트를 선택한다. Framework Preset은 `Other`로 두고
