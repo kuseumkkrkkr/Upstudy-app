@@ -1,0 +1,6 @@
+# Vercel 함수에는 경량 큐 API만 포함하고 Flutter·OCR 모델·DB 파일은 제외한다.
+*
+!api/
+!api/**
+!requirements.txt
+!vercel.json
