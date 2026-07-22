@@ -7,7 +7,7 @@
 
 SQL Editor에서 `supabase_ocr_queue.sql` 전체를 한 번 실행한다. 테이블은 RLS가 켜져 있고
 `anon`/`authenticated` 직접 접근 권한이 없다. Vercel과 Lightning에만 service role key를 Secret으로 둔다.
-카나리 데이터는 `delete_expired_ocr_jobs()`를 Supabase Cron으로 매시간 호출하면 자동 파기된다.
+SQL이 `delete_expired_ocr_jobs()`를 매시간 호출하는 `aiflow-ocr-cleanup` Cron도 함께 등록한다.
 
 ## 2. Lightning AI
 
@@ -18,6 +18,9 @@ Studio Secret에 넣고 아래 공개 앱을 실행한다.
 python -m pip install -r omj/requirements.txt
 bash deploy/lightning/start.sh
 ```
+
+`deploy/lightning/on_start.sh`의 내용을 Studio 홈의 `.lightning_studio/on_start.sh`로 등록하면
+Studio가 자동 시작될 때 worker도 함께 복구된다. 공개 포트는 8000이며 Auto start를 활성화한다.
 
 공개 포트 URL 끝에 `/wake`를 붙인 값을 Vercel의 `LIGHTNING_WAKE_URL`로 사용한다. `/health`가
 200인지 먼저 확인한다. 첫 호출은 Studio/모델 콜드 스타트 때문에 수 분 걸릴 수 있다.
@@ -34,6 +37,8 @@ GET https://YOUR-PROJECT.vercel.app/api/ocr/jobs/{job_id}
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY`, `OMJ_JWT_SECRET`, `LIGHTNING_WAKE_SECRET`은 앱 빌드 값이나 Git에 넣지 않는다.
+콜드 스타트는 Vercel이 `LIGHTNING_API_AUTH`로 기존 Studio를 `cpu-4`에서만 재개한다. GPU 머신 이름은
+코드에 허용하지 않아 wake 요청으로 유료 GPU를 시작할 수 없다.
 
 ## 4. Flutter 앱
 
@@ -54,4 +59,3 @@ flutter build apk `
 - 큐 선점은 PostgreSQL `FOR UPDATE SKIP LOCKED`이며 최대 3회 재시도한다.
 - 완료 시 원본 payload는 즉시 비우고 결과 행도 기본 24시간 후 삭제한다.
 - 이 구성은 20명 미만 카나리용이다. 2,000 동접 운영 구성은 별도 상시 worker와 정식 메시지 큐가 필요하다.
-

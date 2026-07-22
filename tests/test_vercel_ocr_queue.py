@@ -52,3 +52,36 @@ def test_job_requires_bearer_token():
         response = client.post("/api/ocr/jobs", json={"mode": "ocr", "payload": {}})
     assert response.status_code == 401
 
+
+def test_lightning_start_is_pinned_to_free_cpu(monkeypatch):
+    """필요 변수: Lightning 관리 API Secret·가짜 HTTP. 작동 원리: wake가 기존 Studio를 cpu-4로만 시작하는지 검증한다."""
+    module = importlib.import_module("api.index")
+    monkeypatch.setenv("LIGHTNING_API_AUTH", "Basic test-credential")
+    monkeypatch.setenv("LIGHTNING_TEAMSPACE_ID", "teamspace-id")
+    monkeypatch.setenv("LIGHTNING_STUDIO_ID", "studio-id")
+    captured = {}
+
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self, _limit):
+            return b"{}"
+
+    def _urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["authorization"] = request.headers["Authorization"]
+        captured["body"] = request.data.decode("utf-8")
+        captured["timeout"] = timeout
+        return _Response()
+
+    monkeypatch.setattr(module.urllib.request, "urlopen", _urlopen)
+    module._start_lightning_studio()
+
+    assert captured["url"].endswith("/v1/projects/teamspace-id/cloudspaces/studio-id/start")
+    assert captured["authorization"] == "Basic test-credential"
+    assert '"name": "cpu-4"' in captured["body"]
+    assert '"spot": false' in captured["body"]

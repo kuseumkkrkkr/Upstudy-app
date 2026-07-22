@@ -67,6 +67,13 @@ async def _run_once() -> None:
         await asyncio.to_thread(_process_available_jobs)
 
 
+@app.on_event("startup")
+async def drain_queue_on_startup() -> None:
+    """필요 변수: Supabase 큐 환경값. 작동 원리: 콜드 스타트 wake 연결이 끊겨도 남은 작업을 자동 소비한다."""
+    if os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
+        asyncio.create_task(_run_once())
+
+
 @app.get("/health")
 def health() -> dict[str,str]:
     """필요 변수: 없음. 작동 원리: 모델 로드 없이 worker HTTP 프로세스 생존을 알린다."""
@@ -80,4 +87,3 @@ async def wake(_: WakeRequest, x_worker_secret: str | None = Header(default=None
         raise HTTPException(status_code=401,detail="invalid worker secret")
     asyncio.create_task(_run_once())
     return {"status":"accepted"}
-

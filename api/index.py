@@ -104,11 +104,14 @@ def _data_api() -> SupabaseDataApi:
 
 
 def _wake_lightning(job_id: str) -> None:
-    """필요 변수: Lightning 공개 URL·공유 Secret. 작동 원리: 짧은 호출로 휴면 worker 자동 시작을 유도한다."""
+    """필요 변수: Lightning 공개 URL·공유 Secret. 작동 원리: Studio 시작 요청 후 wake를 보내 대기 큐를 소비시킨다."""
     wake_url = os.getenv("LIGHTNING_WAKE_URL", "").strip()
     wake_secret = os.getenv("LIGHTNING_WAKE_SECRET", "").strip()
     if not wake_url or not wake_secret:
         return
+    _start_lightning_studio()
+    # Lightning는 너무 빨리 끊긴 요청을 Auto start 신호로 확정하지 않을 수 있다.
+    wake_timeout = max(5.0, min(float(os.getenv("LIGHTNING_WAKE_TIMEOUT_SECONDS", "20")), 24.0))
     request = urllib.request.Request(
         wake_url,
         data=json.dumps({"job_id": job_id}).encode("utf-8"),
@@ -116,11 +119,37 @@ def _wake_lightning(job_id: str) -> None:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=3) as response:
+        with urllib.request.urlopen(request, timeout=wake_timeout) as response:
             response.read(128)
     except OSError:
         # 콜드 스타트 timeout이어도 최초 요청이 Studio 시작 신호로 사용된다.
         pass
+
+
+def _start_lightning_studio() -> None:
+    """필요 변수: Lightning Basic 인증·팀스페이스/Studio ID. 작동 원리: 기존 무료 CPU-4 Studio만 명시적으로 재개한다."""
+    authorization = os.getenv("LIGHTNING_API_AUTH", "").strip()
+    teamspace_id = os.getenv("LIGHTNING_TEAMSPACE_ID", "").strip()
+    studio_id = os.getenv("LIGHTNING_STUDIO_ID", "").strip()
+    if not authorization or not teamspace_id or not studio_id:
+        return
+    url = f"https://lightning.ai/v1/projects/{teamspace_id}/cloudspaces/{studio_id}/start"
+    request = urllib.request.Request(
+        url,
+        data=json.dumps({"computeConfig": {"name": "cpu-4", "spot": False}}).encode("utf-8"),
+        headers={"Authorization": authorization, "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            response.read(128)
+    except urllib.error.HTTPError as error:
+        # 이미 Running/Pending인 Studio의 충돌 응답은 이어지는 wake 호출로 처리한다.
+        if error.code not in {400, 409}:
+            raise
+    except OSError:
+        # 관리 API 일시 실패는 공개 URL Auto start 경로로 한 번 더 시도한다.
+        return
 
 
 @app.get("/health")
@@ -179,4 +208,3 @@ def get_ocr_job(job_id: uuid.UUID, user_id: str = Depends(_current_user)) -> dic
     if not rows:
         raise HTTPException(status_code=404, detail="OCR job not found")
     return dict(rows[0])
-

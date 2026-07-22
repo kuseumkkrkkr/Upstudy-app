@@ -65,3 +65,15 @@ grant execute on function public.complete_ocr_job(uuid,text,jsonb) to service_ro
 grant execute on function public.fail_ocr_job(uuid,text,text) to service_role;
 grant execute on function public.delete_expired_ocr_jobs() to service_role;
 
+-- 완료 결과를 포함한 카나리 큐 행을 매시간 파기한다.
+create extension if not exists pg_cron with schema pg_catalog;
+do $$
+begin
+  if not exists (select 1 from cron.job where jobname = 'aiflow-ocr-cleanup') then
+    perform cron.schedule(
+      'aiflow-ocr-cleanup',
+      '17 * * * *',
+      'select public.delete_expired_ocr_jobs();'
+    );
+  end if;
+end $$;
