@@ -236,7 +236,12 @@ def _wake_lightning(job_id: str) -> None:
     wake_secret = os.getenv("LIGHTNING_WAKE_SECRET", "").strip()
     if not wake_url or not wake_secret:
         return
-    _start_lightning_studio()
+    try:
+        _start_lightning_studio()
+    except (urllib.error.HTTPError, OSError):
+        # 큐 행은 이미 Supabase에 저장됐다. 관리 API의 일시 인증·네트워크 오류가
+        # 학생의 OCR 접수 자체를 500으로 바꾸지 않게 하고, 실행 중 worker의 다음 poll을 기다린다.
+        pass
     # Lightning는 너무 빨리 끊긴 요청을 Auto start 신호로 확정하지 않을 수 있다.
     wake_timeout = max(5.0, min(float(os.getenv("LIGHTNING_WAKE_TIMEOUT_SECONDS", "20")), 24.0))
     request = urllib.request.Request(
