@@ -112,7 +112,7 @@ class AuthService {
       }),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('회원가입 실패 (status ${response.statusCode})');
+      throw Exception(_errorDetail(response, fallback: '회원가입 실패'));
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final token = (payload['token'] ?? payload['access_token']) as String?;
@@ -120,6 +120,23 @@ class AuthService {
       throw Exception('회원가입 토큰이 없습니다.');
     }
     return token;
+  }
+
+  /// 필요한 변수는 HTTP 오류 응답과 기본 문구다.
+  /// 작동 원리는 FastAPI의 detail을 우선 표시해 사용자가 400 원인을 바로 수정하게 하는 것이다.
+  String _errorDetail(http.Response response, {required String fallback}) {
+    try {
+      final payload = jsonDecode(response.body);
+      if (payload is Map<String, dynamic>) {
+        final detail = payload['detail'];
+        if (detail is String && detail.trim().isNotEmpty) {
+          return detail.trim();
+        }
+      }
+    } catch (_) {
+      // JSON이 아닌 프록시 오류는 상태 코드로 안전하게 축약한다.
+    }
+    return '$fallback (status ${response.statusCode})';
   }
 
   Future<UsernameCheckResult> checkUsername(String username) async {

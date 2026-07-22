@@ -61,20 +61,12 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   Future<void> _submit() async {
-    if (_nameController.text.trim().isEmpty ||
-        _gradeController.text.trim().isEmpty ||
-        _schoolController.text.trim().isEmpty ||
-        _idController.text.trim().isEmpty ||
-        _pwController.text.isEmpty) {
+    final validationError = _registrationValidationError();
+    if (validationError != null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('필수 정보를 모두 입력해 주세요.')));
-      return;
-    }
-    if (_pwController.text != _pwConfirmController.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('비밀번호가 서로 일치하지 않습니다.')));
+      ).showSnackBar(SnackBar(content: Text(validationError.$2)));
+      _setStage(validationError.$1);
       return;
     }
 
@@ -108,14 +100,51 @@ class _SignupPageState extends State<SignupPage> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('회원가입 실패: ${error.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '회원가입 실패: ${error.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _loading = false);
       }
     }
+  }
+
+  /// 필요한 변수는 회원가입 입력 컨트롤러 전체다.
+  /// 작동 원리는 서버와 같은 형식을 제출 전에 검사하고 오류가 있는 단계와 문구를 반환한다.
+  (int, String)? _registrationValidationError() {
+    final name = _nameController.text.trim();
+    final grade = _gradeController.text.trim();
+    final school = _schoolController.text.trim();
+    final username = _idController.text.trim();
+    final password = _pwController.text;
+    if (name.isEmpty || grade.isEmpty || school.isEmpty) {
+      return (0, '이름·학년·학교를 모두 입력해 주세요.');
+    }
+    if (!RegExp(r'^[가-힣A-Za-z0-9 ]{1,20}$').hasMatch(name)) {
+      return (0, '이름은 한글·영문·숫자 20자 이내로 입력해 주세요.');
+    }
+    if (!RegExp(r'^[A-Za-z0-9]{4,16}$').hasMatch(username)) {
+      return (1, '아이디는 영문과 숫자 4–16자로 입력해 주세요.');
+    }
+    if (!RegExp(
+      r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$',
+    ).hasMatch(password)) {
+      return (1, '비밀번호는 영문과 숫자를 포함한 8–20자로 입력해 주세요.');
+    }
+    if (password != _pwConfirmController.text) {
+      return (1, '비밀번호가 서로 일치하지 않습니다.');
+    }
+    final email = _emailController.text.trim();
+    if (email.isNotEmpty &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      return (1, '이메일 형식을 확인해 주세요.');
+    }
+    return null;
   }
 
   @override

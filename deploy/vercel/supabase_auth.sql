@@ -22,6 +22,18 @@ alter table public.canary_users enable row level security;
 revoke all on public.canary_users from anon, authenticated;
 grant select, insert, update, delete on public.canary_users to service_role;
 
+create table if not exists public.canary_user_kv (
+  user_id uuid not null references public.canary_users(user_id) on delete cascade,
+  key text not null,
+  value text not null,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, key)
+);
+
+alter table public.canary_user_kv enable row level security;
+revoke all on public.canary_user_kv from anon, authenticated;
+grant select, insert, update, delete on public.canary_user_kv to service_role;
+
 -- 카나리 종료 후 사용자 정보를 명시적으로 파기할 수 있다.
 create or replace function public.delete_all_canary_users() returns bigint
 language plpgsql security definer set search_path=public as $$

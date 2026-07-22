@@ -69,6 +69,31 @@ class FieldValidationRequest(BaseModel):
     value: str = ""
 
 
+class ProfileUpdateRequest(BaseModel):
+    """필요 변수: 변경할 프로필 필드. 작동 원리: 전달된 값만 기존 사용자 행에 반영한다."""
+
+    username: str | None = None
+    password: str | None = None
+    name: str | None = None
+    grade: str | None = None
+    track: str | None = None
+    subject: str | None = None
+    school: str | None = None
+    email: str | None = None
+
+
+class ProfileDeleteRequest(BaseModel):
+    """필요 변수: 현재 비밀번호. 작동 원리: 계정 삭제 전 소유자를 재검증한다."""
+
+    password: str
+
+
+class UserStorageRequest(BaseModel):
+    """필요 변수: UTF-8 JSON 문자열. 작동 원리: 기존 앱의 사용자별 KV 계약을 유지한다."""
+
+    value: str
+
+
 class SupabaseDataApi:
     """필요 변수: Supabase URL·service role key. 작동 원리: HTTPS PostgREST로만 큐를 읽고 쓴다."""
 
@@ -174,6 +199,27 @@ def _validate_registration(payload: RegisterRequest) -> None:
         raise HTTPException(status_code=400, detail="학년을 입력해주세요")
     if payload.email and not EMAIL_RE.fullmatch(payload.email.strip()):
         raise HTTPException(status_code=400, detail="이메일 형식이 다릅니다")
+
+
+def _get_private_user(user_id: str) -> dict[str, Any]:
+    """필요 변수: 사용자 UUID. 작동 원리: 비밀번호 검증이 필요한 내부 열을 단건 조회한다."""
+    try:
+        rows = _data_api().request(
+            "GET",
+            "canary_users",
+            query={"select": "user_id,password_hash,salt", "user_id": f"eq.{user_id}", "limit": "1"},
+        ) or []
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    if not rows:
+        raise HTTPException(status_code=404, detail="User not found")
+    return dict(rows[0])
+
+
+def _password_matches(row: dict[str, Any], password: str) -> bool:
+    """필요 변수: 비밀번호 해시 행과 평문 입력. 작동 원리: PBKDF2 결과를 상수시간으로 비교한다."""
+    computed = _hash_password(password, str(row["salt"]))
+    return hmac.compare_digest(computed, str(row["password_hash"]))
 
 
 def _data_api() -> SupabaseDataApi:
@@ -305,6 +351,58 @@ def get_current_profile(user_id: str = Depends(_current_user)) -> dict[str, Any]
     return dict(rows[0])
 
 
+@app.put("/auth/me")
+def update_current_profile(payload: ProfileUpdateRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자·변경 필드. 작동 원리: 허용 필드만 검증해 Supabase 단일 행을 갱신한다."""
+    changes = payload.model_dump(exclude_none=True)
+    password = changes.pop("password", None)
+    if "username" in changes and not USERNAME_RE.fullmatch(str(changes["username"]).strip()):
+        raise HTTPException(status_code=400, detail="아이디 형식이 다릅니다")
+    if "name" in changes and not NAME_RE.fullmatch(str(changes["name"]).strip()):
+        raise HTTPException(status_code=400, detail="이름 형식이 다릅니다")
+    if "email" in changes and changes["email"] and not EMAIL_RE.fullmatch(str(changes["email"]).strip()):
+        raise HTTPException(status_code=400, detail="이메일 형식이 다릅니다")
+    changes = {key: value.strip() if isinstance(value, str) else value for key, value in changes.items()}
+    if password is not None:
+        if not PASSWORD_RE.fullmatch(password):
+            raise HTTPException(status_code=400, detail="비밀번호 형식이 다릅니다")
+        salt = secrets.token_hex(16)
+        changes.update({"salt": salt, "password_hash": _hash_password(password, salt)})
+    if changes:
+        try:
+            _data_api().request(
+                "PATCH",
+                "canary_users",
+                query={"user_id": f"eq.{user_id}"},
+                body=changes,
+                prefer="return=minimal",
+            )
+        except RuntimeError as error:
+            if "23505" in str(error):
+                raise HTTPException(status_code=409, detail="username already exists") from error
+            raise HTTPException(status_code=502, detail=str(error)) from error
+    return get_current_profile(user_id)
+
+
+@app.delete("/auth/me")
+def delete_current_profile(payload: ProfileDeleteRequest, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    """필요 변수: 인증 사용자·현재 비밀번호. 작동 원리: 비밀번호 확인 후 연관 KV와 사용자 행을 cascade 삭제한다."""
+    if not _password_matches(_get_private_user(user_id), payload.password):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+    try:
+        _data_api().request("DELETE", "canary_users", query={"user_id": f"eq.{user_id}"}, prefer="return=minimal")
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {"status": "deleted"}
+
+
+@app.post("/auth/anonymous")
+def create_anonymous_token() -> dict[str, str]:
+    """필요 변수: 없음. 작동 원리: 저장 행 없이 7일짜리 익명 사용자 토큰을 발급한다."""
+    user_id = str(uuid.uuid4())
+    return {"token": _create_token(user_id), "user_id": user_id}
+
+
 @app.post("/auth/username/check")
 def check_username(payload: UsernameRequest) -> dict[str, Any]:
     """필요 변수: 후보 아이디. 작동 원리: 형식 확인 후 고유 인덱스로 존재 여부만 조회한다."""
@@ -339,6 +437,204 @@ def validate_auth_field(payload: FieldValidationRequest) -> dict[str, Any]:
     else:
         raise HTTPException(status_code=400, detail="unsupported field")
     return {"valid": valid, "reason": None if valid else "형식이 다릅니다"}
+
+
+@app.get("/user/storage/{key}")
+def get_user_storage(key: str, user_id: str = Depends(_current_user)) -> dict[str, str | None]:
+    """필요 변수: 인증 사용자·저장 키. 작동 원리: 복합 기본키로 사용자 JSON 문자열을 단건 조회한다."""
+    try:
+        rows = _data_api().request(
+            "GET",
+            "canary_user_kv",
+            query={"select": "value", "user_id": f"eq.{user_id}", "key": f"eq.{key}", "limit": "1"},
+        ) or []
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {"value": str(rows[0]["value"]) if rows else None}
+
+
+@app.put("/user/storage/{key}")
+def put_user_storage(key: str, payload: UserStorageRequest, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    """필요 변수: 인증 사용자·키·값. 작동 원리: 복합키 upsert로 재시작 가능한 사용자 상태를 저장한다."""
+    try:
+        _data_api().request(
+            "POST",
+            "canary_user_kv",
+            query={"on_conflict": "user_id,key"},
+            body={"user_id": user_id, "key": key, "value": payload.value},
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {"status": "ok"}
+
+
+@app.delete("/user/storage/{key}")
+def delete_user_storage(key: str, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    """필요 변수: 인증 사용자·키. 작동 원리: 본인 복합키 행만 삭제한다."""
+    try:
+        _data_api().request(
+            "DELETE", "canary_user_kv", query={"user_id": f"eq.{user_id}", "key": f"eq.{key}"}, prefer="return=minimal"
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {"status": "ok"}
+
+
+def _empty_account_summary() -> dict[str, Any]:
+    """필요 변수: 없음. 작동 원리: 신규 카나리 계정의 포인트·활동 기본값을 앱 계약대로 반환한다."""
+    return {
+        "total_points": 0,
+        "activity_score": 0,
+        "level": 1,
+        "current_level_score": 0,
+        "next_level_score": 100,
+        "level_progress": 0.0,
+        "daily_points": 0,
+        "daily_point_limit": 100,
+        "daily_points_remaining": 100,
+        "activity_display_daily_cap": 2000,
+    }
+
+
+@app.get("/account/summary")
+def get_account_summary(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: 신규 계정이 홈 화면을 열 수 있는 기본 계정 요약을 반환한다."""
+    return _empty_account_summary()
+
+
+@app.get("/rating/user")
+def get_user_rating(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: 풀이 이력이 없는 신규 사용자의 초기 레이팅을 반환한다."""
+    return {"rating": 0.0, "ovr": 0.0, "ovr_delta": 0.0, "recent_accuracy": 0.0, "lose_streak": 0}
+
+
+@app.get("/rating/tags")
+def get_tag_ratings(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 태그 풀이 이력이 없으면 빈 목록을 반환한다."""
+    return {"tags": []}
+
+
+@app.get("/weakness/tags")
+def get_weakness_tags(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 약점 이력이 없는 신규 사용자의 빈 목록을 반환한다."""
+    return {"tags": []}
+
+
+@app.get("/courses/v2")
+def list_courses_v2(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: Supabase 코스 원장이 준비되기 전 빈 V2 페이지 계약을 유지한다."""
+    return {"data": []}
+
+
+@app.get("/courses")
+def list_courses(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 레거시 코스 화면에 빈 목록을 반환한다."""
+    return {"courses": []}
+
+
+@app.get("/courses/enrolled")
+def list_enrolled_courses(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 신규 계정의 수강 목록을 빈 배열로 반환한다."""
+    return {"items": []}
+
+
+@app.get("/academy/assignments/my")
+@app.get("/academy/students/me/schedule")
+def list_empty_student_tasks(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 배정 과제와 개인 일정이 없는 초기 홈 계약을 유지한다."""
+    return {"items": []}
+
+
+@app.get("/challenges/daily-quests")
+def get_daily_quests(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: 코스 미선택 상태의 일일 퀘스트와 계정 기본값을 반환한다."""
+    return {"items": [], "account": _empty_account_summary(), "revision": 1}
+
+
+@app.get("/marketplace/listings")
+def list_marketplace_items(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: 마켓 원장 이관 전 빈 페이지 응답을 반환한다."""
+    return {"items": [], "total": 0, "next_offset": None}
+
+
+@app.get("/marketplace/my-items")
+def list_owned_marketplace_items(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 구매 이력이 없는 신규 계정의 빈 보유 목록을 반환한다."""
+    return {"items": []}
+
+
+@app.get("/history/solve")
+def list_solve_history(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 풀이 이력이 없는 신규 계정의 빈 기록을 반환한다."""
+    return {"items": []}
+
+
+@app.get("/social/friends")
+def list_friends(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 친구 관계가 없는 신규 계정의 빈 목록을 반환한다."""
+    return {"friends": []}
+
+
+@app.get("/social/friend-requests")
+def list_friend_requests(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 대기 요청이 없는 신규 계정의 빈 목록을 반환한다."""
+    return {"requests": []}
+
+
+@app.get("/social/friends/rankings")
+def list_friend_rankings(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 친구 랭킹이 없는 초기 상태를 반환한다."""
+    return {"ranks": []}
+
+
+@app.get("/social/conversations")
+def list_conversations(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 대화가 없는 초기 상태를 반환한다."""
+    return {"messages": []}
+
+
+@app.get("/social/study-groups/mine")
+@app.get("/social/study-groups/notices/my/system")
+def list_my_social_items(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 가입 그룹·알림이 없는 초기 상태를 반환한다."""
+    return {"items": []}
+
+
+@app.get("/account/system-notices")
+def list_system_notices(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 전역 알림이 없을 때 빈 목록을 반환한다."""
+    return {"items": []}
+
+
+@app.get("/textbooks")
+def list_textbooks(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 교재 원장 이관 전 빈 교재 목록을 반환한다."""
+    return {"textbooks": []}
+
+
+@app.get("/quests")
+def list_quests(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: 문제 원장 이관 전 빈 검색 페이지를 반환한다."""
+    return {"quests": [], "items": [], "total": 0}
+
+
+@app.get("/quests/generation-tags")
+def list_generation_tags(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 생성 태그 원장 이관 전 빈 그룹을 반환한다."""
+    return {"groups": []}
+
+
+@app.get("/exams")
+def list_exams(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 시험지가 없는 신규 계정의 빈 목록을 반환한다."""
+    return {"items": [], "exams": []}
+
+
+@app.get("/serverchat/config")
+def get_server_chat_config(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: 채팅 모델 Secret 미설정 상태를 명시적으로 비활성 응답한다."""
+    return {"enabled": False, "reason": "SAM_API_KEY is not configured"}
 
 
 @app.post("/api/ocr/jobs", status_code=status.HTTP_202_ACCEPTED)
