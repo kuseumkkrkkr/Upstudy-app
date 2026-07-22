@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import Header, HTTPException
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -18,8 +18,10 @@ sys.path.insert(0, str(OMJ))
 os.chdir(OMJ)
 
 from analysis_service import analyze_pregrade, analyze_submission  # noqa: E402
+from server import app as full_api_app  # noqa: E402
 
-app = FastAPI(title="AIFlow Lightning OCR Worker")
+# 기존 FastAPI 전체 라우트에 OCR wake만 추가해, Lightning 한 포트에서 모든 제품 API를 제공한다.
+app = full_api_app
 _worker_id = f"lightning-{socket.gethostname()}-{os.getpid()}"
 _run_lock = asyncio.Lock()
 
