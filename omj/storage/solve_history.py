@@ -189,7 +189,17 @@ def list_solve_history(
     rows = cur.fetchall()
     conn.close()
     results: list[dict[str, Any]] = []
-    for created_at, kind_val, quest_id, exam_id, codebase_id, seed, data_text in rows:
+    for row in rows:
+        # postgres_compat.Row은 Mapping 호환을 위해 반복 시 컬럼명을 내보낸다.
+        # 이력 API는 SQLite와 PostgreSQL 모두에서 실제 셀 값을 반환해야 하므로
+        # 숫자 인덱스로 명시적으로 꺼낸다.
+        created_at = row[0]
+        kind_val = row[1]
+        quest_id = row[2]
+        exam_id = row[3]
+        codebase_id = row[4]
+        seed = row[5]
+        data_text = row[6]
         try:
             data = json.loads(data_text)
         except Exception:
@@ -234,7 +244,9 @@ def recent_correct_codebases(
     rows = cur.fetchall()
     conn.close()
     result: set[int] = set()
-    for (data_text,) in rows:
+    for row in rows:
+        # Row 반복은 컬럼명이므로 단일 컬럼도 인덱스로 읽는다.
+        data_text = row[0]
         try:
             data = json.loads(data_text)
         except Exception:
