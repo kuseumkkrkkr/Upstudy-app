@@ -18,11 +18,13 @@ from domain.academy import repository as academy_repo
 from domain.course.v2_models import CourseModule, CourseModuleType
 from storage.textbook_storage import get_textbook, is_teacher_manual_textbook
 from storage.postgres_problem_store import postgres_problem_store
+from storage.storage import get_quests_by_ids as get_local_quests_by_ids
 
 router = APIRouter(prefix="/courses/v2/runtime", tags=["courses-v2-runtime"])
 
-# 필요 변수: PostgreSQL 문제 저장소.
-# 작동 원리: 학생 런타임의 문제 조회·검색·MCQ 갱신이 로컬 파일 저장소를 거치지 않게 한다.
+# 필요 변수: PostgreSQL 주 저장소와 카나리 이미지의 읽기 전용 원본 문제 DB다.
+# 작동 원리: 운영 데이터는 PostgreSQL을 우선하고, 이관되지 않은 고정 코스 문제만
+# 이미지의 원본 SQLite에서 보완해 공개 코스가 빈 화면으로 열리지 않게 한다.
 get_quest = postgres_problem_store.get_problem
 search_quests = postgres_problem_store.search_problems
 update_quest_mcq = postgres_problem_store.update_problem_mcq
@@ -579,10 +581,22 @@ def _problem_ids_from_module(module: CourseModule) -> list[str]:
 
 
 def _load_module_quests(module: CourseModule) -> list[dict[str, Any]]:
+    """필요 변수는 코스 모듈의 고정 문제 ID와 선택적 검색 조건이다.
+    작동 원리는 고정 ID를 PostgreSQL에서 한 번에 읽고 누락 ID만 원본 SQLite로
+    보완한 뒤, 순서·중복 제거·MCQ 변환을 유지해 카나리와 운영 응답 계약을 맞춘다.
+    """
     quests: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for quest_id in _problem_ids_from_module(module):
-        quest = get_quest(quest_id)
+    problem_ids = _problem_ids_from_module(module)
+    postgres_quests = postgres_problem_store.get_problems_by_ids(problem_ids)
+    missing_ids = [quest_id for quest_id in problem_ids if quest_id not in postgres_quests]
+    local_quests = {
+        str((quest.get("header") or {}).get("quest_id") or ""): quest
+        for quest in get_local_quests_by_ids(missing_ids)
+        if isinstance(quest, dict)
+    }
+    for quest_id in problem_ids:
+        quest = postgres_quests.get(quest_id) or local_quests.get(quest_id)
         if not quest:
             continue
         qid = str((quest.get("header") or {}).get("quest_id") or quest_id)
