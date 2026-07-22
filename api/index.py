@@ -2,7 +2,12 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import hmac
 import os
+import re
+import secrets
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -16,6 +21,11 @@ from pydantic import BaseModel, Field
 
 MAX_JOB_BYTES = int(os.getenv("OCR_QUEUE_MAX_JOB_BYTES", "4000000"))
 VISIBLE_COLUMNS = "id,status,result,error,created_at,updated_at,expires_at"
+USER_COLUMNS = "user_id,username,name,grade,track,subject,school,profile_image,email,role,created_at"
+USERNAME_RE = re.compile(r"^[A-Za-z0-9]{4,16}$")
+PASSWORD_RE = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$")
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+NAME_RE = re.compile(r"^[가-힣A-Za-z0-9 ]{1,20}$")
 
 
 class OcrJobRequest(BaseModel):
@@ -23,6 +33,40 @@ class OcrJobRequest(BaseModel):
 
     mode: str = Field(default="solve", pattern="^(solve|ocr)$")
     payload: dict[str, Any]
+
+
+class RegisterRequest(BaseModel):
+    """필요 변수: 학생 가입 필드. 작동 원리: 기존 FastAPI 가입 계약과 같은 JSON을 검증한다."""
+
+    username: str
+    password: str
+    name: str
+    grade: str
+    track: str | None = None
+    subject: str | None = None
+    school: str | None = None
+    profile_image: str | None = None
+    email: str | None = None
+
+
+class LoginRequest(BaseModel):
+    """필요 변수: 아이디와 비밀번호. 작동 원리: Supabase 저장 해시와 비교할 입력을 제한한다."""
+
+    username: str
+    password: str
+
+
+class UsernameRequest(BaseModel):
+    """필요 변수: 검사할 아이디. 작동 원리: 가입 전 형식과 중복 여부를 한 번에 확인한다."""
+
+    username: str
+
+
+class FieldValidationRequest(BaseModel):
+    """필요 변수: 필드 이름과 값. 작동 원리: 기존 앱의 단계별 가입 검증 계약을 유지한다."""
+
+    field: str
+    value: str = ""
 
 
 class SupabaseDataApi:
@@ -95,6 +139,43 @@ def _current_user(authorization: str | None = Header(default=None)) -> str:
     return user_id
 
 
+def _jwt_secret() -> str:
+    """필요 변수: OMJ_JWT_SECRET. 작동 원리: 모든 카나리 인증 토큰에 동일한 운영 Secret을 강제한다."""
+    secret = os.getenv("OMJ_JWT_SECRET", "").strip()
+    if not secret:
+        raise HTTPException(status_code=503, detail="OMJ_JWT_SECRET is not configured")
+    return secret
+
+
+def _create_token(user_id: str) -> str:
+    """필요 변수: 사용자 UUID. 작동 원리: 기존 서버와 같은 HS256·7일 만료 토큰을 발급한다."""
+    now = int(time.time())
+    return jwt.encode(
+        {"sub": user_id, "role": "student", "iat": now, "exp": now + 60 * 60 * 24 * 7},
+        _jwt_secret(),
+        algorithm="HS256",
+    )
+
+
+def _hash_password(password: str, salt: str) -> str:
+    """필요 변수: 평문 비밀번호와 무작위 salt. 작동 원리: 기존 서버와 동일한 PBKDF2-SHA256 12만 회 해시를 만든다."""
+    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 120_000).hex()
+
+
+def _validate_registration(payload: RegisterRequest) -> None:
+    """필요 변수: 가입 payload. 작동 원리: DB 요청 전에 기존 학생 가입 형식을 동일하게 검사한다."""
+    if not USERNAME_RE.fullmatch(payload.username.strip()):
+        raise HTTPException(status_code=400, detail="아이디 형식이 다릅니다")
+    if not PASSWORD_RE.fullmatch(payload.password):
+        raise HTTPException(status_code=400, detail="비밀번호 형식이 다릅니다")
+    if not NAME_RE.fullmatch(payload.name.strip()):
+        raise HTTPException(status_code=400, detail="이름 형식이 다릅니다")
+    if not payload.grade.strip():
+        raise HTTPException(status_code=400, detail="학년을 입력해주세요")
+    if payload.email and not EMAIL_RE.fullmatch(payload.email.strip()):
+        raise HTTPException(status_code=400, detail="이메일 형식이 다릅니다")
+
+
 def _data_api() -> SupabaseDataApi:
     """필요 변수: 배포 Secret. 작동 원리: serverless 요청마다 무상태 Data API 클라이언트를 만든다."""
     try:
@@ -156,6 +237,108 @@ def _start_lightning_studio() -> None:
 def health() -> dict[str, str]:
     """필요 변수: 없음. 작동 원리: DB나 모델 없이 Vercel 함수 생존만 확인한다."""
     return {"status": "ok", "service": "aiflow-ocr-queue"}
+
+
+@app.post("/auth/register", status_code=status.HTTP_201_CREATED)
+def register_user(payload: RegisterRequest) -> dict[str, str]:
+    """필요 변수: 검증된 가입 정보. 작동 원리: 고유 아이디를 Supabase에 저장하고 즉시 기존 호환 JWT를 발급한다."""
+    _validate_registration(payload)
+    user_id = str(uuid.uuid4())
+    salt = secrets.token_hex(16)
+    row = {
+        "user_id": user_id,
+        "username": payload.username.strip(),
+        "name": payload.name.strip(),
+        "grade": payload.grade.strip(),
+        "track": (payload.track or "").strip() or None,
+        "subject": (payload.subject or "").strip() or None,
+        "school": (payload.school or "").strip() or None,
+        "profile_image": (payload.profile_image or "").strip() or None,
+        "email": (payload.email or "").strip() or None,
+        "password_hash": _hash_password(payload.password, salt),
+        "salt": salt,
+    }
+    try:
+        rows = _data_api().request("POST", "canary_users", body=row, prefer="return=representation") or []
+    except RuntimeError as error:
+        if "23505" in str(error):
+            raise HTTPException(status_code=409, detail="username already exists") from error
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    if not rows:
+        raise HTTPException(status_code=502, detail="User was not created")
+    return {"token": _create_token(user_id), "user_id": user_id}
+
+
+@app.post("/auth/login")
+def login_user(payload: LoginRequest) -> dict[str, str]:
+    """필요 변수: 아이디·비밀번호. 작동 원리: 인덱스 단건 조회 후 상수시간 해시 비교로 로그인한다."""
+    username = payload.username.strip()
+    try:
+        rows = _data_api().request(
+            "GET",
+            "canary_users",
+            query={"select": "user_id,password_hash,salt", "username": f"eq.{username}", "limit": "1"},
+        ) or []
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    if not rows:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    row = rows[0]
+    computed = _hash_password(payload.password, str(row["salt"]))
+    if not hmac.compare_digest(computed, str(row["password_hash"])):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    user_id = str(row["user_id"])
+    return {"token": _create_token(user_id), "user_id": user_id}
+
+
+@app.get("/auth/me")
+def get_current_profile(user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증된 사용자 UUID. 작동 원리: 토큰 소유자의 공개 프로필 열만 단건 조회한다."""
+    try:
+        rows = _data_api().request(
+            "GET", "canary_users", query={"select": USER_COLUMNS, "user_id": f"eq.{user_id}", "limit": "1"}
+        ) or []
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    if not rows:
+        raise HTTPException(status_code=404, detail="User not found")
+    return dict(rows[0])
+
+
+@app.post("/auth/username/check")
+def check_username(payload: UsernameRequest) -> dict[str, Any]:
+    """필요 변수: 후보 아이디. 작동 원리: 형식 확인 후 고유 인덱스로 존재 여부만 조회한다."""
+    username = payload.username.strip()
+    if not USERNAME_RE.fullmatch(username):
+        return {"available": False, "reason": "형식이 다릅니다"}
+    try:
+        rows = _data_api().request(
+            "GET", "canary_users", query={"select": "user_id", "username": f"eq.{username}", "limit": "1"}
+        ) or []
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {"available": not rows, "reason": None if not rows else "이미 사용 중인 아이디입니다"}
+
+
+@app.post("/auth/validate")
+def validate_auth_field(payload: FieldValidationRequest) -> dict[str, Any]:
+    """필요 변수: 필드명·값. 작동 원리: 네트워크 DB 조회 없이 가입 입력 형식을 빠르게 검증한다."""
+    field = payload.field.strip().lower()
+    value = payload.value
+    valid = True
+    if field == "username":
+        valid = bool(USERNAME_RE.fullmatch(value.strip()))
+    elif field == "password":
+        valid = bool(PASSWORD_RE.fullmatch(value))
+    elif field == "name":
+        valid = bool(NAME_RE.fullmatch(value.strip()))
+    elif field == "email":
+        valid = not value.strip() or bool(EMAIL_RE.fullmatch(value.strip()))
+    elif field == "school":
+        valid = bool(value.strip())
+    else:
+        raise HTTPException(status_code=400, detail="unsupported field")
+    return {"valid": valid, "reason": None if valid else "형식이 다릅니다"}
 
 
 @app.post("/api/ocr/jobs", status_code=status.HTTP_202_ACCEPTED)

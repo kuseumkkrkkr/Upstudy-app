@@ -91,6 +91,9 @@ class _SignupPageState extends State<SignupPage> {
         email: _emailController.text.trim().isEmpty
             ? null
             : _emailController.text.trim(),
+        track: _track,
+        subject: _subject,
+        school: _schoolController.text.trim(),
       );
       await ApiClient.instance.setToken(
         token,

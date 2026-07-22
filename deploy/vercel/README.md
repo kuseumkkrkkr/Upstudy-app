@@ -1,13 +1,17 @@
 # Vercel + Supabase + Lightning AI 카나리 배포
 
-이 브랜치는 무거운 TexTeller를 Vercel에 넣지 않는다. 앱은 Vercel에 작업을 등록하고, Supabase가
-24시간짜리 큐를 보관하며, Lightning 공개 앱이 기존 `omj/analysis_service.py`를 실행한다.
+이 브랜치는 무거운 TexTeller를 Vercel에 넣지 않는다. Vercel은 카나리 학생 인증과 OCR 큐 API를
+제공하고, Supabase가 사용자·24시간짜리 큐를 보관하며, Lightning 공개 앱이 기존
+`omj/analysis_service.py`를 실행한다.
 
 ## 1. Supabase
 
-SQL Editor에서 `supabase_ocr_queue.sql` 전체를 한 번 실행한다. 테이블은 RLS가 켜져 있고
+SQL Editor에서 `supabase_ocr_queue.sql`과 `supabase_auth.sql`을 각각 한 번 실행한다. 테이블은 RLS가 켜져 있고
 `anon`/`authenticated` 직접 접근 권한이 없다. Vercel과 Lightning에만 service role key를 Secret으로 둔다.
 SQL이 `delete_expired_ocr_jobs()`를 매시간 호출하는 `aiflow-ocr-cleanup` Cron도 함께 등록한다.
+
+`canary_users`에는 기존 앱과 호환되는 PBKDF2 비밀번호 해시만 저장한다. 카나리 종료 시
+`select public.delete_all_canary_users();`로 가입 정보를 전부 파기할 수 있다.
 
 ## 2. Lightning AI
 
@@ -32,6 +36,9 @@ Vercel에서 이 저장소의 `vercel` 브랜치와 저장소 루트를 선택�
 
 ```text
 GET https://YOUR-PROJECT.vercel.app/health
+POST https://YOUR-PROJECT.vercel.app/auth/register
+POST https://YOUR-PROJECT.vercel.app/auth/login
+GET https://YOUR-PROJECT.vercel.app/auth/me
 POST https://YOUR-PROJECT.vercel.app/api/ocr/jobs
 GET https://YOUR-PROJECT.vercel.app/api/ocr/jobs/{job_id}
 ```
@@ -42,11 +49,12 @@ GET https://YOUR-PROJECT.vercel.app/api/ocr/jobs/{job_id}
 
 ## 4. Flutter 앱
 
-기존 API 주소는 그대로 두고 OCR 큐 주소만 추가한다.
+현재 카나리 웹은 Vercel을 인증·OCR API 주소로 사용한다. 아직 이 경량 API에 포함되지 않은 코스·마켓 등은
+별도 전체 FastAPI 주소가 준비될 때까지 동작하지 않는다.
 
 ```powershell
 flutter build apk `
-  --dart-define=API_BASE_URL=https://EXISTING-API.example.com `
+  --dart-define=API_BASE_URL=https://YOUR-PROJECT.vercel.app `
   --dart-define=OCR_QUEUE_BASE_URL=https://YOUR-PROJECT.vercel.app/api/ocr
 ```
 
