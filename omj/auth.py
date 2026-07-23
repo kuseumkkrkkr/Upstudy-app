@@ -323,10 +323,9 @@ def _ensure_demo_session_table() -> None:
 
 def create_demo_session() -> Dict[str, object]:
     """필요 변수: 30분 시연 수명과 무작위 내부 사용자명.
-    작동 원리: 만료된 시연 데이터를 먼저 정리한 뒤 노출하지 않는 임시 계정을 만들고,
-    이름은 항상 Test로 고정한 30분 JWT와 만료 시각을 함께 반환한다.
+    작동 원리: 정리 작업은 startup·주기 worker에 맡겨 생성 요청의 DB 왕복을 줄이고,
+    노출하지 않는 임시 계정에 Test 이름·30분 JWT·만료 시각을 함께 부여한다.
     """
-    purge_expired_demo_sessions()
     _ensure_demo_session_table()
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=DEMO_SESSION_TTL_SECONDS)
     username = f"demo{uuid.uuid4().hex[:12]}"
