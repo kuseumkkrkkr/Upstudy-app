@@ -86,7 +86,7 @@ class _LandingPageState extends State<LandingPage> {
   Future<void> _contactByEmail(BuildContext context) async {
     final uri = Uri(
       scheme: 'mailto',
-      path: _contactEmail,
+      path: LandingPage._contactEmail,
       queryParameters: const {
         'subject': 'AIFlow 문의',
         'body': '안녕하세요. AIFlow 도입 문의드립니다.',
