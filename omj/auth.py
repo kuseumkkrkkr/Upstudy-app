@@ -7,7 +7,7 @@ import re
 import threading
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 from infra.db import postgres_compat as db
@@ -28,6 +28,7 @@ _HAS_PYJWT = bool(
 
 ALGORITHM = "HS256"
 TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7
+DEMO_SESSION_TTL_SECONDS = 60 * 30
 ELEVATED_ROLES = {"teacher", "admin"}
 _DEFAULT_DEV_JWT_SECRET = "omj-local-dev-jwt-secret-change-me"
 _DEV_JWT_SECRET = os.environ.get("OMJ_JWT_DEV_SECRET") or _DEFAULT_DEV_JWT_SECRET
@@ -35,6 +36,8 @@ _SQLITE_TIMEOUT_SECONDS = float(os.environ.get("OMJ_SQLITE_TIMEOUT_SECONDS", "30
 _USER_TABLE_READY: set[str] = set()
 _USER_TABLE_LOCK = threading.Lock()
 _POSTGRES_READY_KEY = "postgres"
+_DEMO_SESSION_TABLE_READY = False
+_DEMO_SESSION_TABLE_LOCK = threading.Lock()
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9]{4,16}$")
 PASSWORD_RE = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$")
@@ -101,14 +104,27 @@ def _get_secret() -> str:
     return _DEV_JWT_SECRET
 
 
-def create_token(user_id: str, role: Optional[str] = None) -> str:
+def create_token(
+    user_id: str,
+    role: Optional[str] = None,
+    *,
+    ttl_seconds: int = TOKEN_TTL_SECONDS,
+    extra_claims: Optional[Dict[str, object]] = None,
+) -> str:
+    """필요 변수: 사용자 ID, 역할, 토큰 수명과 선택 클레임.
+    작동 원리: 기본 계정은 기존 7일 토큰을 유지하고, 시연 계정만 짧은 만료·식별 클레임을 넣어
+    같은 서명 체계에서 서버가 즉시 폐기 여부를 판별하게 한다.
+    """
+    safe_ttl_seconds = max(1, int(ttl_seconds))
     payload = {
         "sub": user_id,
-        "exp": int(time.time()) + TOKEN_TTL_SECONDS,
+        "exp": int(time.time()) + safe_ttl_seconds,
         "iat": int(time.time()),
     }
     if role:
         payload["role"] = role
+    if extra_claims:
+        payload.update(extra_claims)
     if _HAS_PYJWT:
         return pyjwt.encode(payload, _get_secret(), algorithm=ALGORITHM)
     return _encode_fallback(payload, _get_secret())
@@ -267,6 +283,165 @@ def get_user_id_by_username(username: str) -> Optional[str]:
 def init_user_db() -> None:
     """Create user table if missing (idempotent)."""
     _ensure_user_table()
+
+
+def _ensure_demo_session_table() -> None:
+    """필요 변수: PostgreSQL 사용자 테이블 준비 상태.
+    작동 원리: 시연 사용자 ID와 만료 시각만 별도 테이블에 저장해 일반 회원 데이터와
+    수명 정책을 섞지 않고, 만료 조회 인덱스로 정리 작업의 전체 스캔을 피한다.
+    """
+    global _DEMO_SESSION_TABLE_READY
+    if _DEMO_SESSION_TABLE_READY:
+        return
+    with _DEMO_SESSION_TABLE_LOCK:
+        if _DEMO_SESSION_TABLE_READY:
+            return
+        _ensure_user_table()
+        conn = _connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS demo_sessions (
+                    user_id TEXT PRIMARY KEY,
+                    expires_at TIMESTAMPTZ NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_demo_sessions_expires_at
+                ON demo_sessions (expires_at)
+                """
+            )
+            conn.commit()
+            _DEMO_SESSION_TABLE_READY = True
+        finally:
+            conn.close()
+
+
+def create_demo_session() -> Dict[str, object]:
+    """필요 변수: 30분 시연 수명과 무작위 내부 사용자명.
+    작동 원리: 만료된 시연 데이터를 먼저 정리한 뒤 노출하지 않는 임시 계정을 만들고,
+    이름은 항상 Test로 고정한 30분 JWT와 만료 시각을 함께 반환한다.
+    """
+    purge_expired_demo_sessions()
+    _ensure_demo_session_table()
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=DEMO_SESSION_TTL_SECONDS)
+    username = f"demo{uuid.uuid4().hex[:12]}"
+    user_id = register_user(
+        username=username,
+        password=f"Demo{uuid.uuid4().hex[:16]}7A",
+        name="Test",
+        grade="demo",
+    )
+    conn = _connect()
+    try:
+        conn.cursor().execute(
+            "INSERT INTO demo_sessions (user_id, expires_at) VALUES (?, ?)",
+            (user_id, expires_at),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        # 시연 세션 레코드 기록에 실패하면 접근 가능한 고아 계정을 남기지 않는다.
+        conn.cursor().execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+        conn.commit()
+        raise
+    finally:
+        conn.close()
+    return {
+        "user_id": user_id,
+        "token": create_token(
+            user_id,
+            role="student",
+            ttl_seconds=DEMO_SESSION_TTL_SECONDS,
+            extra_claims={"demo": True},
+        ),
+        "expires_at": expires_at.isoformat(),
+    }
+
+
+def is_demo_session_active(user_id: str) -> bool:
+    """필요 변수: JWT에서 확인한 시연 사용자 ID.
+    작동 원리: 서버 저장 만료 시각을 다시 비교해 JWT가 아직 유효해도 폐기된 세션은
+    모든 보호 API에서 즉시 차단한다.
+    """
+    if not user_id:
+        return False
+    _ensure_demo_session_table()
+    conn = _connect()
+    try:
+        row = conn.cursor().execute(
+            "SELECT 1 FROM demo_sessions WHERE user_id = ? AND expires_at > NOW()",
+            (user_id,),
+        ).fetchone()
+        return row is not None
+    finally:
+        conn.close()
+
+
+def purge_expired_demo_sessions() -> int:
+    """필요 변수: 공개 스키마의 사용자 ID 열과 만료된 시연 세션 목록.
+    작동 원리: 만료 인덱스로 대상만 찾고 사용자 참조 열을 가진 테이블에서 해당 ID의
+    행을 먼저 지운 뒤 users와 세션 메타데이터를 삭제해 30분 시연 기록을 남기지 않는다.
+    """
+    _ensure_demo_session_table()
+    conn = _connect()
+    try:
+        cur = conn.cursor()
+        expired_rows = cur.execute(
+            "SELECT user_id FROM demo_sessions WHERE expires_at <= NOW()"
+        ).fetchall()
+        expired_user_ids = [str(row[0]) for row in expired_rows if str(row[0]).strip()]
+        if not expired_user_ids:
+            conn.commit()
+            return 0
+
+        user_columns = {
+            "user_id",
+            "owner_user_id",
+            "student_user_id",
+            "teacher_user_id",
+            "from_user_id",
+            "to_user_id",
+            "sender_user_id",
+            "recipient_user_id",
+            "member_user_id",
+            "created_by_user_id",
+        }
+        table_columns = cur.execute(
+            """
+            SELECT table_name, column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+            """
+        ).fetchall()
+        identifier_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+        cleanup_targets = [
+            (str(row[0]), str(row[1]))
+            for row in table_columns
+            if str(row[0]) not in {"users", "demo_sessions"}
+            and str(row[1]) in user_columns
+            and identifier_re.fullmatch(str(row[0]))
+            and identifier_re.fullmatch(str(row[1]))
+        ]
+        for user_id in expired_user_ids:
+            for table_name, column_name in cleanup_targets:
+                cur.execute(
+                    f'DELETE FROM "{table_name}" WHERE "{column_name}" = ?',
+                    (user_id,),
+                )
+            cur.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+            cur.execute("DELETE FROM demo_sessions WHERE user_id = ?", (user_id,))
+        conn.commit()
+        return len(expired_user_ids)
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def _hash_password(password: str, salt: str) -> str:

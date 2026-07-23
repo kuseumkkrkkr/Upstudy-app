@@ -56,6 +56,8 @@ from auth import (
 
     authenticate_user,
 
+    create_demo_session,
+
     create_token,
 
     decode_token,
@@ -71,6 +73,10 @@ from auth import (
     get_user_role,
 
     init_user_db,
+
+    is_demo_session_active,
+
+    purge_expired_demo_sessions,
 
     register_teacher,
 
@@ -681,6 +687,19 @@ def _list_variant_tray_items(*, user_id: str, limit: int = 100) -> List[Dict[str
     return items
 
 
+async def _demo_session_purge_loop() -> None:
+    """필요 변수: 60초 정리 주기와 PostgreSQL 시연 세션 테이블.
+    작동 원리: 비동기 웹 루프를 막지 않고 만료 계정·사용자 기록을 주기적으로 삭제해,
+    사용자가 다시 요청하지 않아도 30분 시연 데이터가 자동 파기되게 한다.
+    """
+    while True:
+        try:
+            await asyncio.to_thread(purge_expired_demo_sessions)
+        except Exception as exc:
+            logger.warning("demo session purge failed: %s", type(exc).__name__)
+        await asyncio.sleep(60)
+
+
 @app.on_event("startup")
 async def _startup_event() -> None:
     """필요 변수: PostgreSQL·Redis 시크릿과 마이그레이션.
@@ -689,6 +708,10 @@ async def _startup_event() -> None:
     postgres_rating_store.require_ready()
     init_student_account_db()
     init_user_db()
+    purged_demo_sessions = await asyncio.to_thread(purge_expired_demo_sessions)
+    if purged_demo_sessions:
+        logger.info("purged %s expired demo sessions at startup", purged_demo_sessions)
+    app.state.demo_session_purge_task = asyncio.create_task(_demo_session_purge_loop())
     init_user_kv_db()
     # 교사 문서함과 코스 빌더가 첫 요청부터 기본 교재를 조회할 수 있게 준비한다.
     init_textbook_db()
@@ -729,7 +752,7 @@ async def _startup_event() -> None:
 async def _shutdown_event() -> None:
     if hasattr(app.state, "job_worker"):
         await app.state.job_worker.stop()
-    for task_name in ("seed_validator_task",):
+    for task_name in ("seed_validator_task", "demo_session_purge_task"):
         task = getattr(app.state, task_name, None)
         if task is None:
             continue
@@ -1529,6 +1552,11 @@ class TokenResponse(BaseModel):
     token: str
 
     user_id: str
+
+
+class DemoSessionResponse(TokenResponse):
+    expires_at: str
+    name: str = "Test"
 
 
 
@@ -3077,6 +3105,10 @@ def _get_user_id(
     user = resolve_token_payload_user(payload)
     if not user["user_id"]:
         raise HTTPException(status_code=401, detail="Invalid token")
+    if payload.get("demo") is True and not is_demo_session_active(user["user_id"]):
+        # 만료 JWT가 남은 클라이언트도 즉시 차단하고 다음 정리 주기 전에 사용자 기록을 지운다.
+        purge_expired_demo_sessions()
+        raise HTTPException(status_code=401, detail="Demo session expired")
     return user["user_id"]
 
 
@@ -3091,6 +3123,9 @@ def _get_auth_payload(
     user = resolve_token_payload_user(payload)
     if not user["user_id"]:
         raise HTTPException(status_code=401, detail="Invalid token")
+    if payload.get("demo") is True and not is_demo_session_active(user["user_id"]):
+        purge_expired_demo_sessions()
+        raise HTTPException(status_code=401, detail="Demo session expired")
     return {**payload, "sub": user["user_id"], "username": user["username"], "role": user["role"]}
 
 
@@ -3266,19 +3301,34 @@ def _to_user_profile_payload(profile: Dict[str, Optional[str]]) -> Dict[str, Opt
 
 
 @app.get("/auth/me", response_model=UserProfile)
-def get_profile(user_id: str = Depends(_get_user_id)) -> UserProfile:
+def get_profile(auth_payload: Dict[str, Any] = Depends(_get_auth_payload)) -> UserProfile:
+    """필요 변수: 인증 payload와 사용자 프로필.
+    작동 원리: 시연 JWT는 저장된 Test 이름만 반환해 클라이언트 캐시나 프로필 값이
+    시연 참가자별 이름으로 바뀌지 않게 한다.
+    """
+    user_id = str(auth_payload["sub"])
     profile = get_auth_user_by_id(user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
     payload = _to_user_profile_payload(profile)
+    if auth_payload.get("demo") is True:
+        payload["name"] = "Test"
+        payload["username"] = "Test"
     return UserProfile(**payload)
 
 
 @app.put("/auth/me", response_model=UserProfile)
 def update_profile(
     payload: UserProfileUpdateRequest,
-    user_id: str = Depends(_get_user_id),
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
 ) -> UserProfile:
+    """필요 변수: 인증 payload와 프로필 수정 요청.
+    작동 원리: 정식 계정은 기존 수정 흐름을 유지하고, 30분 시연 계정은 Test 표기를
+    고정하기 위해 프로필 변경을 차단한다.
+    """
+    if auth_payload.get("demo") is True:
+        raise HTTPException(status_code=403, detail="Demo profile is fixed to Test")
+    user_id = str(auth_payload["sub"])
     try:
         updated = update_user_profile(
             user_id=user_id,
@@ -3317,6 +3367,24 @@ def issue_anonymous_token() -> TokenResponse:
     user_id = str(uuid.uuid4())
 
     return TokenResponse(token=create_token(user_id), user_id=user_id)
+
+
+@app.post("/auth/demo-session", response_model=DemoSessionResponse, status_code=201)
+def issue_demo_session() -> DemoSessionResponse:
+    """필요 변수: 30분 시연 계정 생성기.
+    작동 원리: 회원가입 입력 없이 새 Test 계정과 짧은 JWT를 발급하고, 만료 시각은
+    서버 정리 루프와 JWT 양쪽에서 강제해 시연 데이터가 장기 보관되지 않게 한다.
+    """
+    try:
+        session = create_demo_session()
+    except Exception as exc:
+        logger.exception("demo session creation failed")
+        raise HTTPException(status_code=503, detail="Demo session is temporarily unavailable") from exc
+    return DemoSessionResponse(
+        token=str(session["token"]),
+        user_id=str(session["user_id"]),
+        expires_at=str(session["expires_at"]),
+    )
 
 
 

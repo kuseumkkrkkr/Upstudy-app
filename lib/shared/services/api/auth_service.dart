@@ -17,6 +17,11 @@ class AuthService {
     defaultValue: '/auth/register',
   );
 
+  static const String _demoSessionPath = String.fromEnvironment(
+    'API_DEMO_SESSION_PATH',
+    defaultValue: '/auth/demo-session',
+  );
+
   static const String _kakaoLoginPath = String.fromEnvironment(
     'API_KAKAO_LOGIN_PATH',
     defaultValue: '/auth/kakao',
@@ -118,6 +123,25 @@ class AuthService {
     final token = (payload['token'] ?? payload['access_token']) as String?;
     if (token == null || token.isEmpty) {
       throw Exception('회원가입 토큰이 없습니다.');
+    }
+    return token;
+  }
+
+  /// 필요한 변수는 시연 세션 API 주소다.
+  /// 작동 원리는 가입 정보 없이 서버가 만든 30분 Test JWT만 받아 일반 인증 저장소에
+  /// 넣을 수 있게 반환하며, 클라이언트가 임의 사용자명을 만들지 않는다.
+  Future<String> startDemoSession() async {
+    final response = await _client.post(
+      _resolve(_demoSessionPath),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_errorDetail(response, fallback: '시연 세션 시작 실패'));
+    }
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final token = (payload['token'] ?? payload['access_token']) as String?;
+    if (token == null || token.isEmpty) {
+      throw Exception('시연 세션 토큰이 없습니다.');
     }
     return token;
   }
