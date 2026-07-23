@@ -332,7 +332,7 @@ def create_demo_session() -> Dict[str, object]:
     username = f"demo{uuid.uuid4().hex[:12]}"
     user_id = register_user(
         username=username,
-        password=f"Demo{uuid.uuid4().hex[:16]}7A",
+        password=f"Demo{uuid.uuid4().hex[:12]}7A",
         name="Test",
         grade="demo",
     )
