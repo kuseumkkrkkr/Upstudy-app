@@ -107,4 +107,26 @@ void main() {
       isNot(contains('#board {\n        width: 100%;\n        height: 220px;')),
     );
   });
+
+  test('JSXGraph 함수 그래프는 정의역 양 끝을 개별 인자로 전달한다', () {
+    // 필요한 변수는 함수 항목이 포함된 그래프 문서와 생성된 HTML이다.
+    // 작동 원리는 JSXGraph functiongraph 규격인 [함수, 최소값, 최대값] 형태를 검사해 곡선 누락을 방지한다.
+    const document = AiFlowGraphDocument(
+      items: [
+        AiFlowGraphItem(
+          id: 'sin-graph',
+          type: AiFlowGraphItemType.function,
+          label: '사인 함수',
+          colorHex: '#2F7CF6',
+          expression: 'sin(x)',
+        ),
+      ],
+      settings: AiFlowGraphSettings(),
+    );
+
+    final html = buildAiFlowGraphHtml(document);
+
+    expect(html, contains('                  left,\n                  right,'));
+    expect(html, isNot(contains('                  [left, right],')));
+  });
 }

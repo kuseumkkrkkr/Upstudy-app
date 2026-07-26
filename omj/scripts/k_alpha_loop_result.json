@@ -1,0 +1,243 @@
+{
+  "metadata": {
+    "case_count": 10,
+    "repeat_per_case": 2,
+    "total": 20,
+    "max_grade_code": 9,
+    "pass_count": 10,
+    "fail_count": 10,
+    "review_count": 0,
+    "pass_rate": 0.5,
+    "fail_rate": 0.5,
+    "review_rate": 0.0,
+    "question_type_counts": {
+      "sequence": 6,
+      "set": 6,
+      "quadratic": 4,
+      "ratio": 4
+    }
+  },
+  "cases": [
+    {
+      "problem_id": "kalpha-20260725032211-0-0",
+      "question_type": "sequence",
+      "prompt": "등차수열에서 a₁=5, 공차 d=-3, n=2일 때 a_n을 구하시오.",
+      "expected": "2",
+      "submission": "3",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-0-1",
+      "question_type": "sequence",
+      "prompt": "등차수열에서 a₁=-4, 공차 d=-4, n=4일 때 a_n을 구하시오.",
+      "expected": "-16",
+      "submission": "-16",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-1-0",
+      "question_type": "set",
+      "prompt": "|A|=28, |B|=26, |A∩B|=22일 때 |A∪B|를 구하시오.",
+      "expected": "32",
+      "submission": "33",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-1-1",
+      "question_type": "set",
+      "prompt": "|A|=16, |B|=20, |A∩B|=3일 때 |A∪B|를 구하시오.",
+      "expected": "33",
+      "submission": "33",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-2-0",
+      "question_type": "quadratic",
+      "prompt": "x²-5x+6=0 형태로 바꿔서 정수해를 모두 구하시오.",
+      "expected": "2",
+      "submission": "3",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-2-1",
+      "question_type": "quadratic",
+      "prompt": "x²-5x+6=0 형태로 바꿔서 정수해를 모두 구하시오.",
+      "expected": "2",
+      "submission": "2",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-3-0",
+      "question_type": "ratio",
+      "prompt": "두 수의 비가 2:6일 때, 전체가 100일 경우 첫째 수는?",
+      "expected": "25",
+      "submission": "26",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-3-1",
+      "question_type": "ratio",
+      "prompt": "두 수의 비가 9:7일 때, 전체가 100일 경우 첫째 수는?",
+      "expected": "56.25",
+      "submission": "56.25",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-4-0",
+      "question_type": "sequence",
+      "prompt": "등차수열에서 a₁=-2, 공차 d=-1, n=3일 때 a_n을 구하시오.",
+      "expected": "-4",
+      "submission": "-3",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-4-1",
+      "question_type": "sequence",
+      "prompt": "등차수열에서 a₁=11, 공차 d=4, n=6일 때 a_n을 구하시오.",
+      "expected": "31",
+      "submission": "31",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-5-0",
+      "question_type": "set",
+      "prompt": "|A|=21, |B|=17, |A∩B|=17일 때 |A∪B|를 구하시오.",
+      "expected": "21",
+      "submission": "22",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-5-1",
+      "question_type": "set",
+      "prompt": "|A|=20, |B|=13, |A∩B|=8일 때 |A∪B|를 구하시오.",
+      "expected": "25",
+      "submission": "25",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-6-0",
+      "question_type": "quadratic",
+      "prompt": "x²-5x+6=0 형태로 바꿔서 정수해를 모두 구하시오.",
+      "expected": "2",
+      "submission": "3",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-6-1",
+      "question_type": "quadratic",
+      "prompt": "x²-5x+6=0 형태로 바꿔서 정수해를 모두 구하시오.",
+      "expected": "2",
+      "submission": "2",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-7-0",
+      "question_type": "ratio",
+      "prompt": "두 수의 비가 8:8일 때, 전체가 100일 경우 첫째 수는?",
+      "expected": "50",
+      "submission": "51",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-7-1",
+      "question_type": "ratio",
+      "prompt": "두 수의 비가 9:6일 때, 전체가 100일 경우 첫째 수는?",
+      "expected": "60",
+      "submission": "60",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-8-0",
+      "question_type": "sequence",
+      "prompt": "등차수열에서 a₁=11, 공차 d=2, n=3일 때 a_n을 구하시오.",
+      "expected": "15",
+      "submission": "16",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-8-1",
+      "question_type": "sequence",
+      "prompt": "등차수열에서 a₁=6, 공차 d=-4, n=4일 때 a_n을 구하시오.",
+      "expected": "-6",
+      "submission": "-6",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-9-0",
+      "question_type": "set",
+      "prompt": "|A|=16, |B|=9, |A∩B|=4일 때 |A∪B|를 구하시오.",
+      "expected": "21",
+      "submission": "22",
+      "grade_status": "FAIL",
+      "grade_score": 0.0,
+      "reason": "numeric_mismatch",
+      "school_grade_code": 9
+    },
+    {
+      "problem_id": "kalpha-20260725032211-9-1",
+      "question_type": "set",
+      "prompt": "|A|=28, |B|=27, |A∩B|=2일 때 |A∪B|를 구하시오.",
+      "expected": "53",
+      "submission": "53",
+      "grade_status": "PASS",
+      "grade_score": 1.0,
+      "reason": "ok",
+      "school_grade_code": 9
+    }
+  ],
+  "saved_at": "2026-07-25T03:22:11"
+}

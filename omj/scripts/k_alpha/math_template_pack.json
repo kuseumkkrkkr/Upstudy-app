@@ -1,0 +1,116 @@
+{
+  "version": "2026.07.25-kalpha-v1",
+  "templates": [
+    {
+      "template_id": "tpl_seq_arith_n",
+      "topic": "등차수열",
+      "problem_type": "sequence",
+      "grade_min": 7,
+      "grade_max": 9,
+      "domain_node": "kg_sequence",
+      "required_rules": [
+        "R_SEQ_AP"
+      ],
+      "slots": [
+        "a1",
+        "d",
+        "n"
+      ],
+      "template": "등차수열에서 a₁={a1}, 공차 d={d}, n={n}일 때 a_n을 구하시오.",
+      "answer_formula": "a1 + (n - 1) * d",
+      "expected_check": {
+        "type": "integer",
+        "min": -100000,
+        "max": 100000
+      },
+      "steps_hint": [
+        "문제에서 조건 확인",
+        "일반항 공식 대입",
+        "계산 및 정답 검산"
+      ]
+    },
+    {
+      "template_id": "tpl_set_union_count",
+      "topic": "집합",
+      "problem_type": "set",
+      "grade_min": 7,
+      "grade_max": 9,
+      "domain_node": "kg_set",
+      "required_rules": [
+        "R_SET_UNION"
+      ],
+      "slots": [
+        "A",
+        "B",
+        "C"
+      ],
+      "template": "|A|={A}, |B|={B}, |A∩B|={C}일 때 |A∪B|를 구하시오.",
+      "answer_formula": "A + B - C",
+      "expected_check": {
+        "type": "integer",
+        "min": 0,
+        "max": 10000
+      },
+      "steps_hint": [
+        "합집합 공식 적용",
+        "값 대입",
+        "빼기 순서 확인"
+      ]
+    },
+    {
+      "template_id": "tpl_quad_int_root",
+      "topic": "이차방정식",
+      "problem_type": "quadratic",
+      "grade_min": 8,
+      "grade_max": 9,
+      "domain_node": "kg_quadratic_intro",
+      "required_rules": [
+        "R_QUAD_DELTA_INT_ROOT"
+      ],
+      "slots": [
+        "a",
+        "b",
+        "c"
+      ],
+      "template": "x²-5x+6=0 형태로 바꿔서 정수해를 모두 구하시오.",
+      "answer_formula": "2",
+      "expected_check": {
+        "type": "integer",
+        "min": -500,
+        "max": 500
+      },
+      "steps_hint": [
+        "계수 정리",
+        "판별식 계산",
+        "정수근 판정"
+      ]
+    },
+    {
+      "template_id": "tpl_ratio_bacteria",
+      "topic": "비율",
+      "problem_type": "ratio",
+      "grade_min": 7,
+      "grade_max": 9,
+      "domain_node": "kg_arith_basic",
+      "required_rules": [
+        "R_RATIO_RATE_PERCENT"
+      ],
+      "slots": [
+        "a",
+        "b"
+      ],
+      "template": "두 수의 비가 {a}:{b}일 때, 전체가 100일 경우 첫째 수는?",
+      "answer_formula": "100 * a / (a + b)",
+      "expected_check": {
+        "type": "fraction_or_integer",
+        "min": 0,
+        "max": 100
+      },
+      "steps_hint": [
+        "전체=분모의 합",
+        "비례식 세우기",
+        "분수 계산"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "id": "Ko-Math-000013",
+  "subject": "수학",
+  "question": "두 행렬 \\( A = \\begin{pmatrix} 2 & 1 \\\\ 5 & 0 \\end{pmatrix}, B = \\begin{pmatrix} 1 & 0 \\\\ 1 & 1 \\end{pmatrix} \\)에 대하여 행렬 \\( A - B \\)의 모든 성분의 합은? [2점]\n① 1   ② 2   ③ 3   ④ 4   ⑤ 5",
+  "answer": "⑤ 5",
+  "explanation": "먼저 행렬 \\(A-B\\)를 계산한다.\n\\[\nA - B = \\begin{pmatrix} 2 & 1 \\\\ 5 & 0 \\end{pmatrix} - \\begin{pmatrix} 1 & 0 \\\\ 1 & 1 \\end{pmatrix} = \\begin{pmatrix} 1 & 1 \\\\ 4 & -1 \\end{pmatrix}\n\\]\n그 다음 모든 성분의 합은\n\\[\n1 + 1 + 4 + (-1) = 5\n\\]\n따라서 정답은 ⑤ 5이다.",
+  "knowledge_point": "행렬의 뺄셈과 행렬 성분의 합 구하기"
+}

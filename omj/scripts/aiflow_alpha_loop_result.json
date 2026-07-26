@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "algorithm": "AIFlow_Alpha",
+    "case_count": 3,
+    "repeat": 3,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "metrics": {
+    "solved_count": 9,
+    "step_count_avg": 2.3333333333333335
+  },
+  "cases": [
+    {
+      "name": "sequence",
+      "attempt": 0,
+      "solved": true,
+      "step_count": 3,
+      "question": "등차수열 aₙ = 3 + (1)(n-1)일 때, a₃의 값은?",
+      "final_answer": "5",
+      "tags": [
+        "수열",
+        "등차수열"
+      ]
+    },
+    {
+      "name": "sequence",
+      "attempt": 1,
+      "solved": true,
+      "step_count": 3,
+      "question": "등차수열 aₙ = 3 + (1)(n-1)일 때, a₃의 값은?",
+      "final_answer": "5",
+      "tags": [
+        "수열",
+        "등차수열"
+      ]
+    },
+    {
+      "name": "sequence",
+      "attempt": 2,
+      "solved": true,
+      "step_count": 3,
+      "question": "등차수열 aₙ = 3 + (1)(n-1)일 때, a₃의 값은?",
+      "final_answer": "5",
+      "tags": [
+        "수열",
+        "등차수열"
+      ]
+    },
+    {
+      "name": "quadratic",
+      "attempt": 0,
+      "solved": true,
+      "step_count": 2,
+      "question": "3x² + 5x + -4 = 0의 정수 해 x를 구하시오.",
+      "final_answer": "0",
+      "tags": [
+        "이차방정식",
+        "판별식",
+        "근의공식"
+      ]
+    },
+    {
+      "name": "quadratic",
+      "attempt": 1,
+      "solved": true,
+      "step_count": 2,
+      "question": "3x² + 5x + -16 = 0의 정수 해 x를 구하시오.",
+      "final_answer": "0",
+      "tags": [
+        "이차방정식",
+        "판별식",
+        "근의공식"
+      ]
+    },
+    {
+      "name": "quadratic",
+      "attempt": 2,
+      "solved": true,
+      "step_count": 2,
+      "question": "3x² + 5x + -4 = 0의 정수 해 x를 구하시오.",
+      "final_answer": "0",
+      "tags": [
+        "이차방정식",
+        "판별식",
+        "근의공식"
+      ]
+    },
+    {
+      "name": "set",
+      "attempt": 0,
+      "solved": true,
+      "step_count": 2,
+      "question": "|A|=24, |B|=10, |A∩B|=6일 때 |A∪B|를 구하시오.",
+      "final_answer": "28",
+      "tags": [
+        "집합",
+        "교집합",
+        "합집합"
+      ]
+    },
+    {
+      "name": "set",
+      "attempt": 1,
+      "solved": true,
+      "step_count": 2,
+      "question": "|A|=24, |B|=10, |A∩B|=6일 때 |A∪B|를 구하시오.",
+      "final_answer": "28",
+      "tags": [
+        "집합",
+        "교집합",
+        "합집합"
+      ]
+    },
+    {
+      "name": "set",
+      "attempt": 2,
+      "solved": true,
+      "step_count": 2,
+      "question": "|A|=24, |B|=10, |A∩B|=6일 때 |A∪B|를 구하시오.",
+      "final_answer": "28",
+      "tags": [
+        "집합",
+        "교집합",
+        "합집합"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "version": "2026.07.25-alpha",
+  "rules": [
+    {
+      "rule_id": "hs1_function_value",
+      "name": "함숫값 대입",
+      "domain": "hs1_function_basic",
+      "lhs": "f(x)=...",
+      "rhs": "f(a)=...",
+      "conditions": {"tags": ["함수", "함숫값"], "requires": ["function_expression", "input"]},
+      "inverse": "evaluate_function",
+      "risk": "medium",
+      "notes_kr": "정의역 조건을 먼저 확인한 뒤 입력값을 대입한다."
+    },
+    {
+      "rule_id": "hs1_function_composition",
+      "name": "합성함수 대입",
+      "domain": "hs1_function_composition",
+      "lhs": "f(g(x))",
+      "rhs": "f(g(x))=a(cx+d)+b",
+      "conditions": {"tags": ["합성함수"], "requires": ["a", "b", "c", "d", "input"]},
+      "inverse": "evaluate_inner_first",
+      "risk": "low",
+      "notes_kr": "안쪽 함수 g를 먼저 계산한 뒤 바깥 함수 f에 대입한다."
+    },
+    {
+      "rule_id": "hs1_inverse_function",
+      "name": "일차함수 역함수",
+      "domain": "hs1_inverse_function",
+      "lhs": "f(x)=ax+b",
+      "rhs": "f^-1(x)=(x-b)/a",
+      "conditions": {"tags": ["역함수"], "requires": ["a", "b"]},
+      "inverse": "reverse_mapping",
+      "risk": "low",
+      "notes_kr": "a는 0이 아니어야 하며 x와 y를 바꾼 뒤 정리한다."
+    },
+    {
+      "rule_id": "hs1_conditional_probability",
+      "name": "조건부확률 정의",
+      "domain": "hs1_conditional_probability",
+      "lhs": "P(A|B)",
+      "rhs": "P(A∩B)/P(B)",
+      "conditions": {"tags": ["조건부확률"], "requires": ["joint", "condition"]},
+      "inverse": "divide_by_condition",
+      "risk": "medium",
+      "notes_kr": "P(B)가 0이 아닌지 확인한다."
+    },
+    {
+      "rule_id": "hs1_factor_remainder",
+      "name": "인수정리",
+      "domain": "hs1_polynomial_factor",
+      "lhs": "P(a)=0",
+      "rhs": "(x-a)는 P(x)의 인수",
+      "conditions": {"tags": ["인수정리"], "requires": ["polynomial", "candidate"]},
+      "inverse": "factor_polynomial",
+      "risk": "medium",
+      "notes_kr": "후보 근을 대입해 나머지가 0인지 검산한다."
+    },
+    {
+      "rule_id": "linear_balance",
+      "name": "일차방정식 등식 보존",
+      "domain": "cm_linear",
+      "lhs": "a*x+b=c",
+      "rhs": "x=(c-b)/a",
+      "conditions": {"tags": ["일차방정식"], "requires": ["a", "b", "c"]},
+      "inverse": "substitute_x",
+      "risk": "low",
+      "notes_kr": "a가 0이면 일차방정식이 아니므로 거부한다."
+    },
+    {
+      "rule_id": "ratio_scale",
+      "name": "비례식 비율 보존",
+      "domain": "cm_ratio",
+      "lhs": "a:b=c:d",
+      "rhs": "a*d=b*c",
+      "conditions": {"tags": ["비례"], "requires": ["numbers"]},
+      "inverse": "solve_missing_ratio",
+      "risk": "low",
+      "notes_kr": "비례식은 양변의 교차곱으로 검산한다."
+    },
+    {
+      "rule_id": "probability_basic",
+      "name": "확률의 기본 정의",
+      "domain": "cm_probability",
+      "lhs": "P(E)",
+      "rhs": "favorable/total",
+      "conditions": {"tags": ["확률"], "requires": ["numbers"]},
+      "inverse": "count_events",
+      "risk": "medium",
+      "notes_kr": "동일한 가능성을 갖는 유한 표본공간에서만 적용한다."
+    },
+    {
+      "rule_id": "pythagorean_identity",
+      "name": "피타고라스 정리",
+      "domain": "cm_geometry",
+      "lhs": "a²+b²",
+      "rhs": "c²",
+      "conditions": {"tags": ["피타고라스"], "requires": ["numbers"]},
+      "inverse": "solve_side",
+      "risk": "low",
+      "notes_kr": "c는 직각삼각형의 빗변이어야 한다."
+    },
+    {
+      "rule_id": "ar_seq_an_formula",
+      "name": "등차수열 일반항",
+      "domain": "cm_arith_sequence",
+      "lhs": "a_n",
+      "rhs": "a1 + (n - 1) * d",
+      "conditions": {
+        "tags": ["수열", "등차수열"],
+        "requires": ["a1", "d", "n"]
+      },
+      "inverse": "a_n_to_a1d",
+      "risk": "low",
+      "notes_kr": "n 입력이 없으면 n=1 기준 기본값으로 폴백."
+    },
+    {
+      "rule_id": "ar_gp_an_formula",
+      "name": "등비수열 일반항",
+      "domain": "cm_arith_sequence",
+      "lhs": "a_n",
+      "rhs": "a1 * (r)^(n - 1)",
+      "conditions": {
+        "tags": ["수열", "등비수열"],
+        "requires": ["a1", "r", "n"]
+      },
+      "inverse": "an_to_a1r",
+      "risk": "low",
+      "notes_kr": "음수 지수 입력은 문제 생성에서 제한."
+    },
+    {
+      "rule_id": "set_union_identity",
+      "name": "합집합 공식",
+      "domain": "cm_set",
+      "lhs": "|A∪B|",
+      "rhs": "|A| + |B| - |A∩B|",
+      "conditions": {
+        "tags": ["집합", "합집합", "교집합"],
+        "requires": ["|A|", "|B|", "|A∩B|"]
+      },
+      "inverse": "intersection_from_union",
+      "risk": "low",
+      "notes_kr": "전제: 유한 집합의 크기 양의 정수."
+    },
+    {
+      "rule_id": "quad_delta_root",
+      "name": "이차방정식 판별식",
+      "domain": "cm_quadratic",
+      "lhs": "ax²+bx+c=0",
+      "rhs": "D = b² - 4ac",
+      "conditions": {
+        "tags": ["이차방정식", "판별식"],
+        "requires": ["a", "b", "c"]
+      },
+      "inverse": "solve_from_delta",
+      "risk": "medium",
+      "notes_kr": "복소근 허용 여부는 도메인 제약에서 지정."
+    }
+  ]
+}

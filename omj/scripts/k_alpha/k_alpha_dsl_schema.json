@@ -1,0 +1,56 @@
+{
+  "schema_id": "k-alpha-program",
+  "schema_version": "k-alpha-1.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "problem_id",
+    "prompt",
+    "question_type",
+    "school_grade_code",
+    "tags",
+    "rule_refs",
+    "vars",
+    "answer_formula",
+    "expected_answer",
+    "checks",
+    "steps"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "problem_id": {"type": "string"},
+    "prompt": {"type": "string"},
+    "question_type": {"type": "string"},
+    "school_grade_code": {"type": "integer", "minimum": 1, "maximum": 9},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "rule_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_id"],
+        "properties": {
+          "rule_id": {"type": "string"},
+          "weight": {"type": "number"}
+        }
+      }
+    },
+    "vars": {"type": "object"},
+    "answer_formula": {"type": "string"},
+    "expected_answer": {"type": "string"},
+    "checks": {"type": "object"},
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step_id", "goal"],
+        "properties": {
+          "step_id": {"type": "string"},
+          "goal": {"type": "string"},
+          "rule_ids": {"type": "array", "items": {"type": "string"}},
+          "hints": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "metadata": {"type": "object"}
+  }
+}

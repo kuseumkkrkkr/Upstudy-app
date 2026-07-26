@@ -741,7 +741,8 @@ String buildAiFlowGraphHtml(
                   function (x) {
                     return evaluator(x);
                   },
-                  [left, right],
+                  left,
+                  right,
                 ],
                 {
                   strokeColor: color,
