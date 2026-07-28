@@ -421,7 +421,8 @@ class _BookWidgetState extends State<BookWidget> {
       child: Scaffold(
         key: const ValueKey('bookbag-mobile-redesign'),
         backgroundColor: const Color(0xFFF2F2F4),
-        drawer: const AppDrawer(),
+        drawer: null,
+        bottomNavigationBar: const MobileStudentBottomAppBar(),
         body: SafeArea(
           child: Column(
             children: [
@@ -769,7 +770,9 @@ class _BookWidgetState extends State<BookWidget> {
   Widget _buildHeader(BuildContext context) {
     return Ios26TopBar(
       brandColor: BookWidget.primaryGreen,
-      onMenu: () => toggleAppDrawer(context),
+      onMenu: () => MediaQuery.sizeOf(context).width <= 720
+          ? MobileStudentBottomAppBar.openMore(context)
+          : toggleAppDrawer(context),
       onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainStudentPage()),
         (route) => false,
