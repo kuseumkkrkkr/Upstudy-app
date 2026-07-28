@@ -13,11 +13,9 @@ Widget buildJsxGraphEmbed(
   Key? key,
   bool showParameterControls = true,
   bool directManipulationMode = false,
-  bool forceCanvasRenderer = false,
 }) => buildJsxGraphEmbedImpl(
   document,
   key: key,
   showParameterControls: showParameterControls,
   directManipulationMode: directManipulationMode,
-  forceCanvasRenderer: forceCanvasRenderer,
 );

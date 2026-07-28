@@ -6,7 +6,6 @@ Widget buildJsxGraphEmbedImpl(
   Key? key,
   bool showParameterControls = true,
   bool directManipulationMode = false,
-  bool forceCanvasRenderer = false,
 }) {
   return Center(key: key, child: Text('현재 플랫폼에서는 그래프 보기를 지원하지 않습니다.'));
 }

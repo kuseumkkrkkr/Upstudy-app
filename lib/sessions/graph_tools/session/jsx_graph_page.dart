@@ -292,10 +292,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                           constraints.maxWidth < 720 &&
                           MediaQuery.orientationOf(context) ==
                               Orientation.portrait;
-                      final graphPanel = _buildGraphPanel(
-                        isLinux: isLinux,
-                        forceCanvasRenderer: portraitMobile,
-                      );
+                      final graphPanel = _buildGraphPanel(isLinux: isLinux);
                       final editorPanel = _buildEditorPanel(
                         compactMobile: portraitMobile,
                       );
@@ -413,13 +410,10 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     );
   }
 
-  /// 필요한 변수는 플랫폼 지원 여부와 모바일 Canvas 렌더러 사용 여부다.
-  /// 작동 원리는 세로 모바일에서 iframe 기반 JSXGraph 대신 Canvas를 우선해
-  /// 수식 입력 직후에도 그래프 선이 안정적으로 표시되게 하는 것이다.
-  Widget _buildGraphPanel({
-    required bool isLinux,
-    required bool forceCanvasRenderer,
-  }) {
+  /// 필요한 변수는 플랫폼 지원 여부와 현재 그래프 문서다.
+  /// 작동 원리는 모든 화면 크기에서 JSXGraph를 유지하고, 모바일은 iframe 로드
+  /// 완료 뒤 최신 수식을 다시 전달해 좌표평면과 수식 상태를 일치시키는 것이다.
+  Widget _buildGraphPanel({required bool isLinux}) {
     return _SurfaceCard(
       padding: EdgeInsets.zero,
       child: ClipRRect(
@@ -439,7 +433,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                   _buildDocument(),
                   showParameterControls: false,
                   directManipulationMode: true,
-                  forceCanvasRenderer: forceCanvasRenderer,
                 )
               : const _GraphEmbedDisabledForTesting(),
         ),

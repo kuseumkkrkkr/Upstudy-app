@@ -9,7 +9,6 @@ String buildAiFlowGraphHtml(
   AiFlowGraphDocument document, {
   bool showParameterControls = true,
   bool directManipulationMode = false,
-  bool forceCanvasRenderer = false,
 }) {
   final payloadJson = jsonEncode(document.toJson());
   final escapedPayload = payloadJson
@@ -203,7 +202,7 @@ String buildAiFlowGraphHtml(
       }
     </style>
   </head>
-  <body class="__AIFLOW_GRAPH_BODY_CLASS__ __AIFLOW_GRAPH_RENDERER_CLASS__">
+  <body class="__AIFLOW_GRAPH_BODY_CLASS__">
     <div id="app">
       <div id="status"></div>
       <div class="toolbar">
@@ -284,22 +283,6 @@ String buildAiFlowGraphHtml(
           const top = numberOrFallback(viewport?.top, 8);
           const bottom = numberOrFallback(viewport?.bottom, -8);
           return { left, right, top, bottom };
-        }
-
-        function zoomFallback(factor) {
-          const viewport = getViewport(currentPayload);
-          const centerX = (viewport.left + viewport.right) / 2;
-          const centerY = (viewport.top + viewport.bottom) / 2;
-          const halfWidth = (viewport.right - viewport.left) * factor / 2;
-          const halfHeight = (viewport.top - viewport.bottom) * factor / 2;
-          currentPayload.settings = currentPayload.settings || {};
-          currentPayload.settings.viewport = {
-            left: centerX - halfWidth,
-            right: centerX + halfWidth,
-            top: centerY + halfHeight,
-            bottom: centerY - halfHeight,
-          };
-          drawFallback(currentPayload);
         }
 
         function ensureFallbackCanvasSize() {
@@ -667,6 +650,27 @@ String buildAiFlowGraphHtml(
           return board;
         }
 
+        function refreshBoardSize() {
+          if (!board || !graphHostElement) return;
+          const width = graphHostElement.clientWidth;
+          const height = graphHostElement.clientHeight;
+          if (width < 2 || height < 2) return;
+          try {
+            board.resizeContainer(width, height, true);
+            board.fullUpdate();
+          } catch (_) {}
+        }
+
+        if (window.ResizeObserver && graphHostElement) {
+          const graphResizeObserver = new ResizeObserver(() => {
+            window.requestAnimationFrame(refreshBoardSize);
+          });
+          graphResizeObserver.observe(graphHostElement);
+        }
+        window.addEventListener('resize', () => {
+          window.requestAnimationFrame(refreshBoardSize);
+        });
+
         function renderControls(parameters) {
           controlsElement.innerHTML = '';
           for (const parameter of parameters) {
@@ -854,22 +858,6 @@ String buildAiFlowGraphHtml(
           parameterValues = buildFormulaMap();
           renderControls(parameters);
 
-          if (isInitial) {
-            const viewport = getViewport(currentPayload);
-            initialViewport = [
-              viewport.left,
-              viewport.top,
-              viewport.right,
-              viewport.bottom,
-            ];
-          }
-
-          if (document.body.classList.contains('force-canvas-renderer')) {
-            setRenderMode(true);
-            drawFallback(currentPayload);
-            return;
-          }
-
           if (!window.JXG || typeof window.JXG.JSXGraph?.initBoard !== 'function') {
             setRenderMode(true);
             drawFallback(currentPayload);
@@ -885,6 +873,7 @@ String buildAiFlowGraphHtml(
               return;
             }
             renderCurrentGraph();
+            window.requestAnimationFrame(refreshBoardSize);
           } else {
             renderCurrentGraph();
           }
@@ -948,9 +937,7 @@ String buildAiFlowGraphHtml(
           startLibraryLoadGuard();
         }
 
-        if (document.body.classList.contains('force-canvas-renderer')) {
-          applyInitialPayload();
-        } else if (window.JXG && typeof window.JXG.JSXGraph?.initBoard === 'function') {
+        if (window.JXG && typeof window.JXG.JSXGraph?.initBoard === 'function') {
           applyInitialPayload();
         } else {
           bindLibraryLoadEvents();
@@ -978,33 +965,14 @@ String buildAiFlowGraphHtml(
         }
 
         zoomInBtn?.addEventListener('click', () => {
-          if (useFallback) {
-            zoomFallback(0.8);
-            return;
-          }
           if (!board || !board.zoomIn) return;
           board.zoomIn();
         });
         zoomOutBtn?.addEventListener('click', () => {
-          if (useFallback) {
-            zoomFallback(1.25);
-            return;
-          }
           if (!board || !board.zoomOut) return;
           board.zoomOut();
         });
         resetBtn?.addEventListener('click', () => {
-          if (useFallback && initialViewport) {
-            currentPayload.settings = currentPayload.settings || {};
-            currentPayload.settings.viewport = {
-              left: initialViewport[0],
-              top: initialViewport[1],
-              right: initialViewport[2],
-              bottom: initialViewport[3],
-            };
-            drawFallback(currentPayload);
-            return;
-          }
           if (!board || !initialViewport) return;
           board.setBoundingBox(initialViewport, false);
           setStatus('초기 뷰로 되돌렸습니다.');
@@ -1027,10 +995,6 @@ String buildAiFlowGraphHtml(
       .replaceAll(
         r'__AIFLOW_GRAPH_BODY_CLASS__',
         directManipulationMode ? 'direct-drawing' : '',
-      )
-      .replaceAll(
-        r'__AIFLOW_GRAPH_RENDERER_CLASS__',
-        forceCanvasRenderer ? 'force-canvas-renderer' : '',
       )
       .replaceAll(
         r'__AIFLOW_GRAPH_SHOW_NAVIGATION__',
