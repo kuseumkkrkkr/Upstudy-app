@@ -287,6 +287,39 @@ def _build_marketplace_problem_set_questions(listing: dict[str, Any]) -> list[di
     return questions
 
 
+def _build_course_runtime_state(course_id: str, owned_state: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: 코스 asset ID와 KV 보유 상태. 작동 원리: main 런타임의 student_state 계약을
+    작은 상태 객체로 재현해 수강 시작·이어하기가 추가 DB 조회 없이 같은 상태를 사용하게 한다."""
+    progress_index = max(0, int(owned_state.get("progress_index") or 0))
+    completed = bool(owned_state.get("completed"))
+    module_id = f"{course_id}-module-{progress_index + 1}"
+    return {
+        "status": "completed" if completed else "in_progress",
+        "current_module_id": None if completed else module_id,
+        "completed_modules": [module_id] if completed else [],
+        "progress_index": progress_index,
+    }
+
+
+def _find_marketplace_question(quest_id: str) -> dict[str, Any] | None:
+    """필요 변수: 문제세트가 만든 quest ID. 작동 원리: 접미사 앞의 상품 ID를 먼저 분리한 뒤
+    결정적 문항 목록에서 한 번만 찾아 main의 variant-grade 정답 인덱스 계약으로 연결한다."""
+    listing_id, marker, _suffix = quest_id.rpartition("-q")
+    if not marker:
+        return None
+    listing = _find_catalog_listing(listing_id)
+    if listing is None or listing.get("kind") != "problem_set":
+        return None
+    return next(
+        (
+            question
+            for question in _build_marketplace_problem_set_questions(listing)
+            if str(question.get("header", {}).get("quest_id")) == quest_id
+        ),
+        None,
+    )
+
+
 class OcrJobRequest(BaseModel):
     """필요 변수: 처리 모드와 기존 분석 payload. 작동 원리: 추론 입력을 큐 행 하나로 제한한다."""
 
@@ -1108,6 +1141,79 @@ def get_legacy_course(course_id: str, _user_id: str = Depends(_current_user)) ->
     return _catalog_course(listing)
 
 
+@app.post("/courses/v2/runtime/next")
+async def start_course_runtime(request: Request, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: main 클라이언트가 전송한 course_id와 로그인 사용자. 작동 원리: 공개 코스를
+    보유 목록에 멱등 등록하고 main의 data.student_state 응답을 반환해 수강 시작을 즉시 완료한다."""
+    try:
+        payload = await request.json()
+    except (ValueError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="invalid_json") from None
+    course_id = str(payload.get("course_id") or "").strip() if isinstance(payload, dict) else ""
+    listing = _find_catalog_listing(course_id)
+    if not course_id or listing is None or listing.get("kind") != "course":
+        raise HTTPException(status_code=404, detail="course_not_found")
+    owned = _load_owned_marketplace(user_id)
+    state = owned.setdefault(
+        str(listing["id"]),
+        {"progress_index": 0, "status": "in_progress", "completed": False},
+    )
+    _save_owned_marketplace(user_id, owned)
+    student_state = _build_course_runtime_state(str(listing["asset_id"]), state)
+    return {
+        "data": {
+            "status": student_state["status"],
+            "next_module_id": student_state["current_module_id"],
+            "student_state": student_state,
+        }
+    }
+
+
+@app.get("/courses/v2/runtime/state/{course_id}")
+def get_course_runtime_state(course_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 코스 asset ID와 보유 KV 상태. 작동 원리: main의 state 경로처럼 마지막
+    모듈 위치를 반환해 앱 재진입 때 등록 상태가 초기화되지 않게 한다."""
+    listing = _find_catalog_listing(course_id)
+    if listing is None or listing.get("kind") != "course":
+        raise HTTPException(status_code=404, detail="course_not_found")
+    owned = _load_owned_marketplace(user_id)
+    state = owned.get(str(listing["id"]))
+    if state is None:
+        raise HTTPException(status_code=404, detail="course_not_enrolled")
+    student_state = _build_course_runtime_state(str(listing["asset_id"]), state)
+    return {"data": student_state}
+
+
+@app.post("/courses/v2/runtime/submit")
+async def submit_course_runtime(request: Request, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 코스·모듈 ID와 정오답 수. 작동 원리: main의 런타임 제출 형식을 받아
+    모듈 완료 여부만 KV 한 행에 갱신하고 다음 모듈 상태를 반환한다."""
+    try:
+        payload = await request.json()
+    except (ValueError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="invalid_json") from None
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="invalid_payload")
+    course_id = str(payload.get("course_id") or "").strip()
+    listing = _find_catalog_listing(course_id)
+    if not course_id or listing is None or listing.get("kind") != "course":
+        raise HTTPException(status_code=404, detail="course_not_found")
+    total_count = max(1, int(payload.get("total_count") or 0))
+    correct_count = max(0, int(payload.get("correct_count") or 0))
+    owned = _load_owned_marketplace(user_id)
+    state = owned.setdefault(
+        str(listing["id"]),
+        {"progress_index": 0, "status": "in_progress", "completed": False},
+    )
+    if correct_count >= total_count:
+        state["progress_index"] = int(state.get("progress_index") or 0) + 1
+    state["completed"] = int(state.get("progress_index") or 0) >= int(listing["item_count"])
+    state["status"] = "completed" if state["completed"] else "in_progress"
+    _save_owned_marketplace(user_id, owned)
+    student_state = _build_course_runtime_state(str(listing["asset_id"]), state)
+    return {"data": {"status": student_state["status"], "student_state": student_state}}
+
+
 @app.get("/academy/assignments/my")
 @app.get("/academy/students/me/schedule")
 def list_empty_student_tasks(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
@@ -1227,6 +1333,73 @@ def update_owned_marketplace_progress(
     }
     _save_owned_marketplace(user_id, owned)
     return owned[listing_id]
+
+
+@app.post("/analysis/solve/variant-grade")
+async def grade_variant_solve(request: Request, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 문제 ID와 선택지 인덱스 또는 입력 답. 작동 원리: main의 variant-grade와
+    동일하게 정답 인덱스를 비교해 raw_correct·pass를 즉시 반환하므로 채점 대기 작업을 만들지 않는다."""
+    try:
+        payload = await request.json()
+    except (ValueError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="invalid_json") from None
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="invalid_payload")
+    quest_id = str(payload.get("quest_id") or "").strip()
+    question = _find_marketplace_question(quest_id)
+    if question is None:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    data = question.get("data", {})
+    expected_index = int(data.get("correct_choice_index") or 0)
+    selected = payload.get("selected_index")
+    raw_correct = isinstance(selected, int) and selected == expected_index
+    return {
+        "quest_id": quest_id,
+        "question_type": "multiple_choice",
+        "raw_correct": raw_correct,
+        "pass": raw_correct,
+        "hints_forbidden": True,
+        "reason": "normal" if raw_correct else "incorrect_choice",
+    }
+
+
+@app.post("/analysis/solve")
+async def analyze_solve(request: Request, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: main 풀이 분석 JSON의 solves 목록. 작동 원리: 카나리에서 무거운 OCR 모델을
+    동기 실행하지 않고 제출된 객관식 정답 정보만 즉시 판정해 기존 분석 응답 필드를 유지한다."""
+    try:
+        payload = await request.json()
+    except (ValueError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="invalid_json") from None
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="invalid_payload")
+    solves = payload.get("solves") if isinstance(payload.get("solves"), list) else []
+    status_items: list[dict[str, Any]] = []
+    for solve in solves:
+        if not isinstance(solve, dict):
+            continue
+        quest_id = str(solve.get("quest_id") or solve.get("id") or "").strip()
+        question = _find_marketplace_question(quest_id)
+        selected = solve.get("selected_index")
+        correct = bool(
+            question is not None
+            and isinstance(selected, int)
+            and selected == int(question.get("data", {}).get("correct_choice_index") or 0)
+        )
+        status_items.append({"quest_id": quest_id, "status": "O" if correct else "X"})
+    total = len(status_items)
+    correct_count = sum(item["status"] == "O" for item in status_items)
+    return {
+        "status": status_items,
+        "step_correctness": status_items,
+        "is_correct": total > 0 and correct_count == total,
+        "correct_rate": correct_count / total if total else 0.0,
+        "total_solved": total,
+        "total_correct": correct_count,
+        "weak_tags": [],
+        "ai_opinion": "객관식 답안을 기준으로 즉시 채점했습니다.",
+        "warnings": ["이미지 OCR 채점은 카나리 큐에서 별도로 처리됩니다."] if not solves else [],
+    }
 
 
 @app.get("/history/solve")
