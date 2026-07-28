@@ -29,7 +29,154 @@ NAME_RE = re.compile(r"^[가-힣A-Za-z0-9 ]{1,20}$")
 
 
 def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
-    """필요 변수: 기본 코스 6종·난이도 5단계·확장판 15개 버전. 작동 원리: Vercel 시작 시 81개 코스를 한 번만 생성해 검색 요청마다 DB를 조회하지 않는다."""
+    """필요 변수: 시험지 85개·문제세트 166개·코스 81개 규칙. 작동 원리: Vercel 시작 시 전체 332개 재고를 한 번만 생성해 검색 요청마다 DB를 조회하지 않는다."""
+    items: list[dict[str, Any]] = []
+    grade_by_tier = {
+        1: "고1",
+        2: "고1-2",
+        3: "고1-2",
+        4: "고2-3",
+        5: "고2-3",
+    }
+    tier_labels = {
+        1: "기본기",
+        2: "개념 적용",
+        3: "유형 연결",
+        4: "응용 실전",
+        5: "심화 사고력",
+    }
+    version_labels = {
+        3: "기본",
+        4: "확장",
+        5: "유형 확장",
+        6: "종합 확장",
+        7: "역량 확장",
+        8: "병렬 확장",
+        9: "원리 확장",
+        10: "개념 연결",
+        11: "유형 확장",
+        12: "실전 연결",
+        13: "수리 확장",
+        14: "심화 연결",
+        15: "구조 통합",
+        16: "응용 전개",
+        17: "개념 융합",
+    }
+
+    exam_specs = (
+        ("foundation-a", "공통수학 기초 진단 A", "고1 핵심 개념 10문항 진단", "고1", "입문"),
+        ("foundation-b", "공통수학 기초 진단 B", "계산 정확도와 개념 연결 점검", "고1", "기본"),
+        ("algebra", "대수 실전 미니 모의", "수열·지수·로그 10문항", "고2", "중급"),
+        ("calculus", "미적분 I 실전 미니 모의", "극한·미분·적분 10문항", "고2-3", "중상"),
+        ("challenge", "상위권 사고력 모의", "복합 조건 중심 10문항", "고2-3", "심화"),
+        ("mixed", "전 범위 밸런스 모의", "난이도 1~5 혼합 10문항", "고1-3", "혼합"),
+        ("common-plus", "공통수학 종합 진단 C", "복소수·행렬·직선 10문항", "고1", "중급"),
+        ("algebra-plus", "대수 개념 진단 B", "나머지정리·로그·수열 10문항", "고1-2", "중급"),
+        ("calculus-plus", "미적분 I 실전 모의 B", "접선과 정적분 중심 10문항", "고2-3", "중상"),
+        ("mixed-plus", "전 범위 밸런스 모의 B", "전 범위 혼합 10문항", "고1-3", "혼합"),
+    )
+    for rank, (slug, title, description, grade, difficulty) in enumerate(exam_specs):
+        items.append(
+            {
+                "id": f"market-v2-exam-{slug}",
+                "kind": "exam",
+                "title": title,
+                "description": description,
+                "grade_band": grade,
+                "difficulty": difficulty,
+                "item_count": 10,
+                "price_points": 0,
+                "problem_ids": [],
+                "owned": False,
+                "featured_rank": 199 - rank,
+                "asset_id": "",
+            }
+        )
+    for version, suffix in version_labels.items():
+        for tier, label in tier_labels.items():
+            items.append(
+                {
+                    "id": f"market-v2-exam-tier-{tier}-v{version}",
+                    "kind": "exam",
+                    "title": f"난이도 {tier} · {label} 진단 · {suffix}",
+                    "description": f"난이도 {tier} 직접 출제 문제 10문항",
+                    "grade_band": grade_by_tier[tier],
+                    "difficulty": f"난이도 {tier}",
+                    "item_count": 10,
+                    "price_points": 0,
+                    "problem_ids": [],
+                    "owned": False,
+                    "featured_rank": 185 - version * 3 - tier,
+                    "asset_id": "",
+                }
+            )
+
+    set_specs = (
+        ("polynomial", "다항식 기본기 5", "다항식 계산부터 인수정리까지", "고1", "입문"),
+        ("quadratic", "이차방정식 집중 5", "근과 계수, 판별식 핵심 연습", "고1", "기본"),
+        ("sequence", "수열 패턴 훈련 5", "등차·등비수열과 합의 구조", "고2", "기본"),
+        ("exponential", "지수·로그 스타터 5", "지수법칙과 방정식 첫 훈련", "고2", "기본"),
+        ("function", "함수 그래프 해석 5", "합성함수와 그래프 이동 연습", "고1-2", "중급"),
+        ("counting", "경우의 수 핵심 5", "순열·조합과 조건 분류", "고1", "중급"),
+        ("derivative", "미분 개념 점검 5", "도함수와 극대·극소 판정", "고2-3", "중급"),
+        ("integral", "적분 계산 점검 5", "정적분 계산과 넓이 해석", "고2-3", "중급"),
+        ("complex", "복소수 계산 스타터 5", "허수 단위 거듭제곱 훈련", "고1", "입문"),
+        ("matrix", "행렬 연산 스타터 5", "행렬 덧셈과 성분 계산", "고1", "입문"),
+        ("remainder", "나머지정리 기본기 5", "대입으로 나머지 계산", "고1", "기본"),
+        ("logarithm", "로그 정의 점검 5", "로그식을 지수식으로 변환", "고2", "기본"),
+        ("line", "직선의 방정식 점검 5", "기울기와 절편 복원", "고1", "중급"),
+        ("permutation", "순열 사고 훈련 5", "선후 조건과 대응 연습", "고1", "중급"),
+        ("tangent", "접선 기울기 실전 5", "도함수로 미정계수 복원", "고2-3", "중상"),
+        ("parabola-area", "포물선 넓이 실전 5", "정적분 넓이와 매개변수", "고2-3", "심화"),
+    )
+    for rank, (slug, title, description, grade, difficulty) in enumerate(set_specs):
+        items.append(
+            {
+                "id": f"market-v2-set-{slug}",
+                "kind": "problem_set",
+                "title": title,
+                "description": description,
+                "grade_band": grade,
+                "difficulty": difficulty,
+                "item_count": 5,
+                "price_points": 0,
+                "problem_ids": [],
+                "owned": False,
+                "featured_rank": 198 - rank,
+                "asset_id": "",
+            }
+        )
+    set_topics = (
+        ("다항식", 1),
+        ("수열 기초", 1),
+        ("방정식", 2),
+        ("지수·로그", 2),
+        ("함수", 3),
+        ("좌표기하", 3),
+        ("미분", 4),
+        ("적분", 4),
+        ("고난도 함수", 5),
+        ("복합 사고력", 5),
+    )
+    for version, suffix in version_labels.items():
+        for index, (topic, tier) in enumerate(set_topics):
+            items.append(
+                {
+                    "id": f"market-v2-set-{version}-{index + 1}",
+                    "kind": "problem_set",
+                    "title": f"난이도 {tier} · {topic} 5 · {suffix}",
+                    "description": f"{topic} 핵심 유형 5문항",
+                    "grade_band": grade_by_tier[tier],
+                    "difficulty": f"난이도 {tier}",
+                    "item_count": 5,
+                    "price_points": 0,
+                    "problem_ids": [],
+                    "owned": False,
+                    "featured_rank": 180 - version * 3 - index,
+                    "asset_id": "",
+                }
+            )
+
     base_courses = (
         ("foundation", "공통수학 기초 완성", "다항식부터 지수까지 4단계 코스", "고1-2", "입문", 20, 900),
         ("algebra", "대수 개념 연결", "방정식·수열·지수를 연결하는 3단계 코스", "고1-2", "중급", 15, 1200),
@@ -38,7 +185,6 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
         ("geometry", "좌표기하 연결 코스", "원과 직선을 연결하는 2단계 코스", "고1", "중급", 10, 1100),
         ("mastery", "수학 전 범위 마스터 루트", "검수 문제로 구성한 5단계 종합 코스", "고1-3", "혼합", 25, 2200),
     )
-    items: list[dict[str, Any]] = []
     for rank, (slug, title, description, grade, difficulty, count, _price) in enumerate(base_courses):
         items.append(
             {
@@ -57,14 +203,14 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
             }
         )
 
-    tier_labels = {
+    course_tier_labels = {
         1: ("개념 시작", "고1"),
         2: ("기본 완성", "고1"),
         3: ("유형 훈련", "고1-2"),
         4: ("실전 심화", "고2-3"),
         5: ("최상위 도전", "고2-3"),
     }
-    version_labels = {
+    course_version_labels = {
         3: "",
         4: "확장",
         5: "유형 확장",
@@ -81,8 +227,8 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
         16: "파이널",
         17: "마스터",
     }
-    for version, suffix in version_labels.items():
-        for tier, (label, grade) in tier_labels.items():
+    for version, suffix in course_version_labels.items():
+        for tier, (label, grade) in course_tier_labels.items():
             title = f"난이도 {tier} · {label} 코스"
             if suffix:
                 title = f"{title} · {suffix}"
@@ -735,9 +881,12 @@ def _filtered_catalog_courses(
     courses = [
         _catalog_course(item)
         for item in MARKETPLACE_CATALOG
-        if not normalized
-        or normalized
-        in f"{item['title']} {item['description']} {item['difficulty']}".casefold()
+        if item["kind"] == "course"
+        and (
+            not normalized
+            or normalized
+            in f"{item['title']} {item['description']} {item['difficulty']}".casefold()
+        )
     ]
     safe_offset = max(0, offset)
     safe_limit = min(max(1, limit), 200)
@@ -773,7 +922,7 @@ def list_enrolled_courses(user_id: str = Depends(_current_user)) -> dict[str, li
     items = []
     for listing_id, state in owned.items():
         listing = _find_catalog_listing(listing_id)
-        if listing is None:
+        if listing is None or listing["kind"] != "course":
             continue
         items.append(
             {

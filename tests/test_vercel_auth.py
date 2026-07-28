@@ -205,6 +205,20 @@ def test_marketplace_catalog_search_and_pagination(monkeypatch):
         assert first_page.json()["next_offset"] == 20
         assert all(item["price_points"] == 0 for item in first_page.json()["items"])
 
+        inventory = {
+            kind: client.get(
+                f"/marketplace/listings?kind={kind}&limit=1",
+                headers=headers,
+            ).json()["total"]
+            for kind in ("exam", "problem_set", "course")
+        }
+        all_items = client.get(
+            "/marketplace/listings?limit=1",
+            headers=headers,
+        ).json()
+        assert inventory == {"exam": 85, "problem_set": 166, "course": 81}
+        assert all_items["total"] == 332
+
         searched = client.get(
             "/marketplace/listings?kind=course&query=공통수학&grade_band=고1",
             headers=headers,

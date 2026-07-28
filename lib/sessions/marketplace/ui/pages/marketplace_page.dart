@@ -550,10 +550,10 @@ class _MobileMarketplaceBody extends StatelessWidget {
       const SizedBox(height: 22),
       Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              '추천 코스',
-              style: TextStyle(
+              selected == '전체' ? '추천 자료' : selected,
+              style: const TextStyle(
                 fontSize: 28,
                 letterSpacing: -.8,
                 fontWeight: FontWeight.w900,
@@ -796,16 +796,25 @@ class _MobileMarketGrid extends StatelessWidget {
   final ValueChanged<_MarketItem> onOpen;
 
   /// 필요한 변수는 현재 페이지 상품 목록과 열기 동작이다.
-  /// 작동 원리는 코스를 한 줄에 하나씩 배치해 작은 화면에서도 제목과 학습 조건을 큰 글자로 읽게 한다.
+  /// 작동 원리는 각 항목을 큰 캡슐로 반복하지 않고 하나의 흰 목록 안에서 구분선으로 나눠 스크롤 길이와 시각 소음을 줄인다.
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context) => Container(
     key: const ValueKey('market-mobile-grid'),
-    children: [
-      for (var index = 0; index < items.length; index++) ...[
-        _MobileMarketCard(item: items[index], onOpen: onOpen),
-        if (index != items.length - 1) const SizedBox(height: 10),
+    clipBehavior: Clip.antiAlias,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: const Color(0xFFDEDEE2)),
+    ),
+    child: Column(
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          _MobileMarketCard(item: items[index], onOpen: onOpen),
+          if (index != items.length - 1)
+            const Divider(height: 1, indent: 72, color: Color(0xFFE8E8EB)),
+        ],
       ],
-    ],
+    ),
   );
 }
 
@@ -816,76 +825,70 @@ class _MobileMarketCard extends StatelessWidget {
   final ValueChanged<_MarketItem> onOpen;
 
   /// 필요한 변수는 상품 유형·제목·학습 조건이다.
-  /// 작동 원리는 표지 이미지를 제거하고 제목·한 줄 조건·무료 상태만 남겨 정보 밀도를 낮춘다.
+  /// 작동 원리는 유형별 아이콘 표식과 한 줄 제목·조건만 사용해 시험지, 문제세트, 코스를 빠르게 구분하게 한다.
   @override
   Widget build(BuildContext context) => Material(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(20),
-    clipBehavior: Clip.antiAlias,
+    color: Colors.transparent,
     child: InkWell(
       onTap: () => onOpen(item),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFDEDEE2)),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF202023),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(item.icon, size: 25, color: Colors.white),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: item.mobileAccent,
+                borderRadius: BorderRadius.circular(14),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 19,
-                        height: 1.2,
-                        letterSpacing: -.5,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    Text(
-                      item.compactSubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF707076),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Icon(item.icon, size: 22, color: item.mobileForeground),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '무료',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                    item.mobileTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      height: 1.2,
+                      letterSpacing: -.4,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                  SizedBox(height: 7),
-                  Icon(Icons.arrow_forward_ios_rounded, size: 15),
+                  const SizedBox(height: 5),
+                  Text(
+                    '${item.typeLabel} · ${item.compactSubtitle}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF707076),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F1F3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                '무료',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right_rounded, size: 24),
+          ],
         ),
       ),
     ),
@@ -1637,6 +1640,16 @@ class _MarketItem {
       .where((value) => value != '무료' && !value.endsWith('P'))
       .take(3)
       .join(' · ');
+  String get mobileTitle => title
+      .replaceAll(RegExp(r'\s*·\s*실전$'), '')
+      .replaceAll(RegExp(r'\s*코스\s*·\s*'), ' · ');
+  Color get mobileAccent => switch (type) {
+    _MarketItemType.exam => const Color(0xFF171719),
+    _MarketItemType.problemSet => const Color(0xFFE6E6EA),
+    _MarketItemType.course => const Color(0xFFDCE8FF),
+  };
+  Color get mobileForeground =>
+      type == _MarketItemType.exam ? Colors.white : Colors.black;
 
   /// 필요한 변수는 현재 상품 정보다.
   /// 작동 원리는 무료 담기 성공 직후 네트워크 재검색 없이 현재 카드만 보유 상태로 바꾼다.
@@ -1731,8 +1744,8 @@ class _MarketplacePreviewSheet extends StatelessWidget {
               )
               .toList(growable: false)
         : switch (item.type) {
-            _MarketItemType.exam => const [('01', '시험 문제를 불러오지 못했습니다.')],
-            _MarketItemType.problemSet => const [('01', '문제 미리보기를 준비 중입니다.')],
+            _MarketItemType.exam => const <(String, String)>[],
+            _MarketItemType.problemSet => const <(String, String)>[],
             _MarketItemType.course => const <(String, String)>[],
           };
     final calculatedStageCount = (item.itemCount + 4) ~/ 5;
@@ -1808,10 +1821,18 @@ class _MarketplacePreviewSheet extends StatelessWidget {
                   style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 12),
-                if (item.type == _MarketItemType.course)
+                if (problems.isEmpty)
                   for (var index = 0; index < courseStageCount; index++)
-                    _CoursePreviewStage(
+                    _LearningPreviewStage(
                       index: index,
+                      label: _fallbackStageLabel(item.type, index),
+                      last: index == courseStageCount - 1,
+                    )
+                else if (item.type == _MarketItemType.course)
+                  for (var index = 0; index < courseStageCount; index++)
+                    _LearningPreviewStage(
+                      index: index,
+                      label: _fallbackStageLabel(item.type, index),
                       last: index == courseStageCount - 1,
                     )
                 else
@@ -1892,19 +1913,34 @@ class _MarketplacePreviewSheet extends StatelessWidget {
         .join(' ');
     return text.isEmpty ? value?.toString() ?? '' : text;
   }
+
+  /// 필요한 변수는 자료 유형과 단계 번호다.
+  /// 작동 원리는 원문 문제 ID가 없는 Vercel 카탈로그에서도 오류 대신 실제 자료 구성에 맞는 짧은 학습 단계를 표시한다.
+  static String _fallbackStageLabel(_MarketItemType type, int index) {
+    final labels = switch (type) {
+      _MarketItemType.exam => ['출제 범위 확인', '10문항 실전 풀이', '결과 확인'],
+      _MarketItemType.problemSet => ['핵심 유형 확인', '5문항 집중 풀이', '정답 점검'],
+      _MarketItemType.course => ['핵심 개념 확인', '유형 문제 훈련', '학습 마무리'],
+    };
+    return labels[index];
+  }
 }
 
-class _CoursePreviewStage extends StatelessWidget {
-  const _CoursePreviewStage({required this.index, required this.last});
+class _LearningPreviewStage extends StatelessWidget {
+  const _LearningPreviewStage({
+    required this.index,
+    required this.label,
+    required this.last,
+  });
 
   final int index;
+  final String label;
   final bool last;
 
   /// 필요한 변수는 코스 단계 번호와 마지막 단계 여부다.
   /// 작동 원리는 문제 원문 대신 학습 흐름만 한 줄로 보여 줘 비어 있는 문제 오류 문구를 노출하지 않는다.
   @override
   Widget build(BuildContext context) {
-    final labels = ['핵심 개념 확인', '유형 문제 훈련', '학습 마무리'];
     return Container(
       margin: EdgeInsets.only(bottom: last ? 0 : 9),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
@@ -1926,7 +1962,7 @@ class _CoursePreviewStage extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Text(
-              labels[index],
+              label,
               style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
             ),
           ),
