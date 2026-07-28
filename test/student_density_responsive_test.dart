@@ -120,6 +120,7 @@ Map<String, dynamic> _arenaResponsiveSummary() => {
         'losses': 9,
         'draws': 2,
         'estimated_wait_seconds': 12,
+        'coming_soon': type != 'duel_exam',
       },
   ],
 };
@@ -454,7 +455,7 @@ void main() {
     expect(find.text('페이지 미리보기'), findsOneWidget);
   });
 
-  testWidgets('500px 아레나는 두 인원 대결 큐를 함께 보여 준다', (tester) async {
+  testWidgets('500px 아레나는 즉시 입장 가능한 1v1 버튼을 먼저 보여 준다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -486,6 +487,7 @@ void main() {
                   'losses': 9,
                   'draws': 2,
                   'estimated_wait_seconds': 12,
+                  'coming_soon': type != 'duel_exam',
                 },
             ],
           },
@@ -494,14 +496,14 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('RANKED MATCH'), findsOneWidget);
-    expect(find.text('실력으로 증명하는\n20분.'), findsOneWidget);
-    expect(find.text('1,580'), findsOneWidget);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -700));
-    await tester.pump();
-    expect(find.text('대결 방식 선택'), findsOneWidget);
+    expect(find.text('REAL-TIME MATCH'), findsOneWidget);
+    expect(find.text('대결장'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('arena-mobile-join-button')),
+      findsOneWidget,
+    );
     expect(find.text('1v1 문제풀이'), findsOneWidget);
-    expect(find.text('2v2 문제풀이'), findsOneWidget);
+    expect(find.text('2v2 문제풀이'), findsNothing);
   });
 
   testWidgets('500px 마켓은 HTML 검색·필터·추천 상세 흐름을 유지한다', (tester) async {
@@ -989,7 +991,7 @@ void main() {
     expect(find.text('닫기'), findsOneWidget);
   });
 
-  testWidgets('390px 아레나는 단일 열에서 두 인원 큐를 함께 유지한다', (tester) async {
+  testWidgets('390px 아레나는 세로 화면에서 1v1 입장 버튼을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -1000,15 +1002,16 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('arena-mobile-overview')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('arena-mobile-entry-card')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('arena-mobile-queue-list')),
       findsOneWidget,
     );
-    await tester.drag(find.byType(ListView).first, const Offset(0, -620));
-    await tester.pump();
     expect(find.text('1v1 문제풀이'), findsOneWidget);
-    expect(find.text('2v2 문제풀이'), findsOneWidget);
+    expect(find.text('2v2 문제풀이'), findsNothing);
   });
 
   testWidgets('1280px 아레나는 HTML형 양열 overview와 큐 그리드를 사용한다', (tester) async {

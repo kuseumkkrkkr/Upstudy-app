@@ -790,7 +790,7 @@ def _empty_arena_queue(queue_type: str) -> dict[str, Any]:
         "losses": 0,
         "draws": 0,
         "recent_results": [],
-        "coming_soon": True,
+        "coming_soon": queue_type != "duel_exam",
         "estimated_wait_seconds": 0,
     }
 
@@ -798,14 +798,133 @@ def _empty_arena_queue(queue_type: str) -> dict[str, Any]:
 @app.get("/arena/summary")
 def get_arena_summary(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
     """필요 변수: 인증 사용자. 작동 원리: Vercel 화면이 대결장 구조를 렌더링하도록 두 공개 큐의 명시적 준비 상태를 반환한다."""
+    active = _arena_load(_user_id)
     return {
         "queues": [
             _empty_arena_queue("duel_exam"),
             _empty_arena_queue("team_exam"),
         ],
-        "active_match_id": None,
+        "active_match_id": active.get("id") if active and not active.get("finished") else None,
         "active_practice_match_id": None,
     }
+
+
+class ArenaJoinRequest(BaseModel):
+    """필요 변수: 큐 유형과 멱등 키. 작동 원리: Vercel에서도 main의 1v1 봇전 진입 계약을 유지한다."""
+    queue_type: str
+    idempotency_key: str = Field(min_length=8, max_length=128)
+
+
+class ArenaAnswerRequest(BaseModel):
+    """필요 변수: 문항·답안·멱등 키. 작동 원리: 사용자별 Supabase KV 경기 상태에 한 번만 답안을 반영한다."""
+    question_id: str
+    answer: str
+    idempotency_key: str = Field(min_length=8, max_length=128)
+
+
+def _arena_key() -> str:
+    """필요 변수 없음. 작동 원리: 다른 카나리 사용자 데이터와 충돌하지 않는 경기 저장 키를 반환한다."""
+    return "arena.active_match"
+
+
+def _arena_load(user_id: str) -> dict[str, Any] | None:
+    """필요 변수: 사용자 ID. 작동 원리: Supabase KV의 UTF-8 JSON 경기 한 건을 안전하게 복원한다."""
+    rows = _data_api().request("GET", "canary_user_kv", query={"select": "value", "user_id": f"eq.{user_id}", "key": f"eq.{_arena_key()}", "limit": "1"}) or []
+    if not rows:
+        return None
+    try:
+        value = json.loads(str(rows[0].get("value") or "{}"))
+    except json.JSONDecodeError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _arena_save(user_id: str, match: dict[str, Any]) -> None:
+    """필요 변수: 사용자 ID와 경기 상태. 작동 원리: 복합키 UPSERT로 serverless 인스턴스 교체 후에도 경기를 보존한다."""
+    _data_api().request("POST", "canary_user_kv", query={"on_conflict": "user_id,key"}, body={"user_id": user_id, "key": _arena_key(), "value": json.dumps(match, ensure_ascii=False)}, prefer="resolution=merge-duplicates,return=minimal")
+
+
+def _arena_questions() -> list[dict[str, Any]]:
+    """필요 변수 없음. 작동 원리: main의 fallback 문항 계약처럼 객관식·숫자 단답형 10개를 고정 순서로 제공한다."""
+    values = ((2, 3), (4, 5), (6, 7), (8, 2), (9, 3), (7, 4), (12, 5), (15, 3), (11, 8), (14, 6))
+    items: list[dict[str, Any]] = []
+    for index, (left, right) in enumerate(values):
+        answer = left + right
+        item = {"id": f"canary-arena-{index}", "prompt": f"{left} + {right}의 값은?", "answer": str(answer), "tags": "기본 연산"}
+        if index % 2 == 0:
+            labels = [answer - 1, answer, answer + 1, answer + 2]
+            item["choices"] = [{"id": str(position), "label": str(label)} for position, label in enumerate(labels)]
+            item["answer"] = "1"
+        items.append(item)
+    return items
+
+
+def _arena_public_state(match: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: 영속 경기. 작동 원리: 정답을 제외한 Flutter 경기 화면 계약으로 변환한다."""
+    now = int(time.time())
+    remaining = max(0, 1200 - (now - int(match["started_at"])))
+    questions = [{key: value for key, value in question.items() if key != "answer"} for question in match["questions"]]
+    return {"id": match["id"], "queue_type": "duel_exam", "practice": True, "team": 0, "bot_tier": "C", "bot_win_rating_reward": 20, "finished": bool(match.get("finished")), "remaining_seconds": remaining, "questions": questions, "submitted_question_ids": match.get("submitted", []), "scores": {"0": {"correct": match.get("correct", 0)}, "1": {"correct": 0}}, "participants": [{"user_id": "bot", "team": 1, "is_bot": True}]}
+
+
+@app.post("/arena/queue/join")
+def join_arena_queue(payload: ArenaJoinRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 1v1 큐. 작동 원리: main의 실사용자 대기 전 봇전 경로를 Supabase에 즉시 생성한다."""
+    if payload.queue_type != "duel_exam":
+        raise HTTPException(status_code=403, detail="현재 사용할 수 없는 대결 방식입니다.")
+    current = _arena_load(user_id)
+    if current and not current.get("finished"):
+        return {"practice_match_id": current["id"]}
+    match = {"id": str(uuid.uuid4()), "started_at": int(time.time()), "questions": _arena_questions(), "submitted": [], "correct": 0, "finished": False}
+    _arena_save(user_id, match)
+    return {"practice_match_id": match["id"]}
+
+
+@app.post("/arena/queue/cancel")
+def cancel_arena_queue(user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: 활성 경기 키를 삭제해 main 취소 응답과 같은 cancelled 상태를 반환한다."""
+    _data_api().request("DELETE", "canary_user_kv", query={"user_id": f"eq.{user_id}", "key": f"eq.{_arena_key()}"}, prefer="return=minimal")
+    return {"cancelled": True}
+
+
+@app.get("/arena/matches/{match_id}")
+def get_arena_match(match_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 경기·사용자 ID. 작동 원리: 본인 KV 경기만 읽어 재접속과 REST 폴링을 지원한다."""
+    match = _arena_load(user_id)
+    if not match or match.get("id") != match_id:
+        raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
+    return _arena_public_state(match)
+
+
+@app.post("/arena/matches/{match_id}/answers")
+def submit_arena_answer(match_id: str, payload: ArenaAnswerRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 경기·문항·답안. 작동 원리: 중복 제출을 차단하고 마지막 문항에서 종료 결과를 영속화한다."""
+    match = _arena_load(user_id)
+    if not match or match.get("id") != match_id or match.get("finished"):
+        raise HTTPException(status_code=409, detail="제출할 수 없는 경기입니다.")
+    if payload.question_id in match["submitted"]:
+        raise HTTPException(status_code=409, detail="이미 제출한 문항입니다.")
+    question = next((item for item in match["questions"] if item["id"] == payload.question_id), None)
+    if question is None:
+        raise HTTPException(status_code=404, detail="문항을 찾을 수 없습니다.")
+    correct = str(question["answer"]) == payload.answer.strip()
+    match["submitted"].append(payload.question_id)
+    match["correct"] += int(correct)
+    match["answers"] = {**match.get("answers", {}), payload.question_id: {"answer": payload.answer, "correct": correct}}
+    if len(match["submitted"]) == len(match["questions"]):
+        match["finished"] = True
+    _arena_save(user_id, match)
+    return {"correct": correct, "finished": match["finished"]}
+
+
+@app.get("/arena/matches/{match_id}/result")
+def get_arena_result(match_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 종료 경기. 작동 원리: main 결과 페이지가 요구하는 참가자·점수·문항 분석 계약을 반환한다."""
+    match = _arena_load(user_id)
+    if not match or match.get("id") != match_id:
+        raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
+    analysis = [{"question_id": item["id"], "prompt": item["prompt"], "correct_answer": item["answer"], "team_answers": {"0": match.get("answers", {}).get(item["id"], {})}} for item in match["questions"]]
+    return {"practice": True, "viewer_user_id": user_id, "viewer_team": 0, "finish_reason": "all_answered", "scores": {"0": {"correct": match.get("correct", 0)}, "1": {"correct": 0}}, "participants": [{"user_id": user_id, "team": 0, "record": "win", "rating_before": 1500, "rating_after": 1520, "rating_delta": 20}, {"user_id": "bot", "team": 1, "is_bot": True, "record": "loss"}], "analysis": analysis}
 
 
 @app.get("/arena/rankings")

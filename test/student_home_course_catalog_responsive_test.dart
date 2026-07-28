@@ -70,6 +70,10 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('course-catalog-mobile-redesign')),
+        width < 760 ? findsOneWidget : findsNothing,
+      );
       expect(tester.takeException(), isNull);
     }
   });

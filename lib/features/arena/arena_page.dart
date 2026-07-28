@@ -180,6 +180,11 @@ class _ArenaPageState extends State<ArenaPage> {
               queue['queue_type'] == 'team_exam',
         )
         .toList(growable: false);
+    // 모바일은 현재 참가 가능한 모드만 첫 화면에 둔다.
+    // 준비 중인 2v2 카드와 전적 정보가 실제 1v1 입장 버튼을 화면 아래로 밀지 않게 한다.
+    final joinableQueues = visibleQueues
+        .where((queue) => queue['coming_soon'] != true)
+        .toList(growable: false);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
@@ -210,25 +215,28 @@ class _ArenaPageState extends State<ArenaPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _ArenaHero(
-                              tier: tier,
-                              rating: rating,
-                              wins: wins,
-                              losses: losses,
-                              draws: draws,
-                              winRate: winRate,
-                              desktop: desktop,
-                              recentResults: recentResults,
-                              onTierTap: () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => ArenaRankingPage(
-                                    queueType:
-                                        profile['queue_type']?.toString() ??
-                                        'duel_exam',
+                            if (desktop)
+                              _ArenaHero(
+                                tier: tier,
+                                rating: rating,
+                                wins: wins,
+                                losses: losses,
+                                draws: draws,
+                                winRate: winRate,
+                                desktop: true,
+                                recentResults: recentResults,
+                                onTierTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => ArenaRankingPage(
+                                      queueType:
+                                          profile['queue_type']?.toString() ??
+                                          'duel_exam',
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              )
+                            else
+                              const _ArenaMobileHeader(),
                             if (resumableMatchId != null &&
                                 resumableMatchId.isNotEmpty)
                               Padding(
@@ -245,9 +253,11 @@ class _ArenaPageState extends State<ArenaPage> {
                                   style: const TextStyle(color: Colors.red),
                                 ),
                               ),
-                            const SizedBox(height: 56),
-                            const _ArenaMatchHeader(),
-                            const SizedBox(height: 20),
+                            SizedBox(height: desktop ? 56 : 28),
+                            if (desktop) ...[
+                              const _ArenaMatchHeader(),
+                              const SizedBox(height: 20),
+                            ],
                             if (_summary == null)
                               const Center(child: CircularProgressIndicator())
                             else if (desktop)
@@ -293,35 +303,23 @@ class _ArenaPageState extends State<ArenaPage> {
                               Column(
                                 key: const ValueKey('arena-mobile-queue-list'),
                                 children: [
-                                  for (
-                                    var index = 0;
-                                    index < visibleQueues.length;
-                                    index++
-                                  )
-                                    _QueueCard(
-                                      data: visibleQueues[index],
-                                      // 모바일에서도 두 모드의 반전 색상 규칙을 유지한다.
-                                      featured:
-                                          visibleQueues[index]['queue_type'] ==
-                                          'duel_exam',
+                                  for (final queue in joinableQueues)
+                                    _ArenaMobileEntryCard(
+                                      data: queue,
                                       waiting:
-                                          _waitingQueue ==
-                                          visibleQueues[index]['queue_type'],
+                                          _waitingQueue == queue['queue_type'],
                                       disabled:
-                                          visibleQueues[index]['coming_soon'] ==
-                                              true ||
-                                          (_waitingQueue != null &&
-                                              _waitingQueue !=
-                                                  visibleQueues[index]['queue_type']),
-                                      onJoin: () => _join(
-                                        visibleQueues[index]['queue_type']
-                                            .toString(),
-                                      ),
+                                          _waitingQueue != null &&
+                                          _waitingQueue != queue['queue_type'],
+                                      onJoin: () =>
+                                          _join(queue['queue_type'].toString()),
                                       onCancel: _cancel,
                                     ),
+                                  if (joinableQueues.isEmpty)
+                                    const _ArenaUnavailableCard(),
                                 ],
                               ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 20),
                             _ArenaRules(desktop: desktop),
                           ],
                         ),
@@ -336,6 +334,146 @@ class _ArenaPageState extends State<ArenaPage> {
       ),
     );
   }
+}
+
+/// 필요한 변수 없음.
+/// 작동 원리: 세로 화면에서는 전적·티어 같은 보조 정보를 생략하고,
+/// 사용자가 대결을 시작할 수 있는 목적을 첫 화면에서 명확히 전달한다.
+class _ArenaMobileHeader extends StatelessWidget {
+  const _ArenaMobileHeader();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'REAL-TIME MATCH',
+        style: TextStyle(
+          fontSize: 10,
+          letterSpacing: 1.6,
+          color: Colors.black54,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      SizedBox(height: 10),
+      Text(
+        '대결장',
+        style: TextStyle(
+          fontSize: 34,
+          letterSpacing: -1.8,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      SizedBox(height: 6),
+      Text(
+        '같은 10문항으로 실력을 겨뤄보세요.',
+        style: TextStyle(fontSize: 14, color: Colors.black54),
+      ),
+    ],
+  );
+}
+
+/// 필요한 변수: 참가 가능한 큐, 대기 상태와 참가·취소 콜백.
+/// 작동 원리: 모바일 세로폭에서 버튼을 카드 전체 폭으로 분리해
+/// 작은 가로 Row의 눌림 영역·오버플로우 때문에 대결장에 들어가지 못하는 일을 막는다.
+class _ArenaMobileEntryCard extends StatelessWidget {
+  const _ArenaMobileEntryCard({
+    required this.data,
+    required this.waiting,
+    required this.disabled,
+    required this.onJoin,
+    required this.onCancel,
+  });
+
+  final Map<String, dynamic> data;
+  final bool waiting;
+  final bool disabled;
+  final VoidCallback onJoin;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final waitSeconds = (data['estimated_wait_seconds'] as num? ?? 0).round();
+    return Container(
+      key: const ValueKey('arena-mobile-entry-card'),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFF171719),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '1V1 RANKED MATCH',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 10,
+              letterSpacing: 1.4,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            '1v1 문제풀이',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              letterSpacing: -1.2,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '10문항 · 20분${waitSeconds > 0 ? ' · 약 $waitSeconds초 대기' : ''}',
+            style: const TextStyle(color: Colors.white60, fontSize: 13),
+          ),
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: FilledButton(
+              key: const ValueKey('arena-mobile-join-button'),
+              onPressed: disabled ? null : (waiting ? onCancel : onJoin),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                disabledBackgroundColor: Colors.white24,
+                disabledForegroundColor: Colors.white54,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                waiting ? '매칭 취소' : '대결 시작',
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 필요한 변수 없음.
+/// 작동 원리: 서버가 활성 큐를 반환하지 못한 경우에도 빈 화면 대신 재시도 안내를 제공한다.
+class _ArenaUnavailableCard extends StatelessWidget {
+  const _ArenaUnavailableCard();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFFE1E1E3)),
+    ),
+    child: const Text(
+      '지금은 참가 가능한 대결이 없습니다. 잠시 후 다시 확인해 주세요.',
+      style: TextStyle(color: Colors.black54),
+    ),
+  );
 }
 
 class _ArenaHero extends StatelessWidget {
