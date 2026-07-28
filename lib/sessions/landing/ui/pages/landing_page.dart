@@ -71,7 +71,8 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   /// 필요한 변수는 로그인·가입·소개·문의 콜백과 화면 폭입니다.
-  /// 작동 원리는 데스크톱에서 소개와 인증 선택을 2열로, 모바일에서는 한 열로 재배치하는 것입니다.
+  /// 작동 원리는 데스크톱에서 소개와 인증 선택을 2열로 두고, 모바일에서는
+  /// 소개 패널을 제외한 인증 카드만 스크롤 없이 한 화면에 고정하는 것입니다.
   @override
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
@@ -92,16 +93,13 @@ class _LandingPageState extends State<LandingPage> {
         child: Stack(
           children: [
             const Positioned(top: -130, right: -100, child: _AmbientOrb()),
-            SingleChildScrollView(
-              padding: EdgeInsets.all(mobile ? 14 : 28),
-              child: Center(
-                child: ConstrainedBox(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final content = ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1440),
                   child: Container(
                     constraints: BoxConstraints(
-                      minHeight: mobile
-                          ? 0
-                          : MediaQuery.sizeOf(context).height - 56,
+                      minHeight: mobile ? 0 : constraints.maxHeight - 56,
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(mobile ? 28 : 38),
@@ -115,10 +113,7 @@ class _LandingPageState extends State<LandingPage> {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: mobile
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [story, entry],
-                          )
+                        ? entry
                         : IntrinsicHeight(
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -129,8 +124,18 @@ class _LandingPageState extends State<LandingPage> {
                             ),
                           ),
                   ),
-                ),
-              ),
+                );
+                if (mobile) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Center(child: content),
+                  );
+                }
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(28),
+                  child: Center(child: content),
+                );
+              },
             ),
           ],
         ),
