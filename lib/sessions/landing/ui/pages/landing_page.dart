@@ -72,7 +72,7 @@ class _LandingPageState extends State<LandingPage> {
 
   /// 필요한 변수는 로그인·가입·소개·문의 콜백과 화면 폭입니다.
   /// 작동 원리는 데스크톱에서 소개와 인증 선택을 2열로 두고, 모바일에서는
-  /// 소개 패널을 제외한 인증 카드만 스크롤 없이 한 화면에 고정하는 것입니다.
+  /// 일반 앱 로그인처럼 브랜드와 폼을 한 열로 두어 작은 세로 화면에서도 입력을 보장하는 것입니다.
   @override
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
@@ -126,9 +126,17 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                 );
                 if (mobile) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Center(child: content),
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 28),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: (constraints.maxHeight - 44).clamp(
+                          0,
+                          double.infinity,
+                        ),
+                      ),
+                      child: Center(child: content),
+                    ),
                   );
                 }
                 return SingleChildScrollView(
@@ -222,65 +230,34 @@ class _LandingEntry extends StatelessWidget {
   final bool showSignupButton;
 
   /// 필요한 변수는 로그인·가입 콜백과 현재 화면 폭입니다.
-  /// 작동 원리는 모바일에서는 랜딩 안에 로그인 폼을 바로 표시하고,
+  /// 작동 원리는 모바일에서는 홍보 배너 대신 친숙한 브랜드 헤더와 로그인 폼을 바로 표시하고,
   /// 넓은 화면에서는 기존 모달 진입과 가입 선택을 유지하는 것입니다.
   @override
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
     return Container(
       color: AuthDesignTokens.surface,
-      padding: EdgeInsets.all(mobile ? 18 : 54),
+      padding: EdgeInsets.all(mobile ? 24 : 54),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (mobile) ...[
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF101012), Color(0xFF242428)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            const Row(
+              children: [
+                _LandingBrand(light: false),
+                Spacer(),
+                Text(
+                  '학습 계정',
+                  style: TextStyle(
+                    color: AuthDesignTokens.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x18000000),
-                    blurRadius: 24,
-                    offset: Offset(0, 12),
-                  ),
-                ],
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _LandingBrand(light: true),
-                  SizedBox(height: 22),
-                  Text(
-                    'STUDENT SPACE',
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 9,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '오늘의 학습 흐름을\n이어가세요.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 25,
-                      height: 1.05,
-                      letterSpacing: -1.4,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 42),
             const Text(
               '로그인',
               style: TextStyle(
@@ -292,8 +269,12 @@ class _LandingEntry extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text(
-              '계정으로 저장된 학습 기록을 이어가세요.',
-              style: TextStyle(color: AuthDesignTokens.muted, fontSize: 12),
+              '로그인하고 오늘의 학습을 이어가세요.',
+              style: TextStyle(
+                color: AuthDesignTokens.muted,
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
             const LoginPage(embedded: true),
           ] else ...[
