@@ -9,6 +9,168 @@ class AppDrawer extends StatefulWidget {
   State<AppDrawer> createState() => _AppDrawerState();
 }
 
+/// 필요한 변수는 현재 학생 라우트와 하단 목적지 목록이다.
+/// 작동 원리는 모바일에서 넓은 측면 드로어 대신 자주 쓰는 홈·코스·마켓을 고정하고,
+/// 나머지 메뉴만 바텀시트로 축약해 화면 전환 중에도 탐색 동선을 유지하는 것이다.
+class MobileStudentBottomAppBar extends StatelessWidget {
+  const MobileStudentBottomAppBar({super.key, this.activeRoute});
+
+  final String? activeRoute;
+
+  static const _primaryItems = <_DrawerDestination>[
+    _DrawerDestination(
+      icon: Icons.home_outlined,
+      label: '홈',
+      route: '/student/dashboard',
+      activeRoutes: ['/student/dashboard', '/app'],
+    ),
+    _DrawerDestination(
+      icon: Icons.route_outlined,
+      label: '코스',
+      route: '/courses',
+      activeRoutes: ['/courses', '/course_runtime'],
+    ),
+    _DrawerDestination(
+      icon: Icons.storefront_outlined,
+      label: '마켓',
+      route: '/marketplace',
+      activeRoutes: ['/marketplace'],
+    ),
+  ];
+
+  /// 필요한 변수는 현재 Navigator와 드로어 전체 메뉴다.
+  /// 작동 원리는 측면 패널을 열지 않고 바텀시트에 보조 목적지만 담아 한 손 탐색을 유지한다.
+  static Future<void> openMore(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFF6F6F4),
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          children: [
+            const Text(
+              '더보기',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 12),
+            for (final group in _navigationGroups)
+              for (final item in group.items)
+                if (!_primaryItems.any(
+                  (primary) => primary.route == item.route,
+                ))
+                  ListTile(
+                    leading: Icon(item.icon),
+                    title: Text(item.label),
+                    minVerticalPadding: 10,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _goToRoute(context, item.route);
+                    },
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 선택한 명명 라우트다.
+  /// 작동 원리는 중복 탭에서는 현재 화면을 보존하고 다른 탭은 루트 위에 한 번만 쌓아
+  /// 모바일 하단 탭을 반복해도 뒤로가기 스택이 길어지지 않게 하는 것이다.
+  static void _goToRoute(BuildContext context, String route) {
+    final current = ModalRoute.of(context)?.settings.name;
+    if (current == route) return;
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(route, (entry) => entry.isFirst);
+  }
+
+  bool _isActive(_DrawerDestination item, String route) {
+    return item.activeRoutes.any(
+      (candidate) => route == candidate || route.startsWith('$candidate/'),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final route = activeRoute ?? ModalRoute.of(context)?.settings.name ?? '';
+    return SafeArea(
+      top: false,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0x1409090B))),
+        ),
+        child: SizedBox(
+          height: 68,
+          child: Row(
+            children: [
+              for (final item in _primaryItems)
+                Expanded(
+                  child: _MobileBottomDestination(
+                    item: item,
+                    active: _isActive(item, route),
+                    onTap: () => _goToRoute(context, item.route),
+                  ),
+                ),
+              Expanded(
+                child: _MobileBottomDestination(
+                  item: const _DrawerDestination(
+                    icon: Icons.more_horiz_rounded,
+                    label: '더보기',
+                    route: '',
+                  ),
+                  active: false,
+                  onTap: () => openMore(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileBottomDestination extends StatelessWidget {
+  const _MobileBottomDestination({
+    required this.item,
+    required this.active,
+    required this.onTap,
+  });
+
+  final _DrawerDestination item;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? const Color(0xFF09090B) : const Color(0xFF76767D);
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(item.icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            item.label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AppDrawerState extends State<AppDrawer> {
   static const Color _background = Color(0xFFF4F4F6);
   static const Color _ink = Color(0xFF09090B);

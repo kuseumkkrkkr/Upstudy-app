@@ -295,13 +295,16 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     final rating = _formatVisibleOvr(RatingStore.notifier.value.ovr);
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile ? const MobileStudentBottomAppBar() : null,
       body: SafeArea(
         child: Column(
           children: [
             Ios26TopBar(
               brandColor: StudentDensityTokens.dark,
-              onMenu: () => toggleAppDrawer(context),
+              onMenu: () => mobile
+                  ? MobileStudentBottomAppBar.openMore(context)
+                  : toggleAppDrawer(context),
               showLevelIndicator: false,
               items: studentTopNavItems(
                 context,

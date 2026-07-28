@@ -448,12 +448,14 @@ class _MainStudentPageState extends State<MainStudentPage> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: StudentDensityTokens.background,
-        drawer: const AppDrawer(),
+        drawer: mobile ? null : const AppDrawer(),
+        bottomNavigationBar: mobile ? const MobileStudentBottomAppBar() : null,
         body: SafeArea(
           child: Column(
             children: [
               _Header(
                 displayName: _displayName,
+                mobile: mobile,
                 onProfileChanged: _refreshDisplayName,
               ),
               Expanded(
@@ -548,9 +550,14 @@ class _CourseLoaderState extends State<_CourseLoader> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.displayName, required this.onProfileChanged});
+  const _Header({
+    required this.displayName,
+    required this.mobile,
+    required this.onProfileChanged,
+  });
 
   final String? displayName;
+  final bool mobile;
   final Future<void> Function() onProfileChanged;
 
   /// 필요 변수는 현재 Navigator와 프로필 변경 후 실행할 새로고침 함수다.
@@ -566,7 +573,9 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Ios26TopBar(
       brandColor: _green,
-      onMenu: () => toggleAppDrawer(context),
+      onMenu: () => mobile
+          ? MobileStudentBottomAppBar.openMore(context)
+          : toggleAppDrawer(context),
       showLevelIndicator: false,
       profileLabel: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()

@@ -285,7 +285,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
     return Ios26TopBar(
       brandColor: Colors.black,
       showLevelIndicator: false,
-      onMenu: () => toggleAppDrawer(context),
+      onMenu: () => MediaQuery.sizeOf(context).width <= 720
+          ? MobileStudentBottomAppBar.openMore(context)
+          : toggleAppDrawer(context),
       onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainStudentPage()),
         (route) => false,
@@ -308,7 +310,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
     final portraitMobile = size.width <= 720 && size.height > size.width;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      drawer: portraitMobile ? null : const AppDrawer(),
+      bottomNavigationBar: portraitMobile
+          ? const MobileStudentBottomAppBar()
+          : null,
       body: SafeArea(
         child: Column(
           children: [

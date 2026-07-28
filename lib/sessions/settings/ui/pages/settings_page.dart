@@ -207,7 +207,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!isStudentDensityMobile(context)) return _buildDesktopSettings(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      drawer: null,
+      bottomNavigationBar: const MobileStudentBottomAppBar(),
       body: SafeArea(
         child: Column(
           children: [
@@ -215,7 +216,7 @@ class _SettingsPageState extends State<SettingsPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
+                onMenu: () => MobileStudentBottomAppBar.openMore(context),
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,
