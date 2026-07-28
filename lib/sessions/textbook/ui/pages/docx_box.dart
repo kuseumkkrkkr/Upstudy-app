@@ -227,9 +227,9 @@ class _BookWidgetState extends State<BookWidget> {
         });
       setState(() {
         _activeCourse = sorted.first;
-        _activeCourses = sorted.where((course) => !course.isCompleted).toList(
-          growable: false,
-        );
+        _activeCourses = sorted
+            .where((course) => !course.isCompleted)
+            .toList(growable: false);
       });
     } catch (_) {}
   }
@@ -368,6 +368,10 @@ class _BookWidgetState extends State<BookWidget> {
   // ── build root ────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final mobile = size.width <= 720 && size.height > size.width;
+    if (mobile) return _buildMobileBookbag(context);
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -390,6 +394,366 @@ class _BookWidgetState extends State<BookWidget> {
                   ],
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 교재·시험지·북마크 개수와 최근·고정 자료다.
+  /// 작동 원리는 세로형 모바일에서 긴 소개·통계·보관함·코스 섹션을 제거하고 이어 보기와 네 자료 입구를 한 화면에 압축한다.
+  Widget _buildMobileBookbag(BuildContext context) {
+    final pinned = _buildPinnedItems();
+    final seen = <String>{};
+    final items = <BigSectionItem>[];
+    for (final item in [..._recentItems, ...pinned]) {
+      final key = '${item.type.name}:${item.id}';
+      if (seen.add(key)) items.add(item);
+    }
+    final featured = items.firstOrNull;
+    final recent = items.skip(1).take(3).toList(growable: false);
+    final total =
+        _bookCount + _examCount + _bookBookmarkCount + _problemBookmarkCount;
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        key: const ValueKey('bookbag-mobile-redesign'),
+        backgroundColor: const Color(0xFFF2F2F4),
+        drawer: const AppDrawer(),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Builder(builder: (headerContext) => _buildHeader(headerContext)),
+              Expanded(
+                child: CustomScrollView(
+                  key: const ValueKey('bookbag-mobile-scroll'),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(18, 22, 18, 30),
+                      sliver: SliverList.list(
+                        children: [
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  '책가방',
+                                  style: TextStyle(
+                                    fontSize: 40,
+                                    height: 1,
+                                    letterSpacing: -2,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              IconButton.filled(
+                                key: const ValueKey('bookbag-mobile-search'),
+                                tooltip: '책가방 검색',
+                                onPressed: () => _showGlobalSearch(context),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  minimumSize: const Size(48, 48),
+                                ),
+                                icon: const Icon(
+                                  Icons.search_rounded,
+                                  color: Colors.white,
+                                  size: 25,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            '내 학습 자료 $total개',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF71717A),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          _buildMobileFeatured(featured),
+                          const SizedBox(height: 26),
+                          const Text(
+                            '내 자료',
+                            style: TextStyle(
+                              fontSize: 27,
+                              letterSpacing: -1,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildMobileShortcut(
+                                  icon: Icons.menu_book_rounded,
+                                  label: '교재',
+                                  count: _bookCount,
+                                  onTap: () => _showTextbookModal(context),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _buildMobileShortcut(
+                                  icon: Icons.description_rounded,
+                                  label: '시험지',
+                                  count: _examCount,
+                                  onTap: () => _showExamModal(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildMobileShortcut(
+                                  icon: Icons.bookmark_rounded,
+                                  label: '책 북마크',
+                                  count: _bookBookmarkCount,
+                                  onTap: () =>
+                                      _showBookmarkDetailModal(isBook: true),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _buildMobileShortcut(
+                                  icon: Icons.edit_note_rounded,
+                                  label: '문제 북마크',
+                                  count: _problemBookmarkCount,
+                                  onTap: () =>
+                                      _showBookmarkDetailModal(isBook: false),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (recent.isNotEmpty) ...[
+                            const SizedBox(height: 28),
+                            const Text(
+                              '최근 항목',
+                              style: TextStyle(
+                                fontSize: 27,
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              clipBehavior: Clip.antiAlias,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: const Color(0x1F09090B),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  for (
+                                    var index = 0;
+                                    index < recent.length;
+                                    index++
+                                  ) ...[
+                                    _buildMobileRecentItem(recent[index]),
+                                    if (index != recent.length - 1)
+                                      const Divider(
+                                        height: 1,
+                                        indent: 67,
+                                        color: Color(0xFFE7E7EA),
+                                      ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 최근 또는 고정 자료 한 건이다.
+  /// 작동 원리는 모바일 첫 화면에서 가장 최근 자료의 제목·종류·열기 동작만 큰 검은 카드로 강조한다.
+  Widget _buildMobileFeatured(BigSectionItem? item) {
+    return Material(
+      key: const ValueKey('bookbag-mobile-featured'),
+      color: const Color(0xFF202023),
+      borderRadius: BorderRadius.circular(26),
+      child: InkWell(
+        onTap: item == null ? null : () => _openBigItem(item),
+        borderRadius: BorderRadius.circular(26),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      item == null
+                          ? Icons.auto_stories_outlined
+                          : _bigItemIcon(item.type),
+                      color: Colors.black,
+                      size: 25,
+                    ),
+                  ),
+                  const Spacer(),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Text(
+                item == null ? '최근 학습 없음' : '이어서 보기',
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 7),
+              _LatexLine(
+                item?.title ?? '교재나 시험지를 열어보세요',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 25,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -.8,
+                ),
+              ),
+              if (item != null) ...[
+                const SizedBox(height: 7),
+                _LatexLine(
+                  item.subtitle,
+                  style: const TextStyle(color: Colors.white60, fontSize: 14),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 자료 유형·개수·열기 동작이다.
+  /// 작동 원리는 2열 90px 카드로 네 보관함을 한 화면에 배치하고 설명 문구는 제거한다.
+  Widget _buildMobileShortcut({
+    required IconData icon,
+    required String label,
+    required int count,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          height: 96,
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0x1F09090B)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 23),
+                  const Spacer(),
+                  Text(
+                    '$count',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 최근 자료 한 건이다.
+  /// 작동 원리는 아이콘·제목·종류만 68px 행에 배치해 반복 카드로 인한 긴 스크롤을 막는다.
+  Widget _buildMobileRecentItem(BigSectionItem item) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openBigItem(item),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F0F2),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(_bigItemIcon(item.type), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _LatexLine(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    _LatexLine(
+                      item.subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF71717A),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, size: 24),
             ],
           ),
         ),
