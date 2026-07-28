@@ -55,4 +55,45 @@ void main() {
     expect(find.text('다항식 기본기 5'), findsNothing);
     expect(find.text('공통수학 기초 완성'), findsNothing);
   });
+
+  testWidgets('720px 이하 세로 화면은 간결한 무료 코스 목록과 단계 미리보기를 쓴다', (tester) async {
+    // 필요 변수는 612px 세로 화면과 무료 코스다.
+    // 작동 원리는 기존 태블릿 코너가 숨겨지고 단일 열 카드와 오류 없는 단계 미리보기가 나타나는지 검증한다.
+    tester.view.physicalSize = const Size(612, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MarketplacePage(
+          initialData: [
+            {
+              'id': 'course-free',
+              'kind': 'course',
+              'title': '난이도 3 · 유형 훈련 코스',
+              'description': '단계별 실전 코스',
+              'grade_band': '고1-2',
+              'difficulty': '난이도 3',
+              'item_count': 10,
+              'price_points': 0,
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('코스 찾기'), findsOneWidget);
+    expect(find.text('MARKET CORNERS'), findsNothing);
+    expect(find.text('난이도 3 · 유형 훈련 코스'), findsOneWidget);
+    expect(find.text('무료'), findsOneWidget);
+
+    await tester.tap(find.text('난이도 3 · 유형 훈련 코스'));
+    await tester.pumpAndSettle();
+    expect(find.text('핵심 개념 확인'), findsOneWidget);
+    expect(find.text('유형 문제 훈련'), findsOneWidget);
+    expect(find.text('코스에 포함된 문제를 불러오지 못했습니다.'), findsNothing);
+    expect(find.text('무료로 내 학습에 담기'), findsOneWidget);
+  });
 }

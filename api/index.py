@@ -39,7 +39,7 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
         ("mastery", "수학 전 범위 마스터 루트", "검수 문제로 구성한 5단계 종합 코스", "고1-3", "혼합", 25, 2200),
     )
     items: list[dict[str, Any]] = []
-    for rank, (slug, title, description, grade, difficulty, count, price) in enumerate(base_courses):
+    for rank, (slug, title, description, grade, difficulty, count, _price) in enumerate(base_courses):
         items.append(
             {
                 "id": f"market-v2-course-{slug}",
@@ -49,10 +49,11 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
                 "grade_band": grade,
                 "difficulty": difficulty,
                 "item_count": count,
-                "price_points": price,
+                "price_points": 0,
                 "problem_ids": [],
                 "owned": False,
                 "featured_rank": 200 - rank,
+                "asset_id": f"market-course-{slug}-v1",
             }
         )
 
@@ -94,10 +95,11 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
                     "grade_band": grade,
                     "difficulty": f"난이도 {tier}",
                     "item_count": 10,
-                    "price_points": 400 + version * 100 + tier * 200,
+                    "price_points": 0,
                     "problem_ids": [],
                     "owned": False,
                     "featured_rank": 180 - version * 5 - tier,
+                    "asset_id": f"market-course-tier-{tier}-v{version}",
                 }
             )
     return tuple(items)
@@ -170,6 +172,13 @@ class UserStorageRequest(BaseModel):
     """필요 변수: UTF-8 JSON 문자열. 작동 원리: 기존 앱의 사용자별 KV 계약을 유지한다."""
 
     value: str
+
+
+class MarketplaceProgressRequest(BaseModel):
+    """필요 변수: 문제 위치와 완료 여부. 작동 원리: 무료 마켓 코스의 사용자별 학습 위치를 제한된 형식으로 받는다."""
+
+    progress_index: int = Field(default=0, ge=0)
+    completed: bool = False
 
 
 class SupabaseDataApi:
@@ -643,22 +652,159 @@ def get_weakness_tags(_user_id: str = Depends(_current_user)) -> dict[str, list[
     return {"tags": []}
 
 
+def _catalog_course(item: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: 마켓 코스 상품. 작동 원리: 같은 ID·제목을 코스 목록과 상세 화면이 파싱할 수 있는 V2 코스 계약으로 변환한다."""
+    count = int(item["item_count"])
+    return {
+        "id": item["asset_id"],
+        "title": item["title"],
+        "description": item["description"],
+        "difficulty": item["difficulty"],
+        "duration": f"{max(1, (count + 4) // 5)}일",
+        "lessons": max(1, (count + 4) // 5),
+        "focus_tags": [item["grade_band"], item["difficulty"]],
+        "target_ovr": 800,
+        "is_demo": False,
+        "is_public": True,
+        "benefits": ["핵심 개념 정리", "단계별 문제 훈련"],
+        "outline": ["개념 확인", "유형 훈련", "학습 마무리"],
+        "modules": [],
+    }
+
+
+def _find_catalog_listing(identifier: str) -> dict[str, Any] | None:
+    """필요 변수: 상품 ID 또는 코스 asset ID. 작동 원리: 81개 메모리 카탈로그를 단순 순회해 상세 요청 하나를 찾는다."""
+    return next(
+        (
+            item
+            for item in MARKETPLACE_CATALOG
+            if item["id"] == identifier or item["asset_id"] == identifier
+        ),
+        None,
+    )
+
+
+def _load_owned_marketplace(user_id: str) -> dict[str, dict[str, Any]]:
+    """필요 변수: 인증 사용자 ID. 작동 원리: 복합 인덱스 KV 한 행에서 무료 코스 보유·진도 상태를 읽어 DB 요청 수를 고정한다."""
+    try:
+        rows = _data_api().request(
+            "GET",
+            "canary_user_kv",
+            query={
+                "select": "value",
+                "user_id": f"eq.{user_id}",
+                "key": "eq.marketplace_owned",
+                "limit": "1",
+            },
+        ) or []
+        raw = json.loads(str(rows[0]["value"])) if rows else {}
+    except (RuntimeError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+        return {}
+    return {
+        str(key): dict(value)
+        for key, value in raw.items()
+        if isinstance(value, dict)
+    }
+
+
+def _save_owned_marketplace(user_id: str, owned: dict[str, dict[str, Any]]) -> None:
+    """필요 변수: 인증 사용자 ID와 보유 코스 상태. 작동 원리: 한 개 UTF-8 JSON 값으로 upsert해 상품별 DB 행 증가를 피한다."""
+    try:
+        _data_api().request(
+            "POST",
+            "canary_user_kv",
+            query={"on_conflict": "user_id,key"},
+            body={
+                "user_id": user_id,
+                "key": "marketplace_owned",
+                "value": json.dumps(owned, ensure_ascii=False, separators=(",", ":")),
+            },
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+
+
+def _filtered_catalog_courses(
+    query: str | None,
+    offset: int,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """필요 변수: 코스 검색어와 페이지 범위. 작동 원리: 마켓과 동일한 메모리 원장에서 제목·설명을 검색해 코스 화면의 빈 목록을 제거한다."""
+    normalized = (query or "").strip().casefold()
+    courses = [
+        _catalog_course(item)
+        for item in MARKETPLACE_CATALOG
+        if not normalized
+        or normalized
+        in f"{item['title']} {item['description']} {item['difficulty']}".casefold()
+    ]
+    safe_offset = max(0, offset)
+    safe_limit = min(max(1, limit), 200)
+    return courses[safe_offset : safe_offset + safe_limit]
+
+
 @app.get("/courses/v2")
-def list_courses_v2(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: Supabase 코스 원장이 준비되기 전 빈 V2 페이지 계약을 유지한다."""
-    return {"data": []}
+def list_courses_v2(
+    query: str | None = None,
+    offset: int = 0,
+    limit: int = 50,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자·검색어·페이지 범위. 작동 원리: 무료 마켓 코스와 같은 81개 코스를 V2 목록 계약으로 반환한다."""
+    return {"data": _filtered_catalog_courses(query, offset, limit)}
 
 
 @app.get("/courses")
-def list_courses(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 레거시 코스 화면에 빈 목록을 반환한다."""
-    return {"courses": []}
+def list_courses(
+    query: str | None = None,
+    offset: int = 0,
+    limit: int = 50,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자·검색어·페이지 범위. 작동 원리: 레거시 화면에도 V2와 동일한 무료 코스 목록을 제공한다."""
+    return {"courses": _filtered_catalog_courses(query, offset, limit)}
 
 
 @app.get("/courses/enrolled")
-def list_enrolled_courses(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 신규 계정의 수강 목록을 빈 배열로 반환한다."""
-    return {"items": []}
+def list_enrolled_courses(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 무료 마켓 보유 상태. 작동 원리: 구매한 코스 asset ID를 내 코스 화면의 등록 계약으로 변환한다."""
+    owned = _load_owned_marketplace(user_id)
+    items = []
+    for listing_id, state in owned.items():
+        listing = _find_catalog_listing(listing_id)
+        if listing is None:
+            continue
+        items.append(
+            {
+                "course_id": listing["asset_id"],
+                "percent": 1.0 if state.get("completed") else 0.0,
+                "status": "completed" if state.get("completed") else "in_progress",
+                "progress": {
+                    "progress_index": int(state.get("progress_index") or 0),
+                    "completed_modules": [],
+                },
+            }
+        )
+    return {"items": items}
+
+
+@app.get("/courses/v2/{course_id}")
+def get_course_v2(course_id: str, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 코스 asset ID. 작동 원리: 마켓 원장에서 같은 코스를 찾아 상세 화면이 404 없이 조회할 V2 계약을 반환한다."""
+    listing = _find_catalog_listing(course_id)
+    if listing is None:
+        raise HTTPException(status_code=404, detail="course_not_found")
+    return {"data": _catalog_course(listing)}
+
+
+@app.get("/courses/{course_id}")
+def get_legacy_course(course_id: str, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 코스 asset ID. 작동 원리: 레거시 상세 화면에도 같은 정규화 코스를 반환한다."""
+    listing = _find_catalog_listing(course_id)
+    if listing is None:
+        raise HTTPException(status_code=404, detail="course_not_found")
+    return _catalog_course(listing)
 
 
 @app.get("/academy/assignments/my")
@@ -719,9 +865,52 @@ def list_marketplace_items(
 
 
 @app.get("/marketplace/my-items")
-def list_owned_marketplace_items(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 구매 이력이 없는 신규 계정의 빈 보유 목록을 반환한다."""
-    return {"items": []}
+def list_owned_marketplace_items(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 보유 상태. 작동 원리: KV의 상품 ID를 공개 카탈로그와 합쳐 내 학습 목록을 반환한다."""
+    owned = _load_owned_marketplace(user_id)
+    items = []
+    for listing_id, state in owned.items():
+        listing = _find_catalog_listing(listing_id)
+        if listing is not None:
+            items.append({**listing, **state, "owned": True})
+    return {"items": items}
+
+
+@app.post("/marketplace/listings/{listing_id}/purchase")
+def purchase_marketplace_item(
+    listing_id: str,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 무료 상품 ID와 인증 사용자. 작동 원리: 가격 차감 없이 KV 보유 목록에 멱등 등록하고 즉시 코스 조회가 가능하게 한다."""
+    listing = _find_catalog_listing(listing_id)
+    if listing is None:
+        raise HTTPException(status_code=404, detail="listing_not_found")
+    owned = _load_owned_marketplace(user_id)
+    state = owned.setdefault(
+        listing["id"],
+        {"progress_index": 0, "status": "in_progress", "completed": False},
+    )
+    _save_owned_marketplace(user_id, owned)
+    return {**listing, **state, "owned": True}
+
+
+@app.post("/marketplace/my-items/{listing_id}/progress")
+def update_owned_marketplace_progress(
+    listing_id: str,
+    payload: MarketplaceProgressRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 보유 상품 ID·문제 위치·완료 여부. 작동 원리: 기존 KV 상태 하나만 갱신해 중단 위치와 완료 상태를 저장한다."""
+    owned = _load_owned_marketplace(user_id)
+    if listing_id not in owned:
+        raise HTTPException(status_code=404, detail="purchase_not_found")
+    owned[listing_id] = {
+        "progress_index": payload.progress_index,
+        "status": "completed" if payload.completed else "in_progress",
+        "completed": payload.completed,
+    }
+    _save_owned_marketplace(user_id, owned)
+    return owned[listing_id]
 
 
 @app.get("/history/solve")

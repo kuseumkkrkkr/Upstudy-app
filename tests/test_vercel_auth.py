@@ -203,6 +203,7 @@ def test_marketplace_catalog_search_and_pagination(monkeypatch):
         assert first_page.json()["total"] == 81
         assert len(first_page.json()["items"]) == 20
         assert first_page.json()["next_offset"] == 20
+        assert all(item["price_points"] == 0 for item in first_page.json()["items"])
 
         searched = client.get(
             "/marketplace/listings?kind=course&query=공통수학&grade_band=고1",
@@ -211,3 +212,38 @@ def test_marketplace_catalog_search_and_pagination(monkeypatch):
         assert searched.status_code == 200
         assert searched.json()["total"] == 1
         assert searched.json()["items"][0]["title"] == "공통수학 기초 완성"
+
+
+def test_free_marketplace_purchase_exposes_course(monkeypatch):
+    """필요 변수: 무료 코스 상품과 사용자 KV. 작동 원리: 0코인 구매 후 보유 자료·등록 코스·코스 상세이 모두 같은 asset ID로 조회되는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student06", "password": "password123", "name": "학생6", "grade": "1학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        listing_id = "market-v2-course-foundation"
+
+        purchased = client.post(
+            f"/marketplace/listings/{listing_id}/purchase",
+            headers=headers,
+        )
+        assert purchased.status_code == 200
+        assert purchased.json()["price_points"] == 0
+        assert purchased.json()["owned"] is True
+
+        owned = client.get("/marketplace/my-items", headers=headers).json()["items"]
+        enrolled = client.get("/courses/enrolled", headers=headers).json()["items"]
+        assert owned[0]["id"] == listing_id
+        assert enrolled[0]["course_id"] == "market-course-foundation-v1"
+
+        detail = client.get(
+            "/courses/v2/market-course-foundation-v1",
+            headers=headers,
+        )
+        assert detail.status_code == 200
+        assert detail.json()["data"]["title"] == "공통수학 기초 완성"
