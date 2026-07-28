@@ -52600,7 +52600,7 @@ $S:5}
 A.bKH.prototype={
 $1(a){var s=A.fW().b
 s=s==null?null:s.canvasKitBaseUrl
-return(s==null?"https://www.gstatic.com/flutter-canvaskit/83675ed27633283e7fc296c8bca22e841224c096/":s)+a},
+return(s==null?"canvaskit/":s)+a},
 $S:22}
 A.aaS.prototype={
 gC(a){var s=this.a
