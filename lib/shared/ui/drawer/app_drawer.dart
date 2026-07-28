@@ -53,9 +53,10 @@ class _AppDrawerState extends State<AppDrawer> {
   /// 최신 학생 시안의 작은 브랜드·이어 학습·그룹형 메뉴·하단 프로필 칩 순서로 드로어를 구성한다.
   @override
   Widget build(BuildContext context) {
-    final drawerWidth = (MediaQuery.sizeOf(context).width - 40)
-        .clamp(0, 310)
-        .toDouble();
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final drawerWidth = mobile
+        ? (MediaQuery.sizeOf(context).width - 16).clamp(0, 420).toDouble()
+        : (MediaQuery.sizeOf(context).width - 40).clamp(0, 310).toDouble();
 
     return Drawer(
       width: drawerWidth,
@@ -65,7 +66,12 @@ class _AppDrawerState extends State<AppDrawer> {
       shape: const RoundedRectangleBorder(),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 20, 14, 20),
+          padding: EdgeInsets.fromLTRB(
+            mobile ? 16 : 14,
+            mobile ? 16 : 20,
+            mobile ? 16 : 14,
+            mobile ? 16 : 20,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -112,17 +118,18 @@ class _DrawerBrand extends StatelessWidget {
   /// 최신 시안의 34px 검정 브랜드 마크와 STUDENT 보조 라벨을 한 줄 헤더로 표시한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     return Stack(
       children: [
         InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: onTap,
-          child: const Padding(
-            padding: EdgeInsets.fromLTRB(8, 6, 48, 18),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(8, 6, mobile ? 58 : 48, 18),
             child: Row(
               children: [
-                _SquareIcon(icon: null, label: 'A'),
-                SizedBox(width: 11),
+                const _SquareIcon(icon: null, label: 'A'),
+                SizedBox(width: mobile ? 14 : 11),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -130,17 +137,17 @@ class _DrawerBrand extends StatelessWidget {
                       'AIFlow',
                       style: TextStyle(
                         color: _AppDrawerState._ink,
-                        fontSize: 17,
+                        fontSize: mobile ? 22 : 17,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.5,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'STUDENT',
                       style: TextStyle(
                         color: _AppDrawerState._muted,
-                        fontSize: 9,
+                        fontSize: mobile ? 11 : 9,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.2,
                       ),
@@ -157,9 +164,9 @@ class _DrawerBrand extends StatelessWidget {
           child: IconButton(
             tooltip: '메뉴 닫기',
             onPressed: onClose,
-            icon: const Icon(Icons.close_rounded, size: 20),
+            icon: Icon(Icons.close_rounded, size: mobile ? 25 : 20),
             style: IconButton.styleFrom(
-              fixedSize: const Size(38, 38),
+              fixedSize: Size.square(mobile ? 48 : 38),
               backgroundColor: Colors.white.withValues(alpha: 0.76),
               side: const BorderSide(color: _AppDrawerState._line),
             ),
@@ -179,6 +186,7 @@ class _ResumeCard extends StatelessWidget {
   /// 별도 DB 조회 없이 최신 시안의 검정 이어 학습 카드를 제공해 드로어를 열 때 추가 부하를 만들지 않는다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 2, 2, 9),
       child: Material(
@@ -189,14 +197,14 @@ class _ResumeCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: onTap,
-          child: const SizedBox(
-            height: 82,
+          child: SizedBox(
+            height: mobile ? 112 : 82,
             child: Padding(
-              padding: EdgeInsets.all(12),
+              padding: EdgeInsets.all(mobile ? 16 : 12),
               child: Row(
                 children: [
-                  _SquareIcon(icon: Icons.play_arrow_rounded),
-                  SizedBox(width: 11),
+                  const _SquareIcon(icon: Icons.play_arrow_rounded),
+                  SizedBox(width: mobile ? 14 : 11),
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -204,38 +212,38 @@ class _ResumeCard extends StatelessWidget {
                       children: [
                         Text(
                           '이어 학습',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF8F8F98),
-                            fontSize: 9,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
                           '최근 코스에서 계속하기',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: mobile ? 17 : 12,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
                           '코스 선택 후 학습을 이어갑니다',
                           style: TextStyle(
-                            color: Color(0xFFA1A1AA),
-                            fontSize: 9,
+                            color: const Color(0xFFA1A1AA),
+                            fontSize: mobile ? 12 : 9,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Icon(
+                  const Icon(
                     Icons.chevron_right_rounded,
                     color: Color(0xFF92929A),
-                    size: 20,
+                    size: 24,
                   ),
                 ],
               ),
@@ -262,8 +270,9 @@ class _DrawerGroup extends StatelessWidget {
   /// 메뉴를 42px 슬림 행으로 쌓고 현재 화면만 검정 캡슐로 강조한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     return Padding(
-      padding: const EdgeInsets.only(top: 5, bottom: 3),
+      padding: EdgeInsets.only(top: mobile ? 10 : 5, bottom: mobile ? 5 : 3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -271,9 +280,9 @@ class _DrawerGroup extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 5),
             child: Text(
               group.label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: _AppDrawerState._faint,
-                fontSize: 10,
+                fontSize: mobile ? 12 : 10,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.1,
               ),
@@ -306,33 +315,38 @@ class _DrawerNavItem extends StatelessWidget {
   /// 비활성 메뉴는 투명 배경, 활성 메뉴는 최신 시안과 같은 검정 배경과 흰 글자로 렌더한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     final foreground = active ? Colors.white : const Color(0xFF505057);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
       child: Material(
         color: active ? _AppDrawerState._ink : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(mobile ? 18 : 14),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(mobile ? 18 : 14),
           onTap: onTap,
           child: SizedBox(
-            height: 42,
+            height: mobile ? 58 : 42,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 11),
+              padding: EdgeInsets.symmetric(horizontal: mobile ? 16 : 11),
               child: Row(
                 children: [
                   SizedBox(
-                    width: 21,
-                    child: Icon(item.icon, size: 19, color: foreground),
+                    width: mobile ? 28 : 21,
+                    child: Icon(
+                      item.icon,
+                      size: mobile ? 24 : 19,
+                      color: foreground,
+                    ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: mobile ? 14 : 10),
                   Expanded(
                     child: Text(
                       item.label,
                       style: TextStyle(
                         color: foreground,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                        fontSize: mobile ? 17 : 13,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
@@ -356,6 +370,7 @@ class _ProfileChip extends StatelessWidget {
   /// 구형 로그아웃 버튼 대신 최신 시안의 원형 아바타와 학생 요약 칩을 드로어 하단에 고정한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     final initial = data.username.characters.first.toUpperCase();
     return Material(
       color: Colors.white.withValues(alpha: 0.76),
@@ -364,7 +379,7 @@ class _ProfileChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(9),
+          padding: EdgeInsets.all(mobile ? 12 : 9),
           decoration: BoxDecoration(
             border: Border.all(color: _AppDrawerState._line),
             borderRadius: BorderRadius.circular(18),
@@ -372,13 +387,13 @@ class _ProfileChip extends StatelessWidget {
           child: Row(
             children: [
               CircleAvatar(
-                radius: 16,
+                radius: mobile ? 22 : 16,
                 backgroundColor: _AppDrawerState._ink,
                 child: Text(
                   initial,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: mobile ? 16 : 12,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -392,27 +407,27 @@ class _ProfileChip extends StatelessWidget {
                       data.username,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _AppDrawerState._ink,
-                        fontSize: 12,
+                        fontSize: mobile ? 16 : 12,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 3),
-                    const Text(
+                    Text(
                       'AIFlow STUDENT',
                       style: TextStyle(
                         color: _AppDrawerState._muted,
-                        fontSize: 10,
+                        fontSize: mobile ? 12 : 10,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 color: _AppDrawerState._muted,
-                size: 20,
+                size: mobile ? 25 : 20,
               ),
             ],
           ),
@@ -433,21 +448,35 @@ class _SquareIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBrand = label != null;
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final size = isBrand
+        ? mobile
+              ? 44.0
+              : 34.0
+        : mobile
+        ? 48.0
+        : 38.0;
     return Container(
-      width: isBrand ? 34 : 38,
-      height: isBrand ? 34 : 38,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: isBrand ? _AppDrawerState._ink : Colors.white,
-        borderRadius: BorderRadius.circular(isBrand ? 12 : 13),
+        borderRadius: BorderRadius.circular(
+          mobile
+              ? 15
+              : isBrand
+              ? 12
+              : 13,
+        ),
       ),
       child: icon != null
-          ? Icon(icon, color: _AppDrawerState._ink, size: 18)
+          ? Icon(icon, color: _AppDrawerState._ink, size: mobile ? 23 : 18)
           : Text(
               label!,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: mobile ? 20 : 16,
                 fontWeight: FontWeight.w900,
               ),
             ),

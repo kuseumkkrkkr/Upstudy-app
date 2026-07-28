@@ -483,7 +483,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
                           ),
                         ),
                       ),
-                      if (!portraitMobile) _BottomSection(),
+                      _BottomSection(),
                     ],
                   ),
                 ),

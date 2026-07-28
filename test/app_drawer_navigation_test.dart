@@ -95,6 +95,11 @@ void main() {
 
     expect(find.byType(AppDrawer), findsOneWidget);
     expect(find.text('오답 노트'), findsOneWidget);
+    expect(tester.getSize(find.byType(AppDrawer)).width, 374);
+    expect(
+      tester.widget<Text>(find.text('오답 노트')).style?.fontSize,
+      greaterThanOrEqualTo(17),
+    );
   });
 
   test('전체 메뉴 목적지가 학생 앱 중앙 라우트에 모두 등록돼 있다', () {
