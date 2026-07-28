@@ -35,6 +35,7 @@ class _LoginPageState extends State<LoginPage> {
   final _pwController = TextEditingController();
   final KakaoLoginService _kakaoLoginService = KakaoLoginService();
   bool _loading = false;
+  bool _passwordObscured = true;
   String? _errorText;
 
   /// 필요한 변수는 미리보기용 아이디와 비밀번호다.
@@ -125,9 +126,9 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// 필요한 변수는 현재 인증 화면 문맥이다.
-  /// 작동 원리는 좁거나 세로인 화면에서만 가입 진입을 폼 안에 두고,
-  /// 어떤 진입점도 동일한 SignupPage와 가입 API를 사용하게 하는 것이다.
+  /// 필요한 변수는 현재 인증 화면 문맥, 비밀번호 표시 상태와 로딩 상태다.
+  /// 작동 원리는 일반 로그인 화면처럼 입력·로그인·간편 로그인을 순서대로
+  /// 제공하고, 비밀번호 표시 여부만 화면 내부 상태로 전환하는 것이다.
   Widget _buildFormContents(BuildContext context) {
     final showInlineSignup = useInlineSignupEntry(context);
     return Column(
@@ -155,8 +156,20 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(height: isAuthMobile(context) ? 12 : 16),
         TextFormField(
           controller: _pwController,
-          decoration: _authInputDecoration('비밀번호'),
-          obscureText: true,
+          decoration: _authInputDecoration('비밀번호').copyWith(
+            suffixIcon: IconButton(
+              tooltip: _passwordObscured ? '비밀번호 표시' : '비밀번호 숨기기',
+              onPressed: () => setState(() {
+                _passwordObscured = !_passwordObscured;
+              }),
+              icon: Icon(
+                _passwordObscured
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+              ),
+            ),
+          ),
+          obscureText: _passwordObscured,
           validator: (value) =>
               (value == null || value.isEmpty) ? '비밀번호를 입력하세요' : null,
         ),
@@ -233,8 +246,9 @@ class _LoginPageState extends State<LoginPage> {
   InputDecoration _authInputDecoration(String label) =>
       authInputDecoration(label);
 
-  /// 필요한 변수는 로그인 폼과 현재 화면 폭입니다.
-  /// 작동 원리는 데스크톱에서 안내와 폼을 2열로, 모바일에서는 한 화면에 들어가는 단일 로그인 카드로 배치하는 것입니다.
+  /// 필요한 변수는 로그인 폼과 현재 화면 폭이다.
+  /// 작동 원리는 데스크톱에서는 서비스 소개와 폼을 2열로 유지하고,
+  /// 모바일에서는 익숙한 브랜드 헤더와 안내 문구를 포함한 단일 카드로 바꾸는 것이다.
   Widget _buildLoginLayout(BuildContext context, Widget form) {
     final mobile = isAuthMobile(context);
     final story = Container(
@@ -287,7 +301,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
     final formCard = Container(
-      padding: EdgeInsets.all(mobile ? 20 : 52),
+      padding: EdgeInsets.all(mobile ? 24 : 52),
       decoration: BoxDecoration(
         color: AuthDesignTokens.surface,
         borderRadius: mobile
@@ -304,12 +318,12 @@ class _LoginPageState extends State<LoginPage> {
             Row(
               children: [
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 40,
+                  height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AuthDesignTokens.ink,
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BorderRadius.circular(13),
                   ),
                   child: const Text(
                     'A',
@@ -319,14 +333,28 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                const Text(
-                  'AIFlow',
-                  style: TextStyle(fontWeight: FontWeight.w900),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AIFlow',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'LEARNING ACCOUNT',
+                      style: TextStyle(
+                        color: AuthDesignTokens.muted,
+                        fontSize: 9,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 36),
           ],
           if (!mobile) ...[
             const Text(
@@ -341,20 +369,19 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 30),
           ],
           Text(
-            '로그인',
+            mobile ? '다시 만나서 반가워요' : '로그인',
             style: TextStyle(
-              fontSize: mobile ? 32 : 44,
-              letterSpacing: -2,
+              fontSize: mobile ? 28 : 44,
+              letterSpacing: mobile ? -1.4 : -2,
+              height: 1.15,
               fontWeight: FontWeight.w900,
             ),
           ),
-          if (!mobile) ...[
-            const SizedBox(height: 10),
-            const Text(
-              '아이디 또는 이메일로 로그인하세요.',
-              style: TextStyle(color: AuthDesignTokens.muted),
-            ),
-          ],
+          const SizedBox(height: 8),
+          const Text(
+            '아이디 또는 이메일로 로그인하세요.',
+            style: TextStyle(color: AuthDesignTokens.muted, height: 1.5),
+          ),
           form,
         ],
       ),
@@ -467,8 +494,8 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     // 필요한 변수는 화면 크기와 로그인 폼이다.
-    // 작동 원리: 모바일은 한 화면용으로 축약한 단일 카드를 스크롤 없이
-    // 중앙에 배치하고, 데스크톱만 긴 화면을 대비한 세로 스크롤을 사용한다.
+    // 작동 원리: 모바일은 키보드와 작은 세로 화면에서도 입력 요소가 가려지지
+    // 않도록 스크롤 가능한 단일 카드로, 데스크톱은 넓은 2열 화면으로 렌더링한다.
     return Scaffold(
       backgroundColor: AuthDesignTokens.canvas,
       body: SafeArea(
@@ -477,9 +504,17 @@ class _LoginPageState extends State<LoginPage> {
             final mobile = isAuthMobile(context);
             final content = _buildLoginLayout(context, form);
             if (mobile) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Center(child: content),
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: (constraints.maxHeight - 56).clamp(
+                      0,
+                      double.infinity,
+                    ),
+                  ),
+                  child: Center(child: content),
+                ),
               );
             }
             return ClipRect(
