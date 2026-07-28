@@ -57,6 +57,8 @@ GET https://YOUR-PROJECT.vercel.app/health
 POST https://YOUR-PROJECT.vercel.app/auth/register
 POST https://YOUR-PROJECT.vercel.app/auth/login
 GET https://YOUR-PROJECT.vercel.app/auth/me
+GET https://YOUR-PROJECT.vercel.app/arena/summary
+GET https://YOUR-PROJECT.vercel.app/arena/rankings?queue_type=duel_exam
 POST https://YOUR-PROJECT.vercel.app/api/ocr/jobs
 GET https://YOUR-PROJECT.vercel.app/api/ocr/jobs/{job_id}
 ```
@@ -64,6 +66,10 @@ GET https://YOUR-PROJECT.vercel.app/api/ocr/jobs/{job_id}
 `SUPABASE_SERVICE_ROLE_KEY`, `OMJ_JWT_SECRET`, `LIGHTNING_WAKE_SECRET`은 앱 빌드 값이나 Git에 넣지 않는다.
 콜드 스타트는 Vercel이 `LIGHTNING_API_AUTH`로 기존 Studio를 `cpu-4`에서만 재개한다. GPU 머신 이름은
 코드에 허용하지 않아 wake 요청으로 유료 GPU를 시작할 수 없다.
+
+대결장 요약·랭킹은 카나리 UI가 404 없이 열리기 위한 초기 계약만 제공한다. Vercel 함수는
+실시간 WebSocket 매칭 서버가 아니므로 두 큐는 `coming_soon` 상태이며, 실제 매칭은 별도 상시
+Arena 서버를 연결하기 전까지 활성화하지 않는다.
 
 ## 4. Flutter 앱
 

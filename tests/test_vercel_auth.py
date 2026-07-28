@@ -148,6 +148,8 @@ def test_new_user_dashboard_endpoints(monkeypatch):
         paths = [
             "/account/summary",
             "/rating/user",
+            "/arena/summary",
+            "/arena/rankings?queue_type=duel_exam",
             "/rating/tags",
             "/weakness/tags",
             "/courses/v2",
@@ -175,3 +177,10 @@ def test_new_user_dashboard_endpoints(monkeypatch):
             response = client.get(path, headers=headers)
             assert response.status_code == 200, path
             assert isinstance(response.json(), dict), path
+
+        arena = client.get("/arena/summary", headers=headers).json()
+        assert [item["queue_type"] for item in arena["queues"]] == [
+            "duel_exam",
+            "team_exam",
+        ]
+        assert all(item["coming_soon"] is True for item in arena["queues"])

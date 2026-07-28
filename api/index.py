@@ -514,6 +514,45 @@ def get_user_rating(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
     return {"rating": 0.0, "ovr": 0.0, "ovr_delta": 0.0, "recent_accuracy": 0.0, "lose_streak": 0}
 
 
+def _empty_arena_queue(queue_type: str) -> dict[str, Any]:
+    """필요 변수: 대결 방식 ID. 작동 원리: 실시간 매칭 서버가 없는 Vercel 카나리에서 404 대신 초기 전적과 준비 상태를 반환한다."""
+    return {
+        "queue_type": queue_type,
+        "rating": 1500,
+        "tier": "C",
+        "wins": 0,
+        "losses": 0,
+        "draws": 0,
+        "recent_results": [],
+        "coming_soon": True,
+        "estimated_wait_seconds": 0,
+    }
+
+
+@app.get("/arena/summary")
+def get_arena_summary(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: Vercel 화면이 대결장 구조를 렌더링하도록 두 공개 큐의 명시적 준비 상태를 반환한다."""
+    return {
+        "queues": [
+            _empty_arena_queue("duel_exam"),
+            _empty_arena_queue("team_exam"),
+        ],
+        "active_match_id": None,
+        "active_practice_match_id": None,
+    }
+
+
+@app.get("/arena/rankings")
+def get_arena_rankings(
+    queue_type: str = "duel_exam",
+    _user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 인증 사용자·대결 방식. 작동 원리: 카나리 랭킹 원장이 준비되기 전 파싱 가능한 빈 순위를 반환한다."""
+    if queue_type not in {"duel_exam", "team_exam"}:
+        raise HTTPException(status_code=403, detail="현재 사용할 수 없는 대결 방식입니다.")
+    return {"queue_type": queue_type, "items": []}
+
+
 @app.get("/rating/tags")
 def get_tag_ratings(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
     """필요 변수: 인증 사용자. 작동 원리: 태그 풀이 이력이 없으면 빈 목록을 반환한다."""
