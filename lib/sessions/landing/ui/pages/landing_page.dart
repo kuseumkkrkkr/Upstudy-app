@@ -228,29 +228,50 @@ class _LandingEntry extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
     return Container(
-      color: AuthDesignTokens.surface.withValues(alpha: .96),
-      padding: EdgeInsets.all(mobile ? 16 : 54),
+      color: AuthDesignTokens.surface,
+      padding: EdgeInsets.all(mobile ? 18 : 54),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (mobile) ...[
             Container(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AuthDesignTokens.darkSurface,
-                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF101012), Color(0xFF242428)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x18000000),
+                    blurRadius: 24,
+                    offset: Offset(0, 12),
+                  ),
+                ],
               ),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _LandingBrand(light: true),
-                  SizedBox(height: 14),
+                  SizedBox(height: 22),
                   Text(
-                    '오늘의 학습을\n이어가세요.',
+                    'STUDENT SPACE',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 9,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '오늘의 학습 흐름을\n이어가세요.',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 26,
+                      fontSize: 25,
                       height: 1.05,
                       letterSpacing: -1.4,
                       fontWeight: FontWeight.w900,
@@ -259,15 +280,20 @@ class _LandingEntry extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 22),
             const Text(
               '로그인',
               style: TextStyle(
                 color: AuthDesignTokens.ink,
-                fontSize: 28,
+                fontSize: 27,
                 letterSpacing: -1.4,
                 fontWeight: FontWeight.w900,
               ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '계정으로 저장된 학습 기록을 이어가세요.',
+              style: TextStyle(color: AuthDesignTokens.muted, fontSize: 12),
             ),
             const LoginPage(embedded: true),
           ] else ...[
