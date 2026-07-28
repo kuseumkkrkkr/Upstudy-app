@@ -5,9 +5,6 @@ import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
-import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/services/api/auth_service.dart';
 
 class LandingPage extends StatefulWidget {
   static const routeName = '/';
@@ -20,34 +17,6 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
-  bool _demoLoading = false;
-
-  /// 필요한 변수는 시연 API 토큰과 현재 Navigator다.
-  /// 작동 원리는 회원가입 없이 발급받은 Test 전용 30분 토큰을 일반 인증 저장소에 넣고,
-  /// 기존 학생 대시보드로 이동해 시연과 정식 로그인 진입을 분리한다.
-  Future<void> _startDemoSession() async {
-    if (_demoLoading) return;
-    setState(() => _demoLoading = true);
-    try {
-      final token = await AuthService().startDemoSession();
-      await ApiClient.instance.setToken(token, username: 'Test');
-      if (!mounted) return;
-      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => const MainStudentPage(username: 'Test'),
-        ),
-        (route) => false,
-      );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('시연 세션을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.')),
-      );
-    } finally {
-      if (mounted) setState(() => _demoLoading = false);
-    }
-  }
-
   /// 필요한 변수는 현재 화면의 Navigator와 Dialog 컨텍스트입니다.
   /// 작동 원리는 랜딩 위에 반응형 로그인 모달을 표시하고 성공 시 기존 인증 이동 흐름을 유지하는 것입니다.
   void _goToLogin(BuildContext context) {
@@ -114,8 +83,6 @@ class _LandingPageState extends State<LandingPage> {
     final entry = _LandingEntry(
       onLogin: () => _goToLogin(context),
       onSignup: () => _goToSignup(context),
-      onDemo: _startDemoSession,
-      demoLoading: _demoLoading,
       showSignupButton: !inlineSignup,
     );
 
@@ -242,20 +209,15 @@ class _LandingEntry extends StatelessWidget {
   const _LandingEntry({
     required this.onLogin,
     required this.onSignup,
-    required this.onDemo,
-    required this.demoLoading,
     required this.showSignupButton,
   });
 
   final VoidCallback onLogin;
   final VoidCallback onSignup;
-  final Future<void> Function() onDemo;
-  final bool demoLoading;
   final bool showSignupButton;
 
-  /// 필요한 변수는 로그인·가입·시연 콜백과 현재 화면 폭입니다.
-  /// 작동 원리는 정식 인증과 별개로 30분 Test 시연 진입을 먼저 제공해,
-  /// 가입 과정 없이 발표 현장에서 즉시 기능을 확인하게 하는 것입니다.
+  /// 필요한 변수는 로그인·가입 콜백과 현재 화면 폭입니다.
+  /// 작동 원리는 정식 계정 인증 경로만 제공해 저장되지 않는 시연 프로필 생성을 막는 것입니다.
   @override
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
@@ -297,37 +259,6 @@ class _LandingEntry extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 34),
-          ElevatedButton.icon(
-            onPressed: demoLoading ? null : onDemo,
-            icon: demoLoading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.play_arrow_rounded),
-            label: Text(demoLoading ? '시연 세션 준비 중…' : 'Test 계정으로 시연 시작'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 52),
-              backgroundColor: AuthDesignTokens.ink,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              textStyle: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            '로그인 없이 30분간 이용할 수 있으며 시연 기록은 자동으로 삭제됩니다.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AuthDesignTokens.muted,
-              fontSize: 12,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 22),
           AuthPrimaryButton(label: '로그인', onPressed: onLogin),
           if (showSignupButton) ...[
             const SizedBox(height: 10),
