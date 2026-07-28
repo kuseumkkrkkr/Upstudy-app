@@ -292,14 +292,21 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                           constraints.maxWidth < 720 &&
                           MediaQuery.orientationOf(context) ==
                               Orientation.portrait;
-                      final graphPanel = _buildGraphPanel(isLinux: isLinux);
-                      final editorPanel = _buildEditorPanel();
+                      final graphPanel = _buildGraphPanel(
+                        isLinux: isLinux,
+                        forceCanvasRenderer: portraitMobile,
+                      );
+                      final editorPanel = _buildEditorPanel(
+                        compactMobile: portraitMobile,
+                      );
 
                       if (portraitMobile) {
                         return Column(
                           children: [
                             SizedBox(
-                              height: constraints.maxHeight * 0.48,
+                              height: (constraints.maxHeight * .40)
+                                  .clamp(250.0, 330.0)
+                                  .toDouble(),
                               child: graphPanel,
                             ),
                             const SizedBox(height: 12),
@@ -406,7 +413,13 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     );
   }
 
-  Widget _buildGraphPanel({required bool isLinux}) {
+  /// 필요한 변수는 플랫폼 지원 여부와 모바일 Canvas 렌더러 사용 여부다.
+  /// 작동 원리는 세로 모바일에서 iframe 기반 JSXGraph 대신 Canvas를 우선해
+  /// 수식 입력 직후에도 그래프 선이 안정적으로 표시되게 하는 것이다.
+  Widget _buildGraphPanel({
+    required bool isLinux,
+    required bool forceCanvasRenderer,
+  }) {
     return _SurfaceCard(
       padding: EdgeInsets.zero,
       child: ClipRRect(
@@ -426,6 +439,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                   _buildDocument(),
                   showParameterControls: false,
                   directManipulationMode: true,
+                  forceCanvasRenderer: forceCanvasRenderer,
                 )
               : const _GraphEmbedDisabledForTesting(),
         ),
@@ -433,27 +447,33 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     );
   }
 
-  /// 필요한 변수는 현재 예제, 실습 매개변수, 수식 초안과 편집 옵션이다.
-  /// 작동 원리는 편집 패널의 모든 내용을 하나의 스크롤 영역에 배치해 수식이 늘어나도
-  /// 상단 정보부터 갱신 버튼까지 자연스럽게 이어서 탐색하도록 하는 것이다.
-  Widget _buildEditorPanel() {
+  /// 필요한 변수는 세로 모바일용 축약 여부와 현재 수식 초안이다.
+  /// 작동 원리는 모바일에서 큰 설명·여러 줄 입력을 줄이고 한 줄 수식 입력과
+  /// 전체 폭 갱신 행동을 앞세워 그래프 확인까지의 단계를 짧게 만드는 것이다.
+  Widget _buildEditorPanel({bool compactMobile = false}) {
     return _SurfaceCard(
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '수식',
-              style: TextStyle(
+            Text(
+              compactMobile ? '함수 그리기' : '수식',
+              style: const TextStyle(
                 color: _kGreen,
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              '함수식을 직접 입력하고 좌표평면에서 결과를 확인하세요.',
-              style: TextStyle(color: _kMuted, fontSize: 12.5, height: 1.45),
+            Text(
+              compactMobile
+                  ? '수식을 입력하면 좌표평면에 바로 반영됩니다.'
+                  : '함수식을 직접 입력하고 좌표평면에서 결과를 확인하세요.',
+              style: const TextStyle(
+                color: _kMuted,
+                fontSize: 12.5,
+                height: 1.45,
+              ),
             ),
             if (_hasActiveExampleContext) ...[
               const SizedBox(height: 10),
@@ -514,7 +534,8 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _drafts.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) => _buildDraftTile(_drafts[index]),
+              itemBuilder: (context, index) =>
+                  _buildDraftTile(_drafts[index], compact: compactMobile),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -573,22 +594,27 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
             ],
             const SizedBox(height: 10),
             Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                onPressed: _applyCurrentDrafts,
-                style: FilledButton.styleFrom(
-                  backgroundColor: _kGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
+              alignment: compactMobile
+                  ? Alignment.center
+                  : Alignment.centerRight,
+              child: SizedBox(
+                width: compactMobile ? double.infinity : null,
+                child: FilledButton.icon(
+                  onPressed: _applyCurrentDrafts,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _kGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  icon: const Icon(Icons.stacked_line_chart_rounded),
+                  label: Text(compactMobile ? '그래프에 반영하기' : '그래프 갱신'),
                 ),
-                icon: const Icon(Icons.stacked_line_chart_rounded),
-                label: const Text('그래프 갱신'),
               ),
             ),
           ],
@@ -597,10 +623,11 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     );
   }
 
-  Widget _buildDraftTile(_GraphItemDraft draft) {
+  Widget _buildDraftTile(_GraphItemDraft draft, {bool compact = false}) {
     if (draft.type == AiFlowGraphItemType.function) {
       return _FunctionDraftTile(
         draft: draft,
+        compact: compact,
         onChanged: () {
           setState(() {
             draft.errorText = null;
@@ -1859,6 +1886,7 @@ class _MiniBadge extends StatelessWidget {
 class _FunctionDraftTile extends StatefulWidget {
   const _FunctionDraftTile({
     required this.draft,
+    required this.compact,
     required this.onChanged,
     required this.onToggle,
     required this.onRemove,
@@ -1866,6 +1894,7 @@ class _FunctionDraftTile extends StatefulWidget {
   });
 
   final _GraphItemDraft draft;
+  final bool compact;
   final VoidCallback onChanged;
   final VoidCallback onToggle;
   final VoidCallback onRemove;
@@ -1883,6 +1912,7 @@ class _FunctionDraftTileState extends State<_FunctionDraftTile> {
   VoidCallback get onToggle => widget.onToggle;
   VoidCallback get onRemove => widget.onRemove;
   ValueChanged<String> get onSubmitted => widget.onSubmitted;
+  bool get compact => widget.compact;
 
   /// 필요한 변수는 수식 입력란의 포커스 상태다.
   /// 작동 원리는 포커스 변경을 감지해 현재 편집 중인 카드에만 계산 입력 패드를 표시하는 것이다.
@@ -1908,8 +1938,9 @@ class _FunctionDraftTileState extends State<_FunctionDraftTile> {
     super.dispose();
   }
 
-  /// 필요한 변수는 수식 초안과 입력란 포커스 상태다.
-  /// 작동 원리는 입력란을 최대 네 줄까지 확장하고 포커스가 있을 때만 계산 입력 패드를 펼치는 것이다.
+  /// 필요한 변수는 수식 초안·입력란 포커스 상태·모바일 축약 여부다.
+  /// 작동 원리는 데스크톱에서는 여러 줄 입력과 계산 패드를 제공하고,
+  /// 모바일에서는 시스템 키보드에 맞춘 한 줄 입력으로 편집 영역을 줄이는 것이다.
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1973,24 +2004,54 @@ class _FunctionDraftTileState extends State<_FunctionDraftTile> {
                 TextField(
                   controller: draft.expressionController,
                   focusNode: _expressionFocusNode,
-                  minLines: 2,
-                  maxLines: 4,
-                  keyboardType: TextInputType.multiline,
-                  textInputAction: TextInputAction.newline,
+                  minLines: compact ? 1 : 2,
+                  maxLines: compact ? 1 : 4,
+                  keyboardType: compact
+                      ? TextInputType.text
+                      : TextInputType.multiline,
+                  textInputAction: compact
+                      ? TextInputAction.done
+                      : TextInputAction.newline,
                   onChanged: (_) => onChanged(),
                   onSubmitted: onSubmitted,
                   onTapOutside: (_) => _expressionFocusNode.unfocus(),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
+                  decoration: InputDecoration(
+                    border: compact
+                        ? OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: _kBorder),
+                          )
+                        : InputBorder.none,
+                    enabledBorder: compact
+                        ? OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: _kBorder),
+                          )
+                        : InputBorder.none,
+                    focusedBorder: compact
+                        ? OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF2F7CF6),
+                              width: 1.5,
+                            ),
+                          )
+                        : InputBorder.none,
+                    contentPadding: compact
+                        ? const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          )
+                        : null,
                     isDense: true,
-                    hintText: '예: sin(x), x^2-1, log(x), sqrt(9-x^2)',
+                    hintText: '예: sin(x), x^2-1, log(x)',
                   ),
                 ),
                 _ExpressionPreview(controller: draft.expressionController),
                 AnimatedSize(
                   duration: const Duration(milliseconds: 160),
                   alignment: Alignment.topCenter,
-                  child: _expressionFocusNode.hasFocus
+                  child: !compact && _expressionFocusNode.hasFocus
                       ? Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: _CalculatorKeypad(

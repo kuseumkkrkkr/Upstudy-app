@@ -12,6 +12,7 @@ Widget buildJsxGraphEmbedImpl(
   Key? key,
   bool showParameterControls = true,
   bool directManipulationMode = false,
+  bool forceCanvasRenderer = false,
 }) {
   if (InAppWebViewPlatform.instance == null) {
     return Center(key: key, child: const Text('그래프 뷰어를 준비 중입니다.'));
@@ -21,6 +22,7 @@ Widget buildJsxGraphEmbedImpl(
     document: document,
     showParameterControls: showParameterControls,
     directManipulationMode: directManipulationMode,
+    forceCanvasRenderer: forceCanvasRenderer,
   );
 }
 
@@ -30,11 +32,13 @@ class _JsxGraphEmbedNative extends StatefulWidget {
     required this.document,
     required this.showParameterControls,
     required this.directManipulationMode,
+    required this.forceCanvasRenderer,
   });
 
   final AiFlowGraphDocument document;
   final bool showParameterControls;
   final bool directManipulationMode;
+  final bool forceCanvasRenderer;
 
   @override
   State<_JsxGraphEmbedNative> createState() => _JsxGraphEmbedNativeState();
@@ -69,6 +73,7 @@ class _JsxGraphEmbedNativeState extends State<_JsxGraphEmbedNative> {
           widget.document,
           showParameterControls: widget.showParameterControls,
           directManipulationMode: widget.directManipulationMode,
+          forceCanvasRenderer: widget.forceCanvasRenderer,
         ),
       ),
       initialSettings: InAppWebViewSettings(

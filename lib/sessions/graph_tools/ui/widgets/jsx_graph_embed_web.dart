@@ -12,11 +12,13 @@ Widget buildJsxGraphEmbedImpl(
   Key? key,
   bool showParameterControls = true,
   bool directManipulationMode = false,
+  bool forceCanvasRenderer = false,
 }) => _JsxGraphEmbedWeb(
   key: key,
   document: document,
   showParameterControls: showParameterControls,
   directManipulationMode: directManipulationMode,
+  forceCanvasRenderer: forceCanvasRenderer,
 );
 
 class _JsxGraphEmbedWeb extends StatefulWidget {
@@ -25,11 +27,13 @@ class _JsxGraphEmbedWeb extends StatefulWidget {
     required this.document,
     required this.showParameterControls,
     required this.directManipulationMode,
+    required this.forceCanvasRenderer,
   });
 
   final AiFlowGraphDocument document;
   final bool showParameterControls;
   final bool directManipulationMode;
+  final bool forceCanvasRenderer;
 
   @override
   State<_JsxGraphEmbedWeb> createState() => _JsxGraphEmbedWebState();
@@ -58,6 +62,7 @@ class _JsxGraphEmbedWebState extends State<_JsxGraphEmbedWeb> {
         widget.document,
         showParameterControls: widget.showParameterControls,
         directManipulationMode: widget.directManipulationMode,
+        forceCanvasRenderer: widget.forceCanvasRenderer,
       ),
     );
 
