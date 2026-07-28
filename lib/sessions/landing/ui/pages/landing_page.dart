@@ -222,64 +222,101 @@ class _LandingEntry extends StatelessWidget {
   final bool showSignupButton;
 
   /// 필요한 변수는 로그인·가입 콜백과 현재 화면 폭입니다.
-  /// 작동 원리는 정식 계정 인증 경로만 제공해 저장되지 않는 시연 프로필 생성을 막는 것입니다.
+  /// 작동 원리는 모바일에서는 랜딩 안에 로그인 폼을 바로 표시하고,
+  /// 넓은 화면에서는 기존 모달 진입과 가입 선택을 유지하는 것입니다.
   @override
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
     return Container(
       color: AuthDesignTokens.surface.withValues(alpha: .96),
-      padding: EdgeInsets.all(mobile ? 24 : 54),
+      padding: EdgeInsets.all(mobile ? 16 : 54),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (mobile) const _LandingBrand(light: false),
-          if (mobile) const SizedBox(height: 42),
-          const Text(
-            'START A SESSION',
-            style: TextStyle(
-              color: AuthDesignTokens.muted,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.6,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'AIFlow 시작하기',
-            style: TextStyle(
-              color: AuthDesignTokens.ink,
-              fontSize: mobile ? 34 : 44,
-              letterSpacing: -2,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            '계정이 있다면 학습 기록을 이어가고, 처음이라면 맞춤 학습 프로필을 만들어 보세요.',
-            style: TextStyle(
-              color: AuthDesignTokens.muted,
-              fontSize: 13,
-              height: 1.55,
-            ),
-          ),
-          const SizedBox(height: 34),
-          AuthPrimaryButton(label: '로그인', onPressed: onLogin),
-          if (showSignupButton) ...[
-            const SizedBox(height: 10),
-            OutlinedButton(
-              onPressed: onSignup,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                foregroundColor: AuthDesignTokens.ink,
-                side: const BorderSide(color: AuthDesignTokens.line),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          if (mobile) ...[
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AuthDesignTokens.darkSurface,
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text('새 계정 만들기'),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _LandingBrand(light: true),
+                  SizedBox(height: 14),
+                  Text(
+                    '오늘의 학습을\n이어가세요.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      height: 1.05,
+                      letterSpacing: -1.4,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: 18),
+            const Text(
+              '로그인',
+              style: TextStyle(
+                color: AuthDesignTokens.ink,
+                fontSize: 28,
+                letterSpacing: -1.4,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const LoginPage(embedded: true),
+          ] else ...[
+            const Text(
+              'START A SESSION',
+              style: TextStyle(
+                color: AuthDesignTokens.muted,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.6,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'AIFlow 시작하기',
+              style: TextStyle(
+                color: AuthDesignTokens.ink,
+                fontSize: 44,
+                letterSpacing: -2,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '계정이 있다면 학습 기록을 이어가고, 처음이라면 맞춤 학습 프로필을 만들어 보세요.',
+              style: TextStyle(
+                color: AuthDesignTokens.muted,
+                fontSize: 13,
+                height: 1.55,
+              ),
+            ),
+            const SizedBox(height: 34),
+            AuthPrimaryButton(label: '로그인', onPressed: onLogin),
+            if (showSignupButton) ...[
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: onSignup,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  foregroundColor: AuthDesignTokens.ink,
+                  side: const BorderSide(color: AuthDesignTokens.line),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                child: const Text('새 계정 만들기'),
+              ),
+            ],
           ],
         ],
       ),

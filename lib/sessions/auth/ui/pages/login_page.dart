@@ -12,12 +12,16 @@ class LoginPage extends StatefulWidget {
   const LoginPage({
     super.key,
     this.asDialog = false,
+    this.embedded = false,
     this.initialUsername,
     this.initialPassword,
   });
 
   /// Dialog로 사용할 때 모달 형태로 렌더링합니다.
   final bool asDialog;
+
+  /// 랜딩 화면 안에 로그인 폼만 직접 표시할 때 사용합니다.
+  final bool embedded;
   final String? initialUsername;
   final String? initialPassword;
 
@@ -452,6 +456,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
+      );
+    }
+
+    if (widget.embedded) {
+      return Material(
+        color: Colors.transparent,
+        child: Form(key: _formKey, child: _buildFormContents(context)),
       );
     }
 
