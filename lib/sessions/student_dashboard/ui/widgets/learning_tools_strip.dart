@@ -20,6 +20,8 @@ class LearningToolsStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width <= 780;
+    final portraitMobile =
+        compact && MediaQuery.orientationOf(context) == Orientation.portrait;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -29,6 +31,7 @@ class LearningToolsStrip extends StatelessWidget {
           onTap: onNotepad,
           shape: _ToolShape.note,
           compact: compact,
+          portraitMobile: portraitMobile,
         ),
         _ToolItem(
           icon: Icons.timer_rounded,
@@ -36,6 +39,7 @@ class LearningToolsStrip extends StatelessWidget {
           onTap: onTimer,
           shape: _ToolShape.timer,
           compact: compact,
+          portraitMobile: portraitMobile,
         ),
         _ToolItem(
           icon: Icons.center_focus_strong_rounded,
@@ -43,6 +47,7 @@ class LearningToolsStrip extends StatelessWidget {
           onTap: onFocusMode,
           shape: _ToolShape.focus,
           compact: compact,
+          portraitMobile: portraitMobile,
         ),
         _ToolItem(
           icon: Icons.stacked_line_chart_rounded,
@@ -50,6 +55,7 @@ class LearningToolsStrip extends StatelessWidget {
           onTap: onGraph,
           shape: _ToolShape.graph,
           compact: compact,
+          portraitMobile: portraitMobile,
         ),
       ],
     );
@@ -65,6 +71,7 @@ class _ToolItem extends StatelessWidget {
     required this.onTap,
     required this.shape,
     required this.compact,
+    required this.portraitMobile,
   });
 
   final IconData icon;
@@ -72,12 +79,17 @@ class _ToolItem extends StatelessWidget {
   final VoidCallback onTap;
   final _ToolShape shape;
   final bool compact;
+  final bool portraitMobile;
 
   /// 필요한 변수는 도구 종류와 현재 화면 폭이다.
   /// 작동 원리: HTML의 사각 노트·원형 타이머·중첩 집중·회전 그래프 도형을 흑백으로 재현한다.
   @override
   Widget build(BuildContext context) {
-    final size = compact ? 52.0 : 68.0;
+    final size = portraitMobile
+        ? 64.0
+        : compact
+        ? 52.0
+        : 68.0;
     final isDark = shape == _ToolShape.note;
     final isCircle = shape == _ToolShape.timer;
     final isGraph = shape == _ToolShape.graph;
@@ -136,9 +148,9 @@ class _ToolItem extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _toolInk,
-                    fontSize: 11,
+                    fontSize: portraitMobile ? 14 : 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0,
                   ),

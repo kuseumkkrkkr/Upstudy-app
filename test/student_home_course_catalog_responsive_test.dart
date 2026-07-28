@@ -83,7 +83,10 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('오늘도 시작해 볼까요?'), findsOneWidget);
+      expect(
+        find.textContaining(width < 760 ? '바로 시작해요.' : '오늘도 시작해 볼까요?'),
+        findsOneWidget,
+      );
       expect(
         find.byKey(
           ValueKey(
@@ -96,11 +99,10 @@ void main() {
     }
   });
 
-  testWidgets('HTML 시안의 홈 하단 그리드가 PC·태블릿·모바일 분기를 유지한다', (tester) async {
+  testWidgets('홈 하단 정보는 PC·태블릿에 유지하고 세로 모바일에서는 핵심 동작만 남긴다', (tester) async {
     const cases = <(double, String)>[
       (1280, 'student-home-footer-desktop'),
       (900, 'student-home-footer-tablet'),
-      (500, 'student-home-footer-mobile'),
     ];
 
     for (final (width, layoutKey) in cases) {
@@ -117,5 +119,21 @@ void main() {
       expect(find.text('공지사항'), findsWidgets);
       expect(tester.takeException(), isNull);
     }
+
+    await _pumpAt(
+      tester,
+      const Size(500, 900),
+      const MainStudentPage(username: '김학생'),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('student-home-footer-mobile')),
+      findsNothing,
+    );
+    expect(find.text('빠른 도구'), findsOneWidget);
+    expect(find.text('코스 이어하기'), findsOneWidget);
+    expect(find.text('일정 달력'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }

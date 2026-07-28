@@ -23,9 +23,13 @@ String buildAiFlowGraphHtml(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AIFlow Graph</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/jsxgraph@1.13.1/distrib/jsxgraph.css"
+    />
     <script
       id="jsxgraph-script"
-      src="https://jsxgraph.org/distrib/jsxgraphcore.js"
+      src="https://cdn.jsdelivr.net/npm/jsxgraph@1.13.1/distrib/jsxgraphcore.js"
       async
     ></script>
     <style>
@@ -56,6 +60,9 @@ String buildAiFlowGraphHtml(
         height: 100%;
         box-sizing: border-box;
         min-height: 120px;
+        position: relative;
+        overflow: hidden;
+        touch-action: none;
         border: 1px solid #d6e2d7;
         border-radius: 8px;
         background: #ffffff;

@@ -102,6 +102,9 @@ void main() {
 
     expect(html, contains('#board {'));
     expect(html, contains('height: 100%;'));
+    expect(html, contains('jsxgraph@1.13.1/distrib/jsxgraph.css'));
+    expect(html, contains('position: relative;'));
+    expect(html, contains('touch-action: none;'));
     expect(
       html,
       isNot(contains('#board {\n        width: 100%;\n        height: 220px;')),

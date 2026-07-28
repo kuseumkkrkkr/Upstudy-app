@@ -432,11 +432,17 @@ class _MainStudentPageState extends State<MainStudentPage> {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    final portraitMobile =
+        mobile && MediaQuery.orientationOf(context) == Orientation.portrait;
     final todayTasks = [..._todayTeacherTasks, ..._todayPersonalTasks];
-    // 필요한 변수는 모바일 본문 여백과 2줄 인사 문구의 실제 높이다.
-    // 작동 원리: 좁은 폭에서도 인사·보조 설명이 잘리지 않도록 시안의 압축 히어로를
-    // 고정 210px이 아닌 내용이 들어가는 250px 높이로 유지한다.
-    final heroExtent = mobile ? 250.0 : 294.0;
+    // 필요한 변수는 화면 방향과 인사 문구의 실제 높이다.
+    // 작동 원리: 세로형 모바일은 설명을 덜어낸 전용 히어로를 사용하고,
+    // 가로형·태블릿은 기존 정보형 히어로를 유지한다.
+    final heroExtent = portraitMobile
+        ? 214.0
+        : mobile
+        ? 250.0
+        : 294.0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -457,12 +463,17 @@ class _MainStudentPageState extends State<MainStudentPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _HeroSection(username: _displayName, height: heroExtent),
+                      _HeroSection(
+                        username: _displayName,
+                        height: heroExtent,
+                        portraitMobile: portraitMobile,
+                      ),
                       _CourseLoader(
                         key: _courseLoaderKey,
                         builder: (course) => _LearningSection(
                           todayTasks: todayTasks,
                           activeCourse: course,
+                          portraitMobile: portraitMobile,
                           onCourseTap: _handleCourseTap,
                           onTodayTasksTap: () => showTodayTasksModal(
                             context: context,
@@ -472,7 +483,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
                           ),
                         ),
                       ),
-                      _BottomSection(),
+                      if (!portraitMobile) _BottomSection(),
                     ],
                   ),
                 ),
@@ -656,9 +667,14 @@ class _AppBarLevelIndicatorState extends State<_AppBarLevelIndicator> {
 }
 
 class _HeroSection extends StatelessWidget {
-  const _HeroSection({required this.username, required this.height});
+  const _HeroSection({
+    required this.username,
+    required this.height,
+    required this.portraitMobile,
+  });
   final String? username;
   final double? height;
+  final bool portraitMobile;
 
   /// 필요 변수: 로그인 사용자 이름과 화면 폭.
   /// 작동 원리: 배경 사진과 통계 회전을 제거하고 최신 시안의 짧은 인사 문맥만 먼저 표시합니다.
@@ -675,14 +691,22 @@ class _HeroSection extends StatelessWidget {
       child: StudentDensityPage(
         padding: EdgeInsets.fromLTRB(
           studentDensityHorizontalPadding(context),
-          studentDensityVerticalPadding(context),
+          portraitMobile ? 18 : studentDensityVerticalPadding(context),
           studentDensityHorizontalPadding(context),
           0,
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: mobile ? 24 : 38,
-            vertical: mobile ? 24 : 30,
+            horizontal: portraitMobile
+                ? 10
+                : mobile
+                ? 24
+                : 38,
+            vertical: portraitMobile
+                ? 20
+                : mobile
+                ? 24
+                : 30,
           ),
           child: Align(
             alignment: Alignment.topLeft,
@@ -694,24 +718,36 @@ class _HeroSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '$displayName님,\n오늘도 시작해 볼까요?',
+                  portraitMobile
+                      ? '$displayName님,\n바로 시작해요.'
+                      : '$displayName님,\n오늘도 시작해 볼까요?',
                   style: TextStyle(
                     color: StudentDensityTokens.ink,
-                    fontSize: mobile ? 38 : 56,
-                    height: 0.98,
+                    fontSize: portraitMobile
+                        ? 46
+                        : mobile
+                        ? 38
+                        : 56,
+                    height: portraitMobile ? 1.02 : 0.98,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: mobile ? -2 : -3.4,
+                    letterSpacing: portraitMobile
+                        ? -2.7
+                        : mobile
+                        ? -2
+                        : -3.4,
                   ),
                 ),
-                SizedBox(height: mobile ? 9 : 12),
-                Text(
-                  '어제 멈춘 학습과 오늘 일정은 아래 학습 영역에서 이어집니다.',
-                  style: TextStyle(
-                    color: StudentDensityTokens.muted,
-                    fontSize: mobile ? 11 : 14,
-                    height: 1.5,
+                if (!portraitMobile) ...[
+                  SizedBox(height: mobile ? 9 : 12),
+                  Text(
+                    '어제 멈춘 학습과 오늘 일정은 아래 학습 영역에서 이어집니다.',
+                    style: TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: mobile ? 11 : 14,
+                      height: 1.5,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -1154,11 +1190,13 @@ class _LearningSection extends StatelessWidget {
   const _LearningSection({
     required this.todayTasks,
     required this.activeCourse,
+    required this.portraitMobile,
     required this.onCourseTap,
     required this.onTodayTasksTap,
   });
   final List<_TodayTaskItem> todayTasks;
   final Course? activeCourse;
+  final bool portraitMobile;
   final VoidCallback onCourseTap;
   final VoidCallback onTodayTasksTap;
 
@@ -1257,13 +1295,24 @@ class _LearningSection extends StatelessWidget {
           );
 
     final statusCards = [
-      Expanded(child: _DailyQuestProgressCard(courseId: activeCourse?.id)),
+      Expanded(
+        child: portraitMobile
+            ? _HomeStatusCard(
+                label: '현재 코스',
+                value: progressPercent == null ? '선택' : '$progressPercent%',
+                meta: '',
+                onTap: onCourseTap,
+                hideMeta: true,
+              )
+            : _DailyQuestProgressCard(courseId: activeCourse?.id),
+      ),
       Expanded(
         child: _HomeStatusCard(
           label: '오늘 할 일',
           value: '${todayTasks.length}개',
           meta: todayTasks.isEmpty ? '오늘 해야 할 일이 없습니다.' : '카드를 눌러 할 일을 확인하세요.',
           onTap: onTodayTasksTap,
+          hideMeta: portraitMobile,
         ),
       ),
     ];
@@ -1286,25 +1335,59 @@ class _LearningSection extends StatelessWidget {
             14,
           ),
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(portraitMobile ? 14 : 20),
             decoration: BoxDecoration(
-              color: StudentDensityTokens.surfaceMuted,
-              borderRadius: BorderRadius.circular(34),
-              border: Border.all(color: StudentDensityTokens.line),
+              color: portraitMobile
+                  ? StudentDensityTokens.background
+                  : StudentDensityTokens.surfaceMuted,
+              borderRadius: BorderRadius.circular(portraitMobile ? 0 : 34),
+              border: portraitMobile
+                  ? null
+                  : Border.all(color: StudentDensityTokens.line),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _LearnBanner(onTap: () => showStudyModeModal(context: context)),
-                const SizedBox(height: 12),
+                _LearnBanner(
+                  portraitMobile: portraitMobile,
+                  onTap: () => showStudyModeModal(context: context),
+                ),
+                SizedBox(height: portraitMobile ? 16 : 12),
                 Row(
                   children: [
                     statusCards[0],
-                    SizedBox(width: mobile ? 8 : 12),
+                    SizedBox(
+                      width: portraitMobile
+                          ? 12
+                          : mobile
+                          ? 8
+                          : 12,
+                    ),
                     statusCards[1],
                   ],
                 ),
-                const SizedBox(height: 12),
-                moduleGrid,
+                SizedBox(height: portraitMobile ? 22 : 12),
+                if (portraitMobile) ...[
+                  const Text(
+                    '빠른 도구',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  tools,
+                  const SizedBox(height: 18),
+                  _HomeFeatureCard(
+                    icon: Icons.play_arrow_rounded,
+                    title: '코스 이어하기',
+                    description: courseTitle,
+                    onTap: onCourseTap,
+                    compactMobile: true,
+                  ),
+                ] else
+                  moduleGrid,
               ],
             ),
           ),
@@ -1351,6 +1434,7 @@ class _HomeStatusCard extends StatelessWidget {
     required this.meta,
     required this.onTap,
     this.showBadge = false,
+    this.hideMeta = false,
   });
 
   final String label;
@@ -1358,6 +1442,7 @@ class _HomeStatusCard extends StatelessWidget {
   final String meta;
   final VoidCallback? onTap;
   final bool showBadge;
+  final bool hideMeta;
 
   /// 필요한 변수는 상태 라벨·핵심 수치·보조 설명과 탭 콜백이다.
   /// 작동 원리: HTML의 132px 홈 상태 버튼을 큰 수치 중심의 흰 카드로 재현한다.
@@ -1366,7 +1451,11 @@ class _HomeStatusCard extends StatelessWidget {
     final mobile = isStudentDensityMobile(context);
     return SizedBox(
       width: double.infinity,
-      height: mobile ? 118 : 132,
+      height: hideMeta
+          ? 126
+          : mobile
+          ? 118
+          : 132,
       child: Stack(
         fit: StackFit.expand,
         clipBehavior: Clip.none,
@@ -1385,29 +1474,39 @@ class _HomeStatusCard extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: StudentDensityTokens.muted,
-                      fontSize: mobile ? 10 : 12,
+                      fontSize: hideMeta
+                          ? 15
+                          : mobile
+                          ? 10
+                          : 12,
+                      fontWeight: hideMeta ? FontWeight.w800 : FontWeight.w400,
                     ),
                   ),
                   Text(
                     value,
                     style: TextStyle(
                       color: StudentDensityTokens.ink,
-                      fontSize: mobile ? 28 : 42,
+                      fontSize: hideMeta
+                          ? 38
+                          : mobile
+                          ? 28
+                          : 42,
                       height: 1,
                       fontWeight: FontWeight.w900,
                       letterSpacing: mobile ? -1.7 : -2.5,
                     ),
                   ),
-                  Text(
-                    meta,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: StudentDensityTokens.ink,
-                      fontSize: mobile ? 9 : 12,
-                      fontWeight: FontWeight.w800,
+                  if (!hideMeta)
+                    Text(
+                      meta,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: StudentDensityTokens.ink,
+                        fontSize: mobile ? 9 : 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -1437,12 +1536,14 @@ class _HomeFeatureCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.onTap,
+    this.compactMobile = false,
   });
 
   final IconData icon;
   final String title;
   final String description;
   final VoidCallback? onTap;
+  final bool compactMobile;
 
   /// 필요한 변수는 기능 아이콘·제목·설명과 이동 콜백이다.
   /// 작동 원리: HTML의 118px 기능 카드를 48px 아이콘과 우측 화살표의 3열 구조로 만든다.
@@ -1452,20 +1553,24 @@ class _HomeFeatureCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       onTap: onTap,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 118),
+        constraints: BoxConstraints(minHeight: compactMobile ? 92 : 118),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(compactMobile ? 16 : 20),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: compactMobile ? 56 : 48,
+                height: compactMobile ? 56 : 48,
                 decoration: BoxDecoration(
                   color: StudentDensityTokens.surfaceMuted,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: StudentDensityTokens.line),
                 ),
-                child: Icon(icon, color: StudentDensityTokens.ink, size: 24),
+                child: Icon(
+                  icon,
+                  color: StudentDensityTokens.ink,
+                  size: compactMobile ? 28 : 24,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1475,8 +1580,8 @@ class _HomeFeatureCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: compactMobile ? 19 : 16,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -1485,9 +1590,9 @@ class _HomeFeatureCard extends StatelessWidget {
                       description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: StudentDensityTokens.muted,
-                        fontSize: 12,
+                        fontSize: compactMobile ? 15 : 12,
                         height: 1.5,
                       ),
                     ),
@@ -1554,15 +1659,22 @@ class _InlineCta extends StatelessWidget {
 }
 
 class _LearnBanner extends StatelessWidget {
-  const _LearnBanner({this.onTap});
+  const _LearnBanner({this.onTap, this.portraitMobile = false});
   final VoidCallback? onTap;
+  final bool portraitMobile;
 
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(minHeight: mobile ? 118 : 150),
+      constraints: BoxConstraints(
+        minHeight: portraitMobile
+            ? 142
+            : mobile
+            ? 118
+            : 150,
+      ),
       decoration: BoxDecoration(
         color: StudentDensityTokens.darkSecondary,
         borderRadius: BorderRadius.circular(30),
@@ -1575,7 +1687,11 @@ class _LearnBanner extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: mobile ? 20 : 28,
-              vertical: mobile ? 17 : 24,
+              vertical: portraitMobile
+                  ? 22
+                  : mobile
+                  ? 17
+                  : 24,
             ),
             child: Row(
               children: [
@@ -1584,36 +1700,52 @@ class _LearnBanner extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const StudentDensityEyebrow(
-                        'LEARNING START',
-                        color: Color(0xFF9B9BA3),
-                      ),
-                      const SizedBox(height: 3),
+                      if (!portraitMobile) ...[
+                        const StudentDensityEyebrow(
+                          'LEARNING START',
+                          color: Color(0xFF9B9BA3),
+                        ),
+                        const SizedBox(height: 3),
+                      ],
                       Text(
-                        '학습하기',
+                        portraitMobile ? '학습 시작' : '학습하기',
                         style: TextStyle(
-                          fontSize: mobile ? 26 : 38,
+                          fontSize: portraitMobile
+                              ? 36
+                              : mobile
+                              ? 26
+                              : 38,
                           height: 1.1,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 7),
-                      Text(
-                        '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFAFAFB6),
+                      if (!portraitMobile) ...[
+                        const SizedBox(height: 7),
+                        const Text(
+                          '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFAFAFB6),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(width: 18),
                 Container(
-                  width: mobile ? 56 : 58,
-                  height: mobile ? 56 : 58,
+                  width: portraitMobile
+                      ? 68
+                      : mobile
+                      ? 56
+                      : 58,
+                  height: portraitMobile
+                      ? 68
+                      : mobile
+                      ? 56
+                      : 58,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),

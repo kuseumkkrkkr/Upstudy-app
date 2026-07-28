@@ -288,8 +288,25 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final compact = constraints.maxWidth < 1120;
+                      final portraitMobile =
+                          constraints.maxWidth < 720 &&
+                          MediaQuery.orientationOf(context) ==
+                              Orientation.portrait;
                       final graphPanel = _buildGraphPanel(isLinux: isLinux);
                       final editorPanel = _buildEditorPanel();
+
+                      if (portraitMobile) {
+                        return Column(
+                          children: [
+                            SizedBox(
+                              height: constraints.maxHeight * 0.48,
+                              child: graphPanel,
+                            ),
+                            const SizedBox(height: 12),
+                            Expanded(child: editorPanel),
+                          ],
+                        );
+                      }
 
                       if (compact) {
                         return ListView(
