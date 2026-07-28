@@ -141,14 +141,14 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 12),
         ],
-        const SizedBox(height: 28),
+        SizedBox(height: isAuthMobile(context) ? 16 : 28),
         TextFormField(
           controller: _idController,
           decoration: _authInputDecoration('아이디 또는 이메일'),
           validator: (value) =>
               (value == null || value.trim().isEmpty) ? '아이디를 입력하세요' : null,
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: isAuthMobile(context) ? 12 : 16),
         TextFormField(
           controller: _pwController,
           decoration: _authInputDecoration('비밀번호'),
@@ -156,9 +156,9 @@ class _LoginPageState extends State<LoginPage> {
           validator: (value) =>
               (value == null || value.isEmpty) ? '비밀번호를 입력하세요' : null,
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: isAuthMobile(context) ? 16 : 24),
         AuthPrimaryButton(label: '로그인', onPressed: _submit, loading: _loading),
-        const SizedBox(height: 18),
+        SizedBox(height: isAuthMobile(context) ? 12 : 18),
         const Row(
           children: [
             Expanded(child: Divider(color: Color(0xFFE5E5E7))),
@@ -172,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
             Expanded(child: Divider(color: Color(0xFFE5E5E7))),
           ],
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: isAuthMobile(context) ? 12 : 18),
         ElevatedButton.icon(
           onPressed: _loading ? null : _loginWithKakao,
           style: ElevatedButton.styleFrom(
@@ -198,7 +198,7 @@ class _LoginPageState extends State<LoginPage> {
           label: Text(_loading ? '' : '카카오로 계속하기'),
         ),
         if (showInlineSignup) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: isAuthMobile(context) ? 10 : 12),
           TextButton(
             onPressed: _loading
                 ? null
@@ -218,7 +218,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             child: const Text('처음 오셨나요? 회원가입'),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isAuthMobile(context) ? 0 : 12),
         ],
       ],
     );
@@ -230,7 +230,7 @@ class _LoginPageState extends State<LoginPage> {
       authInputDecoration(label);
 
   /// 필요한 변수는 로그인 폼과 현재 화면 폭입니다.
-  /// 작동 원리는 데스크톱에서 안내와 폼을 2열로, 모바일에서는 읽기 순서대로 1열로 배치하는 것입니다.
+  /// 작동 원리는 데스크톱에서 안내와 폼을 2열로, 모바일에서는 한 화면에 들어가는 단일 로그인 카드로 배치하는 것입니다.
   Widget _buildLoginLayout(BuildContext context, Widget form) {
     final mobile = isAuthMobile(context);
     final story = Container(
@@ -243,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
           bottomLeft: Radius.circular(mobile ? 0 : 32),
         ),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -259,73 +259,98 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
-          SizedBox(height: 46),
+          SizedBox(height: mobile ? 28 : 46),
           Text(
-            'WELCOME BACK',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 10,
-              letterSpacing: 1.6,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          SizedBox(height: 14),
-          Text(
-            '멈춘 곳에서\n다시 시작해요.',
+            mobile ? '다시 시작해요.' : '멈춘 곳에서\n다시 시작해요.',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 48,
+              fontSize: mobile ? 32 : 48,
               height: 1.02,
-              letterSpacing: -2.2,
+              letterSpacing: mobile ? -1.6 : -2.2,
               fontWeight: FontWeight.w900,
             ),
           ),
-          SizedBox(height: 24),
-          Text(
-            '코스 진도, 필기, 복습 기록과 그룹 활동을\n안전하게 불러와 그대로 이어갑니다.',
-            style: TextStyle(color: Colors.white60, height: 1.6),
-          ),
-          SizedBox(height: 38),
-          _RestoreNotice(),
+          if (!mobile) ...[
+            SizedBox(height: 24),
+            Text(
+              '코스 진도, 필기, 복습 기록과 그룹 활동을\n안전하게 불러와 그대로 이어갑니다.',
+              style: TextStyle(color: Colors.white60, height: 1.6),
+            ),
+            SizedBox(height: 38),
+            _RestoreNotice(),
+          ],
         ],
       ),
     );
     final formCard = Container(
-      padding: EdgeInsets.all(mobile ? 24 : 52),
+      padding: EdgeInsets.all(mobile ? 20 : 52),
       decoration: BoxDecoration(
         color: AuthDesignTokens.surface,
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(mobile ? 0 : 32),
-          bottomLeft: Radius.circular(mobile ? 32 : 0),
-          bottomRight: const Radius.circular(32),
-        ),
+        borderRadius: mobile
+            ? BorderRadius.circular(28)
+            : const BorderRadius.only(
+                topRight: Radius.circular(32),
+                bottomRight: Radius.circular(32),
+              ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'STUDENT LOGIN',
-            style: TextStyle(
-              color: AuthDesignTokens.muted,
-              fontSize: 10,
-              letterSpacing: 1.5,
-              fontWeight: FontWeight.w900,
+          if (mobile) ...[
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AuthDesignTokens.ink,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: const Text(
+                    'A',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'AIFlow',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 30),
+            const SizedBox(height: 22),
+          ],
+          if (!mobile) ...[
+            const Text(
+              'STUDENT LOGIN',
+              style: TextStyle(
+                color: AuthDesignTokens.muted,
+                fontSize: 10,
+                letterSpacing: 1.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 30),
+          ],
           Text(
             '로그인',
             style: TextStyle(
-              fontSize: mobile ? 36 : 44,
+              fontSize: mobile ? 32 : 44,
               letterSpacing: -2,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 10),
-          const Text(
-            '아이디 또는 이메일로 로그인하세요.',
-            style: TextStyle(color: AuthDesignTokens.muted),
-          ),
+          if (!mobile) ...[
+            const SizedBox(height: 10),
+            const Text(
+              '아이디 또는 이메일로 로그인하세요.',
+              style: TextStyle(color: AuthDesignTokens.muted),
+            ),
+          ],
           form,
         ],
       ),
@@ -333,7 +358,7 @@ class _LoginPageState extends State<LoginPage> {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1180),
       child: mobile
-          ? Column(children: [story, formCard])
+          ? formCard
           : IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -431,35 +456,40 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     // 필요한 변수는 화면 크기와 로그인 폼이다.
-    // 작동 원리: 인증 전에는 데이터 조회용 앱 바·드로어를 만들지 않고,
-    // 세로 스크롤과 가로 제약으로 작은 화면의 RenderFlex 오버플로를 차단한다.
+    // 작동 원리: 모바일은 한 화면용으로 축약한 단일 카드를 스크롤 없이
+    // 중앙에 배치하고, 데스크톱만 긴 화면을 대비한 세로 스크롤을 사용한다.
     return Scaffold(
       backgroundColor: AuthDesignTokens.canvas,
       body: SafeArea(
         child: LayoutBuilder(
-          builder: (context, constraints) => ClipRect(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                isAuthMobile(context) ? 14 : 34,
-                isAuthMobile(context) ? 18 : 34,
-                isAuthMobile(context) ? 14 : 34,
-                40,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: AuthDesignTokens.contentMaxWidth,
-                    minWidth: 0,
-                    minHeight: (constraints.maxHeight - 58).clamp(
-                      0,
-                      double.infinity,
+          builder: (context, constraints) {
+            final mobile = isAuthMobile(context);
+            final content = _buildLoginLayout(context, form);
+            if (mobile) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Center(child: content),
+              );
+            }
+            return ClipRect(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(34, 34, 34, 40),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: AuthDesignTokens.contentMaxWidth,
+                      minWidth: 0,
+                      minHeight: (constraints.maxHeight - 58).clamp(
+                        0,
+                        double.infinity,
+                      ),
                     ),
+                    child: content,
                   ),
-                  child: _buildLoginLayout(context, form),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
