@@ -2,10 +2,7 @@ class ContentBlock {
   final String type;
   final String content;
 
-  const ContentBlock({
-    required this.type,
-    required this.content,
-  });
+  const ContentBlock({required this.type, required this.content});
 
   bool get isLatex {
     final normalized = type.toLowerCase();
@@ -115,10 +112,7 @@ List<ContentBlock> normalizeFlowBlocks(List<ContentBlock> blocks) {
   return normalized.isEmpty ? blocks : normalized;
 }
 
-List<ContentBlock> prependTextBlock(
-  List<ContentBlock> blocks,
-  String prefix,
-) {
+List<ContentBlock> prependTextBlock(List<ContentBlock> blocks, String prefix) {
   if (prefix.isEmpty) {
     return blocks;
   }
@@ -132,10 +126,7 @@ List<ContentBlock> prependTextBlock(
       ...blocks.skip(1),
     ];
   }
-  return [
-    ContentBlock(type: 'text', content: prefix),
-    ...blocks,
-  ];
+  return [ContentBlock(type: 'text', content: prefix), ...blocks];
 }
 
 String contentBlocksToPlainText(List<ContentBlock> blocks) {
@@ -278,5 +269,10 @@ int _indexOfUnescapedSingleDollar(String text, int start) {
 }
 
 String _unescapeText(String text) {
-  return text.replaceAll('\\\$', '\$');
+  // 필요한 변수는 서버가 문자열로 전달한 이스케이프 문자다.
+  // 작동 원리는 LaTeX 구분자 밖의 줄바꿈 표기를 실제 개행으로 복원해 `\n`이 화면에 노출되지 않게 하는 것이다.
+  return text
+      .replaceAll(r'\r\n', '\n')
+      .replaceAll(r'\n', '\n')
+      .replaceAll('\\\$', '\$');
 }

@@ -8,6 +8,8 @@ extension _MobileSolveStateView on _BuildpageWidgetState {
 
   Widget _buildMobileWritingSurface() => _renderMobileWritingSurface(this);
 
+  Widget _buildMobileToolbar() => _renderMobileToolbar(this);
+
   Widget _buildMobileQuickSolveCard() => _renderMobileQuickSolveCard(this);
 
   Widget _buildMobileQuickAnswerCard() => _renderMobileQuickAnswerCard(this);
@@ -16,81 +18,187 @@ extension _MobileSolveStateView on _BuildpageWidgetState {
 /// 필요한 변수는 현재 문제 카드, 세로 필기판, 하단 도구 모음이다.
 /// 작동 원리는 모바일에서 PC용 오버레이 캔버스를 제거하고 문제와 필기판을 세로 순서로 분리하는 것이다.
 Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
-  final title = state._hashTags.isEmpty
-      ? '오늘의 문제'
-      : state._hashTags.first.replaceFirst('#', '');
-  return GestureDetector(
-    onTap: () => FocusScope.of(state.context).unfocus(),
-    child: Scaffold(
-      backgroundColor: const Color(0xFFF6F6F4),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        titleSpacing: 8,
-        leading: IconButton(
-          tooltip: '문제 풀이 나가기',
-          onPressed: () => Navigator.of(state.context).maybePop(),
-          icon: const Icon(Icons.chevron_left_rounded),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-        actions: [
-          IconButton(
-            tooltip: '문제풀이 안내',
-            onPressed: state._showSolveInfo,
-            icon: const Icon(Icons.info_outline_rounded),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value:
-                (state._currentProblemIndex + 1) /
-                math.max(1, state._problemCount),
-            minHeight: 4,
-            color: Colors.black,
-            backgroundColor: const Color(0xFFE4E4E2),
+  final progress =
+      (state._currentProblemIndex + 1) / math.max(1, state._problemCount);
+  return Stack(
+    children: [
+      GestureDetector(
+        onTap: () => FocusScope.of(state.context).unfocus(),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF5F5F3),
+          body: SafeArea(
+            child: Column(
+              children: [
+                Container(
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 58,
+                        child: Row(
+                          children: [
+                            IconButton(
+                              tooltip: '문제 풀이 나가기',
+                              onPressed: () =>
+                                  Navigator.of(state.context).maybePop(),
+                              icon: const Icon(Icons.arrow_back_rounded),
+                            ),
+                            const SizedBox(width: 2),
+                            const Expanded(
+                              child: Text(
+                                '문제 풀이',
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  letterSpacing: -.6,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${state._currentProblemIndex + 1} / ${state._problemCount}',
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: '문제풀이 안내',
+                              onPressed: state._showSolveInfo,
+                              icon: const Icon(
+                                Icons.info_outline_rounded,
+                                size: 22,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 3,
+                        color: Colors.black,
+                        backgroundColor: const Color(0xFFE8E8E6),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+                    children: [
+                      state._buildMobileProblemCard(),
+                      const SizedBox(height: 12),
+                      if (state._mobileQuickSolve) ...[
+                        state._buildMobileQuickAnswerCard(),
+                        const SizedBox(height: 12),
+                        state._buildMobileQuickSolveCard(),
+                      ] else
+                        state._buildMobileWritingSurface(),
+                    ],
+                  ),
+                ),
+                state._buildMobileToolbar(),
+              ],
+            ),
           ),
         ),
       ),
-      body: SafeArea(
-        top: false,
-        child: Column(
+      if (state._questLoading) state._buildGenerationOverlay(),
+      if (!state._questLoading && state._hasPendingGeneration)
+        state._buildGenerationStatusBadge(),
+    ],
+  );
+}
+
+/// 필요한 변수는 현재 도구·선택 답·필기 획·제출 상태다.
+/// 작동 원리는 모바일 하단에 자주 쓰는 다섯 도구와 제출 버튼만 한 줄로 고정해 캔버스를 가리지 않는 것이다.
+Widget _renderMobileToolbar(_BuildpageWidgetState state) {
+  final options = state._currentQuestOptionBlocks();
+  final canSubmit = options.isNotEmpty
+      ? state._currentSelectedChoice() != null
+      : state._strokes.isNotEmpty || state._currentStroke != null;
+  final quickSteps = _mobileFlowStepsFor(state._currentQuest?['solves']);
+  final submit = state._mobileQuickSolve && quickSteps.isNotEmpty
+      ? state._handleMobileQuickSolve
+      : state._handleGrade;
+  return Material(
+    color: Colors.white,
+    elevation: 12,
+    shadowColor: Colors.black12,
+    child: SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        child: Row(
           children: [
+            if (!state._mobileQuickSolve) ...[
+              _MobileSolveTool(
+                icon: Icons.edit_rounded,
+                label: '펜',
+                active: state._toolMode == _ToolMode.pen,
+                onTap: () => state._setToolMode(_ToolMode.pen),
+              ),
+              _MobileSolveTool(
+                icon: Icons.auto_fix_off_rounded,
+                label: '지우개',
+                active: state._toolMode == _ToolMode.eraser,
+                onTap: () => state._setToolMode(_ToolMode.eraser),
+              ),
+              _MobileSolveTool(
+                icon: Icons.palette_outlined,
+                label: '색상',
+                indicatorColor: state._penColor,
+                onTap: state._openPenSettings,
+              ),
+              _MobileSolveTool(
+                icon: Icons.undo_rounded,
+                label: '되돌리기',
+                enabled: state._undoStack.isNotEmpty,
+                onTap: () {
+                  state._undo();
+                  state.setState(() {});
+                },
+              ),
+              _MobileSolveTool(
+                icon: Icons.delete_outline_rounded,
+                label: '지우기',
+                enabled:
+                    state._strokes.isNotEmpty || state._currentStroke != null,
+                onTap: () {
+                  state._clearAll();
+                  state.setState(() {});
+                },
+              ),
+              const SizedBox(width: 6),
+            ] else
+              const Spacer(),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
-                children: [
-                  state._buildMobileProblemCard(),
-                  const SizedBox(height: 14),
-                  if (state._mobileQuickSolve) ...[
-                    state._buildMobileQuickAnswerCard(),
-                    const SizedBox(height: 14),
-                    state._buildMobileQuickSolveCard(),
-                  ] else
-                    state._buildMobileWritingSurface(),
-                ],
+              flex: 2,
+              child: FilledButton.icon(
+                onPressed:
+                    state._analysisBusy ||
+                        state._hasPendingGeneration ||
+                        (!state._mobileQuickSolve && !canSubmit)
+                    ? null
+                    : submit,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(88, 48),
+                  backgroundColor: Colors.black,
+                  disabledBackgroundColor: const Color(0xFFD8D8D6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.check_rounded, size: 19),
+                label: Text(
+                  state._mobileQuickSolve ? '정답 확인' : '제출',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
             ),
-            if (!state._mobileQuickSolve) state._buildToolbar(),
           ],
         ),
       ),
-      floatingActionButton: state._hasPendingGeneration
-          ? null
-          : FloatingActionButton.extended(
-              onPressed:
-                  state._mobileQuickSolve &&
-                      _mobileFlowStepsFor(
-                        state._currentQuest?['solves'],
-                      ).isNotEmpty
-                  ? state._handleMobileQuickSolve
-                  : state._handleGrade,
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              label: Text(state._mobileQuickSolve ? '정답 확인' : '제출'),
-              icon: const Icon(Icons.check_rounded),
-            ),
     ),
   );
 }
@@ -144,24 +252,78 @@ Widget _renderMobileQuickAnswerCard(_BuildpageWidgetState state) {
 Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
   final blocks = state._currentQuestTitleBlocks();
   final options = state._currentQuestOptionBlocks();
-  return Card(
-    margin: EdgeInsets.zero,
-    elevation: 0,
-    color: Colors.white,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+  final tag = state._hashTags.isEmpty
+      ? null
+      : state._hashTags.first.replaceFirst('#', '');
+  return DecoratedBox(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFE7E7E4)),
+    ),
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+      padding: const EdgeInsets.fromLTRB(16, 15, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            '문제 ${state._currentProblemIndex + 1}',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+          Row(
+            children: [
+              Text(
+                '문제 ${state._currentProblemIndex + 1}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              if (tag != null) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    tag,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.black45, fontSize: 11),
+                  ),
+                ),
+              ] else
+                const Spacer(),
+              TextButton(
+                onPressed: state._showHint,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Text('힌트'),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          state._buildProblemPrompt(displayBlocks: blocks),
+          const SizedBox(height: 10),
+          if (state._questLoading)
+            const LinearProgressIndicator(minHeight: 2)
+          else if (state._questError != null)
+            Text(
+              state._questError!,
+              style: const TextStyle(color: Colors.redAccent),
+            )
+          else
+            ContentBlocksView(
+              blocks: blocks,
+              textStyle: const TextStyle(
+                fontSize: 20,
+                height: 1.4,
+                letterSpacing: -.35,
+                color: Color(0xFF202020),
+              ),
+              latexStyle: const TextStyle(
+                fontSize: 20,
+                height: 1.4,
+                color: Color(0xFF202020),
+              ),
+              inline: true,
+            ),
           if (options.isNotEmpty) ...[
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             state._buildOptionPreview(
               options,
               selectedIndex: state._currentSelectedChoice(),
@@ -176,58 +338,223 @@ Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
 /// 필요한 변수는 필기 획과 모바일 viewport다.
 /// 작동 원리는 필기 영역을 문제 카드와 분리하고 항상 세로 스크롤을 허용해 긴 풀이 중간의 입력 단절 구간을 없애는 것이다.
 Widget _renderMobileWritingSurface(_BuildpageWidgetState state) {
-  return SizedBox(
-    height: 520,
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: Stack(
+  return DecoratedBox(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFE7E7E4)),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Positioned.fill(child: ColoredBox(color: Colors.white)),
-          Positioned.fill(
-            child: Listener(
-              behavior: HitTestBehavior.opaque,
-              onPointerDown: (event) => state._handlePointerDown(event, 1),
-              onPointerMove: (event) => state._handlePointerMove(event, 1),
-              onPointerUp: state._handlePointerUp,
-              onPointerCancel: state._handlePointerCancel,
-              child: ValueListenableBuilder<int>(
-                valueListenable: state._paintVersion,
-                builder: (context, _, __) => CustomPaint(
-                  painter: _StrokePainter(
-                    strokes: state._strokes,
-                    currentStroke: state._currentStroke,
-                    eraserPosition: state._eraserActive
-                        ? state._eraserPosition
-                        : null,
-                    eraserRadius: _BuildpageWidgetState._eraserRadius,
-                    scale: 1,
-                    logicalSize: const Size(
-                      _BuildpageWidgetState._baseWidth,
-                      520,
-                    ),
-                    backgroundColor: Colors.transparent,
-                    repaint: state._paintVersion,
-                  ),
+          const Row(
+            children: [
+              Icon(Icons.draw_outlined, size: 18),
+              SizedBox(width: 7),
+              Text(
+                '풀이 노트',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+              ),
+              Spacer(),
+              Text(
+                '손가락이나 펜으로 작성',
+                style: TextStyle(color: Colors.black38, fontSize: 10),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(13),
+            child: AspectRatio(
+              aspectRatio:
+                  _BuildpageWidgetState._baseWidth /
+                  _BuildpageWidgetState._baseHeight,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final scale =
+                      constraints.maxWidth / _BuildpageWidgetState._baseWidth;
+                  return Stack(
+                    children: [
+                      Positioned.fill(
+                        child: state._noteLinesEnabled
+                            ? CustomPaint(
+                                painter: _NotebookPaperPainter(
+                                  lineStartY:
+                                      _BuildpageWidgetState._noteLineStartY *
+                                      scale,
+                                  lineSpacing:
+                                      _BuildpageWidgetState._noteLineSpacing *
+                                      scale,
+                                  leftMargin:
+                                      _BuildpageWidgetState._noteLeftMargin *
+                                      scale,
+                                ),
+                              )
+                            : const ColoredBox(color: Colors.white),
+                      ),
+                      Positioned.fill(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onPanStart: (details) {
+                            final position = state._toLogicalPosition(
+                              details.localPosition,
+                              scale,
+                            );
+                            state._ensureClockRunning();
+                            if (state._toolMode == _ToolMode.pen) {
+                              state._startStroke(position, 1);
+                            } else {
+                              state._startEraser(position);
+                            }
+                          },
+                          onPanUpdate: (details) {
+                            final position = state._toLogicalPosition(
+                              details.localPosition,
+                              scale,
+                            );
+                            if (!state._withinCanvas(position)) return;
+                            if (state._toolMode == _ToolMode.pen) {
+                              state._appendStroke(position, 1);
+                            } else {
+                              state._updateEraser(position);
+                            }
+                          },
+                          onPanEnd: (_) {
+                            if (state._toolMode == _ToolMode.pen) {
+                              state._finishStroke();
+                            } else {
+                              state._finishEraser();
+                            }
+                            state.setState(() {});
+                          },
+                          onPanCancel: () {
+                            if (state._toolMode == _ToolMode.pen) {
+                              state._finishStroke();
+                            } else {
+                              state._finishEraser();
+                            }
+                            state.setState(() {});
+                          },
+                          child: ValueListenableBuilder<int>(
+                            valueListenable: state._paintVersion,
+                            builder: (context, _, __) => CustomPaint(
+                              painter: _StrokePainter(
+                                strokes: state._strokes,
+                                currentStroke: state._currentStroke,
+                                eraserPosition: state._eraserActive
+                                    ? state._eraserPosition
+                                    : null,
+                                eraserRadius:
+                                    _BuildpageWidgetState._eraserRadius,
+                                scale: scale,
+                                logicalSize: const Size(
+                                  _BuildpageWidgetState._baseWidth,
+                                  _BuildpageWidgetState._baseHeight,
+                                ),
+                                backgroundColor: Colors.transparent,
+                                repaint: state._paintVersion,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (state._strokes.isEmpty &&
+                          state._currentStroke == null)
+                        const Positioned(
+                          left: 14,
+                          top: 12,
+                          child: IgnorePointer(
+                            child: Text(
+                              '여기에 풀이를 적어보세요',
+                              style: TextStyle(
+                                color: Colors.black26,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MobileSolveTool extends StatelessWidget {
+  const _MobileSolveTool({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+    this.enabled = true,
+    this.indicatorColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool active;
+  final bool enabled;
+  final Color? indicatorColor;
+
+  /// 필요한 변수는 도구 아이콘·활성 상태·동작 콜백이다.
+  /// 작동 원리는 좁은 하단 바에서 최소 44px 터치 영역과 현재 선택 상태를 함께 제공하는 것이다.
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 45,
+    height: 48,
+    child: InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(12),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: active ? const Color(0xFFEEEEEC) : Colors.transparent,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(
+              icon,
+              size: 21,
+              color: enabled ? Colors.black : Colors.black26,
+            ),
+          ),
+          if (indicatorColor != null)
+            Positioned(
+              right: 6,
+              bottom: 5,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: indicatorColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
                 ),
               ),
             ),
-          ),
-          IgnorePointer(
-            child: CustomPaint(
-              painter: _NotebookPaperPainter(
-                lineStartY: _BuildpageWidgetState._noteLineStartY,
-                lineSpacing: _BuildpageWidgetState._noteLineSpacing,
-                leftMargin: _BuildpageWidgetState._noteLeftMargin,
+          Positioned(
+            bottom: 0,
+            child: ExcludeSemantics(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: enabled ? Colors.black54 : Colors.black26,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              size: Size.infinite,
-            ),
-          ),
-          const Positioned(
-            left: 18,
-            top: 14,
-            child: Text(
-              '여기에 풀이를 적어보세요',
-              style: TextStyle(color: Colors.black38),
             ),
           ),
         ],
