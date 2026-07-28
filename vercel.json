@@ -5,6 +5,11 @@
     "api/index.py": { "maxDuration": 30 }
   },
   "routes": [
-    { "src": "/(.*)", "dest": "/api/index.py" }
+    { "handle": "filesystem" },
+    {
+      "src": "/(health|auth|user|account|rating|arena|weakness|history|courses|academy|challenges|marketplace|analysis|social|textbooks|quests|exams|serverchat|api)(/.*)?",
+      "dest": "/api/index.py"
+    },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

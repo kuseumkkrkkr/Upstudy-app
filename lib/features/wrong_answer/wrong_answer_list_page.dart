@@ -273,6 +273,7 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
   Widget build(BuildContext context) {
     final pending = _items.where((item) => !item.done).length;
     final completed = _items.where((item) => item.done).length;
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
       key: const ValueKey('wrong-answers-screen'),
       backgroundColor: StudentDensityTokens.background,
@@ -294,66 +295,82 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
             Expanded(
               child: SingleChildScrollView(
                 child: StudentDensityPage(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _ReviewHeading(
-                        onStart: () => _showReviewAction('맞춤 복습 시작', null),
-                      ),
-                      const SizedBox(height: 16),
-                      _ReviewHero(
-                        pendingCount: pending,
-                        completedCount: completed,
-                        weaknessTags: _weaknessTags,
-                        onStart: () => _showReviewAction('6문제 이어서 풀기', null),
-                      ),
-                      const SizedBox(height: 14),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final mobile = constraints.maxWidth <= 780;
-                          final list = _loading
-                              ? const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(36),
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                )
-                              : _error != null
-                              ? _ReviewError(message: _error!, onRetry: _load)
-                              : _ReviewList(
-                                  items: _visibleItems,
-                                  filter: _filter,
-                                  onFilter: (value) =>
-                                      setState(() => _filter = value),
-                                  latestFirst: _latestFirst,
-                                  onSort: () => setState(
-                                    () => _latestFirst = !_latestFirst,
-                                  ),
-                                  onAction: _showReviewAction,
+                  child: mobile
+                      ? _MobileReviewContent(
+                          loading: _loading,
+                          hasLoadError: _error != null,
+                          items: _visibleItems,
+                          pendingCount: pending,
+                          completedCount: completed,
+                          weaknessTags: _weaknessTags,
+                          filter: _filter,
+                          latestFirst: _latestFirst,
+                          onFilter: (value) => setState(() => _filter = value),
+                          onSort: () =>
+                              setState(() => _latestFirst = !_latestFirst),
+                          onRetry: _load,
+                          onAction: _showReviewAction,
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _ReviewHeading(
+                              onStart: () =>
+                                  _showReviewAction('맞춤 복습 시작', null),
+                            ),
+                            const SizedBox(height: 16),
+                            _ReviewHero(
+                              pendingCount: pending,
+                              completedCount: completed,
+                              weaknessTags: _weaknessTags,
+                              onStart: () =>
+                                  _showReviewAction('6문제 이어서 풀기', null),
+                            ),
+                            const SizedBox(height: 14),
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final mobile = constraints.maxWidth <= 780;
+                                final list = _loading
+                                    ? const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(36),
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      )
+                                    : _ReviewList(
+                                        items: _visibleItems,
+                                        filter: _filter,
+                                        onFilter: (value) =>
+                                            setState(() => _filter = value),
+                                        latestFirst: _latestFirst,
+                                        onSort: () => setState(
+                                          () => _latestFirst = !_latestFirst,
+                                        ),
+                                        onAction: _showReviewAction,
+                                      );
+                                final side = _WeakPoints(tags: _weaknessTags);
+                                if (mobile) {
+                                  return Column(
+                                    children: [
+                                      list,
+                                      const SizedBox(height: 14),
+                                      side,
+                                    ],
+                                  );
+                                }
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(flex: 7, child: list),
+                                    const SizedBox(width: 14),
+                                    Expanded(flex: 3, child: side),
+                                  ],
                                 );
-                          final side = _WeakPoints(tags: _weaknessTags);
-                          if (mobile) {
-                            return Column(
-                              children: [
-                                list,
-                                const SizedBox(height: 14),
-                                side,
-                              ],
-                            );
-                          }
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(flex: 7, child: list),
-                              const SizedBox(width: 14),
-                              Expanded(flex: 3, child: side),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
+                              },
+                            ),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -362,6 +379,429 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
       ),
     );
   }
+}
+
+class _MobileReviewContent extends StatelessWidget {
+  const _MobileReviewContent({
+    required this.loading,
+    required this.hasLoadError,
+    required this.items,
+    required this.pendingCount,
+    required this.completedCount,
+    required this.weaknessTags,
+    required this.filter,
+    required this.latestFirst,
+    required this.onFilter,
+    required this.onSort,
+    required this.onRetry,
+    required this.onAction,
+  });
+
+  final bool loading;
+  final bool hasLoadError;
+  final List<_ReviewItem> items;
+  final int pendingCount;
+  final int completedCount;
+  final List<WeaknessTag> weaknessTags;
+  final String filter;
+  final bool latestFirst;
+  final ValueChanged<String> onFilter;
+  final VoidCallback onSort;
+  final VoidCallback onRetry;
+  final void Function(String, _ReviewItem?) onAction;
+
+  /// 필요한 변수는 복습 수치·필터·서버 상태·화면 동작 콜백이다.
+  /// 작동 원리는 모바일에서 핵심 행동과 문제 목록만 한 열로 보여 주고, 빈 약점 카드처럼 불필요한 정보는 숨기는 것이다.
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const SizedBox(height: 8),
+      const StudentDensityEyebrow('REVIEW'),
+      const SizedBox(height: 8),
+      const Text(
+        '오늘 복습',
+        style: TextStyle(
+          color: StudentDensityTokens.ink,
+          fontSize: 30,
+          height: 1.05,
+          letterSpacing: -1.4,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        '틀린 문제 중 지금 다시 볼 것만 모았어요.',
+        style: TextStyle(
+          color: StudentDensityTokens.muted,
+          fontSize: 13,
+          height: 1.45,
+        ),
+      ),
+      const SizedBox(height: 20),
+      _MobileReviewSummary(
+        pendingCount: pendingCount,
+        completedCount: completedCount,
+        onStart: () => onAction('맞춤 복습 시작', null),
+      ),
+      if (hasLoadError) ...[
+        const SizedBox(height: 10),
+        _MobileLoadNotice(onRetry: onRetry),
+      ],
+      const SizedBox(height: 28),
+      Row(
+        children: [
+          const Expanded(
+            child: Text(
+              '다시 볼 문제',
+              style: TextStyle(
+                fontSize: 20,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          Text(
+            '${items.length}개',
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 14),
+      _MobileReviewFilters(
+        filter: filter,
+        latestFirst: latestFirst,
+        onFilter: onFilter,
+        onSort: onSort,
+      ),
+      const SizedBox(height: 14),
+      if (loading)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 52),
+          child: Center(child: CircularProgressIndicator()),
+        )
+      else if (items.isEmpty)
+        const _MobileReviewEmpty()
+      else
+        for (var index = 0; index < items.length; index++) ...[
+          _MobileReviewRow(item: items[index], onAction: onAction),
+          if (index != items.length - 1) const SizedBox(height: 10),
+        ],
+      if (weaknessTags.isNotEmpty) ...[
+        const SizedBox(height: 28),
+        _MobileWeakPoints(tags: weaknessTags),
+      ],
+      const SizedBox(height: 32),
+    ],
+  );
+}
+
+class _MobileReviewSummary extends StatelessWidget {
+  const _MobileReviewSummary({
+    required this.pendingCount,
+    required this.completedCount,
+    required this.onStart,
+  });
+
+  final int pendingCount;
+  final int completedCount;
+  final VoidCallback onStart;
+
+  /// 필요한 변수는 대기·완료 문제 수와 시작 콜백이다.
+  /// 작동 원리는 큰 원형 그래프와 삼단 지표를 제거하고 오늘 할 일과 단일 행동만 압축해 보여 주는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final hasPending = pendingCount > 0;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.dark,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white12,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  hasPending ? '오늘 $pendingCount문제' : '오늘 완료',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (completedCount > 0)
+                Text(
+                  '$completedCount문제 완료',
+                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            hasPending ? '$pendingCount문제만 다시 보면 돼요.' : '지금은 복습할 문제가 없어요.',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              height: 1.12,
+              letterSpacing: -1.2,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasPending ? '최근 오답부터 짧게 끝내보세요.' : '문제를 풀면 틀린 문항이 여기에 자동으로 모여요.',
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+          if (hasPending) ...[
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: onStart,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                backgroundColor: Colors.white,
+                foregroundColor: StudentDensityTokens.ink,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text(
+                '복습 시작',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileLoadNotice extends StatelessWidget {
+  const _MobileLoadNotice({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  /// 필요한 변수는 API 재요청 콜백이다.
+  /// 작동 원리는 별도 오류 카드를 만들지 않고 목록 상단의 작은 상태 행에서 재시도만 제공하는 것이다.
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      const Expanded(
+        child: Text(
+          '최신 복습 기록을 확인하지 못했어요.',
+          style: TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
+        ),
+      ),
+      TextButton(onPressed: onRetry, child: const Text('다시 불러오기')),
+    ],
+  );
+}
+
+class _MobileReviewFilters extends StatelessWidget {
+  const _MobileReviewFilters({
+    required this.filter,
+    required this.latestFirst,
+    required this.onFilter,
+    required this.onSort,
+  });
+
+  final String filter;
+  final bool latestFirst;
+  final ValueChanged<String> onFilter;
+  final VoidCallback onSort;
+
+  /// 필요한 변수는 선택 필터·정렬 상태와 변경 콜백이다.
+  /// 작동 원리는 한 줄 가로 스크롤 칩으로 줄바꿈을 막아 세로 공간을 절약하는 것이다.
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Row(
+      children: [
+        for (final value in const ['전체', '최근 오답', '반복 오답', '완료']) ...[
+          ChoiceChip(
+            label: Text(value),
+            selected: filter == value,
+            onSelected: (_) => onFilter(value),
+            selectedColor: StudentDensityTokens.dark,
+            labelStyle: TextStyle(
+              color: filter == value ? Colors.white : StudentDensityTokens.ink,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+            side: const BorderSide(color: StudentDensityTokens.line),
+            showCheckmark: false,
+          ),
+          const SizedBox(width: 6),
+        ],
+        ActionChip(
+          label: Text(latestFirst ? '최신순' : '오래된순'),
+          avatar: const Icon(Icons.swap_vert_rounded, size: 16),
+          onPressed: onSort,
+          side: const BorderSide(color: StudentDensityTokens.line),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MobileReviewEmpty extends StatelessWidget {
+  const _MobileReviewEmpty();
+
+  /// 필요한 변수는 없다.
+  /// 작동 원리는 오류처럼 보이는 큰 카드 대신 여백과 짧은 안내로 정상적인 빈 상태를 표현하는 것이다.
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 42, horizontal: 20),
+    child: Column(
+      children: [
+        Icon(
+          Icons.check_circle_outline_rounded,
+          color: StudentDensityTokens.muted,
+          size: 32,
+        ),
+        SizedBox(height: 12),
+        Text(
+          '지금 다시 볼 문제가 없어요.',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+        ),
+        SizedBox(height: 6),
+        Text(
+          '새 오답이 생기면 이곳에서 바로 복습할 수 있어요.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MobileReviewRow extends StatelessWidget {
+  const _MobileReviewRow({required this.item, required this.onAction});
+
+  final _ReviewItem item;
+  final void Function(String, _ReviewItem?) onAction;
+
+  /// 필요한 변수는 복습 문제와 풀이 진입 콜백이다.
+  /// 작동 원리는 설명·보조 버튼을 줄이고 문제 제목, 오답 횟수, 주 행동만 터치 가능한 한 행에 배치하는 것이다.
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(18),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => onAction(item.done ? '한 번 더 풀기' : '다시 풀기', item),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: StudentDensityTokens.line),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: StudentDensityTokens.surfaceMuted,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                item.number,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.25,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '${item.attempts} · ${item.source}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right_rounded, size: 22),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _MobileWeakPoints extends StatelessWidget {
+  const _MobileWeakPoints({required this.tags});
+
+  final List<WeaknessTag> tags;
+
+  /// 필요한 변수는 누적 약점 태그다.
+  /// 작동 원리는 데이터가 있을 때만 상위 태그를 작은 칩으로 노출해 별도 대형 카드와 빈 안내를 없애는 것이다.
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        '먼저 볼 개념',
+        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 12),
+      Wrap(
+        spacing: 7,
+        runSpacing: 7,
+        children: [
+          for (final tag in tags.take(4))
+            Chip(
+              label: Text(tag.tag),
+              backgroundColor: StudentDensityTokens.surfaceMuted,
+              side: BorderSide.none,
+            ),
+        ],
+      ),
+    ],
+  );
 }
 
 class _ReviewHeading extends StatelessWidget {
@@ -904,23 +1344,4 @@ class _ReviewItem {
   final String attempts;
   final bool done;
   int get incorrectCount => int.tryParse(attempts.split('회').first) ?? 0;
-}
-
-class _ReviewError extends StatelessWidget {
-  const _ReviewError({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => StudentDensitySurface(
-    radius: 28,
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      children: [
-        Text(message),
-        const SizedBox(height: 12),
-        OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
-      ],
-    ),
-  );
 }
