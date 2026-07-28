@@ -28,6 +28,84 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 NAME_RE = re.compile(r"^[가-힣A-Za-z0-9 ]{1,20}$")
 
 
+def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
+    """필요 변수: 기본 코스 6종·난이도 5단계·확장판 15개 버전. 작동 원리: Vercel 시작 시 81개 코스를 한 번만 생성해 검색 요청마다 DB를 조회하지 않는다."""
+    base_courses = (
+        ("foundation", "공통수학 기초 완성", "다항식부터 지수까지 4단계 코스", "고1-2", "입문", 20, 900),
+        ("algebra", "대수 개념 연결", "방정식·수열·지수를 연결하는 3단계 코스", "고1-2", "중급", 15, 1200),
+        ("calculus", "미적분 I 실전 루트", "미분과 적분을 연결하는 2단계 코스", "고2-3", "중상", 10, 1500),
+        ("challenge", "상위권 복합 사고력", "복합 사고력을 단계별로 훈련하는 심화 코스", "고2-3", "심화", 20, 1800),
+        ("geometry", "좌표기하 연결 코스", "원과 직선을 연결하는 2단계 코스", "고1", "중급", 10, 1100),
+        ("mastery", "수학 전 범위 마스터 루트", "검수 문제로 구성한 5단계 종합 코스", "고1-3", "혼합", 25, 2200),
+    )
+    items: list[dict[str, Any]] = []
+    for rank, (slug, title, description, grade, difficulty, count, price) in enumerate(base_courses):
+        items.append(
+            {
+                "id": f"market-v2-course-{slug}",
+                "kind": "course",
+                "title": title,
+                "description": description,
+                "grade_band": grade,
+                "difficulty": difficulty,
+                "item_count": count,
+                "price_points": price,
+                "problem_ids": [],
+                "owned": False,
+                "featured_rank": 200 - rank,
+            }
+        )
+
+    tier_labels = {
+        1: ("개념 시작", "고1"),
+        2: ("기본 완성", "고1"),
+        3: ("유형 훈련", "고1-2"),
+        4: ("실전 심화", "고2-3"),
+        5: ("최상위 도전", "고2-3"),
+    }
+    version_labels = {
+        3: "",
+        4: "확장",
+        5: "유형 확장",
+        6: "실전",
+        7: "집중 훈련",
+        8: "응용",
+        9: "고난도",
+        10: "실전 완성",
+        11: "약점 보완",
+        12: "속도 훈련",
+        13: "정확도 훈련",
+        14: "내신 대비",
+        15: "모의 평가",
+        16: "파이널",
+        17: "마스터",
+    }
+    for version, suffix in version_labels.items():
+        for tier, (label, grade) in tier_labels.items():
+            title = f"난이도 {tier} · {label} 코스"
+            if suffix:
+                title = f"{title} · {suffix}"
+            items.append(
+                {
+                    "id": f"market-v2-course-tier-{tier}-v{version}",
+                    "kind": "course",
+                    "title": title,
+                    "description": f"난이도 {tier} 문제를 단계별로 학습하는 {suffix or '전용'} 코스",
+                    "grade_band": grade,
+                    "difficulty": f"난이도 {tier}",
+                    "item_count": 10,
+                    "price_points": 400 + version * 100 + tier * 200,
+                    "problem_ids": [],
+                    "owned": False,
+                    "featured_rank": 180 - version * 5 - tier,
+                }
+            )
+    return tuple(items)
+
+
+MARKETPLACE_CATALOG = _build_marketplace_catalog()
+
+
 class OcrJobRequest(BaseModel):
     """필요 변수: 처리 모드와 기존 분석 payload. 작동 원리: 추론 입력을 큐 행 하나로 제한한다."""
 
@@ -597,9 +675,47 @@ def get_daily_quests(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
 
 
 @app.get("/marketplace/listings")
-def list_marketplace_items(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
-    """필요 변수: 인증 사용자. 작동 원리: 마켓 원장 이관 전 빈 페이지 응답을 반환한다."""
-    return {"items": [], "total": 0, "next_offset": None}
+def list_marketplace_items(
+    query: str | None = None,
+    kind: str | None = None,
+    grade_band: str | None = None,
+    price: str | None = None,
+    offset: int = 0,
+    limit: int = 20,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 검색어·자료 유형·학년·가격·페이지 범위. 작동 원리: 메모리 상주 카탈로그를 필터링하고 최대 50개만 반환해 Vercel DB 부하를 만들지 않는다."""
+    normalized_query = (query or "").strip().casefold()
+    normalized_grade = (grade_band or "").replace(" ", "")
+    safe_offset = max(0, offset)
+    safe_limit = min(max(1, limit), 50)
+
+    def matches(item: dict[str, Any]) -> bool:
+        """필요 변수: 카탈로그 항목과 정규화된 검색 조건. 작동 원리: 제목·설명·학년·난이도를 한 번씩 비교해 일치 여부를 결정한다."""
+        if kind and item["kind"] != kind:
+            return False
+        if normalized_grade and normalized_grade not in str(item["grade_band"]).replace(" ", ""):
+            return False
+        if price == "free" and int(item["price_points"]) != 0:
+            return False
+        if price == "paid" and int(item["price_points"]) <= 0:
+            return False
+        searchable = " ".join(
+            str(item[field]) for field in ("title", "description", "grade_band", "difficulty")
+        ).casefold()
+        return not normalized_query or normalized_query in searchable
+
+    filtered = sorted(
+        (item for item in MARKETPLACE_CATALOG if matches(item)),
+        key=lambda item: (-int(item["featured_rank"]), str(item["title"])),
+    )
+    page = filtered[safe_offset : safe_offset + safe_limit]
+    next_offset = safe_offset + len(page)
+    return {
+        "items": page,
+        "total": len(filtered),
+        "next_offset": next_offset if next_offset < len(filtered) else None,
+    }
 
 
 @app.get("/marketplace/my-items")

@@ -42,7 +42,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('시험지 · 문제세트 · 코스 · 태그 검색'), findsOneWidget);
+    expect(find.byKey(const ValueKey('market-mobile-body')), findsOneWidget);
+    expect(find.byKey(const ValueKey('market-mobile-grid')), findsOneWidget);
+    expect(find.text('코스 · 시험지 검색'), findsOneWidget);
     expect(find.text('공통수학 기초 진단 A'), findsOneWidget);
     expect(find.text('다항식 기본기 5'), findsOneWidget);
     expect(find.text('공통수학 기초 완성'), findsOneWidget);

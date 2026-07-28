@@ -177,10 +177,37 @@ def test_new_user_dashboard_endpoints(monkeypatch):
             response = client.get(path, headers=headers)
             assert response.status_code == 200, path
             assert isinstance(response.json(), dict), path
-
         arena = client.get("/arena/summary", headers=headers).json()
         assert [item["queue_type"] for item in arena["queues"]] == [
             "duel_exam",
             "team_exam",
         ]
         assert all(item["coming_soon"] is True for item in arena["queues"])
+
+
+def test_marketplace_catalog_search_and_pagination(monkeypatch):
+    """필요 변수: 인증 사용자·코스 검색어·페이지 크기. 작동 원리: Vercel 카탈로그가 전체 81개와 검색·다음 페이지 계약을 실제로 반환하는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeAuthDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student05", "password": "password123", "name": "학생5", "grade": "1학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+
+        first_page = client.get("/marketplace/listings?kind=course&limit=20", headers=headers)
+        assert first_page.status_code == 200
+        assert first_page.json()["total"] == 81
+        assert len(first_page.json()["items"]) == 20
+        assert first_page.json()["next_offset"] == 20
+
+        searched = client.get(
+            "/marketplace/listings?kind=course&query=공통수학&grade_band=고1",
+            headers=headers,
+        )
+        assert searched.status_code == 200
+        assert searched.json()["total"] == 1
+        assert searched.json()["items"][0]["title"] == "공통수학 기초 완성"
