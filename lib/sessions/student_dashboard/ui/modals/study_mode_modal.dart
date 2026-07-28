@@ -46,14 +46,11 @@ class StudypageCopyWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width <= 780;
-    if (mobile) {
-      return _buildMobilePanel(context);
-    }
     return SizedBox(
-      width: 980,
-      height: 490,
+      width: mobile ? double.infinity : 980,
+      height: mobile ? double.infinity : 490,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(mobile ? 0 : 28),
         child: Material(
           color: const Color(0xFFF9F9FA),
           child: Column(
@@ -101,24 +98,35 @@ class StudypageCopyWidget extends StatelessWidget {
               const Divider(height: 1, color: Color(0xFFE4E4E6)),
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 38, 24, 20),
-                child: const Text(
-                  '기존 앱과 동일하게 학습 유형을 먼저 고른 뒤 해당 전체 화면으로 이동합니다.',
-                  style: TextStyle(color: Colors.black54, fontSize: 14),
+                child: Text(
+                  mobile
+                      ? '시작할 학습 유형을 선택하세요.'
+                      : '기존 앱과 동일하게 학습 유형을 먼저 고른 뒤 해당 전체 화면으로 이동합니다.',
+                  style: const TextStyle(color: Colors.black54, fontSize: 14),
                 ),
               ),
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 2.9,
-                  ),
-                  itemCount: _kModes.length,
-                  itemBuilder: (context, index) =>
-                      _buildModeCard(context, _kModes[index]),
-                ),
+                child: mobile
+                    ? ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+                        itemCount: _kModes.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) =>
+                            _buildModeCard(context, _kModes[index]),
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 2.9,
+                            ),
+                        itemCount: _kModes.length,
+                        itemBuilder: (context, index) =>
+                            _buildModeCard(context, _kModes[index]),
+                      ),
               ),
               const Divider(height: 1, color: Color(0xFFE4E4E6)),
               Padding(
@@ -133,82 +141,6 @@ class StudypageCopyWidget extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  /// 필요한 변수는 모바일 화면 context와 여섯 학습 모드다.
-  /// 작동 원리는 순백 바탕에 순흑 정보만 사용하고, 중복 하단 닫기를 제거한 압축 목록으로 모든 메뉴를 한 화면에서 빠르게 선택하게 하는 것이다.
-  Widget _buildMobilePanel(BuildContext context) {
-    return Material(
-      key: const ValueKey('study-mode-mobile-surface'),
-      color: Colors.white,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 18, 16),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      '학습하기',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 38,
-                        height: 1,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1.8,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 52,
-                    height: 52,
-                    child: IconButton(
-                      key: const ValueKey('study-mode-mobile-close'),
-                      tooltip: '닫기',
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: IconButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.black,
-                        padding: EdgeInsets.zero,
-                      ),
-                      icon: const Icon(Icons.close_rounded, size: 30),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 2, thickness: 2, color: Colors.black),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 18, 20, 14),
-              child: Text(
-                '무엇을 학습할까요?',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
-                ),
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                key: const ValueKey('study-mode-mobile-list'),
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                itemCount: _kModes.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) => _MobileModeCard(
-                  key: ValueKey('study-mode-mobile-${_kModes[index].label}'),
-                  mode: _kModes[index],
-                  onTap: _actionFor(context, _kModes[index].destination),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -365,87 +297,6 @@ class _ModeCard extends StatelessWidget {
             ),
             const Icon(Icons.chevron_right_rounded),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MobileModeCard extends StatelessWidget {
-  const _MobileModeCard({super.key, required this.mode, required this.onTap});
-
-  final _StudyMode mode;
-  final VoidCallback? onTap;
-
-  /// 필요한 변수는 학습 모드 정보와 선택 콜백이다.
-  /// 작동 원리는 52px 아이콘과 20px 제목을 순백·순흑 카드에 배치하고, 82px 이상의 터치 높이로 작은 모바일 화면에서도 오선택을 줄이는 것이다.
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: Colors.black, width: 1.5),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 82),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(mode.icon, size: 27, color: Colors.white),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        mode.label,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 20,
-                          height: 1.05,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.6,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        mode.description,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                          height: 1.1,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 28,
-                  color: Colors.black,
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
