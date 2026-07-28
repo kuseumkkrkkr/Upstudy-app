@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solve_analysis_page.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solve_debug_page.dart';
@@ -19,6 +20,7 @@ part '../session/build_page_widget.dart';
 part '../ui/widgets/ui_components.dart';
 part '../ui/widgets/painting.dart';
 part '../business/analysis.dart';
+part '../../../Mobiles/mobile_solve_view.dart';
 
 // Legacy aliases for backward compatibility
 typedef SharedFlowConfig = ProblemSolveConfig;

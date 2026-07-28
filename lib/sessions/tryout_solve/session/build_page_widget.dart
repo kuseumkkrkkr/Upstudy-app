@@ -33,6 +33,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   // Gemini prompt/model is handled on the server.
   static const HeatmapConfig _heatmapConfig = HeatmapConfig();
   static const bool _sendProblemImage = false;
+  static const String _mobileQuickSolveKey = 'settings.mobile_quick_solve';
 
   static const Color _penRed = Color(0xFFE53935);
   static const Color _penBlue = Color(0xFF1E88E5);
@@ -59,6 +60,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   // 필요 변수: 현재 풀이 화면 생명주기. 작동 원리: 네트워크 재시도에도 같은 제출 키를 재사용해 중복 레이팅을 방지한다.
   late final String _ratingSessionId;
   bool _continueLoaded = false;
+  bool _mobileQuickSolve = false;
+  int _mobileFlowNextIndex = 0;
 
   double _problemElapsedOffset = 0.0;
   int _nextStrokeId = 0;
@@ -107,6 +110,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     super.initState();
     _ratingSessionId = DateTime.now().microsecondsSinceEpoch.toString();
     _applyConfig(widget.config ?? const ProblemSolveConfig());
+    unawaited(_loadMobileQuickSolvePreference());
     _sessionClock.start();
     _scheduleSolveTimerTick(updateNow: true);
     if (_quests.whereType<Map<String, dynamic>>().isEmpty) {
@@ -128,6 +132,16 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   double get _logicalHeight => _scrollEnabled ? _expandedHeight : _baseHeight;
+
+  /// 필요한 변수는 기기별 모바일 간편풀이 저장값이다.
+  /// 작동 원리는 설정 화면과 풀이 화면이 같은 로컬 키를 공유해 네트워크 요청 없이 모드를 결정하는 것이다.
+  Future<void> _loadMobileQuickSolvePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(
+      () => _mobileQuickSolve = prefs.getBool(_mobileQuickSolveKey) ?? false,
+    );
+  }
 
   int get _generatedQuestCount =>
       _quests.whereType<Map<String, dynamic>>().length.clamp(0, _problemCount);
@@ -167,6 +181,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _hashTags = List<String>.from(config.hashTags);
     _gradeImmediately = config.gradeImmediately;
     _ratingEnabled = config.ratingEnabled;
+    _mobileQuickSolve = config.mobileQuickSolve;
+    _mobileFlowNextIndex = 0;
     final minTier = math
         .min(config.minDifficultyTier, config.maxDifficultyTier)
         .clamp(1, 5)
@@ -355,6 +371,76 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     });
   }
 
+  /// 필요한 변수는 현재 모바일 flow의 다음 순서와 문제 채점 카운터다.
+  /// 작동 원리는 flow 원장의 순서와 사용자의 선택을 비교해 틀린 단계는 거부하고, 마지막 단계에서 정답으로 기록하는 것이다.
+  void _selectMobileFlowStep(int index) {
+    final steps = _mobileFlowStepsFor(_currentQuest?['solves']);
+    if (steps.isEmpty || _mobileFlowNextIndex >= steps.length) return;
+    if (index != _mobileFlowNextIndex) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('풀이 흐름의 다음 단계를 선택해 주세요.')));
+      return;
+    }
+    setState(() => _mobileFlowNextIndex += 1);
+  }
+
+  /// 필요한 변수는 flow 단계, 현재 문제, 활동 저장소다.
+  /// 작동 원리는 모바일 간편풀이의 순서 검증을 기존 문제 완료 콜백과 활동 기록에 연결하는 것이다.
+  Future<void> _handleMobileQuickSolve() async {
+    final steps = _mobileFlowStepsFor(_currentQuest?['solves']);
+    if (steps.isEmpty || _mobileFlowNextIndex < steps.length) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('풀이 흐름을 순서대로 모두 선택해 주세요.')));
+      return;
+    }
+    if (_currentProblemIndex < _problemGraded.length &&
+        _problemGraded[_currentProblemIndex])
+      return;
+    final quest = _currentQuest;
+    final fingerprint = _problemFingerprint(quest, _currentProblemIndex);
+    if (_currentProblemIndex < _problemGraded.length) {
+      _problemGraded[_currentProblemIndex] = true;
+    }
+    _gradedCount += 1;
+    _correctCount += 1;
+    await widget.config?.onProblemGraded?.call(
+      itemIndex: _currentProblemIndex + 1,
+      quest: quest,
+      isCorrect: true,
+      stepCorrectness: const <Map<String, dynamic>>[],
+      selectedIndex: null,
+      elapsedSeconds: _sessionClock.elapsed.inSeconds,
+    );
+    try {
+      await ActivityStore.recordProblemSolve(
+        problemId: fingerprint,
+        problemNumber: fingerprint,
+        difficultyTier: _tierForProblemIndex(_currentProblemIndex),
+      );
+    } catch (_) {}
+    if (!mounted) return;
+    final hasNext = _currentProblemIndex < _problemCount - 1;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('정답'),
+        content: const Text('풀이 흐름을 올바른 순서로 완성했습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (hasNext) _goToNextProblem();
+            },
+            child: Text(hasNext ? '다음 문제' : '확인'),
+          ),
+        ],
+      ),
+    );
+    _completeCourseModuleIfNeeded();
+  }
+
   Future<void> _loadQuestsForTags() async {
     if (_hashTags.isEmpty) {
       setState(() {
@@ -480,6 +566,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   void _loadProblem(int index) {
+    _mobileFlowNextIndex = 0;
     final snapshot = _problemSnapshots[index];
     _strokes
       ..clear()
@@ -974,6 +1061,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width <= 600) return _buildMobileSolveScaffold();
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Stack(

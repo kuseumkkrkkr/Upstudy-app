@@ -27,10 +27,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   static const _notificationsKey = 'settings.notifications_enabled';
+  static const _mobileQuickSolveKey = 'settings.mobile_quick_solve';
 
   bool _loading = true;
   bool _notificationsEnabled = true;
   bool _textbookPageMode = false;
+  bool _mobileQuickSolve = false;
 
   @override
   void initState() {
@@ -49,10 +51,12 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_notificationsKey);
     final textbookPageMode = await TextbookReaderPreferences.loadPageMode();
+    final mobileQuickSolve = prefs.getBool(_mobileQuickSolveKey) ?? false;
     if (!mounted) return;
     setState(() {
       _notificationsEnabled = enabled ?? true;
       _textbookPageMode = textbookPageMode;
+      _mobileQuickSolve = mobileQuickSolve;
       _loading = false;
     });
   }
@@ -66,6 +70,14 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _setTextbookPageMode(bool value) async {
     setState(() => _textbookPageMode = value);
     await TextbookReaderPreferences.savePageMode(value);
+  }
+
+  /// 필요한 변수는 모바일 간편풀이 선택값이다.
+  /// 작동 원리는 기기 로컬 설정만 저장하고 다음 문제풀이 진입부터 즉시 적용하는 것이다.
+  Future<void> _setMobileQuickSolve(bool value) async {
+    setState(() => _mobileQuickSolve = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_mobileQuickSolveKey, value);
   }
 
   void _showLicenses() {
@@ -307,6 +319,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 16),
                   _SettingsPanel(
                     number: '02',
+                    title: '모바일 문제풀이',
+                    subtitle: '세로 모바일에서는 풀이 흐름을 순서대로 확인하는 간편풀이를 사용할 수 있습니다.',
+                    child: _settingTile(
+                      icon: Icons.route_outlined,
+                      title: '모바일 간편풀이',
+                      subtitle: _mobileQuickSolve
+                          ? '모바일에서 필기 대신 풀이 흐름을 표시합니다.'
+                          : '모바일에서도 일반 필기 풀이를 사용합니다.',
+                      trailing: Switch.adaptive(
+                        value: _mobileQuickSolve,
+                        onChanged: _setMobileQuickSolve,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _SettingsPanel(
+                    number: '03',
                     title: '알림',
                     subtitle: '멤버 모든 알림을 한 번에 켜거나 끕니다.',
                     child: _settingTile(
@@ -323,7 +352,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 16),
                   _SettingsPanel(
-                    number: '03',
+                    number: '04',
                     title: '앱 정보',
                     subtitle: 'AIFlow에 포함된 오픈소스 라이선스를 확인합니다.',
                     child: _settingTile(
@@ -447,6 +476,21 @@ class _SettingsPageState extends State<SettingsPage> {
       const SizedBox(height: 16),
       _SettingsPanel(
         number: '02',
+        title: '모바일 문제풀이',
+        subtitle: '세로 모바일에서 풀이 흐름을 순서대로 확인합니다.',
+        child: _settingTile(
+          icon: Icons.route_outlined,
+          title: '모바일 간편풀이',
+          subtitle: _mobileQuickSolve ? '모바일 간편풀이를 사용합니다.' : '일반 필기 풀이를 사용합니다.',
+          trailing: Switch.adaptive(
+            value: _mobileQuickSolve,
+            onChanged: _setMobileQuickSolve,
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      _SettingsPanel(
+        number: '03',
         title: '알림',
         subtitle: '앱의 모든 알림을 한 번에 켜거나 끕니다.',
         child: _settingTile(
@@ -463,7 +507,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       const SizedBox(height: 16),
       _SettingsPanel(
-        number: '03',
+        number: '04',
         title: '앱 정보',
         subtitle: 'AIFlow에 포함된 오픈소스 라이선스를 확인합니다.',
         child: _settingTile(
