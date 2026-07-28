@@ -2287,6 +2287,32 @@ class ApiClient {
         : const <Map<String, dynamic>>[];
   }
 
+  /// 필요한 변수는 보유 문제세트 ID다.
+  /// 작동 원리는 세트의 모든 문항을 단일 API 응답으로 받아 문항 수만큼
+  /// `/quests`를 순차 요청하던 대기 시간을 없애고 풀이 화면을 즉시 시작하는 것이다.
+  Future<List<Map<String, dynamic>>> loadMarketplaceProblemSetQuestions(
+    String listingId,
+  ) async {
+    final response = await _get<List<Map<String, dynamic>>>(
+      '/marketplace/my-items/${Uri.encodeComponent(listingId)}/questions',
+      parser: (data) {
+        final map = data is Map
+            ? Map<String, dynamic>.from(data)
+            : const <String, dynamic>{};
+        final rawItems = map['items'];
+        return rawItems is List
+            ? rawItems
+                  .whereType<Map>()
+                  .map((item) => Map<String, dynamic>.from(item))
+                  .toList(growable: false)
+            : const <Map<String, dynamic>>[];
+      },
+      useCache: true,
+      cacheTtl: const Duration(minutes: 5),
+    );
+    return response.data ?? const <Map<String, dynamic>>[];
+  }
+
   /// 필요한 변수는 구매할 공개 상품 ID다.
   /// 작동 원리는 서버에서 코인 차감과 보유 등록을 멱등 처리하고 갱신된 상품을 반환하는 것이다.
   Future<Map<String, dynamic>> purchaseMarketplaceListing(

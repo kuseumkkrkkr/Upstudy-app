@@ -34,6 +34,7 @@ class _OwnedMarketplaceModal extends StatefulWidget {
 
 class _OwnedMarketplaceModalState extends State<_OwnedMarketplaceModal> {
   late Future<List<Map<String, dynamic>>> _items;
+  String? _openingListingId;
 
   @override
   void initState() {
@@ -56,15 +57,19 @@ class _OwnedMarketplaceModalState extends State<_OwnedMarketplaceModal> {
   }
 
   /// 필요한 변수는 선택한 보유 자료의 메타데이터다.
-  /// 작동 원리는 유형에 맞는 풀이 화면으로 이동하고 문제세트는 완료 콜백으로 이수 상태를 저장하는 것이다.
+  /// 작동 원리는 문제세트 전체를 한 번에 받은 뒤 풀이 화면으로 이동하고,
+  /// 대기 중에는 같은 자료를 다시 선택하지 못하게 해 중복 요청을 막는 것이다.
   Future<void> _openItem(Map<String, dynamic> item) async {
     final listingId =
         item['listing_id']?.toString() ?? item['id']?.toString() ?? '';
+    if (listingId.isEmpty || _openingListingId != null) {
+      return;
+    }
     final navigator = Navigator.of(context, rootNavigator: true);
-    // 동일한 루트 Navigator로 모달을 닫고 풀이 화면을 push해야 웹에서도
-    // 모달 아래의 학습 화면이 잘못 pop되지 않는다.
-    navigator.pop(OwnedMarketplaceModalResult.itemOpened);
     if (widget.kind == 'exam') {
+      // 동일한 루트 Navigator로 모달을 닫고 풀이 화면을 push해야 웹에서도
+      // 모달 아래의 학습 화면이 잘못 pop되지 않는다.
+      navigator.pop(OwnedMarketplaceModalResult.itemOpened);
       navigator.push(
         MaterialPageRoute(
           builder: (_) => ExamPaperPage(
@@ -80,62 +85,68 @@ class _OwnedMarketplaceModalState extends State<_OwnedMarketplaceModal> {
       );
       return;
     }
-    final rawIds = item['problem_ids'];
-    final ids = rawIds is List
-        ? rawIds.map((id) => id.toString()).where((id) => id.isNotEmpty)
-        : const Iterable<String>.empty();
-    final quests = <Map<String, dynamic>>[];
-    for (final id in ids) {
-      try {
-        final result = await ApiClient.instance.searchQuests(
-          questId: id,
-          pageSize: 1,
+    setState(() => _openingListingId = listingId);
+    try {
+      final quests = await ApiClient.instance
+          .loadMarketplaceProblemSetQuestions(listingId);
+      if (!mounted) return;
+      if (quests.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('문제를 준비하지 못했습니다. 잠시 후 다시 시도해주세요.')),
         );
-        if (result.isNotEmpty) quests.add(result.first);
-      } catch (_) {
-        // 한 문제 조회 실패가 전체 보유 자료의 선택을 막지 않게 한다.
+        return;
       }
-    }
-    if (quests.isEmpty) return;
-    navigator.push(
-      MaterialPageRoute(
-        builder: (_) => BuildpageWidget(
-          config: ProblemSolveConfig(
-            questionCount: quests.length,
-            quests: quests,
-            ratingEnabled: false,
-            onComplete:
-                ({
-                  required correctCount,
-                  required totalCount,
-                  required passed,
-                  elapsedSeconds,
-                }) async {
-                  await ApiClient.instance.updateMarketplaceProgress(
-                    listingId: listingId,
-                    progressIndex: totalCount,
-                    completed: passed,
-                  );
-                },
-            onProblemGraded:
-                ({
-                  required itemIndex,
-                  required quest,
-                  required isCorrect,
-                  required stepCorrectness,
-                  selectedIndex,
-                  elapsedSeconds,
-                }) async {
-                  await ApiClient.instance.updateMarketplaceProgress(
-                    listingId: listingId,
-                    progressIndex: itemIndex + 1,
-                    completed: false,
-                  );
-                },
+      setState(() => _openingListingId = null);
+      navigator.pop(OwnedMarketplaceModalResult.itemOpened);
+      navigator.push(
+        MaterialPageRoute(
+          builder: (_) => BuildpageWidget(
+            config: ProblemSolveConfig(
+              questionCount: quests.length,
+              quests: quests,
+              ratingEnabled: false,
+              onComplete:
+                  ({
+                    required correctCount,
+                    required totalCount,
+                    required passed,
+                    elapsedSeconds,
+                  }) async {
+                    await ApiClient.instance.updateMarketplaceProgress(
+                      listingId: listingId,
+                      progressIndex: totalCount,
+                      completed: passed,
+                    );
+                  },
+              onProblemGraded:
+                  ({
+                    required itemIndex,
+                    required quest,
+                    required isCorrect,
+                    required stepCorrectness,
+                    selectedIndex,
+                    elapsedSeconds,
+                  }) async {
+                    await ApiClient.instance.updateMarketplaceProgress(
+                      listingId: listingId,
+                      progressIndex: itemIndex + 1,
+                      completed: false,
+                    );
+                  },
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('문제를 불러오지 못했습니다. 다시 시도해주세요.')),
+      );
+    } finally {
+      if (mounted && _openingListingId == listingId) {
+        setState(() => _openingListingId = null);
+      }
+    }
   }
 
   @override
@@ -178,7 +189,9 @@ class _OwnedMarketplaceModalState extends State<_OwnedMarketplaceModal> {
               final item = items[index];
               final completed = item['status']?.toString() == 'completed';
               return ListTile(
-                onTap: completed ? null : () => _openItem(item),
+                onTap: completed || _openingListingId != null
+                    ? null
+                    : () => _openItem(item),
                 tileColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
@@ -203,7 +216,15 @@ class _OwnedMarketplaceModalState extends State<_OwnedMarketplaceModal> {
                     fontWeight: completed ? FontWeight.w800 : FontWeight.w500,
                   ),
                 ),
-                trailing: completed
+                trailing:
+                    _openingListingId ==
+                        (item['listing_id']?.toString() ??
+                            item['id']?.toString())
+                    ? const SizedBox.square(
+                        dimension: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : completed
                     ? const Text(
                         '이수 완료',
                         style: TextStyle(fontWeight: FontWeight.w800),

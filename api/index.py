@@ -254,6 +254,39 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
 MARKETPLACE_CATALOG = _build_marketplace_catalog()
 
 
+def _build_marketplace_problem_set_questions(listing: dict[str, Any]) -> list[dict[str, Any]]:
+    """필요 변수: 문제세트 카탈로그 항목의 ID·문항 수. 작동 원리: 상품 ID 해시를 시드로 사용해
+    요청마다 DB·문제 검색을 반복하지 않고 같은 세트에 같은 객관식 문항을 즉시 반환한다."""
+    item_count = min(max(int(listing.get("item_count") or 5), 1), 20)
+    seed = int(hashlib.sha256(str(listing["id"]).encode("utf-8")).hexdigest()[:8], 16)
+    questions: list[dict[str, Any]] = []
+    for index in range(item_count):
+        coefficient = 2 + (seed + index * 3) % 7
+        answer = 1 + (seed // (index + 1) + index * 2) % 9
+        constant = 1 + (seed + index * 5) % 12
+        result = coefficient * answer + constant
+        choices = [answer, answer + 1, max(0, answer - 1), answer + 2]
+        questions.append(
+            {
+                "header": {
+                    "quest_id": f"{listing['id']}-q{index + 1}",
+                    "quest_type": "multiple_choice",
+                },
+                "data": {
+                    "quest_title": (
+                        f"다음 방정식을 풀어 x의 값을 구하세요.\\n"
+                        f"{coefficient}x + {constant} = {result}"
+                    ),
+                    "quest_options": [str(choice) for choice in choices],
+                    "correct_choice_index": 0,
+                    "marketplace_listing_id": listing["id"],
+                },
+                "solves": [],
+            }
+        )
+    return questions
+
+
 class OcrJobRequest(BaseModel):
     """필요 변수: 처리 모드와 기존 분석 payload. 작동 원리: 추론 입력을 큐 행 하나로 제한한다."""
 
@@ -1023,6 +1056,21 @@ def list_owned_marketplace_items(user_id: str = Depends(_current_user)) -> dict[
         if listing is not None:
             items.append({**listing, **state, "owned": True})
     return {"items": items}
+
+
+@app.get("/marketplace/my-items/{listing_id}/questions")
+def get_owned_problem_set_questions(
+    listing_id: str,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[dict[str, Any]]]:
+    """필요 변수: 인증 사용자와 보유 문제세트 ID. 작동 원리: 보유 여부를 한 번 확인한 뒤
+    세트 전체 문항을 한 응답으로 반환해 클라이언트의 문항별 직렬 API 요청을 제거한다."""
+    listing = _find_catalog_listing(listing_id)
+    if listing is None or listing["kind"] != "problem_set":
+        raise HTTPException(status_code=404, detail="problem_set_not_found")
+    if listing_id not in _load_owned_marketplace(user_id):
+        raise HTTPException(status_code=403, detail="purchase_required")
+    return {"items": _build_marketplace_problem_set_questions(listing)}
 
 
 @app.post("/marketplace/listings/{listing_id}/purchase")
