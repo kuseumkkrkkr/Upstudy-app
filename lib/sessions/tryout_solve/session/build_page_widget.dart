@@ -61,6 +61,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   late final String _ratingSessionId;
   bool _continueLoaded = false;
   bool _mobileQuickSolve = false;
+  bool _mobileNoteExpanded = false;
   int _mobileFlowNextIndex = 0;
 
   double _problemElapsedOffset = 0.0;
@@ -182,6 +183,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _gradeImmediately = config.gradeImmediately;
     _ratingEnabled = config.ratingEnabled;
     _mobileQuickSolve = config.mobileQuickSolve;
+    _mobileNoteExpanded = false;
     _mobileFlowNextIndex = 0;
     final minTier = math
         .min(config.minDifficultyTier, config.maxDifficultyTier)
@@ -613,9 +615,16 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _saveCurrentProblem();
     setState(() {
       _continueLoaded = false;
+      _mobileNoteExpanded = false;
       _currentProblemIndex = index;
       _loadProblem(index);
     });
+  }
+
+  /// 필요한 변수는 모바일 객관식의 풀이 노트 표시 상태다.
+  /// 작동 원리는 문제·보기를 우선 노출하고 사용자가 필요할 때만 필기판과 도구를 펼치는 것이다.
+  void _toggleMobileNote() {
+    setState(() => _mobileNoteExpanded = !_mobileNoteExpanded);
   }
 
   void _goToNextProblem() => _goToProblem(_currentProblemIndex + 1);
@@ -1838,7 +1847,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
             : (constraints.maxWidth - 10) / 2;
         return Wrap(
           spacing: 10,
-          runSpacing: 10,
+          runSpacing: compact ? 8 : 10,
           children: List.generate(options.length, (index) {
             final isSelected = selectedIndex == index;
             final textColor = isSelected
@@ -1849,7 +1858,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
               child: Material(
                 color: isSelected ? const Color(0xFFF3F3F4) : Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(compact ? 12 : 14),
                   side: BorderSide(
                     color: isSelected ? Colors.black : const Color(0xFFDADADD),
                     width: isSelected ? 2 : 1,
@@ -1859,9 +1868,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                 child: InkWell(
                   onTap: () => _toggleChoice(index),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 12,
+                      vertical: compact ? 9 : 12,
                     ),
                     child: Row(
                       children: [

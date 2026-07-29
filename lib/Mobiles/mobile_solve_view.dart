@@ -20,6 +20,9 @@ extension _MobileSolveStateView on _BuildpageWidgetState {
 Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
   final progress =
       (state._currentProblemIndex + 1) / math.max(1, state._problemCount);
+  final hasOptions = state._currentQuestOptionBlocks().isNotEmpty;
+  final showWritingSurface =
+      !state._mobileQuickSolve && (!hasOptions || state._mobileNoteExpanded);
   return Stack(
     children: [
       GestureDetector(
@@ -84,16 +87,20 @@ Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
                 ),
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
                     children: [
                       state._buildMobileProblemCard(),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       if (state._mobileQuickSolve) ...[
                         state._buildMobileQuickAnswerCard(),
                         const SizedBox(height: 12),
                         state._buildMobileQuickSolveCard(),
-                      ] else
+                      ] else if (showWritingSurface)
                         state._buildMobileWritingSurface(),
+                      if (!state._mobileQuickSolve &&
+                          hasOptions &&
+                          !showWritingSurface)
+                        _renderMobileNoteLauncher(state),
                     ],
                   ),
                 ),
@@ -111,9 +118,13 @@ Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
 }
 
 /// 필요한 변수는 현재 도구·선택 답·필기 획·제출 상태다.
-/// 작동 원리는 모바일 하단에 자주 쓰는 다섯 도구와 제출 버튼만 한 줄로 고정해 캔버스를 가리지 않는 것이다.
+/// 작동 원리는 접힌 객관식에서는 노트·제출만, 필기판을 펼치면 편집 도구까지
+/// 한 줄에 보여 답 선택과 필기 작업의 우선순위를 분리하는 것이다.
 Widget _renderMobileToolbar(_BuildpageWidgetState state) {
   final options = state._currentQuestOptionBlocks();
+  final showWritingTools =
+      !state._mobileQuickSolve &&
+      (options.isEmpty || state._mobileNoteExpanded);
   final canSubmit = options.isNotEmpty
       ? state._currentSelectedChoice() != null
       : state._strokes.isNotEmpty || state._currentStroke != null;
@@ -131,7 +142,7 @@ Widget _renderMobileToolbar(_BuildpageWidgetState state) {
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         child: Row(
           children: [
-            if (!state._mobileQuickSolve) ...[
+            if (showWritingTools) ...[
               _MobileSolveTool(
                 icon: Icons.edit_rounded,
                 label: '펜',
@@ -170,6 +181,26 @@ Widget _renderMobileToolbar(_BuildpageWidgetState state) {
                 },
               ),
               const SizedBox(width: 6),
+            ] else if (!state._mobileQuickSolve) ...[
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: state._toggleMobileNote,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(96, 48),
+                    foregroundColor: Colors.black,
+                    side: const BorderSide(color: Color(0xFFD8D8D6)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.draw_outlined, size: 19),
+                  label: const Text(
+                    '풀이 노트',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
             ] else
               const Spacer(),
             Expanded(
@@ -248,7 +279,8 @@ Widget _renderMobileQuickAnswerCard(_BuildpageWidgetState state) {
 }
 
 /// 필요한 변수는 현재 문제의 본문과 선택지다.
-/// 작동 원리는 모바일에서 작은 메타 정보와 중복 헤더를 줄이고 본문·선택지를 읽기 순서대로 배치하는 것이다.
+/// 작동 원리는 중복 문제 번호를 없애고 글자·여백·선택지 높이를 줄여 문제와 답을
+/// 첫 화면에서 함께 읽을 수 있게 한다.
 Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
   final blocks = state._currentQuestTitleBlocks();
   final options = state._currentQuestOptionBlocks();
@@ -256,36 +288,33 @@ Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
       ? null
       : state._hashTags.first.replaceFirst('#', '');
   return DecoratedBox(
+    key: const ValueKey('mobile-solve-problem-card'),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       border: Border.all(color: const Color(0xFFE7E7E4)),
     ),
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 15, 16, 16),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Text(
-                '문제 ${state._currentProblemIndex + 1}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              if (tag != null) ...[
-                const SizedBox(width: 8),
+              if (tag != null)
                 Expanded(
                   child: Text(
                     tag,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.black45, fontSize: 11),
+                    style: const TextStyle(
+                      color: Colors.black45,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ] else
+                )
+              else
                 const Spacer(),
               TextButton(
                 onPressed: state._showHint,
@@ -298,7 +327,7 @@ Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 4),
           if (state._questLoading)
             const LinearProgressIndicator(minHeight: 2)
           else if (state._questError != null)
@@ -310,20 +339,20 @@ Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
             ContentBlocksView(
               blocks: blocks,
               textStyle: const TextStyle(
-                fontSize: 20,
-                height: 1.4,
+                fontSize: 17,
+                height: 1.35,
                 letterSpacing: -.35,
                 color: Color(0xFF202020),
               ),
               latexStyle: const TextStyle(
-                fontSize: 20,
-                height: 1.4,
+                fontSize: 17,
+                height: 1.35,
                 color: Color(0xFF202020),
               ),
               inline: true,
             ),
           if (options.isNotEmpty) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             state._buildOptionPreview(
               options,
               selectedIndex: state._currentSelectedChoice(),
@@ -335,10 +364,50 @@ Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
   );
 }
 
+/// 필요한 변수는 객관식 문제의 접힌 풀이 노트 상태다.
+/// 작동 원리는 작은 한 줄 행동만 보여 주고, 탭하면 기존 필기판과 편집 도구를 함께 펼친다.
+Widget _renderMobileNoteLauncher(_BuildpageWidgetState state) {
+  return Material(
+    key: const ValueKey('mobile-solve-note-launcher'),
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: state._toggleMobileNote,
+      child: const SizedBox(
+        height: 56,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Icon(Icons.draw_outlined, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '풀이 노트',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                ),
+              ),
+              Text(
+                '필요할 때 펼치기',
+                style: TextStyle(color: Colors.black45, fontSize: 11),
+              ),
+              SizedBox(width: 4),
+              Icon(Icons.expand_more_rounded, color: Colors.black45, size: 20),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 /// 필요한 변수는 필기 획과 모바일 viewport다.
 /// 작동 원리는 필기 영역을 문제 카드와 분리하고 항상 세로 스크롤을 허용해 긴 풀이 중간의 입력 단절 구간을 없애는 것이다.
 Widget _renderMobileWritingSurface(_BuildpageWidgetState state) {
+  final canCollapse = state._currentQuestOptionBlocks().isNotEmpty;
   return DecoratedBox(
+    key: const ValueKey('mobile-solve-writing-surface'),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
@@ -349,19 +418,34 @@ Widget _renderMobileWritingSurface(_BuildpageWidgetState state) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.draw_outlined, size: 18),
-              SizedBox(width: 7),
-              Text(
+              const Icon(Icons.draw_outlined, size: 18),
+              const SizedBox(width: 7),
+              const Text(
                 '풀이 노트',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
               ),
-              Spacer(),
-              Text(
-                '손가락이나 펜으로 작성',
-                style: TextStyle(color: Colors.black38, fontSize: 10),
-              ),
+              const Spacer(),
+              if (canCollapse)
+                TextButton.icon(
+                  onPressed: state._toggleMobileNote,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black54,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                  ),
+                  icon: const Icon(Icons.expand_less_rounded, size: 18),
+                  label: const Text(
+                    '접기',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                )
+              else
+                const Text(
+                  '손가락이나 펜으로 작성',
+                  style: TextStyle(color: Colors.black38, fontSize: 10),
+                ),
             ],
           ),
           const SizedBox(height: 10),
