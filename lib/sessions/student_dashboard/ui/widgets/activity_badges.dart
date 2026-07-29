@@ -283,27 +283,28 @@ void showActivityBadgeDialog({
   required ActivitySnapshot snapshot,
   int accountLevel = 0,
 }) {
-  final mobile = MediaQuery.sizeOf(context).width <= 780;
-  if (mobile) {
-    // 필요한 변수는 활동 기록·계정 레벨과 모바일 화면 높이다.
-    // 작동 원리: 업적을 작은 중앙 Dialog로 축소하지 않고 90% 하단 시트에서
-    // 한 열 그룹으로 탐색하며 기존 잠금 미리보기 동작을 유지한다.
+  // 필요한 변수는 현재 화면 크기와 업적 진행 기록이다.
+  // 작동 원리: 세로 모바일은 한 손 스크롤에 맞춘 전폭 바텀시트를 열고,
+  // 태블릿·PC는 기존 정보 밀도가 높은 중앙 다이얼로그를 유지한다.
+  final media = MediaQuery.of(context);
+  final isPortraitMobile =
+      media.size.width <= 720 && media.size.height >= media.size.width;
+  if (isPortraitMobile) {
     showModalBottomSheet<void>(
       context: context,
-      useSafeArea: true,
       isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: const Color(0xFFF4F4F6),
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.90,
-        child: _ActivityBadgeDialog(
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.34),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.93,
+        minChildSize: 0.72,
+        maxChildSize: 0.98,
+        expand: false,
+        builder: (context, scrollController) => _MobileActivityBadgeSheet(
           snapshot: snapshot,
           accountLevel: accountLevel,
-          mobileSheet: true,
+          scrollController: scrollController,
         ),
       ),
     );
@@ -317,16 +318,259 @@ void showActivityBadgeDialog({
   );
 }
 
-class _ActivityBadgeDialog extends StatelessWidget {
-  const _ActivityBadgeDialog({
+class _MobileActivityBadgeSheet extends StatelessWidget {
+  const _MobileActivityBadgeSheet({
     required this.snapshot,
     required this.accountLevel,
-    this.mobileSheet = false,
+    required this.scrollController,
   });
 
   final ActivitySnapshot snapshot;
   final int accountLevel;
-  final bool mobileSheet;
+  final ScrollController scrollController;
+
+  /// 필요한 변수는 활동 기록, 계정 레벨, 바텀시트 스크롤 컨트롤러다.
+  /// 작동 원리: 전체 업적을 가족 단위 세로 카드로 나누고 각 카드는 고정 4열
+  /// 트로피 그리드를 사용해 작은 모바일에서도 번호와 진행 상태를 읽을 수 있게 한다.
+  @override
+  Widget build(BuildContext context) {
+    final all = ActivityBadgeCatalog.evaluate(
+      snapshot,
+      accountLevel: accountLevel,
+    );
+    final earnedCount = all.where((entry) => entry.isEarned).length;
+    final groups = _groupBadgeProgress(all);
+
+    return Material(
+      key: const ValueKey('activity-badge-mobile-sheet'),
+      color: const Color(0xFFF5F5F7),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(34)),
+      clipBehavior: Clip.antiAlias,
+      child: CustomScrollView(
+        controller: scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 14, 18),
+              child: Column(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4A4A52),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '업적 보관함',
+                              style: TextStyle(
+                                fontSize: 30,
+                                height: 1.08,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$earnedCount개 획득 · 잠긴 트로피를 눌러 미리보기',
+                              style: const TextStyle(
+                                color: Color(0xFF66666D),
+                                fontSize: 14,
+                                height: 1.35,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Semantics(
+                        button: true,
+                        label: '업적 보관함 닫기',
+                        child: Material(
+                          color: Colors.white,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => Navigator.of(context).pop(),
+                            child: const SizedBox(
+                              width: 54,
+                              height: 54,
+                              child: Icon(Icons.close_rounded, size: 29),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            sliver: SliverList.separated(
+              itemCount: groups.length,
+              itemBuilder: (context, index) =>
+                  _MobileBadgeGroupCard(group: groups[index]),
+              separatorBuilder: (context, index) => const SizedBox(height: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileBadgeGroupCard extends StatelessWidget {
+  const _MobileBadgeGroupCard({required this.group});
+
+  final _BadgeProgressGroup group;
+
+  /// 필요한 변수는 같은 목표를 공유하는 12단계 트로피 목록이다.
+  /// 작동 원리: 목표 설명과 획득 수를 먼저 보여주고 트로피를 항상 4열로 배치한 뒤,
+  /// 카드 하단에서 다음 단계의 수치와 진행률을 한 줄로 안내한다.
+  @override
+  Widget build(BuildContext context) {
+    final first = group.items.first.badge;
+    final title = ActivityBadgeCatalog.familyTitleOf(first.family);
+    final earned = group.items.where((entry) => entry.isEarned).length;
+    final next = _firstLocked(group.items);
+    final color = first.color;
+
+    return Container(
+      key: ValueKey('activity-badge-mobile-group-${first.family}'),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.055),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(first.icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$earned/${group.items.length} · ${first.metricLabel}',
+                      style: const TextStyle(
+                        color: Color(0xFF696970),
+                        fontSize: 14,
+                        height: 1.25,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          GridView.builder(
+            key: ValueKey('activity-badge-mobile-grid-${first.family}'),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.78,
+            ),
+            itemCount: group.items.length,
+            itemBuilder: (context, index) => _CompactBadgeTile(
+              progress: group.items[index],
+              iconSize: 58,
+              labelSize: 13,
+              labelSpacing: 7,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (next == null)
+            Text(
+              '이 그룹의 모든 트로피를 획득했어요.',
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            )
+          else ...[
+            Text(
+              '다음: ${next.badge.title} · ${next.progressText}',
+              style: const TextStyle(
+                color: Color(0xFF5F5F66),
+                fontSize: 13,
+                height: 1.3,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 9),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: next.progress,
+                minHeight: 7,
+                backgroundColor: const Color(0xFFF0F0F2),
+                color: color,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityBadgeDialog extends StatelessWidget {
+  const _ActivityBadgeDialog({
+    required this.snapshot,
+    required this.accountLevel,
+  });
+
+  final ActivitySnapshot snapshot;
+  final int accountLevel;
 
   @override
   Widget build(BuildContext context) {
@@ -338,106 +582,88 @@ class _ActivityBadgeDialog extends StatelessWidget {
     final earnedCount = all.where((entry) => entry.isEarned).length;
     final groups = _groupBadgeProgress(all);
     final media = MediaQuery.of(context);
-    final width = mobileSheet
-        ? double.infinity
-        : math.min(media.size.width - 56, 1224.0);
-    final height = mobileSheet
-        ? double.infinity
-        : math.min(media.size.height - 42, 862.0);
-    final content = SizedBox(
-      width: width,
-      height: height,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                20 * scale,
-                mobileSheet ? 2 : 18 * scale,
-                14 * scale,
-                10 * scale,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '업적 보관함',
-                          style: _textStyle(
-                            size: mobileSheet ? 27 : 20 * scale,
-                            weight: FontWeight.w900,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 4 * scale),
-                        Text(
-                          mobileSheet
-                              ? '$earnedCount개 획득 · 트로피를 눌러 자세히 보기'
-                              : '총 ${ActivityBadgeCatalog.allBadges.length}종 · 획득 $earnedCount개 · 잠긴 트로피를 누르면 미리볼 수 있어요',
-                          style: _textStyle(
-                            size: mobileSheet ? 13 : 12 * scale,
-                            color: Colors.black54,
-                            weight: FontWeight.w700,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: '닫기',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                    style: IconButton.styleFrom(
-                      fixedSize: const Size.square(48),
-                      backgroundColor: mobileSheet ? Colors.white : null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (!mobileSheet)
-              Divider(height: 1, color: Colors.black.withValues(alpha: 0.08)),
-            Expanded(
-              child: GridView.builder(
-                padding: EdgeInsets.fromLTRB(
-                  16 * scale,
-                  14 * scale,
-                  16 * scale,
-                  18 * scale,
-                ),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _groupGridColumns(context),
-                  mainAxisSpacing: 12 * scale,
-                  crossAxisSpacing: 12 * scale,
-                  childAspectRatio: _groupAspectRatio(context),
-                ),
-                itemCount: groups.length,
-                itemBuilder: (context, index) {
-                  return _BadgeGroupCard(group: groups[index]);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (mobileSheet) {
-      return Material(
-        key: const ValueKey('activity-badges-mobile-sheet'),
-        color: const Color(0xFFF4F4F6),
-        child: content,
-      );
-    }
+    final width = math.min(media.size.width - 56, 1224.0);
+    final height = math.min(media.size.height - 42, 862.0);
+
     return Dialog(
       insetPadding: const EdgeInsets.all(14),
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: content,
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20 * scale,
+                  18 * scale,
+                  14 * scale,
+                  10 * scale,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '업적 보관함',
+                            style: _textStyle(
+                              size: 20 * scale,
+                              weight: FontWeight.w900,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 4 * scale),
+                          Text(
+                            '총 ${ActivityBadgeCatalog.allBadges.length}종 · 획득 $earnedCount개 · 잠긴 트로피를 누르면 미리볼 수 있어요',
+                            style: _textStyle(
+                              size: 12 * scale,
+                              color: Colors.black54,
+                              weight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: '닫기',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: Colors.black.withValues(alpha: 0.08)),
+              Expanded(
+                child: GridView.builder(
+                  padding: EdgeInsets.fromLTRB(
+                    16 * scale,
+                    14 * scale,
+                    16 * scale,
+                    18 * scale,
+                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: _groupGridColumns(context),
+                    mainAxisSpacing: 12 * scale,
+                    crossAxisSpacing: 12 * scale,
+                    childAspectRatio: _groupAspectRatio(context),
+                  ),
+                  itemCount: groups.length,
+                  itemBuilder: (context, index) {
+                    return _BadgeGroupCard(group: groups[index]);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -447,12 +673,9 @@ class _BadgeGroupCard extends StatelessWidget {
 
   final _BadgeProgressGroup group;
 
-  /// 필요 변수: 업적 그룹과 화면 폭.
-  /// 모바일에서는 트로피를 4열로 키우고, PC에서는 기존 정보 밀도를 유지한다.
   @override
   Widget build(BuildContext context) {
     final scale = _scale(context);
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
     final first = group.items.first.badge;
     final title = ActivityBadgeCatalog.familyTitleOf(first.family);
     final earned = group.items.where((entry) => entry.isEarned).length;
@@ -460,13 +683,11 @@ class _BadgeGroupCard extends StatelessWidget {
     final color = first.color;
 
     return Container(
-      padding: EdgeInsets.all(mobile ? 16 : 16 * scale),
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(mobile ? 22 : 10 * scale),
-        border: mobile
-            ? null
-            : Border.all(color: color.withValues(alpha: 0.16)),
+        borderRadius: BorderRadius.circular(10 * scale),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.07),
@@ -481,19 +702,15 @@ class _BadgeGroupCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: mobile ? 42 : 32 * scale,
-                height: mobile ? 42 : 32 * scale,
+                width: 32 * scale,
+                height: 32 * scale,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(mobile ? 13 : 8 * scale),
+                  borderRadius: BorderRadius.circular(8 * scale),
                 ),
-                child: Icon(
-                  first.icon,
-                  color: color,
-                  size: mobile ? 23 : 18 * scale,
-                ),
+                child: Icon(first.icon, color: color, size: 18 * scale),
               ),
-              SizedBox(width: mobile ? 12 : 9 * scale),
+              SizedBox(width: 9 * scale),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,7 +718,7 @@ class _BadgeGroupCard extends StatelessWidget {
                     Text(
                       title,
                       style: _textStyle(
-                        size: mobile ? 16 : 13 * scale,
+                        size: 13 * scale,
                         weight: FontWeight.w900,
                       ),
                       maxLines: 1,
@@ -511,7 +728,7 @@ class _BadgeGroupCard extends StatelessWidget {
                     Text(
                       '$earned/${group.items.length} · ${first.metricLabel}',
                       style: _textStyle(
-                        size: mobile ? 13 : 10 * scale,
+                        size: 10 * scale,
                         color: Colors.black54,
                         weight: FontWeight.w700,
                       ),
@@ -527,23 +744,17 @@ class _BadgeGroupCard extends StatelessWidget {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tile = _badgeTileSize(
-                  constraints.maxWidth,
-                  scale,
-                  mobile: mobile,
-                );
+                final tile = _badgeTileSize(constraints.maxWidth, scale);
                 return Wrap(
-                  spacing: mobile ? 12 : 10 * scale,
-                  runSpacing: mobile ? 12 : 10 * scale,
+                  spacing: 10 * scale,
+                  runSpacing: 10 * scale,
                   children: [
                     for (final progress in group.items)
                       SizedBox(
                         width: tile,
                         child: _CompactBadgeTile(
                           progress: progress,
-                          iconSize: mobile
-                              ? math.min(tile * 0.70, 58)
-                              : math.min(tile * 0.72, 54 * scale),
+                          iconSize: math.min(tile * 0.72, 54 * scale),
                         ),
                       ),
                   ],
@@ -556,7 +767,7 @@ class _BadgeGroupCard extends StatelessWidget {
             Text(
               '이 그룹을 모두 획득했습니다.',
               style: _textStyle(
-                size: mobile ? 13 : 10 * scale,
+                size: 10 * scale,
                 color: color,
                 weight: FontWeight.w800,
               ),
@@ -569,10 +780,7 @@ class _BadgeGroupCard extends StatelessWidget {
               children: [
                 Text(
                   '다음: ${next.badge.title} · ${next.progressText}',
-                  style: _textStyle(
-                    size: mobile ? 13 : 10 * scale,
-                    color: Colors.black54,
-                  ),
+                  style: _textStyle(size: 10 * scale, color: Colors.black54),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -581,7 +789,7 @@ class _BadgeGroupCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
                     value: next.progress,
-                    minHeight: mobile ? 7 : 5 * scale,
+                    minHeight: 5 * scale,
                     backgroundColor: Colors.black.withValues(alpha: 0.06),
                     color: color,
                   ),
@@ -595,10 +803,17 @@ class _BadgeGroupCard extends StatelessWidget {
 }
 
 class _CompactBadgeTile extends StatefulWidget {
-  const _CompactBadgeTile({required this.progress, required this.iconSize});
+  const _CompactBadgeTile({
+    required this.progress,
+    required this.iconSize,
+    this.labelSize,
+    this.labelSpacing,
+  });
 
   final ActivityBadgeProgress progress;
   final double iconSize;
+  final double? labelSize;
+  final double? labelSpacing;
 
   @override
   State<_CompactBadgeTile> createState() => _CompactBadgeTileState();
@@ -624,12 +839,9 @@ class _CompactBadgeTileState extends State<_CompactBadgeTile> {
     });
   }
 
-  /// 필요 변수: 업적 획득 상태와 화면 폭.
-  /// 잠긴 업적은 탭 미리보기를 유지하고 모바일의 단계 숫자는 읽기 쉽게 키운다.
   @override
   Widget build(BuildContext context) {
     final scale = _scale(context);
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
     final displayProgress = _previewActive
         ? ActivityBadgeProgress(
             badge: widget.progress.badge,
@@ -655,11 +867,11 @@ class _CompactBadgeTileState extends State<_CompactBadgeTile> {
                 progress: displayProgress,
                 size: widget.iconSize,
               ),
-              SizedBox(height: mobile ? 5 : 4 * scale),
+              SizedBox(height: widget.labelSpacing ?? 4 * scale),
               Text(
                 '${widget.progress.badge.tier}',
                 style: _textStyle(
-                  size: mobile ? 12 : 9 * scale,
+                  size: widget.labelSize ?? 9 * scale,
                   weight: FontWeight.w900,
                   color: displayProgress.isEarned
                       ? widget.progress.badge.color
@@ -957,11 +1169,9 @@ ActivityBadgeProgress? _firstLocked(List<ActivityBadgeProgress> badges) {
   return null;
 }
 
-/// 필요 변수: 사용 가능한 폭, 반응형 배율, 모바일 여부.
-/// 모바일은 트로피를 4열로 고정해 아이콘과 터치 영역을 충분히 확보한다.
-double _badgeTileSize(double maxWidth, double scale, {required bool mobile}) {
-  final gap = mobile ? 12.0 : 10 * scale;
-  final columns = mobile ? 4 : (maxWidth >= 300 * scale ? 6 : 4);
+double _badgeTileSize(double maxWidth, double scale) {
+  final gap = 10 * scale;
+  final columns = maxWidth >= 300 * scale ? 6 : 4;
   return (maxWidth - gap * (columns - 1)) / columns;
 }
 
@@ -971,13 +1181,11 @@ int _groupGridColumns(BuildContext context) {
   return 1;
 }
 
-/// 필요 변수: 현재 화면 폭.
-/// 모바일 카드에는 4열 트로피 세 줄과 진행 안내가 들어갈 세로 공간을 준다.
 double _groupAspectRatio(BuildContext context) {
   final width = MediaQuery.of(context).size.width;
   if (width >= 900) return 1.75;
   if (width >= 620) return 2.2;
-  return 1.0;
+  return 1.25;
 }
 
 class _BadgeProgressGroup {
