@@ -61,6 +61,8 @@ class _FlowViewPageState extends State<FlowViewPage> {
   bool _showSharedAnalysis = false;
   bool _formulaModalVisible = false;
   bool _fullScreen = false;
+  double _canvasScale = 1;
+  final TransformationController _canvasController = TransformationController();
   Offset _formulaModalOffset = const Offset(24, 120);
 
   Future<void> _bookmarkProblem() async {
@@ -104,8 +106,24 @@ class _FlowViewPageState extends State<FlowViewPage> {
   /// 작동 원리는 Flow에 집중할 때만 상단 시스템 영역을 숨기고, 종료 즉시 기본 화면 상태로 복구하는 것이다.
   @override
   void dispose() {
+    _canvasController.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
+  }
+
+  /// 필요한 변수는 새 확대 비율이다.
+  /// 작동 원리는 60~180% 범위로 제한한 행렬을 Flow 캔버스에 적용하고 현재 비율 라벨을 함께 갱신한다.
+  void _setCanvasScale(double value) {
+    final next = value.clamp(.6, 1.8).toDouble();
+    _canvasController.value = Matrix4.diagonal3Values(next, next, 1);
+    setState(() => _canvasScale = next);
+  }
+
+  /// 필요한 변수 없음.
+  /// 작동 원리는 확대·이동 행렬을 기본값으로 되돌려 Flow의 시작 위치와 100% 배율을 복구한다.
+  void _resetCanvasScale() {
+    _canvasController.value = Matrix4.identity();
+    setState(() => _canvasScale = 1);
   }
 
   /// 필요한 변수는 전체화면 여부다.
@@ -659,8 +677,9 @@ class _FlowViewPageState extends State<FlowViewPage> {
     );
   }
 
-  /// 필요한 변수는 그래프 실제 높이와 전체화면 여부다.
-  /// 작동 원리는 그래프의 세로 길이만큼 카드 높이를 자연스럽게 늘려 바깥 페이지가 세로 스크롤을 담당하게 하는 것이다.
+  /// 필요한 변수는 그래프 실제 높이·전체화면·현재 확대 비율이다.
+  /// 작동 원리는 모바일에서도 항상 보이는 확대 도구와 핀치·드래그 캔버스를 제공하고,
+  /// 그래프의 세로 길이만큼 카드 높이를 늘려 바깥 페이지가 다음 정보로 자연스럽게 이어지게 한다.
   Widget _buildCanvasPanel({bool fullScreen = false}) {
     final content = _graph.nodes.isEmpty
         ? const Center(child: Text('No flow data.'))
@@ -673,37 +692,69 @@ class _FlowViewPageState extends State<FlowViewPage> {
     return _buildFlowSurface(
       padding: const EdgeInsets.all(12),
       child: SizedBox(
-        height: math.max(500, _graph.size.height + 72),
+        height: math.max(500, _graph.size.height + 132),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_nodeStates.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(6, 4, 6, 10),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
+                child: const Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
-                    const Expanded(
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: [
-                          _LegendChip(label: '정답', color: Color(0xFF202022)),
-                          _LegendChip(label: '오답', color: Color(0xFF7A7A80)),
-                          _LegendChip(label: '이후 단계', color: Color(0xFFB3B3B8)),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: fullScreen ? '전체화면 닫기' : '전체화면 보기',
-                      onPressed: _toggleFullScreen,
-                      icon: Icon(
-                        fullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                        size: 20,
-                      ),
-                    ),
+                    _LegendChip(label: '정답', color: Color(0xFF202022)),
+                    _LegendChip(label: '오답', color: Color(0xFF7A7A80)),
+                    _LegendChip(label: '이후 단계', color: Color(0xFFB3B3B8)),
                   ],
                 ),
               ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(2, 2, 2, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    tooltip: '축소',
+                    onPressed: () => _setCanvasScale(_canvasScale - .2),
+                    icon: const Icon(Icons.remove_rounded),
+                  ),
+                  Container(
+                    width: 54,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F0F2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${(_canvasScale * 100).round()}%',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: '확대',
+                    onPressed: () => _setCanvasScale(_canvasScale + .2),
+                    icon: const Icon(Icons.add_rounded),
+                  ),
+                  TextButton(
+                    onPressed: _resetCanvasScale,
+                    child: const Text('초기화'),
+                  ),
+                  IconButton(
+                    tooltip: fullScreen ? '전체화면 닫기' : '전체화면 보기',
+                    onPressed: _toggleFullScreen,
+                    icon: Icon(
+                      fullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                      size: 22,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(6),
@@ -713,7 +764,23 @@ class _FlowViewPageState extends State<FlowViewPage> {
                     painter: const _FlowDotGridPainter(),
                     child: ColoredBox(
                       color: Colors.transparent,
-                      child: content,
+                      child: InteractiveViewer(
+                        transformationController: _canvasController,
+                        constrained: false,
+                        minScale: .6,
+                        maxScale: 1.8,
+                        boundaryMargin: const EdgeInsets.all(120),
+                        onInteractionUpdate: (_) {
+                          final next = _canvasController.value
+                              .getMaxScaleOnAxis()
+                              .clamp(.6, 1.8)
+                              .toDouble();
+                          if ((next - _canvasScale).abs() > .01) {
+                            setState(() => _canvasScale = next);
+                          }
+                        },
+                        child: content,
+                      ),
                     ),
                   ),
                 ),
@@ -1255,49 +1322,46 @@ class _FlowCanvas extends StatefulWidget {
 
 class _FlowCanvasState extends State<_FlowCanvas> {
   /// 필요한 변수는 그래프의 실제 가로·세로 크기다.
-  /// 작동 원리는 세로 이동은 상위 페이지 스크롤에 넘기고, 화면보다 넓어진 Flow만 가로 스크롤로 탐색하게 하는 것이다.
+  /// 작동 원리는 정확한 캔버스 크기에 노드와 연결선을 배치하고 확대·이동은 상위 InteractiveViewer에 맡기는 것이다.
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: widget.graph.size.width,
-        height: widget.graph.size.height,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _FlowEdgePainter(
-                  edges: widget.graph.edges,
-                  positions: widget.graph.positions,
-                  nodeSizes: widget.graph.nodeSizes,
-                ),
+    return SizedBox(
+      width: widget.graph.size.width,
+      height: widget.graph.size.height,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _FlowEdgePainter(
+                edges: widget.graph.edges,
+                positions: widget.graph.positions,
+                nodeSizes: widget.graph.nodeSizes,
               ),
             ),
-            ...widget.graph.nodes.values.map((node) {
-              final position = widget.graph.positions[node.id];
-              if (position == null) return const SizedBox.shrink();
-              final nodeSize =
-                  widget.graph.nodeSizes[node.id] ??
-                  const Size(
-                    _FlowGraphBuilder.nodeWidth,
-                    _FlowGraphBuilder.nodeMinHeight,
-                  );
-              return Positioned(
-                left: position.dx,
-                top: position.dy,
-                width: nodeSize.width,
-                height: nodeSize.height,
-                child: _FlowNodeCard(
-                  node: node,
-                  selected: widget.selected?.id == node.id,
-                  state: widget.nodeStates[node.id] ?? _FlowNodeState.normal,
-                  onTap: () => widget.onNodeTap(node),
-                ),
-              );
-            }),
-          ],
-        ),
+          ),
+          ...widget.graph.nodes.values.map((node) {
+            final position = widget.graph.positions[node.id];
+            if (position == null) return const SizedBox.shrink();
+            final nodeSize =
+                widget.graph.nodeSizes[node.id] ??
+                const Size(
+                  _FlowGraphBuilder.nodeWidth,
+                  _FlowGraphBuilder.nodeMinHeight,
+                );
+            return Positioned(
+              left: position.dx,
+              top: position.dy,
+              width: nodeSize.width,
+              height: nodeSize.height,
+              child: _FlowNodeCard(
+                node: node,
+                selected: widget.selected?.id == node.id,
+                state: widget.nodeStates[node.id] ?? _FlowNodeState.normal,
+                onTap: () => widget.onNodeTap(node),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
