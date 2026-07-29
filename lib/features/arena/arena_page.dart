@@ -9,6 +9,10 @@ import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+
+typedef ArenaJoinCallback =
+    Future<Map<String, dynamic>> Function(String queueType);
 
 /// 학생 대시보드에서 실시간 대결장을 연다.
 Future<void> showArena(BuildContext context) => Navigator.of(
@@ -18,9 +22,10 @@ Future<void> showArena(BuildContext context) => Navigator.of(
 /// 필요한 변수: 서버의 네 큐 요약.
 /// 1v1/2v2 시험·OX 큐와 독립 티어를 한 화면에 표시한다.
 class ArenaPage extends StatefulWidget {
-  const ArenaPage({super.key, this.initialSummary});
+  const ArenaPage({super.key, this.initialSummary, this.joinQueue});
 
   final Map<String, dynamic>? initialSummary;
+  final ArenaJoinCallback? joinQueue;
 
   @override
   State<ArenaPage> createState() => _ArenaPageState();
@@ -70,7 +75,9 @@ class _ArenaPageState extends State<ArenaPage> {
       _error = null;
     });
     try {
-      final result = await ArenaApi.instance.join(queueType);
+      final result =
+          await (widget.joinQueue?.call(queueType) ??
+              ArenaApi.instance.join(queueType));
       if (!mounted) return;
       final matchId = result['match_id']?.toString();
       final practiceMatchId = result['practice_match_id']?.toString();
@@ -134,6 +141,184 @@ class _ArenaPageState extends State<ArenaPage> {
     }
   }
 
+  /// 필요한 변수는 선택한 모바일 큐의 유형·예상 대기 시간·문항 수다.
+  /// 작동 원리는 실제 서버 매칭 전에 참조형 바텀시트로 조건을 다시 보여
+  /// 실수로 대결에 참가하는 것을 막고 최종 버튼에서만 참가 요청을 보낸다.
+  Future<void> _confirmMobileJoin(Map<String, dynamic> queue) async {
+    final queueType = queue['queue_type']?.toString() ?? '';
+    if (queueType.isEmpty) {
+      return;
+    }
+    final waitSeconds = (queue['estimated_wait_seconds'] as num? ?? 0).round();
+    final questionCount = (queue['question_count'] as num? ?? 10).round();
+    final durationMinutes = (queue['duration_minutes'] as num? ?? 20).round();
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Container(
+          key: const ValueKey('arena-mobile-confirm-sheet'),
+          margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x26000000),
+                blurRadius: 36,
+                offset: Offset(0, -8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD6D6D8),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                '대결 시작',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                '매칭을 시작하면 상대를 찾는 동안 이 화면을 유지합니다.',
+                style: TextStyle(
+                  color: Color(0xFF68686E),
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF171719),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                      child: const Icon(
+                        Icons.sports_mma_rounded,
+                        color: Colors.black,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '1v1 문제풀이',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$questionCount문항 · $durationMinutes분'
+                            '${waitSeconds > 0 ? ' · 약 $waitSeconds초 대기' : ''}',
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F3F4),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Text(
+                  '실전 대결 결과는 티어와 레이팅에 반영될 수 있습니다.',
+                  style: TextStyle(
+                    color: Color(0xFF55555A),
+                    fontSize: 14,
+                    height: 1.4,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton(
+                  key: const ValueKey('arena-mobile-confirm-join'),
+                  onPressed: () => Navigator.of(sheetContext).pop(true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF202022),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(17),
+                    ),
+                  ),
+                  child: const Text(
+                    '매칭 시작',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(false),
+                  child: const Text(
+                    '취소',
+                    style: TextStyle(
+                      color: Color(0xFF67676C),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _join(queueType);
+    }
+  }
+
   /// 필요한 변수: 성립된 경기 ID. 대기 상태를 정리하고 매치 성립 안내를 거쳐 경기 화면을 연다.
   Future<void> _openMatch(String matchId) async {
     _matchPoller?.cancel();
@@ -149,7 +334,9 @@ class _ArenaPageState extends State<ArenaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final desktop = MediaQuery.sizeOf(context).width >= 1000;
+    final width = MediaQuery.sizeOf(context).width;
+    final desktop = width >= 1000;
+    final mobile = width <= StudentDensityTokens.mobileBreakpoint;
     final queues = List<Map<String, dynamic>>.from(
       (_summary?['queues'] as List? ?? const []).map(
         (e) => Map<String, dynamic>.from(e as Map),
@@ -187,7 +374,10 @@ class _ArenaPageState extends State<ArenaPage> {
         .toList(growable: false);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/arena')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -195,7 +385,8 @@ class _ArenaPageState extends State<ArenaPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
+                showUtilityActions: !mobile,
+                onMenu: mobile ? null : () => toggleAppDrawer(context),
               ),
             ),
             Expanded(
@@ -311,8 +502,7 @@ class _ArenaPageState extends State<ArenaPage> {
                                       disabled:
                                           _waitingQueue != null &&
                                           _waitingQueue != queue['queue_type'],
-                                      onJoin: () =>
-                                          _join(queue['queue_type'].toString()),
+                                      onJoin: () => _confirmMobileJoin(queue),
                                       onCancel: _cancel,
                                     ),
                                   if (joinableQueues.isEmpty)

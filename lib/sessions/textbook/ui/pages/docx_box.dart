@@ -766,13 +766,13 @@ class _BookWidgetState extends State<BookWidget> {
   //  HEADER
   // ══════════════════════════════════════════════════════════
   /// 필요한 변수는 현재 책가방 화면 문맥이다.
-  /// 공용 학생 메뉴에서 책가방을 활성화하고 다른 네 목적지는 명명 라우트로 연결한다.
+  /// PC는 공용 학생 메뉴를 유지하고 모바일은 하단 앱바에 탐색과 유틸리티를 맡긴다.
   Widget _buildHeader(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 720;
     return Ios26TopBar(
       brandColor: BookWidget.primaryGreen,
-      onMenu: () => MediaQuery.sizeOf(context).width <= 720
-          ? MobileStudentBottomAppBar.openMore(context)
-          : toggleAppDrawer(context),
+      showUtilityActions: !mobile,
+      onMenu: mobile ? null : () => toggleAppDrawer(context),
       onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainStudentPage()),
         (route) => false,

@@ -256,6 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
   /// 작동 원리는 HTML DANGER ZONE 버튼에서 설명·비밀번호·취소·삭제를 갖춘 전용 모달을 여는 것이다.
   Future<void> _openDeleteModal() async {
     _deletePasswordController.clear();
+    final formKey = GlobalKey<FormState>();
     final delete = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: .48),
@@ -288,10 +289,16 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: TextStyle(color: Colors.black54, height: 1.45),
               ),
               const SizedBox(height: 20),
-              _field(
-                controller: _deletePasswordController,
-                label: '현재 비밀번호',
-                obscureText: true,
+              Form(
+                key: formKey,
+                child: _field(
+                  controller: _deletePasswordController,
+                  label: '현재 비밀번호',
+                  obscureText: true,
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? '현재 비밀번호를 입력해 주세요.'
+                      : null,
+                ),
               ),
               const SizedBox(height: 18),
               Row(
@@ -305,7 +312,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: FilledButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                      onPressed: () {
+                        if (formKey.currentState?.validate() != true) return;
+                        Navigator.of(dialogContext).pop(true);
+                      },
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                       ),
@@ -446,12 +456,14 @@ class _ProfilePageState extends State<ProfilePage> {
     final name = _nameController.text.trim().isEmpty
         ? _usernameController.text.trim()
         : _nameController.text.trim();
-    if (!isStudentDensityMobile(context)) {
+    final mobile = isStudentDensityMobile(context);
+    if (!mobile) {
       return _buildDesktopProfile(context, name);
     }
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      drawer: null,
+      bottomNavigationBar: const MobileStudentBottomAppBar(),
       body: SafeArea(
         child: Column(
           children: [
@@ -459,7 +471,8 @@ class _ProfilePageState extends State<ProfilePage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
+                showUtilityActions: false,
+                onMenu: null,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,

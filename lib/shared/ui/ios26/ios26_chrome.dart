@@ -92,7 +92,7 @@ class Ios26TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final compact = width <= StudentDensityTokens.mobileBreakpoint;
-    final barHeight = compact ? 58.0 : 68.0;
+    final barHeight = compact ? 62.0 : 68.0;
     final effectiveLeftInset = leftInset ?? (compact ? 12.0 : 40.0);
     final showBackButton = onBack != null;
     final showMenuButton =
@@ -165,11 +165,11 @@ class Ios26TopBar extends StatelessWidget {
                           const SizedBox(width: 9),
                           Text(
                             title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: StudentDensityTokens.ink,
-                              fontSize: 17,
+                              fontSize: compact ? 20 : 17,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
+                              letterSpacing: compact ? -0.8 : -0.5,
                             ),
                           ),
                         ],
@@ -362,17 +362,64 @@ class _StudentQuickSearchSheet extends StatefulWidget {
 }
 
 class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
-  static const _destinations = <({String title, String detail, String route})>[
-    (title: '코스', detail: '수강 중·추천·완료 코스 찾기', route: '/courses'),
-    (title: '책가방', detail: '교재·시험지·북마크 찾기', route: '/bookbag'),
-    (title: '친구/소셜', detail: '친구·그룹·학원 찾기', route: '/social'),
-    (title: '마켓플레이스', detail: '문제·교재·태그 찾기', route: '/marketplace'),
-  ];
+  static const _destinations =
+      <({String title, String detail, String keywords, String route})>[
+        (
+          title: '코스',
+          detail: '수강 중·추천·완료 코스 찾기',
+          keywords: '수학 함수 개념 학습 강의',
+          route: '/courses',
+        ),
+        (
+          title: '책가방',
+          detail: '교재·시험지·북마크 찾기',
+          keywords: '책 문서 문제세트 보관함',
+          route: '/bookbag',
+        ),
+        (
+          title: '오답 노트',
+          detail: '틀린 문제와 오늘 복습 확인',
+          keywords: '오답 문제 복습 수학',
+          route: '/wrong_answers',
+        ),
+        (
+          title: '레벨 테스트',
+          detail: '현재 실력과 추천 난이도 확인',
+          keywords: '진단 평가 OVR 배치',
+          route: '/level_test',
+        ),
+        (
+          title: '친구/소셜',
+          detail: '친구 요청과 새 대화 확인',
+          keywords: '친구 쪽지 대화 소셜',
+          route: '/social',
+        ),
+        (
+          title: '스터디 그룹',
+          detail: '내 그룹과 초대 코드 참가',
+          keywords: '그룹 학원 같이 공부',
+          route: '/groups',
+        ),
+        (
+          title: 'AI 학습 튜터',
+          detail: '개념과 막힌 문제 질문',
+          keywords: 'AI 도구 질문 풀이 수학 함수',
+          route: '/tools',
+        ),
+        (
+          title: '마켓플레이스',
+          detail: '문제·교재·태그 찾기',
+          keywords: '문제세트 시험지 수학 자료',
+          route: '/marketplace',
+        ),
+      ];
   String _query = '';
 
   /// 필요한 변수는 선택 목적지와 현재 시트 Navigator다.
   /// 작동 원리는 시트를 먼저 닫고 루트 Navigator에서 공용 명명 라우트를 연다.
-  void _open(({String title, String detail, String route}) destination) {
+  void _open(
+    ({String title, String detail, String keywords, String route}) destination,
+  ) {
     final navigator = Navigator.of(context, rootNavigator: true);
     Navigator.of(context).pop();
     navigator.pushNamed(destination.route);
@@ -387,7 +434,9 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
         .where(
           (item) =>
               normalized.isEmpty ||
-              '${item.title} ${item.detail}'.toLowerCase().contains(normalized),
+              '${item.title} ${item.detail} ${item.keywords}'
+                  .toLowerCase()
+                  .contains(normalized),
         )
         .toList(growable: false);
     return _StudentUtilitySheet(
@@ -416,13 +465,51 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
             onTap: () => _open(item),
           ),
         if (visible.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: Text('연결할 검색 화면이 없습니다.')),
-          ),
+          isStudentDensityMobile(context)
+              ? const _QuickSearchEmpty()
+              : const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: Text('연결할 검색 화면이 없습니다.')),
+                ),
       ],
     );
   }
+}
+
+class _QuickSearchEmpty extends StatelessWidget {
+  const _QuickSearchEmpty();
+
+  /// 필요한 변수는 결과가 없는 통합 검색 상태다.
+  /// 작동 원리: 막힌 기능처럼 보이는 문구 대신 검색어를 바꿀 방법과 실제 탐색 가능한 범위를 안내한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(top: 8),
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: const Color(0xFF202022),
+      borderRadius: BorderRadius.circular(22),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.search_off_rounded, color: Colors.white, size: 30),
+        SizedBox(height: 14),
+        Text(
+          '검색 결과가 없어요',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 19,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        SizedBox(height: 6),
+        Text(
+          '코스, 교재, 오답, 친구, 그룹처럼 기능 이름이나 학습 키워드로 다시 검색해 보세요.',
+          style: TextStyle(color: Colors.white70, height: 1.45),
+        ),
+      ],
+    ),
+  );
 }
 
 class _StudentNotificationSnapshot {

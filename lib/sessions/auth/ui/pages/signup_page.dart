@@ -63,10 +63,7 @@ class _SignupPageState extends State<SignupPage> {
   Future<void> _submit() async {
     final validationError = _registrationValidationError();
     if (validationError != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(validationError.$2)));
-      _setStage(validationError.$1);
+      _showValidationError(validationError);
       return;
     }
 
@@ -117,17 +114,29 @@ class _SignupPageState extends State<SignupPage> {
   /// 필요한 변수는 회원가입 입력 컨트롤러 전체다.
   /// 작동 원리는 서버와 같은 형식을 제출 전에 검사하고 오류가 있는 단계와 문구를 반환한다.
   (int, String)? _registrationValidationError() {
+    return _profileValidationError() ?? _accountValidationError();
+  }
+
+  /// 필요한 변수는 학생 기본 정보 컨트롤러다.
+  /// 작동 원리는 1단계를 떠나기 전에 필수값과 이름 형식을 확인해 빈 프로필로 다음 단계에 진입하지 못하게 한다.
+  (int, String)? _profileValidationError() {
     final name = _nameController.text.trim();
     final grade = _gradeController.text.trim();
     final school = _schoolController.text.trim();
-    final username = _idController.text.trim();
-    final password = _pwController.text;
     if (name.isEmpty || grade.isEmpty || school.isEmpty) {
       return (0, '이름·학년·학교를 모두 입력해 주세요.');
     }
     if (!RegExp(r'^[가-힣A-Za-z0-9 ]{1,20}$').hasMatch(name)) {
       return (0, '이름은 한글·영문·숫자 20자 이내로 입력해 주세요.');
     }
+    return null;
+  }
+
+  /// 필요한 변수는 계정 정보 컨트롤러다.
+  /// 작동 원리는 2단계를 떠나기 전에 아이디·비밀번호·선택 이메일을 서버 규칙과 같은 형식으로 확인한다.
+  (int, String)? _accountValidationError() {
+    final username = _idController.text.trim();
+    final password = _pwController.text;
     if (!RegExp(r'^[A-Za-z0-9]{4,16}$').hasMatch(username)) {
       return (1, '아이디는 영문과 숫자 4–16자로 입력해 주세요.');
     }
@@ -173,7 +182,7 @@ class _SignupPageState extends State<SignupPage> {
                     child: _buildHeader(),
                   ),
                   const SizedBox(height: 16),
-                  _SignupSteps(stage: _stage, onSelected: _setStage),
+                  _SignupSteps(stage: _stage, onSelected: _requestStage),
                   const SizedBox(height: 12),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
@@ -262,6 +271,42 @@ class _SignupPageState extends State<SignupPage> {
   /// 필요한 변수는 이동할 단계 번호다.
   /// 작동 원리는 진행 배지나 다음 버튼을 누르면 해당 HTML 패널만 표시하는 것이다.
   void _setStage(int stage) => setState(() => _stage = stage.clamp(0, 2));
+
+  /// 필요한 변수는 사용자가 이동하려는 회원가입 단계다.
+  /// 작동 원리는 이전 단계 입력을 순서대로 검증하고 오류 단계로 되돌려, 단계 배지로 필수 입력을 건너뛰지 못하게 한다.
+  void _requestStage(int stage) {
+    final target = stage.clamp(0, 2);
+    if (target <= _stage) {
+      _setStage(target);
+      return;
+    }
+
+    for (var prerequisite = 0; prerequisite < target; prerequisite++) {
+      final validationError = switch (prerequisite) {
+        0 => _profileValidationError(),
+        1 => _accountValidationError(),
+        _ => null,
+      };
+      if (validationError != null) {
+        _showValidationError(validationError);
+        return;
+      }
+    }
+    _setStage(target);
+  }
+
+  /// 필요한 변수는 오류가 발생한 단계와 사용자 안내 문구다.
+  /// 작동 원리는 해당 단계로 이동해 인라인 필드 오류를 갱신하고 같은 내용을 하단 안내로 한 번 더 알린다.
+  void _showValidationError((int, String) validationError) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(validationError.$2)));
+    _setStage(validationError.$1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _stage != validationError.$1) return;
+      _formKey.currentState?.validate();
+    });
+  }
 
   /// 필요한 변수는 학생 기본 정보와 다음 단계 콜백이다.
   /// 작동 원리는 시안의 STEP 01 설명·필수 요약·과정 폼을 한 카드에 구성하는 것이다.
@@ -361,7 +406,7 @@ class _SignupPageState extends State<SignupPage> {
             style: TextStyle(fontSize: 11, color: Colors.black45),
           ),
           const SizedBox(height: 18),
-          _primaryButton('계정 정보 입력하기 →', () => _setStage(1)),
+          _primaryButton('계정 정보 입력하기 →', () => _requestStage(1)),
         ],
       );
     },
@@ -378,14 +423,7 @@ class _SignupPageState extends State<SignupPage> {
     children: [
       _signupField(_idController, '아이디', required: true),
       const SizedBox(height: 6),
-      const Text(
-        '사용 가능한 형식입니다.',
-        style: TextStyle(
-          fontSize: 11,
-          color: Color(0xFF227A43),
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      _buildUsernameFormatHint(),
       const SizedBox(height: 14),
       _signupField(_pwController, '비밀번호', required: true, obscure: true),
       const SizedBox(height: 14),
@@ -398,7 +436,7 @@ class _SignupPageState extends State<SignupPage> {
       const SizedBox(height: 14),
       _signupField(_emailController, '이메일 · 선택'),
       const SizedBox(height: 18),
-      _primaryButton('입력 정보 확인하기 →', () => _setStage(2)),
+      _primaryButton('입력 정보 확인하기 →', () => _requestStage(2)),
     ],
   );
 
@@ -569,6 +607,24 @@ class _SignupPageState extends State<SignupPage> {
             ),
           )
         : Text(label),
+  );
+
+  /// 필요한 변수는 아이디 입력 컨트롤러의 현재 값이다.
+  /// 작동 원리는 영문·숫자 4–16자 규칙을 만족한 경우에만 긍정 안내를 노출해 빈 입력을 유효하다고 오해하지 않게 한다.
+  Widget _buildUsernameFormatHint() => ValueListenableBuilder<TextEditingValue>(
+    valueListenable: _idController,
+    builder: (context, value, child) {
+      final valid = RegExp(r'^[A-Za-z0-9]{4,16}$').hasMatch(value.text.trim());
+      if (!valid) return const SizedBox.shrink();
+      return const Text(
+        '사용 가능한 형식입니다.',
+        style: TextStyle(
+          fontSize: 11,
+          color: Color(0xFF227A43),
+          fontWeight: FontWeight.w700,
+        ),
+      );
+    },
   );
 
   /// 필요한 변수는 요약 레이블과 현재 입력값이다.

@@ -11,7 +11,10 @@ import 'package:s11/shared/services/storage/local_db.dart';
 //=============================================================================
 
 class NotepadPage extends StatefulWidget {
-  const NotepadPage({super.key});
+  const NotepadPage({super.key, this.persistenceEnabled = true});
+
+  /// 테스트나 임시 세션에서 로컬 DB 입출력을 끌 수 있으며 기본 제품 동작은 저장을 유지한다.
+  final bool persistenceEnabled;
 
   @override
   State<NotepadPage> createState() => _NotepadPageState();
@@ -61,7 +64,7 @@ class _NotepadPageState extends State<NotepadPage>
   bool _showWidthPanel = false;
   bool _showEraserPanel = false;
 
-  bool get _canPersist => !kIsWeb;
+  bool get _canPersist => widget.persistenceEnabled && !kIsWeb;
 
   @override
   void initState() {
@@ -208,8 +211,11 @@ class _NotepadPageState extends State<NotepadPage>
     _paintVersion.value += 1;
   }
 
+  /// 필요한 변수는 현재 작성 중인 획과 실행 취소 스택이다.
+  /// 작동 원리는 완성된 획을 저장한 뒤 화면 전체를 갱신해 도구막대의 되돌리기 버튼도 즉시 활성화한다.
   void _endStroke() {
     final stroke = _currentStroke;
+    final hasCompletedStroke = stroke != null && stroke.points.isNotEmpty;
     if (stroke != null && stroke.points.isNotEmpty) {
       _strokes.add(stroke);
       _undoStack.add(_AddAction(stroke));
@@ -220,6 +226,9 @@ class _NotepadPageState extends State<NotepadPage>
     _lastFilteredPoint = null;
     _eraserPosition = null;
     _paintVersion.value += 1;
+    if (hasCompletedStroke && mounted) {
+      setState(() {});
+    }
   }
 
   void _startEraser(Offset position) {
@@ -235,14 +244,20 @@ class _NotepadPageState extends State<NotepadPage>
     _paintVersion.value += 1;
   }
 
+  /// 필요한 변수는 이번 지우개 동작에서 제거한 획 목록이다.
+  /// 작동 원리는 제거 묶음을 하나의 실행 취소 항목으로 저장하고 도구 활성 상태를 다시 그린다.
   void _finishEraser() {
-    if (_pendingEraseRemoved.isNotEmpty) {
+    final hasRemovedStroke = _pendingEraseRemoved.isNotEmpty;
+    if (hasRemovedStroke) {
       _undoStack.add(_RemoveAction(List<_Stroke>.from(_pendingEraseRemoved)));
       _pendingEraseRemoved.clear();
       _scheduleSave();
     }
     _eraserPosition = null;
     _paintVersion.value += 1;
+    if (hasRemovedStroke && mounted) {
+      setState(() {});
+    }
   }
 
   void _eraseAt(Offset position) {
@@ -258,17 +273,201 @@ class _NotepadPageState extends State<NotepadPage>
     _pendingEraseRemoved.addAll(removed);
   }
 
+  /// 필요한 변수는 마지막 실행 취소 항목과 현재 획 목록이다.
+  /// 작동 원리는 추가·삭제 동작을 반대로 적용하고 버튼 활성 상태까지 같은 프레임에 갱신한다.
   void _undo() {
     if (_undoStack.isEmpty) return;
-    final action = _undoStack.removeLast();
-    if (action is _AddAction) {
-      _strokes.remove(action.stroke);
-    } else if (action is _RemoveAction) {
-      _strokes.addAll(action.strokes);
-      _strokes.sort((a, b) => a.order.compareTo(b.order));
-    }
+    setState(() {
+      final action = _undoStack.removeLast();
+      if (action is _AddAction) {
+        _strokes.remove(action.stroke);
+      } else if (action is _RemoveAction) {
+        _strokes.addAll(action.strokes);
+        _strokes.sort((a, b) => a.order.compareTo(b.order));
+      }
+    });
     _paintVersion.value += 1;
     _scheduleSave();
+  }
+
+  /// 필요한 변수는 현재 펜 색상·굵기·줄 표시·형광펜 상태다.
+  /// 작동 원리는 모바일에서 자주 쓰지 않는 세부 설정을 참조 이미지와 같은
+  /// 둥근 바텀시트에 모아 캔버스와 하단 핵심 도구의 공간을 확보하는 것이다.
+  Future<void> _showMobileToolsSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void updateSheet(VoidCallback update) {
+              setState(update);
+              setSheetState(() {});
+            }
+
+            return SafeArea(
+              top: false,
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x26000000),
+                      blurRadius: 36,
+                      offset: Offset(0, -8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD6D6D8),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      '필기 도구',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      '색상과 굵기, 노트 배경을 한곳에서 설정하세요.',
+                      style: TextStyle(
+                        color: Color(0xFF68686E),
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    const Text(
+                      '펜 색상',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        for (final color in _penColors) ...[
+                          _MobileColorChoice(
+                            color: color,
+                            selected: _penColor == color,
+                            onTap: () => updateSheet(() {
+                              _penColor = color;
+                              _toolMode = _ToolMode.pen;
+                            }),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    const Text(
+                      '펜 굵기',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        for (final width in _penWidths)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _MobileWidthChoice(
+                                width: width,
+                                selected: _penWidth == width,
+                                onTap: () =>
+                                    updateSheet(() => _penWidth = width),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _MobileToolSettingRow(
+                      icon: Icons.brush_rounded,
+                      title: '형광펜',
+                      subtitle: '반투명한 펜으로 중요한 부분을 표시합니다.',
+                      value: _isHighlighter,
+                      onChanged: (value) => updateSheet(() {
+                        _isHighlighter = value;
+                        if (value) {
+                          _toolMode = _ToolMode.pen;
+                        }
+                      }),
+                    ),
+                    const SizedBox(height: 10),
+                    _MobileToolSettingRow(
+                      icon: Icons.grid_on_rounded,
+                      title: '노트 줄',
+                      subtitle: '필기 간격을 맞추는 가이드 줄을 표시합니다.',
+                      value: _showLines,
+                      onChanged: (value) =>
+                          updateSheet(() => _showLines = value),
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: OutlinedButton.icon(
+                        onPressed: _strokes.isEmpty
+                            ? null
+                            : () {
+                                Navigator.of(sheetContext).pop();
+                                Future<void>.delayed(
+                                  const Duration(milliseconds: 220),
+                                  () {
+                                    if (mounted) {
+                                      _clearAll();
+                                    }
+                                  },
+                                );
+                              },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFB42318),
+                          side: const BorderSide(color: Color(0xFFF0C8C4)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        label: const Text(
+                          '모든 필기 지우기',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _clearAll() {
@@ -332,6 +531,7 @@ class _NotepadPageState extends State<NotepadPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isMobile = MediaQuery.sizeOf(context).width < 720;
     // 학습 도구 세션 레퍼런스에 맞춰 캔버스와 툴바를 중립 흑백으로 고정한다.
     const bgColor = Color(0xFFF7F7F7);
     const paperColor = Colors.white;
@@ -343,7 +543,10 @@ class _NotepadPageState extends State<NotepadPage>
       body: SafeArea(
         child: Column(
           children: [
-            _NotepadHeader(onClose: () => Navigator.maybePop(context)),
+            _NotepadHeader(
+              mobile: isMobile,
+              onClose: () => Navigator.maybePop(context),
+            ),
             Expanded(
               child: Stack(
                 children: [
@@ -357,10 +560,12 @@ class _NotepadPageState extends State<NotepadPage>
                           child: SingleChildScrollView(
                             controller: _scrollController,
                             child: Container(
-                              margin: const EdgeInsets.all(16),
+                              margin: EdgeInsets.all(isMobile ? 10 : 16),
                               decoration: BoxDecoration(
                                 color: paperColor,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  isMobile ? 20 : 12,
+                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: isDark
@@ -372,8 +577,11 @@ class _NotepadPageState extends State<NotepadPage>
                                 ],
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  isMobile ? 20 : 12,
+                                ),
                                 child: Listener(
+                                  key: const ValueKey('notepad-canvas'),
                                   behavior: HitTestBehavior.opaque,
                                   onPointerDown: (event) {
                                     _closeAllPanels();
@@ -428,45 +636,46 @@ class _NotepadPageState extends State<NotepadPage>
                           ),
                         ),
                       ),
-                      // 우측 사이드바 툴바 (56px)
-                      _RightSidebar(
-                        sidebarBg: sidebarBg,
-                        sidebarBorder: sidebarBorder,
-                        isDark: isDark,
-                        toolMode: _toolMode,
-                        penColor: _penColor,
-                        penWidth: _penWidth,
-                        showLines: _showLines,
-                        isHighlighter: _isHighlighter,
-                        showColorPanel: _showColorPanel,
-                        showWidthPanel: _showWidthPanel,
-                        showEraserPanel: _showEraserPanel,
-                        canUndo: _undoStack.isNotEmpty,
-                        canClear: _strokes.isNotEmpty,
-                        onToolChanged: (mode) {
-                          setState(() => _toolMode = mode);
-                          _closeAllPanels();
-                        },
-                        onColorTap: _toggleColorPanel,
-                        onWidthTap: _toggleWidthPanel,
-                        onEraserTap: _toggleEraserPanel,
-                        onHighlighterTap: _toggleHighlighter,
-                        onColorChanged: (color) =>
-                            setState(() => _penColor = color),
-                        onWidthChanged: (width) =>
-                            setState(() => _penWidth = width),
-                        onLinesChanged: (value) =>
-                            setState(() => _showLines = value),
-                        onUndo: _undo,
-                        onClear: _clearAll,
-                        onBack: () => Navigator.maybePop(context),
-                      ),
+                      if (!isMobile)
+                        // PC 레이아웃은 기존 우측 사이드바를 그대로 유지한다.
+                        _RightSidebar(
+                          sidebarBg: sidebarBg,
+                          sidebarBorder: sidebarBorder,
+                          isDark: isDark,
+                          toolMode: _toolMode,
+                          penColor: _penColor,
+                          penWidth: _penWidth,
+                          showLines: _showLines,
+                          isHighlighter: _isHighlighter,
+                          showColorPanel: _showColorPanel,
+                          showWidthPanel: _showWidthPanel,
+                          showEraserPanel: _showEraserPanel,
+                          canUndo: _undoStack.isNotEmpty,
+                          canClear: _strokes.isNotEmpty,
+                          onToolChanged: (mode) {
+                            setState(() => _toolMode = mode);
+                            _closeAllPanels();
+                          },
+                          onColorTap: _toggleColorPanel,
+                          onWidthTap: _toggleWidthPanel,
+                          onEraserTap: _toggleEraserPanel,
+                          onHighlighterTap: _toggleHighlighter,
+                          onColorChanged: (color) =>
+                              setState(() => _penColor = color),
+                          onWidthChanged: (width) =>
+                              setState(() => _penWidth = width),
+                          onLinesChanged: (value) =>
+                              setState(() => _showLines = value),
+                          onUndo: _undo,
+                          onClear: _clearAll,
+                          onBack: () => Navigator.maybePop(context),
+                        ),
                     ],
                   ),
                   // 웹에서는 저장 불가 알림
                   if (!_canPersist)
                     Positioned(
-                      bottom: 16,
+                      bottom: isMobile ? 10 : 16,
                       left: 0,
                       right: 0,
                       child: Center(
@@ -483,7 +692,7 @@ class _NotepadPageState extends State<NotepadPage>
                             '웹에서는 저장되지 않습니다',
                             style: TextStyle(
                               color: Colors.white70,
-                              fontSize: 12,
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -492,6 +701,22 @@ class _NotepadPageState extends State<NotepadPage>
                 ],
               ),
             ),
+            if (isMobile)
+              _MobileNotepadToolbar(
+                toolMode: _toolMode,
+                penColor: _penColor,
+                isHighlighter: _isHighlighter,
+                canUndo: _undoStack.isNotEmpty,
+                onPen: () => setState(() {
+                  _toolMode = _ToolMode.pen;
+                  _isHighlighter = false;
+                }),
+                onEraser: () => setState(() {
+                  _toolMode = _ToolMode.eraser;
+                }),
+                onUndo: _undo,
+                onTools: _showMobileToolsSheet,
+              ),
           ],
         ),
       ),
@@ -499,45 +724,364 @@ class _NotepadPageState extends State<NotepadPage>
   }
 }
 
-/// 노트패드 캔버스 위에 도구 이름과 세션 종료 동작을 고정한다.
-/// 필요한 변수: 종료 콜백. 작동 원리: 다른 학습 도구와 같은 흰색 헤더를 제공한다.
-class _NotepadHeader extends StatelessWidget {
-  const _NotepadHeader({required this.onClose});
+/// 필요한 변수는 현재 도구·펜 색상·실행 취소 가능 여부와 각 동작 콜백이다.
+/// 작동 원리는 모바일에서 엄지손가락이 닿는 화면 하단에 핵심 도구 네 개만 크게 고정한다.
+class _MobileNotepadToolbar extends StatelessWidget {
+  const _MobileNotepadToolbar({
+    required this.toolMode,
+    required this.penColor,
+    required this.isHighlighter,
+    required this.canUndo,
+    required this.onPen,
+    required this.onEraser,
+    required this.onUndo,
+    required this.onTools,
+  });
 
+  final _ToolMode toolMode;
+  final Color penColor;
+  final bool isHighlighter;
+  final bool canUndo;
+  final VoidCallback onPen;
+  final VoidCallback onEraser;
+  final VoidCallback onUndo;
+  final VoidCallback onTools;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 16,
+      shadowColor: const Color(0x26000000),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: _MobileNotepadAction(
+                  tooltip: '펜',
+                  label: '펜',
+                  icon: Icons.edit_rounded,
+                  selected: toolMode == _ToolMode.pen && !isHighlighter,
+                  indicatorColor: penColor,
+                  onTap: onPen,
+                ),
+              ),
+              Expanded(
+                child: _MobileNotepadAction(
+                  tooltip: '지우개',
+                  label: '지우개',
+                  icon: Icons.auto_fix_high_rounded,
+                  selected: toolMode == _ToolMode.eraser,
+                  onTap: onEraser,
+                ),
+              ),
+              Expanded(
+                child: _MobileNotepadAction(
+                  tooltip: '실행 취소',
+                  label: '되돌리기',
+                  icon: Icons.undo_rounded,
+                  enabled: canUndo,
+                  onTap: canUndo ? onUndo : null,
+                ),
+              ),
+              Expanded(
+                child: _MobileNotepadAction(
+                  tooltip: '필기 도구',
+                  label: '도구',
+                  icon: Icons.tune_rounded,
+                  onTap: onTools,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 도구 아이콘·레이블·선택 및 활성 상태다.
+/// 작동 원리는 48px 이상 터치 영역과 텍스트 레이블을 함께 제공해 아이콘 의미를 분명히 한다.
+class _MobileNotepadAction extends StatelessWidget {
+  const _MobileNotepadAction({
+    required this.tooltip,
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.selected = false,
+    this.enabled = true,
+    this.indicatorColor,
+  });
+
+  final String tooltip;
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool selected;
+  final bool enabled;
+  final Color? indicatorColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveEnabled = enabled && onTap != null;
+    final foreground = !effectiveEnabled
+        ? const Color(0xFFB8B8BA)
+        : selected
+        ? Colors.white
+        : const Color(0xFF3F3F43);
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        enabled: effectiveEnabled,
+        selected: selected,
+        label: tooltip,
+        child: InkWell(
+          onTap: effectiveEnabled ? onTap : null,
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            constraints: const BoxConstraints(minHeight: 54),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0xFF202022) : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(icon, color: foreground, size: 22),
+                    if (indicatorColor != null)
+                      Positioned(
+                        right: -4,
+                        bottom: -3,
+                        child: Container(
+                          width: 9,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            color: indicatorColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: selected ? Colors.black : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: foreground,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 선택할 색상과 현재 선택 여부다.
+/// 작동 원리는 큰 원형 색상 버튼과 체크 표시로 모바일에서도 현재 펜 색상을 즉시 구분하게 한다.
+class _MobileColorChoice extends StatelessWidget {
+  const _MobileColorChoice({
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected ? const Color(0xFF202022) : Colors.transparent,
+            width: 3,
+            strokeAlign: BorderSide.strokeAlignOutside,
+          ),
+        ),
+        child: selected
+            ? const Icon(Icons.check_rounded, color: Colors.white, size: 25)
+            : null,
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 후보 굵기와 선택 여부다.
+/// 작동 원리는 실제 굵기의 선 미리보기를 큰 선택 카드에 그려 숫자 없이도 결과를 예상하게 한다.
+class _MobileWidthChoice extends StatelessWidget {
+  const _MobileWidthChoice({
+    required this.width,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final double width;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF202022) : const Color(0xFFF4F4F5),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        alignment: Alignment.center,
+        child: Container(
+          width: 28,
+          height: width.clamp(2, 9),
+          decoration: BoxDecoration(
+            color: selected ? Colors.white : const Color(0xFF414145),
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 설정 아이콘·제목·설명·스위치 값이다.
+/// 작동 원리는 60px 이상의 행 전체를 눌러도 값이 바뀌는 모바일 설정 카드로 세부 도구를 제공한다.
+class _MobileToolSettingRow extends StatelessWidget {
+  const _MobileToolSettingRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFF5F5F6),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: () => onChanged(!value),
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(icon, color: const Color(0xFF202022)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF717176),
+                        fontSize: 12.5,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(value: value, onChanged: onChanged),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 노트패드 캔버스 위에 도구 이름과 세션 종료 동작을 고정한다.
+/// 필요한 변수: 모바일 여부와 종료 콜백. 작동 원리: PC는 세션 헤더를 유지하고
+/// 모바일은 제목과 닫기만 남긴 60px 헤더로 캔버스 공간을 확보한다.
+class _NotepadHeader extends StatelessWidget {
+  const _NotepadHeader({required this.mobile, required this.onClose});
+
+  final bool mobile;
   final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 82,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      height: mobile ? 60 : 82,
+      padding: EdgeInsets.symmetric(horizontal: mobile ? 14 : 24),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7))),
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'LEARNING TOOL · SESSION',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                    color: Color(0xFF71717A),
+                if (!mobile)
+                  const Text(
+                    'LEARNING TOOL · SESSION',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: Color(0xFF71717A),
+                    ),
                   ),
-                ),
-                SizedBox(height: 3),
+                if (!mobile) const SizedBox(height: 3),
                 Text(
-                  '노트패드',
+                  mobile ? '필기 노트' : '노트패드',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: mobile ? 21 : 24,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -1,
+                    letterSpacing: -.8,
                   ),
                 ),
               ],

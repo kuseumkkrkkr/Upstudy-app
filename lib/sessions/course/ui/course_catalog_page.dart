@@ -302,10 +302,9 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
           children: [
             Ios26TopBar(
               brandColor: StudentDensityTokens.dark,
-              onMenu: () => mobile
-                  ? MobileStudentBottomAppBar.openMore(context)
-                  : toggleAppDrawer(context),
+              onMenu: mobile ? null : () => toggleAppDrawer(context),
               showLevelIndicator: false,
+              showUtilityActions: !mobile,
               items: studentTopNavItems(
                 context,
                 active: StudentTopDestination.courses,

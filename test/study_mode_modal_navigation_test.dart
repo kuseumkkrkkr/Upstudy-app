@@ -32,11 +32,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(StudypageCopyWidget), findsNothing);
-    expect(find.text('시험지 학습하기'), findsOneWidget);
+    expect(find.text('시험지 학습'), findsOneWidget);
 
     await tester.tap(find.byTooltip('학습하기로 돌아가기'));
     await tester.pumpAndSettle();
-    expect(find.text('시험지 학습하기'), findsNothing);
+    expect(find.text('시험지 학습'), findsNothing);
     expect(find.byType(StudypageCopyWidget), findsOneWidget);
   });
 }

@@ -138,26 +138,53 @@ class StudyGroup {
   int get members => memberCount;
   bool get isTeacherGroup => ownerRole == 'teacher';
 
+  /// 필요한 변수는 서버 그룹 JSON과 숫자·목록 필드다.
+  /// 작동 원리: 웹에서 null·문자열·숫자가 섞여 와도 안전하게 문자열과 정수로 정규화해 런타임 형변환 오류를 막는다.
   factory StudyGroup.fromJson(Map<String, dynamic> json) {
+    final rawMemberIds = json['member_ids'];
     return StudyGroup(
-      id: json['group_id'] ?? json['id'] ?? '',
-      name: json['name'] ?? '',
-      description: json['description'],
-      memberCount: json['member_count'] ?? json['members'] ?? 0,
-      maxMembers: json['max_members'] ?? 0,
-      isPublic: json['is_public'] ?? true,
-      logoIndex: json['logo_index'],
-      lockEnabled: json['lock_enabled'] ?? false,
+      id: (json['group_id'] ?? json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      description: json['description']?.toString(),
+      memberCount:
+          int.tryParse(
+            (json['member_count'] ?? json['members'] ?? 0).toString(),
+          ) ??
+          0,
+      maxMembers: int.tryParse((json['max_members'] ?? 0).toString()) ?? 0,
+      isPublic: json['is_public'] != false,
+      logoIndex: int.tryParse(json['logo_index']?.toString() ?? ''),
+      lockEnabled: json['lock_enabled'] == true,
       ownerRole: (json['owner_role'] ?? 'student').toString(),
       inviteCode: json['invite_code']?.toString(),
-      memberIds: List<String>.from(json['member_ids'] as List? ?? const []),
-      password: json['password'],
+      memberIds: rawMemberIds is List
+          ? rawMemberIds
+                .map((value) => value.toString())
+                .toList(growable: false)
+          : const [],
+      password: json['password']?.toString(),
       createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'])
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
       creatorId: (json['creator_id'] ?? '').toString(),
     );
   }
+}
+
+/// 필요한 변수는 그룹 API가 반환한 null·목록·래핑 객체다.
+/// 작동 원리: `groups` 누락과 잘못된 항목을 빈 목록 또는 유효 그룹만으로 정규화해 한 항목 때문에 화면 전체가 깨지지 않게 한다.
+List<StudyGroup> parseStudyGroupListPayload(Object? data) {
+  final Object? rawItems = data is List
+      ? data
+      : data is Map
+      ? data['groups']
+      : null;
+  if (rawItems is! List) return const <StudyGroup>[];
+  return rawItems
+      .whereType<Map>()
+      .map((item) => StudyGroup.fromJson(Map<String, dynamic>.from(item)))
+      .where((group) => group.id.isNotEmpty || group.name.isNotEmpty)
+      .toList(growable: false);
 }
 
 class StudyGroupMember {
@@ -1735,7 +1762,11 @@ class ApiClient {
     await _ensureToken();
     final uri = ApiContract.uri(path);
     log('PUT $uri', name: 'ApiClient');
-    final res = await http.put(uri, headers: _headers, body: jsonEncode(body));
+    final res = await _httpClient.put(
+      uri,
+      headers: _headers,
+      body: jsonEncode(body),
+    );
     await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }
@@ -1748,7 +1779,7 @@ class ApiClient {
     await _ensureToken();
     final uri = ApiContract.uri(path);
     log('PATCH $uri', name: 'ApiClient');
-    final res = await http.patch(
+    final res = await _httpClient.patch(
       uri,
       headers: _headers,
       body: jsonEncode(body),
@@ -1765,7 +1796,7 @@ class ApiClient {
     await _ensureToken();
     final uri = ApiContract.uri(path);
     log('DELETE $uri', name: 'ApiClient');
-    final res = await http.delete(
+    final res = await _httpClient.delete(
       uri,
       headers: _headers,
       body: body == null ? null : jsonEncode(body),
@@ -1819,11 +1850,7 @@ class ApiClient {
   Future<List<StudyGroup>> listStudyGroups() async {
     final res = await _get(
       '/social/study-groups/mine',
-      parser: (d) {
-        return (d['groups'] as List)
-            .map((e) => StudyGroup.fromJson(e))
-            .toList();
-      },
+      parser: parseStudyGroupListPayload,
       useCache: true,
       cacheTtl: const Duration(seconds: 30),
     );
@@ -3197,7 +3224,11 @@ class ApiClient {
       for (final entry in tasksByDate.entries)
         _dateKey(entry.key): List<String>.from(entry.value),
     };
-    return _put('/academy/students/me/schedule', {'tasks_by_date': payload});
+    final response = await _put('/academy/students/me/schedule', {
+      'tasks_by_date': payload,
+    });
+    await invalidateCachePath('/academy/students/me/schedule');
+    return response;
   }
 
   /// 필요한 변수는 로그인 토큰과 개인 일정 API 응답이다.
@@ -5073,12 +5104,7 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get(
       '/social/study-groups/search',
       query: {'q': q, 'limit': '${limit ?? 20}'},
-      parser: (d) {
-        final items = (d['groups'] as List<dynamic>?) ?? const [];
-        return items
-            .map((e) => StudyGroup.fromJson(e as Map<String, dynamic>))
-            .toList();
-      },
+      parser: parseStudyGroupListPayload,
       useCache: true,
       cacheTtl: const Duration(seconds: 30),
     );

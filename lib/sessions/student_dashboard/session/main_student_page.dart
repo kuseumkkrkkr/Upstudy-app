@@ -573,10 +573,9 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Ios26TopBar(
       brandColor: _green,
-      onMenu: () => mobile
-          ? MobileStudentBottomAppBar.openMore(context)
-          : toggleAppDrawer(context),
+      onMenu: mobile ? null : () => toggleAppDrawer(context),
       showLevelIndicator: false,
+      showUtilityActions: !mobile,
       profileLabel: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()
           : null,
@@ -690,7 +689,16 @@ class _HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = username?.trim();
-    final displayName = (name == null || name.isEmpty) ? '사용자' : name;
+    final hasDisplayName = name != null && name.isNotEmpty;
+    final greeting = portraitMobile
+        ? hasDisplayName
+              ? '$name님,\n바로 시작해요.'
+              : '오늘도,\n바로 시작해요.'
+        : hasDisplayName
+        ? '$name님,\n오늘도 시작해 볼까요?'
+        : isStudentDensityMobile(context)
+        ? '오늘도,\n학습을 시작해 볼까요?'
+        : '사용자님,\n오늘도 시작해 볼까요?';
     final now = DateTime.now();
     final mobile = isStudentDensityMobile(context);
     const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -727,9 +735,7 @@ class _HeroSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  portraitMobile
-                      ? '$displayName님,\n바로 시작해요.'
-                      : '$displayName님,\n오늘도 시작해 볼까요?',
+                  greeting,
                   style: TextStyle(
                     color: StudentDensityTokens.ink,
                     fontSize: portraitMobile

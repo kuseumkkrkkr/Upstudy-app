@@ -280,14 +280,14 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리는 PC 공용 메뉴에서 마켓을 활성화하고 모바일에서는 같은 AppDrawer를 여는 것이다.
+  /// 작동 원리는 PC 공용 메뉴에서 마켓을 활성화하고 모바일에서는 하단 앱바에 탐색을 맡기는 것이다.
   Widget _buildHeader(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 720;
     return Ios26TopBar(
       brandColor: Colors.black,
       showLevelIndicator: false,
-      onMenu: () => MediaQuery.sizeOf(context).width <= 720
-          ? MobileStudentBottomAppBar.openMore(context)
-          : toggleAppDrawer(context),
+      showUtilityActions: !mobile,
+      onMenu: mobile ? null : () => toggleAppDrawer(context),
       onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainStudentPage()),
         (route) => false,

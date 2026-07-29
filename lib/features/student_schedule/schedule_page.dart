@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
@@ -30,6 +32,8 @@ class _SchedulePageState extends State<SchedulePage> {
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _schedule = const [];
+  List<StudentScheduleTask> _personalTasks = const [];
+  bool _savingPersonalTask = false;
   bool _weekly = true;
   late DateTime _selectedDate;
 
@@ -45,7 +49,224 @@ class _SchedulePageState extends State<SchedulePage> {
       _loading = false;
     } else {
       unawaited(_loadRuntimeSchedule());
+      unawaited(_loadPersonalSchedule());
     }
+  }
+
+  /// 필요한 변수는 로그인 학생의 개인 일정 API다.
+  /// 작동 원리: 코스 일정과 병렬로 한 번 조회하고 실패는 코스 일정 화면을 막지 않도록 빈 목록으로 격리한다.
+  Future<void> _loadPersonalSchedule() async {
+    try {
+      final response = await ApiClient.instance.listMyStudentSchedule();
+      if (!mounted) return;
+      setState(() => _personalTasks = response.data ?? const []);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _personalTasks = const []);
+    }
+  }
+
+  /// 필요한 변수는 현재 개인 일정 전체와 새 제목·날짜다.
+  /// 작동 원리: 서버의 전체 동기화 계약에 맞춰 기존 날짜별 제목을 보존한 뒤 새 일정 하나를 추가하고 화면 상태를 즉시 갱신한다.
+  Future<void> _savePersonalSchedule(_PersonalScheduleDraft draft) async {
+    if (_savingPersonalTask) return;
+    final tasksByDate = <DateTime, List<String>>{};
+    for (final task in _personalTasks) {
+      final date = DateTime.tryParse(task.date);
+      final title = task.title.trim();
+      if (date == null || title.isEmpty) continue;
+      tasksByDate
+          .putIfAbsent(DateUtils.dateOnly(date), () => <String>[])
+          .add(title);
+    }
+    final selectedDate = DateUtils.dateOnly(draft.date);
+    final titles = tasksByDate.putIfAbsent(selectedDate, () => <String>[]);
+    if (titles.contains(draft.title)) {
+      _showScheduleMessage('같은 날짜에 이미 등록된 일정이에요.');
+      return;
+    }
+    titles.add(draft.title);
+
+    setState(() => _savingPersonalTask = true);
+    try {
+      await ApiClient.instance.syncMyStudentSchedule(tasksByDate);
+      final dateKey = _scheduleDateKey(selectedDate);
+      if (!mounted) return;
+      setState(() {
+        _personalTasks = [
+          ..._personalTasks,
+          StudentScheduleTask(
+            taskId: 'local-${DateTime.now().microsecondsSinceEpoch}',
+            date: dateKey,
+            title: draft.title,
+          ),
+        ];
+        _selectedDate = selectedDate;
+      });
+      _showScheduleMessage('개인 일정을 저장했어요.');
+    } catch (error) {
+      if (!mounted) return;
+      _showScheduleMessage(
+        studentFacingApiError(
+          error,
+          fallback: '개인 일정을 저장하지 못했어요.',
+          unavailable: '일정 저장 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _savingPersonalTask = false);
+    }
+  }
+
+  /// 필요한 변수는 선택 날짜와 모바일 화면 문맥이다.
+  /// 작동 원리: 레퍼런스형 둥근 바텀시트에서 제목·날짜를 검증하고 사용자가 저장을 확정한 경우에만 서버 동기화를 시작한다.
+  Future<void> _openAddPersonalSchedule() async {
+    final titleController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var draftDate = _selectedDate;
+    final draft = await showModalBottomSheet<_PersonalScheduleDraft>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: .52),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4B4B54),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '개인 일정 추가',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    const Text(
+                      '내 학습 계획에 표시할 일정과 날짜를 입력하세요.',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    TextFormField(
+                      key: const ValueKey('personal-schedule-title'),
+                      controller: titleController,
+                      autofocus: true,
+                      textInputAction: TextInputAction.done,
+                      maxLength: 60,
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? '일정 제목을 입력해 주세요.'
+                          : null,
+                      decoration: const InputDecoration(
+                        labelText: '일정 제목',
+                        hintText: '예: 이차함수 오답 복습',
+                        prefixIcon: Icon(Icons.edit_calendar_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      key: const ValueKey('personal-schedule-date'),
+                      onPressed: () async {
+                        final selected = await showDatePicker(
+                          context: context,
+                          initialDate: draftDate,
+                          firstDate: DateTime.now().subtract(
+                            const Duration(days: 365),
+                          ),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 730),
+                          ),
+                        );
+                        if (selected == null) return;
+                        setSheetState(
+                          () => draftDate = DateUtils.dateOnly(selected),
+                        );
+                      },
+                      icon: const Icon(Icons.calendar_month_rounded),
+                      label: Text(_scheduleDateLabel(draftDate)),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(54),
+                        alignment: Alignment.centerLeft,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      key: const ValueKey('personal-schedule-save'),
+                      onPressed: () {
+                        if (formKey.currentState?.validate() != true) return;
+                        Navigator.of(sheetContext).pop(
+                          _PersonalScheduleDraft(
+                            title: titleController.text.trim(),
+                            date: draftDate,
+                          ),
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF202022),
+                        minimumSize: const Size.fromHeight(56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(17),
+                        ),
+                      ),
+                      child: const Text(
+                        '일정 저장',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    // 바텀시트 역방향 애니메이션 동안 입력 위젯이 컨트롤러를 잠시 더 참조하므로
+    // 전환이 끝난 뒤 해제해 dispose 이후 접근을 막는다.
+    await Future<void>.delayed(const Duration(milliseconds: 320));
+    titleController.dispose();
+    if (draft == null || !mounted) return;
+    await _savePersonalSchedule(draft);
+  }
+
+  /// 필요한 변수는 일정 저장 결과 문구다.
+  /// 작동 원리: 이전 안내를 지우고 현재 저장 결과 하나만 화면 하단에 표시한다.
+  void _showScheduleMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// 필요한 변수는 선택 코스 또는 첫 수강 코스다.
@@ -104,23 +325,55 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리는 학습 일정에서도 학생 공용 상단 바와 모바일 드로어를 동일하게 제공하는 것이다.
-  Widget _buildHeader(BuildContext context) => Ios26TopBar(
-    brandColor: Colors.black,
-    showLevelIndicator: false,
-    onMenu: () => toggleAppDrawer(context),
-    onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MainStudentPage()),
-      (route) => false,
-    ),
-    items: studentTopNavItems(context, active: StudentTopDestination.learning),
-  );
+  /// 작동 원리는 PC에서는 공용 드로어를 유지하고 모바일에서는 하단 앱바에 탐색을 맡기는 것이다.
+  Widget _buildHeader(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return Ios26TopBar(
+      brandColor: Colors.black,
+      showLevelIndicator: false,
+      showUtilityActions: !mobile,
+      onMenu: mobile ? null : () => toggleAppDrawer(context),
+      onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainStudentPage()),
+        (route) => false,
+      ),
+      items: studentTopNavItems(
+        context,
+        active: StudentTopDestination.learning,
+      ),
+    );
+  }
 
   /// 필요한 변수는 화면 너비·주간/월간 상태·선택 날짜·런타임 일정이다.
   /// 작동 원리는 780px 이하에서는 일정과 요약을 세로로, PC에서는 시안 비율의 2열로 배치하는 것이다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    final personalSchedule = mobile
+        ? _personalTasks
+              .where(
+                (task) => DateUtils.isSameDay(
+                  DateTime.tryParse(task.date),
+                  _selectedDate,
+                ),
+              )
+              .map(
+                (task) => <String, dynamic>{
+                  'task_id': task.taskId,
+                  'date': task.date,
+                  'title': task.title,
+                  'type': '개인',
+                  'detail': '내 학습 일정',
+                  'status': '예정',
+                  'time': '자율',
+                },
+              )
+              .toList(growable: false)
+        : const <Map<String, dynamic>>[];
+    final visibleSchedule = <Map<String, dynamic>>[
+      ..._schedule,
+      ...personalSchedule,
+    ];
     final scheduleCard = _loading
         ? const _ScheduleLoadingCard()
         : _error != null
@@ -129,23 +382,28 @@ class _SchedulePageState extends State<SchedulePage> {
         ? _WeeklyScheduleCard(
             weekStart: _weekStart,
             selectedDate: _selectedDate,
-            schedule: _schedule,
+            schedule: visibleSchedule,
             onSelectDate: (date) => setState(() => _selectedDate = date),
             onMoveWeek: _moveWeek,
           )
         : _MonthlyScheduleCard(
             selectedDate: _selectedDate,
-            schedule: _schedule,
+            schedule: visibleSchedule,
             onSelectDate: (date) => setState(() => _selectedDate = date),
           );
     final summaryCard = _TodaySummaryCard(
       selectedDate: _selectedDate,
-      schedule: _schedule,
+      schedule: visibleSchedule,
+      savingPersonalTask: _savingPersonalTask,
+      onAddPersonalSchedule: mobile ? _openAddPersonalSchedule : null,
     );
 
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/schedule')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -546,9 +804,16 @@ class _TimelineItem extends StatelessWidget {
 }
 
 class _TodaySummaryCard extends StatelessWidget {
-  const _TodaySummaryCard({required this.selectedDate, required this.schedule});
+  const _TodaySummaryCard({
+    required this.selectedDate,
+    required this.schedule,
+    required this.savingPersonalTask,
+    this.onAddPersonalSchedule,
+  });
   final DateTime selectedDate;
   final List<Map<String, dynamic>> schedule;
+  final bool savingPersonalTask;
+  final VoidCallback? onAddPersonalSchedule;
 
   static const _weekdays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
 
@@ -665,11 +930,16 @@ class _TodaySummaryCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('개인 일정 추가 기능을 준비 중입니다.')),
-              ),
+              onPressed: savingPersonalTask
+                  ? null
+                  : onAddPersonalSchedule ??
+                        () => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('개인 일정 추가 기능을 준비 중입니다.'),
+                          ),
+                        ),
               icon: const Icon(Icons.add_rounded, size: 17),
-              label: const Text('개인 일정 추가'),
+              label: Text(savingPersonalTask ? '저장 중…' : '개인 일정 추가'),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(46),
                 backgroundColor: const Color(0xFF202022),
@@ -685,6 +955,13 @@ class _TodaySummaryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PersonalScheduleDraft {
+  const _PersonalScheduleDraft({required this.title, required this.date});
+
+  final String title;
+  final DateTime date;
 }
 
 class _SummaryTaskItem extends StatelessWidget {
@@ -894,6 +1171,19 @@ String _monthLabel(DateTime date) {
     'December',
   ];
   return '${months[date.month - 1]} ${date.year}';
+}
+
+/// 필요한 변수는 개인 일정 날짜다.
+/// 작동 원리: API 동기화에 사용하는 로컬 시간대의 YYYY-MM-DD 키를 만든다.
+String _scheduleDateKey(DateTime date) {
+  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+}
+
+/// 필요한 변수는 개인 일정 날짜다.
+/// 작동 원리: 모바일 날짜 선택 버튼에 연·월·일과 요일을 함께 표시한다.
+String _scheduleDateLabel(DateTime date) {
+  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  return '${date.year}년 ${date.month}월 ${date.day}일 (${weekdays[date.weekday - 1]})';
 }
 
 /// 필요한 변수는 서버 due_date 값이다.

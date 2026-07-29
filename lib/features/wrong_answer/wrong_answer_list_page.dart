@@ -277,15 +277,19 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
     return Scaffold(
       key: const ValueKey('wrong-answers-screen'),
       backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/wrong_answers')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
             Builder(
               builder: (context) => Ios26TopBar(
                 brandColor: StudentDensityTokens.dark,
-                onMenu: () => Scaffold.of(context).openDrawer(),
+                onMenu: mobile ? null : () => Scaffold.of(context).openDrawer(),
                 showLevelIndicator: false,
+                showUtilityActions: !mobile,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,

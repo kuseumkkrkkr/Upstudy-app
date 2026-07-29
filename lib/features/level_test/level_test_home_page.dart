@@ -3,6 +3,7 @@ import 'package:s11/features/level_test/level_test_result_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
@@ -85,7 +86,14 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error.toString().replaceFirst('Exception: ', '');
+        _error = error is Exception && error is! ApiException
+            ? error.toString().replaceFirst('Exception: ', '')
+            : studentFacingApiError(
+                error,
+                fallback: '레벨 테스트를 시작하지 못했어요.',
+                notFound: '레벨 테스트를 준비 중이에요. 잠시 후 다시 시도해 주세요.',
+                unavailable: '레벨 테스트 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+              );
       });
     }
   }
@@ -107,7 +115,11 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '레벨테스트 결과 반영 실패: ${error.toString().replaceFirst('Exception: ', '')}',
+            studentFacingApiError(
+              error,
+              fallback: '결과를 저장하지 못했어요.',
+              unavailable: '결과 저장 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+            ),
           ),
         ),
       );
@@ -132,18 +144,23 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
   /// 실제 제출 로직 위에 HTML의 OVR 히어로, 측정 과정, 시작 전 확인 영역을 순서대로 배치한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
       key: const ValueKey('level-test-screen'),
       backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/level_test')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
             Builder(
               builder: (context) => Ios26TopBar(
                 brandColor: StudentDensityTokens.dark,
-                onMenu: () => Scaffold.of(context).openDrawer(),
+                onMenu: mobile ? null : () => Scaffold.of(context).openDrawer(),
                 showLevelIndicator: false,
+                showUtilityActions: !mobile,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,

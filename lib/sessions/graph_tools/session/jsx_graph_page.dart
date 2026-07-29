@@ -288,16 +288,13 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final compact = constraints.maxWidth < 1120;
-                      final portraitMobile =
-                          constraints.maxWidth < 720 &&
-                          MediaQuery.orientationOf(context) ==
-                              Orientation.portrait;
+                      final mobileLayout = constraints.maxWidth < 720;
                       final graphPanel = _buildGraphPanel(isLinux: isLinux);
                       final editorPanel = _buildEditorPanel(
-                        compactMobile: portraitMobile,
+                        compactMobile: mobileLayout,
                       );
 
-                      if (portraitMobile) {
+                      if (mobileLayout) {
                         return Column(
                           children: [
                             SizedBox(
@@ -442,178 +439,202 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
 
   /// 필요한 변수는 세로 모바일용 축약 여부와 현재 수식 초안이다.
   /// 작동 원리는 모바일에서 큰 설명·여러 줄 입력을 줄이고 한 줄 수식 입력과
-  /// 전체 폭 갱신 행동을 앞세워 그래프 확인까지의 단계를 짧게 만드는 것이다.
+  /// 고정된 전체 폭 갱신 행동을 앞세워 그래프 확인까지의 단계를 짧게 만드는 것이다.
   Widget _buildEditorPanel({bool compactMobile = false}) {
-    return _SurfaceCard(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              compactMobile ? '함수 그리기' : '수식',
-              style: const TextStyle(
-                color: _kGreen,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
+    final editorContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          compactMobile ? '함수 그리기' : '수식',
+          style: const TextStyle(
+            color: _kGreen,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          compactMobile
+              ? '수식을 입력하면 좌표평면에 바로 반영됩니다.'
+              : '함수식을 직접 입력하고 좌표평면에서 결과를 확인하세요.',
+          style: const TextStyle(color: _kMuted, fontSize: 12.5, height: 1.45),
+        ),
+        if (_hasActiveExampleContext) ...[
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _kSurfaceTint,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _kBorder),
             ),
-            const SizedBox(height: 6),
-            Text(
-              compactMobile
-                  ? '수식을 입력하면 좌표평면에 바로 반영됩니다.'
-                  : '함수식을 직접 입력하고 좌표평면에서 결과를 확인하세요.',
-              style: const TextStyle(
-                color: _kMuted,
-                fontSize: 12.5,
-                height: 1.45,
-              ),
-            ),
-            if (_hasActiveExampleContext) ...[
-              const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _kSurfaceTint,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _kBorder),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.lightbulb_outline_rounded, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '예제에서 시작: ${_selectedExample.title}',
-                        style: const TextStyle(
-                          color: _kGreen,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: '빈 그래프로 전환',
-                      onPressed: _resetToBlankGraph,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _addFunctionDraft,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('식 추가'),
-              ),
-            ),
-            if (_parameters.isNotEmpty) ...[
-              _PracticePanel(
-                parameters: _parameters,
-                onChanged: (parameter, value) {
-                  setState(() {
-                    parameter.value = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
-            ],
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _drafts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) =>
-                  _buildDraftTile(_drafts[index], compact: compactMobile),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            child: Row(
               children: [
-                FilterChip(
-                  label: const Text('축'),
-                  selected: _showAxes,
-                  onSelected: (value) {
-                    setState(() {
-                      _showAxes = value;
-                    });
-                  },
+                const Icon(Icons.lightbulb_outline_rounded, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '예제에서 시작: ${_selectedExample.title}',
+                    style: const TextStyle(
+                      color: _kGreen,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-                FilterChip(
-                  label: const Text('격자'),
-                  selected: _showGrid,
-                  onSelected: (value) {
-                    setState(() {
-                      _showGrid = value;
-                    });
-                  },
-                ),
-                FilterChip(
-                  label: const Text('뷰 고정'),
-                  selected: _lockViewport,
-                  onSelected: (value) {
-                    setState(() {
-                      _lockViewport = value;
-                    });
-                  },
-                ),
-                FilterChip(
-                  label: Text(_degreeMode ? '도 단위' : '라디안'),
-                  selected: _degreeMode,
-                  onSelected: (value) {
-                    setState(() {
-                      _degreeMode = value;
-                    });
-                    _applyCurrentDrafts();
-                  },
+                IconButton(
+                  tooltip: '빈 그래프로 전환',
+                  onPressed: _resetToBlankGraph,
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.close_rounded, size: 18),
                 ),
               ],
             ),
-            if (_editorMessage != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                _editorMessage!,
-                style: const TextStyle(
-                  color: Color(0xFFB33A3A),
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-            const SizedBox(height: 10),
-            Align(
-              alignment: compactMobile
-                  ? Alignment.center
-                  : Alignment.centerRight,
-              child: SizedBox(
-                width: compactMobile ? double.infinity : null,
-                child: FilledButton.icon(
-                  onPressed: _applyCurrentDrafts,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _kGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: _addFunctionDraft,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('식 추가'),
+          ),
+        ),
+        if (_parameters.isNotEmpty) ...[
+          _PracticePanel(
+            parameters: _parameters,
+            onChanged: (parameter, value) {
+              setState(() {
+                parameter.value = value;
+              });
+            },
+          ),
+          const SizedBox(height: 10),
+        ],
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _drafts.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) =>
+              _buildDraftTile(_drafts[index], compact: compactMobile),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              label: const Text('축'),
+              selected: _showAxes,
+              onSelected: (value) {
+                setState(() {
+                  _showAxes = value;
+                });
+              },
+            ),
+            FilterChip(
+              label: const Text('격자'),
+              selected: _showGrid,
+              onSelected: (value) {
+                setState(() {
+                  _showGrid = value;
+                });
+              },
+            ),
+            FilterChip(
+              label: const Text('뷰 고정'),
+              selected: _lockViewport,
+              onSelected: (value) {
+                setState(() {
+                  _lockViewport = value;
+                });
+              },
+            ),
+            FilterChip(
+              label: Text(_degreeMode ? '도 단위' : '라디안'),
+              selected: _degreeMode,
+              onSelected: (value) {
+                setState(() {
+                  _degreeMode = value;
+                });
+                _applyCurrentDrafts();
+              },
+            ),
+          ],
+        ),
+        if (_editorMessage != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            _editorMessage!,
+            style: const TextStyle(
+              color: Color(0xFFB33A3A),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+        const SizedBox(height: 10),
+        if (!compactMobile)
+          Align(
+            alignment: Alignment.centerRight,
+            child: SizedBox(
+              width: null,
+              child: FilledButton.icon(
+                onPressed: _applyCurrentDrafts,
+                style: FilledButton.styleFrom(
+                  backgroundColor: _kGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
                   ),
-                  icon: const Icon(Icons.stacked_line_chart_rounded),
-                  label: Text(compactMobile ? '그래프에 반영하기' : '그래프 갱신'),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.stacked_line_chart_rounded),
+                label: const Text('그래프 갱신'),
+              ),
+            ),
+          ),
+      ],
+    );
+
+    if (compactMobile) {
+      return _SurfaceCard(
+        child: Column(
+          children: [
+            Expanded(child: SingleChildScrollView(child: editorContent)),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const ValueKey('mobile-graph-apply'),
+                onPressed: _applyCurrentDrafts,
+                style: FilledButton.styleFrom(
+                  backgroundColor: _kGreen,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.stacked_line_chart_rounded),
+                label: const Text(
+                  '그래프에 반영하기',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
+      );
+    }
+
+    return _SurfaceCard(child: SingleChildScrollView(child: editorContent));
   }
 
   Widget _buildDraftTile(_GraphItemDraft draft, {bool compact = false}) {

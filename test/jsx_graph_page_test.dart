@@ -61,6 +61,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('모바일 수식은 반영 버튼을 누르면 정규화되어 그래프 상태에 적용된다', (tester) async {
+    // 필요한 변수는 모바일 그래프 화면과 암시적 곱셈이 포함된 수식이다.
+    // 작동 원리는 반영 버튼이 입력을 검증하고 2x를 2*x로 정규화해 문서 재생성 상태를 만드는지 확인한다.
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      const MaterialApp(home: JsxGraphPage(embedEnabled: false)),
+    );
+    await tester.pump();
+
+    final expressionField = find.byType(TextField).first;
+    await tester.enterText(expressionField, 'y = 2x + 1');
+    await tester.pump();
+    final applyButton = find.byKey(const ValueKey('mobile-graph-apply'));
+    expect(applyButton, findsOneWidget);
+    await tester.tap(applyButton);
+    await tester.pump();
+
+    final field = tester.widget<TextField>(expressionField);
+    expect(field.controller?.text, '2*x+1');
+    expect(find.text('검증된 형식으로 바꾼 뒤 다시 갱신하세요.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   test('직접 그리기용 HTML은 내부 매개변수 슬라이더만 숨길 수 있다', () {
     // 필요한 변수는 빈 그래프 문서와 조작부 표시 옵션이다.
     // 작동 원리는 교재 기본 HTML은 슬라이더를 유지하고 직접 그리기 HTML만 display:none을 주입하는지 확인한다.

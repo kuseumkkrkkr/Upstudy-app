@@ -55,4 +55,57 @@ void main() {
     expect(submit.onPressed, isNotNull);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('모바일 필기 풀이를 충분히 작성하고 제출하면 채점 화면으로 이동한다', (tester) async {
+    // 필요한 변수는 모바일 풀이 화면과 서술형 문제, 네 개의 필기 획이다.
+    // 작동 원리는 최소 풀이량을 충족한 뒤 제출 버튼을 눌러 즉시 채점 라우트가 열리는지 확인한다.
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BuildpageWidget(
+          config: ProblemSolveConfig(
+            ratingEnabled: false,
+            quests: [
+              {
+                'header': {'quest_id': 'mobile-submit-test'},
+                'data': {'quest_title': '세 획을 작성하고 제출하세요.'},
+              },
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final canvas = find.byWidgetPredicate(
+      (widget) => widget is GestureDetector && widget.onPanStart != null,
+    );
+    expect(canvas, findsOneWidget);
+    await tester.ensureVisible(canvas);
+    await tester.pump();
+
+    for (var index = 0; index < 4; index += 1) {
+      await tester.dragFrom(
+        tester.getTopLeft(canvas) + Offset(45, 40 + (index * 28)),
+        const Offset(90, 18),
+      );
+      await tester.pump();
+    }
+
+    final submit = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, '제출'),
+    );
+    expect(submit.onPressed, isNotNull);
+    await tester.tap(find.widgetWithText(FilledButton, '제출'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+
+    expect(find.text('채점 중'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
@@ -146,7 +147,11 @@ class _ServerChatPageState extends State<ServerChatPage> {
     } catch (error) {
       if (!mounted) return;
       _applyRateBlock(error);
-      _showError(_friendlyError(error));
+      final message = _friendlyError(error);
+      setState(() {
+        _messages.add(_ChatMessage(text: message, isUser: false));
+      });
+      _scrollToBottom();
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -186,14 +191,15 @@ class _ServerChatPageState extends State<ServerChatPage> {
   /// 필요한 변수는 API 또는 네트워크 오류다.
   /// 작동 원리: 서버 내부 표현을 숨기고 학생이 바로 대응할 수 있는 짧은 한국어 안내로 바꾼다.
   String _friendlyError(Object error) {
-    if (error is ApiException) {
-      if (error.statusCode == 429) {
-        return error.message.isNotEmpty ? error.message : '잠시 후 다시 시도해 주세요.';
-      }
-      if (error.statusCode == 400) return '입력값을 확인해 주세요.';
-      return error.message.isNotEmpty ? error.message : '응답을 가져오지 못했습니다.';
+    if (error is ApiException && error.statusCode == 400) {
+      return '질문 내용을 조금 더 구체적으로 입력해 주세요.';
     }
-    return '응답을 가져오지 못했습니다. 네트워크 연결을 확인해 주세요.';
+    return studentFacingApiError(
+      error,
+      fallback: '답변을 가져오지 못했어요.',
+      notFound: 'AI 튜터 연결을 준비 중이에요. 잠시 후 다시 시도해 주세요.',
+      unavailable: 'AI 튜터 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+    );
   }
 
   /// 필요한 변수는 사용자에게 표시할 오류 문구다.
@@ -225,7 +231,10 @@ class _ServerChatPageState extends State<ServerChatPage> {
     final showBottomPrompts = screenWidth < 1100;
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/tools')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -233,7 +242,8 @@ class _ServerChatPageState extends State<ServerChatPage> {
               builder: (topBarContext) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(topBarContext),
+                showUtilityActions: !mobile,
+                onMenu: mobile ? null : () => toggleAppDrawer(topBarContext),
                 items: studentTopNavItems(
                   topBarContext,
                   active: StudentTopDestination.learning,

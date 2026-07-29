@@ -216,7 +216,7 @@ class _SettingsPageState extends State<SettingsPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => MobileStudentBottomAppBar.openMore(context),
+                showUtilityActions: false,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,

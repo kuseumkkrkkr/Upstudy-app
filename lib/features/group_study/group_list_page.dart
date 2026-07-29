@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
@@ -62,8 +63,13 @@ class _GroupListPageState extends State<GroupListPage> {
         _groups = groups;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = studentFacingApiError(
+          e,
+          fallback: '그룹을 불러오지 못했어요.',
+          unavailable: '그룹 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+        );
       });
     } finally {
       if (mounted) {
@@ -95,9 +101,17 @@ class _GroupListPageState extends State<GroupListPage> {
       await _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('그룹을 만들지 못했습니다: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(
+              e,
+              fallback: '그룹을 만들지 못했어요.',
+              unavailable: '그룹 생성 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -117,7 +131,10 @@ class _GroupListPageState extends State<GroupListPage> {
     final mobile = isStudentDensityMobile(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/groups')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -125,7 +142,8 @@ class _GroupListPageState extends State<GroupListPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
+                showUtilityActions: !mobile,
+                onMenu: mobile ? null : () => toggleAppDrawer(context),
                 onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const MainStudentPage()),
                   (route) => false,
@@ -206,7 +224,7 @@ class _GroupListPageState extends State<GroupListPage> {
                           if (_loading)
                             const Center(child: CircularProgressIndicator())
                           else if (_error != null)
-                            Center(child: Text(_error!))
+                            _GroupLoadError(message: _error!, onRetry: _load)
                           else
                             _GroupListCard(groups: _groups),
                         ],
@@ -301,9 +319,17 @@ class _GroupFindDialogState extends State<_GroupFindDialog> {
       setState(() => _results = results);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('그룹을 검색하지 못했습니다: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(
+              error,
+              fallback: '그룹을 검색하지 못했어요.',
+              unavailable: '그룹 검색 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+            ),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _searching = false);
     }
@@ -347,9 +373,18 @@ class _GroupFindDialogState extends State<_GroupFindDialog> {
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('그룹에 참가하지 못했습니다: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(
+              error,
+              fallback: '그룹에 참가하지 못했어요.',
+              notFound: '초대 코드를 찾지 못했어요. 코드를 다시 확인해 주세요.',
+              unavailable: '그룹 참가 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+            ),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _joining = false);
     }
@@ -460,7 +495,17 @@ class _GroupFindDialogState extends State<_GroupFindDialog> {
                         } catch (error) {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('참가 실패: $error')),
+                            SnackBar(
+                              content: Text(
+                                studentFacingApiError(
+                                  error,
+                                  fallback: '그룹에 참가하지 못했어요.',
+                                  notFound: '이 그룹을 찾지 못했어요.',
+                                  unavailable:
+                                      '그룹 참가 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+                                ),
+                              ),
+                            ),
                           );
                         }
                       },
@@ -562,6 +607,45 @@ class _GroupListCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GroupLoadError extends StatelessWidget {
+  const _GroupLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  /// 필요한 변수는 학생용 오류 문구와 재조회 콜백이다.
+  /// 작동 원리: 원시 예외 대신 둥근 안내 카드와 명확한 재시도 행동을 모바일·PC에 함께 제공한다.
+  @override
+  Widget build(BuildContext context) => StudentDensitySurface(
+    padding: const EdgeInsets.all(24),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Icon(Icons.cloud_off_rounded, size: 34, color: Colors.black54),
+        const SizedBox(height: 12),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 16,
+            height: 1.45,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: onRetry,
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF202022),
+            minimumSize: const Size.fromHeight(50),
+          ),
+          child: const Text('다시 불러오기'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _GroupRow extends StatelessWidget {
