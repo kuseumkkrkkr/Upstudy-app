@@ -41,3 +41,7 @@ windows/
 CODE_GUIDELINES.md
 devtools_options.yaml
 pubspec.yaml
+
+# Flutter 정적 번들은 위의 소스 제외 규칙과 관계없이 전부 배포한다.
+!public/
+!public/**
