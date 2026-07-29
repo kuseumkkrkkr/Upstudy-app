@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 /// 필요한 변수는 실제 Android 세로 화면과 테스트 종료 복원 콜백이다.
 /// 작동 원리는 모든 홈 모달 테스트에 390×844 논리 크기를 적용해 모바일 시트 분기를 고정한다.
@@ -91,5 +92,29 @@ void main() {
     expect(find.text('레이팅 상세'), findsOneWidget);
     expect(find.text('현재 OVR'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('알림 센터는 모바일에서 영문 상단바와 중복 닫기가 없는 하단 시트를 연다', (tester) async {
+    _setMobileView(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showStudentNotifications(context),
+              child: const Text('공지 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('공지 열기'));
+    await tester.pump();
+
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('알림 센터'), findsOneWidget);
+    expect(find.text('LIVE STATUS'), findsNothing);
+    expect(find.byType(OutlinedButton), findsNothing);
   });
 }
