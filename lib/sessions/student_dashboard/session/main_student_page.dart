@@ -1452,6 +1452,8 @@ class _MobileHomeStatusGroup extends StatelessWidget {
   Widget build(BuildContext context) => Material(
     key: const ValueKey('student-home-mobile-status-group'),
     color: Colors.white,
+    elevation: 3,
+    shadowColor: Colors.black.withValues(alpha: 0.12),
     borderRadius: BorderRadius.circular(24),
     clipBehavior: Clip.antiAlias,
     child: Column(
@@ -1768,25 +1770,34 @@ class _LearnBanner extends StatelessWidget {
       width: double.infinity,
       constraints: BoxConstraints(
         minHeight: portraitMobile
-            ? 142
+            ? 124
             : mobile
             ? 118
             : 150,
       ),
       decoration: BoxDecoration(
         color: StudentDensityTokens.darkSecondary,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: portraitMobile
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(28),
           onTap: onTap,
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: mobile ? 20 : 28,
               vertical: portraitMobile
-                  ? 22
+                  ? 18
                   : mobile
                   ? 17
                   : 24,
@@ -1809,7 +1820,7 @@ class _LearnBanner extends StatelessWidget {
                         portraitMobile ? '학습 시작' : '학습하기',
                         style: TextStyle(
                           fontSize: portraitMobile
-                              ? 36
+                              ? 31
                               : mobile
                               ? 26
                               : 38,
@@ -1818,7 +1829,17 @@ class _LearnBanner extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      if (!portraitMobile) ...[
+                      if (portraitMobile) ...[
+                        const SizedBox(height: 6),
+                        const Text(
+                          '이어 하거나 새로 시작',
+                          style: TextStyle(
+                            color: Colors.white60,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ] else ...[
                         const SizedBox(height: 7),
                         const Text(
                           '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
@@ -1835,23 +1856,23 @@ class _LearnBanner extends StatelessWidget {
                 const SizedBox(width: 18),
                 Container(
                   width: portraitMobile
-                      ? 68
+                      ? 58
                       : mobile
                       ? 56
                       : 58,
                   height: portraitMobile
-                      ? 68
+                      ? 58
                       : mobile
                       ? 56
                       : 58,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(19),
                   ),
                   child: const Icon(
                     Icons.play_arrow_rounded,
                     color: StudentDensityTokens.dark,
-                    size: 34,
+                    size: 31,
                   ),
                 ),
               ],
@@ -1962,9 +1983,13 @@ class _BottomSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     // 필요한 변수는 모바일 여부다.
-    // 작동 원리: 레이팅·대결·활동·업적·공지는 하단 `더보기`의 기존 목적지에서
-    // 접근하므로 모바일 홈에서는 중복 카드 묶음을 만들지 않고 PC 정보 홈만 유지한다.
-    if (mobile) return const SizedBox(height: 10);
+    // 작동 원리: 모바일은 달력·대결 같은 중복 진입점을 제외하고 레이팅·업적·공지
+    // 상태만 부드러운 단일 그룹으로 요약하며, PC 정보 홈은 기존 구성을 유지한다.
+    if (mobile) {
+      return _MobileHomeInsights(
+        onRatingTap: (isEligible) => _handleRatingTap(context, isEligible),
+      );
+    }
     final horizontalPadding = studentDensityHorizontalPadding(context);
     return Center(
       child: ConstrainedBox(
@@ -2149,6 +2174,187 @@ class _BottomSection extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 필요한 변수는 활동·레이팅·계정 상태와 레이팅 상세 이동 함수다.
+/// 작동 원리: 모바일 홈에 필요한 상태 정보만 한 개의 무테 Material 그룹으로 묶고,
+/// 달력·대결·빠른 도구처럼 `더보기`와 겹치는 기능은 만들지 않는다.
+class _MobileHomeInsights extends StatelessWidget {
+  const _MobileHomeInsights({required this.onRatingTap});
+
+  final ValueChanged<bool> onRatingTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      key: const ValueKey('student-home-mobile-insights'),
+      padding: EdgeInsets.fromLTRB(
+        studentDensityHorizontalPadding(context),
+        8,
+        studentDensityHorizontalPadding(context),
+        24,
+      ),
+      child: ValueListenableBuilder<ActivitySnapshot>(
+        valueListenable: ActivityStore.notifier,
+        builder: (context, activity, _) {
+          final remaining =
+              (_ratingEstimateMinSolved - activity.totalSolvedCount).clamp(
+                0,
+                _ratingEstimateMinSolved,
+              );
+          final isEligible = remaining == 0;
+          return ValueListenableBuilder<RatingSnapshot>(
+            valueListenable: RatingStore.notifier,
+            builder: (context, rating, __) {
+              return ValueListenableBuilder<AccountSummary?>(
+                valueListenable: ActivityStore.accountSummaryNotifier,
+                builder: (context, account, ___) {
+                  final badges = ActivityBadgeCatalog.evaluate(
+                    activity,
+                    accountLevel: account?.level ?? 0,
+                  );
+                  final earned = badges.where((item) => item.isEarned).length;
+                  final next = ActivityBadgeCatalog.nextBadges(
+                    activity,
+                    accountLevel: account?.level ?? 0,
+                    limit: 1,
+                  );
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 2, bottom: 12),
+                        child: Text(
+                          '학습 현황',
+                          style: TextStyle(
+                            fontSize: 23,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.8,
+                          ),
+                        ),
+                      ),
+                      Material(
+                        color: Colors.white,
+                        elevation: 3,
+                        shadowColor: Colors.black.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(26),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            _MobileInsightRow(
+                              icon: Icons.insights_rounded,
+                              label: '레이팅',
+                              value: rating.isLoaded
+                                  ? 'OVR ${_formatRatingOvr(rating.ovr)}'
+                                  : isEligible
+                                  ? '측정 중'
+                                  : '$remaining문제 남음',
+                              darkIcon: true,
+                              onTap: () => onRatingTap(isEligible),
+                            ),
+                            _MobileInsightRow(
+                              icon: Icons.emoji_events_outlined,
+                              label: '업적',
+                              value: next.isEmpty
+                                  ? '$earned개 달성'
+                                  : '$earned개 · ${next.first.badge.title}',
+                              onTap: () => showActivityBadgeDialog(
+                                context: context,
+                                snapshot: activity,
+                                accountLevel: account?.level ?? 0,
+                              ),
+                            ),
+                            _MobileInsightRow(
+                              icon: Icons.notifications_none_rounded,
+                              label: '공지',
+                              value: '새 소식 확인',
+                              onTap: () => showStudentNotifications(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 상태 아이콘·이름·짧은 값과 이동 콜백이다.
+/// 작동 원리: 선으로 구획하지 않고 72px 행의 여백과 잉크 반응만 사용해 단단한 카드
+/// 묶음 대신 하나의 부드러운 모바일 설정 그룹처럼 동작한다.
+class _MobileInsightRow extends StatelessWidget {
+  const _MobileInsightRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.darkIcon = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+  final bool darkIcon;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: darkIcon
+                  ? StudentDensityTokens.dark
+                  : StudentDensityTokens.surfaceMuted,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(
+              icon,
+              size: 22,
+              color: darkIcon ? Colors.white : StudentDensityTokens.ink,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: StudentDensityTokens.muted,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: StudentDensityTokens.muted,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _HomeRatingCard extends StatelessWidget {

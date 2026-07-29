@@ -11,6 +11,30 @@ Future<T?> showRatingDetailModal<T>({
   required BuildContext context,
   Map<String, TagRating>? initialRatings,
 }) {
+  final mobile = MediaQuery.sizeOf(context).width <= 780;
+  if (mobile) {
+    // 필요한 변수는 레이팅 데이터와 모바일 화면 높이다.
+    // 작동 원리: 축소된 데스크톱 다이얼로그 대신 92% 높이 하단 시트에서 요약·검색·
+    // 보고서를 스크롤하며, 닫기와 검색 전환 상태는 기존 모달이 그대로 소유한다.
+    return showModalBottomSheet<T>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFF4F4F6),
+      barrierColor: Colors.black.withValues(alpha: 0.4),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.92,
+        child: RatingDetailModal(
+          initialRatings: initialRatings,
+          mobileSheet: true,
+        ),
+      ),
+    );
+  }
   return showDialog<T>(
     context: context,
     barrierDismissible: true,
@@ -33,9 +57,14 @@ Future<T?> showRatingDetailModal<T>({
 }
 
 class RatingDetailModal extends StatefulWidget {
-  const RatingDetailModal({super.key, this.initialRatings});
+  const RatingDetailModal({
+    super.key,
+    this.initialRatings,
+    this.mobileSheet = false,
+  });
 
   final Map<String, TagRating>? initialRatings;
+  final bool mobileSheet;
 
   @override
   State<RatingDetailModal> createState() => _RatingDetailModalState();
@@ -416,9 +445,15 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
             : 720.0;
         const baseWidth = 1120.0;
         const baseHeight = 760.0;
-        final width = math.min(baseWidth, maxW * 0.96);
-        final height = math.min(baseHeight, maxH * 0.96);
-        final scale = (width / baseWidth).clamp(0.6, 1.0);
+        final width = widget.mobileSheet
+            ? maxW
+            : math.min(baseWidth, maxW * 0.96);
+        final height = widget.mobileSheet
+            ? maxH
+            : math.min(baseHeight, maxH * 0.96);
+        final scale = widget.mobileSheet
+            ? 1.0
+            : (width / baseWidth).clamp(0.6, 1.0);
 
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -428,19 +463,28 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
               top: true,
               child: Center(
                 child: Container(
+                  key: widget.mobileSheet
+                      ? const ValueKey('rating-detail-mobile-sheet')
+                      : null,
                   width: width,
                   height: height,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F7),
-                    borderRadius: BorderRadius.circular(28 * scale),
-                    border: Border.all(color: const Color(0xFFD8D8DC)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x26000000),
-                        blurRadius: 42,
-                        offset: Offset(0, 20),
-                      ),
-                    ],
+                    color: const Color(0xFFF4F4F6),
+                    borderRadius: BorderRadius.circular(
+                      widget.mobileSheet ? 0 : 28 * scale,
+                    ),
+                    border: widget.mobileSheet
+                        ? null
+                        : Border.all(color: const Color(0xFFD8D8DC)),
+                    boxShadow: widget.mobileSheet
+                        ? null
+                        : const [
+                            BoxShadow(
+                              color: Color(0x26000000),
+                              blurRadius: 42,
+                              offset: Offset(0, 20),
+                            ),
+                          ],
                   ),
                   child: Column(
                     children: [
@@ -449,10 +493,11 @@ class _RatingDetailModalState extends State<RatingDetailModal> {
                         isSearchMode: _isSearchMode,
                         onClose: _handleClose,
                       ),
-                      Divider(
-                        height: 1 * scale,
-                        color: const Color(0xFFD8D8DC),
-                      ),
+                      if (!widget.mobileSheet)
+                        Divider(
+                          height: 1 * scale,
+                          color: const Color(0xFFD8D8DC),
+                        ),
                       Expanded(
                         child: Padding(
                           padding: EdgeInsets.all(20 * scale),
@@ -752,6 +797,7 @@ class _RatingSummaryStrip extends StatelessWidget {
   /// 작동 원리: HTML의 3칸 요약표처럼 첫 지표를 반전하고 나머지를 동일 시각 위계로 연결한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     final values = <({String label, String value, String detail, bool dark})>[
       (
         label: '현재 OVR',
@@ -776,8 +822,18 @@ class _RatingSummaryStrip extends StatelessWidget {
       borderRadius: BorderRadius.circular(22 * scale),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFD8D8DC)),
+          color: Colors.white,
+          border: mobile ? null : Border.all(color: const Color(0xFFD8D8DC)),
           borderRadius: BorderRadius.circular(22 * scale),
+          boxShadow: mobile
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
@@ -790,7 +846,7 @@ class _RatingSummaryStrip extends StatelessWidget {
                     color: values[index].dark
                         ? const Color(0xFF111113)
                         : Colors.white,
-                    border: index == 0
+                    border: index == 0 || mobile
                         ? null
                         : const Border(
                             left: BorderSide(color: Color(0xFFD8D8DC)),

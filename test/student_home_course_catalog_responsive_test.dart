@@ -142,6 +142,10 @@ void main() {
     expect(find.text('학습 시작'), findsOneWidget);
     expect(find.text('현재 코스'), findsOneWidget);
     expect(find.text('오늘 할 일'), findsOneWidget);
+    expect(find.text('학습 현황'), findsOneWidget);
+    expect(find.text('레이팅'), findsOneWidget);
+    expect(find.text('업적'), findsOneWidget);
+    expect(find.text('공지'), findsOneWidget);
     expect(find.text('AIFlow'), findsNothing);
     expect(find.text('빠른 도구'), findsNothing);
     expect(find.text('코스 이어하기'), findsNothing);
