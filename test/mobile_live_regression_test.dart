@@ -69,6 +69,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('프로필 조회 실패도 모바일 앱 셸과 재시도 동작을 유지한다', (tester) async {
+    // 필요한 변수는 HTML 응답 파싱 실패를 반환하는 프로필 로더다.
+    // 작동 원리는 원시 예외를 숨기고 큰 오류 카드·하단 탐색·재시도 버튼을 제공하는지 확인한다.
+    _setMobileView(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProfilePage(
+          loadProfile: () async =>
+              throw const FormatException('Unexpected token <'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
+    expect(find.text('프로필을 열지 못했어요'), findsOneWidget);
+    expect(find.textContaining('프로필을 불러오지 못했어요.'), findsOneWidget);
+    expect(find.textContaining('Unexpected token'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('profile-mobile-retry-button')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('계정 삭제 확인창은 빈 비밀번호에서 닫히지 않는다', (tester) async {
     _setMobileView(tester);
     await tester.pumpWidget(

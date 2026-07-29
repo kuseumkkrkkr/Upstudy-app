@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'arena_api.dart';
 import 'package:s11/shared/data/models/content_block.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
@@ -13,6 +14,7 @@ import 'package:s11/shared/ui/student_density/student_density.dart';
 
 typedef ArenaJoinCallback =
     Future<Map<String, dynamic>> Function(String queueType);
+typedef ArenaSummaryCallback = Future<Map<String, dynamic>> Function();
 
 /// 학생 대시보드에서 실시간 대결장을 연다.
 Future<void> showArena(BuildContext context) => Navigator.of(
@@ -22,10 +24,16 @@ Future<void> showArena(BuildContext context) => Navigator.of(
 /// 필요한 변수: 서버의 네 큐 요약.
 /// 1v1/2v2 시험·OX 큐와 독립 티어를 한 화면에 표시한다.
 class ArenaPage extends StatefulWidget {
-  const ArenaPage({super.key, this.initialSummary, this.joinQueue});
+  const ArenaPage({
+    super.key,
+    this.initialSummary,
+    this.joinQueue,
+    this.loadSummary,
+  });
 
   final Map<String, dynamic>? initialSummary;
   final ArenaJoinCallback? joinQueue;
+  final ArenaSummaryCallback? loadSummary;
 
   @override
   State<ArenaPage> createState() => _ArenaPageState();
@@ -59,11 +67,30 @@ class _ArenaPageState extends State<ArenaPage> {
 
   /// 필요한 변수 없음. 레이팅 요약을 서버에서 다시 읽는다.
   Future<void> _load() async {
+    if (mounted) setState(() => _error = null);
     try {
-      final value = await ArenaApi.instance.summary();
-      if (mounted) setState(() => _summary = value);
+      final value =
+          await (widget.loadSummary?.call() ?? ArenaApi.instance.summary());
+      if (mounted) {
+        setState(() {
+          _summary = value;
+          _error = null;
+        });
+      }
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) {
+        setState(() {
+          // 로딩 실패도 완료 상태로 전환해 진행 표시기가 무한히 남지 않게 한다.
+          _summary = const <String, dynamic>{
+            'queues': <Map<String, dynamic>>[],
+          };
+          _error = studentFacingApiError(
+            error,
+            fallback: '대결 정보를 불러오지 못했어요.',
+            notFound: '대결 기능을 준비하고 있어요.',
+          );
+        });
+      }
     }
   }
 
@@ -94,7 +121,7 @@ class _ArenaPageState extends State<ArenaPage> {
         _matchPoller?.cancel();
         setState(() {
           _waitingQueue = null;
-          _error = error.toString();
+          _error = studentFacingApiError(error, fallback: '매칭을 시작하지 못했어요.');
         });
       }
     }
@@ -114,7 +141,14 @@ class _ArenaPageState extends State<ArenaPage> {
           return;
         }
       } catch (error) {
-        if (mounted) setState(() => _error = error.toString());
+        if (mounted) {
+          setState(
+            () => _error = studentFacingApiError(
+              error,
+              fallback: '매칭 상태를 확인하지 못했어요.',
+            ),
+          );
+        }
       }
       if (mounted && _waitingQueue == queueType) _scheduleMatchPoll(queueType);
     });
@@ -133,7 +167,12 @@ class _ArenaPageState extends State<ArenaPage> {
       }
     } catch (error) {
       if (mounted) {
-        setState(() => _error = error.toString());
+        setState(
+          () => _error = studentFacingApiError(
+            error,
+            fallback: '매칭 취소를 완료하지 못했어요.',
+          ),
+        );
         if (queueType != null && _waitingQueue == queueType) {
           _scheduleMatchPoll(queueType);
         }
@@ -436,12 +475,12 @@ class _ArenaPageState extends State<ArenaPage> {
                                   onResume: () => _openMatch(resumableMatchId),
                                 ),
                               ),
-                            if (_error != null)
+                            if (_error != null && _summary != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 12),
-                                child: Text(
-                                  _error!,
-                                  style: const TextStyle(color: Colors.red),
+                                child: _ArenaErrorBanner(
+                                  message: _error!,
+                                  onRetry: _load,
                                 ),
                               ),
                             SizedBox(height: desktop ? 56 : 28),
@@ -506,7 +545,7 @@ class _ArenaPageState extends State<ArenaPage> {
                                       onCancel: _cancel,
                                     ),
                                   if (joinableQueues.isEmpty)
-                                    const _ArenaUnavailableCard(),
+                                    _ArenaUnavailableCard(onRetry: _load),
                                 ],
                               ),
                             const SizedBox(height: 20),
@@ -649,19 +688,89 @@ class _ArenaMobileEntryCard extends StatelessWidget {
 /// 필요한 변수 없음.
 /// 작동 원리: 서버가 활성 큐를 반환하지 못한 경우에도 빈 화면 대신 재시도 안내를 제공한다.
 class _ArenaUnavailableCard extends StatelessWidget {
-  const _ArenaUnavailableCard();
+  const _ArenaUnavailableCard({required this.onRetry});
+
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) => Container(
+    width: double.infinity,
     padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: const Color(0xFFE1E1E3)),
     ),
-    child: const Text(
-      '지금은 참가 가능한 대결이 없습니다. 잠시 후 다시 확인해 주세요.',
-      style: TextStyle(color: Colors.black54),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.sports_mma_rounded, size: 30),
+        const SizedBox(height: 14),
+        const Text(
+          '참가 가능한 대결이 없어요',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 7),
+        const Text(
+          '잠시 후 다시 확인하거나 새로고침해 주세요.',
+          style: TextStyle(color: Colors.black54, fontSize: 15),
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: OutlinedButton.icon(
+            key: const ValueKey('arena-mobile-retry-button'),
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text(
+              '다시 확인',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// 필요한 변수: 학생용 오류 문구와 재시도 콜백.
+/// 작동 원리: 원시 서버 예외 대신 대비가 충분한 안내와 즉시 복구 동작을 함께 제공한다.
+class _ArenaErrorBanner extends StatelessWidget {
+  const _ArenaErrorBanner({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF0EE),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFE8AAA3)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.info_outline_rounded, color: Color(0xFF9A3027)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: Color(0xFF76251F),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: '다시 시도',
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF76251F)),
+        ),
+      ],
     ),
   );
 }

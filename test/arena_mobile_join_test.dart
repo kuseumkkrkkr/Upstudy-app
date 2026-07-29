@@ -67,4 +67,32 @@ void main() {
     expect(find.text('매칭 취소'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('대결 요약 실패는 원시 예외 대신 재시도 가능한 모바일 카드로 복구한다', (tester) async {
+    // 필요한 변수는 390×844 화면과 HTML 응답 파싱 실패를 흉내 내는 요약 함수다.
+    // 작동 원리는 실패 후 진행 표시기가 사라지고 학생용 안내·재시도 버튼·하단 앱 셸이 남는지 확인한다.
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ArenaPage(
+          loadSummary: () async =>
+              throw const FormatException('Unexpected token <'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.textContaining('대결 정보를 불러오지 못했어요.'), findsOneWidget);
+    expect(find.textContaining('Unexpected token'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('arena-mobile-retry-button')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/theme/app_colors.dart';
@@ -11,6 +12,8 @@ import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+
+typedef ProfileLoader = Future<UserProfile> Function();
 
 class ProfilePage extends StatefulWidget {
   static const routeName = '/profile';
@@ -22,6 +25,7 @@ class ProfilePage extends StatefulWidget {
     this.initialTotalSolvedCount,
     this.initialTextbookPageMode,
     this.showDeleteDialogOnStart = false,
+    this.loadProfile,
   });
 
   final UserProfile? initialProfile;
@@ -29,6 +33,7 @@ class ProfilePage extends StatefulWidget {
   final int? initialTotalSolvedCount;
   final bool? initialTextbookPageMode;
   final bool showDeleteDialogOnStart;
+  final ProfileLoader? loadProfile;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -109,7 +114,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadProfile() async {
     try {
       final results = await Future.wait<Object?>([
-        ApiClient.instance.getMyProfile(),
+        widget.loadProfile?.call() ?? ApiClient.instance.getMyProfile(),
         TextbookReaderPreferences.loadPageMode(),
         _loadRating(),
         _loadActivity(),
@@ -129,7 +134,11 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorText = error.toString();
+        _errorText = studentFacingApiError(
+          error,
+          fallback: '프로필을 불러오지 못했어요.',
+          notFound: '프로필 정보를 찾지 못했어요.',
+        );
         _loading = false;
       });
     }
@@ -189,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorText = error.toString();
+        _errorText = studentFacingApiError(error, fallback: '프로필을 저장하지 못했어요.');
       });
     } finally {
       if (mounted) {
@@ -243,7 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorText = error.toString();
+        _errorText = studentFacingApiError(error, fallback: '계정을 삭제하지 못했어요.');
       });
     } finally {
       if (mounted) {
@@ -1071,7 +1080,13 @@ class _ProfilePageState extends State<ProfilePage> {
   /// 필요한 변수는 기존 프로필 상태이다.
   /// 작동 원리는 데이터 로드 오류일 때 기존 재시도 화면을 제공하는 것이다.
   Widget _buildLegacyProfile(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     if (_loading) {
+      if (mobile) {
+        return _buildMobileProfileState(
+          child: const Center(child: CircularProgressIndicator()),
+        );
+      }
       return const Scaffold(
         backgroundColor: Color(0xFFF6F6F1),
         body: Center(child: CircularProgressIndicator()),
@@ -1079,6 +1094,106 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     if (_profile == null) {
+      if (mobile) {
+        return _buildMobileProfileState(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+            children: [
+              const Text(
+                'MY ACCOUNT',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.7,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '프로필',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE1E1E3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFECE9),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.person_off_outlined,
+                        color: Color(0xFF8A2D25),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      '프로필을 열지 못했어요',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _errorText ?? '네트워크 연결을 확인한 뒤 다시 시도해 주세요.',
+                      style: const TextStyle(
+                        color: Color(0xFF5D5D62),
+                        fontSize: 15,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: FilledButton.icon(
+                        key: const ValueKey('profile-mobile-retry-button'),
+                        onPressed: _loadProfile,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF202022),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text(
+                          '다시 시도',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: TextButton.icon(
+                        onPressed: _openSettings,
+                        icon: const Icon(Icons.settings_outlined),
+                        label: const Text('설정 열기'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
       return Scaffold(
         backgroundColor: const Color(0xFFF6F6F1),
         appBar: AppBar(
@@ -1417,6 +1532,34 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
+  /// 필요한 변수: 로딩 또는 오류 상태를 나타내는 본문 위젯.
+  /// 작동 원리: 정상 프로필과 동일한 상단·하단 모바일 셸을 유지해 오류 중에도 탐색이 끊기지 않게 한다.
+  Widget _buildMobileProfileState({required Widget child}) => Scaffold(
+    backgroundColor: const Color(0xFFF4F4F6),
+    bottomNavigationBar: const MobileStudentBottomAppBar(
+      activeRoute: ProfilePage.routeName,
+    ),
+    body: SafeArea(
+      child: Column(
+        children: [
+          Builder(
+            builder: (context) => Ios26TopBar(
+              brandColor: Colors.black,
+              showLevelIndicator: false,
+              showUtilityActions: false,
+              onMenu: null,
+              items: studentTopNavItems(
+                context,
+                active: StudentTopDestination.learning,
+              ),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ProfileHero extends StatelessWidget {
