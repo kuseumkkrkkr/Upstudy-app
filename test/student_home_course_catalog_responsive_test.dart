@@ -154,4 +154,29 @@ void main() {
     expect(find.text('공지사항'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('모바일 홈의 학습·상태·현황 그룹은 같은 가로축과 폭을 사용한다', (tester) async {
+    await _pumpAt(
+      tester,
+      const Size(390, 900),
+      const MainStudentPage(username: '김학생'),
+    );
+    await tester.pump();
+
+    final learnRect = tester.getRect(
+      find.byKey(const ValueKey('student-home-mobile-learn-banner')),
+    );
+    final statusRect = tester.getRect(
+      find.byKey(const ValueKey('student-home-mobile-status-group')),
+    );
+    final insightsRect = tester.getRect(
+      find.byKey(const ValueKey('student-home-mobile-insights-group')),
+    );
+
+    expect(statusRect.left, closeTo(learnRect.left, 0.1));
+    expect(insightsRect.left, closeTo(learnRect.left, 0.1));
+    expect(statusRect.width, closeTo(learnRect.width, 0.1));
+    expect(insightsRect.width, closeTo(learnRect.width, 0.1));
+    expect(tester.takeException(), isNull);
+  });
 }

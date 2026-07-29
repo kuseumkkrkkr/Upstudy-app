@@ -64,6 +64,12 @@ const double _ratingDeltaPercentMax = 0.5;
 const double _homeFooterDesktopHeight = 384;
 const double _homeFooterSixWeekHeight = 438;
 
+/// 필요한 변수는 현재 모바일 viewport의 공용 바깥 여백이다.
+/// 작동 원리: 홈의 인사·학습·현황 섹션에 14px 안쪽 여백을 더해 같은 수직축을 만든다.
+double _mobileHomeContentInset(BuildContext context) {
+  return studentDensityHorizontalPadding(context) + 14;
+}
+
 double _ratingDisplay(double rating) {
   return (math.max(rating, _ratingFloor) - _ratingFloor)
       .clamp(0, _ratingDisplayMax)
@@ -716,7 +722,7 @@ class _HeroSection extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: portraitMobile
-                ? 8
+                ? 14
                 : mobile
                 ? 24
                 : 38,
@@ -1345,13 +1351,20 @@ class _LearningSection extends StatelessWidget {
         ),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-            studentDensityHorizontalPadding(context),
+            portraitMobile
+                ? _mobileHomeContentInset(context)
+                : studentDensityHorizontalPadding(context),
             0,
-            studentDensityHorizontalPadding(context),
-            14,
+            portraitMobile
+                ? _mobileHomeContentInset(context)
+                : studentDensityHorizontalPadding(context),
+            portraitMobile ? 6 : 14,
           ),
           child: Container(
-            padding: EdgeInsets.all(portraitMobile ? 14 : 20),
+            padding: EdgeInsets.symmetric(
+              horizontal: portraitMobile ? 0 : 20,
+              vertical: portraitMobile ? 14 : 20,
+            ),
             decoration: BoxDecoration(
               color: portraitMobile
                   ? StudentDensityTokens.background
@@ -1767,6 +1780,11 @@ class _LearnBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     return Container(
+      key: ValueKey(
+        portraitMobile
+            ? 'student-home-mobile-learn-banner'
+            : 'student-home-learn-banner',
+      ),
       width: double.infinity,
       constraints: BoxConstraints(
         minHeight: portraitMobile
@@ -2189,9 +2207,9 @@ class _MobileHomeInsights extends StatelessWidget {
     return Padding(
       key: const ValueKey('student-home-mobile-insights'),
       padding: EdgeInsets.fromLTRB(
-        studentDensityHorizontalPadding(context),
-        8,
-        studentDensityHorizontalPadding(context),
+        _mobileHomeContentInset(context),
+        0,
+        _mobileHomeContentInset(context),
         24,
       ),
       child: ValueListenableBuilder<ActivitySnapshot>(
@@ -2234,10 +2252,13 @@ class _MobileHomeInsights extends StatelessWidget {
                         ),
                       ),
                       Material(
+                        key: const ValueKey(
+                          'student-home-mobile-insights-group',
+                        ),
                         color: Colors.white,
                         elevation: 3,
                         shadowColor: Colors.black.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(26),
+                        borderRadius: BorderRadius.circular(24),
                         clipBehavior: Clip.antiAlias,
                         child: Column(
                           children: [
