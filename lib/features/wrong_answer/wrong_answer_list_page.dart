@@ -10,10 +10,25 @@ import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 /// 필요한 변수는 홈 학습 모달의 Navigator 문맥이다.
-/// 작동 원리는 기존 학습 모달을 닫은 뒤 실제 복습 데이터의 요약을 열고, 상세 화면은 오답 목록 라우트로 단일화하는 것이다.
+/// 작동 원리는 기존 학습 모달을 닫은 뒤 모바일은 둥근 복습 시트, PC는 기존 대화상자를 연다.
 Future<T?> showWrongAnswerReviewPreview<T>({required BuildContext context}) {
   final navigator = Navigator.of(context, rootNavigator: true);
   navigator.pop();
+  if (isStudentDensityMobile(navigator.context)) {
+    return showModalBottomSheet<T>(
+      context: navigator.context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFF4F4F6),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (_) => const FractionallySizedBox(
+        heightFactor: .66,
+        child: _ReviewPreviewDialog(mobileSheet: true),
+      ),
+    );
+  }
   return showDialog<T>(
     context: navigator.context,
     builder: (_) => const _ReviewPreviewDialog(),
@@ -21,7 +36,9 @@ Future<T?> showWrongAnswerReviewPreview<T>({required BuildContext context}) {
 }
 
 class _ReviewPreviewDialog extends StatelessWidget {
-  const _ReviewPreviewDialog();
+  const _ReviewPreviewDialog({this.mobileSheet = false});
+
+  final bool mobileSheet;
 
   /// 필요한 변수는 최근 풀이 이력과 누적 약점 태그다.
   /// 작동 원리는 두 API 요청을 함께 조회해 모달에서는 최대 6문제와 최상위 약점만 빠르게 제시하는 것이다.
@@ -32,89 +49,162 @@ class _ReviewPreviewDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final body = SizedBox(
+      width: 390,
+      child: FutureBuilder<List<Object>>(
+        future: _load(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const SizedBox(
+              height: 120,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return const Text(
+              '복습 데이터를 불러오지 못했습니다.\n상세 화면에서 다시 시도해 주세요.',
+              style: TextStyle(fontSize: 15, height: 1.55),
+            );
+          }
+          final history = snapshot.data![0] as List<SolveHistoryItem>;
+          final tags = snapshot.data![1] as List<WeaknessTag>;
+          final incorrect = history.where(_previewIncorrect).toList();
+          final items = incorrect.take(6).toList();
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '오늘은 ${items.length}문제만 다시 보면 돼요.',
+                style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                tags.isEmpty
+                    ? '최근 오답을 먼저 복습해 보세요.'
+                    : '가장 약한 개념: ${tags.first.tag}',
+                style: const TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 16),
+              for (final item in items)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.replay_rounded, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item.questTitleRaw?.trim().isNotEmpty == true
+                              ? item.questTitleRaw!
+                              : '복습 문제',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (items.isEmpty) const Text('오늘 복습할 것이 없어요.'),
+            ],
+          );
+        },
+      ),
+    );
+
+    // 필요 변수: 현재 모달 Navigator와 오답 노트 명명 라우트.
+    // 작동 원리: 복습 요약을 먼저 닫고 루트 Navigator에서 상세 화면을 한 번만 연다.
+    void openDetails() {
+      Navigator.of(context).pop();
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamed(WrongAnswerListPage.routeName);
+    }
+
+    if (mobileSheet) {
+      return Material(
+        key: const ValueKey('review-preview-mobile-sheet'),
+        color: const Color(0xFFF4F4F6),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '오늘의 복습',
+                        style: TextStyle(
+                          fontSize: 27,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: '닫기',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      style: IconButton.styleFrom(
+                        fixedSize: const Size.square(48),
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Expanded(
+                  child: Material(
+                    color: Colors.white,
+                    elevation: 2,
+                    shadowColor: Colors.black.withValues(alpha: .10),
+                    borderRadius: BorderRadius.circular(22),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: body,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                FilledButton(
+                  onPressed: openDetails,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                    backgroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: const Text(
+                    '오답 노트 보기',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: const Text(
         '오늘의 복습',
         style: TextStyle(fontWeight: FontWeight.w900),
       ),
-      content: SizedBox(
-        width: 390,
-        child: FutureBuilder<List<Object>>(
-          future: _load(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const SizedBox(
-                height: 120,
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            if (snapshot.hasError || !snapshot.hasData) {
-              return const Text('복습 데이터를 불러오지 못했습니다. 상세 화면에서 다시 시도해 주세요.');
-            }
-            final history = snapshot.data![0] as List<SolveHistoryItem>;
-            final tags = snapshot.data![1] as List<WeaknessTag>;
-            final incorrect = history.where(_previewIncorrect).toList();
-            final items = incorrect.take(6).toList();
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '오늘은 ${items.length}문제만 다시 보면 돼요.',
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  tags.isEmpty
-                      ? '최근 오답을 먼저 복습해 보세요.'
-                      : '가장 약한 개념: ${tags.first.tag}',
-                  style: const TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 16),
-                for (final item in items)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.replay_rounded, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            item.questTitleRaw?.trim().isNotEmpty == true
-                                ? item.questTitleRaw!
-                                : '복습 문제',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                if (items.isEmpty) const Text('오늘 복습할 것이 없어요.'),
-              ],
-            );
-          },
-        ),
-      ),
+      content: body,
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('닫기'),
         ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            Navigator.of(
-              context,
-              rootNavigator: true,
-            ).pushNamed(WrongAnswerListPage.routeName);
-          },
-          child: const Text('상세보기'),
-        ),
+        FilledButton(onPressed: openDetails, child: const Text('상세보기')),
       ],
     );
   }

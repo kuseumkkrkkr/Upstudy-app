@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
+import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 /// 필요한 변수는 실제 Android 세로 화면과 테스트 종료 복원 콜백이다.
@@ -116,5 +117,23 @@ void main() {
     expect(find.text('알림 센터'), findsOneWidget);
     expect(find.text('LIVE STATUS'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);
+  });
+
+  testWidgets('교재보기는 모바일에서 작은 테두리 대화상자 대신 전폭 시트를 사용한다', (tester) async {
+    _setMobileView(tester);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: BookLibraryModal(books: [], mobileSheet: true)),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('book-library-mobile-sheet')),
+      findsOneWidget,
+    );
+    expect(find.text('교재보기'), findsOneWidget);
+    expect(find.text('학습 중인 교재와 공개 교재를 한 곳에서 이어 읽어요.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

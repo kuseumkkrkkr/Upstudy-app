@@ -20,7 +20,8 @@ import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 
-// 필요 변수: 교재 목록·선택 태그·카테고리. 작동 원리: 블러 배경 위에 필터된 교재함 모달을 연다.
+// 필요 변수: 교재 목록·선택 태그·카테고리와 화면 폭.
+// 작동 원리: 모바일은 둥근 전폭 교재 시트, PC는 기존 블러 대화상자를 연다.
 Future<T?> showBookLibraryModal<T>({
   required BuildContext context,
   String headerTitle = '교재보기',
@@ -30,6 +31,30 @@ Future<T?> showBookLibraryModal<T>({
   String? notice,
   String? category,
 }) {
+  if (isStudentDensityMobile(context)) {
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFFCFDFC),
+      barrierColor: Colors.black.withValues(alpha: .30),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) => FractionallySizedBox(
+        heightFactor: .90,
+        child: BookLibraryModal(
+          headerTitle: headerTitle,
+          libraryTitle: libraryTitle,
+          books: books,
+          selectedTags: selectedTags,
+          notice: notice,
+          category: category,
+          mobileSheet: true,
+        ),
+      ),
+    );
+  }
   return showDialog<T>(
     context: context,
     barrierDismissible: true,
@@ -314,6 +339,7 @@ class BookLibraryModal extends StatelessWidget {
     this.selectedTags = const [],
     this.notice,
     this.category,
+    this.mobileSheet = false,
   });
 
   final String headerTitle;
@@ -322,6 +348,7 @@ class BookLibraryModal extends StatelessWidget {
   final List<String> selectedTags;
   final String? notice;
   final String? category;
+  final bool mobileSheet;
 
   @override
   /// 필요한 변수는 화면 크기와 교재 목록이다.
@@ -330,32 +357,44 @@ class BookLibraryModal extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 640;
-        final width = compact
+        final width = mobileSheet
+            ? double.infinity
+            : compact
             ? constraints.maxWidth - 24
             : constraints.maxWidth.clamp(720.0, 1120.0) * .82;
-        final height = compact
+        final height = mobileSheet
+            ? double.infinity
+            : compact
             ? constraints.maxHeight - 24
             : constraints.maxHeight.clamp(560.0, 760.0) * .82;
         return Container(
+          key: mobileSheet ? const ValueKey('book-library-mobile-sheet') : null,
           width: width,
           height: height,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: const Color(0xFFFCFDFC),
-            borderRadius: BorderRadius.circular(compact ? 24 : 28),
-            border: Border.all(color: const Color(0x1A1F4D38)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x550A1D14),
-                blurRadius: 48,
-                offset: Offset(0, 20),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(
+              mobileSheet ? 0 : (compact ? 24 : 28),
+            ),
+            border: mobileSheet
+                ? null
+                : Border.all(color: const Color(0x1A1F4D38)),
+            boxShadow: mobileSheet
+                ? null
+                : const [
+                    BoxShadow(
+                      color: Color(0x550A1D14),
+                      blurRadius: 48,
+                      offset: Offset(0, 20),
+                    ),
+                  ],
           ),
           child: Column(
             children: [
               _buildHeader(context, compact: compact),
-              const Divider(height: 1, color: Color(0xFFE0E8E2)),
+              if (!mobileSheet)
+                const Divider(height: 1, color: Color(0xFFE0E8E2)),
               Expanded(
                 child: _BookLibraryLoader(
                   onSelect: (book) {
@@ -387,20 +426,13 @@ class BookLibraryModal extends StatelessWidget {
   Widget _buildHeader(BuildContext context, {required bool compact}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        compact ? 12 : 20,
-        12,
-        compact ? 16 : 24,
-        12,
+        mobileSheet ? 20 : (compact ? 12 : 20),
+        mobileSheet ? 2 : 12,
+        mobileSheet ? 14 : (compact ? 16 : 24),
+        mobileSheet ? 16 : 12,
       ),
       child: Row(
         children: [
-          IconButton(
-            tooltip: '닫기',
-            icon: const Icon(Icons.close_rounded, size: 24),
-            color: const Color(0xFF1F4D38),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          const SizedBox(width: 6),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,18 +441,31 @@ class BookLibraryModal extends StatelessWidget {
                   headerTitle,
                   style: TextStyle(
                     color: const Color(0xFF183C2C),
-                    fontSize: compact ? 20 : 22,
-                    fontWeight: FontWeight.w800,
+                    fontSize: mobileSheet ? 27 : (compact ? 20 : 22),
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 2),
-                const Text(
+                SizedBox(height: mobileSheet ? 5 : 2),
+                Text(
                   '학습 중인 교재와 공개 교재를 한 곳에서 이어 읽어요.',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF68766E)),
+                  style: TextStyle(
+                    fontSize: mobileSheet ? 14 : 12,
+                    color: const Color(0xFF68766E),
+                  ),
                 ),
               ],
+            ),
+          ),
+          IconButton(
+            tooltip: '닫기',
+            icon: const Icon(Icons.close_rounded, size: 24),
+            color: const Color(0xFF1F4D38),
+            onPressed: () => Navigator.of(context).pop(),
+            style: IconButton.styleFrom(
+              fixedSize: const Size.square(48),
+              backgroundColor: mobileSheet ? Colors.white : null,
             ),
           ),
           if (!compact)
