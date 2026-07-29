@@ -447,6 +447,8 @@ class _BadgeGroupCard extends StatelessWidget {
 
   final _BadgeProgressGroup group;
 
+  /// 필요 변수: 업적 그룹과 화면 폭.
+  /// 모바일에서는 트로피를 4열로 키우고, PC에서는 기존 정보 밀도를 유지한다.
   @override
   Widget build(BuildContext context) {
     final scale = _scale(context);
@@ -458,7 +460,7 @@ class _BadgeGroupCard extends StatelessWidget {
     final color = first.color;
 
     return Container(
-      padding: EdgeInsets.all(16 * scale),
+      padding: EdgeInsets.all(mobile ? 16 : 16 * scale),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(mobile ? 22 : 10 * scale),
@@ -479,15 +481,19 @@ class _BadgeGroupCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 32 * scale,
-                height: 32 * scale,
+                width: mobile ? 42 : 32 * scale,
+                height: mobile ? 42 : 32 * scale,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(8 * scale),
+                  borderRadius: BorderRadius.circular(mobile ? 13 : 8 * scale),
                 ),
-                child: Icon(first.icon, color: color, size: 18 * scale),
+                child: Icon(
+                  first.icon,
+                  color: color,
+                  size: mobile ? 23 : 18 * scale,
+                ),
               ),
-              SizedBox(width: 9 * scale),
+              SizedBox(width: mobile ? 12 : 9 * scale),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,7 +501,7 @@ class _BadgeGroupCard extends StatelessWidget {
                     Text(
                       title,
                       style: _textStyle(
-                        size: 13 * scale,
+                        size: mobile ? 16 : 13 * scale,
                         weight: FontWeight.w900,
                       ),
                       maxLines: 1,
@@ -505,7 +511,7 @@ class _BadgeGroupCard extends StatelessWidget {
                     Text(
                       '$earned/${group.items.length} · ${first.metricLabel}',
                       style: _textStyle(
-                        size: 10 * scale,
+                        size: mobile ? 13 : 10 * scale,
                         color: Colors.black54,
                         weight: FontWeight.w700,
                       ),
@@ -521,17 +527,23 @@ class _BadgeGroupCard extends StatelessWidget {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tile = _badgeTileSize(constraints.maxWidth, scale);
+                final tile = _badgeTileSize(
+                  constraints.maxWidth,
+                  scale,
+                  mobile: mobile,
+                );
                 return Wrap(
-                  spacing: 10 * scale,
-                  runSpacing: 10 * scale,
+                  spacing: mobile ? 12 : 10 * scale,
+                  runSpacing: mobile ? 12 : 10 * scale,
                   children: [
                     for (final progress in group.items)
                       SizedBox(
                         width: tile,
                         child: _CompactBadgeTile(
                           progress: progress,
-                          iconSize: math.min(tile * 0.72, 54 * scale),
+                          iconSize: mobile
+                              ? math.min(tile * 0.70, 58)
+                              : math.min(tile * 0.72, 54 * scale),
                         ),
                       ),
                   ],
@@ -544,7 +556,7 @@ class _BadgeGroupCard extends StatelessWidget {
             Text(
               '이 그룹을 모두 획득했습니다.',
               style: _textStyle(
-                size: 10 * scale,
+                size: mobile ? 13 : 10 * scale,
                 color: color,
                 weight: FontWeight.w800,
               ),
@@ -557,7 +569,10 @@ class _BadgeGroupCard extends StatelessWidget {
               children: [
                 Text(
                   '다음: ${next.badge.title} · ${next.progressText}',
-                  style: _textStyle(size: 10 * scale, color: Colors.black54),
+                  style: _textStyle(
+                    size: mobile ? 13 : 10 * scale,
+                    color: Colors.black54,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -566,7 +581,7 @@ class _BadgeGroupCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
                     value: next.progress,
-                    minHeight: 5 * scale,
+                    minHeight: mobile ? 7 : 5 * scale,
                     backgroundColor: Colors.black.withValues(alpha: 0.06),
                     color: color,
                   ),
@@ -609,9 +624,12 @@ class _CompactBadgeTileState extends State<_CompactBadgeTile> {
     });
   }
 
+  /// 필요 변수: 업적 획득 상태와 화면 폭.
+  /// 잠긴 업적은 탭 미리보기를 유지하고 모바일의 단계 숫자는 읽기 쉽게 키운다.
   @override
   Widget build(BuildContext context) {
     final scale = _scale(context);
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     final displayProgress = _previewActive
         ? ActivityBadgeProgress(
             badge: widget.progress.badge,
@@ -637,11 +655,11 @@ class _CompactBadgeTileState extends State<_CompactBadgeTile> {
                 progress: displayProgress,
                 size: widget.iconSize,
               ),
-              SizedBox(height: 4 * scale),
+              SizedBox(height: mobile ? 5 : 4 * scale),
               Text(
                 '${widget.progress.badge.tier}',
                 style: _textStyle(
-                  size: 9 * scale,
+                  size: mobile ? 12 : 9 * scale,
                   weight: FontWeight.w900,
                   color: displayProgress.isEarned
                       ? widget.progress.badge.color
@@ -939,9 +957,11 @@ ActivityBadgeProgress? _firstLocked(List<ActivityBadgeProgress> badges) {
   return null;
 }
 
-double _badgeTileSize(double maxWidth, double scale) {
-  final gap = 10 * scale;
-  final columns = maxWidth >= 300 * scale ? 6 : 4;
+/// 필요 변수: 사용 가능한 폭, 반응형 배율, 모바일 여부.
+/// 모바일은 트로피를 4열로 고정해 아이콘과 터치 영역을 충분히 확보한다.
+double _badgeTileSize(double maxWidth, double scale, {required bool mobile}) {
+  final gap = mobile ? 12.0 : 10 * scale;
+  final columns = mobile ? 4 : (maxWidth >= 300 * scale ? 6 : 4);
   return (maxWidth - gap * (columns - 1)) / columns;
 }
 
@@ -951,11 +971,13 @@ int _groupGridColumns(BuildContext context) {
   return 1;
 }
 
+/// 필요 변수: 현재 화면 폭.
+/// 모바일 카드에는 4열 트로피 세 줄과 진행 안내가 들어갈 세로 공간을 준다.
 double _groupAspectRatio(BuildContext context) {
   final width = MediaQuery.of(context).size.width;
   if (width >= 900) return 1.75;
   if (width >= 620) return 2.2;
-  return 1.25;
+  return 1.0;
 }
 
 class _BadgeProgressGroup {
