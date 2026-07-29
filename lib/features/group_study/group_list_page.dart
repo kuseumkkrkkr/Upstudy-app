@@ -171,17 +171,14 @@ class _GroupListPageState extends State<GroupListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (mobile) ...[
-                            const _GroupListHeading(fontSize: 32),
-                            const SizedBox(height: 16),
-                            StudentDensityButton(
-                              onPressed: _openFindSheet,
-                              label: '그룹 찾기 · 코드 참가',
+                            const _GroupListHeading(
+                              fontSize: 32,
+                              compact: true,
                             ),
-                            const SizedBox(height: 8),
-                            StudentDensityButton(
-                              onPressed: _openCreateDialog,
-                              label: '그룹 만들기',
-                              primary: true,
+                            const SizedBox(height: 16),
+                            _MobileGroupActions(
+                              onFind: _openFindSheet,
+                              onCreate: _openCreateDialog,
                             ),
                           ] else
                             Row(
@@ -242,12 +239,13 @@ class _GroupListPageState extends State<GroupListPage> {
 }
 
 class _GroupListHeading extends StatelessWidget {
-  const _GroupListHeading({required this.fontSize});
+  const _GroupListHeading({required this.fontSize, this.compact = false});
 
   final double fontSize;
+  final bool compact;
 
-  /// 필요한 변수는 반응형 제목 크기다.
-  /// 작동 원리는 그룹 영문 표식·제목·설명을 HTML과 같은 간격으로 하나의 소개 블록에 묶는 것이다.
+  /// 필요한 변수는 반응형 제목 크기와 모바일 축약 여부다.
+  /// 작동 원리: 모바일에서는 설명을 한 문장으로 줄이고 PC는 기존 안내를 유지한다.
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,11 +265,83 @@ class _GroupListHeading extends StatelessWidget {
         style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900),
       ),
       const SizedBox(height: 6),
-      const Text(
-        '내 그룹의 새 학습과 대화를 먼저 확인하고, 필요할 때만 검색하거나 초대 코드로 참가하세요.',
-        style: TextStyle(color: Colors.black45),
+      Text(
+        compact
+            ? '그룹 학습과 대화를 한곳에서 이어가세요.'
+            : '내 그룹의 새 학습과 대화를 먼저 확인하고, 필요할 때만 검색하거나 초대 코드로 참가하세요.',
+        style: TextStyle(
+          color: Colors.black45,
+          fontSize: compact ? 14 : null,
+          height: compact ? 1.45 : null,
+        ),
       ),
     ],
+  );
+}
+
+/// 필요한 변수: 그룹 찾기·만들기 콜백이다.
+/// 작동 원리: 모바일의 두 핵심 행동을 한 개의 무테 컨테이너 안에 큰 버튼으로 나란히 배치한다.
+class _MobileGroupActions extends StatelessWidget {
+  const _MobileGroupActions({required this.onFind, required this.onCreate});
+
+  final VoidCallback onFind;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('group-mobile-actions'),
+    padding: const EdgeInsets.all(8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 52,
+            child: TextButton.icon(
+              onPressed: onFind,
+              icon: const Icon(Icons.key_rounded, size: 19),
+              label: const Text('코드로 참여'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF202022),
+                backgroundColor: const Color(0xFFF4F4F6),
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: SizedBox(
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: onCreate,
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: const Text('그룹 만들기'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF202022),
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -616,24 +686,28 @@ class _GroupLoadError extends StatelessWidget {
   final Future<void> Function() onRetry;
 
   /// 필요한 변수는 학생용 오류 문구와 재조회 콜백이다.
-  /// 작동 원리: 원시 예외 대신 둥근 안내 카드와 명확한 재시도 행동을 모바일·PC에 함께 제공한다.
+  /// 작동 원리: 모바일은 짧은 고정 안내와 무테 표면을 사용하고 PC는 상세 오류 문구를 유지한다.
   @override
-  Widget build(BuildContext context) => StudentDensitySurface(
-    padding: const EdgeInsets.all(24),
-    child: Column(
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Icon(Icons.cloud_off_rounded, size: 34, color: Colors.black54),
         const SizedBox(height: 12),
         Text(
-          message,
+          mobile ? '그룹을 불러오지 못했어요' : message,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 16,
-            height: 1.45,
-            fontWeight: FontWeight.w800,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
+        if (mobile) ...[
+          const SizedBox(height: 5),
+          const Text(
+            '연결을 확인하고 다시 시도해 주세요.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black45, fontSize: 14, height: 1.4),
+          ),
+        ],
         const SizedBox(height: 16),
         FilledButton(
           onPressed: onRetry,
@@ -644,8 +718,23 @@ class _GroupLoadError extends StatelessWidget {
           child: const Text('다시 불러오기'),
         ),
       ],
-    ),
-  );
+    );
+    if (mobile) {
+      return Container(
+        key: const ValueKey('group-mobile-load-error'),
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: content,
+      );
+    }
+    return StudentDensitySurface(
+      padding: const EdgeInsets.all(24),
+      child: content,
+    );
+  }
 }
 
 class _GroupRow extends StatelessWidget {
@@ -664,8 +753,10 @@ class _GroupRow extends StatelessWidget {
         vertical: isStudentDensityMobile(context) ? 15 : 21,
         horizontal: isStudentDensityMobile(context) ? 18 : 24,
       ),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFDEDEE1))),
+      decoration: BoxDecoration(
+        border: isStudentDensityMobile(context)
+            ? null
+            : const Border(bottom: BorderSide(color: Color(0xFFDEDEE1))),
       ),
       child: Row(
         children: [

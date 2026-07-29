@@ -810,16 +810,55 @@ class _MobileCourseEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
+    key: const ValueKey('course-mobile-empty-state'),
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
     decoration: BoxDecoration(
       color: StudentDensityTokens.surface,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: StudentDensityTokens.line),
+      borderRadius: BorderRadius.circular(22),
     ),
-    child: const Text(
-      '조건에 맞는 코스가 없습니다. 다른 검색어나 필터를 선택해 보세요.',
-      style: TextStyle(color: StudentDensityTokens.muted, fontSize: 13),
+    child: const Row(
+      children: [
+        _MobileCourseEmptyIcon(),
+        SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '조건에 맞는 코스가 없어요',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              ),
+              SizedBox(height: 4),
+              Text(
+                '검색어나 필터를 바꿔보세요.',
+                style: TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
+  );
+}
+
+/// 필요한 변수 없음.
+/// 작동 원리: 빈 결과의 의미를 짧은 아이콘으로 먼저 전달해 긴 안내 문장을 읽지 않아도 되게 한다.
+class _MobileCourseEmptyIcon extends StatelessWidget {
+  const _MobileCourseEmptyIcon();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 44,
+    height: 44,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: StudentDensityTokens.surfaceMuted,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: const Icon(Icons.search_off_rounded, size: 22),
   );
 }
 
@@ -950,13 +989,108 @@ class _CourseSearchDock extends StatelessWidget {
   final VoidCallback onSearch;
 
   /// 필요한 변수는 검색어·상태 필터·fix_gen.py 과목별 태그 목록이다.
-  /// 작동 원리: 외부 표면 하나만 사용하고 과목을 먼저 고른 뒤 해당 태그만 노출해 검색 조건을 명확히 한다.
+  /// 작동 원리: 모바일은 무테 표면과 큰 입력·필터를 사용하고 PC는 기존 검색 도크를 유지한다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    if (mobile) {
+      return Container(
+        key: const ValueKey('course-mobile-search-dock'),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: StudentDensityTokens.surface,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _SearchInput(
+                    controller: controller,
+                    onSearch: onSearch,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 50,
+                  height: 50,
+                  child: FilledButton(
+                    key: const ValueKey('course-mobile-search-button'),
+                    onPressed: onSearch,
+                    style: FilledButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: StudentDensityTokens.dark,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Icon(Icons.search_rounded, size: 22),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final label in filters)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 7),
+                      child: _FilterChip(
+                        label: label,
+                        selected: label == filter,
+                        onSelected: () => onFilter(label),
+                      ),
+                    ),
+                  if (tagGroups.isNotEmpty) ...[
+                    _FilterChip(
+                      label: '전체 과목',
+                      selected: subjectName == null,
+                      onSelected: () => onTagFilter(null, null),
+                    ),
+                    for (final group in tagGroups)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 7),
+                        child: _FilterChip(
+                          label: group.label,
+                          selected: group.name == subjectName,
+                          onSelected: () => onTagFilter(group.name, null),
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            ),
+            if (tagGroups.isNotEmpty && subjectName != null) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  for (final group in tagGroups.where(
+                    (item) => item.name == subjectName,
+                  ))
+                    for (final item in group.tags)
+                      _FilterChip(
+                        label: '#$item',
+                        selected: item == tag,
+                        onSelected: () =>
+                            onTagFilter(group.name, item == tag ? null : item),
+                      ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    }
     return StudentDensitySurface(
       radius: 20,
-      padding: EdgeInsets.all(mobile ? 12 : 14),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1086,23 +1220,29 @@ class _FilterChip extends StatelessWidget {
   final VoidCallback onSelected;
 
   /// 필요한 변수는 라벨·선택 여부·선택 콜백이다.
-  /// 작동 원리: 상태와 과목·태그 필터가 같은 밀도와 색상 규칙을 공유하도록 공통 칩으로 렌더링한다.
+  /// 작동 원리: 모바일은 큰 무테 칩으로 가독성과 터치 영역을 확보하고 PC 밀도는 유지한다.
   @override
-  Widget build(BuildContext context) => ChoiceChip(
-    label: Text(label),
-    selected: selected,
-    onSelected: (_) => onSelected(),
-    showCheckmark: false,
-    side: BorderSide.none,
-    backgroundColor: StudentDensityTokens.surfaceMuted,
-    selectedColor: StudentDensityTokens.dark,
-    labelStyle: TextStyle(
-      color: selected ? Colors.white : StudentDensityTokens.muted,
-      fontSize: 10,
-      fontWeight: FontWeight.w800,
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 7),
-  );
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      showCheckmark: false,
+      side: BorderSide.none,
+      backgroundColor: StudentDensityTokens.surfaceMuted,
+      selectedColor: StudentDensityTokens.dark,
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : StudentDensityTokens.muted,
+        fontSize: mobile ? 13 : 10,
+        fontWeight: FontWeight.w800,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: mobile ? 11 : 7,
+        vertical: mobile ? 8 : 0,
+      ),
+    );
+  }
 }
 
 class _SearchInput extends StatelessWidget {
@@ -1112,19 +1252,39 @@ class _SearchInput extends StatelessWidget {
   final VoidCallback onSearch;
 
   /// 필요한 변수는 검색 컨트롤러와 제출 콜백이다.
-  /// 작동 원리: 테두리 없는 한 줄 입력과 검색 아이콘을 기존 도크 배경 위에 표시한다.
+  /// 작동 원리: 모바일은 큰 회색 입력면을 사용하고 PC는 기존 한 줄 입력 밀도를 유지한다.
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      onSubmitted: (_) => onSearch(),
-      decoration: const InputDecoration(
-        hintText: '코스명, 설명, 태그로 검색',
-        prefixIcon: Icon(Icons.search_rounded, size: 18),
-        border: InputBorder.none,
-        isDense: true,
+    final mobile = isStudentDensityMobile(context);
+    return SizedBox(
+      height: mobile ? 50 : null,
+      child: TextField(
+        controller: controller,
+        onSubmitted: (_) => onSearch(),
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          hintText: mobile ? '코스 검색' : '코스명, 설명, 태그로 검색',
+          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+          filled: mobile,
+          fillColor: StudentDensityTokens.surfaceMuted,
+          border: InputBorder.none,
+          enabledBorder: mobile
+              ? OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(16),
+                )
+              : InputBorder.none,
+          focusedBorder: mobile
+              ? OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(16),
+                )
+              : InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+          isDense: true,
+        ),
+        style: TextStyle(fontSize: mobile ? 15 : 13),
       ),
-      style: const TextStyle(fontSize: 13),
     );
   }
 }

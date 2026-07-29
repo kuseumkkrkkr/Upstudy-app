@@ -74,6 +74,14 @@ void main() {
         find.byKey(const ValueKey('course-catalog-mobile-redesign')),
         width < 760 ? findsOneWidget : findsNothing,
       );
+      expect(
+        find.byKey(const ValueKey('course-mobile-search-dock')),
+        width < 760 ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('course-mobile-search-button')),
+        width < 760 ? findsOneWidget : findsNothing,
+      );
       expect(tester.takeException(), isNull);
     }
   });

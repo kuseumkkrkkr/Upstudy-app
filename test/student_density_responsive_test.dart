@@ -608,7 +608,8 @@ void main() {
     await tester.pump();
     expect(find.text('GROUP STUDY'), findsOneWidget);
     expect(find.text('중2 심화 스터디'), findsOneWidget);
-    await tester.tap(find.text('그룹 찾기 · 코드 참가'));
+    expect(find.byKey(const ValueKey('group-mobile-actions')), findsOneWidget);
+    await tester.tap(find.text('코드로 참여'));
     await tester.pumpAndSettle();
     expect(find.text('그룹 찾기'), findsWidgets);
     await tester.tapAt(const Offset(10, 10));
@@ -953,7 +954,15 @@ void main() {
     );
     await tester.pump();
     expect(find.text('PREFERENCES'), findsOneWidget);
-    expect(find.text('LOCAL PREFERENCES'), findsOneWidget);
+    expect(find.text('LOCAL'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-mobile-profile-link')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('settings-mobile-panel-01')),
+      findsOneWidget,
+    );
     expect(find.text('교재 보기'), findsOneWidget);
     expect(find.text('알림'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -900));
