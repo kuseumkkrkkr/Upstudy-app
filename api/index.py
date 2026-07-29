@@ -248,15 +248,28 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
                     "asset_id": f"market-course-tier-{tier}-v{version}",
                 }
             )
+    # 필요한 변수는 완성된 마켓 상품과 각 상품의 문항 수다.
+    # 작동 원리: 시험지·문제세트에 결정적 문제 ID를 한 번 할당해 목록·상세·채점이
+    # 같은 원장을 사용하게 하고, 시험지 asset ID도 실제 조회 가능한 ID로 맞춘다.
+    for item in items:
+        if item["kind"] not in {"exam", "problem_set"}:
+            continue
+        item_count = min(max(int(item.get("item_count") or 1), 1), 20)
+        item["problem_ids"] = [
+            f"{item['id']}-q{index + 1}" for index in range(item_count)
+        ]
+        if item["kind"] == "exam" and not str(item.get("asset_id") or "").strip():
+            item["asset_id"] = item["id"]
     return tuple(items)
 
 
 MARKETPLACE_CATALOG = _build_marketplace_catalog()
 
 
-def _build_marketplace_problem_set_questions(listing: dict[str, Any]) -> list[dict[str, Any]]:
-    """필요 변수: 문제세트 카탈로그 항목의 ID·문항 수. 작동 원리: 상품 ID 해시를 시드로 사용해
-    요청마다 DB·문제 검색을 반복하지 않고 같은 세트에 같은 객관식 문항을 즉시 반환한다."""
+def _build_marketplace_questions(listing: dict[str, Any]) -> list[dict[str, Any]]:
+    """필요 변수: 시험지·문제세트 카탈로그의 ID·제목·난이도·문항 수. 작동 원리:
+    상품 ID 해시를 시드로 사용해 같은 상품에는 항상 같은 고유 문항을 할당하고,
+    목록의 problem_ids·개별 조회·시험지 상세·채점이 동일한 문항 원장을 공유한다."""
     item_count = min(max(int(listing.get("item_count") or 5), 1), 20)
     seed = int(hashlib.sha256(str(listing["id"]).encode("utf-8")).hexdigest()[:8], 16)
     questions: list[dict[str, Any]] = []
@@ -274,12 +287,17 @@ def _build_marketplace_problem_set_questions(listing: dict[str, Any]) -> list[di
                 },
                 "data": {
                     "quest_title": (
+                        f"{listing['title']} · {index + 1}번\\n"
                         f"다음 방정식을 풀어 x의 값을 구하세요.\\n"
                         f"{coefficient}x + {constant} = {result}"
                     ),
                     "quest_options": [str(choice) for choice in choices],
                     "correct_choice_index": 0,
                     "marketplace_listing_id": listing["id"],
+                    "hash_tags": [
+                        str(listing.get("difficulty") or ""),
+                        str(listing.get("grade_band") or ""),
+                    ],
                 },
                 "solves": [],
             }
@@ -302,22 +320,57 @@ def _build_course_runtime_state(course_id: str, owned_state: dict[str, Any]) -> 
 
 
 def _find_marketplace_question(quest_id: str) -> dict[str, Any] | None:
-    """필요 변수: 문제세트가 만든 quest ID. 작동 원리: 접미사 앞의 상품 ID를 먼저 분리한 뒤
-    결정적 문항 목록에서 한 번만 찾아 main의 variant-grade 정답 인덱스 계약으로 연결한다."""
+    """필요 변수: 시험지·문제세트가 할당한 quest ID. 작동 원리: 접미사 앞의 상품 ID를
+    분리한 뒤 같은 결정적 문항 원장에서 한 번만 찾아 조회와 채점 계약을 일치시킨다."""
     listing_id, marker, _suffix = quest_id.rpartition("-q")
     if not marker:
         return None
     listing = _find_catalog_listing(listing_id)
-    if listing is None or listing.get("kind") != "problem_set":
+    if listing is None or listing.get("kind") not in {"problem_set", "exam"}:
         return None
     return next(
         (
             question
-            for question in _build_marketplace_problem_set_questions(listing)
+            for question in _build_marketplace_questions(listing)
             if str(question.get("header", {}).get("quest_id")) == quest_id
         ),
         None,
     )
+
+
+def _build_marketplace_exam_status(listing: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: 시험지 상품과 공유 문항 원장이다. 작동 원리: ExamPaperPage가 요구하는
+    완료 상태·문항 메타데이터로 변환해 시험지 목록과 실제 풀이 화면의 문항 수를 일치시킨다."""
+    difficulty_match = re.search(r"(\d+)", str(listing.get("difficulty") or ""))
+    difficulty_tier = int(difficulty_match.group(1)) if difficulty_match else 1
+    questions = _build_marketplace_questions(listing)
+    items = []
+    for index, question in enumerate(questions):
+        header = question["header"]
+        data = question["data"]
+        items.append(
+            {
+                "exam_id": listing["id"],
+                "title": listing["title"],
+                "item_count": len(questions),
+                "item_index": index,
+                "status": "done",
+                "subject_key": str(listing.get("grade_band") or "수학"),
+                "hash_tags": data.get("hash_tags", []),
+                "difficulty_tier": difficulty_tier,
+                "question_type": header["quest_type"],
+                "quest_id": header["quest_id"],
+                "quest_title": data["quest_title"],
+                "quest_options": data["quest_options"],
+                "solves_count": 0,
+                "strategy_level": 0,
+                "branch_conditions": 0,
+                "flow_count": 0,
+                "codebase_id": 0,
+                "seed": index,
+            }
+        )
+    return {"exam_id": listing["id"], "status": "done", "items": items}
 
 
 class OcrJobRequest(BaseModel):
@@ -1296,7 +1349,7 @@ def get_owned_problem_set_questions(
         raise HTTPException(status_code=404, detail="problem_set_not_found")
     if listing_id not in _load_owned_marketplace(user_id):
         raise HTTPException(status_code=403, detail="purchase_required")
-    return {"items": _build_marketplace_problem_set_questions(listing)}
+    return {"items": _build_marketplace_questions(listing)}
 
 
 @app.post("/marketplace/listings/{listing_id}/purchase")
@@ -1453,9 +1506,16 @@ def list_textbooks(_user_id: str = Depends(_current_user)) -> dict[str, list[Any
 
 
 @app.get("/quests")
-def list_quests(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
-    """필요 변수: 인증 사용자. 작동 원리: 문제 원장 이관 전 빈 검색 페이지를 반환한다."""
-    return {"quests": [], "items": [], "total": 0}
+def list_quests(
+    quest_id: str | None = None,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 선택적 문제 ID다. 작동 원리: 마켓 상품이 할당한 ID는
+    공유 문항 원장에서 직접 조회하고, 일반 검색은 기존 빈 원장 계약을 유지한다."""
+    normalized_id = (quest_id or "").strip()
+    question = _find_marketplace_question(normalized_id) if normalized_id else None
+    items = [question] if question is not None else []
+    return {"quests": items, "items": items, "total": len(items)}
 
 
 @app.get("/quests/generation-tags")
@@ -1465,9 +1525,31 @@ def list_generation_tags(_user_id: str = Depends(_current_user)) -> dict[str, li
 
 
 @app.get("/exams")
-def list_exams(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 시험지가 없는 신규 계정의 빈 목록을 반환한다."""
-    return {"items": [], "exams": []}
+def list_exams(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자의 보유 마켓 자료다. 작동 원리: 보유 시험지만 카탈로그와
+    결합해 반환하고 각 시험지의 실제 할당 문항 수를 함께 제공한다."""
+    owned = _load_owned_marketplace(user_id)
+    exams = [
+        {**listing, **owned[listing["id"]], "owned": True}
+        for listing in MARKETPLACE_CATALOG
+        if listing["kind"] == "exam" and listing["id"] in owned
+    ]
+    return {"items": exams, "exams": exams}
+
+
+@app.get("/exams/{exam_id}")
+def get_exam_status(
+    exam_id: str,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 시험지 ID와 인증 사용자의 보유 원장이다. 작동 원리: 실제 보유 시험지만
+    공유 문항 원장에서 ExamPaperPage 계약으로 변환해 빈 종이 대신 문제를 렌더링한다."""
+    listing = _find_catalog_listing(exam_id)
+    if listing is None or listing.get("kind") != "exam":
+        raise HTTPException(status_code=404, detail="exam_not_found")
+    if listing["id"] not in _load_owned_marketplace(user_id):
+        raise HTTPException(status_code=403, detail="purchase_required")
+    return _build_marketplace_exam_status(listing)
 
 
 @app.get("/serverchat/config")

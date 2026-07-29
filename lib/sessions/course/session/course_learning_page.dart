@@ -89,10 +89,85 @@ String _currentLearningTopic(Course course, CourseUnit? unit) {
   return course.title.trim().isNotEmpty ? course.title.trim() : '학습 과정';
 }
 
+/// 필요한 변수는 코스의 레벨·기간·유형·집중 태그다.
+/// 작동 원리: 서버가 실제로 제공한 값만 중복 없이 모아 화면 문맥 라벨로 사용하며,
+/// 특정 학년이나 과목을 임의로 채우지 않는다.
+List<String> _courseContextLabels(Course course, {int limit = 4}) {
+  final labels = <String>[];
+  void add(String value) {
+    final normalized = value.trim();
+    if (normalized.isNotEmpty && !labels.contains(normalized)) {
+      labels.add(normalized);
+    }
+  }
+
+  add(course.level);
+  add(course.duration);
+  for (final type in course.types) {
+    add(type);
+  }
+  for (final tag in course.focusTags) {
+    add(tag);
+  }
+  return labels.take(limit).toList(growable: false);
+}
+
+/// 필요한 변수는 코스 설명·제목·단원 수다.
+/// 작동 원리: 서버 설명을 우선 사용하고 설명이 없을 때만 현재 코스의 실제 단원 수로
+/// 짧은 대체 문구를 만들어 다른 코스의 내용이 섞이지 않게 한다.
+String _courseDisplaySummary(Course course) {
+  final description = course.description.trim();
+  if (description.isNotEmpty) return description;
+  if (course.units.isNotEmpty) return '${course.units.length}단계로 구성된 학습 코스';
+  return '${course.title} 학습 코스';
+}
+
+/// 필요한 변수는 단원 상태가 포함된 코스다.
+/// 작동 원리: 진행 중 단원, 수강 가능한 첫 단원, 첫 단원 순서로 현재 위치를 결정한다.
+int _currentCourseUnitIndex(Course course) {
+  if (course.units.isEmpty) return -1;
+  var index = course.units.indexWhere(
+    (unit) => unit.status == CourseUnitStatus.active,
+  );
+  if (index >= 0) return index;
+  index = course.units.indexWhere(
+    (unit) => unit.status != CourseUnitStatus.locked,
+  );
+  return index >= 0 ? index : 0;
+}
+
+/// 필요한 변수는 미션 행동명과 미션 상세 유형이다.
+/// 작동 원리: 서버가 제공한 행동명을 우선하고 비어 있을 때만 모듈 종류에 맞는
+/// 일반 행동명을 사용해 모든 미션을 교재로 오인하지 않게 한다.
+String _missionActionLabel(CourseUnitMission? mission) {
+  if (mission == null) return '학습 준비 중';
+  final explicit = mission.actionLabel.trim();
+  if (explicit.isNotEmpty && explicit != '시작') return explicit;
+  final detail = mission.detail;
+  final type = detail is Map ? detail['type']?.toString() ?? '' : '';
+  switch (type) {
+    case 'textbook_view':
+      return '교재 이어보기';
+    case 'problem_solve':
+      return '문제 풀기';
+    case 'exam_solve':
+      return '시험 시작';
+    case 'level_test':
+      return '레벨 테스트';
+    default:
+      return explicit.isEmpty ? '학습 시작' : explicit;
+  }
+}
+
 class CourseLearningPage extends StatefulWidget {
-  const CourseLearningPage({super.key, required this.course});
+  const CourseLearningPage({
+    super.key,
+    required this.course,
+    this.courseLoader,
+  });
 
   final Course course;
+  final Future<Course> Function(String courseId)? courseLoader;
 
   @override
   State<CourseLearningPage> createState() => _CourseLearningPageState();
@@ -122,7 +197,8 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   Future<void> _loadCourseDetail({bool showLoading = true}) async {
     if (showLoading) setState(() => _loadingCourse = true);
     try {
-      final full = await CourseService.fetchCourse(widget.course.id);
+      final loader = widget.courseLoader ?? CourseService.fetchCourse;
+      final full = await loader(widget.course.id);
       if (!mounted) return;
       setState(() {
         _course = full;
@@ -427,6 +503,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   @override
   Widget build(BuildContext context) {
     final course = _course;
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
       key: const ValueKey('course-learning-screen'),
       backgroundColor: StudentDensityTokens.background,
@@ -434,20 +511,29 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
       body: SafeArea(
         child: Column(
           children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                onMenu: () => Scaffold.of(context).openDrawer(),
-                showLevelIndicator: false,
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.courses,
+            if (!mobile)
+              Builder(
+                builder: (context) => Ios26TopBar(
+                  brandColor: StudentDensityTokens.dark,
+                  onMenu: () => Scaffold.of(context).openDrawer(),
+                  showLevelIndicator: false,
+                  items: studentTopNavItems(
+                    context,
+                    active: StudentTopDestination.courses,
+                  ),
                 ),
               ),
-            ),
             Expanded(
               child: _loadingCourse
                   ? const Center(child: CircularProgressIndicator())
+                  : mobile
+                  ? _MobileCourseLearningBody(
+                      course: course,
+                      expandedUnits: _expandedUnits,
+                      onBack: _goBack,
+                      onToggleUnit: _toggleUnit,
+                      onMissionTap: _handleMissionTap,
+                    )
                   : SingleChildScrollView(
                       child: StudentDensityPage(
                         child: Column(
@@ -511,6 +597,650 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   }
 }
 
+class _MobileCourseLearningBody extends StatelessWidget {
+  const _MobileCourseLearningBody({
+    required this.course,
+    required this.expandedUnits,
+    required this.onBack,
+    required this.onToggleUnit,
+    required this.onMissionTap,
+  });
+
+  final Course course;
+  final Set<int> expandedUnits;
+  final VoidCallback onBack;
+  final ValueChanged<int> onToggleUnit;
+  final Future<void> Function(CourseUnit, CourseUnitMission) onMissionTap;
+
+  /// 필요한 변수는 최신 코스, 펼친 단원, 이동·미션 콜백이다.
+  /// 작동 원리: 모바일에서는 브랜드 앱바를 제거하고 실제 코스 데이터로 만든 개요,
+  /// 현재 학습, 학습 기록, 단일 경로 목록을 한 손 스크롤 순서로 배치한다.
+  @override
+  Widget build(BuildContext context) {
+    final currentIndex = _currentCourseUnitIndex(course);
+    final currentUnit = currentIndex < 0 ? null : course.units[currentIndex];
+    final currentMission = currentUnit == null || currentUnit.missions.isEmpty
+        ? null
+        : currentUnit.missions.first;
+
+    return SingleChildScrollView(
+      key: const ValueKey('course-learning-mobile'),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _MobileLearningNavigation(onBack: onBack),
+          const SizedBox(height: 24),
+          _MobileCourseOverview(course: course),
+          const SizedBox(height: 14),
+          _MobileCurrentLearningCard(
+            course: course,
+            unit: currentUnit,
+            mission: currentMission,
+            unitIndex: currentIndex,
+            onStart: currentUnit == null || currentMission == null
+                ? null
+                : () => onMissionTap(currentUnit, currentMission),
+          ),
+          const SizedBox(height: 14),
+          _MobileCourseStats(course: course),
+          const SizedBox(height: 30),
+          const Text(
+            '학습 순서',
+            style: TextStyle(
+              fontSize: 27,
+              height: 1.12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 7),
+          const Text(
+            '완료한 단계와 다음 학습을 한눈에 확인하세요.',
+            style: TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            key: const ValueKey('course-learning-mobile-route'),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 24,
+                  offset: const Offset(0, 9),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: course.units.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(22),
+                    child: Text(
+                      '등록된 학습 단계가 없습니다.',
+                      style: TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 14,
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: [
+                      for (
+                        var index = 0;
+                        index < course.units.length;
+                        index++
+                      ) ...[
+                        _MobileCourseUnitTile(
+                          index: index,
+                          unit: course.units[index],
+                          expanded: expandedUnits.contains(index),
+                          onToggle: () => onToggleUnit(index),
+                          onMissionTap: (mission) =>
+                              onMissionTap(course.units[index], mission),
+                        ),
+                        if (index != course.units.length - 1)
+                          const Divider(
+                            height: 1,
+                            indent: 72,
+                            color: StudentDensityTokens.line,
+                          ),
+                      ],
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileLearningNavigation extends StatelessWidget {
+  const _MobileLearningNavigation({required this.onBack});
+
+  final VoidCallback onBack;
+
+  /// 필요한 변수는 코스 목록 복귀 콜백이다.
+  /// 작동 원리: 모바일 상세 화면에 필요한 뒤로가기와 목록 행동만 48px 터치 영역으로
+  /// 남겨 큰 브랜드 앱바와 중복 목록 버튼을 대체한다.
+  @override
+  Widget build(BuildContext context) {
+    Widget action({
+      required IconData icon,
+      required String label,
+      required VoidCallback onTap,
+    }) {
+      return Semantics(
+        button: true,
+        label: label,
+        child: Material(
+          color: Colors.white,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: SizedBox(width: 48, height: 48, child: Icon(icon, size: 24)),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        action(icon: Icons.arrow_back_rounded, label: '이전 화면', onTap: onBack),
+        const SizedBox(width: 13),
+        const Expanded(
+          child: Text(
+            '코스 학습',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.4,
+            ),
+          ),
+        ),
+        action(icon: Icons.grid_view_rounded, label: '코스 목록', onTap: onBack),
+      ],
+    );
+  }
+}
+
+class _MobileCourseOverview extends StatelessWidget {
+  const _MobileCourseOverview({required this.course});
+
+  final Course course;
+
+  /// 필요한 변수는 코스 제목·설명·문맥 라벨·전체 진행률이다.
+  /// 작동 원리: 서버 응답만 사용해 코스를 소개하고 큰 진행 숫자 대신 제목과 설명을
+  /// 먼저 읽은 뒤 현재 진도를 확인하도록 정보 순서를 정리한다.
+  @override
+  Widget build(BuildContext context) {
+    final labels = _courseContextLabels(course, limit: 3);
+    final progress = course.progress.clamp(0.0, 1.0);
+    final percent = (progress * 100).round();
+    final completed = course.units
+        .where((unit) => unit.status == CourseUnitStatus.completed)
+        .length;
+
+    return Container(
+      key: const ValueKey('course-learning-mobile-overview'),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 24,
+            offset: const Offset(0, 9),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (labels.isNotEmpty) ...[
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: [for (final label in labels) _LearningPill(label)],
+            ),
+            const SizedBox(height: 17),
+          ],
+          Text(
+            course.title,
+            style: const TextStyle(
+              fontSize: 31,
+              height: 1.08,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1.3,
+            ),
+          ),
+          const SizedBox(height: 11),
+          Text(
+            _courseDisplaySummary(course),
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 14,
+              height: 1.5,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              Text(
+                '$percent%',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.8,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$completed/${course.units.length}단계 완료',
+                style: const TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: StudentDensityTokens.surfaceMuted,
+              color: StudentDensityTokens.dark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileCurrentLearningCard extends StatelessWidget {
+  const _MobileCurrentLearningCard({
+    required this.course,
+    required this.unit,
+    required this.mission,
+    required this.unitIndex,
+    required this.onStart,
+  });
+
+  final Course course;
+  final CourseUnit? unit;
+  final CourseUnitMission? mission;
+  final int unitIndex;
+  final VoidCallback? onStart;
+
+  /// 필요한 변수는 현재 단원·첫 미션·실행 콜백이다.
+  /// 작동 원리: 현재 해야 할 학습 하나만 어두운 고대비 카드에 표시하고 미션 유형에
+  /// 맞는 서버 행동명을 사용해 교재·문제·시험을 같은 문구로 부르지 않는다.
+  @override
+  Widget build(BuildContext context) {
+    final detail = mission?.detail;
+    final type = detail is Map ? detail['type']?.toString() ?? '' : '';
+    final topic = _currentLearningTopic(course, unit);
+    final title = unit?.title.trim().isNotEmpty == true
+        ? unit!.title.trim()
+        : course.title;
+    final missionTitle = mission?.title.trim() ?? '';
+
+    return Container(
+      key: const ValueKey('course-learning-mobile-current'),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.dark,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            unitIndex < 0
+                ? '다음 학습'
+                : '현재 학습 ${unitIndex + 1}/${course.units.length}',
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              height: 1.15,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.8,
+            ),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            missionTitle.isEmpty
+                ? topic
+                : '$topic · $missionTitle${type.isEmpty ? '' : ' · ${_moduleTypeLabel(type)}'}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onStart,
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: Text(_missionActionLabel(mission)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(54),
+                backgroundColor: Colors.white,
+                foregroundColor: StudentDensityTokens.ink,
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(17),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.center,
+            child: TextButton(
+              onPressed: () => showCoursePolicyDialog(context),
+              style: TextButton.styleFrom(foregroundColor: Colors.white70),
+              child: const Text('완료 조건 확인'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileCourseStats extends StatelessWidget {
+  const _MobileCourseStats({required this.course});
+
+  final Course course;
+
+  /// 필요한 변수는 서버 누적 시간과 단원 완료 상태다.
+  /// 작동 원리: 별도 대형 카드 대신 같은 면 안의 두 지표로 압축해 현재 학습 행동보다
+  /// 기록이 먼저 보이지 않도록 한다.
+  @override
+  Widget build(BuildContext context) {
+    final completed = course.units
+        .where((unit) => unit.status == CourseUnitStatus.completed)
+        .length;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _MobileCourseStat(
+              label: '학습 시간',
+              value: _formatCourseElapsedTime(_courseElapsedSeconds(course)),
+            ),
+          ),
+          Container(width: 1, height: 40, color: StudentDensityTokens.line),
+          Expanded(
+            child: _MobileCourseStat(
+              label: '완료한 단계',
+              value: '$completed/${course.units.length}',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileCourseStat extends StatelessWidget {
+  const _MobileCourseStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          color: StudentDensityTokens.muted,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 5),
+      Text(
+        value,
+        style: const TextStyle(
+          fontSize: 19,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -0.5,
+        ),
+      ),
+    ],
+  );
+}
+
+class _MobileCourseUnitTile extends StatelessWidget {
+  const _MobileCourseUnitTile({
+    required this.index,
+    required this.unit,
+    required this.expanded,
+    required this.onToggle,
+    required this.onMissionTap,
+  });
+
+  final int index;
+  final CourseUnit unit;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final ValueChanged<CourseUnitMission> onMissionTap;
+
+  /// 필요한 변수는 단원 순번·상태·미션과 펼침 콜백이다.
+  /// 작동 원리: 단원을 하나의 그룹 행으로 표시하고 펼쳤을 때만 실제 미션 행동을
+  /// 노출하며 잠긴 단원의 실행은 차단한다.
+  @override
+  Widget build(BuildContext context) {
+    final status = _statusFor(unit.status);
+    final canExpand = unit.missions.isNotEmpty;
+    final locked = unit.status == CourseUnitStatus.locked;
+    return Column(
+      children: [
+        InkWell(
+          onTap: canExpand ? onToggle : null,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 17, 14, 17),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: locked
+                        ? StudentDensityTokens.surfaceMuted
+                        : StudentDensityTokens.dark,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: locked
+                      ? const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 18,
+                          color: StudentDensityTokens.muted,
+                        )
+                      : Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        unit.title,
+                        style: TextStyle(
+                          color: locked
+                              ? StudentDensityTokens.muted
+                              : StudentDensityTokens.ink,
+                          fontSize: 15,
+                          height: 1.25,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_moduleTypeLabel(unit.type)} · ${status.label}${unit.estimatedMinutes > 0 ? ' · ${unit.estimatedMinutes}분' : ''}',
+                        style: const TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (canExpand)
+                  Icon(
+                    expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: StudentDensityTokens.muted,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (expanded)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Column(
+              children: [
+                for (final mission in unit.missions)
+                  _MobileMissionRow(
+                    mission: mission,
+                    locked: locked,
+                    onTap: () => onMissionTap(mission),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _MobileMissionRow extends StatelessWidget {
+  const _MobileMissionRow({
+    required this.mission,
+    required this.locked,
+    required this.onTap,
+  });
+
+  final CourseUnitMission mission;
+  final bool locked;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 미션 제목·유형·잠금 상태와 실행 콜백이다.
+  /// 작동 원리: 미션 정보를 넓은 터치 행 하나로 묶고 서버 행동명을 오른쪽에 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    final detail = mission.detail;
+    final type = detail is Map ? detail['type']?.toString() ?? '' : '';
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Material(
+        color: StudentDensityTokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: locked ? null : onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        mission.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (type.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          _moduleTypeLabel(type),
+                          style: const TextStyle(
+                            color: StudentDensityTokens.muted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  locked ? '잠김' : _missionActionLabel(mission),
+                  style: TextStyle(
+                    color: locked
+                        ? StudentDensityTokens.muted
+                        : StudentDensityTokens.ink,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 3),
+                const Icon(Icons.chevron_right_rounded, size: 19),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LearningHero extends StatelessWidget {
   const _LearningHero({required this.course});
 
@@ -521,9 +1251,7 @@ class _LearningHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final tags = course.focusTags.isEmpty
-        ? const ['중학교 2학년', '수학', '#일차함수', '#그래프']
-        : ['중학교 2학년', '수학', ...course.focusTags];
+    final tags = _courseContextLabels(course);
     return ClipRRect(
       borderRadius: BorderRadius.circular(mobile ? 22 : 28),
       child: Container(
@@ -558,7 +1286,9 @@ class _LearningHero extends StatelessWidget {
                     ),
                     SizedBox(height: mobile ? 9 : 16),
                     Text(
-                      '일차함수의 개념부터\n그래프 실전까지',
+                      _courseDisplaySummary(course),
+                      maxLines: mobile ? 3 : 4,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: mobile ? 22 : 40,
                         height: .98,
@@ -707,7 +1437,12 @@ class _LearningProgress extends StatelessWidget {
                     '현재 단원',
                   ),
                 ),
-                const Expanded(child: _ProgressMeta('18.6', 'MY OVR')),
+                Expanded(
+                  child: _ProgressMeta(
+                    course.targetOvr > 0 ? '${course.targetOvr}' : '미설정',
+                    '목표 OVR',
+                  ),
+                ),
               ],
             ),
           ],
@@ -774,11 +1509,9 @@ class _CurrentLearning extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final activeIndex = course.units.indexWhere(
-      (unit) => unit.status == CourseUnitStatus.active,
-    );
-    final index = activeIndex < 0 ? 0 : activeIndex;
-    final unit = course.units.isEmpty ? null : course.units[index];
+    final currentIndex = _currentCourseUnitIndex(course);
+    final index = currentIndex < 0 ? 0 : currentIndex;
+    final unit = currentIndex < 0 ? null : course.units[currentIndex];
     final mission = unit == null || unit.missions.isEmpty
         ? null
         : unit.missions.first;
@@ -858,9 +1591,9 @@ class _CurrentLearning extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
-              child: const Text(
-                '교재 이어보기',
-                style: TextStyle(fontWeight: FontWeight.w800),
+              child: Text(
+                _missionActionLabel(mission),
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
             const SizedBox(width: 8),
@@ -929,7 +1662,7 @@ class _CurrentLearning extends StatelessWidget {
                             backgroundColor: StudentDensityTokens.dark,
                             minimumSize: const Size.fromHeight(44),
                           ),
-                          child: const Text('교재 이어보기'),
+                          child: Text(_missionActionLabel(mission)),
                         ),
                         const SizedBox(height: 8),
                         OutlinedButton(
