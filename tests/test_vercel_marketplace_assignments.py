@@ -59,6 +59,8 @@ def test_every_exam_and_problem_set_has_consistent_assignments() -> None:
         for question in questions:
             data = question["data"]
             assert data["quest_title"].strip()
+            assert "\\n" not in data["quest_title"]
+            assert data["quest_title"].count("\n") == 2
             assert len(data["quest_options"]) == 4
             assert 0 <= int(data["correct_choice_index"]) < len(
                 data["quest_options"]

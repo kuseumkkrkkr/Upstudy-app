@@ -287,8 +287,8 @@ def _build_marketplace_questions(listing: dict[str, Any]) -> list[dict[str, Any]
                 },
                 "data": {
                     "quest_title": (
-                        f"{listing['title']} · {index + 1}번\\n"
-                        f"다음 방정식을 풀어 x의 값을 구하세요.\\n"
+                        f"{listing['title']} · {index + 1}번\n"
+                        f"다음 방정식을 풀어 x의 값을 구하세요.\n"
                         f"{coefficient}x + {constant} = {result}"
                     ),
                     "quest_options": [str(choice) for choice in choices],
