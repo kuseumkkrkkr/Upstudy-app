@@ -441,7 +441,8 @@ if origins:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
-        allow_methods=["GET", "POST", "OPTIONS"],
+        # Flutter Web의 프로필·사용자 저장소 갱신과 삭제도 교차 출처에서 동작해야 한다.
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-Idempotency-Key"],
     )
 
