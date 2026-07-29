@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/auth_service.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 
 class SignupPage extends StatefulWidget {
@@ -100,7 +101,7 @@ class _SignupPageState extends State<SignupPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '회원가입 실패: ${error.toString().replaceFirst('Exception: ', '')}',
+            studentFacingApiError(error, fallback: '회원가입을 완료하지 못했어요.'),
           ),
         ),
       );

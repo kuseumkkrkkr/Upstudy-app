@@ -489,7 +489,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       setState(() {
         _questLoading = false;
         _generationProgress = 0.0;
-        _questError = error.toString().replaceFirst('Exception: ', '');
+        _questError = studentFacingApiError(error, fallback: '문제를 불러오지 못했어요.');
       });
     }
   }
@@ -2290,9 +2290,13 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       _completeCourseModuleIfNeeded();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('채점 실패: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(error, fallback: '답안을 채점하지 못했어요.'),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _analysisBusy = false);
     }
@@ -2505,9 +2509,13 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         navigator.pop();
         gradingShown = false;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Grading failed: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(error, fallback: '풀이 분석을 완료하지 못했어요.'),
+          ),
+        ),
+      );
     } finally {
       if (mounted) {
         _completeCourseModuleIfNeeded();

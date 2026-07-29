@@ -10,6 +10,7 @@ import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solve_analysis_page.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solve_debug_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/business/usecases/heatmap_engine.dart';

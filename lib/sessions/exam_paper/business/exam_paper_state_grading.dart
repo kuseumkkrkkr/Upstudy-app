@@ -190,7 +190,7 @@ mixin _ExamPaperGradingMixin
           setState(() {
             _gradeResults[region.item.itemIndex!] = _GradeResult.failure(
               region.item.itemIndex!,
-              error.toString(),
+              studentFacingApiError(error, fallback: '이 문항을 채점하지 못했어요.'),
               quest: quest,
             );
             _gradingCompleted += 1;

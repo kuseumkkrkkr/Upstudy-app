@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/flow_view_page.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solution_view_page.dart';
 import 'package:s11/shared/data/models/content_block.dart';
@@ -154,7 +155,7 @@ class _QuickGeneratePageState extends State<QuickGeneratePage> {
       }
       setState(() {
         _loading = false;
-        _error = '문제 생성 실패: ${error.toString()}';
+        _error = studentFacingApiError(error, fallback: '문제를 생성하지 못했어요.');
       });
     } finally {
       if (mounted) {

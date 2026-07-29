@@ -9,6 +9,7 @@ import 'package:s11/shared/data/models/concept_textbooks.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/components/tag_picker_dialog.dart';
@@ -283,7 +284,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = studentFacingApiError(
+          error,
+          fallback: '약점 태그를 불러오지 못했어요.',
+        );
       });
     }
   } // ← 누락된 닫는 중괄호
@@ -514,7 +518,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
       if (!mounted) return;
       setState(() {
         _historyLoading = false;
-        _historyError = error.toString();
+        _historyError = studentFacingApiError(
+          error,
+          fallback: '풀이 기록을 불러오지 못했어요.',
+        );
       });
     }
   }
@@ -1355,9 +1362,13 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
       setState(() {
         _oxLoading = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('퀴즈 생성 실패: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(error, fallback: '복습 퀴즈를 만들지 못했어요.'),
+          ),
+        ),
+      );
     }
   }
 

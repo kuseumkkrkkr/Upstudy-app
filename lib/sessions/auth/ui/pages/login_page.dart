@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/auth_service.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/services/auth/kakao_login_service.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
@@ -113,9 +114,10 @@ class _LoginPageState extends State<LoginPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorText = error is StateError
-            ? error.message
-            : '카카오 로그인에 실패했습니다. ${error.toString()}';
+        _errorText = studentFacingApiError(
+          error,
+          fallback: '카카오 로그인을 완료하지 못했어요.',
+        );
       });
     } finally {
       if (mounted) {

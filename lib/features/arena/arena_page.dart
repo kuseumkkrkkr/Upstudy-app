@@ -1949,7 +1949,14 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
       try {
         await _load();
       } catch (error) {
-        if (mounted) setState(() => _feedback = error.toString());
+        if (mounted) {
+          setState(
+            () => _feedback = studentFacingApiError(
+              error,
+              fallback: '경기 상태를 갱신하지 못했어요.',
+            ),
+          );
+        }
       }
       if (mounted && !_switchingMatch && !_showingResult) {
         _startFallbackPolling();
@@ -2005,7 +2012,12 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
     } catch (error) {
       if (!mounted) return;
       _showingResult = false;
-      setState(() => _feedback = '경기는 종료됐지만 결과를 불러오지 못했습니다: $error');
+      setState(
+        () => _feedback = studentFacingApiError(
+          error,
+          fallback: '경기는 종료됐지만 결과를 불러오지 못했어요.',
+        ),
+      );
       _startFallbackPolling();
     }
   }
@@ -2134,7 +2146,7 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
       if (mounted) {
         setState(() {
           _submitting = false;
-          _feedback = error.toString();
+          _feedback = studentFacingApiError(error, fallback: '답안을 제출하지 못했어요.');
         });
       }
     }
@@ -2410,7 +2422,14 @@ class _ArenaResultPageState extends State<ArenaResultPage> {
         });
       }
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) {
+        setState(
+          () => _error = studentFacingApiError(
+            error,
+            fallback: '경기 결과를 불러오지 못했어요.',
+          ),
+        );
+      }
     }
   }
 

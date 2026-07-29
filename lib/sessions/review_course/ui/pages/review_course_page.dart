@@ -67,7 +67,7 @@ class _ReviewCoursePageState extends State<ReviewCoursePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = error.toString();
+        _error = '복습 코스를 준비하지 못했어요. 잠시 후 다시 시도해 주세요.';
         _loading = false;
       });
     }

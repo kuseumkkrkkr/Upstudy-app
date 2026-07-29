@@ -86,14 +86,12 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = error is Exception && error is! ApiException
-            ? error.toString().replaceFirst('Exception: ', '')
-            : studentFacingApiError(
-                error,
-                fallback: '레벨 테스트를 시작하지 못했어요.',
-                notFound: '레벨 테스트를 준비 중이에요. 잠시 후 다시 시도해 주세요.',
-                unavailable: '레벨 테스트 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
-              );
+        _error = studentFacingApiError(
+          error,
+          fallback: '레벨 테스트를 시작하지 못했어요.',
+          notFound: '레벨 테스트를 준비 중이에요. 잠시 후 다시 시도해 주세요.',
+          unavailable: '레벨 테스트 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
+        );
       });
     }
   }
