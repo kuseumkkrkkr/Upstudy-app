@@ -710,7 +710,7 @@ class _MobileMarketCategories extends StatelessWidget {
   final ValueChanged<String> onSelected;
 
   /// 필요한 변수는 전체 항목과 세 마켓 카테고리다.
-  /// 작동 원리는 설명 카드 대신 네 개의 동일 폭 터치 영역을 사용해 한 화면에서 유형을 즉시 바꾸게 한다.
+  /// 작동 원리는 네 카테고리를 한 개의 흰 Material 그룹에 넣고 선택 항목만 검게 강조한다.
   @override
   Widget build(BuildContext context) {
     final categories = [
@@ -722,20 +722,25 @@ class _MobileMarketCategories extends StatelessWidget {
       ),
       ...corners,
     ];
-    return Row(
+    return Container(
       key: const ValueKey('market-mobile-categories'),
-      children: [
-        for (var index = 0; index < categories.length; index++) ...[
-          Expanded(
-            child: _MobileMarketCategory(
-              corner: categories[index],
-              selected: selected == categories[index].filter,
-              onTap: () => onSelected(categories[index].filter),
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(21),
+      ),
+      child: Row(
+        children: [
+          for (final category in categories)
+            Expanded(
+              child: _MobileMarketCategory(
+                corner: category,
+                selected: selected == category.filter,
+                onTap: () => onSelected(category.filter),
+              ),
             ),
-          ),
-          if (index != categories.length - 1) const SizedBox(width: 8),
         ],
-      ],
+      ),
     );
   }
 }
@@ -752,23 +757,17 @@ class _MobileMarketCategory extends StatelessWidget {
   final VoidCallback onTap;
 
   /// 필요한 변수는 카테고리·선택 상태다.
-  /// 작동 원리는 최소 72px 높이의 아이콘 버튼으로 모바일에서 현재 유형을 명확히 표시한다.
+  /// 작동 원리는 그룹 안의 64px 터치 셀에서 선택 항목만 채워 도형 수를 최소화한다.
   @override
   Widget build(BuildContext context) => Material(
     key: ValueKey('market-corner-${corner.filter}'),
-    color: selected ? Colors.black : Colors.white,
-    borderRadius: BorderRadius.circular(17),
+    color: selected ? Colors.black : Colors.transparent,
+    borderRadius: BorderRadius.circular(16),
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(17),
-      child: Container(
-        height: 68,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(17),
-          border: Border.all(
-            color: selected ? Colors.black : const Color(0xFFDCDCE0),
-          ),
-        ),
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        height: 64,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

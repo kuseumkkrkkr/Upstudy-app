@@ -168,23 +168,29 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
             Expanded(
               child: SingleChildScrollView(
                 child: StudentDensityPage(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _PlacementHero(),
-                      const SizedBox(height: 34),
-                      const _PlacementIntro(),
-                      const SizedBox(height: 18),
-                      const _PlacementProcess(),
-                      const SizedBox(height: 14),
-                      _PlacementReady(
-                        loading: _loading,
-                        error: _error,
-                        onStart: _startPlacement,
-                      ),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
+                  child: mobile
+                      ? _MobilePlacementBody(
+                          loading: _loading,
+                          error: _error,
+                          onStart: _startPlacement,
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const _PlacementHero(),
+                            const SizedBox(height: 34),
+                            const _PlacementIntro(),
+                            const SizedBox(height: 18),
+                            const _PlacementProcess(),
+                            const SizedBox(height: 14),
+                            _PlacementReady(
+                              loading: _loading,
+                              error: _error,
+                              onStart: _startPlacement,
+                            ),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -193,6 +199,207 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       ),
     );
   }
+}
+
+/// 필요한 변수는 레벨 테스트 준비 상태·오류·시작 콜백이다.
+/// 작동 원리: 모바일에서는 소개용 대형 카드들을 한 개의 시작 카드와 한 개의 과정 목록으로 압축한다.
+class _MobilePlacementBody extends StatelessWidget {
+  const _MobilePlacementBody({
+    required this.loading,
+    required this.error,
+    required this.onStart,
+  });
+
+  final bool loading;
+  final String? error;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    key: const ValueKey('level-test-mobile-flat'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text(
+        '레벨 테스트',
+        style: TextStyle(
+          fontSize: 32,
+          letterSpacing: -1.4,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 18),
+      Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: StudentDensityTokens.dark,
+          borderRadius: BorderRadius.circular(26),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Icon(Icons.speed_rounded, size: 24),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Text(
+                    '50문제로\n실력을 확인해요',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      height: 1.12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              '약 60분 · 자동 저장 · OVR 분석',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: 54,
+              child: FilledButton(
+                key: const ValueKey('level-test-mobile-start'),
+                onPressed: loading ? null : onStart,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: StudentDensityTokens.ink,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: loading
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text(
+                        '테스트 시작',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+              ),
+            ),
+            if (error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                error!,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ],
+        ),
+      ),
+      const SizedBox(height: 26),
+      const Text(
+        '진행 방식',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 10),
+      Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: const Column(
+          children: [
+            _MobilePlacementStep(
+              icon: Icons.quiz_outlined,
+              title: '문제 풀기',
+              subtitle: '주요 개념 50문항',
+            ),
+            _MobilePlacementStep(
+              icon: Icons.insights_outlined,
+              title: '풀이 분석',
+              subtitle: '정오답과 풀이 시간 확인',
+            ),
+            _MobilePlacementStep(
+              icon: Icons.route_outlined,
+              title: '학습 추천',
+              subtitle: 'OVR과 다음 코스 제공',
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 32),
+    ],
+  );
+}
+
+/// 필요한 변수는 단계 아이콘·제목·짧은 설명이다.
+/// 작동 원리: 과정 설명을 카드 세 개 대신 한 그룹 안의 큰 Material 목록 행으로 표시한다.
+class _MobilePlacementStep extends StatelessWidget {
+  const _MobilePlacementStep({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+    child: Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: StudentDensityTokens.surfaceMuted,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, size: 21),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _PlacementHero extends StatelessWidget {

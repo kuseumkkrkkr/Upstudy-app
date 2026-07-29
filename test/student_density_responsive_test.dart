@@ -893,7 +893,7 @@ void main() {
     expect(find.text('먼저 학생 정보를\n알려주세요.'), findsOneWidget);
   });
 
-  testWidgets('500px 프로필은 HTML 학생 히어로와 학습 정보를 유지한다', (tester) async {
+  testWidgets('500px 프로필은 축약 히어로와 큰 편집 필드를 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -922,17 +922,21 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('MY ACCOUNT'), findsOneWidget);
-    expect(find.text('STUDENT PROFILE'), findsOneWidget);
+    expect(find.text('MY ACCOUNT'), findsNothing);
+    expect(find.text('STUDENT PROFILE'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('profile-mobile-compact-hero')),
+      findsOneWidget,
+    );
     expect(find.text('18.6'), findsOneWidget);
     expect(find.text('B'), findsOneWidget);
     expect(find.text('246'), findsOneWidget);
-    expect(find.text('@student01 · AIFlow 중학교 2학년'), findsOneWidget);
-    expect(find.text('중학교   수학'), findsOneWidget);
-    expect(find.text('LEARNING PROFILE'), findsOneWidget);
+    expect(find.text('@student01 · AIFlow 중학교'), findsOneWidget);
+    expect(find.text('LEARNING PROFILE'), findsNothing);
     await tester.drag(find.byType(ListView).first, const Offset(0, -720));
     await tester.pumpAndSettle();
-    expect(find.text('SECURITY'), findsOneWidget);
+    expect(find.text('비밀번호 변경'), findsOneWidget);
+    expect(find.text('SECURITY'), findsNothing);
     await tester.drag(find.byType(ListView).first, const Offset(0, -720));
     await tester.pumpAndSettle();
     expect(find.text('DANGER ZONE'), findsOneWidget);
@@ -944,7 +948,7 @@ void main() {
     expect(find.text('현재 비밀번호'), findsOneWidget);
   });
 
-  testWidgets('500px 설정은 HTML 로컬 히어로와 세 설정 카드를 유지한다', (tester) async {
+  testWidgets('500px 설정은 단일 Material 설정 목록을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -953,23 +957,23 @@ void main() {
       const MaterialApp(home: SettingsPage(preview: true)),
     );
     await tester.pump();
-    expect(find.text('PREFERENCES'), findsOneWidget);
-    expect(find.text('LOCAL'), findsOneWidget);
+    expect(find.text('PREFERENCES'), findsNothing);
+    expect(find.text('LOCAL'), findsNothing);
     expect(
       find.byKey(const ValueKey('settings-mobile-profile-link')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('settings-mobile-panel-01')),
+      find.byKey(const ValueKey('settings-mobile-flat-list')),
       findsOneWidget,
     );
-    expect(find.text('교재 보기'), findsOneWidget);
+    expect(find.text('교재 페이지'), findsOneWidget);
     expect(find.text('알림'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -900));
     await tester.pumpAndSettle();
     expect(find.text('STORAGE CONTRACT'), findsNothing);
     expect(find.text('settings.notifications_enabled'), findsNothing);
-    expect(find.text('자동 저장'), findsOneWidget);
+    expect(find.text('자동 저장'), findsNothing);
   });
 
   testWidgets('500px 학습 액션은 HTML처럼 전체 화면 패널과 하단 닫기를 사용한다', (tester) async {

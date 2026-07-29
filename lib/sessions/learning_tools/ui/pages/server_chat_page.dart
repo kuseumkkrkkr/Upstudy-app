@@ -255,19 +255,47 @@ class _ServerChatPageState extends State<ServerChatPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    StudentDensityPageHeader(
-                      eyebrow: 'AI LEARNING',
-                      title: 'AI 학습 튜터',
-                      description: '학습 질문과 풀이 상담을 한 대화에서 이어갑니다.',
-                      action: SizedBox(
-                        width: mobile ? double.infinity : 170,
-                        child: StudentDensityButton(
-                          label: '맞춤 학습 상담',
-                          primary: true,
-                          onPressed: _canSend ? _askWithMyData : null,
+                    if (mobile)
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'AI 학습 튜터',
+                              style: TextStyle(
+                                fontSize: 32,
+                                letterSpacing: -1.5,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            key: const ValueKey('tutor-mobile-personalized'),
+                            tooltip: '맞춤 학습 상담',
+                            onPressed: _canSend ? _askWithMyData : null,
+                            icon: const Icon(Icons.auto_awesome_rounded),
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  StudentDensityTokens.surfaceMuted,
+                              foregroundColor: StudentDensityTokens.ink,
+                              minimumSize: const Size(48, 48),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      StudentDensityPageHeader(
+                        eyebrow: 'AI LEARNING',
+                        title: 'AI 학습 튜터',
+                        description: '학습 질문과 풀이 상담을 한 대화에서 이어갑니다.',
+                        action: SizedBox(
+                          width: 170,
+                          child: StudentDensityButton(
+                            label: '맞춤 학습 상담',
+                            primary: true,
+                            onPressed: _canSend ? _askWithMyData : null,
+                          ),
                         ),
                       ),
-                    ),
                     SizedBox(height: mobile ? 14 : 22),
                     Expanded(
                       child: _buildChatSurface(

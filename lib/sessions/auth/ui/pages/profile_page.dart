@@ -494,34 +494,30 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
                   children: [
-                    const Text(
-                      'MY ACCOUNT',
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.7,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            '프로필',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          key: const ValueKey('profile-mobile-settings'),
+                          tooltip: '설정',
+                          onPressed: _openSettings,
+                          icon: const Icon(Icons.settings_outlined),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            minimumSize: const Size(48, 48),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '프로필',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '학습 정보와 계정 정보를 확인하고 필요한 항목만 수정합니다.',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: _openSettings,
-                      child: const Text('설정'),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 18),
                     _ProfileHero(
                       name: name,
                       username: _usernameController.text,
@@ -535,36 +531,21 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: _profileCardDecoration(),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'LEARNING PROFILE',
-                            style: TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 1.6,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
                             '학생 정보',
                             style: TextStyle(
-                              fontSize: 26,
+                              fontSize: 22,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '코스 추천과 학습 분석에 사용하는 정보입니다.',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.black45,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 16),
                           _field(
                             controller: _nameController,
                             label: '이름',
@@ -1018,61 +999,65 @@ class _ProfilePageState extends State<ProfilePage> {
     ),
   );
 
-  /// 필요한 변수는 없으며 프로필 카드의 공용 표면을 만든다.
-  /// 작동 원리는 흰 배경과 28px 둥근 모서리로 HTML 정보 카드를 재현하는 것이다.
-  BoxDecoration _profileCardDecoration() => BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(28),
-    border: Border.all(color: const Color(0xFFE0E0E2)),
-  );
-
   /// 필요한 변수는 섹션 표식·제목·설명·내부 컨트롤이다.
-  /// 작동 원리는 프로필 하단의 SECURITY·READER·SESSION 카드를 HTML과 같은 간격으로 재사용하는 것이다.
+  /// 작동 원리는 모바일에서 영문 표식·반복 설명·외곽선을 숨기고 PC는 기존 정보 카드를 유지한다.
   Widget _htmlAccountCard({
     required String eyebrow,
     required String title,
     required String description,
     required List<Widget> children,
-  }) => Material(
-    color: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(28),
-      side: const BorderSide(color: Color(0xFFE0E0E2)),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            eyebrow,
-            style: const TextStyle(
-              fontSize: 10,
-              letterSpacing: 1.6,
-              color: Colors.black54,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 18),
-          ...children,
-        ],
+  }) {
+    final mobile = isStudentDensityMobile(context);
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(mobile ? 24 : 28),
+        side: mobile
+            ? BorderSide.none
+            : const BorderSide(color: Color(0xFFE0E0E2)),
       ),
-    ),
-  );
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!mobile) ...[
+              Text(
+                eyebrow,
+                style: const TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.6,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: mobile ? 22 : 24,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            if (!mobile) ...[
+              const SizedBox(height: 7),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.black54,
+                  height: 1.45,
+                ),
+              ),
+            ],
+            const SizedBox(height: 18),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) => _buildHtmlProfile(context);
@@ -1591,6 +1576,83 @@ class _ProfileHero extends StatelessWidget {
       track.trim(),
       subject.trim(),
     ].where((value) => value.isNotEmpty).join('   ');
+    if (isStudentDensityMobile(context)) {
+      return Container(
+        key: const ValueKey('profile-mobile-compact-hero'),
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF202022),
+          borderRadius: BorderRadius.circular(26),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    name.isEmpty ? '?' : name.characters.first,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '@$username · $schoolLabel',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _ProfileMetric(
+                  label: 'OVR',
+                  value: _formatProfileOvr(rating?.ovr),
+                ),
+                _ProfileMetric(
+                  label: '티어',
+                  value: _profileTier(rating?.rating),
+                ),
+                _ProfileMetric(
+                  label: '풀이',
+                  value: totalSolvedCount?.toString() ?? '--',
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
       decoration: BoxDecoration(

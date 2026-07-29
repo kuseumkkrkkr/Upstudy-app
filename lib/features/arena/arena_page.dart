@@ -548,8 +548,10 @@ class _ArenaPageState extends State<ArenaPage> {
                                     _ArenaUnavailableCard(onRetry: _load),
                                 ],
                               ),
-                            const SizedBox(height: 20),
-                            _ArenaRules(desktop: desktop),
+                            if (desktop) ...[
+                              const SizedBox(height: 20),
+                              const _ArenaRules(desktop: true),
+                            ],
                           ],
                         ),
                       ),
@@ -566,39 +568,18 @@ class _ArenaPageState extends State<ArenaPage> {
 }
 
 /// 필요한 변수 없음.
-/// 작동 원리: 세로 화면에서는 전적·티어 같은 보조 정보를 생략하고,
-/// 사용자가 대결을 시작할 수 있는 목적을 첫 화면에서 명확히 전달한다.
+/// 작동 원리: 세로 화면에서는 영문 라벨·긴 설명·전적을 생략하고 기능명만 크게 표시한다.
 class _ArenaMobileHeader extends StatelessWidget {
   const _ArenaMobileHeader();
 
   @override
-  Widget build(BuildContext context) => const Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'REAL-TIME MATCH',
-        style: TextStyle(
-          fontSize: 10,
-          letterSpacing: 1.6,
-          color: Colors.black54,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      SizedBox(height: 10),
-      Text(
-        '대결장',
-        style: TextStyle(
-          fontSize: 34,
-          letterSpacing: -1.8,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      SizedBox(height: 6),
-      Text(
-        '같은 10문항으로 실력을 겨뤄보세요.',
-        style: TextStyle(fontSize: 14, color: Colors.black54),
-      ),
-    ],
+  Widget build(BuildContext context) => const Text(
+    '대결장',
+    style: TextStyle(
+      fontSize: 34,
+      letterSpacing: -1.8,
+      fontWeight: FontWeight.w900,
+    ),
   );
 }
 
@@ -633,16 +614,6 @@ class _ArenaMobileEntryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '1V1 RANKED MATCH',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 10,
-              letterSpacing: 1.4,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 14),
           const Text(
             '1v1 문제풀이',
             style: TextStyle(
@@ -686,7 +657,7 @@ class _ArenaMobileEntryCard extends StatelessWidget {
 }
 
 /// 필요한 변수 없음.
-/// 작동 원리: 서버가 활성 큐를 반환하지 못한 경우에도 빈 화면 대신 재시도 안내를 제공한다.
+/// 작동 원리: 서버가 활성 큐를 반환하지 못하면 테두리 없는 빈 상태와 큰 재시도 버튼을 제공한다.
 class _ArenaUnavailableCard extends StatelessWidget {
   const _ArenaUnavailableCard({required this.onRetry});
 
@@ -698,8 +669,7 @@ class _ArenaUnavailableCard extends StatelessWidget {
     padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFE1E1E3)),
+      borderRadius: BorderRadius.circular(24),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,13 +689,18 @@ class _ArenaUnavailableCard extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           height: 50,
-          child: OutlinedButton.icon(
+          child: FilledButton.icon(
             key: const ValueKey('arena-mobile-retry-button'),
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
             label: const Text(
               '다시 확인',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F2),
+              foregroundColor: Colors.black,
+              elevation: 0,
             ),
           ),
         ),

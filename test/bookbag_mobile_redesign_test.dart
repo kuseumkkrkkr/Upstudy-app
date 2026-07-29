@@ -101,6 +101,10 @@ void main() {
       find.byKey(const ValueKey('bookbag-mobile-featured')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('bookbag-mobile-shortcut-group')),
+      findsOneWidget,
+    );
     expect(find.text('내 자료'), findsOneWidget);
     expect(find.text('교재'), findsWidgets);
     expect(find.text('시험지'), findsWidgets);

@@ -199,17 +199,19 @@ class _GroupListPageState extends State<GroupListPage> {
                                 ),
                               ],
                             ),
-                          const SizedBox(height: 22),
-                          const Text(
-                            'CONTINUE TOGETHER',
-                            style: TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 1.6,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w900,
+                          SizedBox(height: mobile ? 26 : 22),
+                          if (!mobile) ...[
+                            const Text(
+                              'CONTINUE TOGETHER',
+                              style: TextStyle(
+                                fontSize: 10,
+                                letterSpacing: 1.6,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
+                            const SizedBox(height: 8),
+                          ],
                           const Text(
                             '내 그룹',
                             style: TextStyle(
@@ -245,36 +247,34 @@ class _GroupListHeading extends StatelessWidget {
   final bool compact;
 
   /// 필요한 변수는 반응형 제목 크기와 모바일 축약 여부다.
-  /// 작동 원리: 모바일에서는 설명을 한 문장으로 줄이고 PC는 기존 안내를 유지한다.
+  /// 작동 원리: 모바일은 영문 표식과 설명을 숨겨 기능명만 남기고 PC는 기존 안내를 유지한다.
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text(
-        'GROUP STUDY',
-        style: TextStyle(
-          fontSize: 10,
-          letterSpacing: 1.7,
-          color: Colors.black54,
-          fontWeight: FontWeight.w900,
+      if (!compact) ...[
+        const Text(
+          'GROUP STUDY',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.7,
+            color: Colors.black54,
+            fontWeight: FontWeight.w900,
+          ),
         ),
-      ),
-      const SizedBox(height: 8),
+        const SizedBox(height: 8),
+      ],
       Text(
         '그룹 스터디',
         style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900),
       ),
-      const SizedBox(height: 6),
-      Text(
-        compact
-            ? '그룹 학습과 대화를 한곳에서 이어가세요.'
-            : '내 그룹의 새 학습과 대화를 먼저 확인하고, 필요할 때만 검색하거나 초대 코드로 참가하세요.',
-        style: TextStyle(
-          color: Colors.black45,
-          fontSize: compact ? 14 : null,
-          height: compact ? 1.45 : null,
+      if (!compact) ...[
+        const SizedBox(height: 6),
+        const Text(
+          '내 그룹의 새 학습과 대화를 먼저 확인하고, 필요할 때만 검색하거나 초대 코드로 참가하세요.',
+          style: TextStyle(color: Colors.black45),
         ),
-      ),
+      ],
     ],
   );
 }
@@ -637,11 +637,14 @@ class _GroupListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     if (groups.isEmpty) {
-      return StudentDensitySurface(
-        padding: const EdgeInsets.all(28),
+      return Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: mobile ? 6 : 28,
+          vertical: mobile ? 24 : 28,
+        ),
         child: const Text(
-          '아직 참여 중인 그룹이 없어요. 그룹을 찾거나 초대 코드로 참가해 보세요.',
-          style: TextStyle(fontSize: 14, color: Colors.black45),
+          '참여 중인 그룹이 없어요.\n그룹 찾기나 초대 코드로 시작해 보세요.',
+          style: TextStyle(fontSize: 14, color: Colors.black45, height: 1.55),
         ),
       );
     }

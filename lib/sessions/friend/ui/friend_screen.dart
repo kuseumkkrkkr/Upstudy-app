@@ -241,40 +241,66 @@ class _SocialSectionHeader extends StatelessWidget {
   final String trailing;
 
   /// 필요한 변수는 영문 섹션명·한글 제목·요약 문구다.
-  /// 작동 원리는 위치를 고정한 요약을 제목 오른쪽에 놓아 HTML 카드 헤더를 재현하는 것이다.
+  /// 작동 원리는 모바일에서 영문 표식을 숨기고 제목·요약만 한 행에 배치하며 PC는 기존 헤더를 유지한다.
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(18, 22, 18, 14),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                eyebrow,
-                style: const TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 1.5,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w900,
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!mobile) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    eyebrow,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 1.5,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Text(
+                  trailing,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 9),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: mobile ? 24 : 26,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-            ),
-            Text(
-              trailing,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
-            ),
-          ],
-        ),
-        const SizedBox(height: 9),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
-        ),
-      ],
-    ),
-  );
+              if (mobile)
+                Text(
+                  trailing,
+                  style: const TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SocialPersonRow extends StatelessWidget {
@@ -3087,13 +3113,16 @@ class _SoWidgetState extends State<SoWidget> {
     );
   }
 
-  /// 필요한 변수는 없으며 소셜 카드가 공유할 표면 규칙을 만든다.
-  /// 작동 원리는 흰 배경·22px 모서리·어두운 테두리로 HTML 카드 외곽을 고정하는 것이다.
-  BoxDecoration _socialCardDecoration() => BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(22),
-    border: Border.all(color: const Color(0xFFE0E0E2)),
-  );
+  /// 필요한 변수는 현재 화면 폭이다.
+  /// 작동 원리는 모바일은 무테 흰 표면을, PC는 기존 외곽선 카드를 공유한다.
+  BoxDecoration _socialCardDecoration() {
+    final mobile = isStudentDensityMobile(context);
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: mobile ? null : Border.all(color: const Color(0xFFE0E0E2)),
+    );
+  }
 
   // BUILD
   // ══════════════════════════════════════════════════════════════

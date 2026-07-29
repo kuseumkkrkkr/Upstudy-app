@@ -639,16 +639,6 @@ class _MobileFeaturedCourse extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            continuing ? 'CONTINUE' : 'RECOMMENDED',
-            style: const TextStyle(
-              color: Colors.white54,
-              fontSize: 10,
-              letterSpacing: 1.4,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
             course.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

@@ -203,8 +203,116 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  /// 필요한 변수는 아이콘·제목·상태 문구·우측 제어와 선택 콜백이다.
+  /// 작동 원리: 개별 카드 대신 한 그룹 안의 68px Material 행으로 설정을 바로 조작한다.
+  Widget _mobileSettingRow({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
+    VoidCallback? onTap,
+  }) {
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F6),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, size: 21, color: const Color(0xFF202022)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.black45, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          trailing,
+        ],
+      ),
+    );
+    if (onTap == null) return content;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: content,
+    );
+  }
+
+  /// 필요한 변수는 현재 교재·간편풀이·알림 상태와 저장 콜백이다.
+  /// 작동 원리: 네 설정을 하나의 큰 흰 표면에 모아 중첩 카드·번호 배지·반복 설명을 제거한다.
+  Widget _buildMobileSettingsList() => Container(
+    key: const ValueKey('settings-mobile-flat-list'),
+    padding: const EdgeInsets.all(6),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(26),
+    ),
+    child: Column(
+      children: [
+        _mobileSettingRow(
+          icon: Icons.auto_stories_outlined,
+          title: '교재 페이지',
+          subtitle: _textbookPageMode ? '페이지 단위' : '연속 스크롤',
+          trailing: Switch.adaptive(
+            value: _textbookPageMode,
+            onChanged: _setTextbookPageMode,
+          ),
+          onTap: () => _setTextbookPageMode(!_textbookPageMode),
+        ),
+        _mobileSettingRow(
+          icon: Icons.route_outlined,
+          title: '간편풀이',
+          subtitle: _mobileQuickSolve ? '사용 중' : '일반 필기 사용 중',
+          trailing: Switch.adaptive(
+            value: _mobileQuickSolve,
+            onChanged: _setMobileQuickSolve,
+          ),
+          onTap: () => _setMobileQuickSolve(!_mobileQuickSolve),
+        ),
+        _mobileSettingRow(
+          icon: Icons.notifications_none_rounded,
+          title: '알림',
+          subtitle: _notificationsEnabled ? '켜짐' : '꺼짐',
+          trailing: Switch.adaptive(
+            value: _notificationsEnabled,
+            onChanged: _setNotificationsEnabled,
+          ),
+          onTap: () => _setNotificationsEnabled(!_notificationsEnabled),
+        ),
+        _mobileSettingRow(
+          icon: Icons.receipt_long_outlined,
+          title: '오픈소스 정보',
+          subtitle: '라이선스 보기',
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: _showLicenses,
+        ),
+      ],
+    ),
+  );
+
   /// 필요한 변수는 교재 보기·알림·로딩 상태이다.
-  /// 작동 원리는 HTML의 로컬 환경 히어로와 세 개 번호 카드에 기존 저장 콜백을 연결하는 것이다.
+  /// 작동 원리는 모바일은 단일 설정 그룹, PC는 기존 정보형 카드에 같은 저장 콜백을 연결하는 것이다.
   Widget _buildHtmlSettings(BuildContext context) {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -232,158 +340,36 @@ class _SettingsPageState extends State<SettingsPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
                 children: [
-                  const Text(
-                    'PREFERENCES',
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 1.7,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '설정',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 6),
                   Row(
                     children: [
                       const Expanded(
                         child: Text(
-                          '학습 화면을 내 방식에 맞게 조정하세요.',
-                          style: TextStyle(color: Colors.black45, fontSize: 14),
+                          '설정',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
-                      TextButton.icon(
+                      IconButton(
                         key: const ValueKey('settings-mobile-profile-link'),
+                        tooltip: '프로필',
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => const ProfilePage(),
                           ),
                         ),
-                        icon: const Icon(
-                          Icons.person_outline_rounded,
-                          size: 18,
-                        ),
-                        label: const Text('프로필'),
-                        style: TextButton.styleFrom(
+                        icon: const Icon(Icons.person_outline_rounded),
+                        style: IconButton.styleFrom(
                           foregroundColor: const Color(0xFF202022),
-                          textStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          backgroundColor: Colors.white,
+                          minimumSize: const Size(48, 48),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF202022),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: const Row(
-                      children: [
-                        _SettingsHeroIcon(),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'LOCAL',
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 9,
-                                  letterSpacing: 1.5,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              SizedBox(height: 14),
-                              Text(
-                                '이 기기의 학습 환경',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '자동 저장',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SettingsPanel(
-                    number: '01',
-                    title: '교재 보기',
-                    subtitle: '교재를 페이지처럼 볼 수 있어요.',
-                    child: _settingTile(
-                      icon: Icons.auto_stories_outlined,
-                      title: 'PDF형 페이지 보기',
-                      subtitle: _textbookPageMode ? '페이지 단위' : '연속 스크롤',
-                      trailing: Switch.adaptive(
-                        value: _textbookPageMode,
-                        onChanged: _setTextbookPageMode,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SettingsPanel(
-                    number: '02',
-                    title: '모바일 문제풀이',
-                    subtitle: '세로 화면에 맞는 풀이 방식을 선택하세요.',
-                    child: _settingTile(
-                      icon: Icons.route_outlined,
-                      title: '모바일 간편풀이',
-                      subtitle: _mobileQuickSolve ? '간편풀이 사용 중' : '일반 필기 사용 중',
-                      trailing: Switch.adaptive(
-                        value: _mobileQuickSolve,
-                        onChanged: _setMobileQuickSolve,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SettingsPanel(
-                    number: '03',
-                    title: '알림',
-                    subtitle: '앱 알림을 한 번에 관리해요.',
-                    child: _settingTile(
-                      icon: Icons.notifications_none_rounded,
-                      title: '모든 알림',
-                      subtitle: _notificationsEnabled ? '알림 켜짐' : '알림 꺼짐',
-                      trailing: Switch.adaptive(
-                        value: _notificationsEnabled,
-                        onChanged: _setNotificationsEnabled,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SettingsPanel(
-                    number: '04',
-                    title: '앱 정보',
-                    subtitle: '앱의 오픈소스 정보를 확인하세요.',
-                    child: _settingTile(
-                      icon: Icons.receipt_long_outlined,
-                      title: '라이선스 보기',
-                      subtitle: '오픈소스 정보',
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: _showLicenses,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildPreferenceNotice(),
+                  const SizedBox(height: 18),
+                  _buildMobileSettingsList(),
                 ],
               ),
             ),

@@ -75,7 +75,7 @@ class StudentDensityPage extends StatelessWidget {
 }
 
 /// 필요 변수: 카드 본문, 여백, 배경색과 선택적인 탭 동작.
-/// 작동 원리: 최신 시안의 흰 표면·얇은 테두리·큰 반경을 한 컴포넌트로 제공합니다.
+/// 작동 원리: 모바일은 테두리·그림자 없는 플랫 표면을, PC는 기존 카드 깊이를 제공합니다.
 class StudentDensitySurface extends StatelessWidget {
   const StudentDensitySurface({
     super.key,
@@ -94,18 +94,21 @@ class StudentDensitySurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     final decorated = Ink(
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: StudentDensityTokens.line),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F000000),
-            blurRadius: 44,
-            offset: Offset(0, 14),
-          ),
-        ],
+        border: mobile ? null : Border.all(color: StudentDensityTokens.line),
+        boxShadow: mobile
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x0F000000),
+                  blurRadius: 44,
+                  offset: Offset(0, 14),
+                ),
+              ],
       ),
       child: Padding(padding: padding, child: child),
     );
@@ -122,7 +125,7 @@ class StudentDensitySurface extends StatelessWidget {
 }
 
 /// 필요 변수: 짧은 영문 또는 상태 라벨.
-/// 작동 원리: 시안의 작은 대문자 문맥 라벨을 동일한 자간과 굵기로 표시합니다.
+/// 작동 원리: PC에서만 문맥 라벨을 표시하고 모바일은 제목만 남겨 텍스트 밀도를 줄입니다.
 class StudentDensityEyebrow extends StatelessWidget {
   const StudentDensityEyebrow(this.text, {super.key, this.color});
 
@@ -130,19 +133,22 @@ class StudentDensityEyebrow extends StatelessWidget {
   final Color? color;
 
   @override
-  Widget build(BuildContext context) => Text(
-    text.toUpperCase(),
-    style: TextStyle(
-      color: color ?? StudentDensityTokens.muted,
-      fontSize: 10,
-      fontWeight: FontWeight.w900,
-      letterSpacing: 1.3,
-    ),
-  );
+  Widget build(BuildContext context) {
+    if (isStudentDensityMobile(context)) return const SizedBox.shrink();
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        color: color ?? StudentDensityTokens.muted,
+        fontSize: 10,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.3,
+      ),
+    );
+  }
 }
 
 /// 필요 변수: 페이지 제목과 선택적인 설명·우측 행동.
-/// 작동 원리: 모바일에서는 행동을 제목 아래로 내려 시안의 정보 우선순위를 유지합니다.
+/// 작동 원리: 모바일은 영문 라벨과 기본 설명을 생략하고 제목·행동만 남기며 PC는 기존 정보를 유지합니다.
 class StudentDensityPageHeader extends StatelessWidget {
   const StudentDensityPageHeader({
     super.key,
@@ -150,12 +156,14 @@ class StudentDensityPageHeader extends StatelessWidget {
     required this.title,
     this.description,
     this.action,
+    this.showMobileDescription = false,
   });
 
   final String eyebrow;
   final String title;
   final String? description;
   final Widget? action;
+  final bool showMobileDescription;
 
   @override
   Widget build(BuildContext context) {
@@ -163,8 +171,10 @@ class StudentDensityPageHeader extends StatelessWidget {
     final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        StudentDensityEyebrow(eyebrow),
-        const SizedBox(height: 10),
+        if (!mobile) ...[
+          StudentDensityEyebrow(eyebrow),
+          const SizedBox(height: 10),
+        ],
         Text(
           title,
           style: TextStyle(
@@ -175,13 +185,13 @@ class StudentDensityPageHeader extends StatelessWidget {
             letterSpacing: mobile ? -1.8 : -2.8,
           ),
         ),
-        if (description != null) ...[
+        if (description != null && (!mobile || showMobileDescription)) ...[
           SizedBox(height: mobile ? 6 : 8),
           Text(
             description!,
             style: TextStyle(
               color: StudentDensityTokens.muted,
-              fontSize: mobile ? 12 : 14,
+              fontSize: 14,
               height: 1.45,
               fontWeight: FontWeight.w500,
             ),
@@ -193,7 +203,7 @@ class StudentDensityPageHeader extends StatelessWidget {
     if (mobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [copy, const SizedBox(height: 20), action!],
+        children: [copy, const SizedBox(height: 14), action!],
       );
     }
     return Row(
@@ -208,7 +218,7 @@ class StudentDensityPageHeader extends StatelessWidget {
 }
 
 /// 필요 변수: 버튼 문구, 탭 동작과 반전 여부.
-/// 작동 원리: 시안의 검은 기본 행동과 흰 보조 행동을 동일한 캡슐 형태로 제공합니다.
+/// 작동 원리: 모바일은 큰 무테 Material 버튼을, PC는 기존 시안의 캡슐 버튼을 제공합니다.
 class StudentDensityButton extends StatelessWidget {
   const StudentDensityButton({
     super.key,
@@ -224,25 +234,42 @@ class StudentDensityButton extends StatelessWidget {
   final IconData? icon;
 
   @override
-  Widget build(BuildContext context) => FilledButton.icon(
-    onPressed: onPressed,
-    icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 18),
-    label: Text(label),
-    style: FilledButton.styleFrom(
-      elevation: 0,
-      backgroundColor: primary
-          ? StudentDensityTokens.dark
-          : StudentDensityTokens.surface,
-      foregroundColor: primary ? Colors.white : StudentDensityTokens.ink,
-      disabledBackgroundColor: const Color(0xFFE8E8EB),
-      disabledForegroundColor: StudentDensityTokens.muted,
-      side: BorderSide(
-        color: primary ? StudentDensityTokens.dark : StudentDensityTokens.line,
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return FilledButton.icon(
+      onPressed: onPressed,
+      icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 20),
+      label: Text(label),
+      style: FilledButton.styleFrom(
+        elevation: 0,
+        backgroundColor: primary
+            ? StudentDensityTokens.dark
+            : mobile
+            ? StudentDensityTokens.surfaceMuted
+            : StudentDensityTokens.surface,
+        foregroundColor: primary ? Colors.white : StudentDensityTokens.ink,
+        disabledBackgroundColor: const Color(0xFFE8E8EB),
+        disabledForegroundColor: StudentDensityTokens.muted,
+        side: mobile
+            ? BorderSide.none
+            : BorderSide(
+                color: primary
+                    ? StudentDensityTokens.dark
+                    : StudentDensityTokens.line,
+              ),
+        minimumSize: Size(0, mobile ? 52 : 44),
+        padding: EdgeInsets.symmetric(
+          horizontal: mobile ? 18 : 16,
+          vertical: mobile ? 14 : 12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(mobile ? 18 : 16),
+        ),
+        textStyle: TextStyle(
+          fontSize: mobile ? 14 : 13,
+          fontWeight: FontWeight.w800,
+        ),
       ),
-      minimumSize: const Size(0, 44),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-    ),
-  );
+    );
+  }
 }

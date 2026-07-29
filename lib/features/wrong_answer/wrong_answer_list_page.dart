@@ -415,93 +415,87 @@ class _MobileReviewContent extends StatelessWidget {
   final void Function(String, _ReviewItem?) onAction;
 
   /// 필요한 변수는 복습 수치·필터·서버 상태·화면 동작 콜백이다.
-  /// 작동 원리는 모바일에서 핵심 행동과 문제 목록만 한 열로 보여 주고, 빈 약점 카드처럼 불필요한 정보는 숨기는 것이다.
+  /// 작동 원리는 빈 목록에서는 한 번만 안내하고, 문제가 있을 때만 요약·필터·목록을 차례로 표시한다.
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const SizedBox(height: 8),
-      const StudentDensityEyebrow('REVIEW'),
-      const SizedBox(height: 8),
-      const Text(
-        '오늘 복습',
-        style: TextStyle(
-          color: StudentDensityTokens.ink,
-          fontSize: 30,
-          height: 1.05,
-          letterSpacing: -1.4,
-          fontWeight: FontWeight.w900,
+  Widget build(BuildContext context) {
+    final hasItems = items.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 8),
+        const Text(
+          '오답 노트',
+          style: TextStyle(
+            color: StudentDensityTokens.ink,
+            fontSize: 30,
+            height: 1.05,
+            letterSpacing: -1.4,
+            fontWeight: FontWeight.w900,
+          ),
         ),
-      ),
-      const SizedBox(height: 8),
-      const Text(
-        '틀린 문제 중 지금 다시 볼 것만 모았어요.',
-        style: TextStyle(
-          color: StudentDensityTokens.muted,
-          fontSize: 13,
-          height: 1.45,
-        ),
-      ),
-      const SizedBox(height: 20),
-      _MobileReviewSummary(
-        pendingCount: pendingCount,
-        completedCount: completedCount,
-        onStart: () => onAction('맞춤 복습 시작', null),
-      ),
-      if (hasLoadError) ...[
-        const SizedBox(height: 10),
-        _MobileLoadNotice(onRetry: onRetry),
-      ],
-      const SizedBox(height: 28),
-      Row(
-        children: [
-          const Expanded(
-            child: Text(
-              '다시 볼 문제',
-              style: TextStyle(
-                fontSize: 20,
-                letterSpacing: -.6,
-                fontWeight: FontWeight.w900,
+        const SizedBox(height: 22),
+        if (loading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 72),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (!hasItems) ...[
+          if (hasLoadError) _MobileLoadNotice(onRetry: onRetry),
+          const _MobileReviewEmpty(),
+        ] else ...[
+          _MobileReviewSummary(
+            pendingCount: pendingCount,
+            completedCount: completedCount,
+            onStart: () => onAction('맞춤 복습 시작', null),
+          ),
+          if (hasLoadError) ...[
+            const SizedBox(height: 10),
+            _MobileLoadNotice(onRetry: onRetry),
+          ],
+          const SizedBox(height: 26),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '다시 풀 문제',
+                  style: TextStyle(
+                    fontSize: 20,
+                    letterSpacing: -.6,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
-            ),
+              Text(
+                '${items.length}개',
+                style: const TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
-          Text(
-            '${items.length}개',
-            style: const TextStyle(
-              color: StudentDensityTokens.muted,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
+          const SizedBox(height: 12),
+          _MobileReviewFilters(
+            filter: filter,
+            latestFirst: latestFirst,
+            onFilter: onFilter,
+            onSort: onSort,
           ),
+          const SizedBox(height: 14),
+          for (var index = 0; index < items.length; index++) ...[
+            _MobileReviewRow(item: items[index], onAction: onAction),
+            if (index != items.length - 1) const SizedBox(height: 8),
+          ],
         ],
-      ),
-      const SizedBox(height: 14),
-      _MobileReviewFilters(
-        filter: filter,
-        latestFirst: latestFirst,
-        onFilter: onFilter,
-        onSort: onSort,
-      ),
-      const SizedBox(height: 14),
-      if (loading)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 52),
-          child: Center(child: CircularProgressIndicator()),
-        )
-      else if (items.isEmpty)
-        const _MobileReviewEmpty()
-      else
-        for (var index = 0; index < items.length; index++) ...[
-          _MobileReviewRow(item: items[index], onAction: onAction),
-          if (index != items.length - 1) const SizedBox(height: 10),
+        if (weaknessTags.isNotEmpty) ...[
+          const SizedBox(height: 26),
+          _MobileWeakPoints(tags: weaknessTags),
         ],
-      if (weaknessTags.isNotEmpty) ...[
-        const SizedBox(height: 28),
-        _MobileWeakPoints(tags: weaknessTags),
+        const SizedBox(height: 32),
       ],
-      const SizedBox(height: 32),
-    ],
-  );
+    );
+  }
 }
 
 class _MobileReviewSummary extends StatelessWidget {
@@ -650,10 +644,11 @@ class _MobileReviewFilters extends StatelessWidget {
             selectedColor: StudentDensityTokens.dark,
             labelStyle: TextStyle(
               color: filter == value ? Colors.white : StudentDensityTokens.ink,
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
             ),
-            side: const BorderSide(color: StudentDensityTokens.line),
+            side: BorderSide.none,
+            backgroundColor: StudentDensityTokens.surfaceMuted,
             showCheckmark: false,
           ),
           const SizedBox(width: 6),
@@ -662,7 +657,8 @@ class _MobileReviewFilters extends StatelessWidget {
           label: Text(latestFirst ? '최신순' : '오래된순'),
           avatar: const Icon(Icons.swap_vert_rounded, size: 16),
           onPressed: onSort,
-          side: const BorderSide(color: StudentDensityTokens.line),
+          side: BorderSide.none,
+          backgroundColor: StudentDensityTokens.surfaceMuted,
         ),
       ],
     ),
@@ -676,24 +672,24 @@ class _MobileReviewEmpty extends StatelessWidget {
   /// 작동 원리는 오류처럼 보이는 큰 카드 대신 여백과 짧은 안내로 정상적인 빈 상태를 표현하는 것이다.
   @override
   Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 42, horizontal: 20),
+    padding: EdgeInsets.symmetric(vertical: 72, horizontal: 24),
     child: Column(
       children: [
         Icon(
           Icons.check_circle_outline_rounded,
           color: StudentDensityTokens.muted,
-          size: 32,
+          size: 38,
         ),
         SizedBox(height: 12),
         Text(
-          '지금 다시 볼 문제가 없어요.',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+          '복습할 문제가 없어요',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
         SizedBox(height: 6),
         Text(
-          '새 오답이 생기면 이곳에서 바로 복습할 수 있어요.',
+          '새 오답이 생기면 여기에 모아둘게요.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
+          style: TextStyle(color: StudentDensityTokens.muted, fontSize: 14),
         ),
       ],
     ),
@@ -717,10 +713,7 @@ class _MobileReviewRow extends StatelessWidget {
       onTap: () => onAction(item.done ? '한 번 더 풀기' : '다시 풀기', item),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: StudentDensityTokens.line),
-          borderRadius: BorderRadius.circular(18),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
         child: Row(
           children: [
             Container(

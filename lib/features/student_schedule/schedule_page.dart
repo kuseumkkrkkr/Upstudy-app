@@ -557,10 +557,21 @@ class _WeeklyScheduleCard extends StatelessWidget {
   /// 작동 원리는 7일 선택 행과 시간순 일정 행을 HTML의 한 흰색 카드에 결합하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     final weekEnd = weekStart.add(const Duration(days: 6));
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
-      decoration: _cardDecoration(),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 14 : 20,
+        mobile ? 18 : 24,
+        mobile ? 14 : 20,
+        18,
+      ),
+      decoration: mobile
+          ? BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            )
+          : _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -570,16 +581,18 @@ class _WeeklyScheduleCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'THIS WEEK',
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.6,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
+                    if (!mobile) ...[
+                      const Text(
+                        'THIS WEEK',
+                        style: TextStyle(
+                          fontSize: 10,
+                          letterSpacing: 1.6,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
+                      const SizedBox(height: 8),
+                    ],
                     Text(
                       '${weekStart.month}월 ${weekStart.day}일 – ${weekEnd.day}일',
                       style: const TextStyle(
@@ -649,48 +662,57 @@ class _DayButton extends StatelessWidget {
   static const _days = ['월', '화', '수', '목', '금', '토', '일'];
 
   /// 필요한 변수는 날짜·선택 상태·과제 존재 여부다.
-  /// 작동 원리는 선택일을 검은 카드로, 과제가 있는 날은 하단 점으로 표시하는 것이다.
+  /// 작동 원리는 모바일의 미선택 날짜는 배경·외곽선을 없애고 선택일만 검은 면으로 강조하는 것이다.
   @override
-  Widget build(BuildContext context) => InkWell(
-    borderRadius: BorderRadius.circular(14),
-    onTap: () => onTap(date),
-    child: Container(
-      height: 82,
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFF202022) : const Color(0xFFF7F7F8),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDEDEE1)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            _days[date.weekday - 1],
-            style: TextStyle(color: selected ? Colors.white70 : Colors.black45),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${date.day}',
-            style: TextStyle(
-              color: selected ? Colors.white : Colors.black,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 5),
-          if (hasTask)
-            Container(
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(
-                color: selected ? Colors.white : Colors.black,
-                shape: BoxShape.circle,
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => onTap(date),
+      child: Container(
+        height: mobile ? 76 : 82,
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFF202022)
+              : mobile
+              ? Colors.transparent
+              : const Color(0xFFF7F7F8),
+          borderRadius: BorderRadius.circular(14),
+          border: mobile ? null : Border.all(color: const Color(0xFFDEDEE1)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _days[date.weekday - 1],
+              style: TextStyle(
+                color: selected ? Colors.white70 : Colors.black45,
               ),
             ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              '${date.day}',
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.black,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 5),
+            if (hasTask)
+              Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : Colors.black,
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _TimelineItem extends StatelessWidget {
@@ -821,6 +843,7 @@ class _TodaySummaryCard extends StatelessWidget {
   /// 작동 원리는 완료율·간단 일정 목록·개인 일정 버튼을 PC 우측 또는 모바일 하단 요약 카드에 표시하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     final completed = schedule
         .where((item) => item['completed'] == true)
         .length;
@@ -836,7 +859,12 @@ class _TodaySummaryCard extends StatelessWidget {
     ];
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
+      decoration: mobile
+          ? BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            )
+          : _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

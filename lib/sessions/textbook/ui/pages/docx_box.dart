@@ -486,50 +486,45 @@ class _BookWidgetState extends State<BookWidget> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildMobileShortcut(
+                          Container(
+                            key: const ValueKey(
+                              'bookbag-mobile-shortcut-group',
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Column(
+                              children: [
+                                _buildMobileShortcut(
                                   icon: Icons.menu_book_rounded,
                                   label: '교재',
                                   count: _bookCount,
                                   onTap: () => _showTextbookModal(context),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildMobileShortcut(
+                                _buildMobileShortcut(
                                   icon: Icons.description_rounded,
                                   label: '시험지',
                                   count: _examCount,
                                   onTap: () => _showExamModal(context),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildMobileShortcut(
+                                _buildMobileShortcut(
                                   icon: Icons.bookmark_rounded,
                                   label: '책 북마크',
                                   count: _bookBookmarkCount,
                                   onTap: () =>
                                       _showBookmarkDetailModal(isBook: true),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildMobileShortcut(
+                                _buildMobileShortcut(
                                   icon: Icons.edit_note_rounded,
                                   label: '문제 북마크',
                                   count: _problemBookmarkCount,
                                   onTap: () =>
                                       _showBookmarkDetailModal(isBook: false),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           if (recent.isNotEmpty) ...[
                             const SizedBox(height: 28),
@@ -658,7 +653,7 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   /// 필요한 변수는 자료 유형·개수·열기 동작이다.
-  /// 작동 원리는 2열 90px 카드로 네 보관함을 한 화면에 배치하고 설명 문구는 제거한다.
+  /// 작동 원리는 개별 카드 대신 한 그룹 안의 큰 Material 행으로 자료 입구를 배치한다.
   Widget _buildMobileShortcut({
     required IconData icon,
     required String label,
@@ -666,45 +661,49 @@ class _BookWidgetState extends State<BookWidget> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          height: 96,
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0x1F09090B)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, size: 23),
-                  const Spacer(),
-                  Text(
-                    '$count',
+        child: SizedBox(
+          height: 68,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F0F2),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, size: 21),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    label,
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
                 ),
-              ),
-            ],
+                Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF8A8A91),
+                ),
+              ],
+            ),
           ),
         ),
       ),

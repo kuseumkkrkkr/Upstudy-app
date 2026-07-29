@@ -1368,19 +1368,25 @@ class _LearningSection extends StatelessWidget {
                   onTap: () => showStudyModeModal(context: context),
                 ),
                 SizedBox(height: portraitMobile ? 16 : 12),
-                Row(
-                  children: [
-                    statusCards[0],
-                    SizedBox(
-                      width: portraitMobile
-                          ? 12
-                          : mobile
-                          ? 8
-                          : 12,
-                    ),
-                    statusCards[1],
-                  ],
-                ),
+                if (portraitMobile)
+                  _MobileHomeStatusGroup(
+                    courseValue: progressPercent == null
+                        ? '코스 선택'
+                        : '진행률 $progressPercent%',
+                    taskValue: todayTasks.isEmpty
+                        ? '할 일 없음'
+                        : '${todayTasks.length}개 남음',
+                    onCourseTap: onCourseTap,
+                    onTodayTasksTap: onTodayTasksTap,
+                  )
+                else
+                  Row(
+                    children: [
+                      statusCards[0],
+                      SizedBox(width: mobile ? 8 : 12),
+                      statusCards[1],
+                    ],
+                  ),
                 SizedBox(height: portraitMobile ? 22 : 12),
                 if (portraitMobile) ...[
                   const Text(
@@ -1440,6 +1446,104 @@ class _DashboardPill extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 필요한 변수는 코스·오늘 할 일 상태와 각 이동 콜백이다.
+/// 작동 원리: 모바일의 상태 카드 두 개를 하나의 흰 Material 그룹 안 행으로 합쳐 도형 수를 줄인다.
+class _MobileHomeStatusGroup extends StatelessWidget {
+  const _MobileHomeStatusGroup({
+    required this.courseValue,
+    required this.taskValue,
+    required this.onCourseTap,
+    required this.onTodayTasksTap,
+  });
+
+  final String courseValue;
+  final String taskValue;
+  final VoidCallback onCourseTap;
+  final VoidCallback onTodayTasksTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    key: const ValueKey('student-home-mobile-status-group'),
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(24),
+    clipBehavior: Clip.antiAlias,
+    child: Column(
+      children: [
+        _MobileHomeStatusRow(
+          icon: Icons.play_circle_outline_rounded,
+          label: '현재 코스',
+          value: courseValue,
+          onTap: onCourseTap,
+        ),
+        _MobileHomeStatusRow(
+          icon: Icons.today_outlined,
+          label: '오늘 할 일',
+          value: taskValue,
+          onTap: onTodayTasksTap,
+        ),
+      ],
+    ),
+  );
+}
+
+/// 필요한 변수는 상태 아이콘·이름·값·이동 콜백이다.
+/// 작동 원리: 68px 행 전체를 터치 영역으로 사용하고 보조 설명 없이 현재 값만 보여 준다.
+class _MobileHomeStatusRow extends StatelessWidget {
+  const _MobileHomeStatusRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: StudentDensityTokens.surfaceMuted,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(icon, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: StudentDensityTokens.muted,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _HomeStatusCard extends StatelessWidget {
