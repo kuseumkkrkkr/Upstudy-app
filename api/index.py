@@ -17,6 +17,7 @@ from typing import Any
 import jwt
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 MAX_JOB_BYTES = int(os.getenv("OCR_QUEUE_MAX_JOB_BYTES", "4000000"))
@@ -338,6 +339,69 @@ def _find_marketplace_question(quest_id: str) -> dict[str, Any] | None:
     )
 
 
+def _build_generated_questions(payload: QuestGenerateRequest) -> list[dict[str, Any]]:
+    """필요 변수: 태그·난이도·문항 수·선택 시드다. 작동 원리: 요청 해시로 작은
+    일차방정식 세트를 결정적으로 만들어 외부 생성 서버가 없을 때도 같은 입력에
+    같은 문제를 반환하며 DB 조회와 동시 생성 작업을 만들지 않는다."""
+    tags = [tag.strip() for tag in payload.hash_tags if tag.strip()]
+    normalized_tags = tags or ["수학"]
+    min_tier = min(payload.min_difficulty_tier, payload.max_difficulty_tier)
+    max_tier = max(payload.min_difficulty_tier, payload.max_difficulty_tier)
+    fingerprint = json.dumps(
+        {
+            "hash_tags": normalized_tags,
+            "question_count": payload.question_count,
+            "min_difficulty_tier": min_tier,
+            "max_difficulty_tier": max_tier,
+            "seed": payload.seed,
+            "request_id": payload.request_id,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    base_digest = hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()
+    base_seed = int(base_digest[:12], 16)
+    questions: list[dict[str, Any]] = []
+    tier_span = max_tier - min_tier + 1
+
+    for index in range(payload.question_count):
+        item_seed = base_seed + index * 7919
+        tier = min_tier + (item_seed % tier_span)
+        answer = 1 + (item_seed % (6 + tier * 2))
+        coefficient = 2 + ((item_seed // 7) % (4 + tier))
+        constant = 1 + ((item_seed // 31) % (8 + tier * 2))
+        result = coefficient * answer + constant
+        candidates = [answer, answer + 1, max(0, answer - 1), answer + 2]
+        unique_candidates = list(dict.fromkeys(candidates))
+        while len(unique_candidates) < 4:
+            unique_candidates.append(answer + len(unique_candidates))
+        rotation = (item_seed // 101) % 4
+        rotated = unique_candidates[rotation:] + unique_candidates[:rotation]
+        correct_index = rotated.index(answer)
+        quest_id = f"canary-generated-{base_digest[:12]}-q{index + 1}"
+        questions.append(
+            {
+                "header": {
+                    "quest_id": quest_id,
+                    "quest_type": "multiple_choice",
+                },
+                "data": {
+                    "quest_title": (
+                        "다음 방정식을 풀어 x의 값을 구하세요.\n"
+                        f"{coefficient}x + {constant} = {result}"
+                    ),
+                    "quest_options": [str(choice) for choice in rotated],
+                    "correct_choice_index": correct_index,
+                    "hash_tags": normalized_tags,
+                    "difficulty_tier": tier,
+                },
+                "solves": [],
+            }
+        )
+    return questions
+
+
 def _build_marketplace_exam_status(listing: dict[str, Any]) -> dict[str, Any]:
     """필요 변수: 시험지 상품과 공유 문항 원장이다. 작동 원리: ExamPaperPage가 요구하는
     완료 상태·문항 메타데이터로 변환해 시험지 목록과 실제 풀이 화면의 문항 수를 일치시킨다."""
@@ -444,6 +508,20 @@ class MarketplaceProgressRequest(BaseModel):
 
     progress_index: int = Field(default=0, ge=0)
     completed: bool = False
+
+
+class QuestGenerateRequest(BaseModel):
+    """필요 변수: 문제 태그·문항 수·난이도 범위와 선택 생성 메타데이터다."""
+
+    hash_tags: list[str] = Field(default_factory=list)
+    question_count: int = Field(default=1, ge=1, le=30)
+    min_difficulty_tier: int = Field(default=1, ge=1, le=5)
+    max_difficulty_tier: int = Field(default=3, ge=1, le=5)
+    solves_count: int = Field(default=3, ge=0, le=20)
+    strategy_level: int = Field(default=0, ge=0, le=20)
+    branch_conditions: int = Field(default=0, ge=0, le=20)
+    seed: int | None = None
+    request_id: str | None = None
 
 
 class SupabaseDataApi:
@@ -1503,6 +1581,47 @@ def list_system_notices(_user_id: str = Depends(_current_user)) -> dict[str, lis
 def list_textbooks(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
     """필요 변수: 인증 사용자. 작동 원리: 교재 원장 이관 전 빈 교재 목록을 반환한다."""
     return {"textbooks": []}
+
+
+@app.post("/quests/generate")
+def generate_quest(
+    payload: QuestGenerateRequest,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 단건 생성 조건이다. 작동 원리: 스트림과 같은 결정적
+    생성기를 사용해 기존 단건 API 계약의 `quest`를 즉시 반환한다."""
+    request = payload.model_copy(update={"question_count": 1})
+    return {"quest": _build_generated_questions(request)[0]}
+
+
+@app.post("/quests/generate/stream")
+def generate_quest_stream(
+    payload: QuestGenerateRequest,
+    _user_id: str = Depends(_current_user),
+) -> StreamingResponse:
+    """필요 변수: 인증 사용자와 최대 30개 생성 조건이다. 작동 원리: 미리 만든 작은
+    문제 목록을 SSE 행으로 순서대로 보내 Flutter가 첫 문제부터 즉시 표시하게 한다."""
+    questions = _build_generated_questions(payload)
+
+    def event_stream():
+        """필요 변수는 생성 완료된 문제 목록이다. 작동 원리는 문제별 SSE 행과 종료 행을 순서대로 방출하는 것이다."""
+        for question in questions:
+            encoded = json.dumps(
+                question,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            yield f"data: {encoded}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/quests")
