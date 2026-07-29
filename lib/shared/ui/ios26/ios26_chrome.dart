@@ -51,6 +51,7 @@ class Ios26TopBar extends StatelessWidget {
     this.onProfile,
     this.leftInset,
     this.showMenuWithBack = false,
+    this.hideOnMobile = false,
   });
 
   final Color brandColor;
@@ -70,6 +71,7 @@ class Ios26TopBar extends StatelessWidget {
   final VoidCallback? onProfile;
   final double? leftInset;
   final bool showMenuWithBack;
+  final bool hideOnMobile;
 
   /// 필요한 변수는 상단 바 자신이 가진 Scaffold 문맥과 선택적 기존 메뉴 콜백이다.
   /// 작동 원리: 상단 바 아래의 Drawer를 먼저 직접 열어, 부모 화면의 오래된 문맥이 전달돼도 전체 메뉴가 열리게 한다.
@@ -92,6 +94,10 @@ class Ios26TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final compact = width <= StudentDensityTokens.mobileBreakpoint;
+    // 필요한 변수는 모바일 숨김 설정과 현재 화면 폭이다.
+    // 작동 원리: 하단 앱바와 화면 내부 제목이 탐색을 맡는 최상위 모바일 화면에서는
+    // 브랜드 바를 만들지 않고, PC와 뒤로가기가 필요한 상세 화면은 기존 상단 바를 유지한다.
+    if (compact && hideOnMobile) return const SizedBox.shrink();
     final barHeight = compact ? 62.0 : 68.0;
     final effectiveLeftInset = leftInset ?? (compact ? 12.0 : 40.0);
     final showBackButton = onBack != null;

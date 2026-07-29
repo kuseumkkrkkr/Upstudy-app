@@ -305,6 +305,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
               onMenu: mobile ? null : () => toggleAppDrawer(context),
               showLevelIndicator: false,
               showUtilityActions: !mobile,
+              hideOnMobile: true,
               items: studentTopNavItems(
                 context,
                 active: StudentTopDestination.courses,

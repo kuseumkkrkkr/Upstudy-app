@@ -23,6 +23,7 @@ Future<void> _expectMobileShell(WidgetTester tester, Widget page) async {
   expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
   expect(find.byType(Drawer), findsNothing);
   expect(find.byKey(const ValueKey('student-mobile-menu')), findsNothing);
+  expect(find.text('AIFlow'), findsNothing);
   expect(tester.takeException(), isNull);
 }
 

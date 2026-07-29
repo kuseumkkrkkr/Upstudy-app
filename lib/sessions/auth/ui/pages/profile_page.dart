@@ -481,6 +481,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 brandColor: Colors.black,
                 showLevelIndicator: false,
                 showUtilityActions: false,
+                hideOnMobile: true,
                 onMenu: null,
                 items: studentTopNavItems(
                   context,
@@ -1533,6 +1534,7 @@ class _ProfilePageState extends State<ProfilePage> {
               brandColor: Colors.black,
               showLevelIndicator: false,
               showUtilityActions: false,
+              hideOnMobile: true,
               onMenu: null,
               items: studentTopNavItems(
                 context,

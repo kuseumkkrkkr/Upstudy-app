@@ -771,6 +771,7 @@ class _BookWidgetState extends State<BookWidget> {
     return Ios26TopBar(
       brandColor: BookWidget.primaryGreen,
       showUtilityActions: !mobile,
+      hideOnMobile: true,
       onMenu: mobile ? null : () => toggleAppDrawer(context),
       onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainStudentPage()),

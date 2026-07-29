@@ -111,7 +111,7 @@ void main() {
     }
   });
 
-  testWidgets('홈 하단 기능은 PC·태블릿·세로 모바일에서 모두 유지한다', (tester) async {
+  testWidgets('홈 하단 정보는 PC·태블릿에 유지하고 세로 모바일은 핵심 행동만 남긴다', (tester) async {
     const cases = <(double, String)>[
       (1280, 'student-home-footer-desktop'),
       (900, 'student-home-footer-tablet'),
@@ -139,15 +139,15 @@ void main() {
     );
     await tester.pump();
 
-    expect(
-      find.byKey(const ValueKey('student-home-footer-mobile')),
-      findsOneWidget,
-    );
-    expect(find.text('빠른 도구'), findsOneWidget);
-    expect(find.text('코스 이어하기'), findsOneWidget);
-    expect(find.text('일정 달력'), findsOneWidget);
-    expect(find.text('도전과제 / 업적'), findsOneWidget);
-    expect(find.text('공지사항'), findsWidgets);
+    expect(find.text('학습 시작'), findsOneWidget);
+    expect(find.text('현재 코스'), findsOneWidget);
+    expect(find.text('오늘 할 일'), findsOneWidget);
+    expect(find.text('AIFlow'), findsNothing);
+    expect(find.text('빠른 도구'), findsNothing);
+    expect(find.text('코스 이어하기'), findsNothing);
+    expect(find.text('일정 달력'), findsNothing);
+    expect(find.text('도전과제 / 업적'), findsNothing);
+    expect(find.text('공지사항'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

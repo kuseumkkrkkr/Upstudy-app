@@ -290,6 +290,7 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
                 onMenu: mobile ? null : () => Scaffold.of(context).openDrawer(),
                 showLevelIndicator: false,
                 showUtilityActions: !mobile,
+                hideOnMobile: true,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,

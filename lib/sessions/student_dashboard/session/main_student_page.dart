@@ -439,7 +439,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
     // 작동 원리: 세로형 모바일은 설명을 덜어낸 전용 히어로를 사용하고,
     // 가로형·태블릿은 기존 정보형 히어로를 유지한다.
     final heroExtent = portraitMobile
-        ? 214.0
+        ? 156.0
         : mobile
         ? 250.0
         : 294.0;
@@ -576,6 +576,7 @@ class _Header extends StatelessWidget {
       onMenu: mobile ? null : () => toggleAppDrawer(context),
       showLevelIndicator: false,
       showUtilityActions: !mobile,
+      hideOnMobile: true,
       profileLabel: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()
           : null,
@@ -715,12 +716,12 @@ class _HeroSection extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: portraitMobile
-                ? 10
+                ? 8
                 : mobile
                 ? 24
                 : 38,
             vertical: portraitMobile
-                ? 20
+                ? 14
                 : mobile
                 ? 24
                 : 30,
@@ -739,14 +740,14 @@ class _HeroSection extends StatelessWidget {
                   style: TextStyle(
                     color: StudentDensityTokens.ink,
                     fontSize: portraitMobile
-                        ? 46
+                        ? 40
                         : mobile
                         ? 38
                         : 56,
                     height: portraitMobile ? 1.02 : 0.98,
                     fontWeight: FontWeight.w900,
                     letterSpacing: portraitMobile
-                        ? -2.7
+                        ? -2.2
                         : mobile
                         ? -2
                         : -3.4,
@@ -1387,28 +1388,12 @@ class _LearningSection extends StatelessWidget {
                       statusCards[1],
                     ],
                   ),
-                SizedBox(height: portraitMobile ? 22 : 12),
-                if (portraitMobile) ...[
-                  const Text(
-                    '빠른 도구',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.8,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  tools,
-                  const SizedBox(height: 18),
-                  _HomeFeatureCard(
-                    icon: Icons.play_arrow_rounded,
-                    title: '코스 이어하기',
-                    description: courseTitle,
-                    onTap: onCourseTap,
-                    compactMobile: true,
-                  ),
-                ] else
+                // 모바일 도구와 코스 진입은 하단 `더보기`와 위 상태 행에서 제공한다.
+                // 중복 진입점을 제거해 홈은 학습 시작과 오늘 상태에만 집중한다.
+                if (!portraitMobile) ...[
+                  const SizedBox(height: 12),
                   moduleGrid,
+                ],
               ],
             ),
           ),
@@ -1655,14 +1640,12 @@ class _HomeFeatureCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.onTap,
-    this.compactMobile = false,
   });
 
   final IconData icon;
   final String title;
   final String description;
   final VoidCallback? onTap;
-  final bool compactMobile;
 
   /// 필요한 변수는 기능 아이콘·제목·설명과 이동 콜백이다.
   /// 작동 원리: HTML의 118px 기능 카드를 48px 아이콘과 우측 화살표의 3열 구조로 만든다.
@@ -1672,24 +1655,20 @@ class _HomeFeatureCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       onTap: onTap,
       child: ConstrainedBox(
-        constraints: BoxConstraints(minHeight: compactMobile ? 92 : 118),
+        constraints: const BoxConstraints(minHeight: 118),
         child: Padding(
-          padding: EdgeInsets.all(compactMobile ? 16 : 20),
+          padding: const EdgeInsets.all(20),
           child: Row(
             children: [
               Container(
-                width: compactMobile ? 56 : 48,
-                height: compactMobile ? 56 : 48,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: StudentDensityTokens.surfaceMuted,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: StudentDensityTokens.line),
                 ),
-                child: Icon(
-                  icon,
-                  color: StudentDensityTokens.ink,
-                  size: compactMobile ? 28 : 24,
-                ),
+                child: Icon(icon, color: StudentDensityTokens.ink, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1699,8 +1678,8 @@ class _HomeFeatureCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        fontSize: compactMobile ? 19 : 16,
+                      style: const TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -1709,9 +1688,9 @@ class _HomeFeatureCard extends StatelessWidget {
                       description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: StudentDensityTokens.muted,
-                        fontSize: compactMobile ? 15 : 12,
+                        fontSize: 12,
                         height: 1.5,
                       ),
                     ),
@@ -1982,6 +1961,10 @@ class _BottomSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    // 필요한 변수는 모바일 여부다.
+    // 작동 원리: 레이팅·대결·활동·업적·공지는 하단 `더보기`의 기존 목적지에서
+    // 접근하므로 모바일 홈에서는 중복 카드 묶음을 만들지 않고 PC 정보 홈만 유지한다.
+    if (mobile) return const SizedBox(height: 10);
     final horizontalPadding = studentDensityHorizontalPadding(context);
     return Center(
       child: ConstrainedBox(

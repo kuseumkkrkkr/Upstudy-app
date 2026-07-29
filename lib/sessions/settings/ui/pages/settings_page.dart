@@ -330,6 +330,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 brandColor: Colors.black,
                 showLevelIndicator: false,
                 showUtilityActions: false,
+                hideOnMobile: true,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,

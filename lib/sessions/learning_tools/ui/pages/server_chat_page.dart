@@ -243,6 +243,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
                 brandColor: Colors.black,
                 showLevelIndicator: false,
                 showUtilityActions: !mobile,
+                hideOnMobile: true,
                 onMenu: mobile ? null : () => toggleAppDrawer(topBarContext),
                 items: studentTopNavItems(
                   topBarContext,

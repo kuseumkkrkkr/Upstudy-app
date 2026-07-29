@@ -2458,6 +2458,7 @@ class _SoWidgetState extends State<SoWidget> {
                 brandColor: Colors.black,
                 showLevelIndicator: false,
                 showUtilityActions: !mobile,
+                hideOnMobile: true,
                 onMenu: mobile
                     ? null
                     : () => _scaffoldKey.currentState?.openDrawer(),
@@ -3167,6 +3168,7 @@ class _SoWidgetState extends State<SoWidget> {
                 Ios26TopBar(
                   brandColor: primaryColor,
                   showUtilityActions: !mobile,
+                  hideOnMobile: true,
                   onMenu: mobile
                       ? null
                       : () {

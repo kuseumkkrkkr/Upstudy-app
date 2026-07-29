@@ -425,6 +425,7 @@ class _ArenaPageState extends State<ArenaPage> {
                 brandColor: Colors.black,
                 showLevelIndicator: false,
                 showUtilityActions: !mobile,
+                hideOnMobile: true,
                 onMenu: mobile ? null : () => toggleAppDrawer(context),
               ),
             ),
