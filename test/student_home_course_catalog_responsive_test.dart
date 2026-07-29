@@ -177,6 +177,8 @@ void main() {
     expect(insightsRect.left, closeTo(learnRect.left, 0.1));
     expect(statusRect.width, closeTo(learnRect.width, 0.1));
     expect(insightsRect.width, closeTo(learnRect.width, 0.1));
+    expect(learnRect.height, lessThanOrEqualTo(100));
+    expect(find.text('이어 하거나 새로 시작'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

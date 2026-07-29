@@ -1381,7 +1381,7 @@ class _LearningSection extends StatelessWidget {
                   portraitMobile: portraitMobile,
                   onTap: () => showStudyModeModal(context: context),
                 ),
-                SizedBox(height: portraitMobile ? 16 : 12),
+                const SizedBox(height: 12),
                 if (portraitMobile)
                   _MobileHomeStatusGroup(
                     courseValue: progressPercent == null
@@ -1788,20 +1788,20 @@ class _LearnBanner extends StatelessWidget {
       width: double.infinity,
       constraints: BoxConstraints(
         minHeight: portraitMobile
-            ? 124
+            ? 94
             : mobile
             ? 118
             : 150,
       ),
       decoration: BoxDecoration(
         color: StudentDensityTokens.darkSecondary,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(portraitMobile ? 24 : 28),
         boxShadow: portraitMobile
             ? [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 28,
-                  offset: const Offset(0, 14),
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
               ]
             : null,
@@ -1809,13 +1809,17 @@ class _LearnBanner extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(portraitMobile ? 24 : 28),
           onTap: onTap,
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: mobile ? 20 : 28,
-              vertical: portraitMobile
+              horizontal: portraitMobile
                   ? 18
+                  : mobile
+                  ? 20
+                  : 28,
+              vertical: portraitMobile
+                  ? 14
                   : mobile
                   ? 17
                   : 24,
@@ -1838,7 +1842,7 @@ class _LearnBanner extends StatelessWidget {
                         portraitMobile ? '학습 시작' : '학습하기',
                         style: TextStyle(
                           fontSize: portraitMobile
-                              ? 31
+                              ? 26
                               : mobile
                               ? 26
                               : 38,
@@ -1847,17 +1851,7 @@ class _LearnBanner extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      if (portraitMobile) ...[
-                        const SizedBox(height: 6),
-                        const Text(
-                          '이어 하거나 새로 시작',
-                          style: TextStyle(
-                            color: Colors.white60,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ] else ...[
+                      if (!portraitMobile) ...[
                         const SizedBox(height: 7),
                         const Text(
                           '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
@@ -1871,26 +1865,28 @@ class _LearnBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 18),
+                SizedBox(width: portraitMobile ? 14 : 18),
                 Container(
                   width: portraitMobile
-                      ? 58
+                      ? 50
                       : mobile
                       ? 56
                       : 58,
                   height: portraitMobile
-                      ? 58
+                      ? 50
                       : mobile
                       ? 56
                       : 58,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(19),
+                    borderRadius: BorderRadius.circular(
+                      portraitMobile ? 16 : 19,
+                    ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.play_arrow_rounded,
                     color: StudentDensityTokens.dark,
-                    size: 31,
+                    size: portraitMobile ? 28 : 31,
                   ),
                 ),
               ],

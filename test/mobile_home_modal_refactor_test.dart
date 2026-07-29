@@ -36,10 +36,13 @@ void main() {
 
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.byType(StudypageCopyWidget), findsOneWidget);
-    expect(find.text('어떤 방식으로 공부할까요?'), findsOneWidget);
+    expect(find.text('어떤 방식으로 공부할까요?'), findsNothing);
     expect(find.text('STUDY MODE'), findsNothing);
     expect(find.text('이어하기'), findsOneWidget);
     expect(find.text('교재보기'), findsOneWidget);
+    expect(find.text('마지막 학습 위치'), findsNothing);
+    expect(find.text('보유 문제세트 이어풀기'), findsNothing);
+    expect(find.text('책가방에서 교재 선택'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
