@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import importlib.util
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,14 @@ def _load_api_module() -> Any:
 
 
 api = _load_api_module()
+
+
+class _JsonRequest:
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self._payload = payload
+
+    async def json(self) -> dict[str, Any]:
+        return self._payload
 
 
 # 필요한 변수: 소유 상품 ID와 원본 카탈로그.
@@ -66,6 +75,8 @@ def test_every_exam_and_problem_set_has_consistent_assignments() -> None:
             assert 0 <= int(data["correct_choice_index"]) < len(
                 data["quest_options"]
             )
+            assert len(question["solves"]) == 3
+            assert all(step["flow"].strip() for step in question["solves"])
 
         answer_indexes = [
             int(question["data"]["correct_choice_index"])
@@ -170,3 +181,83 @@ def test_problem_set_and_quest_lookup_share_the_same_assignment(
     assert len(detail["items"]) == problem_set["item_count"]
     assert search["quests"][0]["header"]["quest_id"] == first_id
     assert search["quests"][0] == detail["items"][0]
+
+
+def test_quick_solve_requires_correct_objective_answer_and_flow(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    question = {
+        "data": {
+            "quest_options": ["1", "2", "3", "4"],
+            "correct_choice_index": 1,
+        },
+        "solves": [
+            {"flow": "식을 정리한다."},
+            {"flow": "미지수를 구한다."},
+        ],
+    }
+    monkeypatch.setattr(api, "_find_marketplace_question", lambda _quest_id: question)
+
+    correct = asyncio.run(
+        api.grade_variant_solve(
+            _JsonRequest(
+                {
+                    "quest_id": "quick-objective",
+                    "selected_index": 1,
+                    "flow_order": [0, 1],
+                }
+            ),
+            _user_id="student",
+        )
+    )
+    wrong_flow = asyncio.run(
+        api.grade_variant_solve(
+            _JsonRequest(
+                {
+                    "quest_id": "quick-objective",
+                    "selected_index": 1,
+                    "flow_order": [1, 0],
+                }
+            ),
+            _user_id="student",
+        )
+    )
+
+    assert correct["answer_correct"] is True
+    assert correct["flow_correct"] is True
+    assert correct["raw_correct"] is True
+    assert wrong_flow["answer_correct"] is True
+    assert wrong_flow["flow_correct"] is False
+    assert wrong_flow["raw_correct"] is False
+
+
+def test_quick_solve_normalizes_numeric_short_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    question = {
+        "data": {
+            "quest_answer": {
+                "blocks": [{"type": "latex", "content": "-2.500"}],
+            },
+        },
+        "solves": [{"flow": "식을 정리한다."}],
+    }
+    monkeypatch.setattr(api, "_find_marketplace_question", lambda _quest_id: question)
+
+    result = asyncio.run(
+        api.grade_variant_solve(
+            _JsonRequest(
+                {
+                    "quest_id": "quick-short-answer",
+                    "user_answer": "-02.5",
+                    "flow_order": [0],
+                }
+            ),
+            _user_id="student",
+        )
+    )
+
+    assert result["question_type"] == "short_answer"
+    assert result["answer_correct"] is True
+    assert result["flow_correct"] is True
+    assert result["raw_correct"] is True

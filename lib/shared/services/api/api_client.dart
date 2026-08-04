@@ -2541,6 +2541,7 @@ class ApiClient {
     required String questId,
     int? selectedIndex,
     String? userAnswer,
+    List<int>? flowOrder,
   }) async {
     final token = await _ensureToken();
     final uri = ApiContract.uri('/analysis/solve/variant-grade');
@@ -2554,6 +2555,7 @@ class ApiClient {
         'quest_id': questId,
         if (selectedIndex != null) 'selected_index': selectedIndex,
         if (userAnswer != null) 'user_answer': userAnswer,
+        if (flowOrder != null) 'flow_order': flowOrder,
       }),
     );
     if (response.statusCode != 200) {

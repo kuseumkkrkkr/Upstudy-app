@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 
@@ -164,6 +165,134 @@ void main() {
 
     expect(find.text('채점 중'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('간편풀이에서 Flow 노드를 드래그해 조립하고 객관식 답을 선택한다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'settings.mobile_quick_solve': true,
+    });
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BuildpageWidget(
+          config: ProblemSolveConfig(
+            mobileQuickSolve: true,
+            ratingEnabled: false,
+            quests: [
+              {
+                'header': {'quest_id': 'mobile-quick-objective'},
+                'data': {
+                  'quest_title': '두 단계로 식을 정리한 뒤 답을 고르세요.',
+                  'quest_options': ['10', '20', '30', '40'],
+                },
+                'solves': [
+                  {'flow': '양변에서 같은 수를 뺀다.'},
+                  {'flow': '계수로 나누어 미지수를 구한다.'},
+                ],
+              },
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('mobile-quick-flow-builder')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('mobile-quick-answer-card')),
+      findsOneWidget,
+    );
+    expect(find.byType(LongPressDraggable<int>), findsNWidgets(2));
+    await expectLater(
+      find.byType(Scaffold),
+      matchesGoldenFile('goldens/mobile_quick_solve_flow_builder.png'),
+    );
+
+    final source = find.byKey(const ValueKey('mobile-flow-node-source-1'));
+    final firstSlot = find.byKey(const ValueKey('mobile-flow-slot-0'));
+    await tester.ensureVisible(source);
+    await tester.pump();
+    final gesture = await tester.startGesture(tester.getCenter(source));
+    await tester.pump(const Duration(milliseconds: 300));
+    await gesture.moveTo(tester.getCenter(firstSlot));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    final remaining = find.byKey(const ValueKey('mobile-flow-node-source-0'));
+    await tester.tap(remaining);
+    await tester.pump();
+    expect(find.text('모든 노드를 배치했습니다.'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('20'));
+    await tester.tap(find.text('20'));
+    await tester.pump();
+    final submit = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, '풀이 제출'),
+    );
+    expect(submit.onPressed, isNotNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('간편풀이 단답형은 숫자만 입력받고 Flow 완성 후 제출을 활성화한다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'settings.mobile_quick_solve': true,
+    });
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BuildpageWidget(
+          config: ProblemSolveConfig(
+            mobileQuickSolve: true,
+            ratingEnabled: false,
+            quests: [
+              {
+                'header': {'quest_id': 'mobile-quick-short-answer'},
+                'data': {
+                  'quest_title': 'x의 값을 숫자로 입력하세요.',
+                  'quest_answer': '-2.5',
+                },
+                'solves': [
+                  {'flow': '식을 정리해 x를 구한다.'},
+                ],
+              },
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('mobile-flow-node-source-0')));
+    await tester.pump();
+    final input = find.byKey(const ValueKey('mobile-quick-numeric-answer-0'));
+    await tester.ensureVisible(input);
+    await tester.enterText(input, '숫자아님');
+    await tester.pump();
+    var submit = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, '풀이 제출'),
+    );
+    expect(submit.onPressed, isNull);
+    expect(find.text('숫자만 입력해 주세요.'), findsOneWidget);
+
+    await tester.enterText(input, '-2.5');
+    await tester.pump();
+    submit = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, '풀이 제출'),
+    );
+    expect(submit.onPressed, isNotNull);
     expect(tester.takeException(), isNull);
   });
 }

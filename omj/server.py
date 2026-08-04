@@ -9,6 +9,7 @@ import json
 
 import os
 import random
+import re
 from infra.db import postgres_compat as db
 
 import urllib.error
@@ -1955,6 +1956,7 @@ class VariantGradeRequest(BaseModel):
     quest_id: str
     selected_index: Optional[int] = None
     user_answer: Optional[str] = None
+    flow_order: Optional[List[int]] = None
     hints_forbidden: bool = True
 
 
@@ -6166,6 +6168,49 @@ def convert_variant_to_mcq(
     return VariantGenerateResponse(success=True, quest=quest, rejection=None)
 
 
+def _variant_plain_content_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(value)
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        return " ".join(filter(None, (_variant_plain_content_text(item) for item in value))).strip()
+    if isinstance(value, dict):
+        if isinstance(value.get("blocks"), list):
+            return _variant_plain_content_text(value["blocks"])
+        for key in ("content", "text", "latex"):
+            text = _variant_plain_content_text(value.get(key))
+            if text:
+                return text
+    return ""
+
+
+def _variant_normalize_numeric_answer(value: Any) -> Optional[str]:
+    text = _variant_plain_content_text(value).strip().strip("$").strip()
+    if not re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", text):
+        return None
+    negative = text.startswith("-")
+    unsigned = text.lstrip("+-")
+    whole, _, fraction = unsigned.partition(".")
+    whole = whole.lstrip("0") or "0"
+    fraction = fraction.rstrip("0")
+    normalized = whole if not fraction else f"{whole}.{fraction}"
+    if normalized == "0":
+        return "0"
+    return f"-{normalized}" if negative else normalized
+
+
+def _variant_flow_step_count(value: Any) -> int:
+    if isinstance(value, list):
+        return sum(_variant_flow_step_count(item) for item in value)
+    if not isinstance(value, dict):
+        return 0
+    own = 1 if _variant_plain_content_text(value.get("flow")) else 0
+    return own + _variant_flow_step_count(value.get("branches"))
+
+
 @app.post("/analysis/solve/variant-grade")
 def grade_variant_solve(
     payload: VariantGradeRequest,
@@ -6175,21 +6220,42 @@ def grade_variant_solve(
     if not quest:
         raise HTTPException(status_code=404, detail="Quest not found")
     data = (quest.get("data", {}) or {})
-    is_mcq = str(data.get("question_type") or "").lower() in {"multiple_choice", "mcq"}
+    options = data.get("quest_options")
+    is_mcq = (
+        isinstance(options, list)
+        and bool(options)
+        or str(data.get("question_type") or "").lower() in {"multiple_choice", "mcq"}
+    )
     mcq_meta = data.get("mcq_conversion", {}) if isinstance(data.get("mcq_conversion"), dict) else {}
     answer_index = data.get("choice_answer_index")
     if answer_index is None:
         answer_index = mcq_meta.get("answer_index")
-    selected = payload.selected_index
-    raw_correct = bool(selected is not None and answer_index is not None and int(selected) == int(answer_index))
-    pass_result = raw_correct
+    if is_mcq:
+        selected = payload.selected_index
+        answer_correct = bool(
+            selected is not None
+            and answer_index is not None
+            and int(selected) == int(answer_index)
+        )
+        answer_reason = "normal" if answer_correct else "incorrect_choice"
+    else:
+        expected_answer = _variant_normalize_numeric_answer(data.get("quest_answer"))
+        submitted_answer = _variant_normalize_numeric_answer(payload.user_answer)
+        answer_correct = expected_answer is not None and submitted_answer == expected_answer
+        answer_reason = "normal" if answer_correct else "incorrect_numeric_answer"
+
+    flow_count = _variant_flow_step_count(quest.get("solves"))
+    flow_correct = flow_count == 0 or payload.flow_order == list(range(flow_count))
+    raw_correct = answer_correct and flow_correct
     return {
         "quest_id": payload.quest_id,
-        "question_type": data.get("question_type"),
+        "question_type": "multiple_choice" if is_mcq else "short_answer",
         "raw_correct": raw_correct,
-        "pass": pass_result,
+        "pass": raw_correct,
+        "answer_correct": answer_correct,
+        "flow_correct": flow_correct,
         "hints_forbidden": True,
-        "reason": "incorrect_choice" if is_mcq and not raw_correct else "normal",
+        "reason": "normal" if raw_correct else ("incorrect_flow" if not flow_correct else answer_reason),
     }
 
 

@@ -15,6 +15,214 @@ extension _MobileSolveStateView on _BuildpageWidgetState {
   Widget _buildMobileQuickAnswerCard() => _renderMobileQuickAnswerCard(this);
 }
 
+final Expando<_MobileQuickSolveSession> _mobileQuickSolveSessions =
+    Expando<_MobileQuickSolveSession>('mobileQuickSolveSessions');
+
+class _MobileQuickSolveSession {
+  _MobileQuickSolveSession({required this.questKey, required int stepCount})
+    : slots = List<int?>.filled(stepCount, null),
+      trayOrder = _shuffledFlowOrder(questKey, stepCount);
+
+  final String questKey;
+  final List<int?> slots;
+  final List<int> trayOrder;
+  String numericAnswer = '';
+}
+
+_MobileQuickSolveSession _mobileQuickSessionFor(_BuildpageWidgetState state) {
+  final steps = _mobileFlowStepsFor(state._currentQuest?['solves']);
+  final questId = state._currentQuestId().trim();
+  final questKey = questId.isNotEmpty
+      ? '$questId:${state._currentProblemIndex}'
+      : 'problem:${state._currentProblemIndex}:${steps.length}';
+  final current = _mobileQuickSolveSessions[state];
+  if (current != null &&
+      current.questKey == questKey &&
+      current.slots.length == steps.length) {
+    return current;
+  }
+  final created = _MobileQuickSolveSession(
+    questKey: questKey,
+    stepCount: steps.length,
+  );
+  _mobileQuickSolveSessions[state] = created;
+  return created;
+}
+
+List<int> _shuffledFlowOrder(String key, int count) {
+  final order = List<int>.generate(count, (index) => index);
+  if (count <= 1) return order;
+  final shift = (key.hashCode.abs() % (count - 1)) + 1;
+  return <int>[...order.sublist(shift), ...order.sublist(0, shift)];
+}
+
+bool _mobileQuickFlowReady(_MobileQuickSolveSession session) =>
+    session.slots.every((node) => node != null);
+
+bool _isNumericQuickAnswer(String value) =>
+    RegExp(r'^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$').hasMatch(value.trim());
+
+bool _mobileQuickAnswerReady(
+  _BuildpageWidgetState state,
+  _MobileQuickSolveSession session,
+) {
+  if (state._currentQuestOptionBlocks().isNotEmpty) {
+    return state._currentSelectedChoice() != null;
+  }
+  return _isNumericQuickAnswer(session.numericAnswer);
+}
+
+void _placeMobileFlowNode(
+  _BuildpageWidgetState state,
+  _MobileQuickSolveSession session,
+  int nodeIndex,
+  int slotIndex,
+) {
+  final previousSlot = session.slots.indexOf(nodeIndex);
+  final displacedNode = session.slots[slotIndex];
+  state.setState(() {
+    if (previousSlot >= 0) session.slots[previousSlot] = displacedNode;
+    session.slots[slotIndex] = nodeIndex;
+  });
+}
+
+Future<void> _submitMobileQuickSolve(_BuildpageWidgetState state) async {
+  if (state._analysisBusy) return;
+  final session = _mobileQuickSessionFor(state);
+  if (!_mobileQuickFlowReady(session)) {
+    ScaffoldMessenger.of(
+      state.context,
+    ).showSnackBar(const SnackBar(content: Text('모든 Flow 노드를 순서 칸에 넣어주세요.')));
+    return;
+  }
+  if (!_mobileQuickAnswerReady(state, session)) {
+    ScaffoldMessenger.of(
+      state.context,
+    ).showSnackBar(const SnackBar(content: Text('객관식 답 또는 숫자 답을 입력해 주세요.')));
+    return;
+  }
+  if (state._currentProblemIndex < state._problemGraded.length &&
+      state._problemGraded[state._currentProblemIndex]) {
+    ScaffoldMessenger.of(
+      state.context,
+    ).showSnackBar(const SnackBar(content: Text('이미 제출한 문제입니다.')));
+    return;
+  }
+  final questId = state._currentQuestId();
+  if (questId.isEmpty) {
+    ScaffoldMessenger.of(
+      state.context,
+    ).showSnackBar(const SnackBar(content: Text('문제 ID가 없습니다.')));
+    return;
+  }
+
+  state.setState(() => state._analysisBusy = true);
+  try {
+    final options = state._currentQuestOptionBlocks();
+    final selectedIndex = state._currentSelectedChoice();
+    final flowOrder = session.slots.whereType<int>().toList(growable: false);
+    final result = await ApiClient.instance.gradeVariantSolve(
+      questId: questId,
+      selectedIndex: options.isNotEmpty ? selectedIndex : null,
+      userAnswer: options.isEmpty ? session.numericAnswer.trim() : null,
+      flowOrder: flowOrder,
+    );
+    final isCorrect = result['raw_correct'] == true || result['pass'] == true;
+    final flowCorrect = result['flow_correct'] == true;
+    final answerCorrect = result['answer_correct'] == true;
+    final stepCorrectness = List<Map<String, dynamic>>.generate(
+      session.slots.length,
+      (index) => {
+        'flow_number': index + 1,
+        'status': session.slots[index] == index ? 'O' : 'X',
+      },
+      growable: false,
+    );
+    final quest = state._currentQuest;
+    final fingerprint = state._problemFingerprint(
+      quest,
+      state._currentProblemIndex,
+    );
+    final problemMeta = state._problemMeta(quest);
+    state._problemGraded[state._currentProblemIndex] = true;
+    state._gradedCount += 1;
+    if (isCorrect) state._correctCount += 1;
+    if (state._ratingEnabled) {
+      unawaited(
+        state._submitRatingUpdate(
+          quest: quest,
+          isCorrect: isCorrect,
+          stepCorrectness: stepCorrectness,
+        ),
+      );
+    }
+    await state.widget.config?.onProblemGraded?.call(
+      itemIndex: state._currentProblemIndex + 1,
+      quest: quest,
+      isCorrect: isCorrect,
+      stepCorrectness: stepCorrectness,
+      selectedIndex: options.isNotEmpty ? selectedIndex : null,
+      elapsedSeconds: state._sessionClock.elapsed.inSeconds,
+    );
+    try {
+      if (isCorrect) {
+        await ActivityStore.recordProblemSolve(
+          problemId: fingerprint,
+          problemNumber: fingerprint,
+          difficultyTier: state._tierForProblemIndex(
+            state._currentProblemIndex,
+          ),
+          meta: problemMeta.isEmpty ? null : problemMeta,
+        );
+      } else {
+        await ActivityStore.recordProblemIncorrect(
+          problemId: fingerprint,
+          problemNumber: fingerprint,
+          meta: problemMeta.isEmpty ? null : problemMeta,
+        );
+      }
+    } catch (_) {}
+    if (!state.mounted) return;
+    final hasNext = state._currentProblemIndex < state._problemCount - 1;
+    await showDialog<void>(
+      context: state.context,
+      builder: (context) => AlertDialog(
+        title: Text(isCorrect ? '정답' : '다시 확인해 보세요'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _MobileQuickResultRow(label: '풀이 흐름', correct: flowCorrect),
+            const SizedBox(height: 8),
+            _MobileQuickResultRow(label: '최종 정답', correct: answerCorrect),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (hasNext) state._goToNextProblem();
+            },
+            child: Text(hasNext ? '다음 문제' : '확인'),
+          ),
+        ],
+      ),
+    );
+    state._completeCourseModuleIfNeeded();
+  } catch (error) {
+    if (!state.mounted) return;
+    ScaffoldMessenger.of(state.context).showSnackBar(
+      SnackBar(
+        content: Text(
+          studentFacingApiError(error, fallback: '간편풀이 답안을 채점하지 못했어요.'),
+        ),
+      ),
+    );
+  } finally {
+    if (state.mounted) state.setState(() => state._analysisBusy = false);
+  }
+}
+
 /// 필요한 변수는 현재 문제 카드, 세로 필기판, 하단 도구 모음이다.
 /// 작동 원리는 모바일에서 PC용 오버레이 캔버스를 제거하고 문제와 필기판을 세로 순서로 분리하는 것이다.
 Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
@@ -92,9 +300,9 @@ Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
                       state._buildMobileProblemCard(),
                       const SizedBox(height: 10),
                       if (state._mobileQuickSolve) ...[
-                        state._buildMobileQuickAnswerCard(),
-                        const SizedBox(height: 12),
                         state._buildMobileQuickSolveCard(),
+                        const SizedBox(height: 12),
+                        state._buildMobileQuickAnswerCard(),
                       ] else if (showWritingSurface)
                         state._buildMobileWritingSurface(),
                       if (!state._mobileQuickSolve &&
@@ -122,15 +330,18 @@ Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
 /// 한 줄에 보여 답 선택과 필기 작업의 우선순위를 분리하는 것이다.
 Widget _renderMobileToolbar(_BuildpageWidgetState state) {
   final options = state._currentQuestOptionBlocks();
+  final quickSession = _mobileQuickSessionFor(state);
   final showWritingTools =
       !state._mobileQuickSolve &&
       (options.isEmpty || state._mobileNoteExpanded);
   final canSubmit = options.isNotEmpty
       ? state._currentSelectedChoice() != null
       : state._strokes.isNotEmpty || state._currentStroke != null;
-  final quickSteps = _mobileFlowStepsFor(state._currentQuest?['solves']);
-  final submit = state._mobileQuickSolve && quickSteps.isNotEmpty
-      ? state._handleMobileQuickSolve
+  final quickReady =
+      _mobileQuickFlowReady(quickSession) &&
+      _mobileQuickAnswerReady(state, quickSession);
+  final submit = state._mobileQuickSolve
+      ? () => _submitMobileQuickSolve(state)
       : state._handleGrade;
   return Material(
     color: Colors.white,
@@ -209,7 +420,7 @@ Widget _renderMobileToolbar(_BuildpageWidgetState state) {
                 onPressed:
                     state._analysisBusy ||
                         state._hasPendingGeneration ||
-                        (!state._mobileQuickSolve && !canSubmit)
+                        (state._mobileQuickSolve ? !quickReady : !canSubmit)
                     ? null
                     : submit,
                 style: FilledButton.styleFrom(
@@ -222,7 +433,7 @@ Widget _renderMobileToolbar(_BuildpageWidgetState state) {
                 ),
                 icon: const Icon(Icons.check_rounded, size: 19),
                 label: Text(
-                  state._mobileQuickSolve ? '정답 확인' : '제출',
+                  state._mobileQuickSolve ? '풀이 제출' : '제출',
                   style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
               ),
@@ -238,42 +449,111 @@ Widget _renderMobileToolbar(_BuildpageWidgetState state) {
 /// 작동 원리는 필기판·도구 모음을 완전히 제외하고 답 선택과 즉시 채점만 남겨 일반 풀이와
 /// 같은 화면으로 보이지 않게 하는 것이다.
 Widget _renderMobileQuickAnswerCard(_BuildpageWidgetState state) {
+  final session = _mobileQuickSessionFor(state);
+  final options = state._currentQuestOptionBlocks();
   final selected = state._currentSelectedChoice();
-  return DecoratedBox(
+  return Container(
+    key: const ValueKey('mobile-quick-answer-card'),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: const Color(0xFF171717),
-      borderRadius: BorderRadius.circular(22),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFFE3E3E0)),
     ),
-    child: Padding(
-      padding: const EdgeInsets.all(18),
-      child: Row(
-        children: [
-          const Icon(Icons.bolt_rounded, color: Color(0xFFFFD54F), size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '간편풀이 모드',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                '2',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '최종 정답 입력',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  selected == null
-                      ? '답을 선택한 뒤 정답 확인을 눌러주세요.'
-                      : '${selected + 1}번을 선택했습니다. 바로 채점할 수 있어요.',
-                  style: const TextStyle(color: Colors.white70, height: 1.35),
-                ),
-              ],
+                  Text(
+                    '객관식 또는 숫자 답안을 입력하세요.',
+                    style: TextStyle(color: Colors.black54, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        if (options.isNotEmpty) ...[
+          state._buildOptionPreview(options, selectedIndex: selected),
+          if (selected != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              '${selected + 1}번을 선택했습니다.',
+              style: const TextStyle(
+                color: Color(0xFF2E7D57),
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ] else
+          TextFormField(
+            key: ValueKey(
+              'mobile-quick-numeric-answer-${state._currentProblemIndex}',
+            ),
+            initialValue: session.numericAnswer,
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+              signed: true,
+            ),
+            textInputAction: TextInputAction.done,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            onChanged: (value) {
+              session.numericAnswer = value;
+              state.setState(() {});
+            },
+            validator: (value) {
+              final text = value?.trim() ?? '';
+              if (text.isEmpty) return null;
+              return _isNumericQuickAnswer(text) ? null : '숫자만 입력해 주세요.';
+            },
+            decoration: InputDecoration(
+              hintText: '예: -2.5',
+              prefixIcon: const Icon(Icons.numbers_rounded),
+              filled: true,
+              fillColor: const Color(0xFFF5F5F3),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFE1E1DE)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Colors.black, width: 1.5),
+              ),
             ),
           ),
-        ],
-      ),
+      ],
     ),
   );
 }
@@ -351,7 +631,7 @@ Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
               ),
               inline: true,
             ),
-          if (options.isNotEmpty) ...[
+          if (options.isNotEmpty && !state._mobileQuickSolve) ...[
             const SizedBox(height: 10),
             state._buildOptionPreview(
               options,
@@ -647,92 +927,419 @@ class _MobileSolveTool extends StatelessWidget {
   );
 }
 
-/// 필요한 변수는 문제의 flow 데이터다.
-/// 작동 원리는 모바일 간편풀이를 켠 경우 정답 흐름을 읽기 쉬운 세로 카드로 보여 주어 필기 없이 순서를 확인하게 하는 것이다.
+/// 필요한 변수는 문제의 Flow 노드와 현재 조립 상태다.
+/// 작동 원리는 무작위 노드 보관함에서 번호가 있는 순서 칸으로 드래그해 풀이 흐름을 직접 조립하게 하는 것이다.
 Widget _renderMobileQuickSolveCard(_BuildpageWidgetState state) {
   final steps = _mobileFlowStepsFor(state._currentQuest?['solves']);
+  final session = _mobileQuickSessionFor(state);
   if (steps.isEmpty) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
-      child: Text(
-        '이 문제는 답을 고른 뒤 바로 채점합니다. 필기판과 도구 모음은 표시하지 않습니다.',
-        style: TextStyle(color: Colors.black54, height: 1.4),
+    return Container(
+      key: const ValueKey('mobile-quick-flow-empty'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE3E3E0)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '이 문제에는 조립할 Flow 노드가 없습니다. 최종 정답만 입력해 제출하세요.',
+              style: TextStyle(color: Colors.black54, height: 1.4),
+            ),
+          ),
+        ],
       ),
     );
   }
-  return Card(
-    margin: EdgeInsets.zero,
-    elevation: 0,
-    color: const Color(0xFF202022),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-    child: Padding(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '간편풀이 · 풀이 흐름',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            '필기 대신 아래 순서로 풀이 흐름을 확인하세요.',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-          const SizedBox(height: 14),
-          for (var i = 0; i < steps.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
-                onTap: () => state._selectMobileFlowStep(i),
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: i < state._mobileFlowNextIndex
-                        ? const Color(0xFFB9F5D0)
-                        : Colors.white.withValues(alpha: .1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: 14,
-                        backgroundColor: Colors.white,
-                        child: Text(
-                          '${i + 1}',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          steps[i],
-                          style: TextStyle(
-                            color: i < state._mobileFlowNextIndex
-                                ? Colors.black
-                                : Colors.white,
-                            fontSize: 15,
-                            height: 1.35,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+  final unplaced = session.trayOrder
+      .where((nodeIndex) => !session.slots.contains(nodeIndex))
+      .toList(growable: false);
+  return Container(
+    key: const ValueKey('mobile-quick-flow-builder'),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFFE3E3E0)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                '1',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Flow 조립',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                  ),
+                  Text(
+                    '노드를 길게 눌러 순서 칸에 끌어놓으세요.',
+                    style: TextStyle(color: Colors.black54, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Flow 조립 초기화',
+              onPressed: session.slots.any((node) => node != null)
+                  ? () => state.setState(
+                      () => session.slots.fillRange(
+                        0,
+                        session.slots.length,
+                        null,
+                      ),
+                    )
+                  : null,
+              icon: const Icon(Icons.refresh_rounded, size: 20),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Flow 노드 보관함',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+              ),
+            ),
+            Text(
+              '${unplaced.length}개 남음',
+              style: const TextStyle(
+                color: Colors.black45,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (unplaced.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF6EF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF2E7D57),
+                  size: 18,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  '모든 노드를 배치했습니다.',
+                  style: TextStyle(
+                    color: Color(0xFF2E7D57),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          SizedBox(
+            height: 104,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: unplaced.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final nodeIndex = unplaced[index];
+                return SizedBox(
+                  width: 258,
+                  child: _MobileFlowDraggableNode(
+                    key: ValueKey('mobile-flow-node-source-$nodeIndex'),
+                    nodeIndex: nodeIndex,
+                    label: _mobileFlowNodeLabel(session.trayOrder, nodeIndex),
+                    text: steps[nodeIndex],
+                    onTap: () {
+                      final emptySlot = session.slots.indexOf(null);
+                      if (emptySlot >= 0) {
+                        _placeMobileFlowNode(
+                          state,
+                          session,
+                          nodeIndex,
+                          emptySlot,
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        const SizedBox(height: 16),
+        const Text(
+          '나의 풀이 순서',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        for (var slotIndex = 0; slotIndex < session.slots.length; slotIndex++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _MobileFlowSlot(
+              key: ValueKey('mobile-flow-slot-$slotIndex'),
+              slotIndex: slotIndex,
+              nodeIndex: session.slots[slotIndex],
+              steps: steps,
+              trayOrder: session.trayOrder,
+              onAccept: (nodeIndex) =>
+                  _placeMobileFlowNode(state, session, nodeIndex, slotIndex),
+              onRemove: () =>
+                  state.setState(() => session.slots[slotIndex] = null),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+String _mobileFlowNodeLabel(List<int> trayOrder, int nodeIndex) {
+  final displayIndex = trayOrder.indexOf(nodeIndex);
+  if (displayIndex >= 0 && displayIndex < 26) {
+    return '노드 ${String.fromCharCode(65 + displayIndex)}';
+  }
+  return '노드 ${displayIndex + 1}';
+}
+
+class _MobileFlowSlot extends StatelessWidget {
+  const _MobileFlowSlot({
+    super.key,
+    required this.slotIndex,
+    required this.nodeIndex,
+    required this.steps,
+    required this.trayOrder,
+    required this.onAccept,
+    required this.onRemove,
+  });
+
+  final int slotIndex;
+  final int? nodeIndex;
+  final List<String> steps;
+  final List<int> trayOrder;
+  final ValueChanged<int> onAccept;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) => DragTarget<int>(
+    onWillAcceptWithDetails: (details) =>
+        details.data >= 0 && details.data < steps.length,
+    onAcceptWithDetails: (details) => onAccept(details.data),
+    builder: (context, candidates, rejected) {
+      final active = candidates.isNotEmpty;
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        constraints: const BoxConstraints(minHeight: 62),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFEAF6EF) : const Color(0xFFF5F5F3),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: active ? const Color(0xFF2E7D57) : const Color(0xFFDADAD6),
+            width: active ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '${slotIndex + 1}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: nodeIndex == null
+                  ? Text(
+                      active ? '여기에 놓기' : 'Flow 노드를 끌어오세요',
+                      style: const TextStyle(
+                        color: Colors.black38,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  : _MobileFlowDraggableNode(
+                      nodeIndex: nodeIndex!,
+                      label: _mobileFlowNodeLabel(trayOrder, nodeIndex!),
+                      text: steps[nodeIndex!],
+                      compact: true,
+                      onTap: onRemove,
+                    ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+class _MobileFlowDraggableNode extends StatelessWidget {
+  const _MobileFlowDraggableNode({
+    super.key,
+    required this.nodeIndex,
+    required this.label,
+    required this.text,
+    required this.onTap,
+    this.compact = false,
+  });
+
+  final int nodeIndex;
+  final String label;
+  final String text;
+  final VoidCallback onTap;
+  final bool compact;
+
+  Widget _card({bool feedback = false}) => Material(
+    color: Colors.transparent,
+    child: Container(
+      width: feedback ? 300 : null,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 12,
+        vertical: compact ? 8 : 11,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD5D5D2)),
+        boxShadow: feedback
+            ? const [
+                BoxShadow(
+                  color: Color(0x26000000),
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(Icons.drag_indicator_rounded, size: 18),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.black45,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  text,
+                  maxLines: compact ? 2 : 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF202020),
+                    fontSize: 13,
+                    height: 1.35,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (compact)
+            const Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Icon(Icons.close_rounded, size: 16, color: Colors.black38),
             ),
         ],
       ),
     ),
+  );
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: '$label. 길게 눌러 드래그하거나 탭해 배치',
+    button: true,
+    child: LongPressDraggable<int>(
+      data: nodeIndex,
+      delay: const Duration(milliseconds: 220),
+      feedback: _card(feedback: true),
+      childWhenDragging: Opacity(opacity: .32, child: _card()),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: _card(),
+      ),
+    ),
+  );
+}
+
+class _MobileQuickResultRow extends StatelessWidget {
+  const _MobileQuickResultRow({required this.label, required this.correct});
+
+  final String label;
+  final bool correct;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(
+        correct ? Icons.check_circle_rounded : Icons.cancel_rounded,
+        color: correct ? const Color(0xFF2E7D57) : const Color(0xFFB5473C),
+        size: 20,
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+      ),
+      Text(
+        correct ? '정답' : '오답',
+        style: TextStyle(
+          color: correct ? const Color(0xFF2E7D57) : const Color(0xFFB5473C),
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ],
   );
 }
 
@@ -748,7 +1355,9 @@ List<String> _mobileFlowStepsFor(dynamic value) {
       return;
     }
     if (current is Map) {
-      final flow = current['flow']?.toString().trim() ?? '';
+      final flow = contentBlocksToPlainText(
+        normalizeFlowBlocks(parseContentBlocks(current['flow'])),
+      ).trim();
       if (flow.isNotEmpty) steps.add(flow);
       collect(current['branches']);
     }

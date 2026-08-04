@@ -356,6 +356,29 @@ def _marketplace_topic_question(topic: str, variant: int) -> tuple[str, int]:
     return (f"방정식 {a}x + {b} = {a * answer + b}를 풀어 x의 값을 구하세요.", answer)
 
 
+def _marketplace_flow_steps(topic: str) -> list[dict[str, str]]:
+    """단원별 풀이에 필요한 핵심 동작을 정답값 노출 없이 3개 Flow 노드로 제공한다."""
+    flows = {
+        "polynomial": ("동류항을 찾는다.", "같은 차수의 항끼리 계산한다.", "계수를 정리해 검산한다."),
+        "quadratic": ("식을 표준형으로 정리한다.", "인수분해 또는 근의 공식을 적용한다.", "구한 근을 원래 식에 대입한다."),
+        "sequence": ("수열의 규칙과 공차를 확인한다.", "일반항에 주어진 항 번호를 대입한다.", "계산 결과를 수열의 규칙과 비교한다."),
+        "exponential": ("밑을 같은 형태로 정리한다.", "지수 법칙을 적용한다.", "지수의 값을 계산해 검산한다."),
+        "remainder": ("나누는 식의 근을 구한다.", "나머지정리를 적용한다.", "함숫값을 계산해 나머지를 확인한다."),
+        "function": ("합성할 안쪽 함수부터 확인한다.", "안쪽 함숫값을 바깥 함수에 대입한다.", "계산 결과를 정리한다."),
+        "coordinate": ("두 점의 좌표 차를 구한다.", "거리 공식에 대입한다.", "제곱근을 계산해 거리를 확인한다."),
+        "counting": ("선택 순서와 중복 가능 여부를 확인한다.", "곱의 법칙으로 경우의 수를 계산한다.", "빠진 경우가 없는지 검산한다."),
+        "derivative": ("주어진 함수를 미분한다.", "도함수에 주어진 x값을 대입한다.", "미분계수를 계산해 정리한다."),
+        "tangent": ("함수를 미분해 접선의 기울기를 구한다.", "접점 좌표를 확인한다.", "점-기울기식으로 접선 방정식을 정리한다."),
+        "integral": ("함수의 부정적분을 구한다.", "적분 구간의 양 끝값을 대입한다.", "두 함숫값의 차를 계산한다."),
+        "parabola_area": ("곡선과 축이 만드는 구간을 확인한다.", "넓이에 해당하는 정적분을 세운다.", "정적분 값을 계산해 넓이를 확인한다."),
+    }
+    selected = flows.get(
+        topic,
+        ("문제의 조건을 식으로 정리한다.", "필요한 연산을 순서대로 적용한다.", "계산 결과를 원래 조건으로 검산한다."),
+    )
+    return [{"flow": flow} for flow in selected]
+
+
 def _build_marketplace_questions(listing: dict[str, Any]) -> list[dict[str, Any]]:
     """필요 변수: 시험지·문제세트 카탈로그의 ID·제목·난이도·문항 수. 작동 원리:
     상품 ID 해시를 시드로 사용해 같은 상품에는 항상 같은 고유 문항을 할당하고,
@@ -388,7 +411,7 @@ def _build_marketplace_questions(listing: dict[str, Any]) -> list[dict[str, Any]
                         str(listing.get("grade_band") or ""),
                     ],
                 },
-                "solves": [],
+                "solves": _marketplace_flow_steps(topic),
             }
         )
     return questions
@@ -484,7 +507,11 @@ def _build_generated_questions(payload: QuestGenerateRequest) -> list[dict[str, 
                     "hash_tags": normalized_tags,
                     "difficulty_tier": tier,
                 },
-                "solves": [],
+                "solves": [
+                    {"flow": "양변에서 상수항을 뺀다."},
+                    {"flow": "양변을 x의 계수로 나눈다."},
+                    {"flow": "구한 값을 원래 방정식에 대입해 검산한다."},
+                ],
             }
         )
     return questions
@@ -1555,10 +1582,55 @@ def update_owned_marketplace_progress(
     return owned[listing_id]
 
 
+def _plain_content_text(value: Any) -> str:
+    """콘텐츠 블록·문자열에서 숫자 답과 Flow 문구 검증에 필요한 평문을 추출한다."""
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(value)
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        return " ".join(filter(None, (_plain_content_text(item) for item in value))).strip()
+    if isinstance(value, dict):
+        if isinstance(value.get("blocks"), list):
+            return _plain_content_text(value["blocks"])
+        for key in ("content", "text", "latex"):
+            text = _plain_content_text(value.get(key))
+            if text:
+                return text
+    return ""
+
+
+def _normalize_numeric_answer(value: Any) -> str | None:
+    """부호가 있는 정수·소수를 문자열 기준으로 정규화해 부동소수 오차 없이 비교한다."""
+    text = _plain_content_text(value).strip().strip("$").strip()
+    if not re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", text):
+        return None
+    negative = text.startswith("-")
+    unsigned = text.lstrip("+-")
+    whole, _, fraction = unsigned.partition(".")
+    whole = whole.lstrip("0") or "0"
+    fraction = fraction.rstrip("0")
+    normalized = whole if not fraction else f"{whole}.{fraction}"
+    if normalized == "0":
+        return "0"
+    return f"-{normalized}" if negative else normalized
+
+
+def _flow_step_count(value: Any) -> int:
+    """solves 트리의 실제 Flow 문구가 있는 노드 수를 깊이 우선 기준으로 센다."""
+    if isinstance(value, list):
+        return sum(_flow_step_count(item) for item in value)
+    if not isinstance(value, dict):
+        return 0
+    own = 1 if _plain_content_text(value.get("flow")) else 0
+    return own + _flow_step_count(value.get("branches"))
+
+
 @app.post("/analysis/solve/variant-grade")
 async def grade_variant_solve(request: Request, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
-    """필요 변수: 문제 ID와 선택지 인덱스 또는 입력 답. 작동 원리: main의 variant-grade와
-    동일하게 정답 인덱스를 비교해 raw_correct·pass를 즉시 반환하므로 채점 대기 작업을 만들지 않는다."""
+    """선택 답 또는 숫자 답과 사용자가 조립한 Flow 순서를 서버 원장에 함께 대조한다."""
     try:
         payload = await request.json()
     except (ValueError, json.JSONDecodeError):
@@ -1570,16 +1642,40 @@ async def grade_variant_solve(request: Request, _user_id: str = Depends(_current
     if question is None:
         raise HTTPException(status_code=404, detail="Quest not found")
     data = question.get("data", {})
-    expected_index = int(data.get("correct_choice_index") or 0)
-    selected = payload.get("selected_index")
-    raw_correct = isinstance(selected, int) and selected == expected_index
+    options = data.get("quest_options")
+    is_multiple_choice = isinstance(options, list) and bool(options)
+    if is_multiple_choice:
+        expected_index = int(data.get("correct_choice_index") or 0)
+        selected = payload.get("selected_index")
+        answer_correct = (
+            isinstance(selected, int)
+            and not isinstance(selected, bool)
+            and selected == expected_index
+        )
+        answer_reason = "normal" if answer_correct else "incorrect_choice"
+    else:
+        expected_answer = _normalize_numeric_answer(data.get("quest_answer"))
+        submitted_answer = _normalize_numeric_answer(payload.get("user_answer"))
+        answer_correct = expected_answer is not None and submitted_answer == expected_answer
+        answer_reason = "normal" if answer_correct else "incorrect_numeric_answer"
+
+    flow_count = _flow_step_count(question.get("solves"))
+    submitted_flow = payload.get("flow_order")
+    flow_correct = flow_count == 0 or (
+        isinstance(submitted_flow, list)
+        and all(isinstance(item, int) and not isinstance(item, bool) for item in submitted_flow)
+        and submitted_flow == list(range(flow_count))
+    )
+    raw_correct = answer_correct and flow_correct
     return {
         "quest_id": quest_id,
-        "question_type": "multiple_choice",
+        "question_type": "multiple_choice" if is_multiple_choice else "short_answer",
         "raw_correct": raw_correct,
         "pass": raw_correct,
+        "answer_correct": answer_correct,
+        "flow_correct": flow_correct,
         "hints_forbidden": True,
-        "reason": "normal" if raw_correct else "incorrect_choice",
+        "reason": "normal" if raw_correct else ("incorrect_flow" if not flow_correct else answer_reason),
     }
 
 
