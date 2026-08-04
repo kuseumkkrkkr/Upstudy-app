@@ -96,4 +96,46 @@ void main() {
     expect(find.text('코스에 포함된 문제를 불러오지 못했습니다.'), findsNothing);
     expect(find.text('무료로 내 학습에 담기'), findsOneWidget);
   });
+
+  testWidgets('내 학습 담기 성공 안내는 바로가기 동작을 제공한다', (tester) async {
+    String? purchasedId;
+    String? openedId;
+    tester.view.physicalSize = const Size(500, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MarketplacePage(
+          initialData: const [
+            {
+              'id': 'exam-shortcut',
+              'kind': 'exam',
+              'title': '미적분 | 실전모의 B',
+              'item_count': 10,
+              'price_points': 0,
+              'asset_id': 'exam-shortcut',
+            },
+          ],
+          purchaseHandler: (listingId) async => purchasedId = listingId,
+          openHandler: (listingId) => openedId = listingId,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('미적분 | 실전모의 B'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('무료로 내 학습에 담기'));
+    await tester.pumpAndSettle();
+
+    expect(purchasedId, 'exam-shortcut');
+    expect(find.text('내 학습 자료에 담았습니다.'), findsOneWidget);
+    expect(find.text('바로가기'), findsOneWidget);
+
+    await tester.tap(find.text('바로가기'));
+    await tester.pump();
+    expect(openedId, 'exam-shortcut');
+  });
 }

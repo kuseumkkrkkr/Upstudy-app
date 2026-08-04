@@ -2,17 +2,31 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:s11/sessions/course/session/course_learning_page.dart';
+import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
+typedef MarketplacePurchaseHandler = Future<void> Function(String listingId);
+typedef MarketplaceOpenHandler = void Function(String listingId);
+
 class MarketplacePage extends StatefulWidget {
-  const MarketplacePage({super.key, this.initialData});
+  const MarketplacePage({
+    super.key,
+    this.initialData,
+    this.purchaseHandler,
+    this.openHandler,
+  });
 
   final List<Map<String, dynamic>>? initialData;
+  final MarketplacePurchaseHandler? purchaseHandler;
+  final MarketplaceOpenHandler? openHandler;
 
   @override
   State<MarketplacePage> createState() => _MarketplacePageState();
@@ -30,6 +44,95 @@ class _MarketplacePageState extends State<MarketplacePage> {
   int _total = 0;
   bool _loading = false;
   String? _error;
+
+  /// 담은 자료의 실제 유형에 맞는 학습 화면을 즉시 연다.
+  Future<void> _openPurchasedItem(_MarketItem item) async {
+    final handler = widget.openHandler;
+    if (handler != null) {
+      handler(item.id);
+      return;
+    }
+    try {
+      if (item.type == _MarketItemType.exam) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ExamPaperPage(
+              examId: item.assetId.isNotEmpty ? item.assetId : item.id,
+              expectedQuestionCount: item.itemCount,
+              marketplaceListingId: item.id,
+            ),
+          ),
+        );
+        return;
+      }
+      if (item.type == _MarketItemType.course) {
+        final course = await CourseService.fetchCourse(
+          item.assetId.isNotEmpty ? item.assetId : item.id,
+        );
+        if (!mounted) return;
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => CourseLearningPage(course: course)),
+        );
+        return;
+      }
+      final quests = await ApiClient.instance
+          .loadMarketplaceProblemSetQuestions(item.id);
+      if (!mounted) return;
+      if (quests.isEmpty) throw StateError('empty_marketplace_problem_set');
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => BuildpageWidget(
+            config: ProblemSolveConfig(
+              questionCount: quests.length,
+              quests: quests,
+              ratingEnabled: false,
+              onComplete:
+                  ({
+                    required correctCount,
+                    required totalCount,
+                    required passed,
+                    elapsedSeconds,
+                  }) => ApiClient.instance.updateMarketplaceProgress(
+                    listingId: item.id,
+                    progressIndex: totalCount,
+                    completed: passed,
+                  ),
+              onProblemGraded:
+                  ({
+                    required itemIndex,
+                    required quest,
+                    required isCorrect,
+                    required stepCorrectness,
+                    selectedIndex,
+                    elapsedSeconds,
+                  }) => ApiClient.instance.updateMarketplaceProgress(
+                    listingId: item.id,
+                    progressIndex: itemIndex + 1,
+                    completed: false,
+                  ),
+            ),
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('학습 자료를 열지 못했습니다. 다시 시도해주세요.')),
+      );
+    }
+  }
+
+  void _showPurchaseSuccess(_MarketItem item) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('내 학습 자료에 담았습니다.'),
+        action: SnackBarAction(
+          label: '바로가기',
+          onPressed: () => unawaited(_openPurchasedItem(item)),
+        ),
+      ),
+    );
+  }
 
   static const _corners = <_MarketplaceCorner>[
     _MarketplaceCorner(
@@ -245,7 +348,14 @@ class _MarketplacePageState extends State<MarketplacePage> {
             ? null
             : () async {
                 try {
-                  await ApiClient.instance.purchaseMarketplaceListing(item.id);
+                  final purchase = widget.purchaseHandler;
+                  if (purchase != null) {
+                    await purchase(item.id);
+                  } else {
+                    await ApiClient.instance.purchaseMarketplaceListing(
+                      item.id,
+                    );
+                  }
                   if (!mounted) return;
                   setState(() {
                     _items = _items
@@ -257,9 +367,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         .toList(growable: false);
                   });
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('내 학습 자료에 담았습니다.')),
-                  );
+                  _showPurchaseSuccess(item.copyWithOwned());
                 } on ApiException catch (error) {
                   if (!mounted) return;
                   final message = error.message == 'insufficient_coins'
@@ -1612,6 +1720,7 @@ class _MarketItem {
     required this.pricePoints,
     required this.itemCount,
     required this.problemIds,
+    this.assetId = '',
     this.owned = false,
     this.progressIndex = 0,
     this.completed = false,
@@ -1625,6 +1734,7 @@ class _MarketItem {
   final int pricePoints;
   final int itemCount;
   final List<String> problemIds;
+  final String assetId;
   final bool owned;
   final int progressIndex;
   final bool completed;
@@ -1667,6 +1777,7 @@ class _MarketItem {
     pricePoints: pricePoints,
     itemCount: itemCount,
     problemIds: problemIds,
+    assetId: assetId,
     owned: true,
     progressIndex: progressIndex,
     completed: completed,
@@ -1709,6 +1820,7 @@ class _MarketItem {
                 .where((id) => id.isNotEmpty)
                 .toList(growable: false)
           : const <String>[]),
+      assetId: json['asset_id']?.toString() ?? '',
       owned: json['owned'] == true,
       progressIndex:
           int.tryParse(json['progress_index']?.toString() ?? '') ?? 0,

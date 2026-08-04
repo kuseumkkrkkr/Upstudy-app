@@ -255,7 +255,7 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
     for item in items:
         if item["kind"] not in {"exam", "problem_set"}:
             continue
-        item_count = min(max(int(item.get("item_count") or 1), 1), 20)
+        item_count = min(max(int(item.get("item_count") or 1), 1), 50)
         item["problem_ids"] = [
             f"{item['id']}-q{index + 1}" for index in range(item_count)
         ]
@@ -267,19 +267,110 @@ def _build_marketplace_catalog() -> tuple[dict[str, Any], ...]:
 MARKETPLACE_CATALOG = _build_marketplace_catalog()
 
 
+def _marketplace_topic_pool(listing: dict[str, Any]) -> tuple[str, ...]:
+    """상품 제목·설명·ID에서 출제 단원을 결정해 선택 자료와 문제 내용을 일치시킨다."""
+    text = " ".join(
+        str(listing.get(key) or "") for key in ("id", "title", "description")
+    ).lower()
+    if "전 범위" in text or "mixed" in text or "복합" in text or "상위권" in text:
+        return ("polynomial", "quadratic", "sequence", "function", "derivative", "integral")
+    if "미적분" in text or "calculus" in text:
+        return ("derivative", "tangent", "integral", "parabola_area")
+    if "대수" in text or "algebra" in text:
+        return ("sequence", "exponential", "logarithm", "remainder")
+    if "지수·로그" in text:
+        return ("exponential", "logarithm")
+    rules = (
+        (("다항식", "polynomial"), "polynomial"),
+        (("이차방정식", "quadratic"), "quadratic"),
+        (("수열", "sequence"), "sequence"),
+        (("지수", "exponential"), "exponential"),
+        (("로그", "logarithm"), "logarithm"),
+        (("나머지", "remainder"), "remainder"),
+        (("접선", "tangent"), "tangent"),
+        (("미분", "derivative"), "derivative"),
+        (("포물선", "parabola"), "parabola_area"),
+        (("적분", "integral"), "integral"),
+        (("합성함수", "함수", "function"), "function"),
+        (("좌표기하", "coordinate"), "coordinate"),
+        (("경우의 수", "counting"), "counting"),
+        (("순열", "permutation"), "permutation"),
+        (("복소수", "complex"), "complex"),
+        (("행렬", "matrix"), "matrix"),
+        (("직선", "line"), "line"),
+        (("방정식",), "linear"),
+    )
+    for needles, topic in rules:
+        if any(needle in text for needle in needles):
+            return (topic,)
+    return ("polynomial", "quadratic", "function", "sequence", "linear")
+
+
+def _marketplace_topic_question(topic: str, variant: int) -> tuple[str, int]:
+    """단원별 작은 수치 문제를 결정적으로 만들고 정수 정답을 반환한다."""
+    a = 2 + variant % 5
+    b = 1 + (variant // 3) % 6
+    c = 2 + (variant // 7) % 5
+    n = 3 + variant % 4
+    if topic == "polynomial":
+        return (f"({a}x + {b}) + ({c}x - {b})를 간단히 할 때 x의 계수를 구하세요.", a + c)
+    if topic == "quadratic":
+        other = 1 + (variant // 5) % 5
+        return (f"방정식 x² - {n + other}x + {n * other} = 0의 두 근의 합을 구하세요.", n + other)
+    if topic == "sequence":
+        term = b + (n - 1) * a
+        return (f"첫째항이 {b}, 공차가 {a}인 등차수열의 제{n}항을 구하세요.", term)
+    if topic == "exponential":
+        exponent = 2 + variant % 5
+        return (f"2ˣ = {2 ** exponent}일 때 x의 값을 구하세요.", exponent)
+    if topic == "logarithm":
+        exponent = 2 + variant % 5
+        return (f"log₂({2 ** exponent})의 값을 구하세요.", exponent)
+    if topic == "remainder":
+        return (f"P(x) = {a}x + {b}를 x - {n}으로 나눌 때의 나머지를 구하세요.", a * n + b)
+    if topic == "function":
+        return (f"함수 f(x) = {a}x + {b}일 때 f({n})의 값을 구하세요.", a * n + b)
+    if topic == "coordinate":
+        return (f"두 점 ({b}, {c})와 ({b + n}, {c}) 사이의 거리를 구하세요.", n)
+    if topic == "counting":
+        people = 4 + variant % 4
+        return (f"{people}명 중에서 대표 2명을 순서 없이 뽑는 경우의 수를 구하세요.", people * (people - 1) // 2)
+    if topic == "permutation":
+        people = 4 + variant % 4
+        return (f"{people}명 중 회장과 부회장을 한 명씩 뽑는 경우의 수를 구하세요.", people * (people - 1))
+    if topic in {"derivative", "tangent"}:
+        x = 1 + variant % 3
+        label = "접선의 기울기" if topic == "tangent" else "미분계수"
+        return (f"f(x) = {a}x² + {b}x일 때 x = {x}에서의 {label}를 구하세요.", 2 * a * x + b)
+    if topic == "integral":
+        return (f"정적분 ∫₀^{n} 2x dx의 값을 구하세요.", n * n)
+    if topic == "parabola_area":
+        return (f"0 ≤ x ≤ {n}에서 y = {2 * n} - 2x와 x축이 이루는 넓이를 구하세요.", n * n)
+    if topic == "complex":
+        return (f"i가 허수단위일 때 i^{4 * n} + {b}의 값을 구하세요.", b + 1)
+    if topic == "matrix":
+        return (f"행렬 A의 (1,1)성분이 {a}, B의 (1,1)성분이 {b}일 때 A+B의 (1,1)성분을 구하세요.", a + b)
+    if topic == "line":
+        return (f"직선 y = {a}x + {b} 위에서 x = {n}일 때 y의 값을 구하세요.", a * n + b)
+    answer = 1 + variant % 8
+    return (f"방정식 {a}x + {b} = {a * answer + b}를 풀어 x의 값을 구하세요.", answer)
+
+
 def _build_marketplace_questions(listing: dict[str, Any]) -> list[dict[str, Any]]:
     """필요 변수: 시험지·문제세트 카탈로그의 ID·제목·난이도·문항 수. 작동 원리:
     상품 ID 해시를 시드로 사용해 같은 상품에는 항상 같은 고유 문항을 할당하고,
     목록의 problem_ids·개별 조회·시험지 상세·채점이 동일한 문항 원장을 공유한다."""
-    item_count = min(max(int(listing.get("item_count") or 5), 1), 20)
+    item_count = min(max(int(listing.get("item_count") or 5), 1), 50)
     seed = int(hashlib.sha256(str(listing["id"]).encode("utf-8")).hexdigest()[:8], 16)
+    topics = _marketplace_topic_pool(listing)
+    answer_offset = seed % 5
     questions: list[dict[str, Any]] = []
     for index in range(item_count):
-        coefficient = 2 + (seed + index * 3) % 7
-        answer = 1 + (seed // (index + 1) + index * 2) % 9
-        constant = 1 + (seed + index * 5) % 12
-        result = coefficient * answer + constant
-        choices = [answer, answer + 1, max(0, answer - 1), answer + 2]
+        topic = topics[index % len(topics)]
+        prompt, answer = _marketplace_topic_question(topic, seed + index * 7919)
+        correct_index = (answer_offset + index * 2) % 5
+        distractors = [answer - 2, answer - 1, answer + 1, answer + 2]
+        choices = distractors[:correct_index] + [answer] + distractors[correct_index:]
         questions.append(
             {
                 "header": {
@@ -287,15 +378,12 @@ def _build_marketplace_questions(listing: dict[str, Any]) -> list[dict[str, Any]
                     "quest_type": "multiple_choice",
                 },
                 "data": {
-                    "quest_title": (
-                        f"{listing['title']} · {index + 1}번\n"
-                        f"다음 방정식을 풀어 x의 값을 구하세요.\n"
-                        f"{coefficient}x + {constant} = {result}"
-                    ),
+                    "quest_title": prompt,
                     "quest_options": [str(choice) for choice in choices],
-                    "correct_choice_index": 0,
+                    "correct_choice_index": correct_index,
                     "marketplace_listing_id": listing["id"],
                     "hash_tags": [
+                        topic,
                         str(listing.get("difficulty") or ""),
                         str(listing.get("grade_band") or ""),
                     ],
@@ -417,7 +505,7 @@ def _build_marketplace_exam_status(listing: dict[str, Any]) -> dict[str, Any]:
                 "exam_id": listing["id"],
                 "title": listing["title"],
                 "item_count": len(questions),
-                "item_index": index,
+                "item_index": index + 1,
                 "status": "done",
                 "subject_key": str(listing.get("grade_band") or "수학"),
                 "hash_tags": data.get("hash_tags", []),

@@ -60,11 +60,21 @@ def test_every_exam_and_problem_set_has_consistent_assignments() -> None:
             data = question["data"]
             assert data["quest_title"].strip()
             assert "\\n" not in data["quest_title"]
-            assert data["quest_title"].count("\n") == 2
-            assert len(data["quest_options"]) == 4
+            assert listing["title"] not in data["quest_title"]
+            assert "번\n" not in data["quest_title"]
+            assert len(data["quest_options"]) == 5
             assert 0 <= int(data["correct_choice_index"]) < len(
                 data["quest_options"]
             )
+
+        answer_indexes = [
+            int(question["data"]["correct_choice_index"])
+            for question in questions
+        ]
+        if expected_count >= 10:
+            assert set(answer_indexes) == set(range(5)), listing["id"]
+        if expected_count <= 5:
+            assert max(answer_indexes.count(index) for index in range(5)) <= 1
 
         all_question_ids.extend(assigned_ids)
 
@@ -89,6 +99,51 @@ def test_exam_status_contract_contains_all_assigned_questions(
     assert status["status"] == "done"
     assert len(status["items"]) == exam["item_count"]
     assert [item["quest_id"] for item in status["items"]] == exam["problem_ids"]
+    assert [item["item_index"] for item in status["items"]] == list(
+        range(1, exam["item_count"] + 1)
+    )
+    assert {item["title"] for item in status["items"]} == {exam["title"]}
+
+
+def test_selected_unit_changes_question_content() -> None:
+    polynomial = api._find_catalog_listing("market-v2-set-polynomial")
+    calculus = api._find_catalog_listing("market-v2-set-derivative")
+    assert polynomial is not None
+    assert calculus is not None
+
+    polynomial_titles = [
+        question["data"]["quest_title"]
+        for question in api._build_marketplace_questions(polynomial)
+    ]
+    calculus_titles = [
+        question["data"]["quest_title"]
+        for question in api._build_marketplace_questions(calculus)
+    ]
+
+    assert all("x의 계수" in title for title in polynomial_titles)
+    assert all("미분계수" in title for title in calculus_titles)
+    assert set(polynomial_titles).isdisjoint(calculus_titles)
+
+
+def test_practical_mock_answer_distribution_is_balanced_for_23_questions() -> None:
+    listing = {
+        "id": "distribution-practical-mock",
+        "kind": "exam",
+        "title": "미적분 | 실전모의 B",
+        "description": "미적분 실전모의고사",
+        "grade_band": "고3",
+        "difficulty": "중상",
+        "item_count": 23,
+    }
+
+    indexes = [
+        int(question["data"]["correct_choice_index"])
+        for question in api._build_marketplace_questions(listing)
+    ]
+    counts = [indexes.count(index) for index in range(5)]
+
+    assert sum(counts) == 23
+    assert max(counts) - min(counts) <= 1
 
 
 # 필요한 변수: 문제세트 상품, 첫 문항 ID, 소유 상품 조회 대역.
