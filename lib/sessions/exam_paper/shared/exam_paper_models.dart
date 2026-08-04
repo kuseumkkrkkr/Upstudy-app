@@ -28,7 +28,7 @@ class _QuestionRegion {
   const _QuestionRegion({required this.item, required this.rect});
 }
 
-class _GradeResult {
+class ExamGradeResult {
   final int itemIndex;
   final String? analysis;
   final String? error;
@@ -38,7 +38,7 @@ class _GradeResult {
   final List<Map<String, dynamic>> stepCorrectness;
   final Map<String, dynamic>? quest;
 
-  const _GradeResult._({
+  const ExamGradeResult._({
     required this.itemIndex,
     this.analysis,
     this.error,
@@ -49,11 +49,11 @@ class _GradeResult {
     this.quest,
   });
 
-  factory _GradeResult.empty(int itemIndex, {Map<String, dynamic>? quest}) {
-    return _GradeResult._(itemIndex: itemIndex, empty: true, quest: quest);
+  factory ExamGradeResult.empty(int itemIndex, {Map<String, dynamic>? quest}) {
+    return ExamGradeResult._(itemIndex: itemIndex, empty: true, quest: quest);
   }
 
-  factory _GradeResult.success(
+  factory ExamGradeResult.success(
     int itemIndex, {
     required String analysis,
     required List<String> warnings,
@@ -61,7 +61,7 @@ class _GradeResult {
     List<Map<String, dynamic>> stepCorrectness = const [],
     Map<String, dynamic>? quest,
   }) {
-    return _GradeResult._(
+    return ExamGradeResult._(
       itemIndex: itemIndex,
       analysis: analysis,
       warnings: warnings,
@@ -71,12 +71,12 @@ class _GradeResult {
     );
   }
 
-  factory _GradeResult.failure(
+  factory ExamGradeResult.failure(
     int itemIndex,
     String error, {
     Map<String, dynamic>? quest,
   }) {
-    return _GradeResult._(itemIndex: itemIndex, error: error, quest: quest);
+    return ExamGradeResult._(itemIndex: itemIndex, error: error, quest: quest);
   }
 }
 

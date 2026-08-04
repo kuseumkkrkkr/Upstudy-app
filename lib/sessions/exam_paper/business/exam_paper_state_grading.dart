@@ -188,7 +188,7 @@ mixin _ExamPaperGradingMixin
           final quest = await _loadQuest(region.item.questId);
           if (!mounted) return;
           setState(() {
-            _gradeResults[region.item.itemIndex!] = _GradeResult.failure(
+            _gradeResults[region.item.itemIndex!] = ExamGradeResult.failure(
               region.item.itemIndex!,
               studentFacingApiError(error, fallback: '이 문항을 채점하지 못했어요.'),
               quest: quest,
@@ -222,7 +222,7 @@ mixin _ExamPaperGradingMixin
     await _openGradingReport(passed: passed);
   }
 
-  Future<_GradeResult> _gradeQuestion({
+  Future<ExamGradeResult> _gradeQuestion({
     required ExamItem item,
     required int pageIndex,
     required Rect region,
@@ -236,11 +236,11 @@ mixin _ExamPaperGradingMixin
     final selectedIndex = _selectedOptions[item.itemIndex];
     if (item.questOptions?.isNotEmpty == true) {
       if (selectedIndex == null) {
-        return _GradeResult.empty(item.itemIndex!, quest: quest);
+        return ExamGradeResult.empty(item.itemIndex!, quest: quest);
       }
       final questId = item.questId?.trim() ?? '';
       if (questId.isEmpty) {
-        return _GradeResult.failure(
+        return ExamGradeResult.failure(
           item.itemIndex!,
           '객관식 문제 ID가 없습니다.',
           quest: quest,
@@ -251,7 +251,7 @@ mixin _ExamPaperGradingMixin
         selectedIndex: selectedIndex,
       );
       final isCorrect = result['raw_correct'] == true || result['pass'] == true;
-      return _GradeResult.success(
+      return ExamGradeResult.success(
         item.itemIndex!,
         analysis: '',
         warnings: const <String>[],
@@ -263,7 +263,7 @@ mixin _ExamPaperGradingMixin
     final targetRegion = region;
     final relevant = _extractStrokesInRegion(strokes, targetRegion);
     if (relevant.length <= 2) {
-      return _GradeResult.empty(item.itemIndex!, quest: quest);
+      return ExamGradeResult.empty(item.itemIndex!, quest: quest);
     }
     final imageBytes = await _renderStrokesToPngForRegion(
       relevant,
@@ -320,7 +320,7 @@ mixin _ExamPaperGradingMixin
     final analysis = '';
     final stepCorrectness = _resolveStepCorrectness(response: response);
     final isCorrect = _resolveIsCorrect(response: response);
-    return _GradeResult.success(
+    return ExamGradeResult.success(
       item.itemIndex!,
       analysis: analysis,
       warnings: response.warnings,
@@ -794,7 +794,7 @@ mixin _ExamPaperGradingMixin
 
     final completed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => _ExamGradingReportPage(
+        builder: (_) => ExamGradingReportPage(
           results: results,
 
           totalQuestions: _gradingTotal,

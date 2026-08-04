@@ -1,7 +1,7 @@
 part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
-class _ExamGradingReportPage extends StatelessWidget {
-  const _ExamGradingReportPage({
+class ExamGradingReportPage extends StatelessWidget {
+  const ExamGradingReportPage({
     required this.results,
     required this.totalQuestions,
     required this.passRate,
@@ -12,7 +12,7 @@ class _ExamGradingReportPage extends StatelessWidget {
     this.examId,
   });
 
-  final List<_GradeResult> results;
+  final List<ExamGradeResult> results;
   final int totalQuestions;
   final int passRate;
   final bool passed;
@@ -42,6 +42,23 @@ class _ExamGradingReportPage extends StatelessWidget {
     final processed = results.length;
     final progress = total > 0 ? processed / total : 0.0;
     final score = total > 0 ? correctCount / total : 0.0;
+
+    final media = MediaQuery.of(context);
+    final portraitPhone =
+        media.orientation == Orientation.portrait && media.size.width <= 600;
+    if (portraitPhone) {
+      return _buildPortraitPhonePage(
+        context,
+        total: total,
+        processed: processed,
+        progress: progress,
+        correct: correctCount,
+        incorrect: incorrectCount,
+        empty: math.max(0, total - correctCount - incorrectCount),
+        errors: errorCount,
+        score: score,
+      );
+    }
 
     final mobile = isStudentDensityMobile(context);
     final summary = _buildSummary(
@@ -118,6 +135,436 @@ class _ExamGradingReportPage extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// 세로형 휴대전화에서만 사용하는 결과 화면이다.
+  /// 점수와 정오답 분포를 첫 화면에 모으고 완료 동작은 엄지 영역에 고정한다.
+  Widget _buildPortraitPhonePage(
+    BuildContext context, {
+    required int total,
+    required int processed,
+    required double progress,
+    required int correct,
+    required int incorrect,
+    required int empty,
+    required int errors,
+    required double score,
+  }) {
+    final scoreValue = (score * 100).round();
+    final statusColor = passed
+        ? const Color(0xFF2E7D57)
+        : const Color(0xFFB5473C);
+
+    return Scaffold(
+      key: const ValueKey('exam-result-portrait-mobile'),
+      backgroundColor: const Color(0xFFF5F5F7),
+      appBar: AppBar(
+        title: const Text(
+          '시험 결과',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: StudentDensityTokens.ink,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: StudentDensityTokens.line),
+        ),
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          children: [
+            Row(
+              children: [
+                _buildMobileStatusPill(statusColor),
+                const Spacer(),
+                if (examId != null && examId!.isNotEmpty)
+                  _ExamIdLabel(examId: examId!),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildMobileScoreCard(
+              score: scoreValue,
+              total: total,
+              correct: correct,
+              incorrect: incorrect,
+              empty: empty,
+              statusColor: statusColor,
+            ),
+            const SizedBox(height: 12),
+            _buildMobileGradingSummary(
+              total: total,
+              processed: processed,
+              progress: progress,
+              errors: errors,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Expanded(
+                  child: Text(
+                    '문항별 결과',
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                ),
+                Text(
+                  '정답 $correct / $total',
+                  style: const TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (results.isEmpty)
+              const _MobileEmptyResult()
+            else
+              ...results.map(
+                (result) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _buildMobileResultTile(context, result),
+                ),
+              ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          key: const ValueKey('exam-result-mobile-footer'),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: StudentDensityTokens.lineStrong),
+            ),
+          ),
+          child: ModuleSubmissionFooter(
+            passed: passed,
+            submissionRequired: moduleSubmissionRequired,
+            initialSubmissionSucceeded: moduleSubmissionSucceeded,
+            onRetry: onRetryModuleSubmission,
+            onComplete: () => Navigator.of(context).pop(true),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileStatusPill(Color color) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .1),
+      borderRadius: BorderRadius.circular(99),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          passed ? Icons.check_circle_rounded : Icons.refresh_rounded,
+          size: 16,
+          color: color,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          passed ? '시험 통과' : '다시 도전',
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildMobileScoreCard({
+    required int score,
+    required int total,
+    required int correct,
+    required int incorrect,
+    required int empty,
+    required Color statusColor,
+  }) => Container(
+    key: const ValueKey('exam-result-mobile-score'),
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: StudentDensityTokens.dark,
+      borderRadius: BorderRadius.circular(28),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          passed ? '잘했어요!' : '조금만 더 연습해요',
+          style: const TextStyle(
+            color: Color(0xFFD4D4D8),
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '$score',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 66,
+                height: .9,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -3.5,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(left: 4, bottom: 4),
+              child: Text(
+                '점',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const Spacer(),
+            Container(
+              width: 10,
+              height: 10,
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: statusColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text('$total문제 중 $correct문제를 맞혔어요', style: _paperMetaStyle),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Divider(height: 1, color: Color(0xFF343438)),
+        ),
+        Row(
+          children: [
+            Expanded(child: _buildMobileScoreStat('정답', correct)),
+            const _MobileStatDivider(),
+            Expanded(child: _buildMobileScoreStat('오답', incorrect)),
+            const _MobileStatDivider(),
+            Expanded(child: _buildMobileScoreStat('미응답', empty)),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildMobileScoreStat(String label, int value) => Column(
+    children: [
+      Text(
+        '$value',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 3),
+      Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFA1A1AA),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
+  );
+
+  Widget _buildMobileGradingSummary({
+    required int total,
+    required int processed,
+    required double progress,
+    required int errors,
+  }) => Container(
+    key: const ValueKey('exam-result-mobile-progress'),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Column(
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.fact_check_outlined, size: 20),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                '채점 완료',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+              ),
+            ),
+            Text(
+              '$processed / $total',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(99),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 7,
+            backgroundColor: const Color(0xFFE8E8EC),
+            valueColor: AlwaysStoppedAnimation(
+              errors > 0 ? const Color(0xFFB5473C) : StudentDensityTokens.dark,
+            ),
+          ),
+        ),
+        if (errors > 0) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '채점 오류 $errors건을 확인해 주세요.',
+              style: const TextStyle(
+                color: Color(0xFFB5473C),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  Widget _buildMobileResultTile(BuildContext context, ExamGradeResult result) {
+    final color = result.isCorrect == true
+        ? const Color(0xFF2E7D57)
+        : result.isCorrect == false
+        ? const Color(0xFFB5473C)
+        : const Color(0xFF71717A);
+    final label = result.empty
+        ? '미응답'
+        : result.error != null
+        ? '채점 오류'
+        : result.isCorrect == true
+        ? '정답'
+        : result.isCorrect == false
+        ? '오답'
+        : '판정 불가';
+
+    return Material(
+      key: ValueKey('exam-result-mobile-question-${result.itemIndex}'),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.fromLTRB(14, 8, 12, 8),
+        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        iconColor: StudentDensityTokens.ink,
+        collapsedIconColor: StudentDensityTokens.muted,
+        leading: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: .1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            result.isCorrect == true
+                ? Icons.check_rounded
+                : result.isCorrect == false
+                ? Icons.close_rounded
+                : Icons.more_horiz_rounded,
+            color: color,
+            size: 22,
+          ),
+        ),
+        title: Text(
+          '${result.itemIndex}번 문제',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        children: [
+          if (result.warnings.isNotEmpty)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7E8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                result.warnings.join(', '),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          if (result.quest != null)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => FlowViewPage(
+                        quest: result.quest!,
+                        title: '문제 ${result.itemIndex} 풀이 흐름',
+                        stepCorrectness: result.stepCorrectness,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.account_tree_outlined, size: 18),
+                label: const Text('풀이 흐름 보기'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: StudentDensityTokens.ink,
+                  side: const BorderSide(
+                    color: StudentDensityTokens.lineStrong,
+                  ),
+                  minimumSize: const Size.fromHeight(44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -352,7 +799,7 @@ class _ExamGradingReportPage extends StatelessWidget {
 
   /// 필요한 변수는 문항 채점 상태와 선택적인 풀이 데이터다.
   /// 작동 원리: 정오답을 아이콘과 텍스트로 함께 제공하고, Flow 데이터가 있을 때만 분석 화면 진입을 허용한다.
-  Widget _buildResultTile(BuildContext context, _GradeResult result) {
+  Widget _buildResultTile(BuildContext context, ExamGradeResult result) {
     final statusLabel = result.empty
         ? '미응답'
         : result.error != null
@@ -481,6 +928,41 @@ class _ExamGradingReportPage extends StatelessWidget {
   }
 }
 
+class _MobileStatDivider extends StatelessWidget {
+  const _MobileStatDivider();
+
+  @override
+  Widget build(BuildContext context) =>
+      Container(width: 1, height: 34, color: const Color(0xFF343438));
+}
+
+class _MobileEmptyResult extends StatelessWidget {
+  const _MobileEmptyResult();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: const Column(
+      children: [
+        Icon(Icons.inbox_outlined, color: StudentDensityTokens.muted),
+        SizedBox(height: 8),
+        Text(
+          '표시할 문항별 결과가 없습니다.',
+          style: TextStyle(
+            color: StudentDensityTokens.muted,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 /// 필요한 변수는 시험 식별자 문자열이다.
 /// 작동 원리: 긴 식별자는 앞부분만 표시해 상단 정보 계층을 방해하지 않도록 한다.
 class _ExamIdLabel extends StatelessWidget {
@@ -552,6 +1034,7 @@ class _ModuleSubmissionFooterState extends State<ModuleSubmissionFooter> {
     final blockedBySubmission =
         widget.passed && widget.submissionRequired && !_submissionSucceeded;
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (blockedBySubmission) ...[
