@@ -180,3 +180,7 @@ def test_study_group_create_and_list_contract(monkeypatch):
         assert listed.status_code == 200
         assert [group["group_id"] for group in listed.json()["groups"]] == [created.json()["group_id"]]
         assert listed.json()["groups"][0]["name"] == "매일 수학"
+
+        members = client.get(f"/social/study-groups/{created.json()['group_id']}/members", headers=alice)
+        assert members.status_code == 200
+        assert members.json() == [{"user_id": "user-alice", "username": "alice01"}]

@@ -2537,6 +2537,20 @@ def _social_kv_value(row: dict[str, Any]) -> dict[str, Any] | None:
     return dict(decoded) if isinstance(decoded, dict) else None
 
 
+def _social_group_for_user(user_id: str, group_id: str) -> dict[str, Any] | None:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "key,value",
+            "user_id": f"eq.{user_id}",
+            "key": f"eq.{_SOCIAL_GROUP_PREFIX}{group_id}",
+            "limit": "1",
+        },
+    ) or []
+    return _social_kv_value(dict(rows[0])) if rows else None
+
+
 def _social_upsert_kv(user_id: str, key: str, value: dict[str, Any]) -> None:
     _social_data_request(
         "POST",
@@ -2810,6 +2824,20 @@ def list_my_study_groups(user_id: str = Depends(_current_user)) -> dict[str, lis
         groups.append({key: item for key, item in value.items() if key not in {"password_salt", "password_hash"}})
     groups.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
     return {"groups": groups}
+
+
+@app.get("/social/study-groups/{group_id}/members")
+def list_study_group_members(group_id: str, user_id: str = Depends(_current_user)) -> list[dict[str, str]]:
+    """필요 변수: 인증 사용자와 소속 그룹 ID. 작동 원리: 사용자 KV의 그룹 멤버 ID를 공개 프로필로 복원한다."""
+    group = _social_group_for_user(user_id, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    members: list[dict[str, str]] = []
+    for member_id in group.get("member_ids") or []:
+        profile = _social_user_by_id(str(member_id))
+        if profile:
+            members.append({"user_id": str(member_id), "username": str(profile.get("username") or member_id)})
+    return members
 
 
 @app.get("/social/study-groups/notices/my/system")
