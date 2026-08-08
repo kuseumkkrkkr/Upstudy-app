@@ -1234,6 +1234,22 @@ class _LearningSection extends StatelessWidget {
         : activeCourse!.isDemo
         ? '체험 전용 코스'
         : '진행률 $progressPercent%';
+    final hasTodayTasks = todayTasks.isNotEmpty;
+    final nextActionTitle = hasTodayTasks
+        ? '오늘 할 일 ${todayTasks.length}개 확인'
+        : activeCourse != null
+        ? '$courseTitle 이어하기'
+        : '내 학습 시작하기';
+    final nextActionDescription = hasTodayTasks
+        ? todayTasks.first.title
+        : activeCourse != null
+        ? '현재 진행률 $progressPercent%에서 계속해요.'
+        : '목표에 맞는 학습 모드를 선택해요.';
+    final VoidCallback nextActionTap = hasTodayTasks
+        ? onTodayTasksTap
+        : activeCourse != null
+        ? onCourseTap
+        : () => showStudyModeModal(context: context);
 
     /// 필요한 변수는 도구별 이동 콜백이다.
     /// 작동 원리: HTML 학습 도구 카드의 네 빠른 실행을 기존 기능 화면과 연결한다.
@@ -1379,7 +1395,11 @@ class _LearningSection extends StatelessWidget {
               children: [
                 _LearnBanner(
                   portraitMobile: portraitMobile,
-                  onTap: () => showStudyModeModal(context: context),
+                  title: portraitMobile ? nextActionTitle : null,
+                  description: portraitMobile ? nextActionDescription : null,
+                  onTap: portraitMobile
+                      ? nextActionTap
+                      : () => showStudyModeModal(context: context),
                 ),
                 const SizedBox(height: 12),
                 if (portraitMobile)
@@ -1396,10 +1416,16 @@ class _LearningSection extends StatelessWidget {
                         onTodayTasksTap: onTodayTasksTap,
                       ),
                       const SizedBox(height: 24),
-                      _MobileHomeActionJourney(
-                        onStartTap: () => showStudyModeModal(context: context),
-                        onCourseTap: onCourseTap,
-                        onTodayTasksTap: onTodayTasksTap,
+                      Material(
+                        key: const ValueKey(
+                          'student-home-mobile-practical-tools',
+                        ),
+                        color: Colors.white,
+                        elevation: 4,
+                        shadowColor: Colors.black.withValues(alpha: 0.13),
+                        borderRadius: BorderRadius.circular(24),
+                        clipBehavior: Clip.antiAlias,
+                        child: toolCard,
                       ),
                     ],
                   )
@@ -1411,8 +1437,7 @@ class _LearningSection extends StatelessWidget {
                       statusCards[1],
                     ],
                   ),
-                // 모바일 도구와 코스 진입은 하단 `더보기`와 위 상태 행에서 제공한다.
-                // 중복 진입점을 제거해 홈은 학습 시작과 오늘 상태에만 집중한다.
+                // 세로 모바일은 위의 실제 도구 그룹을 사용하고, 넓은 화면은 기존 모듈 그리드를 유지한다.
                 if (!portraitMobile) ...[
                   const SizedBox(height: 12),
                   moduleGrid,
@@ -1496,160 +1521,6 @@ class _MobileHomeStatusGroup extends StatelessWidget {
       ],
     ),
   );
-}
-
-class _MobileHomeActionJourney extends StatelessWidget {
-  const _MobileHomeActionJourney({
-    required this.onStartTap,
-    required this.onCourseTap,
-    required this.onTodayTasksTap,
-  });
-
-  final VoidCallback onStartTap;
-  final VoidCallback onCourseTap;
-  final VoidCallback onTodayTasksTap;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    key: const ValueKey('student-home-mobile-action-journey'),
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Padding(
-        padding: EdgeInsets.only(left: 2, bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '오늘의 학습 루트',
-              style: TextStyle(
-                fontSize: 23,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.8,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              '순서대로 눌러도 되고, 필요한 단계부터 시작해도 돼요.',
-              style: TextStyle(
-                color: StudentDensityTokens.muted,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-      _MobileHomeJourneyCard(
-        step: '01',
-        title: '10분 학습 시작',
-        description: '지금 풀 수 있는 학습 모드를 바로 선택해요.',
-        icon: Icons.bolt_rounded,
-        dark: true,
-        onTap: onStartTap,
-      ),
-      Padding(
-        padding: const EdgeInsets.only(left: 12, top: 10),
-        child: _MobileHomeJourneyCard(
-          step: '02',
-          title: '코스 이어가기',
-          description: '마지막으로 공부한 위치에서 계속해요.',
-          icon: Icons.play_circle_outline_rounded,
-          onTap: onCourseTap,
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.only(left: 24, top: 10),
-        child: _MobileHomeJourneyCard(
-          step: '03',
-          title: '오늘 할 일 확인',
-          description: '마감 전에 끝낼 과제를 한 번에 확인해요.',
-          icon: Icons.task_alt_rounded,
-          onTap: onTodayTasksTap,
-        ),
-      ),
-    ],
-  );
-}
-
-class _MobileHomeJourneyCard extends StatelessWidget {
-  const _MobileHomeJourneyCard({
-    required this.step,
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.onTap,
-    this.dark = false,
-  });
-
-  final String step;
-  final String title;
-  final String description;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool dark;
-
-  @override
-  Widget build(BuildContext context) {
-    final foreground = dark ? Colors.white : StudentDensityTokens.ink;
-    return Material(
-      color: dark ? StudentDensityTokens.darkSecondary : Colors.white,
-      elevation: dark ? 9 : 4,
-      shadowColor: Colors.black.withValues(alpha: dark ? 0.24 : 0.13),
-      borderRadius: BorderRadius.circular(22),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: dark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : StudentDensityTokens.surfaceMuted,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: foreground, size: 24),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$step  $title',
-                      style: TextStyle(
-                        color: foreground,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        color: dark
-                            ? Colors.white.withValues(alpha: 0.68)
-                            : StudentDensityTokens.muted,
-                        fontSize: 12,
-                        height: 1.4,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.arrow_forward_rounded, color: foreground, size: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// 필요한 변수는 상태 아이콘·이름·값·이동 콜백이다.
@@ -1936,9 +1807,16 @@ class _InlineCta extends StatelessWidget {
 }
 
 class _LearnBanner extends StatelessWidget {
-  const _LearnBanner({this.onTap, this.portraitMobile = false});
+  const _LearnBanner({
+    this.onTap,
+    this.portraitMobile = false,
+    this.title,
+    this.description,
+  });
   final VoidCallback? onTap;
   final bool portraitMobile;
+  final String? title;
+  final String? description;
 
   @override
   Widget build(BuildContext context) {
@@ -1952,7 +1830,7 @@ class _LearnBanner extends StatelessWidget {
       width: double.infinity,
       constraints: BoxConstraints(
         minHeight: portraitMobile
-            ? 94
+            ? 118
             : mobile
             ? 118
             : 150,
@@ -2003,7 +1881,7 @@ class _LearnBanner extends StatelessWidget {
                         const SizedBox(height: 3),
                       ],
                       Text(
-                        portraitMobile ? '학습 시작' : '학습하기',
+                        title ?? (portraitMobile ? '학습 시작' : '학습하기'),
                         style: TextStyle(
                           fontSize: portraitMobile
                               ? 26
@@ -2015,12 +1893,15 @@ class _LearnBanner extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      if (!portraitMobile) ...[
+                      if (description != null || !portraitMobile) ...[
                         const SizedBox(height: 7),
-                        const Text(
-                          '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
-                          style: TextStyle(
+                        Text(
+                          description ?? '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
+                          maxLines: portraitMobile ? 2 : 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
                             fontSize: 13,
+                            height: 1.35,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFFAFAFB6),
                           ),
@@ -2048,7 +1929,9 @@ class _LearnBanner extends StatelessWidget {
                     ),
                   ),
                   child: Icon(
-                    Icons.play_arrow_rounded,
+                    portraitMobile
+                        ? Icons.arrow_forward_rounded
+                        : Icons.play_arrow_rounded,
                     color: StudentDensityTokens.dark,
                     size: portraitMobile ? 28 : 31,
                   ),

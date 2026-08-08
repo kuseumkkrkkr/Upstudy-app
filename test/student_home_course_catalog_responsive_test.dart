@@ -139,7 +139,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('학습 시작'), findsOneWidget);
+    expect(find.text('내 학습 시작하기'), findsOneWidget);
     expect(find.text('현재 코스'), findsOneWidget);
     expect(find.text('오늘 할 일'), findsOneWidget);
     expect(find.text('학습 현황'), findsOneWidget);
@@ -147,8 +147,13 @@ void main() {
     expect(find.text('업적'), findsOneWidget);
     expect(find.text('공지'), findsOneWidget);
     expect(find.text('AIFlow'), findsNothing);
-    expect(find.text('빠른 도구'), findsNothing);
-    expect(find.text('02  코스 이어가기'), findsOneWidget);
+    expect(find.text('학습 도구'), findsOneWidget);
+    expect(find.text('빠른 실행'), findsOneWidget);
+    expect(find.text('노트패드'), findsOneWidget);
+    expect(find.text('타이머'), findsOneWidget);
+    expect(find.text('집중 모드'), findsOneWidget);
+    expect(find.text('그래프'), findsOneWidget);
+    expect(find.text('오늘의 학습 루트'), findsNothing);
     expect(find.text('일정 달력'), findsNothing);
     expect(find.text('도전과제 / 업적'), findsNothing);
     expect(find.text('공지사항'), findsNothing);
@@ -177,12 +182,12 @@ void main() {
     expect(insightsRect.left, closeTo(learnRect.left, 0.1));
     expect(statusRect.width, closeTo(learnRect.width, 0.1));
     expect(insightsRect.width, closeTo(learnRect.width, 0.1));
-    expect(learnRect.height, lessThanOrEqualTo(100));
+    expect(learnRect.height, lessThanOrEqualTo(130));
     expect(find.text('이어 하거나 새로 시작'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('세로 모바일 홈은 3단계 학습 루트와 실제 스크롤을 제공한다', (tester) async {
+  testWidgets('세로 모바일 홈은 실제 학습 도구와 스크롤을 제공한다', (tester) async {
     await _pumpAt(
       tester,
       const Size(390, 844),
@@ -191,12 +196,17 @@ void main() {
     await tester.pump();
 
     expect(
-      find.byKey(const ValueKey('student-home-mobile-action-journey')),
+      find.byKey(const ValueKey('student-home-mobile-practical-tools')),
       findsOneWidget,
     );
-    expect(find.text('01  10분 학습 시작'), findsOneWidget);
-    expect(find.text('02  코스 이어가기'), findsOneWidget);
-    expect(find.text('03  오늘 할 일 확인'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('student-home-mobile-action-journey')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('learning-tools-mobile-group')),
+      findsOneWidget,
+    );
 
     final scrollable = tester.state<ScrollableState>(
       find.byType(Scrollable).first,
@@ -211,7 +221,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('학습 루트는 데스크톱 홈에 추가되지 않는다', (tester) async {
+  testWidgets('모바일 실용 도구 그룹은 데스크톱 홈에 추가되지 않는다', (tester) async {
     await _pumpAt(
       tester,
       const Size(1280, 900),
@@ -220,7 +230,7 @@ void main() {
     await tester.pump();
 
     expect(
-      find.byKey(const ValueKey('student-home-mobile-action-journey')),
+      find.byKey(const ValueKey('student-home-mobile-practical-tools')),
       findsNothing,
     );
     expect(tester.takeException(), isNull);
