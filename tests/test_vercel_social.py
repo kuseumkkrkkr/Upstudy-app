@@ -23,7 +23,9 @@ class _FakeSocialDataApi:
             return self._users(query)
         assert path == "canary_user_kv"
         if method == "POST":
-            self.kv[(body["user_id"], body["key"])] = body["value"]
+            rows = body if isinstance(body, list) else [body]
+            for row in rows:
+                self.kv[(row["user_id"], row["key"])] = row["value"]
             return None
         user_id = query.get("user_id", "").removeprefix("eq.")
         key_filter = query.get("key", "")
@@ -132,6 +134,20 @@ def test_friend_search_request_accept_and_remove(monkeypatch):
         assert client.get("/social/friend-requests", headers=alice).json()["requests"] == []
         assert client.get("/social/friend-requests", headers=bob).json()["requests"] == []
 
+        sent = client.post(
+            "/social/messages",
+            headers=alice,
+            json={"peer": "bob0001", "text": "수락 확인 메시지"},
+        )
+        assert sent.status_code == 200
+        assert sent.json()["is_mine"] is True
+        alice_messages = client.get("/social/messages", headers=alice, params={"peer": "bob0001"})
+        bob_messages = client.get("/social/messages", headers=bob, params={"peer": "alice01"})
+        assert [item["text"] for item in alice_messages.json()["messages"]] == ["수락 확인 메시지"]
+        assert bob_messages.json()["messages"][0]["is_mine"] is False
+        assert client.get("/social/conversations", headers=alice).json()["messages"][0]["to"] == "bob0001"
+        assert client.get("/social/conversations", headers=bob).json()["messages"][0]["from"] == "alice01"
+
         duplicate = client.post("/social/friend-requests", headers=alice, json={"username": "bob0001"})
         assert duplicate.status_code == 409
         removed = client.post("/social/friends/remove", headers=alice, json={"username": "bob0001"})
@@ -159,6 +175,13 @@ def test_friend_request_guards_and_cancel(monkeypatch):
         assert client.get("/social/friend-requests", headers=alice).json()["requests"] == []
         assert client.get("/social/friend-requests", headers=bob).json()["requests"] == []
         assert all("friend_request" not in key for _, key in fake.kv)
+
+        blocked = client.post(
+            "/social/messages",
+            headers=alice,
+            json={"peer": "bob0001", "text": "친구 전 메시지"},
+        )
+        assert blocked.status_code == 403
 
 
 def test_study_group_create_and_list_contract(monkeypatch):

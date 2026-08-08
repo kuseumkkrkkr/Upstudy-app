@@ -678,6 +678,13 @@ class FriendTargetRequest(BaseModel):
     username: str = Field(min_length=1, max_length=16)
 
 
+class DirectMessageCreateRequest(BaseModel):
+    """필요 변수: 친구 사용자명과 쪽지 본문. 작동 원리: 직접 메시지 입력 크기를 API 경계에서 제한한다."""
+
+    peer: str = Field(min_length=1, max_length=16)
+    text: str = Field(min_length=1, max_length=2000)
+
+
 class StudyGroupCreateRequest(BaseModel):
     """필요 변수: 그룹명·소개·정원과 선택 잠금 정보. 작동 원리: 웹 입력 경계에서 그룹 생성 계약을 제한한다."""
 
@@ -2583,6 +2590,9 @@ _SOCIAL_REQUEST_IN_PREFIX = "social.friend_request.in."
 _SOCIAL_REQUEST_OUT_PREFIX = "social.friend_request.out."
 _SOCIAL_GROUP_PREFIX = "social.study_group."
 _SOCIAL_GROUP_MEMBER_PREFIX = "social.study_member."
+_SOCIAL_MESSAGE_PREFIX = "social.message."
+_SOCIAL_CONVERSATION_PREFIX = "social.conversation."
+_SOCIAL_MESSAGE_LIMIT = 200
 
 
 def _social_data_request(method: str, path: str, **kwargs: Any) -> Any:
@@ -2631,7 +2641,7 @@ def _social_user_by_id(user_id: str) -> dict[str, Any] | None:
     return dict(rows[0]) if rows else None
 
 
-def _social_kv_rows(user_id: str, prefix: str) -> list[dict[str, Any]]:
+def _social_kv_rows(user_id: str, prefix: str, *, limit: int = 200) -> list[dict[str, Any]]:
     rows = _social_data_request(
         "GET",
         "canary_user_kv",
@@ -2639,7 +2649,7 @@ def _social_kv_rows(user_id: str, prefix: str) -> list[dict[str, Any]]:
             "select": "key,value",
             "user_id": f"eq.{user_id}",
             "key": f"like.{prefix}*",
-            "limit": "200",
+            "limit": str(max(1, min(limit, 1000))),
         },
     ) or []
     return [dict(row) for row in rows]
@@ -2761,6 +2771,24 @@ def _social_upsert_kv(user_id: str, key: str, value: dict[str, Any]) -> None:
     )
 
 
+def _social_upsert_kv_rows(rows: list[tuple[str, str, dict[str, Any]]]) -> None:
+    """필요 변수: 여러 사용자 KV 행. 작동 원리: 한 PostgREST 요청으로 송수신 메시지와 대화 요약을 함께 커밋한다."""
+    _social_data_request(
+        "POST",
+        "canary_user_kv",
+        query={"on_conflict": "user_id,key"},
+        body=[
+            {
+                "user_id": user_id,
+                "key": key,
+                "value": json.dumps(value, ensure_ascii=False, separators=(",", ":")),
+            }
+            for user_id, key, value in rows
+        ],
+        prefer="resolution=merge-duplicates,return=minimal",
+    )
+
+
 def _social_delete_kv(user_id: str, key: str) -> None:
     _social_data_request(
         "DELETE",
@@ -2805,6 +2833,34 @@ def _social_request_response(value: dict[str, Any]) -> dict[str, Any]:
         "message": value.get("message"),
         "created_at": value.get("created_at"),
     }
+
+
+def _social_message_response(value: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: 사용자별 메시지 KV. 작동 원리: Flutter DirectMessage 계약의 공개 필드만 반환한다."""
+    return {
+        "id": str(value.get("id") or value.get("message_id") or ""),
+        "from": str(value.get("from") or ""),
+        "to": str(value.get("to") or ""),
+        "text": str(value.get("text") or ""),
+        "created_at": str(value.get("created_at") or ""),
+        "is_mine": value.get("is_mine") is True,
+    }
+
+
+def _social_trim_messages(user_id: str, peer_id: str) -> None:
+    """필요 변수: 사용자·대화 상대 ID. 작동 원리: 최신 200개를 넘는 사용자별 쪽지만 오래된 순서로 제거한다."""
+    prefix = f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}."
+    rows = _social_kv_rows(user_id, prefix, limit=_SOCIAL_MESSAGE_LIMIT + 1)
+    if len(rows) <= _SOCIAL_MESSAGE_LIMIT:
+        return
+    decoded = [
+        (str((_social_kv_value(row) or {}).get("created_at") or ""), str(row.get("key") or ""))
+        for row in rows
+    ]
+    decoded.sort()
+    for _, key in decoded[: len(decoded) - _SOCIAL_MESSAGE_LIMIT]:
+        if key:
+            _social_delete_kv(user_id, key)
 
 
 @app.post("/social/friends/search")
@@ -2916,12 +2972,20 @@ def accept_friend_request(request_id: str, user_id: str = Depends(_current_user)
     if not peer:
         raise HTTPException(status_code=404, detail="User not found")
     created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-    _social_upsert_kv(user_id, f"{_SOCIAL_FRIEND_PREFIX}{peer_id}", {"friend_id": peer_id, "created_at": created_at})
-    try:
-        _social_upsert_kv(peer_id, f"{_SOCIAL_FRIEND_PREFIX}{user_id}", {"friend_id": user_id, "created_at": created_at})
-    except HTTPException:
-        _social_delete_kv(user_id, f"{_SOCIAL_FRIEND_PREFIX}{peer_id}")
-        raise
+    _social_upsert_kv_rows(
+        [
+            (
+                user_id,
+                f"{_SOCIAL_FRIEND_PREFIX}{peer_id}",
+                {"friend_id": peer_id, "created_at": created_at},
+            ),
+            (
+                peer_id,
+                f"{_SOCIAL_FRIEND_PREFIX}{user_id}",
+                {"friend_id": user_id, "created_at": created_at},
+            ),
+        ]
+    )
     _social_delete_kv(user_id, own_request_key)
     _social_delete_kv(peer_id, f"{_SOCIAL_REQUEST_OUT_PREFIX}{user_id}")
     return _social_public_profile(peer)
@@ -2967,10 +3031,116 @@ def list_friend_rankings(_user_id: str = Depends(_current_user)) -> dict[str, li
     return {"ranks": []}
 
 
+@app.get("/social/messages")
+def list_direct_messages(
+    peer: str,
+    limit: int = 30,
+    before: str | None = None,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    """필요 변수: 친구 사용자명·페이지 제한·선택 기준 ID. 작동 원리: 사용자별 KV에서 해당 대화를 시간순으로 반환한다."""
+    peer_user = _social_user_by_username(peer.strip())
+    if not peer_user:
+        raise HTTPException(status_code=404, detail="Peer not found")
+    peer_id = str(peer_user.get("user_id") or "")
+    rows = _social_kv_rows(
+        user_id,
+        f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}.",
+        limit=_SOCIAL_MESSAGE_LIMIT,
+    )
+    messages = [value for row in rows if (value := _social_kv_value(row))]
+    messages.sort(key=lambda item: (str(item.get("created_at") or ""), str(item.get("id") or "")))
+    if before:
+        before_index = next(
+            (index for index, item in enumerate(messages) if str(item.get("id") or "") == before),
+            len(messages),
+        )
+        messages = messages[:before_index]
+    bounded_limit = max(1, min(limit, 100))
+    return {"messages": [_social_message_response(item) for item in messages[-bounded_limit:]]}
+
+
+@app.post("/social/messages")
+def send_direct_message(
+    payload: DirectMessageCreateRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 인증 사용자·친구 사용자명·본문. 작동 원리: 송수신 메시지와 양쪽 대화 요약을 한 번의 DB 요청으로 저장한다."""
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+    peer = _social_user_by_username(payload.peer.strip())
+    if not peer:
+        raise HTTPException(status_code=404, detail="Peer not found")
+    peer_id = str(peer.get("user_id") or "")
+    if peer_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot message yourself")
+    if not _social_has_key(user_id, f"{_SOCIAL_FRIEND_PREFIX}{peer_id}"):
+        raise HTTPException(status_code=403, detail="Friends only")
+    current = _social_user_by_id(user_id)
+    if not current:
+        raise HTTPException(status_code=404, detail="Current user not found")
+
+    sender = str(current.get("username") or "")
+    receiver = str(peer.get("username") or "")
+    message_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+    suffix = f"{time.time_ns():020d}.{message_id}"
+    common = {
+        "id": message_id,
+        "message_id": message_id,
+        "from": sender,
+        "to": receiver,
+        "text": text,
+        "created_at": created_at,
+    }
+    sender_message = {**common, "peer_id": peer_id, "is_mine": True}
+    receiver_message = {**common, "peer_id": user_id, "is_mine": False}
+    _social_upsert_kv_rows(
+        [
+            (user_id, f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}.{suffix}", sender_message),
+            (peer_id, f"{_SOCIAL_MESSAGE_PREFIX}{user_id}.{suffix}", receiver_message),
+            (user_id, f"{_SOCIAL_CONVERSATION_PREFIX}{peer_id}", sender_message),
+            (peer_id, f"{_SOCIAL_CONVERSATION_PREFIX}{user_id}", receiver_message),
+        ]
+    )
+    _social_trim_messages(user_id, peer_id)
+    _social_trim_messages(peer_id, user_id)
+    return _social_message_response(sender_message)
+
+
+@app.post("/social/messages/{peer}/delete")
+def delete_direct_message_thread(peer: str, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    """필요 변수: 인증 사용자와 대화 상대. 작동 원리: 요청한 사용자의 메시지 사본과 대화 요약만 제거한다."""
+    peer_user = _social_user_by_username(peer.strip())
+    if not peer_user:
+        raise HTTPException(status_code=404, detail="Peer not found")
+    peer_id = str(peer_user.get("user_id") or "")
+    for row in _social_kv_rows(user_id, f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}.", limit=_SOCIAL_MESSAGE_LIMIT):
+        key = str(row.get("key") or "")
+        if key:
+            _social_delete_kv(user_id, key)
+    _social_delete_kv(user_id, f"{_SOCIAL_CONVERSATION_PREFIX}{peer_id}")
+    return {"status": "deleted"}
+
+
 @app.get("/social/conversations")
-def list_conversations(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 대화가 없는 초기 상태를 반환한다."""
-    return {"messages": []}
+def list_conversations(
+    limit: int = 15,
+    before: str | None = None,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 페이지 기준. 작동 원리: 상대별 최신 대화 요약을 최근순으로 반환한다."""
+    summaries = [
+        value
+        for row in _social_kv_rows(user_id, _SOCIAL_CONVERSATION_PREFIX)
+        if (value := _social_kv_value(row))
+    ]
+    if before:
+        summaries = [item for item in summaries if str(item.get("created_at") or "") < before]
+    summaries.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    bounded_limit = max(1, min(limit, 100))
+    return {"messages": [_social_message_response(item) for item in summaries[:bounded_limit]]}
 
 
 @app.post("/social/study-groups", status_code=status.HTTP_201_CREATED)

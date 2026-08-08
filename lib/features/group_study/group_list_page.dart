@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
@@ -19,6 +20,9 @@ class GroupListPage extends StatefulWidget {
 
 class _GroupListPageState extends State<GroupListPage> {
   List<StudyGroup> _groups = const [];
+  List<FriendRank> _friendRanks = const [];
+  List<TagRating> _tagRatings = const [];
+  UserRating? _rating;
   bool _loading = true;
   String? _error;
 
@@ -58,9 +62,29 @@ class _GroupListPageState extends State<GroupListPage> {
     });
     try {
       final groups = await ApiClient.instance.listStudyGroups();
+      final social = await Future.wait<Object>([
+        ApiClient.instance.fetchFriendRankings().onError(
+          (_, _) => const <FriendRank>[],
+        ),
+        ApiClient.instance.fetchTagRatings().onError(
+          (_, _) => const <TagRating>[],
+        ),
+        ApiClient.instance.fetchUserRating().onError(
+          (_, _) => const UserRating(
+            rating: 0,
+            ovr: 0,
+            ovrDelta: 0,
+            recentAccuracy: 0,
+            loseStreak: 0,
+          ),
+        ),
+      ]);
       if (!mounted) return;
       setState(() {
         _groups = groups;
+        _friendRanks = social[0] as List<FriendRank>;
+        _tagRatings = social[1] as List<TagRating>;
+        _rating = social[2] as UserRating;
       });
     } catch (e) {
       if (!mounted) return;
@@ -124,6 +148,242 @@ class _GroupListPageState extends State<GroupListPage> {
     );
   }
 
+  BoxDecoration _mobileCardDecoration({Color color = Colors.white}) =>
+      BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE0E0E3)),
+      );
+
+  /// 필요한 변수는 그룹 로딩·목록과 찾기·생성 동작이다.
+  /// 작동 원리는 모바일 그룹 전용 카드 안에 핵심 행동과 현재 그룹만 배치한다.
+  Widget _buildMobileActiveGroupsCard() => Container(
+    key: const ValueKey('mobile-active-groups-card'),
+    clipBehavior: Clip.antiAlias,
+    decoration: _mobileCardDecoration(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '지금 활동 중인 그룹',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '그룹 문제풀기 · 시험지 · 채팅',
+                style: TextStyle(fontSize: 12, color: Colors.black45),
+              ),
+              const SizedBox(height: 14),
+              _MobileGroupActions(
+                onFind: _openFindSheet,
+                onCreate: _openCreateDialog,
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.all(28),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_error != null)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _GroupLoadError(message: _error!, onRetry: _load),
+          )
+        else if (_groups.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 18, vertical: 28),
+            child: Center(
+              child: Text(
+                '참여 중인 그룹이 없습니다.',
+                style: TextStyle(fontSize: 13, color: Colors.black45),
+              ),
+            ),
+          )
+        else
+          for (var index = 0; index < _groups.length; index++)
+            _GroupRow(group: _groups[index], index: index),
+      ],
+    ),
+  );
+
+  Widget _buildMobileStudyTogetherCard() => Container(
+    key: const ValueKey('mobile-study-together-card'),
+    padding: const EdgeInsets.all(16),
+    decoration: _mobileCardDecoration(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          '함께 학습하기',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          '문제 · 답안 제외 시험지 · Flow',
+          style: TextStyle(fontSize: 12, color: Colors.black45),
+        ),
+        const SizedBox(height: 14),
+        FilledButton.icon(
+          onPressed: _groups.isEmpty
+              ? _openFindSheet
+              : () => Navigator.pushNamed(
+                  context,
+                  '/group/detail',
+                  arguments: _groups.first.groupId,
+                ),
+          icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+          label: Text(_groups.isEmpty ? '그룹 찾기' : '그룹 공간 열기'),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF202022),
+            minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildMobileRankingCard() => Container(
+    key: const ValueKey('mobile-friend-ranking-card'),
+    padding: const EdgeInsets.all(16),
+    decoration: _mobileCardDecoration(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'FRIEND OVR RANKING',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.5,
+            color: Colors.black54,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (_friendRanks.isEmpty)
+          const SizedBox(
+            height: 72,
+            child: Center(
+              child: Text(
+                '표시할 친구 랭킹이 없습니다.',
+                style: TextStyle(fontSize: 13, color: Colors.black45),
+              ),
+            ),
+          )
+        else
+          for (final rank in _friendRanks.take(3))
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              leading: CircleAvatar(
+                backgroundColor: const Color(0xFF202022),
+                foregroundColor: Colors.white,
+                child: Text(rank.username.isEmpty ? 'F' : rank.username[0]),
+              ),
+              title: Text(
+                '${rank.rank}. ${rank.username}',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              trailing: Text('OVR ${rank.visibleOvr.toStringAsFixed(1)}'),
+            ),
+      ],
+    ),
+  );
+
+  String _ratingTier(double rating) {
+    if (rating <= 0 || rating.isNaN) return '--';
+    if (rating >= 2000) return 'A';
+    if (rating >= 1750) return 'B';
+    if (rating >= 1500) return 'C';
+    if (rating >= 1000) return 'D';
+    return 'E';
+  }
+
+  Widget _buildMobileRatingCard() {
+    final rating = _rating;
+    final strong = [..._tagRatings]
+      ..sort((a, b) => b.rating.compareTo(a.rating));
+    final rising = [..._tagRatings]..sort((a, b) => b.delta.compareTo(a.delta));
+    final falling = [..._tagRatings]
+      ..sort((a, b) => a.delta.compareTo(b.delta));
+    final tier = _ratingTier(rating?.rating ?? 0);
+    final delta = rating?.ovrDelta ?? 0;
+    return Container(
+      key: const ValueKey('mobile-my-rating-card'),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF171719),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'MY RATING',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 10,
+              letterSpacing: 1.5,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            (rating?.ovr ?? 0).toStringAsFixed(1),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 38,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            '$tier Tier · 전날 대비 ${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}',
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _MobileRatingMetric('강점', strong.firstOrNull?.tag),
+              ),
+              Expanded(
+                child: _MobileRatingMetric('상승', rising.firstOrNull?.tag),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _MobileRatingMetric('약점', strong.lastOrNull?.tag),
+              ),
+              Expanded(
+                child: _MobileRatingMetric('하락', falling.firstOrNull?.tag),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: () => showRatingDetailModal(context: context),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              minimumSize: const Size.fromHeight(46),
+            ),
+            child: const Text('내 평점 상세'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 필요한 변수는 내 그룹 상태와 현재 화면 폭이다.
   /// 작동 원리는 780px 이하에서는 전폭 세로 흐름을, PC에서는 제한된 본문 폭 안의 헤더·목록 카드를 사용한다.
   @override
@@ -132,6 +392,16 @@ class _GroupListPageState extends State<GroupListPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: mobile ? null : const AppDrawer(),
+      appBar: mobile
+          ? AppBar(
+              title: const Text(
+                '활동 중인 그룹',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+              backgroundColor: const Color(0xFFF4F4F6),
+              surfaceTintColor: Colors.transparent,
+            )
+          : null,
       bottomNavigationBar: mobile
           ? const MobileStudentBottomAppBar(activeRoute: '/groups')
           : null,
@@ -172,16 +442,14 @@ class _GroupListPageState extends State<GroupListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (mobile) ...[
-                            const _GroupListHeading(
-                              fontSize: 32,
-                              compact: true,
-                            ),
-                            const SizedBox(height: 16),
-                            _MobileGroupActions(
-                              onFind: _openFindSheet,
-                              onCreate: _openCreateDialog,
-                            ),
-                          ] else
+                            _buildMobileActiveGroupsCard(),
+                            const SizedBox(height: 12),
+                            _buildMobileStudyTogetherCard(),
+                            const SizedBox(height: 12),
+                            _buildMobileRankingCard(),
+                            const SizedBox(height: 12),
+                            _buildMobileRatingCard(),
+                          ] else ...[
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
@@ -200,8 +468,7 @@ class _GroupListPageState extends State<GroupListPage> {
                                 ),
                               ],
                             ),
-                          SizedBox(height: mobile ? 26 : 22),
-                          if (!mobile) ...[
+                            const SizedBox(height: 22),
                             const Text(
                               'CONTINUE TOGETHER',
                               style: TextStyle(
@@ -212,21 +479,21 @@ class _GroupListPageState extends State<GroupListPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                          ],
-                          const Text(
-                            '내 그룹',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
+                            const Text(
+                              '내 그룹',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          if (_loading)
-                            const Center(child: CircularProgressIndicator())
-                          else if (_error != null)
-                            _GroupLoadError(message: _error!, onRetry: _load)
-                          else
-                            _GroupListCard(groups: _groups),
+                            const SizedBox(height: 20),
+                            if (_loading)
+                              const Center(child: CircularProgressIndicator())
+                            else if (_error != null)
+                              _GroupLoadError(message: _error!, onRetry: _load)
+                            else
+                              _GroupListCard(groups: _groups),
+                          ],
                         ],
                       ),
                     ),
@@ -241,11 +508,35 @@ class _GroupListPageState extends State<GroupListPage> {
   }
 }
 
+class _MobileRatingMetric extends StatelessWidget {
+  const _MobileRatingMetric(this.label, this.value);
+
+  final String label;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+      const SizedBox(height: 3),
+      Text(
+        value?.trim().isNotEmpty == true ? '#$value' : '-',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ],
+  );
+}
+
 class _GroupListHeading extends StatelessWidget {
-  const _GroupListHeading({required this.fontSize, this.compact = false});
+  const _GroupListHeading({required this.fontSize});
 
   final double fontSize;
-  final bool compact;
 
   /// 필요한 변수는 반응형 제목 크기와 모바일 축약 여부다.
   /// 작동 원리: 모바일은 영문 표식과 설명을 숨겨 기능명만 남기고 PC는 기존 안내를 유지한다.
@@ -253,29 +544,25 @@ class _GroupListHeading extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      if (!compact) ...[
-        const Text(
-          'GROUP STUDY',
-          style: TextStyle(
-            fontSize: 10,
-            letterSpacing: 1.7,
-            color: Colors.black54,
-            fontWeight: FontWeight.w900,
-          ),
+      const Text(
+        'GROUP STUDY',
+        style: TextStyle(
+          fontSize: 10,
+          letterSpacing: 1.7,
+          color: Colors.black54,
+          fontWeight: FontWeight.w900,
         ),
-        const SizedBox(height: 8),
-      ],
+      ),
+      const SizedBox(height: 8),
       Text(
         '그룹 스터디',
         style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900),
       ),
-      if (!compact) ...[
-        const SizedBox(height: 6),
-        const Text(
-          '내 그룹의 새 학습과 대화를 먼저 확인하고, 필요할 때만 검색하거나 초대 코드로 참가하세요.',
-          style: TextStyle(color: Colors.black45),
-        ),
-      ],
+      const SizedBox(height: 6),
+      const Text(
+        '내 그룹의 새 학습과 대화를 먼저 확인하고, 필요할 때만 검색하거나 초대 코드로 참가하세요.',
+        style: TextStyle(color: Colors.black45),
+      ),
     ],
   );
 }
@@ -289,60 +576,37 @@ class _MobileGroupActions extends StatelessWidget {
   final VoidCallback onCreate;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => Row(
     key: const ValueKey('group-mobile-actions'),
-    padding: const EdgeInsets.all(8),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: SizedBox(
-            height: 52,
-            child: TextButton.icon(
-              onPressed: onFind,
-              icon: const Icon(Icons.key_rounded, size: 19),
-              label: const Text('코드로 참여'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF202022),
-                backgroundColor: const Color(0xFFF4F4F6),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
+    children: [
+      Expanded(
+        child: SizedBox(
+          height: 46,
+          child: OutlinedButton(
+            onPressed: onFind,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF202022),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
+            child: const FittedBox(child: Text('그룹찾기·코드참가')),
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SizedBox(
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: onCreate,
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('그룹 만들기'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF202022),
-                foregroundColor: Colors.white,
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: SizedBox(
+          height: 46,
+          child: FilledButton(
+            onPressed: onCreate,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF202022),
+              foregroundColor: Colors.white,
             ),
+            child: const Text('그룹 만들기'),
           ),
         ),
-      ],
-    ),
+      ),
+    ],
   );
 }
 
@@ -821,7 +1085,7 @@ class _GroupRow extends StatelessWidget {
             ],
             const SizedBox(width: 12),
           ],
-          if (index == 0)
+          if (!isStudentDensityMobile(context) && index == 0)
             Container(
               width: 29,
               height: 29,

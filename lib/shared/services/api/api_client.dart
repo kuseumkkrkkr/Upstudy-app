@@ -2018,7 +2018,7 @@ class ApiClient {
         );
   }
 
-  Future<List<FriendProfile>> listFriends() async {
+  Future<List<FriendProfile>> listFriends({bool forceRefresh = false}) async {
     final res = await _get(
       '/social/friends',
       parser: (d) {
@@ -2028,13 +2028,15 @@ class ApiClient {
           source: 'friend_list',
         );
       },
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(minutes: 1),
     );
     return res.data ?? const [];
   }
 
-  Future<List<FriendRequest>> listFriendRequests() async {
+  Future<List<FriendRequest>> listFriendRequests({
+    bool forceRefresh = false,
+  }) async {
     final res = await _get(
       '/social/friend-requests',
       parser: (d) {
@@ -2044,7 +2046,7 @@ class ApiClient {
           source: 'friend_request_list',
         );
       },
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(minutes: 1),
     );
     return res.data ?? const [];
@@ -5028,6 +5030,7 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<List<DirectMessage>> fetchConversationThreads({
     int limit = 20,
     String? before,
+    bool forceRefresh = false,
   }) async {
     final query = <String, String>{'limit': '$limit'};
     if (before != null && before.isNotEmpty) query['before'] = before;
@@ -5042,7 +5045,7 @@ extension ApiClientLegacyCompat on ApiClient {
           source: 'conversation_threads',
         );
       },
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(seconds: 10),
     );
     return res.data ?? const [];
@@ -5054,11 +5057,13 @@ extension ApiClientLegacyCompat on ApiClient {
     int limit = 50,
     String? before,
     String? beforeMessageId,
+    bool forceRefresh = false,
   }) async {
     final target = peer ?? peerUsername;
     if (target == null || target.isEmpty) return const [];
     final query = <String, String>{'peer': target, 'limit': '$limit'};
-    if (before != null && before.isNotEmpty) query['before'] = before;
+    final cursor = before ?? beforeMessageId;
+    if (cursor != null && cursor.isNotEmpty) query['before'] = cursor;
     final res = await _get(
       '/social/messages',
       query: query,
@@ -5070,7 +5075,7 @@ extension ApiClientLegacyCompat on ApiClient {
           source: 'direct_messages',
         );
       },
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(seconds: 10),
     );
     return res.data ?? const [];

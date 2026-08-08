@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:s11/features/group_study/group_list_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
+import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
 void main() {
@@ -165,7 +167,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('모바일 소셜은 ASCII 카드 순서와 전폭 행동을 유지한다', (tester) async {
+  testWidgets('모바일 친구 소셜과 스터디 그룹은 서로 다른 페이지다', (tester) async {
     tester.view.physicalSize = const Size(390, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -193,7 +195,25 @@ void main() {
       find.byKey(const ValueKey('mobile-friends-status-card')),
       findsOneWidget,
     );
-    expect(find.text('활동 중인 그룹 더보기'), findsOneWidget);
+    expect(find.text('활동 중인 그룹'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('mobile-active-groups-card')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('mobile-study-together-card')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('mobile-friend-ranking-card')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('mobile-my-rating-card')), findsNothing);
+
+    await tester.pumpWidget(
+      const MaterialApp(home: GroupListPage(initialGroups: <Object>[])),
+    );
+    await tester.pump();
     expect(find.text('활동 중인 그룹'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('mobile-active-groups-card')),
@@ -208,6 +228,67 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('mobile-my-rating-card')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('모바일 채팅은 실제 쪽지 API로 전송하고 말풍선을 추가한다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await ApiClient.instance.setToken('direct-message-test-token');
+    final requests = <http.Request>[];
+    ApiClient.instance.setHttpClientForTest(
+      MockClient((request) async {
+        requests.add(request);
+        if (request.method == 'GET') {
+          return http.Response(
+            jsonEncode({'messages': <Object>[]}),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          jsonEncode({
+            'id': 'message-1',
+            'from': 'me',
+            'to': body['peer'],
+            'text': body['text'],
+            'created_at': '2026-08-09T00:00:00Z',
+            'is_mine': true,
+          }),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: StudentDirectChatPage(peerUsername: 'friend01')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('mobile-direct-chat')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('mobile-chat-input')),
+      '같이 공부하자',
+    );
+    await tester.tap(find.byKey(const ValueKey('mobile-chat-send')));
+    await tester.pumpAndSettle();
+
+    expect(
+      requests.any(
+        (request) =>
+            request.method == 'POST' &&
+            request.url.path == '/social/messages' &&
+            request.body.contains('같이 공부하자'),
+      ),
+      isTrue,
+    );
+    expect(find.text('같이 공부하자'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
     expect(tester.takeException(), isNull);
   });
 }

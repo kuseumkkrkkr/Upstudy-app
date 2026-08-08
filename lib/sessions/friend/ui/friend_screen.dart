@@ -436,6 +436,9 @@ class _SoWidgetState extends State<SoWidget> {
   bool _loadingRanks = false;
   bool _loadingGroups = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final Set<String> _sentRequestNames = <String>{};
+  Timer? _socialPollTimer;
+  bool _pollingSocial = false;
 
   // ── 원본과 동일한 lifecycle ──────────────────────────────────
   @override
@@ -487,10 +490,15 @@ class _SoWidgetState extends State<SoWidget> {
     SocialMessageHub.addListener(_handleIncomingDirectMessage);
     SocialWebSocketService.instance.addHandler(_handleSocketEvent);
     unawaited(SocialWebSocketService.instance.connect());
+    _socialPollTimer = Timer.periodic(
+      const Duration(seconds: 4),
+      (_) => unawaited(_pollSocialUpdates()),
+    );
   }
 
   @override
   void dispose() {
+    _socialPollTimer?.cancel();
     SocialWebSocketService.instance.removeHandler(_handleSocketEvent);
     SocialMessageHub.removeListener(_handleIncomingDirectMessage);
     super.dispose();
@@ -501,23 +509,33 @@ class _SoWidgetState extends State<SoWidget> {
     if (_refreshingPage) return;
     _refreshingPage = true;
     try {
+      final legacy = const bool.fromEnvironment('USE_LEGACY_SOCIAL');
       await Future.wait([
         _refreshFriends(),
-        _loadFriendRanks(),
-        _loadMyGroups(),
         _loadFriendRequests(),
         _loadConversationThreads(),
-        _loadTagRatings(),
+        if (legacy) ...[_loadFriendRanks(), _loadMyGroups(), _loadTagRatings()],
       ]);
     } finally {
       _refreshingPage = false;
     }
   }
 
-  Future<void> _refreshFriends() async {
+  Future<void> _refreshFriends({
+    bool forceRefresh = false,
+    bool notifyAccepted = false,
+  }) async {
     try {
-      final profiles = await ApiClient.instance.listFriends();
+      final profiles = await ApiClient.instance.listFriends(
+        forceRefresh: forceRefresh,
+      );
       if (!mounted) return;
+      final acceptedNames = notifyAccepted
+          ? profiles
+                .map((profile) => profile.username)
+                .where((name) => _sentRequestNames.contains(name.toLowerCase()))
+                .toList(growable: false)
+          : const <String>[];
       setState(() {
         _friends = profiles
             .map(
@@ -530,6 +548,13 @@ class _SoWidgetState extends State<SoWidget> {
             .toList();
       });
       _cleanupFulfilledRequests();
+      for (final name in acceptedNames) {
+        _sentRequestNames.remove(name.toLowerCase());
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$name님이 친구 요청을 수락했어요.')));
+      }
     } catch (e, st) {
       debugPrint('_refreshFriends error: $e\n$st');
     }
@@ -622,16 +647,22 @@ class _SoWidgetState extends State<SoWidget> {
     }
   }
 
-  Future<void> _loadFriendRequests() async {
+  Future<void> _loadFriendRequests({bool forceRefresh = false}) async {
     try {
-      final requests = await ApiClient.instance.listFriendRequests();
+      final requests = await ApiClient.instance.listFriendRequests(
+        forceRefresh: forceRefresh,
+      );
       if (mounted) {
-        setState(
-          () => _friendRequests = requests
-              .map(_FriendRequest.fromApi)
-              .where((req) => req.username.isNotEmpty)
-              .toList(),
+        final mapped = requests
+            .map(_FriendRequest.fromApi)
+            .where((req) => req.username.isNotEmpty)
+            .toList();
+        _sentRequestNames.addAll(
+          mapped
+              .where((request) => !request.isIncoming && request.isPending)
+              .map((request) => request.username.toLowerCase()),
         );
+        setState(() => _friendRequests = mapped);
       }
     } catch (e, st) {
       debugPrint('_loadFriendRequests error: $e\n$st');
@@ -680,13 +711,19 @@ class _SoWidgetState extends State<SoWidget> {
     _syncNotificationCounts();
   }
 
-  Future<void> _loadConversationThreads({bool loadMore = false}) async {
+  Future<void> _loadConversationThreads({
+    bool loadMore = false,
+    bool forceRefresh = false,
+    bool silent = false,
+  }) async {
     if (_loadingThreads || (!_threadsHasMore && loadMore)) return;
-    setState(() => _loadingThreads = true);
+    if (!silent) setState(() => _loadingThreads = true);
+    _loadingThreads = true;
     try {
       final fetched = await ApiClient.instance.fetchConversationThreads(
         limit: 15,
         before: loadMore ? _threadsBefore : null,
+        forceRefresh: forceRefresh,
       );
       if (!mounted) return;
       final mapped = <_MessageInfo>[];
@@ -717,7 +754,28 @@ class _SoWidgetState extends State<SoWidget> {
       });
     } catch (_) {
     } finally {
-      if (mounted) setState(() => _loadingThreads = false);
+      _loadingThreads = false;
+      if (mounted && !silent) setState(() {});
+    }
+  }
+
+  /// 필요한 변수는 현재 소셜 라우트와 강제 새로고침 API다.
+  /// 작동 원리는 WebSocket이 없는 Vercel에서도 4초 간격으로 수락·요청·쪽지를 화면에 반영한다.
+  Future<void> _pollSocialUpdates() async {
+    if (_pollingSocial ||
+        !mounted ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    _pollingSocial = true;
+    try {
+      await Future.wait([
+        _refreshFriends(forceRefresh: true, notifyAccepted: true),
+        _loadFriendRequests(forceRefresh: true),
+        _loadConversationThreads(forceRefresh: true, silent: true),
+      ]);
+    } finally {
+      _pollingSocial = false;
     }
   }
 
@@ -807,6 +865,7 @@ class _SoWidgetState extends State<SoWidget> {
       if (!mounted || !rootContext.mounted) return;
       setState(() {
         _friendRequests.add(_FriendRequest.fromApi(created));
+        _sentRequestNames.add(friend.name.toLowerCase());
       });
       _syncNotificationCounts();
       ScaffoldMessenger.of(
@@ -2539,6 +2598,16 @@ class _SoWidgetState extends State<SoWidget> {
         key: _scaffoldKey,
         backgroundColor: StudentDensityTokens.background,
         drawer: mobile ? null : const AppDrawer(),
+        appBar: mobile
+            ? AppBar(
+                title: const Text(
+                  '친구 · 소셜',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                backgroundColor: StudentDensityTokens.background,
+                surfaceTintColor: Colors.transparent,
+              )
+            : null,
         bottomNavigationBar: mobile
             ? const MobileStudentBottomAppBar(activeRoute: '/social')
             : null,
@@ -2579,8 +2648,7 @@ class _SoWidgetState extends State<SoWidget> {
                               StudentDensityPageHeader(
                                 eyebrow: 'FRIENDS & SOCIAL',
                                 title: '친구/소셜',
-                                description:
-                                    '새 소식을 먼저 처리하고 친구·그룹 학습으로 자연스럽게 이어집니다.',
+                                description: '친구 요청과 최근 쪽지를 한곳에서 확인합니다.',
                                 action: StudentDensityButton(
                                   label: '친구 추가',
                                   primary: true,
@@ -2591,33 +2659,6 @@ class _SoWidgetState extends State<SoWidget> {
                             _buildSocialSummary(mobile: mobile),
                             const SizedBox(height: 14),
                             _buildSocialDirectory(mobile: mobile),
-                            if (mobile) ...[
-                              const SizedBox(height: 18),
-                              TextButton.icon(
-                                key: const ValueKey(
-                                  'mobile-active-groups-more',
-                                ),
-                                onPressed: () =>
-                                    Navigator.of(context).pushNamed('/groups'),
-                                icon: const Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                ),
-                                label: const Text('활동 중인 그룹 더보기'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: StudentDensityTokens.ink,
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 22),
-                              _buildMobileSectionTitle('활동 중인 그룹'),
-                              const SizedBox(height: 12),
-                            ] else
-                              const SizedBox(height: 14),
-                            _buildActiveGroups(mobile: mobile),
-                            const SizedBox(height: 14),
-                            _buildSocialRatingOverview(mobile: mobile),
                           ],
                         ),
                       ),
@@ -2632,69 +2673,24 @@ class _SoWidgetState extends State<SoWidget> {
     );
   }
 
-  /// 필요한 변수는 모바일 소셜 제목과 친구 추가 동작이다.
-  /// 작동 원리는 ASCII 시안의 제목 구분선과 전폭 친구 추가 버튼을 첫 화면에 고정한다.
-  Widget _buildMobileSocialHeader() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Container(
-        padding: const EdgeInsets.only(bottom: 12),
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: StudentDensityTokens.ink, width: 2),
-          ),
-        ),
-        child: const Text(
-          '친구 · 소셜',
-          style: TextStyle(
-            color: StudentDensityTokens.ink,
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -1.6,
-          ),
-        ),
-      ),
-      const SizedBox(height: 16),
-      OutlinedButton.icon(
-        key: const ValueKey('mobile-social-add-friend'),
-        onPressed: _openAddFriendModal,
-        icon: const Icon(Icons.add_box_outlined),
-        label: const Text('친구 추가'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: StudentDensityTokens.ink,
-          minimumSize: const Size.fromHeight(58),
-          side: const BorderSide(color: StudentDensityTokens.line),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-        ),
-      ),
-    ],
-  );
-
-  /// 필요한 변수는 모바일 하위 섹션 제목이다.
-  /// 작동 원리는 그룹 영역 시작점을 굵은 구분선으로 분명하게 표시한다.
-  Widget _buildMobileSectionTitle(String title) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.only(bottom: 11),
-    decoration: const BoxDecoration(
-      border: Border(
-        bottom: BorderSide(color: StudentDensityTokens.ink, width: 2),
-      ),
-    ),
-    child: Text(
-      title,
-      style: const TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w900,
-        letterSpacing: -1.2,
-      ),
+  /// 필요한 변수는 친구 추가 동작이다.
+  /// 작동 원리는 제목은 모바일 AppBar에 맡기고 첫 행동만 전폭 버튼으로 제공한다.
+  Widget _buildMobileSocialHeader() => OutlinedButton.icon(
+    key: const ValueKey('mobile-social-add-friend'),
+    onPressed: _openAddFriendModal,
+    icon: const Icon(Icons.person_add_alt_1_outlined, size: 19),
+    label: const Text('친구 추가'),
+    style: OutlinedButton.styleFrom(
+      foregroundColor: StudentDensityTokens.ink,
+      minimumSize: const Size.fromHeight(48),
+      side: const BorderSide(color: StudentDensityTokens.line),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
     ),
   );
 
-  /// 필요한 변수는 받은 요청, 안 읽은 쪽지, 그룹 소식 개수다.
-  /// 작동 원리는 새 소식을 세 행으로 표시하고 기존 요청·대화 동작에 연결하는 것이다.
+  /// 필요한 변수는 받은 요청과 안 읽은 쪽지 개수다.
+  /// 작동 원리는 친구 페이지에 해당하는 두 소식만 표시해 그룹 페이지와 경계를 나눈다.
   Widget _buildSocialSummary({required bool mobile}) => Container(
     key: mobile ? const ValueKey('mobile-social-summary-card') : null,
     clipBehavior: Clip.antiAlias,
@@ -2726,23 +2722,10 @@ class _SoWidgetState extends State<SoWidget> {
                 : '${_messages.first.name} 외 ${(_messages.length - 1).clamp(0, 99)}명',
             count: _unreadMessages,
             horizontal: !mobile,
+            last: true,
             onTap: _messages.isEmpty
                 ? null
                 : () => _openMessageThread(_messages.first),
-          ),
-        ),
-        _socialAdaptiveChild(
-          mobile: mobile,
-          child: _SocialNoticeRow(
-            icon: Icons.album_outlined,
-            title: '내 스터디 그룹',
-            subtitle: _groups.isEmpty
-                ? '가입한 그룹 없음'
-                : '가입 그룹 ${_groups.length}개',
-            count: _groups.length,
-            horizontal: !mobile,
-            last: true,
-            onTap: () => Navigator.of(context).pushNamed('/groups'),
           ),
         ),
       ],
@@ -2851,6 +2834,8 @@ class _SoWidgetState extends State<SoWidget> {
 
   /// 필요한 변수는 내 그룹 목록과 가로·세로 레이아웃 여부다.
   /// 작동 원리는 시안처럼 그룹 진입·검색·생성 동작을 한 카드에 모으고 PC에서는 세 열, 모바일에서는 세로 행으로 배치한다.
+  // Kept only for USE_LEGACY_SOCIAL comparison builds.
+  // ignore: unused_element
   Widget _buildActiveGroups({required bool mobile}) {
     final visibleGroups = _groups.take(2).toList(growable: false);
     if (mobile) return _buildMobileActiveGroups(visibleGroups);
@@ -3175,6 +3160,8 @@ class _SoWidgetState extends State<SoWidget> {
 
   /// 필요한 변수는 친구 OVR 순위와 내 태그 레이팅 변화다.
   /// 작동 원리는 HTML 하단처럼 흰 랭킹 카드와 검은 MY RATING 카드를 연속 배치하고 상세 모달로 연결하는 것이다.
+  // Kept only for USE_LEGACY_SOCIAL comparison builds.
+  // ignore: unused_element
   Widget _buildSocialRatingOverview({required bool mobile}) {
     final ranks = _friendRanks.take(3).toList(growable: false);
     final rising = _tagRatings.values.where((item) => item.delta >= 0).toList()

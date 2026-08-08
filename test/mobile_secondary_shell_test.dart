@@ -63,7 +63,7 @@ void main() {
       const GroupListPage(initialGroups: <Object>[]),
     );
     expect(find.byKey(const ValueKey('group-mobile-actions')), findsOneWidget);
-    expect(find.text('코드로 참여'), findsOneWidget);
+    expect(find.text('그룹찾기·코드참가'), findsOneWidget);
   });
 
   testWidgets('AI 학습 튜터는 모바일 하단 앱 셸을 사용한다', (tester) async {
