@@ -45,3 +45,17 @@ def test_graph_sample_rejects_python_access() -> None:
         )
 
     assert response.status_code == 422
+
+
+def test_graph_sample_rejects_excessive_power() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/graphs/sample",
+            json={
+                "expressions": [
+                    {"id": "expensive", "expression": "9^(9^9)"},
+                ]
+            },
+        )
+
+    assert response.status_code == 422

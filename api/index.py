@@ -1595,6 +1595,11 @@ def _compile_graph_expression(source: str, parameter_names: set[str]) -> Any:
                 raise HTTPException(status_code=422, detail="지원되지 않는 함수 호출입니다")
         if isinstance(node, ast.Constant) and not isinstance(node.value, (int, float)):
             raise HTTPException(status_code=422, detail="숫자 상수만 사용할 수 있습니다")
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Pow):
+            if isinstance(node.right, ast.BinOp) and isinstance(node.right.op, ast.Pow):
+                raise HTTPException(status_code=422, detail="중첩 거듭제곱은 사용할 수 없습니다")
+            if isinstance(node.right, ast.Constant) and abs(float(node.right.value)) > 1000:
+                raise HTTPException(status_code=422, detail="지수가 너무 큽니다")
     return compile(tree, "<graph-expression>", "eval")
 
 
