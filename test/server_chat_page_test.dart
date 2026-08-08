@@ -19,13 +19,15 @@ void main() {
 
     final page = tester.widget<ServerChatPage>(find.byType(ServerChatPage));
     expect(page.standalone, isTrue);
-    expect(find.text('AI 학습 튜터'), findsOneWidget);
-    expect(find.text('AIFlow 튜터'), findsOneWidget);
-    expect(find.text('메시지 입력'), findsOneWidget);
+    expect(find.text('과외봇'), findsOneWidget);
+    expect(find.text('온라인 · 개념 설명과 풀이 힌트'), findsOneWidget);
+    expect(find.text('과외봇에게 질문하기'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tutor-personalized')), findsOneWidget);
+    expect(find.byKey(const ValueKey('tutor-quick-prompts')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('데스크톱 챗봇 화면이 질문과 학습 지원 3열을 표시한다', (tester) async {
+  testWidgets('데스크톱 과외봇도 사이드바 없는 단일 대화 화면을 표시한다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -40,7 +42,9 @@ void main() {
     expect(find.text('개념 쉽게 이해하기'), findsOneWidget);
     expect(find.text('오답 줄이는 방법'), findsOneWidget);
     expect(find.text('풀이 힌트 받기'), findsOneWidget);
-    expect(find.text('학습 지원'), findsOneWidget);
+    expect(find.text('학습 지원'), findsNothing);
+    expect(find.byType(VerticalDivider), findsNothing);
+    expect(find.byTooltip('전송'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
