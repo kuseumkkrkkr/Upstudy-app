@@ -184,4 +184,25 @@ void main() {
       isNot(contains('#board {\n        width: 100%;\n        height: 220px;')),
     );
   });
+
+  test('API 좌표 시리즈는 JSXGraph curve 요소로 렌더링한다', () {
+    const document = AiFlowGraphDocument(
+      items: [
+        AiFlowGraphItem(
+          id: 'api-line',
+          type: AiFlowGraphItemType.line,
+          label: 'y=x^2',
+          colorHex: '#2F7CF6',
+          xValues: [-1, 0, 1],
+          yValues: [1, 0, 1],
+        ),
+      ],
+      settings: AiFlowGraphSettings(),
+    );
+
+    final html = buildAiFlowGraphHtml(document);
+
+    expect(html, contains("'curve'"));
+    expect(html, isNot(contains("'polyline'")));
+  });
 }
