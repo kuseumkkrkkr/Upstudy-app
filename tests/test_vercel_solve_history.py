@@ -8,8 +8,14 @@ from fastapi.testclient import TestClient
 class _FakeHistoryDataApi:
     def __init__(self) -> None:
         self.rows: dict[tuple[str, str], str] = {}
+        self.sessions: list[dict] = []
+        self.answers: list[dict] = []
 
     def request(self, method, path, *, query=None, body=None, prefer=None):
+        if path == "level_test_session" and method == "GET":
+            return self.sessions
+        if path == "level_test_answer" and method == "GET":
+            return self.answers
         assert path == "canary_user_kv"
         if method == "POST":
             self.rows[(str(body["user_id"]), str(body["key"]))] = str(body["value"])
@@ -56,3 +62,33 @@ def test_incorrect_solve_is_returned_for_review(monkeypatch):
             "data": {"is_correct": False, "tags": []},
         }
     ]
+
+
+def test_existing_level_test_wrong_answer_is_backfilled(monkeypatch):
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeHistoryDataApi()
+    fake.sessions = [{"session_id": "session-1", "started_at": "2026-08-09T00:00:00+00:00"}]
+    fake.answers = [
+        {
+            "quest_id": "existing-level-test-wrong",
+            "is_correct": False,
+            "tags": ["대수"],
+            "submitted_at": "2026-08-09T00:01:00+00:00",
+        }
+    ]
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    token = module._create_token("student-id")
+
+    with TestClient(module.app) as client:
+        history = client.get(
+            "/history/solve?days=30&limit=100&kind=problem",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert history.status_code == 200
+    assert history.json()["items"][0]["quest_id"] == "existing-level-test-wrong"
+    assert history.json()["items"][0]["data"] == {
+        "is_correct": False,
+        "tags": ["대수"],
+    }

@@ -2400,6 +2400,52 @@ def list_solve_history(
         if kind and item.get("kind") != kind:
             continue
         items.append(item)
+    seen_quest_ids = {str(item.get("quest_id") or "") for item in items}
+    try:
+        sessions = _data_api().request(
+            "GET",
+            "level_test_session",
+            query={
+                "select": "session_id,started_at",
+                "user_id": f"eq.{user_id}",
+                "started_at": f"gte.{cutoff.isoformat()}",
+                "order": "started_at.desc",
+                "limit": "20",
+            },
+        ) or []
+        session_ids = [str(row.get("session_id") or "") for row in sessions if row.get("session_id")]
+        legacy_answers = (
+            _data_api().request(
+                "GET",
+                "level_test_answer",
+                query={
+                    "select": "quest_id,is_correct,tags,submitted_at",
+                    "session_id": f"in.({','.join(session_ids)})",
+                    "order": "submitted_at.desc",
+                    "limit": "200",
+                },
+            ) or []
+            if session_ids
+            else []
+        )
+    except RuntimeError:
+        legacy_answers = []
+    for answer in legacy_answers:
+        quest_id = str(answer.get("quest_id") or "").strip()
+        if not quest_id or quest_id in seen_quest_ids:
+            continue
+        tags = answer.get("tags") if isinstance(answer.get("tags"), list) else []
+        items.append(
+            {
+                "created_at": str(answer.get("submitted_at") or datetime.now(timezone.utc).isoformat()),
+                "kind": "problem",
+                "quest_id": quest_id,
+                "codebase_id": None,
+                "seed": None,
+                "data": {"is_correct": bool(answer.get("is_correct")), "tags": tags},
+            }
+        )
+        seen_quest_ids.add(quest_id)
     items.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
     return {"items": items[:bounded_limit]}
 
