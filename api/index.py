@@ -2844,6 +2844,7 @@ def _social_message_response(value: dict[str, Any]) -> dict[str, Any]:
         "text": str(value.get("text") or ""),
         "created_at": str(value.get("created_at") or ""),
         "is_mine": value.get("is_mine") is True,
+        "is_read": value.get("is_read") is True,
     }
 
 
@@ -3057,6 +3058,14 @@ def list_direct_messages(
         )
         messages = messages[:before_index]
     bounded_limit = max(1, min(limit, 100))
+    conversation_rows = _social_kv_rows(user_id, f"{_SOCIAL_CONVERSATION_PREFIX}{peer_id}", limit=1)
+    conversation = _social_kv_value(conversation_rows[0]) if conversation_rows else None
+    if conversation and conversation.get("is_read") is not True:
+        _social_upsert_kv(
+            user_id,
+            f"{_SOCIAL_CONVERSATION_PREFIX}{peer_id}",
+            {**conversation, "is_read": True},
+        )
     return {"messages": [_social_message_response(item) for item in messages[-bounded_limit:]]}
 
 
@@ -3094,8 +3103,8 @@ def send_direct_message(
         "text": text,
         "created_at": created_at,
     }
-    sender_message = {**common, "peer_id": peer_id, "is_mine": True}
-    receiver_message = {**common, "peer_id": user_id, "is_mine": False}
+    sender_message = {**common, "peer_id": peer_id, "is_mine": True, "is_read": True}
+    receiver_message = {**common, "peer_id": user_id, "is_mine": False, "is_read": False}
     _social_upsert_kv_rows(
         [
             (user_id, f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}.{suffix}", sender_message),

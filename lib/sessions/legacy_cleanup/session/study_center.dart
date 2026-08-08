@@ -274,11 +274,21 @@ class _HeroSectionState extends State<_HeroSection> {
     }
 
     try {
-      final requests = await ApiClient.instance.listFriendRequests();
+      final social = await Future.wait<Object>([
+        ApiClient.instance.listFriendRequests(),
+        ApiClient.instance.fetchConversationThreads(forceRefresh: true),
+      ]);
+      final requests = social[0] as List<FriendRequest>;
+      final messages = social[1] as List<DirectMessage>;
       pendingSocialCount = requests
           .where((request) => request.status.toLowerCase() == 'pending')
           .length;
-      SocialNotificationStore.update(friendRequests: pendingSocialCount);
+      SocialNotificationStore.update(
+        friendRequests: pendingSocialCount,
+        unreadMessages: messages
+            .where((message) => !message.isMine && !message.isRead)
+            .length,
+      );
     } catch (_) {
       // 기존 소셜 알림 값은 유지한다.
     }

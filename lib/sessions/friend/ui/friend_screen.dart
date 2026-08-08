@@ -727,10 +727,12 @@ class _SoWidgetState extends State<SoWidget> {
       );
       if (!mounted) return;
       final mapped = <_MessageInfo>[];
+      final unreadNames = <String>{};
       final seen = <String>{};
       for (final dm in fetched) {
         final name = _peerNameForDirectMessage(dm);
         if (name.isEmpty || !seen.add(name)) continue;
+        if (!dm.isMine && !dm.isRead) unreadNames.add(name);
         mapped.add(
           _MessageInfo(
             name: name,
@@ -751,7 +753,14 @@ class _SoWidgetState extends State<SoWidget> {
         _threadsBefore = fetched.isNotEmpty
             ? fetched.last.createdAt.toIso8601String()
             : _threadsBefore;
+        if (!loadMore) {
+          _unreadThreads
+            ..clear()
+            ..addAll(unreadNames);
+          _unreadMessages = _unreadThreads.length;
+        }
       });
+      _syncNotificationCounts();
     } catch (_) {
     } finally {
       _loadingThreads = false;

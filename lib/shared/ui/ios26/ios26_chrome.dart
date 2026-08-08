@@ -545,11 +545,13 @@ class _StudentNotificationSnapshot {
     required this.globalNotices,
     required this.academyNotices,
     required this.friendRequests,
+    required this.directMessages,
   });
 
   final List<StudyGroupNotice> globalNotices;
   final List<StudyGroupNotice> academyNotices;
   final List<FriendRequest> friendRequests;
+  final List<DirectMessage> directMessages;
 }
 
 class _StudentNotificationsSheet extends StatefulWidget {
@@ -580,11 +582,28 @@ class _StudentNotificationsSheetState
       ApiClient.instance.listFriendRequests().onError(
         (_, _) => const <FriendRequest>[],
       ),
+      ApiClient.instance
+          .fetchConversationThreads(forceRefresh: true)
+          .onError((_, _) => const <DirectMessage>[]),
     ]);
+    final friendRequests = results[2] as List<FriendRequest>;
+    final directMessages = results[3] as List<DirectMessage>;
+    SocialNotificationStore.update(
+      friendRequests: friendRequests
+          .where(
+            (request) =>
+                request.direction == 'incoming' && request.status == 'pending',
+          )
+          .length,
+      unreadMessages: directMessages
+          .where((message) => !message.isMine && !message.isRead)
+          .length,
+    );
     return _StudentNotificationSnapshot(
       globalNotices: results[0] as List<StudyGroupNotice>,
       academyNotices: results[1] as List<StudyGroupNotice>,
-      friendRequests: results[2] as List<FriendRequest>,
+      friendRequests: friendRequests,
+      directMessages: directMessages,
     );
   }
 
@@ -680,6 +699,9 @@ class _StudentNotificationsSheetState
               );
             }
             final data = snapshot.data!;
+            final unreadMessages = data.directMessages
+                .where((message) => !message.isMine && !message.isRead)
+                .toList(growable: false);
             final incomingRequests = data.friendRequests
                 .where(
                   (request) =>
@@ -691,6 +713,12 @@ class _StudentNotificationsSheetState
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                for (final message in unreadMessages)
+                  _UtilityNoticeRow(
+                    title: '${message.from}님의 새 쪽지',
+                    detail: message.text,
+                    meta: '새 쪽지',
+                  ),
                 for (final request in incomingRequests)
                   _UtilityNoticeRow(
                     title: '${request.username}님의 친구 요청',

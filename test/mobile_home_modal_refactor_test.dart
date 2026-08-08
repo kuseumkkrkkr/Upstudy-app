@@ -9,6 +9,7 @@ import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dar
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
+import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
@@ -202,6 +203,60 @@ void main() {
     expect(acceptedRequestId, 'request-1');
     expect(find.text('alice01님의 친구 요청'), findsNothing);
     expect(find.text('alice01님과 친구가 되었습니다.'), findsOneWidget);
+  });
+
+  testWidgets('알림 센터는 읽지 않은 쪽지를 수신 알림으로 표시한다', (tester) async {
+    _setMobileView(tester);
+    SocialNotificationStore.clear();
+    addTearDown(SocialNotificationStore.clear);
+    await ApiClient.instance.setToken('direct-message-notification-token');
+    ApiClient.instance.setHttpClientForTest(
+      MockClient((request) async {
+        final body = request.url.path == '/social/conversations'
+            ? {
+                'messages': [
+                  {
+                    'id': 'message-1',
+                    'from': 'alice01',
+                    'to': 'student01',
+                    'text': '새 쪽지가 왔어요',
+                    'created_at': '2026-08-09T00:00:00Z',
+                    'is_mine': false,
+                    'is_read': false,
+                  },
+                ],
+              }
+            : request.url.path == '/social/friend-requests'
+            ? {'requests': []}
+            : request.url.path == '/social/study-groups/notices/my/system'
+            ? {'notices': []}
+            : {'items': []};
+        return http.Response(
+          jsonEncode(body),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showStudentNotifications(context),
+              child: const Text('공지 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('공지 열기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('alice01님의 새 쪽지'), findsOneWidget);
+    expect(find.text('새 쪽지가 왔어요'), findsOneWidget);
+    expect(SocialNotificationStore.notifier.value.unreadMessages, 1);
   });
 
   testWidgets('교재보기는 모바일에서 작은 테두리 대화상자 대신 전폭 시트를 사용한다', (tester) async {

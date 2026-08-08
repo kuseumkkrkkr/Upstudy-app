@@ -3738,6 +3738,7 @@ class DirectMessage {
   final String text;
   final DateTime createdAt;
   final bool isMine;
+  final bool isRead;
   const DirectMessage({
     required this.id,
     required this.from,
@@ -3745,6 +3746,7 @@ class DirectMessage {
     required this.text,
     required this.createdAt,
     this.isMine = false,
+    this.isRead = false,
   });
   factory DirectMessage.fromJson(Map<String, dynamic> json) => DirectMessage(
     id: (json['id'] ?? json['message_id'] ?? '').toString(),
@@ -3755,6 +3757,7 @@ class DirectMessage {
         DateTime.tryParse((json['created_at'] ?? '').toString()) ??
         DateTime.now(),
     isMine: json['is_mine'] == true,
+    isRead: json['is_read'] == true,
   );
 }
 

@@ -141,12 +141,15 @@ def test_friend_search_request_accept_and_remove(monkeypatch):
         )
         assert sent.status_code == 200
         assert sent.json()["is_mine"] is True
+        bob_conversation = client.get("/social/conversations", headers=bob).json()["messages"][0]
+        assert bob_conversation["is_read"] is False
         alice_messages = client.get("/social/messages", headers=alice, params={"peer": "bob0001"})
         bob_messages = client.get("/social/messages", headers=bob, params={"peer": "alice01"})
         assert [item["text"] for item in alice_messages.json()["messages"]] == ["수락 확인 메시지"]
         assert bob_messages.json()["messages"][0]["is_mine"] is False
         assert client.get("/social/conversations", headers=alice).json()["messages"][0]["to"] == "bob0001"
         assert client.get("/social/conversations", headers=bob).json()["messages"][0]["from"] == "alice01"
+        assert client.get("/social/conversations", headers=bob).json()["messages"][0]["is_read"] is True
 
         duplicate = client.post("/social/friend-requests", headers=alice, json={"username": "bob0001"})
         assert duplicate.status_code == 409
