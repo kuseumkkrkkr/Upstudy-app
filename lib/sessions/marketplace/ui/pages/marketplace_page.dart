@@ -845,7 +845,9 @@ class _MobileMarketCategories extends StatelessWidget {
               child: _MobileMarketCategory(
                 corner: category,
                 selected: selected == category.filter,
-                onTap: () => onSelected(category.filter),
+                onTap: () => onSelected(
+                  selected == category.filter ? '전체' : category.filter,
+                ),
               ),
             ),
         ],
@@ -1268,7 +1270,8 @@ class _SearchPanel extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
               ),
-              onSelected: (_) => onFilterChanged(label),
+              onSelected: (isSelected) =>
+                  onFilterChanged(isSelected ? label : '전체'),
             ),
           )
           .toList(growable: false),
@@ -1632,7 +1635,7 @@ class _MarketFilterSheetState extends State<_MarketFilterSheet> {
             ),
             _FilterGroup(
               label: '과정',
-              values: const ['전체 과정', '고1', '고2', '고3'],
+              values: const ['전체 과정', '중1', '중2', '중3', '고1', '고2', '고3'],
               selected: _course,
               onSelected: (value) => setState(() => _course = value),
             ),
@@ -1643,6 +1646,17 @@ class _MarketFilterSheetState extends State<_MarketFilterSheet> {
               onSelected: (value) => setState(() => _price = value),
             ),
             const SizedBox(height: 8),
+            TextButton.icon(
+              key: const ValueKey('market-filter-clear-all'),
+              onPressed: () => setState(() {
+                _type = '전체';
+                _course = '전체 과정';
+                _price = '전체 가격';
+              }),
+              icon: const Icon(Icons.filter_alt_off_outlined),
+              label: const Text('전체 선택 해제'),
+            ),
+            const SizedBox(height: 4),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF202022),
@@ -1699,7 +1713,8 @@ class _FilterGroup extends StatelessWidget {
                   color: selected == value ? Colors.white : Colors.black87,
                   fontWeight: FontWeight.w800,
                 ),
-                onSelected: (_) => onSelected(value),
+                onSelected: (isSelected) =>
+                    onSelected(isSelected ? value : values.first),
               ),
           ],
         ),

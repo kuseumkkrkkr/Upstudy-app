@@ -138,4 +138,52 @@ void main() {
     await tester.pump();
     expect(openedId, 'exam-shortcut');
   });
+
+  testWidgets('마켓 필터는 중학교 과정과 개별·전체 선택 해제를 제공한다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(home: MarketplacePage(initialData: [])),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('market-mobile-filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(ChoiceChip, '중1'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '중2'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '중3'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, '고1'));
+    await tester.pump();
+    expect(
+      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '고1')).selected,
+      isTrue,
+    );
+    await tester.tap(find.widgetWithText(ChoiceChip, '고1'));
+    await tester.pump();
+    expect(
+      tester
+          .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '전체 과정'))
+          .selected,
+      isTrue,
+    );
+
+    await tester.tap(find.widgetWithText(ChoiceChip, '코스'));
+    await tester.tap(find.widgetWithText(ChoiceChip, '무료'));
+    await tester.tap(find.byKey(const ValueKey('market-filter-clear-all')));
+    await tester.pump();
+    expect(
+      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '전체')).selected,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '전체 가격'))
+          .selected,
+      isTrue,
+    );
+  });
 }
