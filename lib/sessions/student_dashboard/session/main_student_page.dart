@@ -1383,15 +1383,25 @@ class _LearningSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 if (portraitMobile)
-                  _MobileHomeStatusGroup(
-                    courseValue: progressPercent == null
-                        ? '코스 선택'
-                        : '진행률 $progressPercent%',
-                    taskValue: todayTasks.isEmpty
-                        ? '할 일 없음'
-                        : '${todayTasks.length}개 남음',
-                    onCourseTap: onCourseTap,
-                    onTodayTasksTap: onTodayTasksTap,
+                  Column(
+                    children: [
+                      _MobileHomeStatusGroup(
+                        courseValue: progressPercent == null
+                            ? '코스 선택'
+                            : '진행률 $progressPercent%',
+                        taskValue: todayTasks.isEmpty
+                            ? '할 일 없음'
+                            : '${todayTasks.length}개 남음',
+                        onCourseTap: onCourseTap,
+                        onTodayTasksTap: onTodayTasksTap,
+                      ),
+                      const SizedBox(height: 24),
+                      _MobileHomeActionJourney(
+                        onStartTap: () => showStudyModeModal(context: context),
+                        onCourseTap: onCourseTap,
+                        onTodayTasksTap: onTodayTasksTap,
+                      ),
+                    ],
                   )
                 else
                   Row(
@@ -1486,6 +1496,160 @@ class _MobileHomeStatusGroup extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _MobileHomeActionJourney extends StatelessWidget {
+  const _MobileHomeActionJourney({
+    required this.onStartTap,
+    required this.onCourseTap,
+    required this.onTodayTasksTap,
+  });
+
+  final VoidCallback onStartTap;
+  final VoidCallback onCourseTap;
+  final VoidCallback onTodayTasksTap;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    key: const ValueKey('student-home-mobile-action-journey'),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.only(left: 2, bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '오늘의 학습 루트',
+              style: TextStyle(
+                fontSize: 23,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.8,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '순서대로 눌러도 되고, 필요한 단계부터 시작해도 돼요.',
+              style: TextStyle(
+                color: StudentDensityTokens.muted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+      _MobileHomeJourneyCard(
+        step: '01',
+        title: '10분 학습 시작',
+        description: '지금 풀 수 있는 학습 모드를 바로 선택해요.',
+        icon: Icons.bolt_rounded,
+        dark: true,
+        onTap: onStartTap,
+      ),
+      Padding(
+        padding: const EdgeInsets.only(left: 12, top: 10),
+        child: _MobileHomeJourneyCard(
+          step: '02',
+          title: '코스 이어가기',
+          description: '마지막으로 공부한 위치에서 계속해요.',
+          icon: Icons.play_circle_outline_rounded,
+          onTap: onCourseTap,
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(left: 24, top: 10),
+        child: _MobileHomeJourneyCard(
+          step: '03',
+          title: '오늘 할 일 확인',
+          description: '마감 전에 끝낼 과제를 한 번에 확인해요.',
+          icon: Icons.task_alt_rounded,
+          onTap: onTodayTasksTap,
+        ),
+      ),
+    ],
+  );
+}
+
+class _MobileHomeJourneyCard extends StatelessWidget {
+  const _MobileHomeJourneyCard({
+    required this.step,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.onTap,
+    this.dark = false,
+  });
+
+  final String step;
+  final String title;
+  final String description;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = dark ? Colors.white : StudentDensityTokens.ink;
+    return Material(
+      color: dark ? StudentDensityTokens.darkSecondary : Colors.white,
+      elevation: dark ? 9 : 4,
+      shadowColor: Colors.black.withValues(alpha: dark ? 0.24 : 0.13),
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: dark
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : StudentDensityTokens.surfaceMuted,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: foreground, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$step  $title',
+                      style: TextStyle(
+                        color: foreground,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        color: dark
+                            ? Colors.white.withValues(alpha: 0.68)
+                            : StudentDensityTokens.muted,
+                        fontSize: 12,
+                        height: 1.4,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_rounded, color: foreground, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// 필요한 변수는 상태 아이콘·이름·값·이동 콜백이다.
