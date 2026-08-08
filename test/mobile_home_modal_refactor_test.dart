@@ -1,9 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 /// 필요한 변수는 실제 Android 세로 화면과 테스트 종료 복원 콜백이다.
@@ -16,6 +22,14 @@ void _setMobileView(WidgetTester tester) {
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
+  tearDown(() {
+    ApiClient.instance.setHttpClientForTest(http.Client());
+  });
+
   testWidgets('학습 시작은 전체 화면 패널 대신 2열 Material 하단 시트를 연다', (tester) async {
     _setMobileView(tester);
     await tester.pumpWidget(
@@ -120,6 +134,74 @@ void main() {
     expect(find.text('알림 센터'), findsOneWidget);
     expect(find.text('LIVE STATUS'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);
+  });
+
+  testWidgets('알림 센터의 받은 친구 요청을 눌러 확인하고 수락한다', (tester) async {
+    _setMobileView(tester);
+    await ApiClient.instance.setToken('notification-request-token');
+    var acceptedRequestId = '';
+    ApiClient.instance.setHttpClientForTest(
+      MockClient((request) async {
+        final path = request.url.path;
+        if (request.method == 'POST') {
+          acceptedRequestId = path.split('/')[3];
+          return http.Response('{}', 200);
+        }
+        final body = switch (path) {
+          '/social/friend-requests' => {
+            'requests': [
+              {
+                'request_id': 'request-1',
+                'from_user_id': 'alice-id',
+                'to_user_id': 'student-id',
+                'status': 'pending',
+                'username': 'alice01',
+                'direction': 'incoming',
+                'message': '같이 공부해요',
+              },
+            ],
+          },
+          '/social/study-groups/notices/my/system' => {'notices': []},
+          _ => {'items': []},
+        };
+        return http.Response(
+          jsonEncode(body),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showStudentNotifications(context),
+              child: const Text('공지 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('공지 열기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('alice01님의 친구 요청'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('같이 공부해요'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('수락'));
+    await tester.pumpAndSettle();
+
+    expect(acceptedRequestId, 'request-1');
+    expect(find.text('alice01님의 친구 요청'), findsNothing);
+    expect(find.text('alice01님과 친구가 되었습니다.'), findsOneWidget);
   });
 
   testWidgets('교재보기는 모바일에서 작은 테두리 대화상자 대신 전폭 시트를 사용한다', (tester) async {

@@ -565,6 +565,7 @@ class _StudentNotificationsSheet extends StatefulWidget {
 class _StudentNotificationsSheetState
     extends State<_StudentNotificationsSheet> {
   late final Future<_StudentNotificationSnapshot> _future = _load();
+  final Set<String> _resolvedRequestIds = <String>{};
 
   /// 필요한 변수는 전체 공지, 내 학원 공지, 친구 요청 API다.
   /// 작동 원리는 세 GET을 병렬 실행해 순차 요청 없이 알림 패널을 한 번에 갱신하는 것이다.
@@ -585,6 +586,48 @@ class _StudentNotificationsSheetState
       academyNotices: results[1] as List<StudyGroupNotice>,
       friendRequests: results[2] as List<FriendRequest>,
     );
+  }
+
+  /// 필요한 변수는 받은 친구 요청이다.
+  /// 작동 원리는 발신자와 메시지를 확인한 뒤 기존 수락 API를 호출하고 성공한 요청만 현재 알림에서 제거하는 것이다.
+  Future<void> _confirmFriendRequest(FriendRequest request) async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${request.username}님의 친구 요청'),
+        content: Text(
+          request.message?.trim().isNotEmpty == true
+              ? request.message!.trim()
+              : '친구 요청을 수락하시겠어요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('나중에'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('수락'),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true) return;
+    try {
+      await ApiClient.instance.acceptFriendRequest(request.requestId);
+      if (!mounted) return;
+      setState(() => _resolvedRequestIds.add(request.requestId));
+      final current = SocialNotificationStore.notifier.value.friendRequests;
+      SocialNotificationStore.update(friendRequests: current - 1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${request.username}님과 친구가 되었습니다.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('친구 요청을 수락하지 못했습니다. 다시 시도해 주세요.')),
+      );
+    }
   }
 
   /// 필요한 변수는 소셜 알림 상태와 전체·학원 공지·친구 요청 비동기 결과다.
@@ -637,16 +680,32 @@ class _StudentNotificationsSheetState
               );
             }
             final data = snapshot.data!;
+            final incomingRequests = data.friendRequests
+                .where(
+                  (request) =>
+                      request.direction == 'incoming' &&
+                      request.status == 'pending' &&
+                      !_resolvedRequestIds.contains(request.requestId),
+                )
+                .toList(growable: false);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _UtilityNoticeRow(
-                  title: '친구 요청',
-                  detail: data.friendRequests.isEmpty
-                      ? '새로운 친구 요청이 없습니다.'
-                      : '받은 요청을 친구/소셜에서 확인하세요.',
-                  meta: '${data.friendRequests.length}',
-                ),
+                for (final request in incomingRequests)
+                  _UtilityNoticeRow(
+                    title: '${request.username}님의 친구 요청',
+                    detail: request.message?.trim().isNotEmpty == true
+                        ? request.message!.trim()
+                        : '눌러서 요청을 확인하고 수락할 수 있어요.',
+                    meta: '확인',
+                    onTap: () => _confirmFriendRequest(request),
+                  ),
+                if (incomingRequests.isEmpty)
+                  const _UtilityNoticeRow(
+                    title: '친구 요청',
+                    detail: '새로운 친구 요청이 없습니다.',
+                    meta: '0',
+                  ),
                 const SizedBox(height: 24),
                 const _UtilitySectionTitle('공지'),
                 for (final notice in data.globalNotices)
