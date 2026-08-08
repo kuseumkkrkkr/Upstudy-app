@@ -13,6 +13,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 import jwt
@@ -637,6 +638,26 @@ class MarketplaceProgressRequest(BaseModel):
 
     progress_index: int = Field(default=0, ge=0)
     completed: bool = False
+
+
+class FriendSearchRequest(BaseModel):
+    """필요 변수: 사용자명 일부와 결과 제한. 작동 원리: 공개 사용자 열만 제한 검색한다."""
+
+    query: str = Field(min_length=1, max_length=16)
+    limit: int = Field(default=20, ge=1, le=50)
+
+
+class FriendRequestCreateRequest(BaseModel):
+    """필요 변수: 대상 사용자명과 선택 메시지. 작동 원리: 인증 사용자의 대기 요청만 생성한다."""
+
+    username: str = Field(min_length=1, max_length=16)
+    message: str | None = Field(default=None, max_length=200)
+
+
+class FriendTargetRequest(BaseModel):
+    """필요 변수: 관계를 해제할 사용자명. 작동 원리: 양쪽 친구 표식을 함께 제거한다."""
+
+    username: str = Field(min_length=1, max_length=16)
 
 
 class QuestGenerateRequest(BaseModel):
@@ -2219,16 +2240,291 @@ def list_solve_history(_user_id: str = Depends(_current_user)) -> dict[str, list
     return {"items": []}
 
 
+_SOCIAL_FRIEND_PREFIX = "social.friend."
+_SOCIAL_REQUEST_IN_PREFIX = "social.friend_request.in."
+_SOCIAL_REQUEST_OUT_PREFIX = "social.friend_request.out."
+
+
+def _social_data_request(method: str, path: str, **kwargs: Any) -> Any:
+    """필요 변수: 제한된 Data API 요청. 작동 원리: 내부 저장 오류를 공개 정보 없는 502로 변환한다."""
+    try:
+        return _data_api().request(method, path, **kwargs)
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail="Social storage unavailable") from error
+
+
+def _social_public_profile(row: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: canary_users 행. 작동 원리: 친구 화면에 필요한 공개 열만 반환한다."""
+    return {
+        "user_id": str(row.get("user_id") or ""),
+        "username": str(row.get("username") or ""),
+        "name": row.get("name"),
+        "profile_image": row.get("profile_image"),
+        "ovr": 0,
+        "status": "",
+    }
+
+
+def _social_user_by_username(username: str) -> dict[str, Any] | None:
+    rows = _social_data_request(
+        "GET",
+        "canary_users",
+        query={
+            "select": "user_id,username,name,profile_image",
+            "username": f"eq.{username}",
+            "limit": "1",
+        },
+    ) or []
+    return dict(rows[0]) if rows else None
+
+
+def _social_user_by_id(user_id: str) -> dict[str, Any] | None:
+    rows = _social_data_request(
+        "GET",
+        "canary_users",
+        query={
+            "select": "user_id,username,name,profile_image",
+            "user_id": f"eq.{user_id}",
+            "limit": "1",
+        },
+    ) or []
+    return dict(rows[0]) if rows else None
+
+
+def _social_kv_rows(user_id: str, prefix: str) -> list[dict[str, Any]]:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "key,value",
+            "user_id": f"eq.{user_id}",
+            "key": f"like.{prefix}*",
+            "limit": "200",
+        },
+    ) or []
+    return [dict(row) for row in rows]
+
+
+def _social_kv_value(row: dict[str, Any]) -> dict[str, Any] | None:
+    try:
+        decoded = json.loads(str(row.get("value") or ""))
+    except (TypeError, ValueError):
+        return None
+    return dict(decoded) if isinstance(decoded, dict) else None
+
+
+def _social_upsert_kv(user_id: str, key: str, value: dict[str, Any]) -> None:
+    _social_data_request(
+        "POST",
+        "canary_user_kv",
+        query={"on_conflict": "user_id,key"},
+        body={
+            "user_id": user_id,
+            "key": key,
+            "value": json.dumps(value, ensure_ascii=False, separators=(",", ":")),
+        },
+        prefer="resolution=merge-duplicates,return=minimal",
+    )
+
+
+def _social_delete_kv(user_id: str, key: str) -> None:
+    _social_data_request(
+        "DELETE",
+        "canary_user_kv",
+        query={"user_id": f"eq.{user_id}", "key": f"eq.{key}"},
+        prefer="return=minimal",
+    )
+
+
+def _social_has_key(user_id: str, key: str) -> bool:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "key",
+            "user_id": f"eq.{user_id}",
+            "key": f"eq.{key}",
+            "limit": "1",
+        },
+    ) or []
+    return bool(rows)
+
+
+def _social_find_request(user_id: str, request_id: str, direction: str) -> tuple[dict[str, Any], str] | None:
+    prefix = _SOCIAL_REQUEST_IN_PREFIX if direction == "incoming" else _SOCIAL_REQUEST_OUT_PREFIX
+    for row in _social_kv_rows(user_id, prefix):
+        value = _social_kv_value(row)
+        if value and str(value.get("request_id") or value.get("id") or "") == request_id:
+            return value, str(row.get("key") or "")
+    return None
+
+
+def _social_request_response(value: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "request_id": str(value.get("request_id") or value.get("id") or ""),
+        "id": str(value.get("request_id") or value.get("id") or ""),
+        "from_user_id": str(value.get("from_user_id") or ""),
+        "to_user_id": str(value.get("to_user_id") or ""),
+        "status": str(value.get("status") or "pending"),
+        "username": str(value.get("peer_username") or ""),
+        "direction": str(value.get("direction") or "incoming"),
+        "message": value.get("message"),
+        "created_at": value.get("created_at"),
+    }
+
+
+@app.post("/social/friends/search")
+def search_friends(payload: FriendSearchRequest, user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 사용자명 일부. 작동 원리: 본인을 제외한 공개 프로필을 최대 50개 검색한다."""
+    query = payload.query.strip()
+    if not re.fullmatch(r"[A-Za-z0-9]{1,16}", query):
+        return {"users": []}
+    rows = _social_data_request(
+        "GET",
+        "canary_users",
+        query={
+            "select": "user_id,username,name,profile_image",
+            "username": f"ilike.*{query}*",
+            "user_id": f"neq.{user_id}",
+            "order": "username.asc",
+            "limit": str(payload.limit),
+        },
+    ) or []
+    return {"users": [_social_public_profile(dict(row)) for row in rows]}
+
+
 @app.get("/social/friends")
-def list_friends(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 친구 관계가 없는 신규 계정의 빈 목록을 반환한다."""
-    return {"friends": []}
+def list_friends(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 사용자별 멱등 친구 표식에서 현재 공개 프로필을 복원한다."""
+    friends: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in _social_kv_rows(user_id, _SOCIAL_FRIEND_PREFIX):
+        peer_id = str(row.get("key") or "").removeprefix(_SOCIAL_FRIEND_PREFIX)
+        if not peer_id or peer_id in seen:
+            continue
+        seen.add(peer_id)
+        peer = _social_user_by_id(peer_id)
+        if peer:
+            friends.append(_social_public_profile(peer))
+    friends.sort(key=lambda item: str(item.get("username") or "").lower())
+    return {"friends": friends}
 
 
 @app.get("/social/friend-requests")
-def list_friend_requests(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 대기 요청이 없는 신규 계정의 빈 목록을 반환한다."""
-    return {"requests": []}
+def list_friend_requests(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 수신·발신 대기 요청을 하나의 시간순 목록으로 반환한다."""
+    requests: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for prefix in (_SOCIAL_REQUEST_IN_PREFIX, _SOCIAL_REQUEST_OUT_PREFIX):
+        for row in _social_kv_rows(user_id, prefix):
+            value = _social_kv_value(row)
+            if not value:
+                continue
+            request_id = str(value.get("request_id") or value.get("id") or "")
+            if not request_id or request_id in seen:
+                continue
+            seen.add(request_id)
+            requests.append(_social_request_response(value))
+    requests.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return {"requests": requests}
+
+
+@app.post("/social/friend-requests", status_code=status.HTTP_201_CREATED)
+def create_friend_request(payload: FriendRequestCreateRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 대상 사용자명. 작동 원리: 양쪽 KV에 같은 결정적 요청을 보상 가능한 순서로 저장한다."""
+    target = _social_user_by_username(payload.username.strip())
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    target_id = str(target.get("user_id") or "")
+    if target_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot add yourself")
+    if _social_has_key(user_id, f"{_SOCIAL_FRIEND_PREFIX}{target_id}"):
+        raise HTTPException(status_code=409, detail="Already friends")
+    if _social_has_key(user_id, f"{_SOCIAL_REQUEST_IN_PREFIX}{target_id}"):
+        raise HTTPException(status_code=409, detail="Incoming request already exists")
+
+    current = _social_user_by_id(user_id)
+    if not current:
+        raise HTTPException(status_code=404, detail="Current user not found")
+    request_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"aiflow-friend-request:{user_id}:{target_id}"))
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    common = {
+        "request_id": request_id,
+        "id": request_id,
+        "from_user_id": user_id,
+        "to_user_id": target_id,
+        "status": "pending",
+        "message": (payload.message or "").strip(),
+        "created_at": created_at,
+    }
+    outgoing = {**common, "direction": "outgoing", "peer_username": str(target.get("username") or "")}
+    incoming = {**common, "direction": "incoming", "peer_username": str(current.get("username") or "")}
+    outgoing_key = f"{_SOCIAL_REQUEST_OUT_PREFIX}{target_id}"
+    incoming_key = f"{_SOCIAL_REQUEST_IN_PREFIX}{user_id}"
+    _social_upsert_kv(user_id, outgoing_key, outgoing)
+    try:
+        _social_upsert_kv(target_id, incoming_key, incoming)
+    except HTTPException:
+        _social_delete_kv(user_id, outgoing_key)
+        raise
+    return _social_request_response(outgoing)
+
+
+@app.post("/social/friend-requests/{request_id}/accept")
+def accept_friend_request(request_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 수신 대기 요청 ID. 작동 원리: 양쪽 친구 표식을 먼저 저장한 뒤 대기 요청을 제거한다."""
+    found = _social_find_request(user_id, request_id, "incoming")
+    if not found:
+        raise HTTPException(status_code=404, detail="Request not found")
+    request, own_request_key = found
+    peer_id = str(request.get("from_user_id") or "")
+    peer = _social_user_by_id(peer_id)
+    if not peer:
+        raise HTTPException(status_code=404, detail="User not found")
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    _social_upsert_kv(user_id, f"{_SOCIAL_FRIEND_PREFIX}{peer_id}", {"friend_id": peer_id, "created_at": created_at})
+    try:
+        _social_upsert_kv(peer_id, f"{_SOCIAL_FRIEND_PREFIX}{user_id}", {"friend_id": user_id, "created_at": created_at})
+    except HTTPException:
+        _social_delete_kv(user_id, f"{_SOCIAL_FRIEND_PREFIX}{peer_id}")
+        raise
+    _social_delete_kv(user_id, own_request_key)
+    _social_delete_kv(peer_id, f"{_SOCIAL_REQUEST_OUT_PREFIX}{user_id}")
+    return _social_public_profile(peer)
+
+
+def _close_friend_request(request_id: str, user_id: str, direction: str, status_value: str) -> dict[str, Any]:
+    found = _social_find_request(user_id, request_id, direction)
+    if not found:
+        raise HTTPException(status_code=404, detail="Request not found")
+    request, own_key = found
+    peer_id = str(request.get("from_user_id") if direction == "incoming" else request.get("to_user_id") or "")
+    peer_prefix = _SOCIAL_REQUEST_OUT_PREFIX if direction == "incoming" else _SOCIAL_REQUEST_IN_PREFIX
+    _social_delete_kv(user_id, own_key)
+    if peer_id:
+        _social_delete_kv(peer_id, f"{peer_prefix}{user_id}")
+    return _social_request_response({**request, "status": status_value})
+
+
+@app.post("/social/friend-requests/{request_id}/decline")
+def decline_friend_request(request_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    return _close_friend_request(request_id, user_id, "incoming", "declined")
+
+
+@app.post("/social/friend-requests/{request_id}/cancel")
+def cancel_friend_request(request_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    return _close_friend_request(request_id, user_id, "outgoing", "cancelled")
+
+
+@app.post("/social/friends/remove")
+def remove_friend(payload: FriendTargetRequest, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    target = _social_user_by_username(payload.username.strip())
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    target_id = str(target.get("user_id") or "")
+    _social_delete_kv(user_id, f"{_SOCIAL_FRIEND_PREFIX}{target_id}")
+    _social_delete_kv(target_id, f"{_SOCIAL_FRIEND_PREFIX}{user_id}")
+    return {"status": "removed"}
 
 
 @app.get("/social/friends/rankings")
