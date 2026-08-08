@@ -79,10 +79,37 @@ void main() {
     expect(find.text('고급 모드'), findsOneWidget);
     expect(find.text('초보자 모드'), findsOneWidget);
     expect(find.text('그래프 그리기'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('mobile-graph-page-scroll')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('mobile-math-keypad')), findsOneWidget);
+    final mathFieldFinder = find.byKey(
+      const ValueKey('mobile-math-expression-0'),
+    );
+    final mathField = tester.widget<TextField>(mathFieldFinder);
+    expect(mathField.readOnly, isTrue);
+    await tester.tap(mathFieldFinder);
+    await tester.pump();
+    expect(tester.testTextInput.isVisible, isFalse);
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('goldens/jsx_graph_mobile_layout.png'),
     );
+    await tester.drag(
+      find.byKey(const ValueKey('mobile-graph-page-scroll')),
+      const Offset(0, -400),
+    );
+    await tester.pumpAndSettle();
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('mobile-graph-page-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(scrollable.position.pixels, greaterThan(0));
   });
 
   testWidgets('모바일 수식은 반영 버튼을 누르면 정규화되어 그래프 상태에 적용된다', (tester) async {
@@ -119,11 +146,20 @@ void main() {
     );
     await tester.pump();
 
-    final expressionField = find.byType(TextField).first;
-    await tester.enterText(expressionField, 'y = 2x + 1');
-    await tester.pump();
+    final expressionField = find.byKey(
+      const ValueKey('mobile-math-expression-0'),
+    );
+    for (final label in ['2', '×', 'x', '+', '1']) {
+      final key = find.text(label).first;
+      await tester.ensureVisible(key);
+      await tester.pumpAndSettle();
+      await tester.tap(key);
+      await tester.pump();
+    }
     final applyButton = find.byKey(const ValueKey('mobile-graph-apply'));
     expect(applyButton, findsOneWidget);
+    await tester.ensureVisible(applyButton);
+    await tester.pumpAndSettle();
     await tester.tap(applyButton);
     await tester.pump();
 

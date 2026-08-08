@@ -62,6 +62,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   bool _advancedMode = true;
   bool _sampling = false;
   int _beginnerType = 0;
+  int? _activeMobileDraftId;
 
   @override
   void initState() {
@@ -104,6 +105,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           expressionController: TextEditingController(),
         ),
       );
+    _activeMobileDraftId = nextId;
     _parameters.clear();
     _sampledItems.clear();
     _hasActiveExampleContext = false;
@@ -149,6 +151,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           );
         }),
       );
+    _activeMobileDraftId = _drafts.isEmpty ? null : _drafts.first.localId;
     _parameters
       ..clear()
       ..addAll(
@@ -194,6 +197,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           expressionController: TextEditingController(),
         ),
       );
+      _activeMobileDraftId = nextId;
       _editorMessage = null;
       _sampledItems.clear();
     });
@@ -206,6 +210,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       if (_drafts.isEmpty) {
         _hasActiveExampleContext = false;
         _parameters.clear();
+      }
+      if (_activeMobileDraftId == draft.localId) {
+        _activeMobileDraftId = _drafts.isEmpty ? null : _drafts.first.localId;
       }
       _editorMessage = null;
       _sampledItems.clear();
@@ -429,16 +436,18 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                       );
 
                       if (mobileLayout) {
-                        return Column(
+                        return ListView(
+                          key: const ValueKey('mobile-graph-page-scroll'),
+                          padding: const EdgeInsets.only(bottom: 12),
                           children: [
                             SizedBox(
-                              height: (constraints.maxHeight * .40)
-                                  .clamp(250.0, 330.0)
+                              height: (constraints.maxHeight * .42)
+                                  .clamp(280.0, 360.0)
                                   .toDouble(),
                               child: graphPanel,
                             ),
                             const SizedBox(height: 12),
-                            Expanded(child: editorPanel),
+                            editorPanel,
                           ],
                         );
                       }
@@ -799,14 +808,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
             ),
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _advancedMode
-                  ? _buildMobileAdvancedEditor()
-                  : _buildMobileBeginnerEditor(),
-            ),
-          ),
+          _advancedMode
+              ? _buildMobileAdvancedEditor()
+              : _buildMobileBeginnerEditor(),
           if (_editorMessage != null) ...[
             const SizedBox(height: 6),
             Text(
@@ -859,7 +863,14 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   }
 
   Widget _buildMobileAdvancedEditor() {
-    final draft = _drafts.isEmpty ? null : _drafts.first;
+    _GraphItemDraft? draft;
+    for (final item in _drafts) {
+      if (item.localId == _activeMobileDraftId) {
+        draft = item;
+        break;
+      }
+    }
+    draft ??= _drafts.isEmpty ? null : _drafts.first;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -883,9 +894,15 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           _CalculatorKeypad(
             mobile: true,
             onInsert: (token) {
-              draft.insertToken(token);
+              if (token == _CalculatorKeypad.clearToken) {
+                draft!.clearExpression();
+              } else if (token == _CalculatorKeypad.backspaceToken) {
+                draft!.deletePreviousCharacter();
+              } else {
+                draft!.insertToken(token);
+              }
               setState(() {
-                draft.errorText = null;
+                draft!.errorText = null;
                 _sampledItems.clear();
                 _editorMessage = null;
               });
@@ -1001,6 +1018,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         },
         onRemove: () => _removeDraft(draft),
         onSubmitted: (_) => _applyCurrentDrafts(),
+        onActivated: compact
+            ? () => setState(() => _activeMobileDraftId = draft.localId)
+            : null,
       );
     }
 
@@ -2118,6 +2138,9 @@ class _PracticePanel extends StatelessWidget {
 class _CalculatorKeypad extends StatelessWidget {
   const _CalculatorKeypad({required this.onInsert, this.mobile = false});
 
+  static const clearToken = '__clear__';
+  static const backspaceToken = '__backspace__';
+
   final ValueChanged<String> onInsert;
   final bool mobile;
 
@@ -2142,36 +2165,105 @@ class _CalculatorKeypad extends StatelessWidget {
     _CalculatorKey('^', '^'),
   ];
 
+  static const _mobileKeys = <_CalculatorKey>[
+    _CalculatorKey('sin', 'sin()'),
+    _CalculatorKey('cos', 'cos()'),
+    _CalculatorKey('tan', 'tan()'),
+    _CalculatorKey('log', 'log()'),
+    _CalculatorKey('ln', 'ln()'),
+    _CalculatorKey('√', 'sqrt()'),
+    _CalculatorKey('| |', 'abs()'),
+    _CalculatorKey('x', 'x'),
+    _CalculatorKey('7', '7'),
+    _CalculatorKey('8', '8'),
+    _CalculatorKey('9', '9'),
+    _CalculatorKey('÷', '/'),
+    _CalculatorKey('4', '4'),
+    _CalculatorKey('5', '5'),
+    _CalculatorKey('6', '6'),
+    _CalculatorKey('×', '*'),
+    _CalculatorKey('1', '1'),
+    _CalculatorKey('2', '2'),
+    _CalculatorKey('3', '3'),
+    _CalculatorKey('−', '-'),
+    _CalculatorKey('0', '0'),
+    _CalculatorKey('.', '.'),
+    _CalculatorKey('π', 'pi'),
+    _CalculatorKey('+', '+'),
+    _CalculatorKey('(', '('),
+    _CalculatorKey(')', ')'),
+    _CalculatorKey('^', '^'),
+    _CalculatorKey('x²', '^2'),
+    _CalculatorKey('e', 'e'),
+    _CalculatorKey('C', clearToken),
+    _CalculatorKey('⌫', backspaceToken),
+  ];
+
   @override
   Widget build(BuildContext context) {
+    if (mobile) {
+      return GridView.builder(
+        key: const ValueKey('mobile-math-keypad'),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _mobileKeys.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: 1.55,
+        ),
+        itemBuilder: (context, index) {
+          final key = _mobileKeys[index];
+          return _CalculatorKeyButton(calculatorKey: key, onInsert: onInsert);
+        },
+      );
+    }
     return Wrap(
-      spacing: mobile ? 8 : 6,
-      runSpacing: mobile ? 8 : 6,
+      spacing: 6,
+      runSpacing: 6,
       children: [
         for (final key in _keys)
-          InkWell(
-            onTap: () => onInsert(key.value),
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              width: mobile ? 64 : 46,
-              height: mobile ? 48 : 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _kBorder),
-              ),
-              child: Text(
-                key.label,
-                style: const TextStyle(
-                  color: _kGreen,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
+          SizedBox(
+            width: 46,
+            height: 34,
+            child: _CalculatorKeyButton(calculatorKey: key, onInsert: onInsert),
           ),
       ],
+    );
+  }
+}
+
+class _CalculatorKeyButton extends StatelessWidget {
+  const _CalculatorKeyButton({
+    required this.calculatorKey,
+    required this.onInsert,
+  });
+
+  final _CalculatorKey calculatorKey;
+  final ValueChanged<String> onInsert;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => onInsert(calculatorKey.value),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _kBorder),
+        ),
+        child: Text(
+          calculatorKey.label,
+          style: const TextStyle(
+            color: _kGreen,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -2321,6 +2413,7 @@ class _FunctionDraftTile extends StatefulWidget {
     required this.onToggle,
     required this.onRemove,
     required this.onSubmitted,
+    this.onActivated,
   });
 
   final _GraphItemDraft draft;
@@ -2329,6 +2422,7 @@ class _FunctionDraftTile extends StatefulWidget {
   final VoidCallback onToggle;
   final VoidCallback onRemove;
   final ValueChanged<String> onSubmitted;
+  final VoidCallback? onActivated;
 
   @override
   State<_FunctionDraftTile> createState() => _FunctionDraftTileState();
@@ -2432,8 +2526,14 @@ class _FunctionDraftTileState extends State<_FunctionDraftTile> {
             child: Column(
               children: [
                 TextField(
+                  key: compact
+                      ? ValueKey('mobile-math-expression-${draft.localId}')
+                      : null,
                   controller: draft.expressionController,
                   focusNode: _expressionFocusNode,
+                  readOnly: compact,
+                  showCursor: true,
+                  enableInteractiveSelection: true,
                   minLines: compact ? 1 : 2,
                   maxLines: compact ? 1 : 4,
                   keyboardType: compact
@@ -2444,6 +2544,7 @@ class _FunctionDraftTileState extends State<_FunctionDraftTile> {
                       : TextInputAction.newline,
                   onChanged: (_) => onChanged(),
                   onSubmitted: onSubmitted,
+                  onTap: widget.onActivated,
                   onTapOutside: (_) => _expressionFocusNode.unfocus(),
                   decoration: InputDecoration(
                     border: compact
@@ -2691,6 +2792,26 @@ class _GraphItemDraft {
       text: nextText,
       selection: TextSelection.collapsed(offset: cursor),
     );
+  }
+
+  void clearExpression() {
+    expressionController?.clear();
+  }
+
+  void deletePreviousCharacter() {
+    final controller = expressionController;
+    if (controller == null || controller.text.isEmpty) return;
+    final selection = controller.selection;
+    final start = selection.isValid ? selection.start : controller.text.length;
+    final end = selection.isValid ? selection.end : controller.text.length;
+    if (start != end) {
+      controller.text = controller.text.replaceRange(start, end, '');
+      controller.selection = TextSelection.collapsed(offset: start);
+      return;
+    }
+    if (start <= 0) return;
+    controller.text = controller.text.replaceRange(start - 1, start, '');
+    controller.selection = TextSelection.collapsed(offset: start - 1);
   }
 }
 
