@@ -13,7 +13,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 import jwt
@@ -631,6 +631,12 @@ class UserStorageRequest(BaseModel):
     """필요 변수: UTF-8 JSON 문자열. 작동 원리: 기존 앱의 사용자별 KV 계약을 유지한다."""
 
     value: str
+
+
+class StudentScheduleSyncRequest(BaseModel):
+    """필요 변수: 날짜별 개인 일정 제목. 작동 원리: 전체 일정 스냅샷을 사용자 단위로 교체한다."""
+
+    tasks_by_date: dict[str, list[str]]
 
 
 class MarketplaceProgressRequest(BaseModel):
@@ -1978,10 +1984,84 @@ async def submit_course_runtime(request: Request, user_id: str = Depends(_curren
 
 
 @app.get("/academy/assignments/my")
-@app.get("/academy/students/me/schedule")
 def list_empty_student_tasks(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 배정 과제와 개인 일정이 없는 초기 홈 계약을 유지한다."""
+    """필요 변수: 인증 사용자. 작동 원리: 배정 과제가 없는 초기 홈 계약을 유지한다."""
     return {"items": []}
+
+
+_STUDENT_SCHEDULE_STORAGE_KEY = "student.schedule.v1"
+
+
+def _normalize_student_schedule(tasks_by_date: dict[str, list[str]]) -> dict[str, list[str]]:
+    """필요 변수: 날짜별 제목 목록. 작동 원리: 크기·날짜·제목을 제한하고 중복을 제거한다."""
+    if len(tasks_by_date) > 366:
+        raise HTTPException(status_code=400, detail="Too many schedule dates")
+    normalized: dict[str, list[str]] = {}
+    task_count = 0
+    for date_key, raw_titles in tasks_by_date.items():
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_key):
+            raise HTTPException(status_code=400, detail="Schedule date must be YYYY-MM-DD")
+        try:
+            date.fromisoformat(date_key)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail="Invalid schedule date") from error
+        titles: list[str] = []
+        for raw_title in raw_titles:
+            title = raw_title.strip()
+            if not title or len(title) > 60:
+                raise HTTPException(status_code=400, detail="Schedule title must be 1-60 characters")
+            if title not in titles:
+                titles.append(title)
+                task_count += 1
+                if task_count > 500:
+                    raise HTTPException(status_code=400, detail="Too many schedule tasks")
+        if titles:
+            normalized[date_key] = titles
+    return dict(sorted(normalized.items()))
+
+
+def _student_schedule_items(user_id: str, tasks_by_date: dict[str, list[str]]) -> list[dict[str, str]]:
+    """필요 변수: 사용자 ID와 정규화 일정. 작동 원리: 재조회에도 안정적인 일정 ID를 생성한다."""
+    return [
+        {
+            "task_id": hashlib.sha256(f"{user_id}:{date_key}:{index}:{title}".encode()).hexdigest()[:24],
+            "date": date_key,
+            "title": title,
+        }
+        for date_key, titles in tasks_by_date.items()
+        for index, title in enumerate(titles)
+    ]
+
+
+@app.get("/academy/students/me/schedule")
+def get_student_schedule(user_id: str = Depends(_current_user)) -> dict[str, list[dict[str, str]]]:
+    """필요 변수: 인증 사용자. 작동 원리: 사용자 KV의 개인 일정 스냅샷을 화면 항목으로 복원한다."""
+    raw = get_user_storage(_STUDENT_SCHEDULE_STORAGE_KEY, user_id)["value"]
+    if not raw:
+        return {"items": []}
+    try:
+        decoded = json.loads(raw)
+        if not isinstance(decoded, dict):
+            raise ValueError("schedule snapshot must be an object")
+        normalized = _normalize_student_schedule(decoded)
+    except (TypeError, ValueError, HTTPException) as error:
+        raise HTTPException(status_code=502, detail="Stored schedule is invalid") from error
+    return {"items": _student_schedule_items(user_id, normalized)}
+
+
+@app.put("/academy/students/me/schedule")
+def put_student_schedule(
+    payload: StudentScheduleSyncRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, bool]:
+    """필요 변수: 인증 사용자와 전체 일정. 작동 원리: 검증한 스냅샷을 사용자 복합키에 멱등 upsert한다."""
+    normalized = _normalize_student_schedule(payload.tasks_by_date)
+    put_user_storage(
+        _STUDENT_SCHEDULE_STORAGE_KEY,
+        UserStorageRequest(value=json.dumps(normalized, ensure_ascii=False, separators=(",", ":"))),
+        user_id,
+    )
+    return {"success": True}
 
 
 @app.get("/challenges/daily-quests")

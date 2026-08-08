@@ -83,9 +83,13 @@ class MobileStudentBottomAppBar extends StatelessWidget {
   static void _goToRoute(BuildContext context, String route) {
     final current = ModalRoute.of(context)?.settings.name;
     if (current == route) return;
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(route, (entry) => entry.isFirst);
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      route,
+      (entry) =>
+          entry.settings.name == '/student/dashboard' ||
+          entry.settings.name == '/app' ||
+          entry.isFirst,
+    );
   }
 
   bool _isActive(_DrawerDestination item, String route) {

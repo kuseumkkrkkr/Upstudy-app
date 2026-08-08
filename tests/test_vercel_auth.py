@@ -185,6 +185,39 @@ def test_new_user_dashboard_endpoints(monkeypatch):
         assert all(item["coming_soon"] is True for item in arena["queues"])
 
 
+def test_personal_schedule_round_trip(monkeypatch):
+    """필요 변수: 로그인 사용자와 날짜별 일정. 작동 원리: PUT 저장값이 다음 GET에서 같은 사용자 일정으로 복원되는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student09", "password": "password123", "name": "학생9", "grade": "1학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        saved = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={"tasks_by_date": {"2026-08-09": ["오답 복습"], "2026-08-10": ["개념 정리"]}},
+        )
+        assert saved.status_code == 200
+
+        loaded = client.get("/academy/students/me/schedule", headers=headers)
+        assert loaded.status_code == 200
+        assert [(item["date"], item["title"]) for item in loaded.json()["items"]] == [
+            ("2026-08-09", "오답 복습"),
+            ("2026-08-10", "개념 정리"),
+        ]
+        invalid = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={"tasks_by_date": {"2026-02-30": ["잘못된 날짜"]}},
+        )
+        assert invalid.status_code == 400
+
+
 def test_marketplace_catalog_search_and_pagination(monkeypatch):
     """필요 변수: 인증 사용자·코스 검색어·페이지 크기. 작동 원리: Vercel 카탈로그가 전체 81개와 검색·다음 페이지 계약을 실제로 반환하는지 검증한다."""
     monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")

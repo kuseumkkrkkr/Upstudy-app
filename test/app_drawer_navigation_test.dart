@@ -227,6 +227,42 @@ void main() {
     expect(find.text('알림 센터'), findsOneWidget);
   });
 
+  testWidgets('내 정보 저장 후 로그인 화면이 아닌 학생 홈으로 돌아간다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        initialRoute: '/student/dashboard',
+        routes: {
+          '/': (_) => const Scaffold(body: Text('로그인 화면')),
+          '/student/dashboard': (_) => const Scaffold(
+            body: Text('학생 홈'),
+            bottomNavigationBar: MobileStudentBottomAppBar(),
+          ),
+          '/profile': (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('저장하기'),
+            ),
+          ),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('더보기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('mobile-more-profile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('저장하기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('학생 홈'), findsOneWidget);
+    expect(find.text('로그인 화면'), findsNothing);
+  });
+
   testWidgets('모바일 전체 검색은 수학 키워드를 실제 학습 화면과 연결한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
