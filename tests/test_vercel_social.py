@@ -27,15 +27,19 @@ class _FakeSocialDataApi:
             return None
         user_id = query.get("user_id", "").removeprefix("eq.")
         key_filter = query.get("key", "")
+        value_filter = query.get("value", "")
         if method == "DELETE":
             key = key_filter.removeprefix("eq.")
             self.kv.pop((user_id, key), None)
             return None
         rows = [
-            {"key": key, "value": value}
+            {"user_id": owner, "key": key, "value": value}
             for (owner, key), value in self.kv.items()
-            if owner == user_id and self._matches_key(key, key_filter)
+            if (not user_id or owner == user_id)
+            and self._matches_key(key, key_filter)
+            and self._matches_value(value, value_filter)
         ]
+        rows = rows[: int(query.get("limit", "100"))]
         selected = query.get("select", "key,value").split(",")
         return [{field: row.get(field) for field in selected} for row in rows]
 
@@ -67,6 +71,13 @@ class _FakeSocialDataApi:
             return key == key_filter.removeprefix("eq.")
         if key_filter.startswith("like."):
             return key.startswith(key_filter.removeprefix("like.").removesuffix("*"))
+        return True
+
+    @staticmethod
+    def _matches_value(value: str, value_filter: str) -> bool:
+        if value_filter.startswith("ilike."):
+            needle = value_filter.removeprefix("ilike.").strip("*").lower()
+            return needle in value.lower()
         return True
 
 
@@ -184,3 +195,58 @@ def test_study_group_create_and_list_contract(monkeypatch):
         members = client.get(f"/social/study-groups/{created.json()['group_id']}/members", headers=alice)
         assert members.status_code == 200
         assert members.json() == [{"user_id": "user-alice", "username": "alice01"}]
+
+
+def test_study_group_search_invite_and_join_contract(monkeypatch):
+    """다른 사용자의 공개 그룹 검색과 코드 확인·참가가 내 목록과 멤버에 반영되는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeSocialDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    alice = _headers(module, "user-alice")
+    bob = _headers(module, "user-bob")
+
+    with TestClient(module.app) as client:
+        created = client.post(
+            "/social/study-groups",
+            headers=alice,
+            json={
+                "name": "중등 수학 같이 공부",
+                "description": "매일 한 문제",
+                "max_members": 12,
+                "is_public": True,
+                "lock_enabled": True,
+                "password": "1234",
+                "invite_code": "MATH-24",
+            },
+        ).json()
+
+        searched = client.get("/social/study-groups/search?q=중등 수학&limit=10", headers=bob)
+        assert searched.status_code == 200
+        assert [group["group_id"] for group in searched.json()["groups"]] == [created["group_id"]]
+        assert "password_hash" not in searched.text
+
+        invite = client.get("/social/study-groups/invite/math-24", headers=bob)
+        assert invite.status_code == 200
+        assert invite.json()["name"] == "중등 수학 같이 공부"
+        assert invite.json()["lock_enabled"] is True
+
+        denied = client.post(
+            "/social/study-groups/join-by-code",
+            headers=bob,
+            json={"invite_code": "MATH-24", "password": "9999"},
+        )
+        assert denied.status_code == 400
+
+        joined = client.post(
+            "/social/study-groups/join-by-code",
+            headers=bob,
+            json={"invite_code": "MATH-24", "password": "1234"},
+        )
+        assert joined.status_code == 200
+        assert joined.json()["members"] == 2
+        assert client.get("/social/study-groups/search?q=중등 수학", headers=bob).json()["groups"] == []
+        assert client.get("/social/study-groups/mine", headers=bob).json()["groups"][0]["group_id"] == created["group_id"]
+
+        members = client.get(f"/social/study-groups/{created['group_id']}/members", headers=alice)
+        assert {member["username"] for member in members.json()} == {"alice01", "bob0001"}

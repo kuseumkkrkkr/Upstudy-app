@@ -1962,6 +1962,8 @@ class ApiClient {
     String? password,
   }) async {
     await _post('/social/study-groups/$groupId/join', {'password': password});
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-groups/search');
   }
 
   Future<StudyGroup> joinStudyGroupByInviteCode({
@@ -1973,6 +1975,8 @@ class ApiClient {
       {'invite_code': inviteCode.trim(), 'password': password},
       parser: (d) => StudyGroup.fromJson(Map<String, dynamic>.from(d as Map)),
     );
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-groups/search');
     return res.data ?? StudyGroup(id: '', name: '', memberCount: 0);
   }
 

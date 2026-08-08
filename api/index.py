@@ -690,6 +690,14 @@ class StudyGroupCreateRequest(BaseModel):
     invite_code: str | None = Field(default=None, max_length=20)
 
 
+class StudyGroupJoinRequest(BaseModel):
+    password: str | None = Field(default=None, max_length=10)
+
+
+class StudyGroupJoinByCodeRequest(StudyGroupJoinRequest):
+    invite_code: str = Field(min_length=4, max_length=20)
+
+
 class QuestGenerateRequest(BaseModel):
     """필요 변수: 문제 태그·문항 수·난이도 범위와 선택 생성 메타데이터다."""
 
@@ -2467,6 +2475,7 @@ _SOCIAL_FRIEND_PREFIX = "social.friend."
 _SOCIAL_REQUEST_IN_PREFIX = "social.friend_request.in."
 _SOCIAL_REQUEST_OUT_PREFIX = "social.friend_request.out."
 _SOCIAL_GROUP_PREFIX = "social.study_group."
+_SOCIAL_GROUP_MEMBER_PREFIX = "social.study_member."
 
 
 def _social_data_request(method: str, path: str, **kwargs: Any) -> Any:
@@ -2549,6 +2558,86 @@ def _social_group_for_user(user_id: str, group_id: str) -> dict[str, Any] | None
         },
     ) or []
     return _social_kv_value(dict(rows[0])) if rows else None
+
+
+def _social_global_group_rows(*, key: str | None = None, value_query: str | None = None, limit: int = 200) -> list[dict[str, Any]]:
+    query = {
+        "select": "user_id,key,value",
+        "key": f"eq.{key}" if key else f"like.{_SOCIAL_GROUP_PREFIX}*",
+        "limit": str(limit),
+    }
+    if value_query:
+        query["value"] = f"ilike.*{value_query}*"
+    rows = _social_data_request("GET", "canary_user_kv", query=query) or []
+    return [dict(row) for row in rows]
+
+
+def _social_canonical_group(group_id: str) -> dict[str, Any] | None:
+    fallback: dict[str, Any] | None = None
+    for row in _social_global_group_rows(key=f"{_SOCIAL_GROUP_PREFIX}{group_id}"):
+        group = _social_kv_value(row)
+        if not group:
+            continue
+        fallback = fallback or group
+        if str(row.get("user_id") or "") == str(group.get("creator_id") or ""):
+            return group
+    return fallback
+
+
+def _social_group_member_ids(group: dict[str, Any]) -> list[str]:
+    group_id = str(group.get("group_id") or "")
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "user_id",
+            "key": f"eq.{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}",
+            "limit": "101",
+        },
+    ) or []
+    ids = {str(value) for value in group.get("member_ids") or [] if str(value)}
+    ids.update(str(row.get("user_id") or "") for row in rows if row.get("user_id"))
+    return sorted(ids)
+
+
+def _social_public_group(group: dict[str, Any]) -> dict[str, Any]:
+    member_ids = _social_group_member_ids(group)
+    return {
+        key: value
+        for key, value in {**group, "member_ids": member_ids, "members": len(member_ids)}.items()
+        if key not in {"password_salt", "password_hash"}
+    }
+
+
+def _social_join_group(group: dict[str, Any], user_id: str, password: str | None) -> dict[str, Any]:
+    group_id = str(group.get("group_id") or "")
+    member_ids = _social_group_member_ids(group)
+    if user_id in member_ids:
+        existing = _social_group_for_user(user_id, group_id)
+        return _social_public_group(existing or group)
+    if len(member_ids) >= int(group.get("max_members") or 0):
+        raise HTTPException(status_code=409, detail="Group is full")
+    if len(_social_kv_rows(user_id, _SOCIAL_GROUP_PREFIX)) >= 3:
+        raise HTTPException(status_code=409, detail="User reached max groups")
+    if group.get("lock_enabled"):
+        supplied = (password or "").strip()
+        expected = str(group.get("password_hash") or "")
+        salt = str(group.get("password_salt") or "")
+        if not supplied or not expected or not hmac.compare_digest(_hash_password(supplied, salt), expected):
+            raise HTTPException(status_code=400, detail="Invalid group password")
+    joined_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    member_key = f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}"
+    _social_upsert_kv(user_id, member_key, {"group_id": group_id, "joined_at": joined_at})
+    try:
+        _social_upsert_kv(
+            user_id,
+            f"{_SOCIAL_GROUP_PREFIX}{group_id}",
+            {**group, "member_ids": [*member_ids, user_id], "members": len(member_ids) + 1},
+        )
+    except HTTPException:
+        _social_delete_kv(user_id, member_key)
+        raise
+    return _social_public_group({**group, "member_ids": [*member_ids, user_id]})
 
 
 def _social_upsert_kv(user_id: str, key: str, value: dict[str, Any]) -> None:
@@ -2810,7 +2899,16 @@ def create_study_group(payload: StudyGroupCreateRequest, user_id: str = Depends(
         group["password_salt"] = salt
         group["password_hash"] = _hash_password(password, salt)
     _social_upsert_kv(user_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}", group)
-    return {key: value for key, value in group.items() if key not in {"password_salt", "password_hash"}}
+    try:
+        _social_upsert_kv(
+            user_id,
+            f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}",
+            {"group_id": group_id, "joined_at": created_at},
+        )
+    except HTTPException:
+        _social_delete_kv(user_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}")
+        raise
+    return _social_public_group(group)
 
 
 @app.get("/social/study-groups/mine")
@@ -2821,9 +2919,80 @@ def list_my_study_groups(user_id: str = Depends(_current_user)) -> dict[str, lis
         value = _social_kv_value(row)
         if not value:
             continue
-        groups.append({key: item for key, item in value.items() if key not in {"password_salt", "password_hash"}})
+        groups.append(_social_public_group(value))
     groups.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
     return {"groups": groups}
+
+
+@app.get("/social/study-groups/search")
+def search_study_groups(q: str, limit: int = 20, user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 그룹명 일부. 작동 원리: 공개 그룹 KV를 이름으로 제한 검색하고 이미 가입한 그룹은 제외한다."""
+    keyword = q.strip()
+    if not re.fullmatch(r"[가-힣A-Za-z0-9 _-]{1,80}", keyword):
+        return {"groups": []}
+    bounded_limit = max(1, min(limit, 50))
+    groups: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in _social_global_group_rows(value_query=keyword, limit=max(100, bounded_limit * 10)):
+        group = _social_kv_value(row)
+        group_id = str((group or {}).get("group_id") or "")
+        if (
+            not group
+            or not group_id
+            or group_id in seen
+            or not group.get("is_public")
+            or keyword.casefold() not in str(group.get("name") or "").casefold()
+            or user_id in _social_group_member_ids(group)
+        ):
+            continue
+        seen.add(group_id)
+        groups.append(_social_public_group(group))
+        if len(groups) >= bounded_limit:
+            break
+    return {"groups": groups}
+
+
+@app.get("/social/study-groups/invite/{invite_code}")
+def get_study_group_invite(invite_code: str, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    code = invite_code.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9-]{4,20}", code):
+        raise HTTPException(status_code=404, detail="Invite code not found")
+    for row in _social_global_group_rows(value_query=code, limit=50):
+        group = _social_kv_value(row)
+        if group and str(group.get("invite_code") or "").upper() == code:
+            public = _social_public_group(group)
+            return {
+                "group_id": public["group_id"],
+                "name": public["name"],
+                "description": public.get("description") or "",
+                "max_members": public["max_members"],
+                "members": public["members"],
+                "lock_enabled": bool(public.get("lock_enabled")),
+                "owner_role": public.get("owner_role") or "student",
+                "is_teacher_group": bool(public.get("is_teacher_group")),
+                "invite_code": code,
+            }
+    raise HTTPException(status_code=404, detail="Invite code not found")
+
+
+@app.post("/social/study-groups/join-by-code")
+def join_study_group_by_code(payload: StudyGroupJoinByCodeRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    code = payload.invite_code.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9-]{4,20}", code):
+        raise HTTPException(status_code=404, detail="Invite code not found")
+    for row in _social_global_group_rows(value_query=code, limit=50):
+        group = _social_kv_value(row)
+        if group and str(group.get("invite_code") or "").upper() == code:
+            return _social_join_group(group, user_id, payload.password)
+    raise HTTPException(status_code=404, detail="Invite code not found")
+
+
+@app.post("/social/study-groups/{group_id}/join")
+def join_study_group(group_id: str, payload: StudyGroupJoinRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    group = _social_canonical_group(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return _social_join_group(group, user_id, payload.password)
 
 
 @app.get("/social/study-groups/{group_id}/members")
@@ -2833,7 +3002,7 @@ def list_study_group_members(group_id: str, user_id: str = Depends(_current_user
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
     members: list[dict[str, str]] = []
-    for member_id in group.get("member_ids") or []:
+    for member_id in _social_group_member_ids(group):
         profile = _social_user_by_id(str(member_id))
         if profile:
             members.append({"user_id": str(member_id), "username": str(profile.get("username") or member_id)})

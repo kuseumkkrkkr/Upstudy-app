@@ -118,4 +118,29 @@ void main() {
     expect(group.id, 'group-1');
     expect(client.hasMemoryCacheForTest('/social/study-groups/mine'), isFalse);
   });
+
+  test('그룹 참가 후 내 그룹과 검색 캐시를 즉시 무효화한다', () async {
+    final client = ApiClient.instance;
+    await client.setToken('study-group-join-token');
+    await client.seedCacheForTest('/social/study-groups/mine', '{"groups":[]}');
+    await client.seedCacheForTest(
+      '/social/study-groups/search',
+      '{"groups":[]}',
+    );
+    client.setHttpClientForTest(
+      MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/social/study-groups/group-1/join');
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await client.joinStudyGroup(groupId: 'group-1');
+
+    expect(client.hasMemoryCacheForTest('/social/study-groups/mine'), isFalse);
+    expect(
+      client.hasMemoryCacheForTest('/social/study-groups/search'),
+      isFalse,
+    );
+  });
 }
