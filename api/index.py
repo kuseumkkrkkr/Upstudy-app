@@ -583,6 +583,17 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ServerChatMessageRequest(BaseModel):
+    user_message: str = Field(min_length=1, max_length=250)
+    character: str | None = Field(default=None, max_length=40)
+    mode: str = Field(default="chat", pattern="^(chat|problem)$")
+    ephemeral: bool = False
+    include_user_data: bool = False
+    quest_title: str | None = Field(default=None, max_length=500)
+    flow: str | None = Field(default=None, max_length=4000)
+    ocr: str | None = Field(default=None, max_length=4000)
+
+
 class UsernameRequest(BaseModel):
     """필요 변수: 검사할 아이디. 작동 원리: 가입 전 형식과 중복 여부를 한 번에 확인한다."""
 
@@ -2339,10 +2350,87 @@ def get_exam_status(
     return _build_marketplace_exam_status(listing)
 
 
+_TUTOR_SYSTEM_PROMPT = (
+    "너는 AIFlow의 한국어 수학 학습 튜터다. 정답만 대신 내놓지 말고, 학생이 다음 단계를 "
+    "스스로 찾도록 짧고 명확하게 설명하라. 수식은 읽기 쉬운 텍스트로 쓰고 답변은 600자 이내로 제한하라."
+)
+
+
+def _request_tutor_reply(payload: ServerChatMessageRequest) -> tuple[str, str]:
+    api_key = os.getenv("COMETAPI_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("AI tutor is not configured")
+    model = os.getenv("OMJ_CHAT_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
+    base_url = os.getenv("COMET_OPENAI_BASE_URL", "https://api.cometapi.com/v1").rstrip("/")
+    context = "\n".join(
+        part
+        for part in (
+            f"문제: {payload.quest_title}" if payload.quest_title else "",
+            f"풀이 맥락: {payload.flow}" if payload.flow else "",
+            f"인식 내용: {payload.ocr}" if payload.ocr else "",
+        )
+        if part
+    )
+    messages = [{"role": "system", "content": _TUTOR_SYSTEM_PROMPT}]
+    if context:
+        messages.append({"role": "system", "content": context})
+    messages.append({"role": "user", "content": payload.user_message.strip()})
+    body = json.dumps(
+        {"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 300},
+        ensure_ascii=False,
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        f"{base_url}/chat/completions",
+        data=body,
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            result = json.loads(response.read(200_000))
+    except urllib.error.HTTPError as error:
+        print(f"serverchat_upstream_http_error status={error.code}")
+        raise RuntimeError("AI tutor upstream rejected the request") from error
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise RuntimeError("AI tutor upstream is unavailable") from error
+    try:
+        reply = str(result["choices"][0]["message"]["content"]).strip()
+    except (KeyError, IndexError, TypeError) as error:
+        raise RuntimeError("AI tutor returned an invalid response") from error
+    if not reply:
+        raise RuntimeError("AI tutor returned an empty response")
+    return reply, model
+
+
 @app.get("/serverchat/config")
 def get_server_chat_config(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
-    """필요 변수: 인증 사용자. 작동 원리: 채팅 모델 Secret 미설정 상태를 명시적으로 비활성 응답한다."""
-    return {"enabled": False, "reason": "SAM_API_KEY is not configured"}
+    enabled = bool(os.getenv("COMETAPI_KEY", "").strip())
+    return {
+        "enabled": enabled,
+        "reason": "" if enabled else "AI tutor is not configured",
+        "character": "gemma",
+        "character_name": "AI 학습 튜터",
+        "model": os.getenv("OMJ_CHAT_MODEL", "gpt-4o-mini"),
+    }
+
+
+@app.post("/serverchat/message")
+async def send_server_chat_message(
+    payload: ServerChatMessageRequest,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    if not os.getenv("COMETAPI_KEY", "").strip():
+        raise HTTPException(status_code=503, detail="AI tutor is not configured")
+    try:
+        reply, model = await run_in_threadpool(_request_tutor_reply, payload)
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {
+        "assistant_message": reply,
+        "character": payload.character or "gemma",
+        "character_name": "AI 학습 튜터",
+        "model": model,
+    }
 
 
 @app.post("/api/ocr/jobs", status_code=status.HTTP_202_ACCEPTED)
