@@ -61,14 +61,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('모바일 그래프 입력 영역은 한손 조작 배치를 유지한다', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: JsxGraphPage(
+          embedEnabled: false,
+          sampleGraph: (_) async => const <String, dynamic>{},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('고급 모드'), findsOneWidget);
+    expect(find.text('초보자 모드'), findsOneWidget);
+    expect(find.text('그래프 그리기'), findsOneWidget);
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/jsx_graph_mobile_layout.png'),
+    );
+  });
+
   testWidgets('모바일 수식은 반영 버튼을 누르면 정규화되어 그래프 상태에 적용된다', (tester) async {
     // 필요한 변수는 모바일 그래프 화면과 암시적 곱셈이 포함된 수식이다.
     // 작동 원리는 반영 버튼이 입력을 검증하고 2x를 2*x로 정규화해 문서 재생성 상태를 만드는지 확인한다.
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
+    Map<String, dynamic>? sentPayload;
     await tester.pumpWidget(
-      const MaterialApp(home: JsxGraphPage(embedEnabled: false)),
+      MaterialApp(
+        home: JsxGraphPage(
+          embedEnabled: false,
+          sampleGraph: (payload) async {
+            sentPayload = payload;
+            return {
+              'series': [
+                {
+                  'id': 'custom-0',
+                  'label': '함수 1',
+                  'color_hex': '#2F7CF6',
+                  'segments': [
+                    {
+                      'x_values': [-1, 0, 1],
+                      'y_values': [-1, 1, 3],
+                    },
+                  ],
+                },
+              ],
+            };
+          },
+        ),
+      ),
     );
     await tester.pump();
 
@@ -82,6 +129,8 @@ void main() {
 
     final field = tester.widget<TextField>(expressionField);
     expect(field.controller?.text, '2*x+1');
+    expect((sentPayload?['expressions'] as List).first['expression'], '2*x+1');
+    expect(find.text('3개 좌표를 API에서 받았습니다.'), findsOneWidget);
     expect(find.text('검증된 형식으로 바꾼 뒤 다시 갱신하세요.'), findsNothing);
     expect(tester.takeException(), isNull);
   });

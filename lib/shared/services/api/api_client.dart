@@ -1468,6 +1468,22 @@ class ApiClient {
     return UserProfile.fromJson(res.data ?? const <String, dynamic>{});
   }
 
+  /// 공개 그래프 좌표 API에 제한된 함수식과 뷰포트를 보내 실제 렌더링 좌표를 받는다.
+  Future<Map<String, dynamic>> sampleGraph(Map<String, dynamic> payload) async {
+    final uri = ApiContract.uri('/graphs/sample');
+    log('POST $uri', name: 'ApiClient');
+    final response = await _httpClient.post(
+      uri,
+      headers: const {'Content-Type': 'application/json; charset=utf-8'},
+      body: jsonEncode(payload),
+    );
+    final parsed = _parse<Map<String, dynamic>>(
+      response,
+      (data) => Map<String, dynamic>.from(data as Map),
+    );
+    return parsed.data ?? const <String, dynamic>{};
+  }
+
   Future<UserProfile> updateMyProfile({
     String? username,
     String? name,

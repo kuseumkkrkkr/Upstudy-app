@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import ast
 import json
 import hashlib
 import hmac
@@ -710,6 +711,22 @@ class QuestGenerateRequest(BaseModel):
     branch_conditions: int = Field(default=0, ge=0, le=20)
     seed: int | None = None
     request_id: str | None = None
+
+
+class GraphExpressionRequest(BaseModel):
+    id: str = Field(min_length=1, max_length=60)
+    label: str = Field(default="", max_length=80)
+    color_hex: str = Field(default="#2F7CF6", pattern=r"^#[0-9A-Fa-f]{6}$")
+    expression: str = Field(min_length=1, max_length=120)
+
+
+class GraphSampleRequest(BaseModel):
+    expressions: list[GraphExpressionRequest] = Field(min_length=1, max_length=6)
+    parameters: dict[str, float] = Field(default_factory=dict)
+    left: float = Field(default=-12, ge=-100, le=100)
+    right: float = Field(default=12, ge=-100, le=100)
+    samples: int = Field(default=241, ge=41, le=401)
+    degree_mode: bool = False
 
 
 class SupabaseDataApi:
@@ -1548,6 +1565,91 @@ def put_user_storage(key: str, payload: UserStorageRequest, user_id: str = Depen
     except RuntimeError as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
     return {"status": "ok"}
+
+
+_GRAPH_FUNCTION_NAMES = {"sin", "cos", "tan", "sqrt", "abs", "log", "ln", "exp"}
+_GRAPH_AST_NODES = (
+    ast.Expression, ast.BinOp, ast.UnaryOp, ast.Call, ast.Name, ast.Load,
+    ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod,
+    ast.UAdd, ast.USub,
+)
+
+
+def _compile_graph_expression(source: str, parameter_names: set[str]) -> Any:
+    """제한된 수학 AST만 컴파일해 사용자 입력이 Python 기능에 접근하지 못하게 한다."""
+    normalized = re.sub(r"^y\s*=\s*", "", source.strip(), flags=re.IGNORECASE)
+    normalized = normalized.replace("^", "**")
+    try:
+        tree = ast.parse(normalized, mode="eval")
+    except SyntaxError as error:
+        raise HTTPException(status_code=422, detail="지원되는 함수식을 입력해 주세요") from error
+    nodes = list(ast.walk(tree))
+    if len(nodes) > 64 or any(not isinstance(node, _GRAPH_AST_NODES) for node in nodes):
+        raise HTTPException(status_code=422, detail="지원되지 않는 함수식입니다")
+    allowed_names = {"x", "pi", "e", *parameter_names, *_GRAPH_FUNCTION_NAMES}
+    for node in nodes:
+        if isinstance(node, ast.Name) and node.id not in allowed_names:
+            raise HTTPException(status_code=422, detail=f"지원되지 않는 변수: {node.id}")
+        if isinstance(node, ast.Call):
+            if not isinstance(node.func, ast.Name) or node.func.id not in _GRAPH_FUNCTION_NAMES or len(node.args) != 1:
+                raise HTTPException(status_code=422, detail="지원되지 않는 함수 호출입니다")
+        if isinstance(node, ast.Constant) and not isinstance(node.value, (int, float)):
+            raise HTTPException(status_code=422, detail="숫자 상수만 사용할 수 있습니다")
+    return compile(tree, "<graph-expression>", "eval")
+
+
+@app.post("/graphs/sample")
+def sample_graphs(payload: GraphSampleRequest) -> dict[str, Any]:
+    """함수식을 서버에서 안전하게 샘플링해 렌더러가 사용할 실제 좌표 구간을 반환한다."""
+    if payload.left >= payload.right:
+        raise HTTPException(status_code=422, detail="left는 right보다 작아야 합니다")
+    if len(payload.parameters) > 12 or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,15}", key) for key in payload.parameters):
+        raise HTTPException(status_code=422, detail="매개변수 형식이 올바르지 않습니다")
+
+    trig = {
+        "sin": lambda value: math.sin(math.radians(value)) if payload.degree_mode else math.sin(value),
+        "cos": lambda value: math.cos(math.radians(value)) if payload.degree_mode else math.cos(value),
+        "tan": lambda value: math.tan(math.radians(value)) if payload.degree_mode else math.tan(value),
+        "sqrt": math.sqrt,
+        "abs": abs,
+        "log": math.log10,
+        "ln": math.log,
+        "exp": math.exp,
+    }
+    scope = {"pi": math.pi, "e": math.e, **trig, **payload.parameters}
+    step = (payload.right - payload.left) / (payload.samples - 1)
+    series: list[dict[str, Any]] = []
+    for expression in payload.expressions:
+        compiled = _compile_graph_expression(expression.expression, set(payload.parameters))
+        segments: list[dict[str, list[float]]] = []
+        x_values: list[float] = []
+        y_values: list[float] = []
+        for index in range(payload.samples):
+            x_value = payload.left + (step * index)
+            try:
+                y_value = float(eval(compiled, {"__builtins__": {}}, {**scope, "x": x_value}))
+                valid = math.isfinite(y_value) and abs(y_value) <= 1_000_000
+            except (ArithmeticError, ValueError, TypeError, OverflowError):
+                valid = False
+            if valid:
+                x_values.append(round(x_value, 10))
+                y_values.append(round(y_value, 10))
+            elif x_values:
+                segments.append({"x_values": x_values, "y_values": y_values})
+                x_values, y_values = [], []
+        if x_values:
+            segments.append({"x_values": x_values, "y_values": y_values})
+        if not segments:
+            raise HTTPException(status_code=422, detail=f"표시 가능한 좌표가 없습니다: {expression.label or expression.id}")
+        series.append({
+            "id": expression.id,
+            "label": expression.label,
+            "color_hex": expression.color_hex,
+            "expression": expression.expression,
+            "segments": segments,
+            "point_count": sum(len(segment["x_values"]) for segment in segments),
+        })
+    return {"series": series}
 
 
 @app.delete("/user/storage/{key}")

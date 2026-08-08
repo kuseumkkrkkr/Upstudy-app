@@ -8,6 +8,7 @@ import 'package:s11/sessions/graph_tools/shared/aiflow_graph_example_catalog.dar
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_expression.dart';
 import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
@@ -26,10 +27,14 @@ const _kPalette = <Color>[
   Color(0xFF927A1F),
 ];
 
+typedef GraphSampleRequest =
+    Future<Map<String, dynamic>> Function(Map<String, dynamic> payload);
+
 class JsxGraphPage extends StatefulWidget {
-  const JsxGraphPage({super.key, this.embedEnabled = true});
+  const JsxGraphPage({super.key, this.embedEnabled = true, this.sampleGraph});
 
   final bool embedEnabled;
+  final GraphSampleRequest? sampleGraph;
 
   @override
   State<JsxGraphPage> createState() => _JsxGraphPageState();
@@ -39,6 +44,10 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final List<_GraphItemDraft> _drafts = <_GraphItemDraft>[];
   final List<_GraphParameterDraft> _parameters = <_GraphParameterDraft>[];
+  final List<AiFlowGraphItem> _sampledItems = <AiFlowGraphItem>[];
+  final TextEditingController _beginnerA = TextEditingController(text: '1');
+  final TextEditingController _beginnerB = TextEditingController(text: '0');
+  final TextEditingController _beginnerC = TextEditingController(text: '0');
 
   late AiFlowGraphExample _selectedExample;
   int _nextDraftId = 0;
@@ -50,6 +59,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   bool _drawerOpen = false;
   bool _hasActiveExampleContext = true;
   String? _editorMessage;
+  bool _advancedMode = true;
+  bool _sampling = false;
+  int _beginnerType = 0;
 
   @override
   void initState() {
@@ -63,6 +75,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     for (final draft in _drafts) {
       draft.dispose();
     }
+    _beginnerA.dispose();
+    _beginnerB.dispose();
+    _beginnerC.dispose();
     super.dispose();
   }
 
@@ -90,6 +105,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         ),
       );
     _parameters.clear();
+    _sampledItems.clear();
     _hasActiveExampleContext = false;
     _showAxes = true;
     _showGrid = true;
@@ -140,6 +156,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           _GraphParameterDraft.fromParameter,
         ),
       );
+    _sampledItems.clear();
 
     _selectedExample = example;
     _hasActiveExampleContext = true;
@@ -152,7 +169,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
 
   AiFlowGraphDocument _buildDocument() {
     return AiFlowGraphDocument(
-      items: _drafts.map((draft) => draft.toItem()).toList(),
+      items: List<AiFlowGraphItem>.unmodifiable(_sampledItems),
       settings: _selectedExample.document.settings.copyWith(
         showAxes: _showAxes,
         showGrid: _showGrid,
@@ -178,6 +195,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         ),
       );
       _editorMessage = null;
+      _sampledItems.clear();
     });
   }
 
@@ -190,10 +208,11 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         _parameters.clear();
       }
       _editorMessage = null;
+      _sampledItems.clear();
     });
   }
 
-  void _applyCurrentDrafts() {
+  Future<void> _applyCurrentDrafts() async {
     var hasError = false;
     for (final draft in _drafts) {
       if (draft.type != AiFlowGraphItemType.function) {
@@ -215,19 +234,134 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       }
     }
 
+    if (hasError) {
+      setState(() => _editorMessage = '검증된 형식으로 바꾼 뒤 다시 갱신하세요.');
+      return;
+    }
+    final functions = _drafts
+        .where(
+          (draft) =>
+              draft.type == AiFlowGraphItemType.function && draft.enabled,
+        )
+        .toList();
+    if (functions.isEmpty) {
+      setState(() => _editorMessage = '표시할 함수식을 입력해 주세요.');
+      return;
+    }
     setState(() {
-      if (hasError) {
-        _editorMessage = '검증된 형식으로 바꾼 뒤 다시 갱신하세요.';
-        return;
-      }
+      _sampling = true;
       _editorMessage = null;
     });
+    try {
+      final viewport = _selectedExample.document.settings.viewport;
+      final response =
+          await (widget.sampleGraph ?? ApiClient.instance.sampleGraph)({
+            'expressions': [
+              for (final draft in functions)
+                {
+                  'id': draft.itemId,
+                  'label': draft.label,
+                  'color_hex': draft.colorHex,
+                  'expression': draft.expressionController!.text.trim(),
+                },
+            ],
+            'parameters': {
+              for (final parameter in _parameters)
+                parameter.id: parameter.value,
+            },
+            'left': viewport?.left ?? -12,
+            'right': viewport?.right ?? 12,
+            'degree_mode': _degreeMode,
+          });
+      final sampled = _readSampledItems(response);
+      if (sampled.isEmpty) {
+        throw const FormatException('좌표 응답이 비어 있습니다.');
+      }
+      if (!mounted) return;
+      setState(() {
+        _sampledItems
+          ..clear()
+          ..addAll(sampled);
+        _editorMessage =
+            '${sampled.fold<int>(0, (sum, item) => sum + (item.xValues?.length ?? 0))}개 좌표를 API에서 받았습니다.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _sampledItems.clear();
+        _editorMessage = '그래프 좌표를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      });
+    } finally {
+      if (mounted) setState(() => _sampling = false);
+    }
     unawaited(
       ActivityStore.recordGraphPractice(
         graphId: 'jsx_graph_apply',
         meta: {'source': 'jsx_graph_page', 'item_count': _drafts.length},
       ),
     );
+  }
+
+  List<AiFlowGraphItem> _readSampledItems(Map<String, dynamic> response) {
+    final result = <AiFlowGraphItem>[];
+    final series = response['series'];
+    if (series is! List) return result;
+    for (final rawSeries in series.whereType<Map>()) {
+      final item = Map<String, dynamic>.from(rawSeries);
+      final segments = item['segments'];
+      if (segments is! List) continue;
+      var segmentIndex = 0;
+      for (final rawSegment in segments.whereType<Map>()) {
+        final segment = Map<String, dynamic>.from(rawSegment);
+        final xs = (segment['x_values'] as List?)
+            ?.whereType<num>()
+            .map((value) => value.toDouble())
+            .toList();
+        final ys = (segment['y_values'] as List?)
+            ?.whereType<num>()
+            .map((value) => value.toDouble())
+            .toList();
+        if (xs == null || ys == null || xs.length != ys.length || xs.isEmpty) {
+          continue;
+        }
+        result.add(
+          AiFlowGraphItem(
+            id: '${item['id'] ?? 'graph'}-$segmentIndex',
+            type: AiFlowGraphItemType.line,
+            label: item['label']?.toString() ?? '',
+            colorHex:
+                item['color_hex']?.toString() ?? _colorToHex(_kPalette.first),
+            enabled: true,
+            xValues: xs,
+            yValues: ys,
+          ),
+        );
+        segmentIndex += 1;
+      }
+    }
+    return result;
+  }
+
+  void _addBeginnerFunction() {
+    final a = double.tryParse(_beginnerA.text.trim());
+    final b = double.tryParse(_beginnerB.text.trim());
+    final c = double.tryParse(_beginnerC.text.trim());
+    if (a == null || b == null || c == null) {
+      setState(() => _editorMessage = '계수에는 숫자를 입력해 주세요.');
+      return;
+    }
+    if (_drafts.isEmpty) {
+      _addFunctionDraft();
+    }
+    final expressions = <String>[
+      '$a*x+$b',
+      '$a*x^2+$b*x+$c',
+      '$a*x^3+$b*x+$c',
+      '$a/x+$b',
+    ];
+    final draft = _drafts.first;
+    draft.expressionController?.text = expressions[_beginnerType];
+    _applyCurrentDrafts();
   }
 
   Future<void> _showInfoDialog() async {
@@ -441,6 +575,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   /// 작동 원리는 모바일에서 큰 설명·여러 줄 입력을 줄이고 한 줄 수식 입력과
   /// 고정된 전체 폭 갱신 행동을 앞세워 그래프 확인까지의 단계를 짧게 만드는 것이다.
   Widget _buildEditorPanel({bool compactMobile = false}) {
+    if (compactMobile) return _buildMobileEditorPanel();
     final editorContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -637,6 +772,216 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     return _SurfaceCard(child: SingleChildScrollView(child: editorContent));
   }
 
+  Widget _buildMobileEditorPanel() {
+    return _SurfaceCard(
+      child: Column(
+        children: [
+          Container(
+            height: 52,
+            decoration: BoxDecoration(
+              color: _kSurfaceTint,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _kBorder),
+            ),
+            child: Row(
+              children: [
+                _MobileModeButton(
+                  label: '고급 모드',
+                  selected: _advancedMode,
+                  onTap: () => setState(() => _advancedMode = true),
+                ),
+                _MobileModeButton(
+                  label: '초보자 모드',
+                  selected: !_advancedMode,
+                  onTap: () => setState(() => _advancedMode = false),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _advancedMode
+                  ? _buildMobileAdvancedEditor()
+                  : _buildMobileBeginnerEditor(),
+            ),
+          ),
+          if (_editorMessage != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              _editorMessage!,
+              key: const ValueKey('graph-api-message'),
+              style: TextStyle(
+                color: _sampledItems.isEmpty
+                    ? const Color(0xFFB33A3A)
+                    : _kMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const ValueKey('mobile-graph-apply'),
+              onPressed: _sampling ? null : _applyCurrentDrafts,
+              style: FilledButton.styleFrom(
+                backgroundColor: _kGreen,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: _sampling
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.stacked_line_chart_rounded),
+              label: Text(
+                _sampling ? '좌표 가져오는 중' : '그래프 그리기',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileAdvancedEditor() {
+    final draft = _drafts.isEmpty ? null : _drafts.first;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final item in _drafts) ...[
+          _buildDraftTile(item, compact: true),
+          const SizedBox(height: 10),
+        ],
+        Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _addFunctionDraft,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('추가'),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (draft != null)
+          _CalculatorKeypad(
+            mobile: true,
+            onInsert: (token) {
+              draft.insertToken(token);
+              setState(() {
+                draft.errorText = null;
+                _sampledItems.clear();
+                _editorMessage = null;
+              });
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMobileBeginnerEditor() {
+    const labels = ['일차', '이차', '삼차', '유리'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '함수 타입 선택',
+          style: TextStyle(color: _kGreen, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            for (var index = 0; index < labels.length; index++) ...[
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ChoiceChip(
+                    label: SizedBox(
+                      width: double.infinity,
+                      child: Text(labels[index], textAlign: TextAlign.center),
+                    ),
+                    selected: _beginnerType == index,
+                    onSelected: (_) => setState(() => _beginnerType = index),
+                  ),
+                ),
+              ),
+              if (index != labels.length - 1) const SizedBox(width: 8),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          '계수 입력',
+          style: TextStyle(color: _kGreen, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            const Text(
+              'y = ',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            _CoefficientField(controller: _beginnerA, label: 'a'),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6),
+              child: Text('x +'),
+            ),
+            _CoefficientField(controller: _beginnerB, label: 'b'),
+            if (_beginnerType == 1 || _beginnerType == 2) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6),
+                child: Text('+'),
+              ),
+              _CoefficientField(controller: _beginnerC, label: 'c'),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: _sampling ? null : _addBeginnerFunction,
+              style: FilledButton.styleFrom(
+                backgroundColor: _kGreen,
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text(
+                '함수 추가',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          '함수 목록',
+          style: TextStyle(color: _kGreen, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        for (final draft in _drafts) _buildDraftTile(draft, compact: true),
+      ],
+    );
+  }
+
   Widget _buildDraftTile(_GraphItemDraft draft, {bool compact = false}) {
     if (draft.type == AiFlowGraphItemType.function) {
       return _FunctionDraftTile(
@@ -646,6 +991,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           setState(() {
             draft.errorText = null;
             _editorMessage = null;
+            _sampledItems.clear();
           });
         },
         onToggle: () {
@@ -1770,9 +2116,10 @@ class _PracticePanel extends StatelessWidget {
 }
 
 class _CalculatorKeypad extends StatelessWidget {
-  const _CalculatorKeypad({required this.onInsert});
+  const _CalculatorKeypad({required this.onInsert, this.mobile = false});
 
   final ValueChanged<String> onInsert;
+  final bool mobile;
 
   static const _keys = <_CalculatorKey>[
     _CalculatorKey('x', 'x'),
@@ -1798,16 +2145,16 @@ class _CalculatorKeypad extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      spacing: mobile ? 8 : 6,
+      runSpacing: mobile ? 8 : 6,
       children: [
         for (final key in _keys)
           InkWell(
             onTap: () => onInsert(key.value),
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 46,
-              height: 34,
+              width: mobile ? 64 : 46,
+              height: mobile ? 48 : 34,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -1825,6 +2172,75 @@ class _CalculatorKeypad extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _MobileModeButton extends StatelessWidget {
+  const _MobileModeButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: double.infinity,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? _kGreen : Colors.transparent,
+                width: 3,
+              ),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? _kGreen : _kMuted,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CoefficientField extends StatelessWidget {
+  const _CoefficientField({required this.controller, required this.label});
+
+  final TextEditingController controller;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 58,
+      height: 52,
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(
+          decimal: true,
+          signed: true,
+        ),
+        textAlign: TextAlign.center,
+        decoration: InputDecoration(
+          hintText: label,
+          contentPadding: EdgeInsets.zero,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
     );
   }
 }
