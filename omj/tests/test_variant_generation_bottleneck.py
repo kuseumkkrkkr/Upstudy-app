@@ -394,11 +394,11 @@ def test_flow_draft_endpoint_inserts_single_tray_item(monkeypatch):
             {
                 "node_id": "condition_node",
                 "text": "조건을 먼저 정리한다.",
-                "hash_tags": ["#함수"],
+                "hash_tags": ["#함수의정의"],
             }
         ],
         prompt="더미 검증",
-        tags=["#함수"],
+        tags=["#함수의정의"],
         advanced_metrics={"reasoning": 8},
     )
 
@@ -443,11 +443,11 @@ def test_flow_draft_endpoint_preserves_zero_branch_parameter(monkeypatch):
             {
                 "node_id": "linear_node",
                 "text": "한 줄 계산으로 끝나는 문항",
-                "hash_tags": ["#함수"],
+                "hash_tags": ["#함수의정의"],
             }
         ],
         prompt="분기 없는 캔버스 문항",
-        tags=["#함수"],
+        tags=["#함수의정의"],
         solves_count=2,
         strategy_level=1,
         branch_conditions=0,

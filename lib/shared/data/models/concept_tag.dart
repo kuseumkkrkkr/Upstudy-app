@@ -1,4 +1,4 @@
-// 개념 태그 데이터 모델
+// Concept tag data model.
 class ConceptTag {
   final String name;
   final String displayName;
@@ -31,814 +31,408 @@ class ConceptTag {
   }
 }
 
-// 개념 태그 데이터
+ConceptTag _group(String name, List<ConceptTag> children) {
+  return ConceptTag(name: name, displayName: name, children: children);
+}
+
+ConceptTag _tag(String name) {
+  return ConceptTag(name: name, displayName: '#$name');
+}
+
 final List<ConceptTag> conceptTagData = [
-  ConceptTag(
-    name: '공통수학1',
-    displayName: '#공통수학1',
-    children: [
-      ConceptTag(
-        name: '다항식',
-        displayName: '#다항식',
-        children: [
-          ConceptTag(
-            name: '다항식의연산',
-            displayName: '#다항식의연산',
-            children: [
-              ConceptTag(name: '다항식의덧셈', displayName: '#다항식의덧셈'),
-              ConceptTag(name: '다항식의뺄셈', displayName: '#다항식의뺄셈'),
-              ConceptTag(name: '다항식의곱셈', displayName: '#다항식의곱셈'),
-            ],
-          ),
-          ConceptTag(
-            name: '곱셈공식',
-            displayName: '#곱셈공식',
-            children: [
-              ConceptTag(name: '완전제곱식', displayName: '#완전제곱식'),
-              ConceptTag(name: '합차공식', displayName: '#합차공식'),
-              ConceptTag(name: '세제곱공식', displayName: '#세제곱공식'),
-            ],
-          ),
-          ConceptTag(
-            name: '다항식의나눗셈',
-            displayName: '#다항식의나눗셈',
-            children: [
-              ConceptTag(name: '몫과나머지', displayName: '#몫과나머지'),
-              ConceptTag(name: '조립제법', displayName: '#조립제법'),
-            ],
-          ),
-          ConceptTag(
-            name: '항등식',
-            displayName: '#항등식',
-            children: [
-              ConceptTag(name: '항등식의성질', displayName: '#항등식의성질'),
-              ConceptTag(name: '미정계수법', displayName: '#미정계수법'),
-            ],
-          ),
-          ConceptTag(
-            name: '나머지정리',
-            displayName: '#나머지정리',
-            children: [
-              ConceptTag(name: '나머지정리증명', displayName: '#나머지정리증명'),
-              ConceptTag(name: '나머지정리활용', displayName: '#나머지정리활용'),
-            ],
-          ),
-          ConceptTag(
-            name: '인수정리',
-            displayName: '#인수정리',
-            children: [
-              ConceptTag(name: '인수정리증명', displayName: '#인수정리증명'),
-              ConceptTag(name: '인수정리활용', displayName: '#인수정리활용'),
-            ],
-          ),
-          ConceptTag(
-            name: '인수분해',
-            displayName: '#인수분해',
-            children: [
-              ConceptTag(name: '인수분해공식', displayName: '#인수분해공식'),
-              ConceptTag(name: '고차식인수분해', displayName: '#고차식인수분해'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '복소수',
-        displayName: '#복소수',
-        children: [
-          ConceptTag(name: '허수단위', displayName: '#허수단위'),
-          ConceptTag(name: '실수와허수', displayName: '#실수와허수'),
-          ConceptTag(name: '복소수의연산', displayName: '#복소수의연산'),
-          ConceptTag(name: '켤레복소수', displayName: '#켤레복소수'),
-        ],
-      ),
-      ConceptTag(
-        name: '이차방정식',
-        displayName: '#이차방정식',
-        children: [
-          ConceptTag(
-            name: '이차방정식의풀이',
-            displayName: '#이차방정식의풀이',
-            children: [
-              ConceptTag(name: '인수분해법', displayName: '#인수분해법'),
-              ConceptTag(name: '완성제곱법', displayName: '#완성제곱법'),
-              ConceptTag(name: '근의공식', displayName: '#근의공식'),
-            ],
-          ),
-          ConceptTag(
-            name: '이차방정식의판별식',
-            displayName: '#이차방정식의판별식',
-            children: [
-              ConceptTag(name: '판별식과근의개수', displayName: '#판별식과근의개수'),
-              ConceptTag(name: '중근조건', displayName: '#중근조건'),
-              ConceptTag(name: '실근조건', displayName: '#실근조건'),
-            ],
-          ),
-          ConceptTag(
-            name: '이차방정식의근과계수',
-            displayName: '#이차방정식의근과계수',
-            children: [
-              ConceptTag(name: '근과계수의관계', displayName: '#근과계수의관계'),
-              ConceptTag(name: '두근의합', displayName: '#두근의합'),
-              ConceptTag(name: '두근의곱', displayName: '#두근의곱'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '이차함수',
-        displayName: '#이차함수',
-        children: [
-          ConceptTag(
-            name: '이차함수의그래프',
-            displayName: '#이차함수의그래프',
-            children: [
-              ConceptTag(name: '포물선', displayName: '#포물선'),
-              ConceptTag(name: '축', displayName: '#축'),
-              ConceptTag(name: '꼭짓점', displayName: '#꼭짓점'),
-              ConceptTag(name: 'y절편', displayName: '#y절편'),
-            ],
-          ),
-          ConceptTag(
-            name: '이차함수의평행이동',
-            displayName: '#이차함수의평행이동',
-          ),
-          ConceptTag(
-            name: '이차함수의대칭이동',
-            displayName: '#이차함수의대칭이동',
-          ),
-          ConceptTag(
-            name: '이차함수의최대최소',
-            displayName: '#이차함수의최대최소',
-            children: [
-              ConceptTag(name: '최댓값(이차함수)', displayName: '#최댓값'),
-              ConceptTag(name: '최솟값(이차함수)', displayName: '#최솟값'),
-              ConceptTag(
-                name: '정의역에서의최대최소',
-                displayName: '#정의역에서의최대최소',
-              ),
-            ],
-          ),
-          ConceptTag(
-            name: '이차함수와이차방정식',
-            displayName: '#이차함수와이차방정식',
-          ),
-          ConceptTag(
-            name: '이차함수와이차부등식',
-            displayName: '#이차함수와이차부등식',
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '이차부등식',
-        displayName: '#이차부등식',
-        children: [
-          ConceptTag(name: '이차부등식의풀이', displayName: '#이차부등식의풀이'),
-          ConceptTag(name: '이차부등식의해', displayName: '#이차부등식의해'),
-        ],
-      ),
-      ConceptTag(
-        name: '경우의수',
-        displayName: '#경우의수',
-        children: [
-          ConceptTag(
-            name: '합의법칙',
-            displayName: '#합의법칙',
-            children: [
-              ConceptTag(name: '사건의합', displayName: '#사건의합'),
-            ],
-          ),
-          ConceptTag(
-            name: '곱의법칙',
-            displayName: '#곱의법칙',
-            children: [
-              ConceptTag(name: '사건의곱', displayName: '#사건의곱'),
-            ],
-          ),
-          ConceptTag(
-            name: '순열',
-            displayName: '#순열',
-            children: [
-              ConceptTag(name: '순열의수', displayName: '#순열의수'),
-              ConceptTag(name: '팩토리얼', displayName: '#팩토리얼'),
-              ConceptTag(name: '중복순열', displayName: '#중복순열'),
-              ConceptTag(name: '원순열', displayName: '#원순열'),
-            ],
-          ),
-          ConceptTag(
-            name: '조합',
-            displayName: '#조합',
-            children: [
-              ConceptTag(name: '조합의수', displayName: '#조합의수'),
-              ConceptTag(name: '조합의성질', displayName: '#조합의성질'),
-              ConceptTag(name: '중복조합', displayName: '#중복조합'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '행렬',
-        displayName: '#행렬',
-        children: [
-          ConceptTag(
-            name: '행렬의정의',
-            displayName: '#행렬의정의',
-            children: [
-              ConceptTag(name: '행', displayName: '#행'),
-              ConceptTag(name: '열', displayName: '#열'),
-              ConceptTag(name: '성분', displayName: '#성분'),
-            ],
-          ),
-          ConceptTag(
-            name: '행렬의연산',
-            displayName: '#행렬의연산',
-            children: [
-              ConceptTag(name: '행렬의덧셈', displayName: '#행렬의덧셈'),
-              ConceptTag(name: '행렬의뺄셈', displayName: '#행렬의뺄셈'),
-              ConceptTag(name: '행렬의곱셈', displayName: '#행렬의곱셈'),
-              ConceptTag(name: '스칼라곱', displayName: '#스칼라곱'),
-            ],
-          ),
-          ConceptTag(
-            name: '역행렬',
-            displayName: '#역행렬',
-            children: [
-              ConceptTag(name: '역행렬의정의', displayName: '#역행렬의정의'),
-              ConceptTag(name: '역행렬의성질', displayName: '#역행렬의성질'),
-              ConceptTag(name: '역행렬구하기', displayName: '#역행렬구하기'),
-            ],
-          ),
-          ConceptTag(
-            name: '연립일차방정식과행렬',
-            displayName: '#연립일차방정식과행렬',
-            children: [
-              ConceptTag(
-                name: '행렬을이용한연립방정식',
-                displayName: '#행렬을이용한연립방정식',
-              ),
-              ConceptTag(name: '가우스소거법', displayName: '#가우스소거법'),
-            ],
-          ),
-        ],
-      ),
-    ],
-  ),
-  ConceptTag(
-    name: '공통수학2',
-    displayName: '#공통수학2',
-    children: [
-      ConceptTag(
-        name: '좌표평면',
-        displayName: '#좌표평면',
-        children: [
-          ConceptTag(
-            name: '두점사이의거리',
-            displayName: '#두점사이의거리',
-            children: [
-              ConceptTag(name: '거리공식(두점)', displayName: '#거리공식'),
-            ],
-          ),
-          ConceptTag(
-            name: '선분의내분점',
-            displayName: '#선분의내분점',
-            children: [
-              ConceptTag(name: '내분점공식', displayName: '#내분점공식'),
-              ConceptTag(name: '외분점', displayName: '#외분점'),
-              ConceptTag(name: '중점', displayName: '#중점'),
-            ],
-          ),
-          ConceptTag(
-            name: '직선의방정식',
-            displayName: '#직선의방정식',
-            children: [
-              ConceptTag(name: '기울기', displayName: '#기울기'),
-              ConceptTag(name: '절편', displayName: '#절편'),
-              ConceptTag(name: '점기울기형', displayName: '#점기울기형'),
-              ConceptTag(name: '두점을지나는직선', displayName: '#두점을지나는직선'),
-            ],
-          ),
-          ConceptTag(
-            name: '두직선의위치관계',
-            displayName: '#두직선의위치관계',
-            children: [
-              ConceptTag(name: '평행조건', displayName: '#평행조건'),
-              ConceptTag(name: '수직조건', displayName: '#수직조건'),
-              ConceptTag(name: '일치조건', displayName: '#일치조건'),
-            ],
-          ),
-          ConceptTag(
-            name: '점과직선사이의거리',
-            displayName: '#점과직선사이의거리',
-            children: [
-              ConceptTag(name: '거리공식(점직선)', displayName: '#거리공식'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '원의방정식',
-        displayName: '#원의방정식',
-        children: [
-          ConceptTag(
-            name: '원의표준형',
-            displayName: '#원의표준형',
-            children: [
-              ConceptTag(name: '중심', displayName: '#중심'),
-              ConceptTag(name: '반지름', displayName: '#반지름'),
-            ],
-          ),
-          ConceptTag(
-            name: '원의일반형',
-            displayName: '#원의일반형',
-            children: [
-              ConceptTag(
-                name: '일반형을표준형으로',
-                displayName: '#일반형을표준형으로',
-              ),
-            ],
-          ),
-          ConceptTag(
-            name: '평행이동',
-            displayName: '#평행이동',
-            children: [
-              ConceptTag(name: 'x방향이동', displayName: '#x방향이동'),
-              ConceptTag(name: 'y방향이동', displayName: '#y방향이동'),
-            ],
-          ),
-          ConceptTag(
-            name: '대칭이동',
-            displayName: '#대칭이동',
-            children: [
-              ConceptTag(name: 'x축대칭', displayName: '#x축대칭'),
-              ConceptTag(name: 'y축대칭', displayName: '#y축대칭'),
-              ConceptTag(name: '원점대칭', displayName: '#원점대칭'),
-              ConceptTag(name: '직선대칭', displayName: '#직선대칭'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '집합',
-        displayName: '#집합',
-        children: [
-          ConceptTag(
-            name: '집합의표현',
-            displayName: '#집합의표현',
-            children: [
-              ConceptTag(name: '원소나열법', displayName: '#원소나열법'),
-              ConceptTag(name: '조건제시법', displayName: '#조건제시법'),
-            ],
-          ),
-          ConceptTag(
-            name: '집합의연산',
-            displayName: '#집합의연산',
-            children: [
-              ConceptTag(name: '합집합', displayName: '#합집합'),
-              ConceptTag(name: '교집합', displayName: '#교집합'),
-              ConceptTag(name: '차집합', displayName: '#차집합'),
-              ConceptTag(name: '여집합', displayName: '#여집합'),
-            ],
-          ),
-          ConceptTag(
-            name: '집합의포함관계',
-            displayName: '#집합의포함관계',
-            children: [
-              ConceptTag(name: '부분집합', displayName: '#부분집합'),
-              ConceptTag(name: '진부분집합', displayName: '#진부분집합'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '명제',
-        displayName: '#명제',
-        children: [
-          ConceptTag(name: '명제의참거짓', displayName: '#명제의참거짓'),
-          ConceptTag(
-            name: '명제의역과대우',
-            displayName: '#명제의역과대우',
-            children: [
-              ConceptTag(name: '역', displayName: '#역'),
-              ConceptTag(name: '대우', displayName: '#대우'),
-              ConceptTag(name: '이', displayName: '#이'),
-            ],
-          ),
-          ConceptTag(
-            name: '충분조건과필요조건',
-            displayName: '#충분조건과필요조건',
-            children: [
-              ConceptTag(name: '필요조건', displayName: '#필요조건'),
-              ConceptTag(name: '충분조건', displayName: '#충분조건'),
-              ConceptTag(name: '필요충분조건', displayName: '#필요충분조건'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '함수',
-        displayName: '#함수',
-        children: [
-          ConceptTag(
-            name: '함수의정의',
-            displayName: '#함수의정의',
-            children: [
-              ConceptTag(name: '정의역(함수)', displayName: '#정의역'),
-              ConceptTag(name: '공역', displayName: '#공역'),
-              ConceptTag(name: '치역', displayName: '#치역'),
-              ConceptTag(name: '대응', displayName: '#대응'),
-            ],
-          ),
-          ConceptTag(
-            name: '합성함수',
-            displayName: '#합성함수',
-            children: [
-              ConceptTag(name: '합성함수의정의', displayName: '#합성함수의정의'),
-              ConceptTag(name: '합성함수의성질', displayName: '#합성함수의성질'),
-            ],
-          ),
-          ConceptTag(
-            name: '역함수',
-            displayName: '#역함수',
-            children: [
-              ConceptTag(name: '일대일함수', displayName: '#일대일함수'),
-              ConceptTag(name: '일대일대응', displayName: '#일대일대응'),
-              ConceptTag(name: '역함수구하기', displayName: '#역함수구하기'),
-              ConceptTag(name: '역함수의그래프', displayName: '#역함수의그래프'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '유리식과유리함수',
-        displayName: '#유리식과유리함수',
-        children: [
-          ConceptTag(
-            name: '유리식',
-            displayName: '#유리식',
-            children: [
-              ConceptTag(name: '유리식의계산', displayName: '#유리식의계산'),
-              ConceptTag(name: '약분', displayName: '#약분'),
-              ConceptTag(name: '통분', displayName: '#통분'),
-            ],
-          ),
-          ConceptTag(
-            name: '유리함수의그래프',
-            displayName: '#유리함수의그래프',
-            children: [
-              ConceptTag(name: '점근선', displayName: '#점근선'),
-              ConceptTag(name: '쌍곡선', displayName: '#쌍곡선'),
-              ConceptTag(name: '유리함수의평행이동', displayName: '#유리함수의평행이동'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '무리식과무리함수',
-        displayName: '#무리식과무리함수',
-        children: [
-          ConceptTag(
-            name: '무리식',
-            displayName: '#무리식',
-            children: [
-              ConceptTag(name: '무리식의계산', displayName: '#무리식의계산'),
-              ConceptTag(name: '유리화', displayName: '#유리화'),
-            ],
-          ),
-          ConceptTag(
-            name: '무리함수의그래프',
-            displayName: '#무리함수의그래프',
-            children: [
-              ConceptTag(name: '정의역(무리함수)', displayName: '#정의역'),
-              ConceptTag(name: '무리함수의평행이동', displayName: '#무리함수의평행이동'),
-            ],
-          ),
-        ],
-      ),
-    ],
-  ),
-  ConceptTag(
-    name: '대수',
-    displayName: '#대수',
-    children: [
-      ConceptTag(
-        name: '지수',
-        displayName: '#지수',
-        children: [
-          ConceptTag(
-            name: '지수의확장',
-            displayName: '#지수의확장',
-            children: [
-              ConceptTag(name: '정수지수', displayName: '#정수지수'),
-              ConceptTag(name: '유리수지수', displayName: '#유리수지수'),
-              ConceptTag(name: '실수지수', displayName: '#실수지수'),
-            ],
-          ),
-          ConceptTag(
-            name: '지수법칙',
-            displayName: '#지수법칙',
-            children: [
-              ConceptTag(name: '지수법칙의성질', displayName: '#지수법칙의성질'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '지수함수',
-        displayName: '#지수함수',
-        children: [
-          ConceptTag(name: '지수함수의그래프', displayName: '#지수함수의그래프'),
-          ConceptTag(name: '지수함수의성질', displayName: '#지수함수의성질'),
-          ConceptTag(name: '지수함수의평행이동', displayName: '#지수함수의평행이동'),
-        ],
-      ),
-      ConceptTag(
-        name: '로그',
-        displayName: '#로그',
-        children: [
-          ConceptTag(
-            name: '로그의정의',
-            displayName: '#로그의정의',
-            children: [
-              ConceptTag(name: '밑', displayName: '#밑'),
-              ConceptTag(name: '진수', displayName: '#진수'),
-            ],
-          ),
-          ConceptTag(
-            name: '로그의성질',
-            displayName: '#로그의성질',
-            children: [
-              ConceptTag(name: '로그법칙', displayName: '#로그법칙'),
-              ConceptTag(name: '밑의변환', displayName: '#밑의변환'),
-              ConceptTag(name: '상용로그', displayName: '#상용로그'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '로그함수',
-        displayName: '#로그함수',
-        children: [
-          ConceptTag(name: '로그함수의그래프', displayName: '#로그함수의그래프'),
-          ConceptTag(name: '로그함수의성질', displayName: '#로그함수의성질'),
-          ConceptTag(name: '로그함수의평행이동', displayName: '#로그함수의평행이동'),
-        ],
-      ),
-      ConceptTag(
-        name: '지수방정식과지수부등식',
-        displayName: '#지수방정식과지수부등식',
-        children: [
-          ConceptTag(name: '지수방정식', displayName: '#지수방정식'),
-          ConceptTag(name: '지수부등식', displayName: '#지수부등식'),
-        ],
-      ),
-      ConceptTag(
-        name: '로그방정식과로그부등식',
-        displayName: '#로그방정식과로그부등식',
-        children: [
-          ConceptTag(name: '로그방정식', displayName: '#로그방정식'),
-          ConceptTag(name: '로그부등식', displayName: '#로그부등식'),
-          ConceptTag(name: '진수조건', displayName: '#진수조건'),
-        ],
-      ),
-      ConceptTag(
-        name: '수열',
-        displayName: '#수열',
-        children: [
-          ConceptTag(
-            name: '수열의정의',
-            displayName: '#수열의정의',
-            children: [
-              ConceptTag(name: '항', displayName: '#항'),
-              ConceptTag(name: '일반항', displayName: '#일반항'),
-              ConceptTag(name: '수열의표현', displayName: '#수열의표현'),
-            ],
-          ),
-          ConceptTag(
-            name: '등차수열',
-            displayName: '#등차수열',
-            children: [
-              ConceptTag(name: '공차', displayName: '#공차'),
-              ConceptTag(name: '등차수열의일반항', displayName: '#등차수열의일반항'),
-              ConceptTag(name: '등차수열의합', displayName: '#등차수열의합'),
-              ConceptTag(name: '등차중항', displayName: '#등차중항'),
-            ],
-          ),
-          ConceptTag(
-            name: '등비수열',
-            displayName: '#등비수열',
-            children: [
-              ConceptTag(name: '공비', displayName: '#공비'),
-              ConceptTag(name: '등비수열의일반항', displayName: '#등비수열의일반항'),
-              ConceptTag(name: '등비수열의합', displayName: '#등비수열의합'),
-              ConceptTag(name: '등비중항', displayName: '#등비중항'),
-            ],
-          ),
-          ConceptTag(
-            name: '합의기호시그마',
-            displayName: '#합의기호시그마',
-            children: [
-              ConceptTag(name: '시그마의성질', displayName: '#시그마의성질'),
-              ConceptTag(name: '시그마공식', displayName: '#시그마공식'),
-            ],
-          ),
-          ConceptTag(
-            name: '여러가지수열의합',
-            displayName: '#여러가지수열의합',
-            children: [
-              ConceptTag(
-                name: '자연수의거듭제곱의합',
-                displayName: '#자연수의거듭제곱의합',
-              ),
-              ConceptTag(name: '계차수열', displayName: '#계차수열'),
-              ConceptTag(name: '부분분수', displayName: '#부분분수'),
-            ],
-          ),
-          ConceptTag(
-            name: '수학적귀납법',
-            displayName: '#수학적귀납법',
-            children: [
-              ConceptTag(name: '귀납법의원리', displayName: '#귀납법의원리'),
-              ConceptTag(name: '귀납법증명', displayName: '#귀납법증명'),
-            ],
-          ),
-        ],
-      ),
-    ],
-  ),
-  ConceptTag(
-    name: '미적분Ⅰ',
-    displayName: '#미적분Ⅰ',
-    children: [
-      ConceptTag(
-        name: '함수의극한',
-        displayName: '#함수의극한',
-        children: [
-          ConceptTag(
-            name: '극한의정의',
-            displayName: '#극한의정의',
-            children: [
-              ConceptTag(name: '좌극한', displayName: '#좌극한'),
-              ConceptTag(name: '우극한', displayName: '#우극한'),
-            ],
-          ),
-          ConceptTag(
-            name: '극한의성질',
-            displayName: '#극한의성질',
-            children: [
-              ConceptTag(name: '극한의사칙연산', displayName: '#극한의사칙연산'),
-            ],
-          ),
-          ConceptTag(
-            name: '극한값계산',
-            displayName: '#극한값계산',
-            children: [
-              ConceptTag(
-                name: '인수분해를이용한극한',
-                displayName: '#인수분해를이용한극한',
-              ),
-              ConceptTag(
-                name: '유리화를이용한극한',
-                displayName: '#유리화를이용한극한',
-              ),
-              ConceptTag(name: '무한대의극한', displayName: '#무한대의극한'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '함수의연속',
-        displayName: '#함수의연속',
-        children: [
-          ConceptTag(name: '연속의정의', displayName: '#연속의정의'),
-          ConceptTag(name: '불연속', displayName: '#불연속'),
-          ConceptTag(name: '연속함수의성질', displayName: '#연속함수의성질'),
-          ConceptTag(name: '중간값정리', displayName: '#중간값정리'),
-        ],
-      ),
-      ConceptTag(
-        name: '미분계수',
-        displayName: '#미분계수',
-        children: [
-          ConceptTag(name: '미분계수의정의', displayName: '#미분계수의정의'),
-          ConceptTag(
-            name: '미분계수의기하적의미',
-            displayName: '#미분계수의기하적의미',
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '도함수',
-        displayName: '#도함수',
-        children: [
-          ConceptTag(name: '도함수의정의', displayName: '#도함수의정의'),
-          ConceptTag(name: '미분가능', displayName: '#미분가능'),
-          ConceptTag(
-            name: '도함수공식',
-            displayName: '#도함수공식',
-            children: [
-              ConceptTag(name: '거듭제곱의미분', displayName: '#거듭제곱의미분'),
-              ConceptTag(name: '상수배의미분', displayName: '#상수배의미분'),
-              ConceptTag(name: '합차의미분', displayName: '#합차의미분'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '접선의방정식',
-        displayName: '#접선의방정식',
-        children: [
-          ConceptTag(name: '접선의기울기', displayName: '#접선의기울기'),
-          ConceptTag(name: '접선방정식구하기', displayName: '#접선방정식구하기'),
-        ],
-      ),
-      ConceptTag(
-        name: '함수의증가와감소',
-        displayName: '#함수의증가와감소',
-        children: [
-          ConceptTag(name: '증가함수', displayName: '#증가함수'),
-          ConceptTag(name: '감소함수', displayName: '#감소함수'),
-          ConceptTag(name: '도함수의부호', displayName: '#도함수의부호'),
-        ],
-      ),
-      ConceptTag(
-        name: '함수의극대와극소',
-        displayName: '#함수의극대와극소',
-        children: [
-          ConceptTag(name: '극댓값', displayName: '#극댓값'),
-          ConceptTag(name: '극솟값', displayName: '#극솟값'),
-          ConceptTag(name: '극값의판정', displayName: '#극값의판정'),
-        ],
-      ),
-      ConceptTag(
-        name: '미분과최대최소',
-        displayName: '#미분과최대최소',
-        children: [
-          ConceptTag(name: '최댓값(미분)', displayName: '#최댓값'),
-          ConceptTag(name: '최솟값(미분)', displayName: '#최솟값'),
-          ConceptTag(name: '최대최소문제', displayName: '#최대최소문제'),
-        ],
-      ),
-      ConceptTag(
-        name: '속도와가속도',
-        displayName: '#속도와가속도',
-        children: [
-          ConceptTag(name: '위치함수', displayName: '#위치함수'),
-          ConceptTag(name: '속도', displayName: '#속도'),
-          ConceptTag(name: '가속도', displayName: '#가속도'),
-        ],
-      ),
-      ConceptTag(
-        name: '부정적분',
-        displayName: '#부정적분',
-        children: [
-          ConceptTag(name: '부정적분의정의', displayName: '#부정적분의정의'),
-          ConceptTag(name: '부정적분공식', displayName: '#부정적분공식'),
-          ConceptTag(name: '부정적분의성질', displayName: '#부정적분의성질'),
-        ],
-      ),
-      ConceptTag(
-        name: '정적분',
-        displayName: '#정적분',
-        children: [
-          ConceptTag(
-            name: '정적분의정의',
-            displayName: '#정적분의정의',
-            children: [
-              ConceptTag(name: '구분구적법', displayName: '#구분구적법'),
-            ],
-          ),
-          ConceptTag(
-            name: '정적분의계산',
-            displayName: '#정적분의계산',
-            children: [
-              ConceptTag(name: '미적분의기본정리', displayName: '#미적분의기본정리'),
-            ],
-          ),
-          ConceptTag(
-            name: '정적분의성질',
-            displayName: '#정적분의성질',
-            children: [
-              ConceptTag(name: '정적분의선형성', displayName: '#정적분의선형성'),
-              ConceptTag(name: '구간의분할', displayName: '#구간의분할'),
-            ],
-          ),
-        ],
-      ),
-      ConceptTag(
-        name: '정적분과넓이',
-        displayName: '#정적분과넓이',
-        children: [
-          ConceptTag(name: '곡선과x축사이의넓이', displayName: '#곡선과x축사이의넓이'),
-          ConceptTag(name: '두곡선사이의넓이', displayName: '#두곡선사이의넓이'),
-        ],
-      ),
-      ConceptTag(
-        name: '정적분과속도',
-        displayName: '#정적분과속도',
-        children: [
-          ConceptTag(name: '속도와거리', displayName: '#속도와거리'),
-          ConceptTag(name: '위치변화량', displayName: '#위치변화량'),
-        ],
-      ),
-    ],
-  ),
+  _group('고1', [
+    _group('공통수학1', [
+      _group('다항식', [
+        _tag('다항식연산'),
+        _tag('다항식덧셈뺄셈'),
+        _tag('다항식곱셈'),
+        _tag('곱셈공식'),
+        _tag('완전제곱식'),
+        _tag('합차공식'),
+        _tag('세제곱공식'),
+        _tag('다항식나눗셈'),
+        _tag('몫과나머지'),
+        _tag('조립제법'),
+        _tag('항등식'),
+        _tag('미정계수법'),
+        _tag('나머지정리'),
+        _tag('인수정리'),
+        _tag('인수분해'),
+        _tag('고차식인수분해'),
+      ]),
+      _group('복소수와 이차방정식', [
+        _tag('복소수'),
+        _tag('허수단위'),
+        _tag('복소수연산'),
+        _tag('켤레복소수'),
+        _tag('이차방정식풀이'),
+        _tag('이차방정식인수분해'),
+        _tag('완성제곱법'),
+        _tag('근의공식'),
+        _tag('이차방정식판별식'),
+        _tag('이차방정식중근'),
+        _tag('이차방정식실근조건'),
+        _tag('근과계수관계'),
+      ]),
+      _group('이차함수와 이차부등식', [
+        _tag('이차함수그래프'),
+        _tag('이차함수축과꼭짓점'),
+        _tag('이차함수평행이동'),
+        _tag('이차함수대칭이동'),
+        _tag('이차함수최대최소'),
+        _tag('이차함수정의역최대최소'),
+        _tag('이차함수와이차방정식'),
+        _tag('이차함수와이차부등식'),
+        _tag('이차부등식풀이'),
+      ]),
+      _group('경우의 수', [
+        _tag('합의법칙'),
+        _tag('곱의법칙'),
+        _tag('순열'),
+        _tag('팩토리얼'),
+        _tag('중복순열'),
+        _tag('원순열'),
+        _tag('조합'),
+        _tag('조합의성질'),
+        _tag('중복조합기초'),
+      ]),
+      _group('행렬', [
+        _tag('행렬의정의'),
+        _tag('행렬성분'),
+        _tag('행렬덧셈뺄셈'),
+        _tag('행렬스칼라곱'),
+        _tag('행렬곱셈'),
+        _tag('역행렬'),
+        _tag('연립방정식과행렬'),
+        _tag('가우스소거법'),
+      ]),
+    ]),
+    _group('공통수학2', [
+      _group('좌표평면과 직선', [
+        _tag('두점사이거리'),
+        _tag('선분내분점'),
+        _tag('선분외분점'),
+        _tag('선분중점'),
+        _tag('직선기울기'),
+        _tag('직선의방정식'),
+        _tag('두점지나는직선'),
+        _tag('두직선평행'),
+        _tag('두직선수직'),
+        _tag('두직선일치'),
+        _tag('점과직선거리'),
+      ]),
+      _group('원', [
+        _tag('원의방정식'),
+        _tag('원중심과반지름'),
+        _tag('원일반형'),
+        _tag('원평행이동'),
+        _tag('원대칭이동'),
+      ]),
+      _group('집합과 명제', [
+        _tag('집합표현'),
+        _tag('집합연산'),
+        _tag('부분집합'),
+        _tag('진부분집합'),
+        _tag('명제참거짓'),
+        _tag('명제의역'),
+        _tag('명제의이'),
+        _tag('명제의대우'),
+        _tag('필요조건'),
+        _tag('충분조건'),
+        _tag('필요충분조건'),
+      ]),
+      _group('함수', [
+        _tag('함수의정의'),
+        _tag('함수정의역공역치역'),
+        _tag('합성함수'),
+        _tag('역함수'),
+        _tag('일대일함수'),
+        _tag('일대일대응'),
+        _tag('역함수그래프'),
+      ]),
+      _group('유리함수와 무리함수', [
+        _tag('유리식계산'),
+        _tag('유리함수그래프'),
+        _tag('유리함수점근선'),
+        _tag('유리함수평행이동'),
+        _tag('무리식계산'),
+        _tag('무리식유리화'),
+        _tag('무리함수그래프'),
+        _tag('무리함수정의역'),
+        _tag('무리함수평행이동'),
+      ]),
+    ]),
+  ]),
+  _group('고2', [
+    _group('대수', [
+      _group('지수와 로그', [
+        _tag('지수의확장'),
+        _tag('정수지수'),
+        _tag('유리수지수'),
+        _tag('실수지수'),
+        _tag('지수법칙'),
+        _tag('지수함수'),
+        _tag('지수함수그래프'),
+        _tag('지수함수평행이동'),
+        _tag('로그의정의'),
+        _tag('로그의밑과진수'),
+        _tag('로그법칙'),
+        _tag('로그밑변환'),
+        _tag('상용로그'),
+        _tag('로그함수'),
+        _tag('로그함수그래프'),
+        _tag('로그함수평행이동'),
+        _tag('지수방정식'),
+        _tag('지수부등식'),
+        _tag('로그방정식'),
+        _tag('로그부등식'),
+        _tag('로그진수조건'),
+      ]),
+      _group('수열', [
+        _tag('수열의정의'),
+        _tag('수열일반항'),
+        _tag('등차수열'),
+        _tag('등차수열일반항'),
+        _tag('등차수열합'),
+        _tag('등차중항'),
+        _tag('등비수열'),
+        _tag('등비수열일반항'),
+        _tag('등비수열합'),
+        _tag('등비중항'),
+        _tag('시그마'),
+        _tag('시그마성질'),
+        _tag('자연수거듭제곱합'),
+        _tag('계차수열'),
+        _tag('수열부분분수'),
+        _tag('수학적귀납법'),
+      ]),
+    ]),
+    _group('미적분Ⅰ', [
+      _group('함수의 극한과 연속', [
+        _tag('함수의극한'),
+        _tag('좌극한우극한'),
+        _tag('극한의사칙연산'),
+        _tag('극한인수분해'),
+        _tag('극한유리화'),
+        _tag('무한대극한'),
+        _tag('함수의연속'),
+        _tag('불연속'),
+        _tag('연속함수성질'),
+        _tag('중간값정리'),
+      ]),
+      _group('미분', [
+        _tag('미분계수'),
+        _tag('미분계수기하의미'),
+        _tag('도함수'),
+        _tag('미분가능성'),
+        _tag('거듭제곱미분'),
+        _tag('상수배미분'),
+        _tag('합차미분'),
+        _tag('접선의방정식'),
+        _tag('접선기울기'),
+        _tag('함수증가감소'),
+        _tag('도함수부호'),
+        _tag('함수극대극소'),
+        _tag('극값판정'),
+        _tag('미분최대최소'),
+        _tag('미분활용최적화'),
+        _tag('직선운동위치'),
+        _tag('직선운동속도'),
+        _tag('직선운동가속도'),
+      ]),
+      _group('적분', [
+        _tag('부정적분'),
+        _tag('부정적분공식'),
+        _tag('부정적분성질'),
+        _tag('정적분'),
+        _tag('구분구적법'),
+        _tag('미적분기본정리'),
+        _tag('정적분선형성'),
+        _tag('정적분구간분할'),
+        _tag('정적분넓이'),
+        _tag('두곡선사이넓이'),
+        _tag('정적분속도거리'),
+        _tag('정적분위치변화량'),
+      ]),
+    ]),
+  ]),
+  _group('고3', [
+    _group('확률과통계', [
+      _group('경우의 수', [
+        _tag('확통중복조합'),
+        _tag('이항정리'),
+        _tag('이항계수'),
+        _tag('파스칼삼각형'),
+        _tag('이항정리활용'),
+      ]),
+      _group('확률', [
+        _tag('수학적확률'),
+        _tag('통계적확률'),
+        _tag('확률의성질'),
+        _tag('확률덧셈정리'),
+        _tag('배반사건'),
+        _tag('여사건'),
+        _tag('확률곱셈정리'),
+        _tag('조건부확률'),
+        _tag('사건의독립'),
+        _tag('종속사건'),
+        _tag('독립시행확률'),
+      ]),
+      _group('확률분포', [
+        _tag('확률변수'),
+        _tag('이산확률변수'),
+        _tag('연속확률변수'),
+        _tag('확률질량함수'),
+        _tag('확률밀도함수'),
+        _tag('확률변수기댓값'),
+        _tag('확률변수분산'),
+        _tag('확률변수표준편차'),
+        _tag('이항분포'),
+        _tag('베르누이시행'),
+        _tag('이항분포평균분산'),
+        _tag('정규분포'),
+        _tag('표준정규분포'),
+        _tag('정규분포표'),
+      ]),
+      _group('통계적 추정', [
+        _tag('모집단과표본'),
+        _tag('표본추출'),
+        _tag('표본크기'),
+        _tag('표본평균'),
+        _tag('표본평균분포'),
+        _tag('표본평균기댓값'),
+        _tag('표본평균표준편차'),
+        _tag('모평균추정'),
+        _tag('점추정'),
+        _tag('구간추정'),
+        _tag('신뢰구간'),
+        _tag('신뢰도'),
+      ]),
+    ]),
+    _group('미적분Ⅱ', [
+      _group('삼각함수', [
+        _tag('호도법'),
+        _tag('일반각'),
+        _tag('삼각함수값'),
+        _tag('사인함수그래프'),
+        _tag('코사인함수그래프'),
+        _tag('탄젠트함수그래프'),
+        _tag('삼각함수주기'),
+        _tag('삼각함수대칭성'),
+        _tag('삼각함수미분'),
+        _tag('삼각함수적분'),
+      ]),
+      _group('여러 가지 미분법', [
+        _tag('합성함수미분'),
+        _tag('연쇄법칙'),
+        _tag('곱의미분법'),
+        _tag('몫의미분법'),
+        _tag('매개변수미분'),
+        _tag('음함수미분'),
+        _tag('이계도함수'),
+      ]),
+      _group('여러 가지 적분법', [
+        _tag('치환적분법'),
+        _tag('부분적분법'),
+        _tag('유리함수적분'),
+        _tag('무리함수적분'),
+      ]),
+      _group('급수', [
+        _tag('급수수렴발산'),
+        _tag('급수부분합'),
+        _tag('급수의합'),
+        _tag('급수수렴조건'),
+        _tag('멱급수'),
+        _tag('멱급수수렴반경'),
+        _tag('테일러급수'),
+        _tag('테일러전개'),
+        _tag('매클로린급수'),
+      ]),
+      _group('미분의 활용', [
+        _tag('평면운동속도벡터'),
+        _tag('평면운동가속도벡터'),
+        _tag('등속운동'),
+        _tag('등가속도운동'),
+        _tag('곡선의길이'),
+      ]),
+      _group('편미분', [_tag('편도함수'), _tag('편미분계산')]),
+    ]),
+    _group('기하', [
+      _group('이차곡선', [
+        _tag('포물선'),
+        _tag('포물선방정식'),
+        _tag('포물선초점준선'),
+        _tag('타원'),
+        _tag('타원방정식'),
+        _tag('타원초점'),
+        _tag('쌍곡선'),
+        _tag('쌍곡선방정식'),
+        _tag('쌍곡선점근선'),
+      ]),
+      _group('평면벡터', [
+        _tag('평면벡터연산'),
+        _tag('평면벡터성분'),
+        _tag('위치벡터'),
+        _tag('평면벡터내적'),
+        _tag('벡터수직조건'),
+        _tag('벡터직선방정식'),
+      ]),
+      _group('공간도형·공간벡터', [
+        _tag('공간좌표'),
+        _tag('공간거리'),
+        _tag('공간내분점'),
+        _tag('공간벡터연산'),
+        _tag('공간벡터내적'),
+        _tag('공간벡터정사영'),
+        _tag('공간직선방정식'),
+        _tag('평면의방정식'),
+        _tag('법선벡터'),
+        _tag('구의방정식'),
+      ]),
+    ]),
+  ]),
+  _group('기초/선수학습', [
+    _tag('기초정수연산'),
+    _tag('기초분수연산'),
+    _tag('기초소수연산'),
+    _tag('기초문자식'),
+    _tag('기초대입'),
+    _tag('기초다항식계산'),
+    _tag('기초일차식계산'),
+    _tag('기초일차방정식'),
+    _tag('기초일차방정식활용'),
+    _tag('기초일차부등식'),
+    _tag('기초일차부등식활용'),
+    _tag('기초부등식성질'),
+    _tag('기초일차함수'),
+    _tag('기초기울기절편'),
+    _tag('기초함수그래프'),
+    _tag('기초그래프해석'),
+    _tag('기초비와비율'),
+    _tag('기초백분율'),
+    _tag('기초비례식'),
+    _tag('기초점선면'),
+    _tag('기초각'),
+    _tag('기초평행수직'),
+    _tag('기초합동닮음'),
+    _tag('기초이차방정식'),
+    _tag('기초인수분해'),
+    _tag('기초완전제곱'),
+    _tag('기초이차함수'),
+    _tag('기초포물선'),
+    _tag('기초최대최소'),
+    _tag('기초경우의수'),
+    _tag('기초합의법칙'),
+    _tag('기초곱의법칙'),
+    _tag('기초도수분포표'),
+    _tag('기초평균'),
+    _tag('기초중앙값'),
+    _tag('기초최빈값'),
+    _tag('기초히스토그램'),
+    _tag('기초확률'),
+    _tag('기초집합표현'),
+    _tag('기초원소부분집합'),
+    _tag('기초함수'),
+    _tag('기초함수값'),
+  ]),
 ];

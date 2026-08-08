@@ -18,19 +18,24 @@ class GenerationTagRegistryTests(unittest.TestCase):
         groups = generation_tag_groups()
         tags = allowed_generation_tags()
 
-        self.assertGreaterEqual(len(groups), 4)
-        self.assertIn("기울기", tags)
+        self.assertEqual(len(groups), 8)
+        self.assertEqual(len(tags), 320)
+        self.assertIn("직선기울기", tags)
         self.assertIn("공통수학2", {group["label"] for group in groups})
+        self.assertIn("확률과 통계", {group["label"] for group in groups})
+        self.assertIn("기초·선수학습", {group["label"] for group in groups})
 
     def test_validation_normalizes_hash_prefix_and_deduplicates(self) -> None:
         self.assertEqual(
-            validate_generation_tags(["#기울기", "기울기", " 직선의방정식 "]),
-            ["기울기", "직선의방정식"],
+            validate_generation_tags(
+                ["#직선기울기", "직선기울기", " 직선의방정식 "]
+            ),
+            ["직선기울기", "직선의방정식"],
         )
 
     def test_validation_rejects_unknown_tags(self) -> None:
         with self.assertRaises(ValueError):
-            validate_generation_tags(["기울기", "없는태그"])
+            validate_generation_tags(["직선기울기", "없는태그"])
 
     def test_validation_rejects_empty_by_default(self) -> None:
         with self.assertRaises(ValueError):

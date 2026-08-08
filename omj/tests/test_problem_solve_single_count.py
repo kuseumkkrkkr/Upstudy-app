@@ -114,7 +114,7 @@ class ProblemSolveSingleCountTests(unittest.TestCase):
                 response = TestClient(server.app).post(
                     "/quests/generate/stream",
                     json={
-                        "hash_tags": ["기울기"],
+                    "hash_tags": ["직선기울기"],
                         "min_difficulty_tier": 1,
                         "max_difficulty_tier": 1,
                         "question_count": 1,

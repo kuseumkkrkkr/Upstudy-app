@@ -91,17 +91,26 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
 
     final selected = _tags.toSet();
     final commonTags = _tagGroups
-        .where((group) => group.isCsatCommon)
+        .where(
+          (group) =>
+              group.classification == _ExamTagGroupClassification.csatCommon,
+        )
         .expand((group) => group.tags)
         .where(selected.contains)
         .toList();
     final optionalTags = _tagGroups
-        .where((group) => !group.isCsatCommon)
+        .where(
+          (group) =>
+              group.classification == _ExamTagGroupClassification.csatOptional,
+        )
         .expand((group) => group.tags)
         .where(selected.contains)
         .toList();
     final commonFallback = _tagGroups
-        .where((group) => group.isCsatCommon)
+        .where(
+          (group) =>
+              group.classification == _ExamTagGroupClassification.csatCommon,
+        )
         .expand((group) => group.tags)
         .toList();
 
@@ -122,7 +131,11 @@ class _ExamPaperBuilderPageState extends State<ExamPaperBuilderPage> {
     if (_paperType == 'csat' &&
         !_tags.any(
           (tag) => _tagGroups
-              .where((group) => !group.isCsatCommon)
+              .where(
+                (group) =>
+                    group.classification ==
+                    _ExamTagGroupClassification.csatOptional,
+              )
               .expand((group) => group.tags)
               .contains(tag),
         )) {
@@ -867,6 +880,8 @@ class _ExamTypeCapsule extends StatelessWidget {
   }
 }
 
+enum _ExamTagGroupClassification { csatCommon, csatOptional, foundation }
+
 class _ExamTagGroup {
   const _ExamTagGroup({
     required this.name,
@@ -892,7 +907,14 @@ class _ExamTagGroup {
   final String label;
   final List<String> tags;
 
-  bool get isCsatCommon => name == 'common-math-1' || name == 'common-math-2';
+  _ExamTagGroupClassification get classification {
+    return switch (name) {
+      'common-math-1' ||
+      'common-math-2' => _ExamTagGroupClassification.csatCommon,
+      'foundation' => _ExamTagGroupClassification.foundation,
+      _ => _ExamTagGroupClassification.csatOptional,
+    };
+  }
 }
 
 enum _ExamTagSelectionState { selected, unselected, partial }
