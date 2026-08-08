@@ -55,14 +55,21 @@ void main() {
     );
     expect(find.textContaining('12개 중 아직 해금 전'), findsWidgets);
 
-    await tester.tap(
-      find.byKey(const ValueKey('activity-badge-mobile-group-solve')),
+    final solveCard = find.byKey(
+      const ValueKey('activity-badge-mobile-group-solve'),
     );
+    await tester.tap(solveCard);
     await tester.pumpAndSettle();
 
-    expect(find.text('해금 단계 0 / 12'), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('activity-badge-stage-solve-12')),
+      find.descendant(of: solveCard, matching: find.text('해금 단계 0 / 12')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: solveCard,
+        matching: find.byKey(const ValueKey('activity-badge-stage-solve-12')),
+      ),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

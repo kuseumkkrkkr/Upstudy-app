@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -776,92 +775,6 @@ class _TrophyStepRail extends StatelessWidget {
   }
 }
 
-class _CompactBadgeTile extends StatefulWidget {
-  const _CompactBadgeTile({
-    required this.progress,
-    required this.iconSize,
-    this.labelSize,
-    this.labelSpacing,
-  });
-
-  final ActivityBadgeProgress progress;
-  final double iconSize;
-  final double? labelSize;
-  final double? labelSpacing;
-
-  @override
-  State<_CompactBadgeTile> createState() => _CompactBadgeTileState();
-}
-
-class _CompactBadgeTileState extends State<_CompactBadgeTile> {
-  Timer? _previewTimer;
-  bool _previewActive = false;
-
-  @override
-  void dispose() {
-    _previewTimer?.cancel();
-    super.dispose();
-  }
-
-  void _showPreview() {
-    if (widget.progress.isEarned) return;
-    _previewTimer?.cancel();
-    setState(() => _previewActive = true);
-    _previewTimer = Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      setState(() => _previewActive = false);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = _scale(context);
-    final displayProgress = _previewActive
-        ? ActivityBadgeProgress(
-            badge: widget.progress.badge,
-            value: widget.progress.badge.threshold,
-            progress: 1,
-            isEarned: true,
-          )
-        : widget.progress;
-
-    return Tooltip(
-      message:
-          '${widget.progress.badge.title}\n${widget.progress.progressText}',
-      child: Semantics(
-        button: !widget.progress.isEarned,
-        label: widget.progress.badge.title,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.progress.isEarned ? null : _showPreview,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ActivityBadgeIcon(
-                progress: displayProgress,
-                size: widget.iconSize,
-              ),
-              SizedBox(height: widget.labelSpacing ?? 4 * scale),
-              Text(
-                '${widget.progress.badge.tier}',
-                style: _textStyle(
-                  size: widget.labelSize ?? 9 * scale,
-                  weight: FontWeight.w900,
-                  color: displayProgress.isEarned
-                      ? widget.progress.badge.color
-                      : Colors.black38,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 const Color _badgeGold = Color(0xFFFFD766);
 const Color _badgeGoldHot = Color(0xFFFFF3A6);
 
@@ -1141,25 +1054,6 @@ ActivityBadgeProgress? _firstLocked(List<ActivityBadgeProgress> badges) {
     if (!badge.isEarned) return badge;
   }
   return null;
-}
-
-double _badgeTileSize(double maxWidth, double scale) {
-  final gap = 10 * scale;
-  final columns = maxWidth >= 300 * scale ? 6 : 4;
-  return (maxWidth - gap * (columns - 1)) / columns;
-}
-
-int _groupGridColumns(BuildContext context) {
-  final width = MediaQuery.of(context).size.width;
-  if (width >= 900) return 2;
-  return 1;
-}
-
-double _groupAspectRatio(BuildContext context) {
-  final width = MediaQuery.of(context).size.width;
-  if (width >= 900) return 1.75;
-  if (width >= 620) return 2.2;
-  return 1.25;
 }
 
 class _BadgeProgressGroup {
