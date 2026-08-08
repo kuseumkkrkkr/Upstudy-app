@@ -330,8 +330,8 @@ class _MobileActivityBadgeSheet extends StatelessWidget {
   final ScrollController scrollController;
 
   /// 필요한 변수는 활동 기록, 계정 레벨, 바텀시트 스크롤 컨트롤러다.
-  /// 작동 원리: 전체 업적을 가족 단위 세로 카드로 나누고 각 카드는 고정 4열
-  /// 트로피 그리드를 사용해 작은 모바일에서도 번호와 진행 상태를 읽을 수 있게 한다.
+  /// 작동 원리: 전체 업적을 가족 단위 세로 카드로 나누고 각 카드는 최고 해금
+  /// 트로피 한 개와 다음 단계 진행률만 보여준다. 12단계 상세는 카드 선택 시 연다.
   @override
   Widget build(BuildContext context) {
     final all = ActivityBadgeCatalog.evaluate(
@@ -381,7 +381,7 @@ class _MobileActivityBadgeSheet extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '$earnedCount개 획득 · 잠긴 트로피를 눌러 미리보기',
+                              '$earnedCount개 획득 · 항목을 눌러 12단계 확인',
                               style: const TextStyle(
                                 color: Color(0xFF66666D),
                                 fontSize: 14,
@@ -437,128 +437,13 @@ class _MobileBadgeGroupCard extends StatelessWidget {
 
   final _BadgeProgressGroup group;
 
-  /// 필요한 변수는 같은 목표를 공유하는 12단계 트로피 목록이다.
-  /// 작동 원리: 목표 설명과 획득 수를 먼저 보여주고 트로피를 항상 4열로 배치한 뒤,
-  /// 카드 하단에서 다음 단계의 수치와 진행률을 한 줄로 안내한다.
   @override
   Widget build(BuildContext context) {
     final first = group.items.first.badge;
-    final title = ActivityBadgeCatalog.familyTitleOf(first.family);
-    final earned = group.items.where((entry) => entry.isEarned).length;
-    final next = _firstLocked(group.items);
-    final color = first.color;
-
-    return Container(
+    return _TrophySectionCard(
       key: ValueKey('activity-badge-mobile-group-${first.family}'),
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.055),
-            blurRadius: 22,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Icon(first.icon, color: color, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        height: 1.15,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$earned/${group.items.length} · ${first.metricLabel}',
-                      style: const TextStyle(
-                        color: Color(0xFF696970),
-                        fontSize: 14,
-                        height: 1.25,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          GridView.builder(
-            key: ValueKey('activity-badge-mobile-grid-${first.family}'),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.78,
-            ),
-            itemCount: group.items.length,
-            itemBuilder: (context, index) => _CompactBadgeTile(
-              progress: group.items[index],
-              iconSize: 58,
-              labelSize: 13,
-              labelSpacing: 7,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (next == null)
-            Text(
-              '이 그룹의 모든 트로피를 획득했어요.',
-              style: TextStyle(
-                color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
-            )
-          else ...[
-            Text(
-              '다음: ${next.badge.title} · ${next.progressText}',
-              style: const TextStyle(
-                color: Color(0xFF5F5F66),
-                fontSize: 13,
-                height: 1.3,
-                fontWeight: FontWeight.w700,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 9),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                value: next.progress,
-                minHeight: 7,
-                backgroundColor: const Color(0xFFF0F0F2),
-                color: color,
-              ),
-            ),
-          ],
-        ],
-      ),
+      group: group,
+      mobile: true,
     );
   }
 }
@@ -619,7 +504,7 @@ class _ActivityBadgeDialog extends StatelessWidget {
                           ),
                           SizedBox(height: 4 * scale),
                           Text(
-                            '총 ${ActivityBadgeCatalog.allBadges.length}종 · 획득 $earnedCount개 · 잠긴 트로피를 누르면 미리볼 수 있어요',
+                            '총 ${ActivityBadgeCatalog.allBadges.length}종 · 획득 $earnedCount개 · 항목을 눌러 12단계를 확인하세요',
                             style: _textStyle(
                               size: 12 * scale,
                               color: Colors.black54,
@@ -641,23 +526,19 @@ class _ActivityBadgeDialog extends StatelessWidget {
               ),
               Divider(height: 1, color: Colors.black.withValues(alpha: 0.08)),
               Expanded(
-                child: GridView.builder(
+                child: ListView.separated(
                   padding: EdgeInsets.fromLTRB(
                     16 * scale,
                     14 * scale,
                     16 * scale,
                     18 * scale,
                   ),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _groupGridColumns(context),
-                    mainAxisSpacing: 12 * scale,
-                    crossAxisSpacing: 12 * scale,
-                    childAspectRatio: _groupAspectRatio(context),
-                  ),
                   itemCount: groups.length,
                   itemBuilder: (context, index) {
                     return _BadgeGroupCard(group: groups[index]);
                   },
+                  separatorBuilder: (context, index) =>
+                      SizedBox(height: 12 * scale),
                 ),
               ),
             ],
@@ -675,129 +556,222 @@ class _BadgeGroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _scale(context);
     final first = group.items.first.badge;
-    final title = ActivityBadgeCatalog.familyTitleOf(first.family);
-    final earned = group.items.where((entry) => entry.isEarned).length;
-    final next = _firstLocked(group.items);
-    final color = first.color;
+    return _TrophySectionCard(
+      key: ValueKey('activity-badge-desktop-group-${first.family}'),
+      group: group,
+    );
+  }
+}
 
-    return Container(
-      padding: EdgeInsets.all(16 * scale),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10 * scale),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.07),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+class _TrophySectionCard extends StatefulWidget {
+  const _TrophySectionCard({
+    super.key,
+    required this.group,
+    this.mobile = false,
+  });
+
+  final _BadgeProgressGroup group;
+  final bool mobile;
+
+  @override
+  State<_TrophySectionCard> createState() => _TrophySectionCardState();
+}
+
+class _TrophySectionCardState extends State<_TrophySectionCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = widget.mobile ? 1.0 : _scale(context);
+    final items = widget.group.items;
+    final first = items.first.badge;
+    final earned = items.where((entry) => entry.isEarned).toList();
+    final unlockedCount = earned.length;
+    final trophy = earned.isEmpty ? items.first : earned.last;
+    final next = _firstLocked(items);
+    final color = trophy.badge.color;
+    final title = ActivityBadgeCatalog.familyTitleOf(first.family);
+    final radius = widget.mobile ? 28.0 : 18.0 * scale;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(radius),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => setState(() => _expanded = !_expanded),
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.fromLTRB(
+            18 * scale,
+            18 * scale,
+            16 * scale,
+            16 * scale,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 32 * scale,
-                height: 32 * scale,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(8 * scale),
-                ),
-                child: Icon(first.icon, color: color, size: 18 * scale),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Semantics(
+                    label: unlockedCount == 0
+                        ? '$title 아직 해금 전'
+                        : '$title 최고 트로피 ${trophy.badge.tier}단계',
+                    child: ActivityBadgeIcon(
+                      progress: trophy,
+                      size: (widget.mobile ? 72 : 62) * scale,
+                    ),
+                  ),
+                  SizedBox(width: 16 * scale),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: _textStyle(
+                            size: (widget.mobile ? 19 : 16) * scale,
+                            weight: FontWeight.w900,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 4 * scale),
+                        Text(
+                          unlockedCount == 0
+                              ? '12개 중 아직 해금 전 · ${first.metricLabel}'
+                              : '12개 중 $unlockedCount번째까지 해금 · ${trophy.badge.title}',
+                          key: ValueKey(
+                            'activity-badge-unlock-position-${first.family}',
+                          ),
+                          style: _textStyle(
+                            size: (widget.mobile ? 13 : 11) * scale,
+                            color: const Color(0xFF66666D),
+                            weight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 9 * scale),
+                        Text(
+                          next == null
+                              ? '모든 단계 해금 완료'
+                              : '다음 ${next.badge.tier}단계 · ${next.progressText}',
+                          style: _textStyle(
+                            size: (widget.mobile ? 12 : 10) * scale,
+                            color: next == null ? color : Colors.black54,
+                            weight: FontWeight.w800,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 6 * scale),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: next?.progress ?? 1,
+                            minHeight: (widget.mobile ? 7 : 6) * scale,
+                            backgroundColor: const Color(0xFFF0F0F2),
+                            color: color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8 * scale),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.black54,
+                      size: (widget.mobile ? 28 : 24) * scale,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 9 * scale),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: _textStyle(
-                        size: 13 * scale,
-                        weight: FontWeight.w900,
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 180),
+                crossFadeState: _expanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                firstChild: const SizedBox(width: double.infinity),
+                secondChild: Padding(
+                  key: ValueKey('activity-badge-details-${first.family}'),
+                  padding: EdgeInsets.only(top: 18 * scale),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '해금 단계 $unlockedCount / ${items.length}',
+                        style: _textStyle(
+                          size: (widget.mobile ? 14 : 12) * scale,
+                          weight: FontWeight.w900,
+                          color: color,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 2 * scale),
-                    Text(
-                      '$earned/${group.items.length} · ${first.metricLabel}',
-                      style: _textStyle(
-                        size: 10 * scale,
-                        color: Colors.black54,
-                        weight: FontWeight.w700,
+                      SizedBox(height: 10 * scale),
+                      _TrophyStepRail(items: items, color: color, scale: scale),
+                      SizedBox(height: 10 * scale),
+                      Text(
+                        next == null
+                            ? '${trophy.badge.title} · ${trophy.badge.description}'
+                            : '다음 목표: ${next.badge.title} · ${next.badge.description}',
+                        style: _textStyle(
+                          size: (widget.mobile ? 12 : 10) * scale,
+                          color: Colors.black54,
+                          weight: FontWeight.w700,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12 * scale),
+        ),
+      ),
+    );
+  }
+}
+
+class _TrophyStepRail extends StatelessWidget {
+  const _TrophyStepRail({
+    required this.items,
+    required this.color,
+    required this.scale,
+  });
+
+  final List<ActivityBadgeProgress> items;
+  final Color color;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final tile = _badgeTileSize(constraints.maxWidth, scale);
-                return Wrap(
-                  spacing: 10 * scale,
-                  runSpacing: 10 * scale,
-                  children: [
-                    for (final progress in group.items)
-                      SizedBox(
-                        width: tile,
-                        child: _CompactBadgeTile(
-                          progress: progress,
-                          iconSize: math.min(tile * 0.72, 54 * scale),
-                        ),
-                      ),
-                  ],
-                );
-              },
+            child: Semantics(
+              label: '${index + 1}단계 ${items[index].isEarned ? '해금' : '잠김'}',
+              child: Container(
+                key: ValueKey(
+                  'activity-badge-stage-${items.first.badge.family}-${index + 1}',
+                ),
+                height: 8 * scale,
+                decoration: BoxDecoration(
+                  color: items[index].isEarned
+                      ? color
+                      : Colors.black.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
             ),
           ),
-          SizedBox(height: 8 * scale),
-          if (next == null)
-            Text(
-              '이 그룹을 모두 획득했습니다.',
-              style: _textStyle(
-                size: 10 * scale,
-                color: color,
-                weight: FontWeight.w800,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            )
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '다음: ${next.badge.title} · ${next.progressText}',
-                  style: _textStyle(size: 10 * scale, color: Colors.black54),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 5 * scale),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: next.progress,
-                    minHeight: 5 * scale,
-                    backgroundColor: Colors.black.withValues(alpha: 0.06),
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
+          if (index != items.length - 1) SizedBox(width: 3 * scale),
         ],
-      ),
+      ],
     );
   }
 }
