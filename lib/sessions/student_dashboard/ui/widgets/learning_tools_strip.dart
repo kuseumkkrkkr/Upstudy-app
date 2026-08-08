@@ -7,15 +7,13 @@ class LearningToolsStrip extends StatelessWidget {
   const LearningToolsStrip({
     super.key,
     required this.onNotepad,
-    required this.onTimer,
-    required this.onFocusMode,
     required this.onGraph,
+    required this.onTutor,
   });
 
   final VoidCallback onNotepad;
-  final VoidCallback onTimer;
-  final VoidCallback onFocusMode;
   final VoidCallback onGraph;
+  final VoidCallback onTutor;
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +21,8 @@ class LearningToolsStrip extends StatelessWidget {
     final portraitMobile =
         compact && MediaQuery.orientationOf(context) == Orientation.portrait;
     if (portraitMobile) {
-      // 필요한 변수는 네 도구와 각 이동 콜백이다.
-      // 작동 원리: 세로 화면에서는 네 카드를 한 개의 흰 Material 그룹으로 합쳐
+      // 필요한 변수는 세 도구와 각 이동 콜백이다.
+      // 작동 원리: 세로 화면에서는 세 카드를 한 개의 흰 Material 그룹으로 합쳐
       // 도형 수를 줄이면서 각 기능은 큰 터치 행으로 유지한다.
       return Material(
         key: const ValueKey('learning-tools-mobile-group'),
@@ -39,19 +37,14 @@ class LearningToolsStrip extends StatelessWidget {
               onTap: onNotepad,
             ),
             _MobileToolCard(
-              icon: Icons.timer_rounded,
-              label: '타이머',
-              onTap: onTimer,
-            ),
-            _MobileToolCard(
-              icon: Icons.center_focus_strong_rounded,
-              label: '집중 모드',
-              onTap: onFocusMode,
-            ),
-            _MobileToolCard(
               icon: Icons.stacked_line_chart_rounded,
               label: '그래프',
               onTap: onGraph,
+            ),
+            _MobileToolCard(
+              icon: Icons.smart_toy_outlined,
+              label: '과외봇 (챗봇)',
+              onTap: onTutor,
             ),
           ],
         ),
@@ -69,26 +62,18 @@ class LearningToolsStrip extends StatelessWidget {
           portraitMobile: portraitMobile,
         ),
         _ToolItem(
-          icon: Icons.timer_rounded,
-          label: '타이머',
-          onTap: onTimer,
-          shape: _ToolShape.timer,
-          compact: compact,
-          portraitMobile: portraitMobile,
-        ),
-        _ToolItem(
-          icon: Icons.center_focus_strong_rounded,
-          label: '집중 모드',
-          onTap: onFocusMode,
-          shape: _ToolShape.focus,
-          compact: compact,
-          portraitMobile: portraitMobile,
-        ),
-        _ToolItem(
           icon: Icons.stacked_line_chart_rounded,
-          label: '그래프 그리기',
+          label: '그래프',
           onTap: onGraph,
           shape: _ToolShape.graph,
+          compact: compact,
+          portraitMobile: portraitMobile,
+        ),
+        _ToolItem(
+          icon: Icons.smart_toy_outlined,
+          label: '과외봇 (챗봇)',
+          onTap: onTutor,
+          shape: _ToolShape.tutor,
           compact: compact,
           portraitMobile: portraitMobile,
         ),
@@ -153,7 +138,7 @@ class _MobileToolCard extends StatelessWidget {
   }
 }
 
-enum _ToolShape { note, timer, focus, graph }
+enum _ToolShape { note, graph, tutor }
 
 class _ToolItem extends StatelessWidget {
   const _ToolItem({
@@ -182,11 +167,8 @@ class _ToolItem extends StatelessWidget {
         ? 52.0
         : 68.0;
     final isDark = shape == _ToolShape.note;
-    final isCircle = shape == _ToolShape.timer;
     final isGraph = shape == _ToolShape.graph;
-    final radius = isCircle
-        ? size / 2
-        : (shape == _ToolShape.focus ? 24.0 : 20.0);
+    const radius = 20.0;
 
     return Expanded(
       child: Material(
@@ -215,25 +197,14 @@ class _ToolItem extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: shape == _ToolShape.focus
-                        ? Container(
-                            margin: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: _toolInk, width: 8),
-                              borderRadius: BorderRadius.circular(17),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.circle_outlined, size: 18),
-                            ),
-                          )
-                        : Transform.rotate(
-                            angle: isGraph ? -0.785398 : 0,
-                            child: Icon(
-                              icon,
-                              color: isDark ? Colors.white : _toolInk,
-                              size: compact ? 20 : 24,
-                            ),
-                          ),
+                    child: Transform.rotate(
+                      angle: isGraph ? -0.785398 : 0,
+                      child: Icon(
+                        icon,
+                        color: isDark ? Colors.white : _toolInk,
+                        size: compact ? 20 : 24,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),

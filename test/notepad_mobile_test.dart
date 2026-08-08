@@ -78,4 +78,37 @@ void main() {
     expect(find.text('모든 필기 지우기'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('모바일 노트패드는 타이핑·페이지 이동·펜 모드를 분리한다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(home: NotepadPage(persistenceEnabled: false)),
+    );
+
+    await tester.tap(find.text('타이핑'));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('notepad-text-editor')), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '함수 개념 정리');
+    expect(find.text('함수 개념 정리'), findsOneWidget);
+
+    await tester.tap(find.text('이동'));
+    await tester.pump();
+    final moveScroll = tester.widget<SingleChildScrollView>(
+      find.byType(SingleChildScrollView),
+    );
+    expect(moveScroll.physics, isA<BouncingScrollPhysics>());
+
+    await tester.tap(find.text('펜'));
+    await tester.pump();
+    final penScroll = tester.widget<SingleChildScrollView>(
+      find.byType(SingleChildScrollView),
+    );
+    expect(penScroll.physics, isA<NeverScrollableScrollPhysics>());
+    expect(find.byKey(const ValueKey('notepad-canvas')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

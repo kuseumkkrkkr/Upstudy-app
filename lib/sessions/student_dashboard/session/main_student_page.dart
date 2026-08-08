@@ -15,8 +15,7 @@ import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
-import 'package:s11/sessions/learning_tools/ui/pages/timer_page.dart';
-import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
 import 'package:s11/sessions/student_dashboard/business/activity_badge_catalog.dart';
@@ -1234,35 +1233,13 @@ class _LearningSection extends StatelessWidget {
         : activeCourse!.isDemo
         ? '체험 전용 코스'
         : '진행률 $progressPercent%';
-    final hasTodayTasks = todayTasks.isNotEmpty;
-    final nextActionTitle = hasTodayTasks
-        ? '오늘 할 일 ${todayTasks.length}개 확인'
-        : activeCourse != null
-        ? '$courseTitle 이어하기'
-        : '내 학습 시작하기';
-    final nextActionDescription = hasTodayTasks
-        ? todayTasks.first.title
-        : activeCourse != null
-        ? '현재 진행률 $progressPercent%에서 계속해요.'
-        : '목표에 맞는 학습 모드를 선택해요.';
-    final VoidCallback nextActionTap = hasTodayTasks
-        ? onTodayTasksTap
-        : activeCourse != null
-        ? onCourseTap
-        : () => showStudyModeModal(context: context);
 
     /// 필요한 변수는 도구별 이동 콜백이다.
-    /// 작동 원리: HTML 학습 도구 카드의 네 빠른 실행을 기존 기능 화면과 연결한다.
+    /// 작동 원리: 홈의 세 빠른 실행을 기존 노트·그래프·AI 튜터 화면과 연결한다.
     final tools = LearningToolsStrip(
       onNotepad: () => Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const NotepadPage())),
-      onTimer: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const TimerPage())),
-      onFocusMode: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const FocusModePage())),
       onGraph: () {
         unawaited(
           ActivityStore.recordGraphPractice(
@@ -1274,6 +1251,11 @@ class _LearningSection extends StatelessWidget {
           context,
         ).push(MaterialPageRoute(builder: (_) => const JsxGraphPage()));
       },
+      onTutor: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const ServerChatPage(standalone: true),
+        ),
+      ),
     );
 
     // 필요한 변수는 학습 도구 제목·빠른 실행 배지·도구 목록이다.
@@ -1395,11 +1377,9 @@ class _LearningSection extends StatelessWidget {
               children: [
                 _LearnBanner(
                   portraitMobile: portraitMobile,
-                  title: portraitMobile ? nextActionTitle : null,
-                  description: portraitMobile ? nextActionDescription : null,
-                  onTap: portraitMobile
-                      ? nextActionTap
-                      : () => showStudyModeModal(context: context),
+                  title: portraitMobile ? '학습하기' : null,
+                  description: portraitMobile ? '원하는 학습 방식을 선택하세요.' : null,
+                  onTap: () => showStudyModeModal(context: context),
                 ),
                 const SizedBox(height: 12),
                 if (portraitMobile)

@@ -139,7 +139,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('내 학습 시작하기'), findsOneWidget);
+    expect(find.text('학습하기'), findsOneWidget);
     expect(find.text('현재 코스'), findsOneWidget);
     expect(find.text('오늘 할 일'), findsOneWidget);
     expect(find.text('학습 현황'), findsOneWidget);
@@ -150,13 +150,17 @@ void main() {
     expect(find.text('학습 도구'), findsOneWidget);
     expect(find.text('빠른 실행'), findsOneWidget);
     expect(find.text('노트패드'), findsOneWidget);
-    expect(find.text('타이머'), findsOneWidget);
-    expect(find.text('집중 모드'), findsOneWidget);
+    expect(find.text('타이머'), findsNothing);
+    expect(find.text('집중 모드'), findsNothing);
     expect(find.text('그래프'), findsOneWidget);
+    expect(find.text('과외봇 (챗봇)'), findsOneWidget);
     expect(find.text('오늘의 학습 루트'), findsNothing);
     expect(find.text('일정 달력'), findsNothing);
     expect(find.text('도전과제 / 업적'), findsNothing);
     expect(find.text('공지사항'), findsNothing);
+    await tester.tap(find.text('학습하기'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
