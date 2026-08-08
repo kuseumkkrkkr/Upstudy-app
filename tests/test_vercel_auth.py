@@ -184,6 +184,31 @@ def test_new_user_dashboard_endpoints(monkeypatch):
         ]
         assert all(item["coming_soon"] is True for item in arena["queues"])
 
+def test_public_textbook_list_and_detail(monkeypatch):
+    """신규 책가방은 공개 교재 목록과 실제로 열 수 있는 본문을 함께 제공한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={
+                "username": "bookbag01",
+                "password": "password123",
+                "name": "책가방 사용자",
+                "grade": "1학년",
+            },
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        textbooks = client.get("/textbooks", headers=headers).json()["textbooks"]
+        assert textbooks
+        textbook_id = textbooks[0]["textbook_id"]
+        detail = client.get(f"/textbooks/{textbook_id}", headers=headers)
+        assert detail.status_code == 200
+        assert detail.json()["chapters"]
+        assert client.get("/textbooks/missing", headers=headers).status_code == 404
+
 
 def test_personal_schedule_round_trip(monkeypatch):
     """필요 변수: 로그인 사용자와 날짜별 일정. 작동 원리: PUT 저장값이 다음 GET에서 같은 사용자 일정으로 복원되는지 검증한다."""

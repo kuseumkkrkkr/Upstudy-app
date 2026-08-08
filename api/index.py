@@ -1,6 +1,7 @@
 """Vercel에서 Supabase OCR 작업 큐만 제공하는 경량 FastAPI 진입점."""
 from __future__ import annotations
 
+import copy
 import json
 import hashlib
 import hmac
@@ -2632,10 +2633,72 @@ def list_system_notices(_user_id: str = Depends(_current_user)) -> dict[str, lis
     return {"items": []}
 
 
+_PUBLIC_TEXTBOOKS: tuple[dict[str, Any], ...] = (
+    {
+        "textbook_id": "public_manual_textbook",
+        "title": "Upstudy 학습 가이드",
+        "subtitle": "책가방과 교재 읽기의 기본 사용법",
+        "category": "common",
+        "tags": ["가이드", "공개 교재"],
+        "cover_color": 0xFF202024,
+        "progress": 0,
+        "progress_label": "0%",
+        "chapters": [
+            {
+                "title": "1. 책가방 시작하기",
+                "intro": ["책가방에서는 저장한 교재를 한곳에서 확인하고 이어 읽을 수 있습니다."],
+                "sections": [
+                    {
+                        "title": "1-1. 교재 열기",
+                        "paragraphs": [
+                            "책가방의 교재 항목을 누르면 목차와 본문을 확인할 수 있습니다.",
+                            "자주 보는 교재는 고정해 빠르게 다시 열 수 있습니다.",
+                        ],
+                        "images": [],
+                    }
+                ],
+            }
+        ],
+    },
+)
+
+
 @app.get("/textbooks")
-def list_textbooks(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 교재 원장 이관 전 빈 교재 목록을 반환한다."""
-    return {"textbooks": []}
+def list_textbooks(
+    category: str | None = None,
+    tag: str | None = None,
+    type: str | None = None,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, list[dict[str, Any]]]:
+    """인증 사용자가 열 수 있는 공개 교재를 필터와 함께 반환한다."""
+    normalized_category = (category or "").strip().lower()
+    normalized_tag = (tag or "").strip().lower()
+    normalized_type = (type or "").strip().lower()
+    textbooks = []
+    for textbook in _PUBLIC_TEXTBOOKS:
+        textbook_category = str(textbook.get("category") or "").lower()
+        if normalized_category and textbook_category != normalized_category:
+            continue
+        tags = [str(value).lower() for value in textbook.get("tags") or []]
+        if normalized_tag and normalized_tag not in tags:
+            continue
+        if normalized_type and normalized_type not in {"public", "common"}:
+            continue
+        textbooks.append(copy.deepcopy(textbook))
+    return {"textbooks": textbooks}
+
+
+@app.get("/textbooks/{textbook_id}")
+def get_textbook(
+    textbook_id: str,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """목록에서 노출한 공개 교재 본문을 같은 ID로 반환한다."""
+    normalized_id = textbook_id.strip()
+    for textbook in _PUBLIC_TEXTBOOKS:
+        if textbook["textbook_id"] == normalized_id:
+            return copy.deepcopy(textbook)
+    raise HTTPException(status_code=404, detail="Textbook not found")
 
 
 @app.post("/quests/generate")
