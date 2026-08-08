@@ -81,13 +81,6 @@ class _TagTreeNode {
 
 class _ExamBuildModalState extends State<_ExamBuildModal> {
   static const List<String> _difficultyLabels = ['하', '중하', '중', '중상', '상'];
-  static const List<String> _csatOptionalSubjectNames = [
-    '대수',
-    '미적분Ⅰ',
-    '확률과통계',
-    '미적분Ⅱ',
-    '기하',
-  ];
 
   final TextEditingController _questionCountController = TextEditingController(
     text: _defaultExamQuestionCount.toString(),
@@ -136,27 +129,24 @@ class _ExamBuildModalState extends State<_ExamBuildModal> {
   }
 
   void _initializeCsatSubjects() {
-    _commonSubjectOne = _findTag('공통수학1');
-    _commonSubjectTwo = _findTag('공통수학2');
-    _optionalSubjects = _csatOptionalSubjectNames
-        .map(_findTag)
-        .whereType<ConceptTag>()
+    _commonSubjectOne = _findTopLevelTag('공통수학1');
+    _commonSubjectTwo = _findTopLevelTag('공통수학2');
+    _optionalSubjects = _tagTree
+        .where(
+          (tag) =>
+              tag.name != _commonSubjectOne?.name &&
+              tag.name != _commonSubjectTwo?.name,
+        )
         .toList();
-    if (!_optionalSubjects.contains(_selectedOptionalSubject)) {
-      _selectedOptionalSubject = _optionalSubjects.isEmpty
-          ? null
-          : _optionalSubjects.first;
+    if (_optionalSubjects.isNotEmpty) {
+      _selectedOptionalSubject ??= _optionalSubjects.first;
     }
   }
 
-  ConceptTag? _findTag(String name, [List<ConceptTag>? tags]) {
-    for (final tag in tags ?? _tagTree) {
+  ConceptTag? _findTopLevelTag(String name) {
+    for (final tag in _tagTree) {
       if (tag.name == name) {
         return tag;
-      }
-      final match = _findTag(name, tag.children);
-      if (match != null) {
-        return match;
       }
     }
     return null;
