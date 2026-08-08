@@ -1947,6 +1947,7 @@ class ApiClient {
       if (inviteCode != null && inviteCode.trim().isNotEmpty)
         'invite_code': inviteCode.trim(),
     }, parser: (d) => StudyGroup.fromJson(d));
+    await invalidateCachePath('/social/study-groups/mine');
     return res.data ??
         StudyGroup(
           id: '',

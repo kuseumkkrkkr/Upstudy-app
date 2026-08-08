@@ -148,3 +148,35 @@ def test_friend_request_guards_and_cancel(monkeypatch):
         assert client.get("/social/friend-requests", headers=alice).json()["requests"] == []
         assert client.get("/social/friend-requests", headers=bob).json()["requests"] == []
         assert all("friend_request" not in key for _, key in fake.kv)
+
+
+def test_study_group_create_and_list_contract(monkeypatch):
+    """앱과 같은 생성 요청이 201로 저장되고 groups 목록에 즉시 보이는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeSocialDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    alice = _headers(module, "user-alice")
+
+    with TestClient(module.app) as client:
+        created = client.post(
+            "/social/study-groups",
+            headers=alice,
+            json={
+                "name": "매일 수학",
+                "description": "한 문제씩 풀기",
+                "max_members": 12,
+                "is_public": True,
+                "lock_enabled": True,
+                "password": "1234",
+            },
+        )
+        assert created.status_code == 201
+        assert created.json()["members"] == 1
+        assert created.json()["member_ids"] == ["user-alice"]
+        assert "password" not in created.text
+
+        listed = client.get("/social/study-groups/mine", headers=alice)
+        assert listed.status_code == 200
+        assert [group["group_id"] for group in listed.json()["groups"]] == [created.json()["group_id"]]
+        assert listed.json()["groups"][0]["name"] == "매일 수학"

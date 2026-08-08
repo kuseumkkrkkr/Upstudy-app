@@ -677,6 +677,19 @@ class FriendTargetRequest(BaseModel):
     username: str = Field(min_length=1, max_length=16)
 
 
+class StudyGroupCreateRequest(BaseModel):
+    """필요 변수: 그룹명·소개·정원과 선택 잠금 정보. 작동 원리: 웹 입력 경계에서 그룹 생성 계약을 제한한다."""
+
+    name: str = Field(min_length=1, max_length=80)
+    description: str | None = Field(default=None, max_length=500)
+    password: str | None = Field(default=None, max_length=10)
+    max_members: int = Field(default=12, ge=2, le=100)
+    is_public: bool = True
+    logo_index: int | None = Field(default=None, ge=0, le=100)
+    lock_enabled: bool = False
+    invite_code: str | None = Field(default=None, max_length=20)
+
+
 class QuestGenerateRequest(BaseModel):
     """필요 변수: 문제 태그·문항 수·난이도 범위와 선택 생성 메타데이터다."""
 
@@ -2453,6 +2466,7 @@ def list_solve_history(
 _SOCIAL_FRIEND_PREFIX = "social.friend."
 _SOCIAL_REQUEST_IN_PREFIX = "social.friend_request.in."
 _SOCIAL_REQUEST_OUT_PREFIX = "social.friend_request.out."
+_SOCIAL_GROUP_PREFIX = "social.study_group."
 
 
 def _social_data_request(method: str, path: str, **kwargs: Any) -> Any:
@@ -2749,10 +2763,58 @@ def list_conversations(_user_id: str = Depends(_current_user)) -> dict[str, list
     return {"messages": []}
 
 
+@app.post("/social/study-groups", status_code=status.HTTP_201_CREATED)
+def create_study_group(payload: StudyGroupCreateRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 검증된 그룹 입력. 작동 원리: 기존 사용자 KV에 생성자 멤버십을 포함한 그룹을 한 번 저장한다."""
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Group name is required")
+    password = (payload.password or "").strip()
+    if payload.lock_enabled and not re.fullmatch(r"\d{4,10}", password):
+        raise HTTPException(status_code=422, detail="Password must be 4 to 10 digits")
+    group_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    invite_code = (payload.invite_code or "").strip().upper() or secrets.token_hex(4).upper()
+    group: dict[str, Any] = {
+        "group_id": group_id,
+        "name": name,
+        "description": (payload.description or "").strip(),
+        "max_members": payload.max_members,
+        "is_public": payload.is_public,
+        "logo_index": payload.logo_index,
+        "lock_enabled": payload.lock_enabled,
+        "owner_role": "student",
+        "invite_code": invite_code,
+        "is_teacher_group": False,
+        "created_at": created_at,
+        "creator_id": user_id,
+        "member_ids": [user_id],
+        "members": 1,
+    }
+    if payload.lock_enabled:
+        salt = secrets.token_hex(16)
+        group["password_salt"] = salt
+        group["password_hash"] = _hash_password(password, salt)
+    _social_upsert_kv(user_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}", group)
+    return {key: value for key, value in group.items() if key not in {"password_salt", "password_hash"}}
+
+
 @app.get("/social/study-groups/mine")
+def list_my_study_groups(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 사용자 KV의 그룹만 복원해 Flutter의 groups 계약으로 반환한다."""
+    groups: list[dict[str, Any]] = []
+    for row in _social_kv_rows(user_id, _SOCIAL_GROUP_PREFIX):
+        value = _social_kv_value(row)
+        if not value:
+            continue
+        groups.append({key: item for key, item in value.items() if key not in {"password_salt", "password_hash"}})
+    groups.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return {"groups": groups}
+
+
 @app.get("/social/study-groups/notices/my/system")
-def list_my_social_items(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 가입 그룹·알림이 없는 초기 상태를 반환한다."""
+def list_my_group_notices(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 그룹 알림이 없는 초기 상태를 기존 items 계약으로 반환한다."""
     return {"items": []}
 
 

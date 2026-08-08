@@ -96,4 +96,26 @@ void main() {
     expect(requestBody?['is_correct'], isFalse);
     expect(client.hasMemoryCacheForTest('/history/solve'), isFalse);
   });
+
+  test('그룹 생성 후 내 그룹 목록 캐시를 즉시 무효화한다', () async {
+    final client = ApiClient.instance;
+    await client.setToken('study-group-token');
+    await client.seedCacheForTest('/social/study-groups/mine', '{"groups":[]}');
+    client.setHttpClientForTest(
+      MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/social/study-groups');
+        return http.Response(
+          '{"group_id":"group-1","name":"매일 수학","members":1}',
+          201,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+
+    final group = await client.createStudyGroup(name: '매일 수학', maxMembers: 12);
+
+    expect(group.id, 'group-1');
+    expect(client.hasMemoryCacheForTest('/social/study-groups/mine'), isFalse);
+  });
 }
