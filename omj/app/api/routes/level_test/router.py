@@ -74,6 +74,7 @@ class PlacementStartPayload(BaseModel):
     session_id: str
     template_id: str
     question_count: int
+    time_limit_seconds: int
     questions: List[PlacementQuestion]
 
 
@@ -284,8 +285,9 @@ async def start_placement_test(
 
     template_id = str(template["template_id"])
     items = repo.get_placement_template_items(template_id)
-    if len(items) != engine.PLACEMENT_QUESTION_COUNT:
+    if len(items) < engine.PLACEMENT_QUESTION_COUNT:
         raise HTTPException(status_code=503, detail="Placement template is incomplete")
+    items = items[:engine.PLACEMENT_QUESTION_COUNT]
 
     questions = [PlacementQuestion(**item) for item in items]
     if len(questions) != engine.PLACEMENT_QUESTION_COUNT:
@@ -299,6 +301,7 @@ async def start_placement_test(
             session_id=session_id,
             template_id=template_id,
             question_count=len(questions),
+            time_limit_seconds=engine.PLACEMENT_TIME_LIMIT_SECONDS,
             questions=questions,
         ),
         message="Placement test started",

@@ -40,6 +40,7 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       };
       final config = ProblemSolveConfig(
         questionCount: questions.length,
+        timeLimitSeconds: session.timeLimitSeconds,
         hashTags: questions.expand((q) => q.hashTags).toSet().toList(),
         gradeImmediately: true,
         minDifficultyTier: 2,
@@ -253,7 +254,7 @@ class _MobilePlacementBody extends StatelessWidget {
                 const SizedBox(width: 14),
                 const Expanded(
                   child: Text(
-                    '50문제로\n실력을 확인해요',
+                    '25문제로\n실력을 확인해요',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -327,7 +328,7 @@ class _MobilePlacementBody extends StatelessWidget {
             _MobilePlacementStep(
               icon: Icons.quiz_outlined,
               title: '문제 풀기',
-              subtitle: '주요 개념 50문항',
+              subtitle: '주요 개념 25문항',
             ),
             _MobilePlacementStep(
               icon: Icons.insights_outlined,
@@ -407,7 +408,7 @@ class _PlacementHero extends StatelessWidget {
   const _PlacementHero();
 
   /// 필요한 변수는 화면 폭과 고정 배치 테스트 메타다.
-  /// HTML 시안의 밝은 그라데이션 안에 소개 문구·OVR 궤도·50문항 지표를 반응형으로 배치한다.
+  /// HTML 시안의 밝은 그라데이션 안에 소개 문구·OVR 궤도·25문항 지표를 반응형으로 배치한다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
@@ -457,7 +458,7 @@ class _PlacementHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    '50개의 문제로 지금의 학습 위치를 찾습니다.\n첫 OVR은 앞으로의 코스와 난이도를 결정합니다.',
+                    '25개의 문제로 지금의 학습 위치를 찾습니다.\n첫 OVR은 앞으로의 코스와 난이도를 결정합니다.',
                     style: TextStyle(
                       color: StudentDensityTokens.muted,
                       fontSize: mobile ? 11 : 13,
@@ -563,7 +564,7 @@ class _PlacementMeta extends StatelessWidget {
   Widget build(BuildContext context) => const Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Expanded(child: _MetaCell('QUESTIONS', '50')),
+      Expanded(child: _MetaCell('QUESTIONS', '25')),
       SizedBox(width: 8),
       Expanded(child: _MetaCell('DIFFICULTY', '중상–상')),
       SizedBox(width: 8),
@@ -665,7 +666,7 @@ class _PlacementProcess extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const cards = [
-      _ProcessCard('01', '50', '폭넓게 확인', '선별된 50문항으로 주요 개념을 고르게 확인합니다.'),
+      _ProcessCard('01', '25', '폭넓게 확인', '선별된 25문항으로 주요 개념을 고르게 확인합니다.'),
       _ProcessCard('02', '⌁', '풀이 패턴 분석', '정오답, 풀이 시간과 사고 흐름을 문항마다 누적합니다.'),
       _ProcessCard('03', 'OVR', '첫 기준점 생성', '첫 OVR과 신뢰도, 강한 태그와 보완 태그를 제공합니다.'),
     ];
@@ -775,10 +776,9 @@ class _PlacementReady extends StatelessWidget {
             style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
           ),
           SizedBox(height: 16),
-          _ReadyCheck('50문항 · 약 60–90분'),
+          _ReadyCheck('25문항 · 제한 시간 60분'),
           _ReadyCheck('중간 진행 자동 저장'),
           _ReadyCheck('정답은 제출 후 분석'),
-          _ReadyCheck('최초 OVR은 이후 학습으로 계속 보정'),
         ],
       ),
     );

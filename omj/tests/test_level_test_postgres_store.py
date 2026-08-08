@@ -34,7 +34,7 @@ class LevelTestPostgresStoreTests(unittest.TestCase):
         items = engine.build_placement_template_items()
         with patch("storage.storage.get_quest", side_effect=AssertionError("general DB accessed")):
             payloads = engine.quest_payloads_for_template_items(items)
-        self.assertEqual(len(payloads), 50)
+        self.assertEqual(len(payloads), 25)
 
     def test_rating_sample_uses_server_payload(self) -> None:
         """필요 변수: PostgreSQL 문제 한 개와 답안. 작동 원리: 클라이언트 태그가 아니라 서버 payload 태그를 사용한다."""
@@ -54,7 +54,8 @@ class LevelTestPostgresStoreTests(unittest.TestCase):
         request = SimpleNamespace(state=SimpleNamespace(user_id=user_id))
         response = asyncio.run(level_test_router.start_placement_test(request, _user={}))
         payload = response.data
-        self.assertEqual(payload.question_count, 50)
+        self.assertEqual(payload.question_count, 25)
+        self.assertEqual(payload.time_limit_seconds, 60 * 60)
         first = payload.questions[0]
         try:
             asyncio.run(

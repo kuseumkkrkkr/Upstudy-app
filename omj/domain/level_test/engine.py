@@ -19,7 +19,8 @@ from services.ai.prompts import level_test_power_prompt, level_test_speed_prompt
 from services.ai.providers.base import AIProvider
 
 
-PLACEMENT_QUESTION_COUNT = 50
+PLACEMENT_QUESTION_COUNT = 25
+PLACEMENT_TIME_LIMIT_SECONDS = 60 * 60
 PLACEMENT_VERSION = "placement-static-v1"
 
 def generate_speed_test(
@@ -256,9 +257,9 @@ def build_placement_template_items(template_id: Optional[str] = None) -> List[Di
     if not selected_id:
         raise RuntimeError("PostgreSQL level-test contains no active template")
     items = postgres_level_test_store.get_template_items(selected_id)
-    if len(items) != PLACEMENT_QUESTION_COUNT:
+    if len(items) < PLACEMENT_QUESTION_COUNT:
         raise RuntimeError(f"PostgreSQL level-test template is incomplete: {selected_id}")
-    return items
+    return items[:PLACEMENT_QUESTION_COUNT]
 
 
 def quest_payloads_for_template_items(items: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:

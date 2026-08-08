@@ -83,6 +83,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   bool _scrollEnabled = false;
   bool _noteLinesEnabled = true;
   int _timerDisplaySeconds = 0;
+  int? _timeLimitSeconds;
+  bool _timeLimitReached = false;
 
   Offset? _eraserPosition;
   bool _eraserActive = false;
@@ -183,6 +185,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _gradeImmediately = config.gradeImmediately;
     _ratingEnabled = config.ratingEnabled;
     _mobileQuickSolve = config.mobileQuickSolve;
+    _timeLimitSeconds = config.timeLimitSeconds?.clamp(1, 24 * 60 * 60).toInt();
+    _timeLimitReached = false;
     _mobileNoteExpanded = false;
     _mobileFlowNextIndex = 0;
     final minTier = math
@@ -398,8 +402,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       return;
     }
     if (_currentProblemIndex < _problemGraded.length &&
-        _problemGraded[_currentProblemIndex])
+        _problemGraded[_currentProblemIndex]) {
       return;
+    }
     final quest = _currentQuest;
     final fingerprint = _problemFingerprint(quest, _currentProblemIndex);
     if (_currentProblemIndex < _problemGraded.length) {
@@ -522,7 +527,10 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     if (!mounted && !updateNow) return;
 
     final elapsed = _sessionClock.elapsed.inSeconds;
-    final displaySeconds = elapsed >= 40 * 60 ? 40 * 60 : elapsed;
+    final limit = _timeLimitSeconds;
+    final displaySeconds = limit == null
+        ? (elapsed >= 40 * 60 ? 40 * 60 : elapsed)
+        : (limit - elapsed).clamp(0, limit).toInt();
     if (displaySeconds != _timerDisplaySeconds) {
       if (mounted && !updateNow) {
         setState(() => _timerDisplaySeconds = displaySeconds);
@@ -530,18 +538,59 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         _timerDisplaySeconds = displaySeconds;
       }
     }
-    if (elapsed >= 40 * 60) return;
+    if (limit != null && elapsed >= limit) {
+      if (!_timeLimitReached) {
+        _timeLimitReached = true;
+        unawaited(_completeAtTimeLimit());
+      }
+      return;
+    }
+    if (limit == null && elapsed >= 40 * 60) return;
 
-    final delay = elapsed < 5 * 60
+    final useSecondTicks = limit == null
+        ? elapsed < 5 * 60
+        : displaySeconds <= 5 * 60;
+    final delay = useSecondTicks
         ? const Duration(seconds: 1)
         : Duration(seconds: 60 - (elapsed % 60));
     _solveTimer = Timer(delay, _scheduleSolveTimerTick);
   }
 
+  Future<void> _completeAtTimeLimit() async {
+    if (_completionReported) return;
+    if (mounted) setState(() => _analysisBusy = true);
+    try {
+      for (var index = 0; index < _problemCount; index++) {
+        if (_problemGraded[index]) continue;
+        _problemGraded[index] = true;
+        _gradedCount += 1;
+        await widget.config?.onProblemGraded?.call(
+          itemIndex: index + 1,
+          quest: _quests[index],
+          isCorrect: false,
+          stepCorrectness: const <Map<String, dynamic>>[],
+          elapsedSeconds: 0,
+        );
+      }
+      _completeCourseModuleIfNeeded();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(error, fallback: '제한 시간 종료 처리를 완료하지 못했어요.'),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _analysisBusy = false);
+    }
+  }
+
   /// 필요한 변수는 누적 풀이 초다.
   /// 작동 원리는 5분 전에는 분·초, 이후에는 분 단위로 집중 헤더의 시간을 간결하게 표시하는 것이다.
   String _formatSolveElapsed(int seconds) {
-    final clamped = seconds.clamp(0, 40 * 60).toInt();
+    final clamped = seconds.clamp(0, _timeLimitSeconds ?? 40 * 60).toInt();
     if (clamped < 5 * 60) {
       final minutes = clamped ~/ 60;
       final remain = clamped % 60;

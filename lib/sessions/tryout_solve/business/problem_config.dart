@@ -14,6 +14,7 @@ class ProblemSolveConfig {
     this.onComplete,
     this.ratingEnabled = true,
     this.mobileQuickSolve = false,
+    this.timeLimitSeconds,
     this.onProblemGraded,
   });
 
@@ -28,6 +29,7 @@ class ProblemSolveConfig {
   final List<Map<String, dynamic>> quests;
   final bool ratingEnabled;
   final bool mobileQuickSolve;
+  final int? timeLimitSeconds;
 
   /// Called when all problems are graded with [correctCount], [totalCount],
   /// and whether the student [passed] the module.
@@ -67,6 +69,7 @@ class ProblemSolveConfig {
     onComplete,
     bool? ratingEnabled,
     bool? mobileQuickSolve,
+    int? timeLimitSeconds,
     FutureOr<void> Function({
       required int itemIndex,
       required Map<String, dynamic>? quest,
@@ -90,6 +93,7 @@ class ProblemSolveConfig {
       onComplete: onComplete ?? this.onComplete,
       ratingEnabled: ratingEnabled ?? this.ratingEnabled,
       mobileQuickSolve: mobileQuickSolve ?? this.mobileQuickSolve,
+      timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
       onProblemGraded: onProblemGraded ?? this.onProblemGraded,
     );
   }
@@ -114,6 +118,7 @@ class ProblemSolveConfig {
       unitIndex: (json['unit_index'] as num?)?.toInt(),
       ratingEnabled: json['rating_enabled'] as bool? ?? true,
       mobileQuickSolve: json['mobile_quick_solve'] as bool? ?? false,
+      timeLimitSeconds: (json['time_limit_seconds'] as num?)?.toInt(),
       quests: (json['quests'] as List<dynamic>? ?? const [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
@@ -132,6 +137,7 @@ class ProblemSolveConfig {
       if (unitIndex != null) 'unit_index': unitIndex,
       'rating_enabled': ratingEnabled,
       'mobile_quick_solve': mobileQuickSolve,
+      if (timeLimitSeconds != null) 'time_limit_seconds': timeLimitSeconds,
       'quests': quests,
     };
   }

@@ -3563,12 +3563,14 @@ class LevelTestPlacementSession {
   final String sessionId;
   final String templateId;
   final int questionCount;
+  final int timeLimitSeconds;
   final List<LevelTestPlacementQuestion> questions;
 
   const LevelTestPlacementSession({
     required this.sessionId,
     required this.templateId,
     required this.questionCount,
+    required this.timeLimitSeconds,
     required this.questions,
   });
 
@@ -3577,6 +3579,8 @@ class LevelTestPlacementSession {
       sessionId: (json['session_id'] ?? '').toString(),
       templateId: (json['template_id'] ?? '').toString(),
       questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
+      timeLimitSeconds:
+          (json['time_limit_seconds'] as num?)?.toInt() ?? 60 * 60,
       questions: (json['questions'] as List<dynamic>? ?? const [])
           .map(
             (e) => LevelTestPlacementQuestion.fromJson(
