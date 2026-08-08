@@ -4889,6 +4889,23 @@ extension ApiClientLegacyCompat on ApiClient {
     bool allowBack = false,
   }) async {}
 
+  Future<void> recordSolveHistory({
+    required String questId,
+    required bool isCorrect,
+    int? codebaseId,
+    int? seed,
+    List<String> tags = const [],
+  }) async {
+    await _post<Map<String, dynamic>>('/history/solve', {
+      'quest_id': questId,
+      'is_correct': isCorrect,
+      if (codebaseId != null) 'codebase_id': codebaseId,
+      if (seed != null) 'seed': seed,
+      'tags': tags,
+    }, parser: (d) => Map<String, dynamic>.from(d as Map));
+    await invalidateCachePath('/history/solve');
+  }
+
   Future<List<SolveHistoryItem>> fetchSolveHistory({
     int? days,
     String? tag,

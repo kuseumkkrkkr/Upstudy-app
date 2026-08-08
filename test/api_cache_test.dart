@@ -75,4 +75,25 @@ void main() {
     await client.setToken('cache-cleanup-token');
     expect(client.hasMemoryCacheForTest('/arena/summary'), isFalse);
   });
+
+  test('오답 저장 후 풀이 이력 캐시를 즉시 무효화한다', () async {
+    final client = ApiClient.instance;
+    await client.setToken('wrong-answer-token');
+    await client.seedCacheForTest('/history/solve', '{"items":[]}');
+    Map<String, dynamic>? requestBody;
+    client.setHttpClientForTest(
+      MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/history/solve');
+        requestBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{"item":{}}', 200);
+      }),
+    );
+
+    await client.recordSolveHistory(questId: 'quest-wrong-1', isCorrect: false);
+
+    expect(requestBody?['quest_id'], 'quest-wrong-1');
+    expect(requestBody?['is_correct'], isFalse);
+    expect(client.hasMemoryCacheForTest('/history/solve'), isFalse);
+  });
 }

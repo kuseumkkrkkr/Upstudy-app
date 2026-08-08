@@ -14,7 +14,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import jwt
@@ -632,6 +632,16 @@ class UserStorageRequest(BaseModel):
     """필요 변수: UTF-8 JSON 문자열. 작동 원리: 기존 앱의 사용자별 KV 계약을 유지한다."""
 
     value: str
+
+
+class SolveHistoryCreateRequest(BaseModel):
+    """필요 변수: 문제 ID와 정오답. 작동 원리: 오답 노트에 필요한 최소 풀이 결과만 검증한다."""
+
+    quest_id: str = Field(min_length=1, max_length=200)
+    is_correct: bool
+    codebase_id: int | None = None
+    seed: int | None = None
+    tags: list[str] = Field(default_factory=list, max_length=20)
 
 
 class StudentScheduleSyncRequest(BaseModel):
@@ -2315,10 +2325,83 @@ async def analyze_solve(request: Request, _user_id: str = Depends(_current_user)
     }
 
 
+_SOLVE_HISTORY_PREFIX = "solve_history."
+
+
+@app.post("/history/solve")
+def save_solve_history(
+    payload: SolveHistoryCreateRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 정오답. 작동 원리: 시도마다 별도 KV 행을 추가해 동시 제출도 잃지 않는다."""
+    item = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "kind": "problem",
+        "quest_id": payload.quest_id.strip(),
+        "codebase_id": payload.codebase_id,
+        "seed": payload.seed,
+        "data": {
+            "is_correct": payload.is_correct,
+            "tags": [tag.strip()[:100] for tag in payload.tags if tag.strip()],
+        },
+    }
+    try:
+        _data_api().request(
+            "POST",
+            "canary_user_kv",
+            query={"on_conflict": "user_id,key"},
+            body={
+                "user_id": user_id,
+                "key": f"{_SOLVE_HISTORY_PREFIX}{time.time_ns()}.{uuid.uuid4().hex}",
+                "value": json.dumps(item, ensure_ascii=False, separators=(",", ":")),
+            },
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {"item": item}
+
+
 @app.get("/history/solve")
-def list_solve_history(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 풀이 이력이 없는 신규 계정의 빈 기록을 반환한다."""
-    return {"items": []}
+def list_solve_history(
+    days: int = 30,
+    kind: str | None = None,
+    limit: int = 100,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 조회 범위. 작동 원리: 사용자 KV의 최근 풀이만 역순으로 반환한다."""
+    bounded_days = min(max(days, 1), 365)
+    bounded_limit = min(max(limit, 1), 200)
+    try:
+        rows = _data_api().request(
+            "GET",
+            "canary_user_kv",
+            query={
+                "select": "key,value",
+                "user_id": f"eq.{user_id}",
+                "key": f"like.{_SOLVE_HISTORY_PREFIX}*",
+                "limit": "200",
+            },
+        ) or []
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    cutoff = datetime.now(timezone.utc) - timedelta(days=bounded_days)
+    items: list[dict[str, Any]] = []
+    for row in rows:
+        try:
+            item = json.loads(str(row.get("value") or ""))
+            created_at = datetime.fromisoformat(str(item.get("created_at") or ""))
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+        except (AttributeError, TypeError, ValueError, json.JSONDecodeError):
+            continue
+        if not isinstance(item, dict) or created_at < cutoff:
+            continue
+        if kind and item.get("kind") != kind:
+            continue
+        items.append(item)
+    items.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return {"items": items[:bounded_limit]}
 
 
 _SOCIAL_FRIEND_PREFIX = "social.friend."
