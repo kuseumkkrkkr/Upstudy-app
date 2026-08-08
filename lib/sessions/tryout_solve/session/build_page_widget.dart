@@ -2403,7 +2403,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       await _handleObjectiveGrade();
       return;
     }
-    if (_strokes.length <= 2) {
+    if (_strokes.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
