@@ -214,21 +214,66 @@ void main() {
       const MaterialApp(home: GroupListPage(initialGroups: <Object>[])),
     );
     await tester.pump();
-    expect(find.text('활동 중인 그룹'), findsOneWidget);
+    expect(find.text('스터디 그룹'), findsOneWidget);
+    expect(find.text('참여 중인 그룹'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('mobile-active-groups-card')),
       findsOneWidget,
     );
+    expect(find.byKey(const ValueKey('mobile-group-empty')), findsOneWidget);
+    expect(find.byKey(const ValueKey('mobile-group-insights')), findsOneWidget);
     expect(
       find.byKey(const ValueKey('mobile-study-together-card')),
-      findsOneWidget,
+      findsNothing,
     );
+    await tester.tap(find.text('학습 현황'));
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('mobile-friend-ranking-card')),
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('mobile-my-rating-card')), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('모바일 스터디 그룹은 개별 요약 카드에서 상세로 진입한다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    RouteSettings? openedRoute;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        onGenerateRoute: (settings) {
+          openedRoute = settings;
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const SizedBox(),
+          );
+        },
+        home: GroupListPage(
+          initialGroups: <Object>[
+            StudyGroup(
+              id: 'group-1',
+              name: '중2 수학 챌린지',
+              description: '매일 한 문제씩 함께 풀어요',
+              memberCount: 4,
+              maxMembers: 12,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('mobile-group-card-0')), findsOneWidget);
+    expect(find.text('4 / 12명 · 공개'), findsOneWidget);
+    expect(find.text('그룹 공간 열기'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('mobile-group-card-0')));
+    await tester.pumpAndSettle();
+    expect(openedRoute?.name, '/group/detail');
+    expect(openedRoute?.arguments, 'group-1');
   });
 
   testWidgets('모바일 채팅은 실제 쪽지 API로 전송하고 말풍선을 추가한다', (tester) async {

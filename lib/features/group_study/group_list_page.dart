@@ -151,138 +151,171 @@ class _GroupListPageState extends State<GroupListPage> {
   BoxDecoration _mobileCardDecoration({Color color = Colors.white}) =>
       BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE0E0E3)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0x0D000000)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 16,
+            offset: Offset(0, 5),
+          ),
+        ],
       );
 
   /// 필요한 변수는 그룹 로딩·목록과 찾기·생성 동작이다.
   /// 작동 원리는 모바일 그룹 전용 카드 안에 핵심 행동과 현재 그룹만 배치한다.
-  Widget _buildMobileActiveGroupsCard() => Container(
+  Widget _buildMobileActiveGroupsCard() => Column(
     key: const ValueKey('mobile-active-groups-card'),
-    clipBehavior: Clip.antiAlias,
-    decoration: _mobileCardDecoration(),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '지금 활동 중인 그룹',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const Expanded(
+            child: Text(
+              '참여 중인 그룹',
+              style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.8,
               ),
-              const SizedBox(height: 4),
-              const Text(
-                '그룹 문제풀기 · 시험지 · 채팅',
-                style: TextStyle(fontSize: 12, color: Colors.black45),
+            ),
+          ),
+          Text(
+            '${_groups.length}개',
+            style: const TextStyle(
+              color: Colors.black45,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 5),
+      const Text(
+        '문제 · 시험지 · Flow · 채팅을 한곳에서 이어가세요.',
+        style: TextStyle(fontSize: 12, color: Colors.black45),
+      ),
+      const SizedBox(height: 18),
+      _MobileGroupActions(onFind: _openFindSheet, onCreate: _openCreateDialog),
+      const SizedBox(height: 20),
+      if (_loading)
+        Container(
+          height: 140,
+          decoration: _mobileCardDecoration(),
+          child: const Center(child: CircularProgressIndicator()),
+        )
+      else if (_error != null)
+        _GroupLoadError(message: _error!, onRetry: _load)
+      else if (_groups.isEmpty)
+        Container(
+          key: const ValueKey('mobile-group-empty'),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
+          decoration: _mobileCardDecoration(),
+          child: Column(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEFF3FF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.groups_2_rounded,
+                  color: Color(0xFF315FD6),
+                  size: 28,
+                ),
               ),
               const SizedBox(height: 14),
-              _MobileGroupActions(
-                onFind: _openFindSheet,
-                onCreate: _openCreateDialog,
+              const Text(
+                '아직 참여한 그룹이 없어요',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                '그룹을 찾거나 초대 코드로 바로 참가해 보세요.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.black45),
               ),
             ],
           ),
-        ),
-        const Divider(height: 1),
-        if (_loading)
-          const Padding(
-            padding: EdgeInsets.all(28),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (_error != null)
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: _GroupLoadError(message: _error!, onRetry: _load),
-          )
-        else if (_groups.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18, vertical: 28),
-            child: Center(
-              child: Text(
-                '참여 중인 그룹이 없습니다.',
-                style: TextStyle(fontSize: 13, color: Colors.black45),
-              ),
-            ),
-          )
-        else
-          for (var index = 0; index < _groups.length; index++)
-            _GroupRow(group: _groups[index], index: index),
-      ],
-    ),
+        )
+      else
+        for (var index = 0; index < _groups.length; index++) ...[
+          _GroupRow(group: _groups[index], index: index),
+          if (index != _groups.length - 1) const SizedBox(height: 12),
+        ],
+    ],
   );
 
-  Widget _buildMobileStudyTogetherCard() => Container(
-    key: const ValueKey('mobile-study-together-card'),
-    padding: const EdgeInsets.all(16),
-    decoration: _mobileCardDecoration(),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          '함께 학습하기',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+  Widget _buildMobileInsightsCard() => Container(
+    key: const ValueKey('mobile-group-insights'),
+    decoration: const BoxDecoration(
+      borderRadius: BorderRadius.all(Radius.circular(24)),
+      boxShadow: [
+        BoxShadow(
+          color: Color(0x08000000),
+          blurRadius: 16,
+          offset: Offset(0, 5),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          '문제 · 답안 제외 시험지 · Flow',
-          style: TextStyle(fontSize: 12, color: Colors.black45),
-        ),
-        const SizedBox(height: 14),
-        FilledButton.icon(
-          onPressed: _groups.isEmpty
-              ? _openFindSheet
-              : () => Navigator.pushNamed(
-                  context,
-                  '/group/detail',
-                  arguments: _groups.first.groupId,
-                ),
-          icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-          label: Text(_groups.isEmpty ? '그룹 찾기' : '그룹 공간 열기'),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF202022),
-            minimumSize: const Size.fromHeight(48),
+      ],
+    ),
+    child: Material(
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: Color(0x0D000000)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
+          childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+          title: const Text(
+            '학습 현황',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
           ),
+          subtitle: const Text(
+            '친구 OVR · 내 평점',
+            style: TextStyle(fontSize: 11, color: Colors.black45),
+          ),
+          children: [
+            const Divider(height: 1),
+            _buildMobileRankingCard(),
+            const Divider(height: 1),
+            _buildMobileRatingCard(),
+          ],
         ),
-      ],
+      ),
     ),
   );
 
-  Widget _buildMobileRankingCard() => Container(
+  Widget _buildMobileRankingCard() => Padding(
     key: const ValueKey('mobile-friend-ranking-card'),
-    padding: const EdgeInsets.all(16),
-    decoration: _mobileCardDecoration(),
+    padding: const EdgeInsets.symmetric(vertical: 16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'FRIEND OVR RANKING',
-          style: TextStyle(
-            fontSize: 10,
-            letterSpacing: 1.5,
-            color: Colors.black54,
-            fontWeight: FontWeight.w900,
-          ),
+          '친구 OVR 랭킹',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         if (_friendRanks.isEmpty)
-          const SizedBox(
-            height: 72,
-            child: Center(
-              child: Text(
-                '표시할 친구 랭킹이 없습니다.',
-                style: TextStyle(fontSize: 13, color: Colors.black45),
-              ),
-            ),
+          const Text(
+            '표시할 친구 랭킹이 없습니다.',
+            style: TextStyle(fontSize: 12, color: Colors.black45),
           )
         else
           for (final rank in _friendRanks.take(3))
             ListTile(
               contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
               dense: true,
               leading: CircleAvatar(
+                radius: 18,
                 backgroundColor: const Color(0xFF202022),
                 foregroundColor: Colors.white,
                 child: Text(rank.username.isEmpty ? 'F' : rank.username[0]),
@@ -315,39 +348,39 @@ class _GroupListPageState extends State<GroupListPage> {
       ..sort((a, b) => a.delta.compareTo(b.delta));
     final tier = _ratingTier(rating?.rating ?? 0);
     final delta = rating?.ovrDelta ?? 0;
-    return Container(
+    return Padding(
       key: const ValueKey('mobile-my-rating-card'),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFF171719),
-        borderRadius: BorderRadius.circular(22),
-      ),
+      padding: const EdgeInsets.only(top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'MY RATING',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 10,
-              letterSpacing: 1.5,
-              fontWeight: FontWeight.w900,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Expanded(
+                child: Text(
+                  '내 평점',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                ),
+              ),
+              Text(
+                (rating?.ovr ?? 0).toStringAsFixed(1),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '$tier Tier · 전날 대비 ${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}',
+              style: const TextStyle(color: Colors.black45, fontSize: 11),
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            (rating?.ovr ?? 0).toStringAsFixed(1),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 38,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          Text(
-            '$tier Tier · 전날 대비 ${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}',
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -370,12 +403,11 @@ class _GroupListPageState extends State<GroupListPage> {
             ],
           ),
           const SizedBox(height: 16),
-          FilledButton(
+          OutlinedButton(
             onPressed: () => showRatingDetailModal(context: context),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              minimumSize: const Size.fromHeight(46),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF202022),
+              minimumSize: const Size.fromHeight(44),
             ),
             child: const Text('내 평점 상세'),
           ),
@@ -395,7 +427,7 @@ class _GroupListPageState extends State<GroupListPage> {
       appBar: mobile
           ? AppBar(
               title: const Text(
-                '활동 중인 그룹',
+                '스터디 그룹',
                 style: TextStyle(fontWeight: FontWeight.w900),
               ),
               backgroundColor: const Color(0xFFF4F4F6),
@@ -443,12 +475,8 @@ class _GroupListPageState extends State<GroupListPage> {
                         children: [
                           if (mobile) ...[
                             _buildMobileActiveGroupsCard(),
-                            const SizedBox(height: 12),
-                            _buildMobileStudyTogetherCard(),
-                            const SizedBox(height: 12),
-                            _buildMobileRankingCard(),
-                            const SizedBox(height: 12),
-                            _buildMobileRatingCard(),
+                            const SizedBox(height: 18),
+                            _buildMobileInsightsCard(),
                           ] else ...[
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
@@ -518,14 +546,14 @@ class _MobileRatingMetric extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+      Text(label, style: const TextStyle(color: Colors.black45, fontSize: 11)),
       const SizedBox(height: 3),
       Text(
         value?.trim().isNotEmpty == true ? '#$value' : '-',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
-          color: Colors.white,
+          color: Color(0xFF202022),
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -568,7 +596,7 @@ class _GroupListHeading extends StatelessWidget {
 }
 
 /// 필요한 변수: 그룹 찾기·만들기 콜백이다.
-/// 작동 원리: 모바일의 두 핵심 행동을 한 개의 무테 컨테이너 안에 큰 버튼으로 나란히 배치한다.
+/// 작동 원리: 모바일의 두 핵심 행동만 같은 높이의 둥근 버튼으로 나란히 배치한다.
 class _MobileGroupActions extends StatelessWidget {
   const _MobileGroupActions({required this.onFind, required this.onCreate});
 
@@ -587,8 +615,12 @@ class _MobileGroupActions extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF202022),
               padding: const EdgeInsets.symmetric(horizontal: 8),
+              side: const BorderSide(color: Color(0xFFB9B9BE)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
-            child: const FittedBox(child: Text('그룹찾기·코드참가')),
+            child: const FittedBox(child: Text('찾기 · 코드 참가')),
           ),
         ),
       ),
@@ -601,6 +633,9 @@ class _MobileGroupActions extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF202022),
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             child: const Text('그룹 만들기'),
           ),
@@ -1013,102 +1048,169 @@ class _GroupRow extends StatelessWidget {
   /// 필요한 변수는 그룹 정보와 목록 위치다.
   /// 작동 원리는 그룹 문자 배지·소개·멤버 메타를 한 행에 배치하고 기존 상세 라우트로 연결하는 것이다.
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: () =>
-        Navigator.pushNamed(context, '/group/detail', arguments: group.groupId),
-    child: Container(
-      padding: EdgeInsets.symmetric(
-        vertical: isStudentDensityMobile(context) ? 15 : 21,
-        horizontal: isStudentDensityMobile(context) ? 18 : 24,
-      ),
-      decoration: BoxDecoration(
-        border: isStudentDensityMobile(context)
-            ? null
-            : const Border(bottom: BorderSide(color: Color(0xFFDEDEE1))),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: index == 0
-                  ? const Color(0xFF202022)
-                  : const Color(0xFFE8E8EB),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Text(
-              group.name.isEmpty ? 'G' : group.name.substring(0, 1),
-              style: TextStyle(
-                color: index == 0 ? Colors.white : Colors.black,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    const accents = [
+      Color(0xFF315FD6),
+      Color(0xFFD68A12),
+      Color(0xFFE34B2F),
+      Color(0xFF23844B),
+    ];
+    const tints = [
+      Color(0xFFEFF3FF),
+      Color(0xFFFFF5DF),
+      Color(0xFFFFEEE9),
+      Color(0xFFEAF6EE),
+    ];
+    final accent = accents[index % accents.length];
+    final tint = tints[index % tints.length];
+    final capacity = group.maxMembers > 0
+        ? (group.memberCount / group.maxMembers).clamp(0.0, 1.0)
+        : 0.0;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(mobile ? 24 : 0),
+        onTap: () => Navigator.pushNamed(
+          context,
+          '/group/detail',
+          arguments: group.groupId,
+        ),
+        child: Container(
+          key: mobile ? ValueKey('mobile-group-card-$index') : null,
+          padding: EdgeInsets.symmetric(
+            vertical: mobile ? 18 : 21,
+            horizontal: mobile ? 18 : 24,
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  group.name,
-                  style: const TextStyle(
-                    fontSize: 16,
+          decoration: BoxDecoration(
+            color: mobile ? Colors.white : null,
+            borderRadius: mobile ? BorderRadius.circular(24) : null,
+            border: mobile
+                ? Border.all(color: const Color(0x0D000000))
+                : const Border(bottom: BorderSide(color: Color(0xFFDEDEE1))),
+            boxShadow: mobile
+                ? const [
+                    BoxShadow(
+                      color: Color(0x08000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 5),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: mobile ? 62 : 42,
+                height: mobile ? 62 : 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: mobile
+                      ? tint
+                      : index == 0
+                      ? const Color(0xFF202022)
+                      : const Color(0xFFE8E8EB),
+                  borderRadius: BorderRadius.circular(mobile ? 20 : 13),
+                  border: mobile ? Border.all(color: accent, width: 2) : null,
+                ),
+                child: Text(
+                  group.name.isEmpty ? 'G' : group.name.substring(0, 1),
+                  style: TextStyle(
+                    color: mobile
+                        ? accent
+                        : index == 0
+                        ? Colors.white
+                        : Colors.black,
+                    fontSize: mobile ? 20 : null,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  group.description ?? '함께 공부하는 그룹',
-                  style: const TextStyle(fontSize: 11, color: Colors.black45),
+              ),
+              SizedBox(width: mobile ? 16 : 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      group.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      group.description ?? '함께 공부하는 그룹',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black45,
+                      ),
+                    ),
+                    if (mobile) ...[
+                      const SizedBox(height: 7),
+                      Text(
+                        '${group.memberCount} / ${group.maxMembers == 0 ? '—' : group.maxMembers}명 · ${group.isPublic ? '공개' : '비공개'}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.black45,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: capacity,
+                          minHeight: 4,
+                          backgroundColor: const Color(0xFFEAEAED),
+                          valueColor: AlwaysStoppedAnimation<Color>(accent),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                if (isStudentDensityMobile(context)) ...[
-                  const SizedBox(height: 7),
-                  Text(
-                    '${group.memberCount} / ${group.maxMembers == 0 ? '—' : group.maxMembers}명 · ${group.isPublic ? '공개' : '비공개'}',
-                    style: const TextStyle(fontSize: 9, color: Colors.black38),
-                  ),
+              ),
+              if (!mobile) ...[
+                _GroupMetaBadge(
+                  '${group.memberCount} / ${group.maxMembers == 0 ? '—' : group.maxMembers}명',
+                ),
+                const SizedBox(width: 8),
+                _GroupMetaBadge(group.isPublic ? '공개' : '비공개'),
+                if (group.lockEnabled) ...[
+                  const SizedBox(width: 8),
+                  const _GroupMetaBadge('잠금 활동'),
                 ],
+                const SizedBox(width: 12),
               ],
-            ),
-          ),
-          if (!isStudentDensityMobile(context)) ...[
-            _GroupMetaBadge(
-              '${group.memberCount} / ${group.maxMembers == 0 ? '—' : group.maxMembers}명',
-            ),
-            const SizedBox(width: 8),
-            _GroupMetaBadge(group.isPublic ? '공개' : '비공개'),
-            if (group.lockEnabled) ...[
-              const SizedBox(width: 8),
-              const _GroupMetaBadge('잠금 활동'),
+              if (!mobile && index == 0)
+                Container(
+                  width: 29,
+                  height: 29,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF202022),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text(
+                    '5',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                )
+              else
+                const Icon(Icons.chevron_right, color: Colors.black38),
             ],
-            const SizedBox(width: 12),
-          ],
-          if (!isStudentDensityMobile(context) && index == 0)
-            Container(
-              width: 29,
-              height: 29,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFF202022),
-                shape: BoxShape.circle,
-              ),
-              child: const Text(
-                '5',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            )
-          else
-            const Icon(Icons.chevron_right, color: Colors.black38),
-        ],
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _GroupMetaBadge extends StatelessWidget {
