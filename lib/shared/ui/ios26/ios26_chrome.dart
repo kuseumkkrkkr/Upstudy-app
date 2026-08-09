@@ -657,9 +657,8 @@ class _StudentNotificationsSheetState
     return _StudentUtilitySheet(
       kicker: 'LIVE STATUS',
       title: '알림 센터',
-      description: mobile
-          ? '메시지, 친구 요청과 공지를 확인해요.'
-          : '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
+      showMobileClose: false,
+      description: mobile ? '' : '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
       children: [
         const _UtilitySectionTitle('알림'),
         ValueListenableBuilder<SocialNotificationSnapshot>(
@@ -773,12 +772,14 @@ class _StudentUtilitySheet extends StatelessWidget {
     required this.title,
     required this.description,
     required this.children,
+    this.showMobileClose = true,
   });
 
   final String kicker;
   final String title;
   final String description;
   final List<Widget> children;
+  final bool showMobileClose;
 
   /// 필요한 변수는 시트 제목·설명·본문이다.
   /// 작동 원리는 HTML 공용 액션 모달의 여백·타이포·최대 높이를 모든 화면에서 동일하게 유지하는 것이다.
@@ -823,18 +824,19 @@ class _StudentUtilitySheet extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: '닫기',
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                  style: IconButton.styleFrom(
-                    fixedSize: const Size.square(48),
-                    backgroundColor: mobile ? Colors.white : null,
-                    side: mobile
-                        ? BorderSide.none
-                        : const BorderSide(color: Color(0xFFB9B9BD)),
+                if (!mobile || showMobileClose)
+                  IconButton(
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    style: IconButton.styleFrom(
+                      fixedSize: const Size.square(48),
+                      backgroundColor: mobile ? Colors.white : null,
+                      side: mobile
+                          ? BorderSide.none
+                          : const BorderSide(color: Color(0xFFB9B9BD)),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -848,15 +850,17 @@ class _StudentUtilitySheet extends StatelessWidget {
                 MediaQuery.viewInsetsOf(context).bottom + 24,
               ),
               children: [
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: mobile ? Colors.black54 : Colors.black45,
-                    fontSize: mobile ? 15 : null,
-                    height: 1.4,
+                if (description.isNotEmpty) ...[
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: mobile ? Colors.black54 : Colors.black45,
+                      fontSize: mobile ? 15 : null,
+                      height: 1.4,
+                    ),
                   ),
-                ),
-                SizedBox(height: mobile ? 24 : 18),
+                  SizedBox(height: mobile ? 24 : 18),
+                ],
                 ...children,
               ],
             ),
