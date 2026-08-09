@@ -1982,6 +1982,17 @@ class ApiClient {
     await invalidateCachePath('/social/study-groups/search');
   }
 
+  Future<void> inviteFriendToStudyGroup({
+    required String groupId,
+    required String username,
+  }) async {
+    await _post('/social/study-groups/$groupId/invite-friend', {
+      'username': username.trim(),
+    });
+    await invalidateCachePath('/social/study-groups/$groupId/members');
+    await invalidateCachePath('/social/study-groups/mine');
+  }
+
   Future<StudyGroup> joinStudyGroupByInviteCode({
     required String inviteCode,
     String? password,

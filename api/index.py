@@ -706,6 +706,14 @@ class StudyGroupJoinByCodeRequest(StudyGroupJoinRequest):
     invite_code: str = Field(min_length=4, max_length=20)
 
 
+class StudyGroupMessageCreateRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class StudyGroupFriendInviteRequest(BaseModel):
+    username: str = Field(min_length=4, max_length=16)
+
+
 class QuestGenerateRequest(BaseModel):
     """필요 변수: 문제 태그·문항 수·난이도 범위와 선택 생성 메타데이터다."""
 
@@ -2590,9 +2598,11 @@ _SOCIAL_REQUEST_IN_PREFIX = "social.friend_request.in."
 _SOCIAL_REQUEST_OUT_PREFIX = "social.friend_request.out."
 _SOCIAL_GROUP_PREFIX = "social.study_group."
 _SOCIAL_GROUP_MEMBER_PREFIX = "social.study_member."
+_SOCIAL_GROUP_MESSAGE_PREFIX = "social.study_group_message."
 _SOCIAL_MESSAGE_PREFIX = "social.message."
 _SOCIAL_CONVERSATION_PREFIX = "social.conversation."
 _SOCIAL_MESSAGE_LIMIT = 200
+_SOCIAL_GROUP_MESSAGE_LIMIT = 500
 
 
 def _social_data_request(method: str, path: str, **kwargs: Any) -> Any:
@@ -2726,7 +2736,7 @@ def _social_public_group(group: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _social_join_group(group: dict[str, Any], user_id: str, password: str | None) -> dict[str, Any]:
+def _social_add_group_member(group: dict[str, Any], user_id: str) -> dict[str, Any]:
     group_id = str(group.get("group_id") or "")
     member_ids = _social_group_member_ids(group)
     if user_id in member_ids:
@@ -2736,25 +2746,37 @@ def _social_join_group(group: dict[str, Any], user_id: str, password: str | None
         raise HTTPException(status_code=409, detail="Group is full")
     if len(_social_kv_rows(user_id, _SOCIAL_GROUP_PREFIX)) >= 3:
         raise HTTPException(status_code=409, detail="User reached max groups")
+    joined_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    next_member_ids = [*member_ids, user_id]
+    _social_upsert_kv_rows(
+        [
+            (
+                user_id,
+                f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}",
+                {"group_id": group_id, "joined_at": joined_at},
+            ),
+            (
+                user_id,
+                f"{_SOCIAL_GROUP_PREFIX}{group_id}",
+                {**group, "member_ids": next_member_ids, "members": len(next_member_ids)},
+            ),
+        ]
+    )
+    return _social_public_group({**group, "member_ids": next_member_ids})
+
+
+def _social_join_group(group: dict[str, Any], user_id: str, password: str | None) -> dict[str, Any]:
+    member_ids = _social_group_member_ids(group)
+    if user_id in member_ids:
+        existing = _social_group_for_user(user_id, str(group.get("group_id") or ""))
+        return _social_public_group(existing or group)
     if group.get("lock_enabled"):
         supplied = (password or "").strip()
         expected = str(group.get("password_hash") or "")
         salt = str(group.get("password_salt") or "")
         if not supplied or not expected or not hmac.compare_digest(_hash_password(supplied, salt), expected):
             raise HTTPException(status_code=400, detail="Invalid group password")
-    joined_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-    member_key = f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}"
-    _social_upsert_kv(user_id, member_key, {"group_id": group_id, "joined_at": joined_at})
-    try:
-        _social_upsert_kv(
-            user_id,
-            f"{_SOCIAL_GROUP_PREFIX}{group_id}",
-            {**group, "member_ids": [*member_ids, user_id], "members": len(member_ids) + 1},
-        )
-    except HTTPException:
-        _social_delete_kv(user_id, member_key)
-        raise
-    return _social_public_group({**group, "member_ids": [*member_ids, user_id]})
+    return _social_add_group_member(group, user_id)
 
 
 def _social_upsert_kv(user_id: str, key: str, value: dict[str, Any]) -> None:
@@ -2796,6 +2818,29 @@ def _social_delete_kv(user_id: str, key: str) -> None:
         query={"user_id": f"eq.{user_id}", "key": f"eq.{key}"},
         prefer="return=minimal",
     )
+
+
+def _social_group_message_rows(group_id: str) -> list[dict[str, Any]]:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "user_id,key,value",
+            "key": f"like.{_SOCIAL_GROUP_MESSAGE_PREFIX}{group_id}.*",
+            "limit": str(_SOCIAL_GROUP_MESSAGE_LIMIT + 1),
+        },
+    ) or []
+    return [dict(row) for row in rows]
+
+
+def _social_group_messages(group_id: str) -> list[dict[str, Any]]:
+    messages = [
+        value
+        for row in _social_group_message_rows(group_id)
+        if (value := _social_kv_value(row))
+    ]
+    messages.sort(key=lambda item: (str(item.get("created_at") or ""), str(item.get("message_id") or "")))
+    return messages
 
 
 def _social_has_key(user_id: str, key: str) -> bool:
@@ -3293,6 +3338,79 @@ def list_study_group_members(group_id: str, user_id: str = Depends(_current_user
         if profile:
             members.append({"user_id": str(member_id), "username": str(profile.get("username") or member_id)})
     return members
+
+
+@app.post("/social/study-groups/{group_id}/invite-friend")
+def invite_friend_to_study_group(
+    group_id: str,
+    payload: StudyGroupFriendInviteRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    group = _social_group_for_user(user_id, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    friend = _social_user_by_username(payload.username.strip())
+    if not friend:
+        raise HTTPException(status_code=404, detail="Friend not found")
+    friend_id = str(friend.get("user_id") or "")
+    if friend_id == user_id or not _social_has_key(user_id, f"{_SOCIAL_FRIEND_PREFIX}{friend_id}"):
+        raise HTTPException(status_code=403, detail="Only your friends can be invited")
+    canonical = _social_canonical_group(group_id)
+    if not canonical:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return _social_add_group_member(canonical, friend_id)
+
+
+@app.get("/social/study-groups/{group_id}/messages")
+def list_study_group_messages(
+    group_id: str,
+    limit: int = 30,
+    before: str | None = None,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    if not _social_group_for_user(user_id, group_id):
+        raise HTTPException(status_code=404, detail="Group not found")
+    messages = _social_group_messages(group_id)
+    if before:
+        messages = [item for item in messages if str(item.get("created_at") or "") < before]
+    bounded_limit = max(1, min(limit, 100))
+    return {"messages": messages[-bounded_limit:]}
+
+
+@app.post("/social/study-groups/{group_id}/messages", status_code=status.HTTP_201_CREATED)
+def create_study_group_message(
+    group_id: str,
+    payload: StudyGroupMessageCreateRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    group = _social_group_for_user(user_id, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="Message text is required")
+    profile = _social_user_by_id(user_id)
+    message_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+    message = {
+        "message_id": message_id,
+        "user_id": user_id,
+        "sender_name": str((profile or {}).get("name") or (profile or {}).get("username") or user_id),
+        "text": text,
+        "message_type": "text",
+        "payload": None,
+        "created_at": created_at,
+    }
+    canonical = _social_canonical_group(group_id) or group
+    owner_id = str(canonical.get("creator_id") or user_id)
+    key = f"{_SOCIAL_GROUP_MESSAGE_PREFIX}{group_id}.{created_at}.{message_id}"
+    _social_upsert_kv(owner_id, key, message)
+    rows = _social_group_message_rows(group_id)
+    if len(rows) > _SOCIAL_GROUP_MESSAGE_LIMIT:
+        rows.sort(key=lambda row: str((_social_kv_value(row) or {}).get("created_at") or ""))
+        for row in rows[: len(rows) - _SOCIAL_GROUP_MESSAGE_LIMIT]:
+            _social_delete_kv(str(row.get("user_id") or owner_id), str(row.get("key") or ""))
+    return message
 
 
 @app.get("/social/study-groups/notices/my/system")

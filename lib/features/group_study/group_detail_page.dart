@@ -313,8 +313,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
 
   /// 필요한 변수는 현재 그룹의 사용자 ID·닉네임 목록이다.
   /// 작동 원리는 소셜 그룹 API가 반환한 실제 계정 ID와 닉네임을 그대로 목록에 표시해 예비 하드코딩 멤버를 제거하는 것이다.
-  void _openMembers() {
-    showModalBottomSheet<void>(
+  Future<void> _openMembers() async {
+    final inviteRequested = await showModalBottomSheet<bool>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
@@ -323,6 +323,15 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         title: '그룹 멤버',
         description: '현재 그룹의 멤버와 역할을 확인합니다.',
         children: [
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const ValueKey('group-invite-friend'),
+              onPressed: () => Navigator.of(context).pop(true),
+              icon: const Icon(Icons.person_add_alt_1_rounded),
+              label: const Text('내 친구 초대'),
+            ),
+          ),
           for (final member in _members)
             _GroupActionRow(
               title: member.username,
@@ -338,6 +347,18 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
         ],
       ),
     );
+    if (inviteRequested == true && mounted) {
+      final invited = await showModalBottomSheet<bool>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (context) => _GroupFriendInviteSheet(
+          groupId: widget.groupId,
+          memberIds: _members.map((member) => member.userId).toSet(),
+        ),
+      );
+      if (invited == true && mounted) await _load();
+    }
   }
 
   /// 필요한 변수는 현재 자료 탭이다.
@@ -1469,6 +1490,148 @@ class _SharedResourceTile extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _GroupFriendInviteSheet extends StatefulWidget {
+  const _GroupFriendInviteSheet({
+    required this.groupId,
+    required this.memberIds,
+  });
+
+  final String groupId;
+  final Set<String> memberIds;
+
+  @override
+  State<_GroupFriendInviteSheet> createState() =>
+      _GroupFriendInviteSheetState();
+}
+
+class _GroupFriendInviteSheetState extends State<_GroupFriendInviteSheet> {
+  List<FriendProfile> _friends = const [];
+  bool _loading = true;
+  String? _invitingUserId;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadFriends());
+  }
+
+  Future<void> _loadFriends() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final friends = await ApiClient.instance.listFriends(forceRefresh: true);
+      if (!mounted) return;
+      setState(() {
+        _friends = friends
+            .where((friend) => !widget.memberIds.contains(friend.userId))
+            .toList(growable: false);
+      });
+    } catch (_) {
+      if (mounted) setState(() => _error = '친구 목록을 불러오지 못했습니다.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _invite(FriendProfile friend) async {
+    if (_invitingUserId != null) return;
+    setState(() => _invitingUserId = friend.userId);
+    try {
+      await ApiClient.instance.inviteFriendToStudyGroup(
+        groupId: widget.groupId,
+        username: friend.username,
+      );
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('친구를 초대하지 못했습니다.')));
+      setState(() => _invitingUserId = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.sizeOf(context).height * .72;
+    return SafeArea(
+      child: SizedBox(
+        height: height,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '내 친구 초대',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 6),
+              const Text('친구로 등록된 사용자만 이 그룹에 바로 초대할 수 있습니다.'),
+              const SizedBox(height: 18),
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_error!),
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              onPressed: _loadFriends,
+                              child: const Text('다시 시도'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _friends.isEmpty
+                    ? const Center(child: Text('초대할 수 있는 친구가 없습니다.'))
+                    : ListView.separated(
+                        itemCount: _friends.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final friend = _friends[index];
+                          final label = (friend.name ?? '').trim().isNotEmpty
+                              ? friend.name!.trim()
+                              : friend.username;
+                          final isInviting = _invitingUserId == friend.userId;
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              child: Text(label.characters.first.toUpperCase()),
+                            ),
+                            title: Text(label),
+                            subtitle: Text('@${friend.username}'),
+                            trailing: FilledButton(
+                              onPressed: _invitingUserId == null
+                                  ? () => _invite(friend)
+                                  : null,
+                              child: isInviting
+                                  ? const SizedBox.square(
+                                      dimension: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('초대'),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _GroupChatSheet extends StatefulWidget {

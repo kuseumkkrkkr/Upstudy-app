@@ -18,6 +18,38 @@ void main() {
         final Object body;
         if (request.url.path == '/auth/me') {
           body = <String, Object>{'user_id': 'me', 'username': '나'};
+        } else if (request.url.path == '/social/friends') {
+          body = <String, Object>{
+            'friends': <Object>[
+              <String, Object>{
+                'user_id': 'friend-2',
+                'username': 'invite_friend',
+                'name': '초대 친구',
+              },
+            ],
+          };
+        } else if (request.url.path.endsWith('/members')) {
+          body = <Object>[
+            <String, Object>{'user_id': 'me', 'username': '나'},
+            <String, Object>{'user_id': 'friend-1', 'username': '수학친구'},
+            <String, Object>{
+              'user_id': 'friend-2',
+              'username': 'invite_friend',
+            },
+          ];
+        } else if (request.url.path == '/social/study-groups/mine') {
+          body = <String, Object>{
+            'groups': <Object>[
+              <String, Object>{
+                'group_id': 'group-1',
+                'name': '중등 수학 챌린지',
+                'members': 3,
+                'max_members': 12,
+              },
+            ],
+          };
+        } else if (request.url.path.endsWith('/invite-friend')) {
+          body = <String, Object>{'group_id': 'group-1'};
         } else if (request.url.path.endsWith('/schedules')) {
           body = <String, Object>{'schedules': <Object>[]};
         } else if (request.url.path.endsWith('/shared-flows')) {
@@ -98,7 +130,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('그룹 멤버'), findsOneWidget);
     expect(find.text('수학친구'), findsOneWidget);
-    Navigator.of(tester.element(find.text('그룹 멤버'))).pop();
+    expect(find.byKey(const ValueKey('group-invite-friend')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('group-invite-friend')));
+    await tester.pumpAndSettle();
+    expect(find.text('내 친구 초대'), findsWidgets);
+    expect(find.text('초대 친구'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, '초대').last);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('mobile-group-chat')));

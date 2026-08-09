@@ -276,3 +276,92 @@ def test_study_group_search_invite_and_join_contract(monkeypatch):
 
         members = client.get(f"/social/study-groups/{created['group_id']}/members", headers=alice)
         assert {member["username"] for member in members.json()} == {"alice01", "bob0001"}
+
+
+def test_study_group_friend_invite_and_member_chat_contract(monkeypatch):
+    """그룹 멤버 자신의 친구만 초대하며 초대된 멤버와 채팅 원장을 공유하는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeSocialDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    alice = _headers(module, "user-alice")
+    bob = _headers(module, "user-bob")
+    bobby = _headers(module, "user-bobby")
+
+    with TestClient(module.app) as client:
+        request = client.post(
+            "/social/friend-requests",
+            headers=alice,
+            json={"username": "bob0001"},
+        ).json()
+        assert client.post(
+            f"/social/friend-requests/{request['request_id']}/accept",
+            headers=bob,
+        ).status_code == 200
+
+        group = client.post(
+            "/social/study-groups",
+            headers=alice,
+            json={"name": "친구 수학방", "max_members": 4, "is_public": True},
+        ).json()
+        group_id = group["group_id"]
+
+        denied = client.post(
+            f"/social/study-groups/{group_id}/invite-friend",
+            headers=alice,
+            json={"username": "bobby02"},
+        )
+        assert denied.status_code == 403
+
+        invited = client.post(
+            f"/social/study-groups/{group_id}/invite-friend",
+            headers=alice,
+            json={"username": "bob0001"},
+        )
+        assert invited.status_code == 200
+        assert invited.json()["members"] == 2
+        repeated = client.post(
+            f"/social/study-groups/{group_id}/invite-friend",
+            headers=alice,
+            json={"username": "bob0001"},
+        )
+        assert repeated.status_code == 200
+        assert repeated.json()["members"] == 2
+        assert client.get("/social/study-groups/mine", headers=bob).json()["groups"][0]["group_id"] == group_id
+
+        first = client.post(
+            f"/social/study-groups/{group_id}/messages",
+            headers=alice,
+            json={"text": "  첫 메시지  "},
+        )
+        assert first.status_code == 201
+        assert first.json()["text"] == "첫 메시지"
+        assert first.json()["sender_name"] == "앨리스"
+        assert client.get(
+            f"/social/study-groups/{group_id}/messages",
+            headers=bob,
+        ).json()["messages"][0]["message_id"] == first.json()["message_id"]
+
+        second = client.post(
+            f"/social/study-groups/{group_id}/messages",
+            headers=bob,
+            json={"text": "답장"},
+        )
+        assert second.status_code == 201
+        messages = client.get(
+            f"/social/study-groups/{group_id}/messages",
+            headers=alice,
+        ).json()["messages"]
+        assert [message["text"] for message in messages] == ["첫 메시지", "답장"]
+        previous = client.get(
+            f"/social/study-groups/{group_id}/messages",
+            headers=alice,
+            params={"before": second.json()["created_at"]},
+        ).json()["messages"]
+        assert [message["text"] for message in previous] == ["첫 메시지"]
+        assert client.get(f"/social/study-groups/{group_id}/messages", headers=bobby).status_code == 404
+        assert client.post(
+            f"/social/study-groups/{group_id}/messages",
+            headers=bobby,
+            json={"text": "침입"},
+        ).status_code == 404
