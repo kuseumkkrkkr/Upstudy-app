@@ -49,6 +49,33 @@ void main() {
     expect(find.text('30:00'), findsOneWidget);
     expect(find.textContaining('보이면 안 되는 Flow'), findsNothing);
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('placement-writing-mode-controls')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ChoiceChip>(find.byKey(const ValueKey('placement-move-mode')))
+          .selected,
+      isTrue,
+    );
+    await tester.tap(find.byKey(const ValueKey('placement-write-mode')));
+    await tester.pump();
+    final note = find.byKey(const ValueKey('mobile-solve-writing-surface'));
+    await tester.ensureVisible(note);
+    await tester.pumpAndSettle();
+    final center = tester.getCenter(note);
+    await tester.dragFrom(center, const Offset(45, 20));
+    await tester.pump();
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byKey(const ValueKey('placement-clear-tool')),
+          )
+          .onPressed,
+      isNotNull,
+    );
+
     await tester.tap(find.byKey(const ValueKey('placement-next')));
     await tester.pump();
     expect(find.text('2번'), findsOneWidget);

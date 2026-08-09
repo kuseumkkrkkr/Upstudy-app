@@ -28,6 +28,29 @@ from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/level-tests", tags=["level-tests"])
 
+_GRADE_OVR_BANDS = (
+    ("9등급", 800, 827), ("8등급", 828, 923), ("7등급", 924, 1060),
+    ("6등급", 1061, 1170), ("5등급", 1171, 1279), ("4등급", 1280, 1378),
+    ("3등급", 1379, 1478), ("2등급", 1479, 1606), ("1등급", 1607, 2200),
+)
+
+
+def _placement_result_from_session(session: Dict[str, Any]) -> Dict[str, Any]:
+    rating = float(session.get("estimated_rating") or session.get("estimated_ovr") or 0)
+    answers = repo.list_placement_answers(str(session.get("session_id") or ""))
+    correct_count = sum(bool(answer.get("is_correct")) for answer in answers)
+    return {
+        "session_id": str(session.get("session_id") or ""),
+        "rating": rating,
+        "ovr": float(session.get("estimated_ovr") or rating),
+        "ovr_delta": rating - 1200.0,
+        "recent_accuracy": correct_count / engine.PLACEMENT_QUESTION_COUNT if answers else 0.0,
+        "lose_streak": 0 if not answers or bool(answers[-1].get("is_correct")) else 1,
+        "confidence": float(session.get("confidence") or 0),
+        "strong_tags": session.get("strong_tags") or [],
+        "weak_tags": session.get("weak_tags") or [],
+    }
+
 
 # ---------------------------------------------------------------------------
 # Generic response wrapper
@@ -308,6 +331,8 @@ async def start_placement_test(
 ):
     """필요 변수: 인증 사용자 ID. 작동 원리: PostgreSQL 폼과 문제 payload를 한 번 읽어 placement 세션을 생성한다."""
     user_id = request.state.user_id
+    if repo.get_completed_placement(user_id) is not None:
+        raise HTTPException(status_code=409, detail="Placement test already completed")
     template = repo.pick_ready_placement_template(user_id)
     if template is None:
         raise HTTPException(status_code=503, detail="No PostgreSQL placement template available")
@@ -321,10 +346,13 @@ async def start_placement_test(
     questions = [PlacementQuestion(**item) for item in items]
     if len(questions) != engine.PLACEMENT_QUESTION_COUNT:
         raise HTTPException(status_code=503, detail="PostgreSQL placement problems are incomplete")
-    session_id = repo.create_placement_session(
-        user_id=user_id,
-        template_id=template_id,
-    )
+    try:
+        session_id = repo.create_placement_session(
+            user_id=user_id,
+            template_id=template_id,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
     return PlacementStartResponse(
         data=PlacementStartPayload(
             session_id=session_id,
@@ -341,6 +369,12 @@ async def start_placement_test(
 async def get_placement_stats(
     _user=Depends(require_role("student", "teacher", "admin")),
 ):
+    ratings = (1100.0,) * 5 + (1250.0,) * 10 + (1450.0,) * 7 + (1650.0,) * 3
+    estimated_bands = []
+    for grade, minimum, maximum in _GRADE_OVR_BANDS:
+        midpoint = (minimum + maximum) / 2
+        expected = sum(1 / (1 + 10 ** ((problem_rating - midpoint) / 400)) for problem_rating in ratings)
+        estimated_bands.append({"grade": grade, "ovr_min": minimum, "ovr_max": maximum, "expected_correct": round(expected, 1)})
     return CommonResponse(
         data={
             "question_count": engine.PLACEMENT_QUESTION_COUNT,
@@ -348,9 +382,20 @@ async def get_placement_stats(
                 {"tier": tier, "label": label, "question_count": engine.PLACEMENT_DIFFICULTY_COUNTS[tier]}
                 for tier, label in ((2, "기초"), (3, "기본"), (4, "응용"), (5, "심화"))
             ],
-            "grade_bands": repo.get_placement_stats(),
+            "estimated_bands": estimated_bands,
+            "source": "rating-validation-2026-07-15",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
     )
+
+
+@router.get("/placement/status", response_model=CommonResponse[Dict[str, Any]])
+async def get_placement_status(
+    request: Request,
+    _user=Depends(require_role("student", "teacher", "admin")),
+):
+    session = repo.get_completed_placement(request.state.user_id)
+    return CommonResponse(data={"completed": session is not None, "result": _placement_result_from_session(session) if session else None})
 
 
 @router.post("/placement/{session_id}/answer", response_model=CommonResponse[Dict[str, Any]])
@@ -380,7 +425,10 @@ async def submit_placement_test(
     if not session or session["user_id"] != user_id:
         raise HTTPException(status_code=404, detail="Placement session not found")
     if session["status"] == "graded":
-        raise HTTPException(status_code=409, detail="Placement session already submitted")
+        return PlacementSubmitResponse(
+            data=PlacementSubmitPayload(**_placement_result_from_session(session)),
+            message="Placement rating applied",
+        )
     started_at = session.get("started_at")
     if isinstance(started_at, datetime):
         elapsed = (datetime.now(timezone.utc) - started_at.astimezone(timezone.utc)).total_seconds()

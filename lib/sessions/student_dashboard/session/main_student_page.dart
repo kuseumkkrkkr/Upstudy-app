@@ -2062,10 +2062,11 @@ class _BottomSection extends StatelessWidget {
                               0,
                               _ratingEstimateMinSolved,
                             );
-                        final isEligible = remainingCount == 0;
                         return ValueListenableBuilder<RatingSnapshot>(
                           valueListenable: RatingStore.notifier,
                           builder: (context, ratingSnapshot, _) {
+                            final isEligible =
+                                ratingSnapshot.placementCompleted;
                             final ovrText = ratingSnapshot.isLoaded
                                 ? _formatRatingOvr(ratingSnapshot.ovr)
                                 : '--';
@@ -2238,15 +2239,10 @@ class _MobileHomeInsights extends StatelessWidget {
       child: ValueListenableBuilder<ActivitySnapshot>(
         valueListenable: ActivityStore.notifier,
         builder: (context, activity, _) {
-          final remaining =
-              (_ratingEstimateMinSolved - activity.totalSolvedCount).clamp(
-                0,
-                _ratingEstimateMinSolved,
-              );
-          final isEligible = remaining == 0;
           return ValueListenableBuilder<RatingSnapshot>(
             valueListenable: RatingStore.notifier,
             builder: (context, rating, __) {
+              final isEligible = rating.placementCompleted;
               return ValueListenableBuilder<AccountSummary?>(
                 valueListenable: ActivityStore.accountSummaryNotifier,
                 builder: (context, account, ___) {
@@ -2288,11 +2284,9 @@ class _MobileHomeInsights extends StatelessWidget {
                             _MobileInsightRow(
                               icon: Icons.insights_rounded,
                               label: '레이팅',
-                              value: rating.isLoaded
+                              value: rating.isLoaded && isEligible
                                   ? 'OVR ${_formatRatingOvr(rating.ovr)}'
-                                  : isEligible
-                                  ? '측정 중'
-                                  : '$remaining문제 남음',
+                                  : '레벨테스트 필요',
                               darkIcon: true,
                               onTap: () => onRatingTap(isEligible),
                             ),

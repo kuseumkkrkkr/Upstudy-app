@@ -3624,12 +3624,14 @@ class UserRating {
   final double ovrDelta;
   final double recentAccuracy;
   final int loseStreak;
+  final bool placementCompleted;
   const UserRating({
     required this.rating,
     required this.ovr,
     required this.ovrDelta,
     required this.recentAccuracy,
     required this.loseStreak,
+    this.placementCompleted = false,
   });
   factory UserRating.fromJson(Map<String, dynamic> json) => UserRating(
     rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
@@ -3637,6 +3639,7 @@ class UserRating {
     ovrDelta: (json['ovr_delta'] as num?)?.toDouble() ?? 0.0,
     recentAccuracy: (json['recent_accuracy'] as num?)?.toDouble() ?? 0.0,
     loseStreak: (json['lose_streak'] as num?)?.toInt() ?? 0,
+    placementCompleted: json['placement_completed'] == true,
   );
 }
 
@@ -3729,37 +3732,37 @@ class LevelTestDifficultyBand {
       );
 }
 
-class LevelTestGradeBand {
+class LevelTestEstimatedBand {
   final String grade;
-  final int sampleSize;
-  final double averageCorrect;
-  final double averageOvr;
+  final int ovrMin;
+  final int ovrMax;
+  final double expectedCorrect;
 
-  const LevelTestGradeBand({
+  const LevelTestEstimatedBand({
     required this.grade,
-    required this.sampleSize,
-    required this.averageCorrect,
-    required this.averageOvr,
+    required this.ovrMin,
+    required this.ovrMax,
+    required this.expectedCorrect,
   });
 
-  factory LevelTestGradeBand.fromJson(Map<String, dynamic> json) =>
-      LevelTestGradeBand(
+  factory LevelTestEstimatedBand.fromJson(Map<String, dynamic> json) =>
+      LevelTestEstimatedBand(
         grade: (json['grade'] ?? '').toString(),
-        sampleSize: (json['sample_size'] as num?)?.toInt() ?? 0,
-        averageCorrect: (json['average_correct'] as num?)?.toDouble() ?? 0.0,
-        averageOvr: (json['average_ovr'] as num?)?.toDouble() ?? 0.0,
+        ovrMin: (json['ovr_min'] as num?)?.toInt() ?? 0,
+        ovrMax: (json['ovr_max'] as num?)?.toInt() ?? 0,
+        expectedCorrect: (json['expected_correct'] as num?)?.toDouble() ?? 0.0,
       );
 }
 
 class LevelTestPlacementStats {
   final int questionCount;
   final List<LevelTestDifficultyBand> difficultyBands;
-  final List<LevelTestGradeBand> gradeBands;
+  final List<LevelTestEstimatedBand> estimatedBands;
 
   const LevelTestPlacementStats({
     required this.questionCount,
     required this.difficultyBands,
-    required this.gradeBands,
+    required this.estimatedBands,
   });
 
   factory LevelTestPlacementStats.fromJson(Map<String, dynamic> json) =>
@@ -3773,9 +3776,9 @@ class LevelTestPlacementStats {
                   ),
                 )
                 .toList(),
-        gradeBands: (json['grade_bands'] as List<dynamic>? ?? const [])
+        estimatedBands: (json['estimated_bands'] as List<dynamic>? ?? const [])
             .map(
-              (entry) => LevelTestGradeBand.fromJson(
+              (entry) => LevelTestEstimatedBand.fromJson(
                 Map<String, dynamic>.from(entry as Map),
               ),
             )
@@ -3831,6 +3834,26 @@ class LevelTestPlacementResult {
       ovrDelta: ovrDelta,
       recentAccuracy: recentAccuracy,
       loseStreak: loseStreak,
+      placementCompleted: true,
+    );
+  }
+}
+
+class LevelTestPlacementStatus {
+  final bool completed;
+  final LevelTestPlacementResult? result;
+
+  const LevelTestPlacementStatus({required this.completed, this.result});
+
+  factory LevelTestPlacementStatus.fromJson(Map<String, dynamic> json) {
+    final rawResult = json['result'];
+    return LevelTestPlacementStatus(
+      completed: json['completed'] == true,
+      result: rawResult is Map
+          ? LevelTestPlacementResult.fromJson(
+              Map<String, dynamic>.from(rawResult),
+            )
+          : null,
     );
   }
 }
@@ -4659,10 +4682,18 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get<Map<String, dynamic>>(
       '/level-tests/placement/stats',
       parser: (d) => Map<String, dynamic>.from(d as Map),
-      useCache: true,
-      cacheTtl: const Duration(minutes: 5),
+      useCache: false,
     );
     return LevelTestPlacementStats.fromJson(res.data ?? const {});
+  }
+
+  Future<LevelTestPlacementStatus> fetchLevelTestPlacementStatus() async {
+    final res = await _get<Map<String, dynamic>>(
+      '/level-tests/placement/status',
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: false,
+    );
+    return LevelTestPlacementStatus.fromJson(res.data ?? const {});
   }
 
   Future<LevelTestPlacementResult> submitLevelTestPlacement(

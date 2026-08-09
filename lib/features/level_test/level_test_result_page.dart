@@ -100,7 +100,9 @@ class _ResultTopBar extends StatelessWidget {
   /// 필요한 값은 현재 Navigator다.
   /// 모든 시험 결과 진입 경로에서 동일한 홈 복귀 계약을 유지한다.
   void _goHome(BuildContext context) {
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false);
   }
 
   @override

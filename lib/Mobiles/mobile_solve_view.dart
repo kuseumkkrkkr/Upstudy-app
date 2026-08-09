@@ -351,6 +351,139 @@ Widget _renderPlacementExamScaffold(_BuildpageWidgetState state) {
                   ),
                 ],
                 const SizedBox(height: 12),
+                Container(
+                  key: const ValueKey('placement-writing-mode-controls'),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE2E2DF)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '풀이 필기',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Text(
+                              'OVR 채점에는 사용하지 않아요',
+                              style: TextStyle(
+                                color: Colors.black45,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ChoiceChip(
+                        key: const ValueKey('placement-move-mode'),
+                        label: const Text('이동'),
+                        avatar: Icon(
+                          Icons.pan_tool_outlined,
+                          size: 16,
+                          color: !state._placementWritingMode
+                              ? Colors.white
+                              : Colors.black54,
+                        ),
+                        selected: !state._placementWritingMode,
+                        onSelected: (_) =>
+                            state._setPlacementWritingMode(false),
+                        selectedColor: Colors.black,
+                        backgroundColor: Colors.white,
+                        showCheckmark: false,
+                        side: const BorderSide(color: Color(0xFFD6D6D3)),
+                        labelStyle: TextStyle(
+                          color: !state._placementWritingMode
+                              ? Colors.white
+                              : Colors.black,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      ChoiceChip(
+                        key: const ValueKey('placement-write-mode'),
+                        label: const Text('필기'),
+                        avatar: Icon(
+                          Icons.edit_outlined,
+                          size: 16,
+                          color: state._placementWritingMode
+                              ? Colors.white
+                              : Colors.black54,
+                        ),
+                        selected: state._placementWritingMode,
+                        onSelected: (_) => state._setPlacementWritingMode(true),
+                        selectedColor: Colors.black,
+                        backgroundColor: Colors.white,
+                        showCheckmark: false,
+                        side: const BorderSide(color: Color(0xFFD6D6D3)),
+                        labelStyle: TextStyle(
+                          color: state._placementWritingMode
+                              ? Colors.white
+                              : Colors.black,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (state._placementWritingMode)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        key: const ValueKey('placement-pen-tool'),
+                        tooltip: '펜',
+                        onPressed: () => state._setToolMode(_ToolMode.pen),
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          color: state._toolMode == _ToolMode.pen
+                              ? Colors.black
+                              : Colors.black38,
+                        ),
+                      ),
+                      IconButton(
+                        key: const ValueKey('placement-eraser-tool'),
+                        tooltip: '지우개',
+                        onPressed: () => state._setToolMode(_ToolMode.eraser),
+                        icon: Icon(
+                          Icons.cleaning_services_outlined,
+                          color: state._toolMode == _ToolMode.eraser
+                              ? Colors.black
+                              : Colors.black38,
+                        ),
+                      ),
+                      IconButton(
+                        key: const ValueKey('placement-undo-tool'),
+                        tooltip: '되돌리기',
+                        onPressed: state._undoStack.isEmpty
+                            ? null
+                            : state._undo,
+                        icon: const Icon(Icons.undo_rounded),
+                      ),
+                      IconButton(
+                        key: const ValueKey('placement-clear-tool'),
+                        tooltip: '전체 지우기',
+                        onPressed: state._strokes.isEmpty
+                            ? null
+                            : state._clearAll,
+                        icon: const Icon(Icons.delete_outline_rounded),
+                      ),
+                    ],
+                  ),
+                _renderMobileWritingSurface(
+                  state,
+                  interactive: state._placementWritingMode,
+                  allowCollapse: false,
+                ),
+                const SizedBox(height: 12),
                 const Row(
                   children: [
                     Icon(
@@ -1172,8 +1305,13 @@ Widget _renderMobileNoteLauncher(_BuildpageWidgetState state) {
 
 /// 필요한 변수는 필기 획과 모바일 viewport다.
 /// 작동 원리는 필기 영역을 문제 카드와 분리하고 항상 세로 스크롤을 허용해 긴 풀이 중간의 입력 단절 구간을 없애는 것이다.
-Widget _renderMobileWritingSurface(_BuildpageWidgetState state) {
-  final canCollapse = state._currentQuestOptionBlocks().isNotEmpty;
+Widget _renderMobileWritingSurface(
+  _BuildpageWidgetState state, {
+  bool interactive = true,
+  bool allowCollapse = true,
+}) {
+  final canCollapse =
+      allowCollapse && state._currentQuestOptionBlocks().isNotEmpty;
   return DecoratedBox(
     key: const ValueKey('mobile-solve-writing-surface'),
     decoration: BoxDecoration(
@@ -1247,71 +1385,102 @@ Widget _renderMobileWritingSurface(_BuildpageWidgetState state) {
                             : const ColoredBox(color: Colors.white),
                       ),
                       Positioned.fill(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onPanStart: (details) {
-                            final position = state._toLogicalPosition(
-                              details.localPosition,
-                              scale,
-                            );
-                            state._ensureClockRunning();
-                            if (state._toolMode == _ToolMode.pen) {
-                              state._startStroke(position, 1);
-                            } else {
-                              state._startEraser(position);
-                            }
-                          },
-                          onPanUpdate: (details) {
-                            final position = state._toLogicalPosition(
-                              details.localPosition,
-                              scale,
-                            );
-                            if (!state._withinCanvas(position)) return;
-                            if (state._toolMode == _ToolMode.pen) {
-                              state._appendStroke(position, 1);
-                            } else {
-                              state._updateEraser(position);
-                            }
-                          },
-                          onPanEnd: (_) {
-                            if (state._toolMode == _ToolMode.pen) {
-                              state._finishStroke();
-                            } else {
-                              state._finishEraser();
-                            }
-                            state.setState(() {});
-                          },
-                          onPanCancel: () {
-                            if (state._toolMode == _ToolMode.pen) {
-                              state._finishStroke();
-                            } else {
-                              state._finishEraser();
-                            }
-                            state.setState(() {});
-                          },
-                          child: ValueListenableBuilder<int>(
-                            valueListenable: state._paintVersion,
-                            builder: (context, _, __) => CustomPaint(
-                              painter: _StrokePainter(
-                                strokes: state._strokes,
-                                currentStroke: state._currentStroke,
-                                eraserPosition: state._eraserActive
-                                    ? state._eraserPosition
-                                    : null,
-                                eraserRadius:
-                                    _BuildpageWidgetState._eraserRadius,
-                                scale: scale,
-                                logicalSize: const Size(
-                                  _BuildpageWidgetState._baseWidth,
-                                  _BuildpageWidgetState._baseHeight,
+                        child: IgnorePointer(
+                          ignoring: !interactive,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onPanStart: (details) {
+                              final position = state._toLogicalPosition(
+                                details.localPosition,
+                                scale,
+                              );
+                              state._ensureClockRunning();
+                              if (state._toolMode == _ToolMode.pen) {
+                                state._startStroke(position, 1);
+                              } else {
+                                state._startEraser(position);
+                              }
+                            },
+                            onPanUpdate: (details) {
+                              final position = state._toLogicalPosition(
+                                details.localPosition,
+                                scale,
+                              );
+                              if (!state._withinCanvas(position)) return;
+                              if (state._toolMode == _ToolMode.pen) {
+                                state._appendStroke(position, 1);
+                              } else {
+                                state._updateEraser(position);
+                              }
+                            },
+                            onPanEnd: (_) {
+                              if (state._toolMode == _ToolMode.pen) {
+                                state._finishStroke();
+                              } else {
+                                state._finishEraser();
+                              }
+                              state.setState(() {});
+                            },
+                            onPanCancel: () {
+                              if (state._toolMode == _ToolMode.pen) {
+                                state._finishStroke();
+                              } else {
+                                state._finishEraser();
+                              }
+                              state.setState(() {});
+                            },
+                            child: ValueListenableBuilder<int>(
+                              valueListenable: state._paintVersion,
+                              builder: (context, _, __) => CustomPaint(
+                                painter: _StrokePainter(
+                                  strokes: state._strokes,
+                                  currentStroke: state._currentStroke,
+                                  eraserPosition: state._eraserActive
+                                      ? state._eraserPosition
+                                      : null,
+                                  eraserRadius:
+                                      _BuildpageWidgetState._eraserRadius,
+                                  scale: scale,
+                                  logicalSize: const Size(
+                                    _BuildpageWidgetState._baseWidth,
+                                    _BuildpageWidgetState._baseHeight,
+                                  ),
+                                  backgroundColor: Colors.transparent,
+                                  repaint: state._paintVersion,
                                 ),
-                                backgroundColor: Colors.transparent,
-                                repaint: state._paintVersion,
                               ),
                             ),
                           ),
                         ),
                       ),
+                      if (!interactive)
+                        const Positioned.fill(
+                          child: IgnorePointer(
+                            child: Center(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Color(0xD9FFFFFF),
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(99),
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 7,
+                                  ),
+                                  child: Text(
+                                    '이동 모드 · 화면을 위아래로 움직일 수 있어요',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       if (state._strokes.isEmpty &&
                           state._currentStroke == null)
                         const Positioned(

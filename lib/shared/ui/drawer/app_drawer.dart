@@ -997,8 +997,8 @@ const _navigationGroups = <_DrawerNavigationGroup>[
         activeRoutes: ['/wrong_answers', '/wrong_answer_solve'],
       ),
       _DrawerDestination(
-        icon: Icons.speed_outlined,
-        label: '레벨 테스트',
+        icon: Icons.analytics_outlined,
+        label: '보고서 보기',
         route: '/level_test',
         activeRoutes: ['/level_test'],
       ),

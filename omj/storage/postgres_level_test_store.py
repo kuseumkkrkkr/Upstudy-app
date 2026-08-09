@@ -97,9 +97,25 @@ class PostgresLevelTestStore:
             return dict(row) if row else None
 
     def create_session(self, *, user_id: str, template_id: str) -> str:
-        """필요 변수: 사용자·폼 ID. 작동 원리: UUID 세션을 PostgreSQL에 원자적으로 생성한다."""
+        """사용자별 advisory lock으로 완료 후 재응시와 동시 다중 세션을 원자적으로 막는다."""
         session_id = str(uuid.uuid4())
-        with self._connection() as connection, connection.transaction(), connection.cursor() as cursor:
+        with self._connection() as connection, connection.transaction(), connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"placement:{user_id}",))
+            cursor.execute(
+                """SELECT session_id, status FROM level_test_session
+                   WHERE user_id = %s ORDER BY started_at DESC LIMIT 1""",
+                (user_id,),
+            )
+            current = cursor.fetchone()
+            if current and current["status"] == "graded":
+                raise ValueError("Placement test already completed")
+            if current and current["status"] == "started":
+                session_id = str(current["session_id"])
+                cursor.execute(
+                    "UPDATE level_test_session SET template_id=%s, started_at=NOW() WHERE session_id=%s",
+                    (template_id, session_id),
+                )
+                return session_id
             cursor.execute(
                 "INSERT INTO level_test_session(session_id, user_id, template_id, status) VALUES (%s, %s, %s, 'started')",
                 (session_id, user_id, template_id),
@@ -110,6 +126,18 @@ class PostgresLevelTestStore:
         """필요 변수: 세션 ID. 작동 원리: 세션 소유자와 상태를 단건 조회한다."""
         with self._connection() as connection, connection.cursor(row_factory=dict_row) as cursor:
             cursor.execute("SELECT * FROM level_test_session WHERE session_id = %s", (session_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def get_latest_graded_session(self, user_id: str) -> Optional[dict[str, Any]]:
+        """사용자의 최초 배치 완료 여부와 보고서를 같은 세션 원장에서 읽는다."""
+        with self._connection() as connection, connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                """SELECT * FROM level_test_session
+                   WHERE user_id = %s AND status = 'graded'
+                   ORDER BY submitted_at DESC LIMIT 1""",
+                (user_id,),
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
 

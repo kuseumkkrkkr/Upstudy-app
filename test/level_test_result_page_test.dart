@@ -10,7 +10,14 @@ Future<void> _pumpResult(WidgetTester tester, Size size, Widget child) async {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(MaterialApp(home: child));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: child,
+      routes: {
+        '/student/dashboard': (_) => const Scaffold(body: Text('학생 홈 도착')),
+      },
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -76,5 +83,18 @@ void main() {
     expect(find.text('80%'), findsOneWidget);
     expect(find.text('8 / 10 문항 정답'), findsOneWidget);
     expect(find.text('PASS'), findsOneWidget);
+  });
+
+  testWidgets('결과 홈 버튼은 최초 랜딩이 아니라 학생 홈으로 이동한다', (tester) async {
+    await _pumpResult(
+      tester,
+      const Size(390, 844),
+      const LevelTestResultPage(placementResult: _placement),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('level-result-home-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('학생 홈 도착'), findsOneWidget);
   });
 }

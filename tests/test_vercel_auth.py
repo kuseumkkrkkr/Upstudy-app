@@ -41,6 +41,8 @@ class _FakeProfileDataApi(_FakeAuthDataApi):
 
     def request(self, method, path, *, query=None, body=None, prefer=None):
         """필요 변수: PostgREST 호출. 작동 원리: PATCH·DELETE·KV upsert를 메모리 상태에 반영한다."""
+        if path == "level_test_session":
+            return []
         if path == "canary_user_kv":
             user_id = (body or {}).get("user_id") or (query or {}).get("user_id", "").removeprefix("eq.")
             key = (body or {}).get("key") or (query or {}).get("key", "").removeprefix("eq.")

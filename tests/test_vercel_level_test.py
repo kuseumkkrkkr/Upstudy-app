@@ -16,6 +16,8 @@ class _FakeLevelTestDataApi:
         if path == "level_test_session" and method == "POST":
             self.created_sessions.append(dict(body))
             return None
+        if path == "level_test_session" and method == "PATCH":
+            return None
         if method == "GET":
             return []
         raise AssertionError((method, path, query, body, prefer))
@@ -168,3 +170,57 @@ def test_final_submit_grades_raw_answers_once_on_server(monkeypatch):
     assert len(fake.answers) == 25
     assert sum(answer["is_correct"] for answer in fake.answers) == 12
     assert response["data"]["recent_accuracy"] == 12 / 25
+
+
+def test_rating_falls_back_to_canonical_graded_session(monkeypatch):
+    module = importlib.import_module("api.index")
+    monkeypatch.setattr(module, "_load_level_test_kv", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        module,
+        "_latest_graded_level_test_session",
+        lambda _user_id: {
+            "session_id": "graded-1",
+            "status": "graded",
+            "estimated_rating": 1435,
+            "estimated_ovr": 1435,
+            "confidence": 1,
+            "strong_tags": [],
+            "weak_tags": [],
+        },
+    )
+
+    response = module.get_user_rating("user-1")
+
+    assert response["ovr"] == 1435
+    assert response["placement_completed"] is True
+
+
+def test_completed_user_cannot_start_placement(monkeypatch):
+    module = importlib.import_module("api.index")
+    monkeypatch.setattr(module, "_latest_graded_level_test_session", lambda _user_id: {"status": "graded"})
+
+    try:
+        module.start_level_test_placement("user-1")
+    except Exception as error:
+        assert getattr(error, "status_code", None) == 409
+    else:
+        raise AssertionError("completed placement must be locked")
+
+
+def test_estimated_distribution_is_available_without_users():
+    module = importlib.import_module("api.index")
+
+    response = module.get_level_test_placement_stats("user-1")
+
+    bands = response["data"]["estimated_bands"]
+    assert len(bands) == 9
+    assert bands[0]["grade"] == "9등급"
+    assert bands[-1]["grade"] == "1등급"
+    assert bands[0]["expected_correct"] < bands[-1]["expected_correct"]
+
+
+def test_placement_estimator_uses_validation_prior_at_high_extreme():
+    module = importlib.import_module("api.index")
+    samples = [{"is_correct": True, "problem_rating": 1400} for _ in range(25)]
+
+    assert module._estimate_level_test_rating(samples) < 2200

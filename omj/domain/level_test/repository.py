@@ -159,6 +159,11 @@ def get_placement_session(session_id: str) -> Optional[Dict[str, Any]]:
     return postgres_level_test_store.get_session(session_id)
 
 
+def get_completed_placement(user_id: str) -> Optional[Dict[str, Any]]:
+    """사용자의 최근 완료 배치 세션을 반환한다."""
+    return postgres_level_test_store.get_latest_graded_session(user_id)
+
+
 def upsert_placement_answer(
     *,
     session_id: str,

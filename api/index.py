@@ -1028,7 +1028,17 @@ LEVEL_TEST_QUESTION_COUNT = 25
 LEVEL_TEST_TIME_LIMIT_SECONDS = 30 * 60
 LEVEL_TEST_SUBMIT_GRACE_SECONDS = 15
 LEVEL_TEST_DIFFICULTY_COUNTS = {2: 5, 3: 10, 4: 7, 5: 3}
-_level_test_stats_cache: tuple[float, dict[str, Any]] | None = None
+LEVEL_TEST_GRADE_OVR_BANDS = (
+    ("1등급", 1607, 2200),
+    ("2등급", 1479, 1606),
+    ("3등급", 1379, 1478),
+    ("4등급", 1280, 1378),
+    ("5등급", 1171, 1279),
+    ("6등급", 1061, 1170),
+    ("7등급", 924, 1060),
+    ("8등급", 828, 923),
+    ("9등급", 800, 827),
+)
 
 
 class LevelTestPlacementAnswerRequest(BaseModel):
@@ -1122,6 +1132,57 @@ def _get_level_test_session(session_id: str, user_id: str) -> dict[str, Any]:
     return dict(rows[0])
 
 
+def _latest_graded_level_test_session(user_id: str) -> dict[str, Any] | None:
+    """완료 세션을 OVR의 원장으로 읽어 KV 캐시 장애가 사용자 결과를 지우지 않게 한다."""
+    try:
+        rows = _data_api().request(
+            "GET",
+            "level_test_session",
+            query={
+                "select": "session_id,user_id,status,estimated_rating,estimated_ovr,confidence,strong_tags,weak_tags,submitted_at",
+                "user_id": f"eq.{user_id}",
+                "status": "eq.graded",
+                "order": "submitted_at.desc",
+                "limit": "1",
+            },
+        ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    return dict(rows[0]) if rows else None
+
+
+def _level_test_result_from_session(session: dict[str, Any]) -> dict[str, Any]:
+    rating = float(session.get("estimated_rating") or session.get("estimated_ovr") or 0.0)
+    answer_rows: list[dict[str, Any]] = []
+    session_id = str(session.get("session_id") or "")
+    if session_id:
+        try:
+            answer_rows = _data_api().request(
+                "GET",
+                "level_test_answer",
+                query={
+                    "select": "is_correct,item_index",
+                    "session_id": f"eq.{session_id}",
+                    "order": "item_index.asc",
+                    "limit": str(LEVEL_TEST_QUESTION_COUNT),
+                },
+            ) or []
+        except (RuntimeError, HTTPException):
+            pass
+    correct_count = sum(bool(row.get("is_correct")) for row in answer_rows)
+    return {
+        "session_id": session_id,
+        "rating": rating,
+        "ovr": float(session.get("estimated_ovr") or rating),
+        "ovr_delta": rating - 1200.0,
+        "recent_accuracy": correct_count / LEVEL_TEST_QUESTION_COUNT if answer_rows else 0.0,
+        "lose_streak": 0 if not answer_rows or bool(answer_rows[-1].get("is_correct")) else 1,
+        "confidence": float(session.get("confidence") or 0.0),
+        "strong_tags": session.get("strong_tags") or [],
+        "weak_tags": session.get("weak_tags") or [],
+    }
+
+
 def _level_test_template_items(template_id: str) -> list[dict[str, Any]]:
     try:
         items = _data_api().request(
@@ -1187,10 +1248,12 @@ def _level_test_problem_payloads(quest_ids: list[str]) -> dict[str, dict[str, An
 
 
 def _estimate_level_test_rating(samples: list[dict[str, Any]]) -> float:
+    # 2,000명 검증 분포(평균 1229.08, 표준편차 224.57)를 약한 사전분포로 사용해
+    # 전부 정답/오답이 곧바로 탐색 상·하한에 붙는 MLE 과적합을 줄인다.
     best_rating = 1200.0
     best_score = float("-inf")
     for rating in range(800, 2201, 5):
-        score = 0.0
+        score = -0.5 * ((rating - 1229.08) / 224.57) ** 2
         for sample in samples:
             problem_rating = float(sample.get("problem_rating") or 1200.0)
             expected = 1.0 / (1.0 + 10 ** ((problem_rating - rating) / 400.0))
@@ -1219,6 +1282,8 @@ def _level_test_tag_results(samples: list[dict[str, Any]], global_rating: float)
 
 @app.post("/level-tests/placement/start")
 def start_level_test_placement(user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    if _latest_graded_level_test_session(user_id) is not None:
+        raise HTTPException(status_code=409, detail="Placement test already completed")
     try:
         templates = _data_api().request(
             "GET",
@@ -1247,21 +1312,37 @@ def start_level_test_placement(user_id: str = Depends(_current_user)) -> dict[st
         if quest is None:
             raise HTTPException(status_code=503, detail="Placement problem payload is incomplete")
         questions.append({**item, "quest": quest})
-    session_id = str(uuid.uuid4())
+    # 사용자별 고정 ID로 동시에 여러 시작 요청이 와도 하나의 미채점 세션만 유지한다.
+    session_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"aiflow:placement:{user_id}"))
     try:
         _data_api().request(
             "POST",
             "level_test_session",
+            query={"on_conflict": "session_id"},
             body={
                 "session_id": session_id,
                 "user_id": user_id,
                 "template_id": template_id,
                 "status": "started",
+                "started_at": datetime.now(timezone.utc).isoformat(),
             },
+            prefer="resolution=ignore-duplicates,return=minimal",
+        )
+        _data_api().request(
+            "PATCH",
+            "level_test_session",
+            query={
+                "session_id": f"eq.{session_id}",
+                "user_id": f"eq.{user_id}",
+                "status": "eq.started",
+            },
+            body={"template_id": template_id, "started_at": datetime.now(timezone.utc).isoformat()},
             prefer="return=minimal",
         )
     except RuntimeError as error:
         raise _level_test_storage_error(error) from error
+    if _latest_graded_level_test_session(user_id) is not None:
+        raise HTTPException(status_code=409, detail="Placement test already completed")
     return {
         "success": True,
         "data": {
@@ -1275,82 +1356,48 @@ def start_level_test_placement(user_id: str = Depends(_current_user)) -> dict[st
     }
 
 
+@app.get("/level-tests/placement/status")
+def get_level_test_placement_status(user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """완료 원장을 조회해 UI의 응시 잠금과 보고서 진입을 같은 조건으로 결정한다."""
+    session = _latest_graded_level_test_session(user_id)
+    return {
+        "success": True,
+        "data": {
+            "completed": session is not None,
+            "result": _level_test_result_from_session(session) if session is not None else None,
+        },
+    }
+
+
 @app.get("/level-tests/placement/stats")
 def get_level_test_placement_stats(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
-    """최근 완료 응시 200건으로 학년별 평균 정답 수와 평균 OVR을 계산하고 5분간 재사용한다."""
-    global _level_test_stats_cache
-    now = time.monotonic()
-    if _level_test_stats_cache is not None and now - _level_test_stats_cache[0] < 300:
-        return {"success": True, "data": _level_test_stats_cache[1]}
-    try:
-        sessions = _data_api().request(
-            "GET",
-            "level_test_session",
-            query={
-                "select": "session_id,user_id,estimated_ovr",
-                "status": "eq.graded",
-                "order": "submitted_at.desc",
-                "limit": "200",
-            },
-        ) or []
-        session_ids = [str(row.get("session_id") or "") for row in sessions if row.get("session_id")]
-        user_ids = list(dict.fromkeys(str(row.get("user_id") or "") for row in sessions if row.get("user_id")))
-        answers = []
-        profiles = []
-        if session_ids:
-            answers = _data_api().request(
-                "GET",
-                "level_test_answer",
-                query={
-                    "select": "session_id,is_correct",
-                    "session_id": f"in.({','.join(session_ids)})",
-                    "limit": str(len(session_ids) * LEVEL_TEST_QUESTION_COUNT),
-                },
-            ) or []
-        if user_ids:
-            quoted = ",".join(f'"{value.replace(chr(34), "")}"' for value in user_ids)
-            profiles = _data_api().request(
-                "GET",
-                "canary_users",
-                query={"select": "user_id,grade", "user_id": f"in.({quoted})", "limit": str(len(user_ids))},
-            ) or []
-    except RuntimeError as error:
-        raise _level_test_storage_error(error) from error
-
-    correct_by_session: dict[str, list[bool]] = {}
-    for answer in answers:
-        correct_by_session.setdefault(str(answer.get("session_id") or ""), []).append(bool(answer.get("is_correct")))
-    grade_by_user = {
-        str(profile.get("user_id") or ""): str(profile.get("grade") or "").strip()
-        for profile in profiles
-    }
-    grouped: dict[str, list[tuple[int, float]]] = {}
-    for session in sessions:
-        session_answers = correct_by_session.get(str(session.get("session_id") or ""), [])
-        grade = grade_by_user.get(str(session.get("user_id") or ""), "")
-        ovr = session.get("estimated_ovr")
-        if len(session_answers) != LEVEL_TEST_QUESTION_COUNT or not grade or ovr is None:
-            continue
-        grouped.setdefault(grade, []).append((sum(session_answers), float(ovr)))
-    grade_bands = [
-        {
-            "grade": grade,
-            "sample_size": len(values),
-            "average_correct": round(sum(value[0] for value in values) / len(values), 1),
-            "average_ovr": round(sum(value[1] for value in values) / len(values), 1),
-        }
-        for grade, values in sorted(grouped.items())
-        if len(values) >= 3
-    ]
+    """검증 보고서의 OVR 등급 경계와 실제 시험 난이도로 0명부터 동일한 추정 곡선을 제공한다."""
+    representative_problem_ratings = (1100.0,) * 5 + (1250.0,) * 10 + (1450.0,) * 7 + (1650.0,) * 3
+    estimated_bands = []
+    for grade, minimum, maximum in reversed(LEVEL_TEST_GRADE_OVR_BANDS):
+        midpoint = (minimum + maximum) / 2.0
+        expected_correct = sum(
+            1.0 / (1.0 + 10 ** ((problem_rating - midpoint) / 400.0))
+            for problem_rating in representative_problem_ratings
+        )
+        estimated_bands.append(
+            {
+                "grade": grade,
+                "ovr_min": minimum,
+                "ovr_max": maximum,
+                "expected_correct": round(expected_correct, 1),
+            }
+        )
     stats = {
         "question_count": LEVEL_TEST_QUESTION_COUNT,
         "difficulty_bands": [
             {"tier": tier, "label": label, "question_count": LEVEL_TEST_DIFFICULTY_COUNTS[tier]}
             for tier, label in ((2, "기초"), (3, "기본"), (4, "응용"), (5, "심화"))
         ],
-        "grade_bands": grade_bands,
+        "estimated_bands": estimated_bands,
+        "source": "rating-validation-2026-07-15",
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    _level_test_stats_cache = (now, stats)
     return {"success": True, "data": stats}
 
 
@@ -1371,12 +1418,21 @@ def submit_level_test_placement(
     payload: LevelTestPlacementSubmitRequest,
     user_id: str = Depends(_current_user),
 ) -> dict[str, Any]:
-    replay = _load_level_test_kv(user_id, session_id=session_id)
+    try:
+        replay = _load_level_test_kv(user_id, session_id=session_id)
+    except HTTPException as error:
+        if error.status_code != 503:
+            raise
+        replay = None
     if replay is not None:
         return {"success": True, "data": replay, "message": "Placement rating applied"}
     session = _get_level_test_session(session_id, user_id)
     if str(session.get("status") or "") == "graded":
-        raise HTTPException(status_code=409, detail="Placement session already submitted")
+        return {
+            "success": True,
+            "data": _level_test_result_from_session(session),
+            "message": "Placement rating applied",
+        }
     started_at = session.get("started_at")
     if isinstance(started_at, str):
         started_at = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
@@ -1843,16 +1899,25 @@ def get_account_summary(_user_id: str = Depends(_current_user)) -> dict[str, Any
 
 @app.get("/rating/user")
 def get_user_rating(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
-    """필요 변수: 인증 사용자. 작동 원리: 풀이 이력이 없는 신규 사용자의 초기 레이팅을 반환한다."""
-    latest = _load_level_test_kv(_user_id)
+    """KV 캐시가 비어도 완료 세션 원장에서 OVR과 응시 상태를 복구한다."""
+    try:
+        latest = _load_level_test_kv(_user_id)
+    except HTTPException as error:
+        if error.status_code != 503:
+            raise
+        latest = None
+    completed_session = _latest_graded_level_test_session(_user_id)
+    if latest is None and completed_session is not None:
+        latest = _level_test_result_from_session(completed_session)
     if latest is None:
-        return {"rating": 0.0, "ovr": 0.0, "ovr_delta": 0.0, "recent_accuracy": 0.0, "lose_streak": 0}
+        return {"rating": 0.0, "ovr": 0.0, "ovr_delta": 0.0, "recent_accuracy": 0.0, "lose_streak": 0, "placement_completed": False}
     return {
         "rating": float(latest.get("rating") or 0.0),
         "ovr": float(latest.get("ovr") or 0.0),
         "ovr_delta": float(latest.get("ovr_delta") or 0.0),
         "recent_accuracy": float(latest.get("recent_accuracy") or 0.0),
         "lose_streak": int(latest.get("lose_streak") or 0),
+        "placement_completed": completed_session is not None,
     }
 
 

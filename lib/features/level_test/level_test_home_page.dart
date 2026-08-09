@@ -26,12 +26,37 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
   bool _loading = false;
   String? _error;
   LevelTestPlacementStats? _stats;
+  LevelTestPlacementResult? _completedResult;
+  Timer? _statsTimer;
 
   @override
   void initState() {
     super.initState();
     _stats = widget.initialStats;
     if (_stats == null) unawaited(_loadStats());
+    unawaited(_loadStatus());
+    _statsTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => unawaited(_loadStats()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _statsTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadStatus() async {
+    try {
+      final status = await ApiClient.instance.fetchLevelTestPlacementStatus();
+      if (!mounted) return;
+      setState(
+        () => _completedResult = status.completed ? status.result : null,
+      );
+    } catch (_) {
+      // 상태 조회 실패는 통계와 안내 화면 렌더링을 막지 않는다.
+    }
   }
 
   Future<void> _loadStats() async {
@@ -44,7 +69,7 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
   }
 
   Future<void> _startPlacement() async {
-    if (_loading) return;
+    if (_loading || _completedResult != null) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -127,6 +152,9 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
   /// 실제 제출 로직 위에 HTML의 OVR 히어로, 측정 과정, 시작 전 확인 영역을 순서대로 배치한다.
   @override
   Widget build(BuildContext context) {
+    if (_completedResult != null) {
+      return LevelTestResultPage(placementResult: _completedResult);
+    }
     final mobile = isStudentDensityMobile(context);
     return Scaffold(
       key: const ValueKey('level-test-screen'),
@@ -570,13 +598,69 @@ class _PlacementStatistics extends StatelessWidget {
     LevelTestDifficultyBand(tier: 4, label: '응용', questionCount: 7),
     LevelTestDifficultyBand(tier: 5, label: '심화', questionCount: 3),
   ];
+  static const _fallbackEstimates = [
+    LevelTestEstimatedBand(
+      grade: '9등급',
+      ovrMin: 800,
+      ovrMax: 827,
+      expectedCorrect: 2.0,
+    ),
+    LevelTestEstimatedBand(
+      grade: '8등급',
+      ovrMin: 828,
+      ovrMax: 923,
+      expectedCorrect: 3.7,
+    ),
+    LevelTestEstimatedBand(
+      grade: '7등급',
+      ovrMin: 924,
+      ovrMax: 1060,
+      expectedCorrect: 5.8,
+    ),
+    LevelTestEstimatedBand(
+      grade: '6등급',
+      ovrMin: 1061,
+      ovrMax: 1170,
+      expectedCorrect: 8.2,
+    ),
+    LevelTestEstimatedBand(
+      grade: '5등급',
+      ovrMin: 1171,
+      ovrMax: 1279,
+      expectedCorrect: 10.7,
+    ),
+    LevelTestEstimatedBand(
+      grade: '4등급',
+      ovrMin: 1280,
+      ovrMax: 1378,
+      expectedCorrect: 13.2,
+    ),
+    LevelTestEstimatedBand(
+      grade: '3등급',
+      ovrMin: 1379,
+      ovrMax: 1478,
+      expectedCorrect: 15.6,
+    ),
+    LevelTestEstimatedBand(
+      grade: '2등급',
+      ovrMin: 1479,
+      ovrMax: 1606,
+      expectedCorrect: 18.1,
+    ),
+    LevelTestEstimatedBand(
+      grade: '1등급',
+      ovrMin: 1607,
+      ovrMax: 2200,
+      expectedCorrect: 22.6,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final difficulty = stats?.difficultyBands.isNotEmpty == true
         ? stats!.difficultyBands
         : _fallbackDifficulty;
-    final grades = stats?.gradeBands ?? const <LevelTestGradeBand>[];
+    final estimates = stats?.estimatedBands ?? _fallbackEstimates;
     return Column(
       key: const ValueKey('level-test-statistics'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -645,12 +729,12 @@ class _PlacementStatistics extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         const Text(
-          '등급대별 실제 결과',
+          '등급대별 추정 결과',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 6),
         const Text(
-          '제출 완료 데이터 기준 · 표본 3명 이상만 표시',
+          '기존 OVR 분포와 25문항 난이도 기준 · 30초마다 자동 갱신',
           style: TextStyle(color: StudentDensityTokens.muted, fontSize: 12),
         ),
         const SizedBox(height: 10),
@@ -662,68 +746,112 @@ class _PlacementStatistics extends StatelessWidget {
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: StudentDensityTokens.line),
           ),
-          child: grades.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Text(
-                    '아직 표시할 응시자 통계가 충분하지 않아요.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: StudentDensityTokens.muted,
-                      fontSize: 13,
-                    ),
-                  ),
-                )
-              : Column(
-                  children: [
-                    for (var index = 0; index < grades.length; index++) ...[
-                      _GradeAverageBar(band: grades[index]),
-                      if (index != grades.length - 1)
-                        const SizedBox(height: 18),
-                    ],
-                  ],
-                ),
+          child: _EstimatedOvrChart(bands: estimates),
         ),
       ],
     );
   }
 }
 
-class _GradeAverageBar extends StatelessWidget {
-  const _GradeAverageBar({required this.band});
+class _EstimatedOvrChart extends StatelessWidget {
+  const _EstimatedOvrChart({required this.bands});
 
-  final LevelTestGradeBand band;
+  final List<LevelTestEstimatedBand> bands;
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Row(
+      const Row(
         children: [
-          Expanded(
-            child: Text(
-              band.grade,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-            ),
-          ),
           Text(
-            '평균 ${band.averageCorrect.toStringAsFixed(1)}개 · OVR ${band.averageOvr.toStringAsFixed(1)}',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+            '예상 정답 수',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+          ),
+          Spacer(),
+          Text(
+            '0–25문항',
+            style: TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
           ),
         ],
       ),
-      const SizedBox(height: 9),
-      ClipRRect(
-        borderRadius: BorderRadius.circular(99),
-        child: LinearProgressIndicator(
-          value: (band.averageCorrect / 25).clamp(0.0, 1.0),
-          minHeight: 9,
-          color: StudentDensityTokens.dark,
-          backgroundColor: StudentDensityTokens.surfaceMuted,
-        ),
+      const SizedBox(height: 10),
+      SizedBox(
+        key: const ValueKey('level-test-estimated-ovr-line-chart'),
+        height: 190,
+        child: CustomPaint(painter: _EstimatedOvrChartPainter(bands)),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        '예: ${bands.last.grade} · ${bands.last.expectedCorrect.toStringAsFixed(1)}개 · OVR ${bands.last.ovrMin}+',
+        textAlign: TextAlign.right,
+        style: const TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
       ),
     ],
   );
+}
+
+class _EstimatedOvrChartPainter extends CustomPainter {
+  const _EstimatedOvrChartPainter(this.bands);
+
+  final List<LevelTestEstimatedBand> bands;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (bands.isEmpty) return;
+    const left = 24.0;
+    const top = 12.0;
+    const bottom = 30.0;
+    final chartWidth = size.width - left - 8;
+    final chartHeight = size.height - top - bottom;
+    final grid = Paint()
+      ..color = const Color(0xFFE5E5E2)
+      ..strokeWidth = 1;
+    final line = Paint()
+      ..color = StudentDensityTokens.dark
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    for (final value in const [0, 5, 10, 15, 20, 25]) {
+      final y = top + chartHeight * (1 - value / 25);
+      canvas.drawLine(Offset(left, y), Offset(size.width - 8, y), grid);
+    }
+    final path = Path();
+    final divisor = bands.length > 1 ? bands.length - 1 : 1;
+    for (var index = 0; index < bands.length; index++) {
+      final x = left + chartWidth * index / divisor;
+      final y = top + chartHeight * (1 - bands[index].expectedCorrect / 25);
+      if (index == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(path, line);
+    final dot = Paint()..color = StudentDensityTokens.dark;
+    for (var index = 0; index < bands.length; index++) {
+      final x = left + chartWidth * index / divisor;
+      final y = top + chartHeight * (1 - bands[index].expectedCorrect / 25);
+      canvas.drawCircle(Offset(x, y), 4, dot);
+      final label = TextPainter(
+        text: TextSpan(
+          text: bands[index].grade.replaceAll('등급', ''),
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      label.paint(canvas, Offset(x - label.width / 2, size.height - 17));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _EstimatedOvrChartPainter oldDelegate) =>
+      oldDelegate.bands != bands;
 }
 
 class _PlacementReady extends StatelessWidget {

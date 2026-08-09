@@ -62,6 +62,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   bool _continueLoaded = false;
   bool _mobileQuickSolve = false;
   bool _placementExam = false;
+  bool _placementWritingMode = false;
   final List<String> _placementAnswers = <String>[];
   bool _mobileNoteExpanded = false;
   int _mobileFlowNextIndex = 0;
@@ -615,7 +616,29 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       return;
     }
     FocusScope.of(context).unfocus();
-    setState(() => _currentProblemIndex = index);
+    if (_toolMode == _ToolMode.pen) {
+      _finishStroke();
+    } else {
+      _finishEraser();
+    }
+    _activePointer = null;
+    _saveCurrentProblem();
+    setState(() {
+      _currentProblemIndex = index;
+      _loadProblem(index);
+    });
+  }
+
+  void _setPlacementWritingMode(bool writing) {
+    if (_placementWritingMode == writing) return;
+    if (!writing) {
+      if (_toolMode == _ToolMode.pen) {
+        _finishStroke();
+      } else {
+        _finishEraser();
+      }
+    }
+    setState(() => _placementWritingMode = writing);
   }
 
   void _updatePlacementAnswer(String value) {
@@ -694,7 +717,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       nextStrokeId: _nextStrokeId,
       elapsedSeconds: _problemElapsedOffset,
     );
-    unawaited(_saveContinueForCurrentQuest());
+    if (!_placementExam) unawaited(_saveContinueForCurrentQuest());
   }
 
   void _loadProblem(int index) {
@@ -730,7 +753,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _eraserPosition = null;
     _currentEraserStroke = null;
     _bumpPaint();
-    unawaited(_loadContinueForCurrentQuest());
+    if (!_placementExam) unawaited(_loadContinueForCurrentQuest());
   }
 
   void _goToProblem(int index) {
