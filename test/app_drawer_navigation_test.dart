@@ -325,6 +325,8 @@ void main() {
     final searchLabel = tester.widget<Text>(find.text('검색'));
 
     expect(moreTitles, hasLength(1));
+    expect(find.text('학습과 계정 기능을 한곳에서 열어요'), findsNothing);
+    expect(find.byKey(const ValueKey('mobile-more-close')), findsNothing);
     expect(scheduleLabel.style?.fontSize, greaterThanOrEqualTo(17));
     expect(searchLabel.style?.fontSize, greaterThanOrEqualTo(15));
     expect(searchLabel.style?.color, Colors.white);

@@ -230,47 +230,14 @@ class _MobileMoreSheet extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 2, 24, 18),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '더보기',
-                      style: TextStyle(
-                        color: Color(0xFF101012),
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1.1,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '학습과 계정 기능을 한곳에서 열어요',
-                      style: TextStyle(
-                        color: Color(0xFF68686F),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                key: const ValueKey('mobile-more-close'),
-                tooltip: '더보기 닫기',
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close_rounded, size: 26),
-                style: IconButton.styleFrom(
-                  fixedSize: const Size.square(48),
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF101012),
-                  side: const BorderSide(color: Color(0x1609090B)),
-                ),
-              ),
-            ],
+          child: const Text(
+            '더보기',
+            style: TextStyle(
+              color: Color(0xFF101012),
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1.1,
+            ),
           ),
         ),
         Padding(
