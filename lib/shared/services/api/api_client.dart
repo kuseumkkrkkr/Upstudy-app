@@ -3614,7 +3614,7 @@ class LevelTestPlacementSession {
       templateId: (json['template_id'] ?? '').toString(),
       questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
       timeLimitSeconds:
-          (json['time_limit_seconds'] as num?)?.toInt() ?? 60 * 60,
+          (json['time_limit_seconds'] as num?)?.toInt() ?? 30 * 60,
       questions: (json['questions'] as List<dynamic>? ?? const [])
           .map(
             (e) => LevelTestPlacementQuestion.fromJson(
@@ -3624,6 +3624,79 @@ class LevelTestPlacementSession {
           .toList(),
     );
   }
+}
+
+class LevelTestDifficultyBand {
+  final int tier;
+  final String label;
+  final int questionCount;
+
+  const LevelTestDifficultyBand({
+    required this.tier,
+    required this.label,
+    required this.questionCount,
+  });
+
+  factory LevelTestDifficultyBand.fromJson(Map<String, dynamic> json) =>
+      LevelTestDifficultyBand(
+        tier: (json['tier'] as num?)?.toInt() ?? 0,
+        label: (json['label'] ?? '').toString(),
+        questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class LevelTestGradeBand {
+  final String grade;
+  final int sampleSize;
+  final double averageCorrect;
+  final double averageOvr;
+
+  const LevelTestGradeBand({
+    required this.grade,
+    required this.sampleSize,
+    required this.averageCorrect,
+    required this.averageOvr,
+  });
+
+  factory LevelTestGradeBand.fromJson(Map<String, dynamic> json) =>
+      LevelTestGradeBand(
+        grade: (json['grade'] ?? '').toString(),
+        sampleSize: (json['sample_size'] as num?)?.toInt() ?? 0,
+        averageCorrect: (json['average_correct'] as num?)?.toDouble() ?? 0.0,
+        averageOvr: (json['average_ovr'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+class LevelTestPlacementStats {
+  final int questionCount;
+  final List<LevelTestDifficultyBand> difficultyBands;
+  final List<LevelTestGradeBand> gradeBands;
+
+  const LevelTestPlacementStats({
+    required this.questionCount,
+    required this.difficultyBands,
+    required this.gradeBands,
+  });
+
+  factory LevelTestPlacementStats.fromJson(Map<String, dynamic> json) =>
+      LevelTestPlacementStats(
+        questionCount: (json['question_count'] as num?)?.toInt() ?? 25,
+        difficultyBands:
+            (json['difficulty_bands'] as List<dynamic>? ?? const [])
+                .map(
+                  (entry) => LevelTestDifficultyBand.fromJson(
+                    Map<String, dynamic>.from(entry as Map),
+                  ),
+                )
+                .toList(),
+        gradeBands: (json['grade_bands'] as List<dynamic>? ?? const [])
+            .map(
+              (entry) => LevelTestGradeBand.fromJson(
+                Map<String, dynamic>.from(entry as Map),
+              ),
+            )
+            .toList(),
+      );
 }
 
 class LevelTestPlacementResult {
@@ -4496,35 +4569,24 @@ extension ApiClientLegacyCompat on ApiClient {
     return LevelTestPlacementSession.fromJson(res.data ?? const {});
   }
 
-  Future<void> submitLevelTestPlacementAnswer({
-    required String sessionId,
-    required int itemIndex,
-    required String questId,
-    required bool isCorrect,
-    num? answerTime,
-    List<Map<String, dynamic>> stepCorrectness = const [],
-    List<String> tags = const [],
-  }) async {
-    await _post<Map<String, dynamic>>(
-      '/level-tests/placement/$sessionId/answer',
-      {
-        'item_index': itemIndex,
-        'quest_id': questId,
-        'is_correct': isCorrect,
-        if (answerTime != null) 'answer_time': answerTime,
-        'step_correctness': stepCorrectness,
-        'tags': tags,
-      },
+  Future<LevelTestPlacementStats> fetchLevelTestPlacementStats() async {
+    final res = await _get<Map<String, dynamic>>(
+      '/level-tests/placement/stats',
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: true,
+      cacheTtl: const Duration(minutes: 5),
     );
+    return LevelTestPlacementStats.fromJson(res.data ?? const {});
   }
 
   Future<LevelTestPlacementResult> submitLevelTestPlacement(
-    String sessionId,
-  ) async {
+    String sessionId, {
+    required List<Map<String, dynamic>> answers,
+    required int elapsedSeconds,
+  }) async {
     final res = await _post<Map<String, dynamic>>(
       '/level-tests/placement/$sessionId/submit',
-      const <String, dynamic>{},
+      <String, dynamic>{'answers': answers, 'elapsed_seconds': elapsedSeconds},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return LevelTestPlacementResult.fromJson(res.data ?? const {});

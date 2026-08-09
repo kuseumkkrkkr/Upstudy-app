@@ -765,7 +765,7 @@ class SupabaseDataApi:
         path: str,
         *,
         query: dict[str, str] | None = None,
-        body: dict[str, Any] | None = None,
+        body: dict[str, Any] | list[dict[str, Any]] | None = None,
         prefer: str | None = None,
     ) -> Any:
         """필요 변수: 메서드·경로·필터·JSON. 작동 원리: 10초 제한 Data API 호출 결과를 UTF-8 JSON으로 반환한다."""
@@ -1015,7 +1015,10 @@ async def proxy_lightning_app(path: str, request: Request) -> Response:
 
 
 LEVEL_TEST_QUESTION_COUNT = 25
-LEVEL_TEST_TIME_LIMIT_SECONDS = 60 * 60
+LEVEL_TEST_TIME_LIMIT_SECONDS = 30 * 60
+LEVEL_TEST_SUBMIT_GRACE_SECONDS = 15
+LEVEL_TEST_DIFFICULTY_COUNTS = {2: 5, 3: 10, 4: 7, 5: 3}
+_level_test_stats_cache: tuple[float, dict[str, Any]] | None = None
 
 
 class LevelTestPlacementAnswerRequest(BaseModel):
@@ -1025,6 +1028,21 @@ class LevelTestPlacementAnswerRequest(BaseModel):
     answer_time: float | None = Field(default=None, ge=0, le=LEVEL_TEST_TIME_LIMIT_SECONDS)
     step_correctness: list[dict[str, Any]] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
+
+
+class LevelTestPlacementSubmissionAnswer(BaseModel):
+    item_index: int = Field(ge=1, le=LEVEL_TEST_QUESTION_COUNT)
+    quest_id: str = Field(min_length=1, max_length=200)
+    user_answer: str | None = Field(default=None, max_length=100)
+    selected_index: int | None = Field(default=None, ge=0, le=4)
+
+
+class LevelTestPlacementSubmitRequest(BaseModel):
+    answers: list[LevelTestPlacementSubmissionAnswer] = Field(
+        min_length=LEVEL_TEST_QUESTION_COUNT,
+        max_length=LEVEL_TEST_QUESTION_COUNT,
+    )
+    elapsed_seconds: int = Field(ge=0, le=LEVEL_TEST_TIME_LIMIT_SECONDS)
 
 
 def _level_test_storage_error(error: RuntimeError) -> HTTPException:
@@ -1082,7 +1100,7 @@ def _get_level_test_session(session_id: str, user_id: str) -> dict[str, Any]:
             "GET",
             "level_test_session",
             query={
-                "select": "session_id,user_id,template_id,status,estimated_rating,estimated_ovr,confidence",
+                "select": "session_id,user_id,template_id,status,estimated_rating,estimated_ovr,confidence,started_at",
                 "session_id": f"eq.{session_id}",
                 "limit": "1",
             },
@@ -1102,14 +1120,36 @@ def _level_test_template_items(template_id: str) -> list[dict[str, Any]]:
             query={
                 "select": "item_index,phase,subject_key,hash_tags,difficulty_tier,quest_id,problem_rating",
                 "template_id": f"eq.{template_id}",
-                "item_index": f"lte.{LEVEL_TEST_QUESTION_COUNT}",
                 "order": "item_index.asc",
-                "limit": str(LEVEL_TEST_QUESTION_COUNT),
+                "limit": "50",
             },
         ) or []
     except RuntimeError as error:
         raise _level_test_storage_error(error) from error
     return [dict(item) for item in items]
+
+
+def _select_level_test_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """50문항 폼에서 난이도 2~5를 5·10·7·3문항으로 고르게 뽑고 시험 번호를 1~25로 다시 매긴다."""
+    selected: list[dict[str, Any]] = []
+    for tier, count in LEVEL_TEST_DIFFICULTY_COUNTS.items():
+        group = [item for item in items if int(item.get("difficulty_tier") or 0) == tier]
+        if not group:
+            continue
+        if count >= len(group):
+            selected.extend(group)
+            continue
+        positions = [round(index * (len(group) - 1) / (count - 1)) for index in range(count)]
+        selected.extend(group[position] for position in positions)
+    if len(selected) < LEVEL_TEST_QUESTION_COUNT:
+        chosen = {str(item.get("quest_id") or "") for item in selected}
+        selected.extend(
+            item
+            for item in items
+            if str(item.get("quest_id") or "") not in chosen
+        )
+    selected = sorted(selected[:LEVEL_TEST_QUESTION_COUNT], key=lambda item: int(item.get("item_index") or 0))
+    return [{**item, "item_index": index} for index, item in enumerate(selected, start=1)]
 
 
 def _level_test_problem_payloads(quest_ids: list[str]) -> dict[str, dict[str, Any]]:
@@ -1186,7 +1226,7 @@ def start_level_test_placement(user_id: str = Depends(_current_user)) -> dict[st
         raise HTTPException(status_code=503, detail="No placement template available")
     template_index = int(hashlib.sha256(user_id.encode("utf-8")).hexdigest()[:8], 16) % len(templates)
     template_id = str(templates[template_index].get("template_id") or "")
-    items = _level_test_template_items(template_id)
+    items = _select_level_test_items(_level_test_template_items(template_id))
     if len(items) != LEVEL_TEST_QUESTION_COUNT:
         raise HTTPException(status_code=503, detail="Placement template is incomplete")
     payloads = _level_test_problem_payloads([str(item.get("quest_id") or "") for item in items])
@@ -1225,79 +1265,164 @@ def start_level_test_placement(user_id: str = Depends(_current_user)) -> dict[st
     }
 
 
+@app.get("/level-tests/placement/stats")
+def get_level_test_placement_stats(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """최근 완료 응시 200건으로 학년별 평균 정답 수와 평균 OVR을 계산하고 5분간 재사용한다."""
+    global _level_test_stats_cache
+    now = time.monotonic()
+    if _level_test_stats_cache is not None and now - _level_test_stats_cache[0] < 300:
+        return {"success": True, "data": _level_test_stats_cache[1]}
+    try:
+        sessions = _data_api().request(
+            "GET",
+            "level_test_session",
+            query={
+                "select": "session_id,user_id,estimated_ovr",
+                "status": "eq.graded",
+                "order": "submitted_at.desc",
+                "limit": "200",
+            },
+        ) or []
+        session_ids = [str(row.get("session_id") or "") for row in sessions if row.get("session_id")]
+        user_ids = list(dict.fromkeys(str(row.get("user_id") or "") for row in sessions if row.get("user_id")))
+        answers = []
+        profiles = []
+        if session_ids:
+            answers = _data_api().request(
+                "GET",
+                "level_test_answer",
+                query={
+                    "select": "session_id,is_correct",
+                    "session_id": f"in.({','.join(session_ids)})",
+                    "limit": str(len(session_ids) * LEVEL_TEST_QUESTION_COUNT),
+                },
+            ) or []
+        if user_ids:
+            quoted = ",".join(f'"{value.replace(chr(34), "")}"' for value in user_ids)
+            profiles = _data_api().request(
+                "GET",
+                "canary_users",
+                query={"select": "user_id,grade", "user_id": f"in.({quoted})", "limit": str(len(user_ids))},
+            ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+
+    correct_by_session: dict[str, list[bool]] = {}
+    for answer in answers:
+        correct_by_session.setdefault(str(answer.get("session_id") or ""), []).append(bool(answer.get("is_correct")))
+    grade_by_user = {
+        str(profile.get("user_id") or ""): str(profile.get("grade") or "").strip()
+        for profile in profiles
+    }
+    grouped: dict[str, list[tuple[int, float]]] = {}
+    for session in sessions:
+        session_answers = correct_by_session.get(str(session.get("session_id") or ""), [])
+        grade = grade_by_user.get(str(session.get("user_id") or ""), "")
+        ovr = session.get("estimated_ovr")
+        if len(session_answers) != LEVEL_TEST_QUESTION_COUNT or not grade or ovr is None:
+            continue
+        grouped.setdefault(grade, []).append((sum(session_answers), float(ovr)))
+    grade_bands = [
+        {
+            "grade": grade,
+            "sample_size": len(values),
+            "average_correct": round(sum(value[0] for value in values) / len(values), 1),
+            "average_ovr": round(sum(value[1] for value in values) / len(values), 1),
+        }
+        for grade, values in sorted(grouped.items())
+        if len(values) >= 3
+    ]
+    stats = {
+        "question_count": LEVEL_TEST_QUESTION_COUNT,
+        "difficulty_bands": [
+            {"tier": tier, "label": label, "question_count": LEVEL_TEST_DIFFICULTY_COUNTS[tier]}
+            for tier, label in ((2, "기초"), (3, "기본"), (4, "응용"), (5, "심화"))
+        ],
+        "grade_bands": grade_bands,
+    }
+    _level_test_stats_cache = (now, stats)
+    return {"success": True, "data": stats}
+
+
 @app.post("/level-tests/placement/{session_id}/answer")
 def save_level_test_placement_answer(
     session_id: str,
     payload: LevelTestPlacementAnswerRequest,
     user_id: str = Depends(_current_user),
 ) -> dict[str, Any]:
-    session = _get_level_test_session(session_id, user_id)
-    if str(session.get("status") or "") == "graded":
-        raise HTTPException(status_code=409, detail="Placement session already submitted")
-    try:
-        assigned = _data_api().request(
-            "GET",
-            "level_test_template_item",
-            query={
-                "select": "quest_id,hash_tags",
-                "template_id": f"eq.{session['template_id']}",
-                "item_index": f"eq.{payload.item_index}",
-                "limit": "1",
-            },
-        ) or []
-    except RuntimeError as error:
-        raise _level_test_storage_error(error) from error
-    if not assigned or str(assigned[0].get("quest_id") or "") != payload.quest_id:
-        raise HTTPException(status_code=400, detail="Answer does not match the assigned placement problem")
-    try:
-        _data_api().request(
-            "POST",
-            "level_test_answer",
-            query={"on_conflict": "session_id,item_index"},
-            body={
-                "session_id": session_id,
-                "item_index": payload.item_index,
-                "quest_id": payload.quest_id,
-                "is_correct": payload.is_correct,
-                "answer_time": payload.answer_time,
-                "step_correctness": payload.step_correctness,
-                "tags": assigned[0].get("hash_tags") or [],
-            },
-            prefer="resolution=merge-duplicates,return=minimal",
-        )
-    except RuntimeError as error:
-        raise _level_test_storage_error(error) from error
-    return {"success": True, "data": {"ok": True}, "message": "Placement answer saved"}
+    del payload
+    _get_level_test_session(session_id, user_id)
+    raise HTTPException(status_code=410, detail="Placement answers are graded only at final submission")
 
 
 @app.post("/level-tests/placement/{session_id}/submit")
 def submit_level_test_placement(
     session_id: str,
+    payload: LevelTestPlacementSubmitRequest,
     user_id: str = Depends(_current_user),
 ) -> dict[str, Any]:
     replay = _load_level_test_kv(user_id, session_id=session_id)
     if replay is not None:
         return {"success": True, "data": replay, "message": "Placement rating applied"}
     session = _get_level_test_session(session_id, user_id)
+    if str(session.get("status") or "") == "graded":
+        raise HTTPException(status_code=409, detail="Placement session already submitted")
+    started_at = session.get("started_at")
+    if isinstance(started_at, str):
+        started_at = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+    if isinstance(started_at, datetime):
+        elapsed = (datetime.now(timezone.utc) - started_at.astimezone(timezone.utc)).total_seconds()
+        if elapsed > LEVEL_TEST_TIME_LIMIT_SECONDS + LEVEL_TEST_SUBMIT_GRACE_SECONDS:
+            raise HTTPException(status_code=408, detail="Placement test time limit exceeded")
+
+    items = _select_level_test_items(_level_test_template_items(str(session.get("template_id") or "")))
+    item_by_index = {int(item.get("item_index") or 0): item for item in items}
+    submission_by_index = {answer.item_index: answer for answer in payload.answers}
+    if len(item_by_index) != LEVEL_TEST_QUESTION_COUNT or set(submission_by_index) != set(item_by_index):
+        raise HTTPException(status_code=400, detail="Placement answer set is incomplete")
+    problem_payloads = _level_test_problem_payloads(
+        [str(item.get("quest_id") or "") for item in items]
+    )
+    answers: list[dict[str, Any]] = []
+    for index, item in item_by_index.items():
+        submission = submission_by_index[index]
+        quest_id = str(item.get("quest_id") or "")
+        if submission.quest_id != quest_id:
+            raise HTTPException(status_code=400, detail="Answer does not match the assigned placement problem")
+        quest = problem_payloads.get(quest_id)
+        if quest is None:
+            raise HTTPException(status_code=503, detail="Placement problem payload is incomplete")
+        data = quest.get("data") if isinstance(quest.get("data"), dict) else {}
+        options = data.get("quest_options")
+        if isinstance(options, list) and options:
+            expected_index = data.get("correct_choice_index", data.get("choice_answer_index"))
+            is_correct = expected_index is not None and submission.selected_index == int(expected_index)
+        else:
+            expected_answer = _normalize_numeric_answer(data.get("quest_answer"))
+            submitted_answer = _normalize_numeric_answer(submission.user_answer)
+            is_correct = expected_answer is not None and submitted_answer == expected_answer
+        answers.append(
+            {
+                "session_id": session_id,
+                "item_index": index,
+                "quest_id": quest_id,
+                "is_correct": is_correct,
+                "answer_time": None,
+                "step_correctness": [],
+                "tags": item.get("hash_tags") or [],
+            }
+        )
     try:
-        answers = _data_api().request(
-            "GET",
+        _data_api().request(
+            "POST",
             "level_test_answer",
-            query={
-                "select": "item_index,quest_id,is_correct,answer_time,tags",
-                "session_id": f"eq.{session_id}",
-                "order": "item_index.asc",
-                "limit": str(LEVEL_TEST_QUESTION_COUNT),
-            },
-        ) or []
+            query={"on_conflict": "session_id,item_index"},
+            body=answers,
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
     except RuntimeError as error:
         raise _level_test_storage_error(error) from error
-    if len(answers) != LEVEL_TEST_QUESTION_COUNT:
-        raise HTTPException(status_code=400, detail="Placement test is not complete")
-    item_by_index = {
-        int(item.get("item_index") or 0): item
-        for item in _level_test_template_items(str(session.get("template_id") or ""))
-    }
+
     samples = []
     for answer in answers:
         index = int(answer.get("item_index") or 0)

@@ -13,6 +13,494 @@ extension _MobileSolveStateView on _BuildpageWidgetState {
   Widget _buildMobileQuickSolveCard() => _renderMobileQuickSolveCard(this);
 
   Widget _buildMobileQuickAnswerCard() => _renderMobileQuickAnswerCard(this);
+
+  Widget _buildPlacementExamScaffold() => _renderPlacementExamScaffold(this);
+}
+
+String _placementTimerLabel(int seconds) {
+  final minutes = seconds ~/ 60;
+  final remain = seconds % 60;
+  return '${minutes.toString().padLeft(2, '0')}:${remain.toString().padLeft(2, '0')}';
+}
+
+Future<void> _confirmPlacementSubmit(_BuildpageWidgetState state) async {
+  if (state._analysisBusy) return;
+  final answered = List<int>.generate(
+    state._problemCount,
+    (index) => index,
+  ).where(state._placementAnsweredAt).length;
+  final blank = state._problemCount - answered;
+  final confirmed = await showDialog<bool>(
+    context: state.context,
+    builder: (context) => AlertDialog(
+      title: const Text('레벨 테스트를 제출할까요?'),
+      content: Text(
+        blank == 0
+            ? '25문항을 마지막에 한 번 채점합니다.'
+            : '빈 답 $blank개는 오답으로 채점됩니다. 그래도 제출할까요?',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('계속 풀기'),
+        ),
+        FilledButton(
+          key: const ValueKey('placement-confirm-submit'),
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('일괄 채점'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true) await state._submitPlacementExam();
+}
+
+Future<void> _showPlacementQuestionGrid(_BuildpageWidgetState state) async {
+  await showModalBottomSheet<void>(
+    context: state.context,
+    backgroundColor: Colors.white,
+    showDragHandle: true,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+    ),
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '문항 이동',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '답을 쓰지 않아도 원하는 문항으로 이동할 수 있어요.',
+              style: TextStyle(color: Colors.black54, fontSize: 13),
+            ),
+            const SizedBox(height: 18),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                mainAxisSpacing: 9,
+                crossAxisSpacing: 9,
+              ),
+              itemCount: state._problemCount,
+              itemBuilder: (context, index) {
+                final current = index == state._currentProblemIndex;
+                final answered = state._placementAnsweredAt(index);
+                return Material(
+                  color: current
+                      ? Colors.black
+                      : answered
+                      ? const Color(0xFFE8E8E6)
+                      : Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(13),
+                    side: BorderSide(
+                      color: current ? Colors.black : const Color(0xFFD8D8D5),
+                    ),
+                  ),
+                  child: InkWell(
+                    key: ValueKey('placement-question-${index + 1}'),
+                    borderRadius: BorderRadius.circular(13),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      state._goToPlacementProblem(index);
+                    },
+                    child: Center(
+                      child: Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          color: current ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _renderPlacementExamScaffold(_BuildpageWidgetState state) {
+  final options = state._currentQuestOptionBlocks();
+  final answered = List<int>.generate(
+    state._problemCount,
+    (index) => index,
+  ).where(state._placementAnsweredAt).length;
+  final isLast = state._currentProblemIndex == state._problemCount - 1;
+  final timerUrgent = state._timerDisplaySeconds <= 5 * 60;
+  return Scaffold(
+    key: const ValueKey('placement-exam-screen'),
+    backgroundColor: const Color(0xFFF5F5F3),
+    body: SafeArea(
+      child: Column(
+        children: [
+          Container(
+            color: Colors.white,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 62,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          tooltip: '레벨 테스트 나가기',
+                          onPressed: state._analysisBusy
+                              ? null
+                              : () => Navigator.of(state.context).maybePop(),
+                          icon: const Icon(Icons.arrow_back_rounded),
+                        ),
+                        const Expanded(
+                          child: Text(
+                            '레벨 테스트',
+                            style: TextStyle(
+                              fontSize: 19,
+                              letterSpacing: -.6,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          key: const ValueKey('placement-timer'),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: timerUrgent
+                                ? const Color(0xFFFFE7E4)
+                                : const Color(0xFFF0F0EE),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.timer_outlined,
+                                size: 16,
+                                color: timerUrgent
+                                    ? const Color(0xFFCF3527)
+                                    : Colors.black87,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                _placementTimerLabel(
+                                  state._timerDisplaySeconds,
+                                ),
+                                style: TextStyle(
+                                  color: timerUrgent
+                                      ? const Color(0xFFB52D22)
+                                      : Colors.black87,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                LinearProgressIndicator(
+                  value: (state._currentProblemIndex + 1) / state._problemCount,
+                  minHeight: 3,
+                  color: Colors.black,
+                  backgroundColor: const Color(0xFFE8E8E6),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(14, 18, 14, 18),
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '${state._currentProblemIndex + 1}번',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '응답 $answered / ${state._problemCount}',
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFE2E2DF)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ContentBlocksView(
+                        blocks: state._currentQuestTitleBlocks(),
+                        textStyle: const TextStyle(
+                          fontSize: 18,
+                          height: 1.5,
+                          color: Color(0xFF202020),
+                        ),
+                        latexStyle: const TextStyle(
+                          fontSize: 18,
+                          height: 1.5,
+                          color: Color(0xFF202020),
+                        ),
+                        inline: true,
+                      ),
+                      if (options.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        state._buildOptionPreview(
+                          options,
+                          selectedIndex: state._currentSelectedChoice(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (options.isEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFE2E2DF)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          '정답 입력',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          key: ValueKey(
+                            'placement-answer-${state._currentProblemIndex + 1}',
+                          ),
+                          initialValue: state
+                              ._placementAnswers[state._currentProblemIndex],
+                          enabled: !state._timeLimitReached,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                            signed: true,
+                          ),
+                          textInputAction: isLast
+                              ? TextInputAction.done
+                              : TextInputAction.next,
+                          onChanged: state._updatePlacementAnswer,
+                          onFieldSubmitted: (_) {
+                            if (!isLast)
+                              state._goToPlacementProblem(
+                                state._currentProblemIndex + 1,
+                              );
+                          },
+                          decoration: InputDecoration(
+                            hintText: '숫자 답을 입력하세요',
+                            filled: true,
+                            fillColor: const Color(0xFFF5F5F3),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFDADAD7),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Colors.black,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 16,
+                      color: Colors.black45,
+                    ),
+                    SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        '빈 답도 넘길 수 있으며 마지막에 전체 문항을 한 번만 채점합니다.',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Material(
+            color: Colors.white,
+            elevation: 10,
+            shadowColor: Colors.black12,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                child: Column(
+                  children: [
+                    InkWell(
+                      key: const ValueKey('placement-question-grid'),
+                      onTap: state._analysisBusy
+                          ? null
+                          : () => _showPlacementQuestionGrid(state),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.grid_view_rounded, size: 18),
+                            const SizedBox(width: 8),
+                            const Text(
+                              '문항 보기',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '$answered개 응답',
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            const Icon(
+                              Icons.expand_less_rounded,
+                              size: 18,
+                              color: Colors.black45,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            key: const ValueKey('placement-previous'),
+                            onPressed:
+                                state._analysisBusy ||
+                                    state._currentProblemIndex == 0
+                                ? null
+                                : () => state._goToPlacementProblem(
+                                    state._currentProblemIndex - 1,
+                                  ),
+                            icon: const Icon(Icons.arrow_back_rounded),
+                            label: const Text('이전'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.black,
+                              minimumSize: const Size(0, 50),
+                              side: const BorderSide(color: Color(0xFFD3D3D0)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: FilledButton.icon(
+                            key: ValueKey(
+                              isLast ? 'placement-submit' : 'placement-next',
+                            ),
+                            onPressed: state._analysisBusy
+                                ? null
+                                : isLast
+                                ? () => _confirmPlacementSubmit(state)
+                                : () => state._goToPlacementProblem(
+                                    state._currentProblemIndex + 1,
+                                  ),
+                            icon: state._analysisBusy
+                                ? const SizedBox.square(
+                                    dimension: 17,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Icon(
+                                    isLast
+                                        ? Icons.check_rounded
+                                        : Icons.arrow_forward_rounded,
+                                  ),
+                            label: Text(
+                              state._analysisBusy
+                                  ? '제출 중'
+                                  : isLast
+                                  ? '전체 제출'
+                                  : '다음 문제',
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(0, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 final Expando<_MobileQuickSolveSession> _mobileQuickSolveSessions =

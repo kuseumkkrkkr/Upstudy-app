@@ -41,8 +41,10 @@ void main() {
     );
 
     expect(find.text('18.6'), findsOneWidget);
-    expect(find.text('강점 태그'), findsOneWidget);
-    expect(find.text('#일차함수 19.2'), findsOneWidget);
+    expect(find.text('OVR 배정 결과'), findsOneWidget);
+    expect(find.text('21 / 25'), findsWidgets);
+    expect(find.text('30분'), findsWidgets);
+    expect(find.text('강점 태그'), findsNothing);
     expect(find.byKey(const ValueKey('level-result-overview')), findsOneWidget);
     expect(find.byKey(const ValueKey('level-result-analysis')), findsOneWidget);
   });

@@ -15,6 +15,7 @@ from typing import Any, Dict, Generic, List, Optional, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.api.routes.auth.middleware import require_role
+from arena.grading import grade_answer
 from domain.level_test import engine, repository as repo
 from domain.level_test.models import (
     LevelTestResult,
@@ -91,6 +92,21 @@ class PlacementAnswerRequest(BaseModel):
     tags: List[str] = Field(default_factory=list)
 
 
+class PlacementSubmissionAnswer(BaseModel):
+    item_index: int = Field(ge=1, le=engine.PLACEMENT_QUESTION_COUNT)
+    quest_id: str = Field(min_length=1, max_length=200)
+    user_answer: Optional[str] = Field(default=None, max_length=100)
+    selected_index: Optional[int] = Field(default=None, ge=0, le=4)
+
+
+class PlacementSubmitRequest(BaseModel):
+    answers: List[PlacementSubmissionAnswer] = Field(
+        min_length=engine.PLACEMENT_QUESTION_COUNT,
+        max_length=engine.PLACEMENT_QUESTION_COUNT,
+    )
+    elapsed_seconds: int = Field(ge=0, le=engine.PLACEMENT_TIME_LIMIT_SECONDS)
+
+
 class PlacementSubmitPayload(BaseModel):
     session_id: str
     rating: float
@@ -105,6 +121,19 @@ class PlacementSubmitPayload(BaseModel):
 
 class PlacementSubmitResponse(CommonResponse[PlacementSubmitPayload]):
     """Concrete response for placement final rating."""
+
+
+def _plain_content_text(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "".join(_plain_content_text(item) for item in value)
+    if isinstance(value, dict):
+        for key in ("blocks", "content", "text", "latex"):
+            text = _plain_content_text(value.get(key))
+            if text:
+                return text
+    return ""
 
 
 class TemplateGenerateRequest(BaseModel):
@@ -287,7 +316,7 @@ async def start_placement_test(
     items = repo.get_placement_template_items(template_id)
     if len(items) < engine.PLACEMENT_QUESTION_COUNT:
         raise HTTPException(status_code=503, detail="Placement template is incomplete")
-    items = items[:engine.PLACEMENT_QUESTION_COUNT]
+    items = engine.select_placement_items(items)
 
     questions = [PlacementQuestion(**item) for item in items]
     if len(questions) != engine.PLACEMENT_QUESTION_COUNT:
@@ -308,11 +337,42 @@ async def start_placement_test(
     )
 
 
+@router.get("/placement/stats", response_model=CommonResponse[Dict[str, Any]])
+async def get_placement_stats(
+    _user=Depends(require_role("student", "teacher", "admin")),
+):
+    return CommonResponse(
+        data={
+            "question_count": engine.PLACEMENT_QUESTION_COUNT,
+            "difficulty_bands": [
+                {"tier": tier, "label": label, "question_count": engine.PLACEMENT_DIFFICULTY_COUNTS[tier]}
+                for tier, label in ((2, "기초"), (3, "기본"), (4, "응용"), (5, "심화"))
+            ],
+            "grade_bands": repo.get_placement_stats(),
+        }
+    )
+
+
 @router.post("/placement/{session_id}/answer", response_model=CommonResponse[Dict[str, Any]])
 async def submit_placement_answer(
     request: Request,
     session_id: str,
     body: PlacementAnswerRequest,
+    _user=Depends(require_role("student", "teacher", "admin")),
+):
+    del body
+    user_id = request.state.user_id
+    session = repo.get_placement_session(session_id)
+    if not session or session["user_id"] != user_id:
+        raise HTTPException(status_code=404, detail="Placement session not found")
+    raise HTTPException(status_code=410, detail="Placement answers are graded only at final submission")
+
+
+@router.post("/placement/{session_id}/submit", response_model=PlacementSubmitResponse)
+async def submit_placement_test(
+    request: Request,
+    session_id: str,
+    body: PlacementSubmitRequest,
     _user=Depends(require_role("student", "teacher", "admin")),
 ):
     user_id = request.state.user_id
@@ -321,38 +381,44 @@ async def submit_placement_answer(
         raise HTTPException(status_code=404, detail="Placement session not found")
     if session["status"] == "graded":
         raise HTTPException(status_code=409, detail="Placement session already submitted")
-    assigned_item = repo.postgres_level_test_store.get_template_item(
-        str(session["template_id"]),
-        body.item_index,
+    started_at = session.get("started_at")
+    if isinstance(started_at, datetime):
+        elapsed = (datetime.now(timezone.utc) - started_at.astimezone(timezone.utc)).total_seconds()
+        if elapsed > engine.PLACEMENT_TIME_LIMIT_SECONDS + 15:
+            raise HTTPException(status_code=408, detail="Placement test time limit exceeded")
+    items = engine.select_placement_items(
+        repo.get_placement_template_items(str(session["template_id"]))
     )
-    if not assigned_item or str(assigned_item["quest_id"]) != body.quest_id:
-        raise HTTPException(status_code=400, detail="Answer does not match the assigned placement problem")
-    repo.upsert_placement_answer(
-        session_id=session_id,
-        item_index=body.item_index,
-        quest_id=body.quest_id,
-        is_correct=body.is_correct,
-        answer_time=body.answer_time,
-        step_correctness=body.step_correctness,
-        # 클라이언트가 보낸 태그 대신 검수된 정적 문제 태그만 레이팅에 사용한다.
-        tags=list(assigned_item["hash_tags"]),
-    )
-    return CommonResponse(data={"ok": True}, message="Placement answer saved")
-
-
-@router.post("/placement/{session_id}/submit", response_model=PlacementSubmitResponse)
-async def submit_placement_test(
-    request: Request,
-    session_id: str,
-    _user=Depends(require_role("student", "teacher", "admin")),
-):
-    user_id = request.state.user_id
-    session = repo.get_placement_session(session_id)
-    if not session or session["user_id"] != user_id:
-        raise HTTPException(status_code=404, detail="Placement session not found")
-    answers = repo.list_placement_answers(session_id)
-    if len(answers) < engine.PLACEMENT_QUESTION_COUNT:
-        raise HTTPException(status_code=400, detail="Placement test is not complete")
+    item_by_index = {int(item["item_index"]): item for item in items}
+    submission_by_index = {answer.item_index: answer for answer in body.answers}
+    if len(item_by_index) != engine.PLACEMENT_QUESTION_COUNT or set(item_by_index) != set(submission_by_index):
+        raise HTTPException(status_code=400, detail="Placement answer set is incomplete")
+    answers: List[Dict[str, Any]] = []
+    for index, item in item_by_index.items():
+        submission = submission_by_index[index]
+        if submission.quest_id != str(item["quest_id"]):
+            raise HTTPException(status_code=400, detail="Answer does not match the assigned placement problem")
+        quest = item.get("quest") if isinstance(item.get("quest"), dict) else {}
+        data = quest.get("data") if isinstance(quest.get("data"), dict) else {}
+        options = data.get("quest_options")
+        if isinstance(options, list) and options:
+            expected_index = data.get("correct_choice_index", data.get("choice_answer_index"))
+            is_correct = expected_index is not None and submission.selected_index == int(expected_index)
+        else:
+            expected = _plain_content_text(data.get("quest_answer")).strip().strip("$").strip()
+            is_correct = grade_answer("short", submission.user_answer or "", [expected])
+        answers.append(
+            {
+                "session_id": session_id,
+                "item_index": index,
+                "quest_id": str(item["quest_id"]),
+                "is_correct": is_correct,
+                "answer_time": None,
+                "step_correctness": [],
+                "tags": list(item.get("hash_tags") or []),
+            }
+        )
+    repo.upsert_placement_answers(answers)
     result = apply_level_test_placement(
         user_id=user_id,
         session_id=session_id,

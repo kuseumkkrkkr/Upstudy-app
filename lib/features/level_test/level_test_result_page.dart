@@ -301,7 +301,7 @@ class _ResultAnalysis extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'LEARNING SIGNALS',
+            'RESULT SUMMARY',
             style: TextStyle(
               fontSize: 10,
               letterSpacing: 1.5,
@@ -310,14 +310,26 @@ class _ResultAnalysis extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 7),
-          const Text(
-            '다음 학습을 위한 분석',
+          Text(
+            report.isPlacement ? 'OVR 배정 결과' : '다음 학습을 위한 분석',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 22),
-          _TagGroup(title: '강점 태그', tags: report.strongTags, positive: true),
-          const SizedBox(height: 18),
-          _TagGroup(title: '보완 태그', tags: report.weakTags),
+          if (report.isPlacement) ...[
+            _ResultFact(
+              label: report.firstMetricLabel,
+              value: report.firstMetricValue,
+            ),
+            const SizedBox(height: 14),
+            _ResultFact(
+              label: report.secondMetricLabel,
+              value: report.secondMetricValue,
+            ),
+          ] else ...[
+            _TagGroup(title: '강점 태그', tags: report.strongTags, positive: true),
+            const SizedBox(height: 18),
+            _TagGroup(title: '보완 태그', tags: report.weakTags),
+          ],
           const SizedBox(height: 22),
           const Divider(height: 1, color: _LevelResultTokens.line),
           const SizedBox(height: 16),
@@ -341,6 +353,29 @@ class _ResultAnalysis extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ResultFact extends StatelessWidget {
+  const _ResultFact({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF3F3F1),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Row(
+      children: [
+        Text(label, style: const TextStyle(color: _LevelResultTokens.muted)),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+      ],
+    ),
+  );
 }
 
 /// 결과 뒤의 다음 학습 행동을 기존 홈 라우팅으로 연결한다.
@@ -466,23 +501,23 @@ class _LevelResultReport {
 
   factory _LevelResultReport.placement(LevelTestPlacementResult result) {
     final confidence = (result.confidence * 100).round();
+    final correctCount = (result.recentAccuracy * 25).round();
     return _LevelResultReport._(
       isPlacement: true,
       primaryValue: result.ovr > 0 ? result.ovr.toStringAsFixed(1) : '--',
-      primaryCaption: '첫 OVR · 배치 테스트 기준점',
+      primaryCaption: '레벨 테스트로 배정된 첫 OVR',
       statusLabel: 'MEASURED',
-      firstMetricLabel: '신뢰도',
-      firstMetricValue: '$confidence%',
-      secondMetricLabel: '최근 정확도',
-      secondMetricValue: '${(result.recentAccuracy * 100).round()}%',
-      analysisState: '분석 완료',
-      description:
-          '정오답과 풀이 시간을 바탕으로 현재 학습 위치를 분석했어요. 이 기준점은 다음 풀이 기록으로 더 정확해집니다.',
-      confidenceCopy: '측정 신뢰도 $confidence% · 이후 코스와 문제 풀이에 따라 OVR이 계속 보정됩니다.',
-      strongTags: result.strongTags,
-      weakTags: result.weakTags,
-      nextTitle: '분석 결과를 바탕으로 코스를 추천할게요.',
-      nextDescription: '학습 홈에서 현재 수준에 맞는 다음 단원을 시작하세요.',
+      firstMetricLabel: '정답 수',
+      firstMetricValue: '$correctCount / 25',
+      secondMetricLabel: '제한 시간',
+      secondMetricValue: '30분',
+      analysisState: 'OVR 배정',
+      description: '25문항의 전체 답안을 한 번에 채점해 첫 OVR을 배정했습니다.',
+      confidenceCopy: '측정 신뢰도 $confidence% · 이 시험 결과는 첫 OVR 배정에 사용됩니다.',
+      strongTags: const [],
+      weakTags: const [],
+      nextTitle: '첫 OVR 배정이 완료됐어요.',
+      nextDescription: '학습 홈으로 돌아가 원하는 학습을 시작하세요.',
     );
   }
 
