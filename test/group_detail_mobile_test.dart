@@ -10,8 +10,10 @@ import 'package:s11/shared/services/api/api_client.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  var groupMessageGetCount = 0;
 
   setUp(() {
+    groupMessageGetCount = 0;
     SharedPreferences.setMockInitialValues(<String, Object>{});
     ApiClient.instance.setHttpClientForTest(
       MockClient((request) async {
@@ -30,12 +32,9 @@ void main() {
           };
         } else if (request.url.path.endsWith('/members')) {
           body = <Object>[
-            <String, Object>{'user_id': 'me', 'username': '나'},
-            <String, Object>{'user_id': 'friend-1', 'username': '수학친구'},
-            <String, Object>{
-              'user_id': 'friend-2',
-              'username': 'invite_friend',
-            },
+            <String, Object>{'username': '나', 'role': 'admin'},
+            <String, Object>{'username': '수학친구', 'role': 'member'},
+            <String, Object>{'username': 'invite_friend', 'role': 'member'},
           ];
         } else if (request.url.path == '/social/study-groups/mine') {
           body = <String, Object>{
@@ -50,6 +49,23 @@ void main() {
           };
         } else if (request.url.path.endsWith('/invite-friend')) {
           body = <String, Object>{'group_id': 'group-1'};
+        } else if (request.url.path.endsWith('/messages')) {
+          groupMessageGetCount += 1;
+          body = <String, Object>{
+            'messages': request.url.queryParameters.containsKey('before')
+                ? <Object>[]
+                : List<Object>.generate(
+                    30,
+                    (index) => <String, Object>{
+                      'message_id': 'message-$index',
+                      'user_id': index.isEven ? 'me' : 'friend-1',
+                      'sender_name': index.isEven ? '나' : '수학친구',
+                      'text': '메시지 $index',
+                      'created_at':
+                          '2026-08-09T00:${index.toString().padLeft(2, '0')}:00Z',
+                    },
+                  ),
+          };
         } else if (request.url.path.endsWith('/schedules')) {
           body = <String, Object>{'schedules': <Object>[]};
         } else if (request.url.path.endsWith('/shared-flows')) {
@@ -88,16 +104,13 @@ void main() {
             description: '매일 한 문제씩 함께 풀어요',
             memberCount: 2,
             maxMembers: 12,
-            memberIds: const ['me', 'friend-1'],
-            creatorId: 'me',
           ),
           initialMembers: const [
-            StudyGroupMember(userId: 'me', username: '나'),
-            StudyGroupMember(userId: 'friend-1', username: '수학친구'),
+            StudyGroupMember(username: '나', role: 'admin'),
+            StudyGroupMember(username: '수학친구'),
           ],
           initialShareHistory: const [],
           initialShareExams: const [],
-          initialChatMessages: const [],
         ),
       ),
     );
@@ -130,6 +143,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('그룹 멤버'), findsOneWidget);
     expect(find.text('수학친구'), findsOneWidget);
+    expect(find.byKey(const ValueKey('group-member-scroll')), findsOneWidget);
+    expect(find.text('관리자'), findsOneWidget);
+    expect(find.text('N MEMBERS'), findsNothing);
+    expect(find.textContaining('MEMBERS'), findsNothing);
+    expect(find.text('현재 그룹의 멤버와 역할을 확인합니다.'), findsNothing);
+    expect(find.textContaining('사용자 ID'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('member-actions-수학친구')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('delete-study-group')), findsOneWidget);
     expect(find.byKey(const ValueKey('group-invite-friend')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('group-invite-friend')));
     await tester.pumpAndSettle();
@@ -140,8 +164,13 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('mobile-group-chat')));
     await tester.pumpAndSettle();
-    expect(find.text('첫 메시지를 남겨 보세요.'), findsOneWidget);
-    Navigator.of(tester.element(find.text('첫 메시지를 남겨 보세요.'))).pop();
+    expect(find.text('이전 메시지 더보기'), findsNothing);
+    expect(find.textContaining('최근 30개부터 표시'), findsNothing);
+    expect(find.byIcon(Icons.history_rounded), findsNothing);
+    await tester.fling(find.byType(ListView).last, const Offset(0, 1200), 2500);
+    await tester.pumpAndSettle();
+    expect(groupMessageGetCount, greaterThanOrEqualTo(2));
+    Navigator.of(tester.element(find.text('메시지 0'))).pop();
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('시험지'));

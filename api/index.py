@@ -711,7 +711,17 @@ class StudyGroupMessageCreateRequest(BaseModel):
 
 
 class StudyGroupFriendInviteRequest(BaseModel):
-    username: str = Field(min_length=4, max_length=16)
+    username: str = Field(pattern=r"^[A-Za-z0-9]{4,16}$")
+
+
+class StudyGroupMemberRoleRequest(BaseModel):
+    role: str = Field(pattern="^(admin|deputy|member)$")
+
+
+class StudyGroupScheduleCreateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    scheduled_date: date
+    scheduled_time: str | None = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 class QuestGenerateRequest(BaseModel):
@@ -2753,6 +2763,8 @@ _SOCIAL_REQUEST_OUT_PREFIX = "social.friend_request.out."
 _SOCIAL_GROUP_PREFIX = "social.study_group."
 _SOCIAL_GROUP_MEMBER_PREFIX = "social.study_member."
 _SOCIAL_GROUP_MESSAGE_PREFIX = "social.study_group_message."
+_SOCIAL_GROUP_INVITE_PREFIX = "social.study_group_invite."
+_SOCIAL_GROUP_SCHEDULE_PREFIX = "social.study_group_schedule."
 _SOCIAL_MESSAGE_PREFIX = "social.message."
 _SOCIAL_CONVERSATION_PREFIX = "social.conversation."
 _SOCIAL_MESSAGE_LIMIT = 200
@@ -2886,8 +2898,46 @@ def _social_public_group(group: dict[str, Any]) -> dict[str, Any]:
     return {
         key: value
         for key, value in {**group, "member_ids": member_ids, "members": len(member_ids)}.items()
-        if key not in {"password_salt", "password_hash"}
+        if key not in {
+            "password_salt",
+            "password_hash",
+            "member_ids",
+            "creator_id",
+            "admin_id",
+            "deputy_admin_ids",
+        }
     }
+
+
+def _social_group_role(group: dict[str, Any], user_id: str) -> str:
+    admin_id = str(group.get("admin_id") or group.get("creator_id") or "")
+    if user_id == admin_id:
+        return "admin"
+    if user_id in {str(value) for value in group.get("deputy_admin_ids") or []}:
+        return "deputy"
+    return "member"
+
+
+def _social_sync_group(group: dict[str, Any]) -> None:
+    group_id = str(group.get("group_id") or "")
+    member_ids = _social_group_member_ids(group)
+    synced = {**group, "member_ids": member_ids, "members": len(member_ids)}
+    _social_upsert_kv_rows(
+        [(member_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}", synced) for member_id in member_ids]
+    )
+
+
+def _social_global_kv_rows(prefix: str, *, limit: int = 1000) -> list[dict[str, Any]]:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "user_id,key,value",
+            "key": f"like.{prefix}*",
+            "limit": str(max(1, min(limit, 1000))),
+        },
+    ) or []
+    return [dict(row) for row in rows]
 
 
 def _social_add_group_member(group: dict[str, Any], user_id: str) -> dict[str, Any]:
@@ -2995,6 +3045,14 @@ def _social_group_messages(group_id: str) -> list[dict[str, Any]]:
     ]
     messages.sort(key=lambda item: (str(item.get("created_at") or ""), str(item.get("message_id") or "")))
     return messages
+
+
+def _social_group_message_response(message: dict[str, Any], user_id: str) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in {**message, "is_mine": str(message.get("user_id") or "") == user_id}.items()
+        if key != "user_id"
+    }
 
 
 def _social_has_key(user_id: str, key: str) -> bool:
@@ -3376,6 +3434,8 @@ def create_study_group(payload: StudyGroupCreateRequest, user_id: str = Depends(
         "is_teacher_group": False,
         "created_at": created_at,
         "creator_id": user_id,
+        "admin_id": user_id,
+        "deputy_admin_ids": [],
         "member_ids": [user_id],
         "members": 1,
     }
@@ -3482,7 +3542,7 @@ def join_study_group(group_id: str, payload: StudyGroupJoinRequest, user_id: str
 
 @app.get("/social/study-groups/{group_id}/members")
 def list_study_group_members(group_id: str, user_id: str = Depends(_current_user)) -> list[dict[str, str]]:
-    """필요 변수: 인증 사용자와 소속 그룹 ID. 작동 원리: 사용자 KV의 그룹 멤버 ID를 공개 프로필로 복원한다."""
+    """멤버 UUID는 반환하지 않고 인증된 그룹 멤버에게 닉네임과 역할만 공개한다."""
     group = _social_group_for_user(user_id, group_id)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -3490,7 +3550,13 @@ def list_study_group_members(group_id: str, user_id: str = Depends(_current_user
     for member_id in _social_group_member_ids(group):
         profile = _social_user_by_id(str(member_id))
         if profile:
-            members.append({"user_id": str(member_id), "username": str(profile.get("username") or member_id)})
+            members.append(
+                {
+                    "username": str(profile.get("username") or ""),
+                    "role": _social_group_role(group, str(member_id)),
+                }
+            )
+    members.sort(key=lambda member: ({"admin": 0, "deputy": 1}.get(member["role"], 2), member["username"]))
     return members
 
 
@@ -3512,7 +3578,190 @@ def invite_friend_to_study_group(
     canonical = _social_canonical_group(group_id)
     if not canonical:
         raise HTTPException(status_code=404, detail="Group not found")
-    return _social_add_group_member(canonical, friend_id)
+    if friend_id in _social_group_member_ids(canonical):
+        raise HTTPException(status_code=409, detail="Already a group member")
+    if len(_social_group_member_ids(canonical)) >= int(canonical.get("max_members") or 0):
+        raise HTTPException(status_code=409, detail="Group is full")
+    inviter = _social_user_by_id(user_id) or {}
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    invitation = {
+        "invite_id": group_id,
+        "group_id": group_id,
+        "group_name": str(canonical.get("name") or "그룹"),
+        "inviter_username": str(inviter.get("username") or "그룹 멤버"),
+        "invited_by_user_id": user_id,
+        "created_at": created_at,
+    }
+    _social_upsert_kv(friend_id, f"{_SOCIAL_GROUP_INVITE_PREFIX}{group_id}", invitation)
+    return {key: value for key, value in invitation.items() if key != "invited_by_user_id"}
+
+
+@app.get("/social/study-group-invitations")
+def list_study_group_invitations(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    invitations = [
+        value
+        for row in _social_kv_rows(user_id, _SOCIAL_GROUP_INVITE_PREFIX, limit=100)
+        if (value := _social_kv_value(row))
+    ]
+    invitations.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return {
+        "invitations": [
+            {key: value for key, value in invitation.items() if key != "invited_by_user_id"}
+            for invitation in invitations
+        ]
+    }
+
+
+@app.post("/social/study-group-invitations/{group_id}/accept")
+def accept_study_group_invitation(group_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    key = f"{_SOCIAL_GROUP_INVITE_PREFIX}{group_id}"
+    rows = _social_kv_rows(user_id, key, limit=1)
+    invitation = next((_social_kv_value(row) for row in rows if str(row.get("key") or "") == key), None)
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    group = _social_canonical_group(group_id)
+    if not group:
+        _social_delete_kv(user_id, key)
+        raise HTTPException(status_code=404, detail="Group not found")
+    result = _social_add_group_member(group, user_id)
+    _social_delete_kv(user_id, key)
+    return result
+
+
+@app.post("/social/study-group-invitations/{group_id}/reject")
+def reject_study_group_invitation(group_id: str, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    key = f"{_SOCIAL_GROUP_INVITE_PREFIX}{group_id}"
+    rows = _social_kv_rows(user_id, key, limit=1)
+    if not any(str(row.get("key") or "") == key for row in rows):
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    _social_delete_kv(user_id, key)
+    return {"status": "rejected"}
+
+
+@app.post("/social/study-groups/{group_id}/members/{username}/role")
+def change_study_group_member_role(
+    group_id: str,
+    username: str,
+    payload: StudyGroupMemberRoleRequest,
+    user_id: str = Depends(_current_user),
+) -> list[dict[str, str]]:
+    if not USERNAME_RE.fullmatch(username.strip()):
+        raise HTTPException(status_code=404, detail="Member not found")
+    group = _social_canonical_group(group_id)
+    if not group or user_id not in _social_group_member_ids(group):
+        raise HTTPException(status_code=404, detail="Group not found")
+    if _social_group_role(group, user_id) != "admin":
+        raise HTTPException(status_code=403, detail="Admin permission required")
+    target = _social_user_by_username(username.strip())
+    target_id = str((target or {}).get("user_id") or "")
+    member_ids = _social_group_member_ids(group)
+    if not target_id or target_id not in member_ids:
+        raise HTTPException(status_code=404, detail="Member not found")
+    admin_id = str(group.get("admin_id") or group.get("creator_id") or "")
+    deputies = {str(value) for value in group.get("deputy_admin_ids") or []}
+    if payload.role == "admin":
+        if target_id == admin_id:
+            return list_study_group_members(group_id, user_id)
+        deputies.discard(target_id)
+        group = {**group, "admin_id": target_id, "creator_id": target_id, "deputy_admin_ids": sorted(deputies)}
+    elif target_id == admin_id:
+        raise HTTPException(status_code=409, detail="Transfer admin before changing this role")
+    elif payload.role == "deputy":
+        deputies.add(target_id)
+        group = {**group, "deputy_admin_ids": sorted(deputies)}
+    else:
+        deputies.discard(target_id)
+        group = {**group, "deputy_admin_ids": sorted(deputies)}
+    _social_sync_group(group)
+    return list_study_group_members(group_id, user_id)
+
+
+@app.delete("/social/study-groups/{group_id}/members/{username}")
+def remove_study_group_member(
+    group_id: str,
+    username: str,
+    user_id: str = Depends(_current_user),
+) -> dict[str, str]:
+    if not USERNAME_RE.fullmatch(username.strip()):
+        raise HTTPException(status_code=404, detail="Member not found")
+    group = _social_canonical_group(group_id)
+    if not group or user_id not in _social_group_member_ids(group):
+        raise HTTPException(status_code=404, detail="Group not found")
+    actor_role = _social_group_role(group, user_id)
+    if actor_role not in {"admin", "deputy"}:
+        raise HTTPException(status_code=403, detail="Manager permission required")
+    target = _social_user_by_username(username.strip())
+    target_id = str((target or {}).get("user_id") or "")
+    member_ids = _social_group_member_ids(group)
+    if not target_id or target_id not in member_ids:
+        raise HTTPException(status_code=404, detail="Member not found")
+    target_role = _social_group_role(group, target_id)
+    if target_id == user_id or target_role == "admin" or (actor_role == "deputy" and target_role == "deputy"):
+        raise HTTPException(status_code=403, detail="This member cannot be removed")
+    _social_delete_kv(target_id, f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}")
+    _social_delete_kv(target_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}")
+    deputies = [value for value in group.get("deputy_admin_ids") or [] if str(value) != target_id]
+    updated = {**group, "member_ids": [value for value in member_ids if value != target_id], "deputy_admin_ids": deputies}
+    _social_sync_group(updated)
+    return {"status": "removed"}
+
+
+@app.delete("/social/study-groups/{group_id}")
+def delete_study_group(group_id: str, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    group = _social_canonical_group(group_id)
+    if not group or user_id not in _social_group_member_ids(group):
+        raise HTTPException(status_code=404, detail="Group not found")
+    if _social_group_role(group, user_id) != "admin":
+        raise HTTPException(status_code=403, detail="Admin permission required")
+    for member_id in _social_group_member_ids(group):
+        _social_delete_kv(member_id, f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}")
+        _social_delete_kv(member_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}")
+    for prefix in (
+        f"{_SOCIAL_GROUP_MESSAGE_PREFIX}{group_id}.",
+        f"{_SOCIAL_GROUP_SCHEDULE_PREFIX}{group_id}.",
+        f"{_SOCIAL_GROUP_INVITE_PREFIX}{group_id}",
+    ):
+        for row in _social_global_kv_rows(prefix):
+            _social_delete_kv(str(row.get("user_id") or ""), str(row.get("key") or ""))
+    return {"status": "deleted"}
+
+
+@app.get("/social/study-groups/{group_id}/schedules")
+def list_study_group_schedules(group_id: str, user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    if not _social_group_for_user(user_id, group_id):
+        raise HTTPException(status_code=404, detail="Group not found")
+    schedules = [
+        value
+        for row in _social_global_kv_rows(f"{_SOCIAL_GROUP_SCHEDULE_PREFIX}{group_id}.")
+        if (value := _social_kv_value(row)) and str(value.get("scheduled_date") or "") >= date.today().isoformat()
+    ]
+    schedules.sort(key=lambda item: (str(item.get("scheduled_date") or ""), str(item.get("scheduled_time") or "")))
+    return {"schedules": schedules}
+
+
+@app.post("/social/study-groups/{group_id}/schedules", status_code=status.HTTP_201_CREATED)
+def create_study_group_schedule(
+    group_id: str,
+    payload: StudyGroupScheduleCreateRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    group = _social_canonical_group(group_id)
+    if not group or user_id not in _social_group_member_ids(group):
+        raise HTTPException(status_code=404, detail="Group not found")
+    if _social_group_role(group, user_id) not in {"admin", "deputy"}:
+        raise HTTPException(status_code=403, detail="Manager permission required")
+    schedule_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    schedule = {
+        "schedule_id": schedule_id,
+        "group_id": group_id,
+        "title": payload.title.strip(),
+        "scheduled_date": payload.scheduled_date.isoformat(),
+        "scheduled_time": payload.scheduled_time,
+        "created_at": created_at,
+    }
+    _social_upsert_kv(user_id, f"{_SOCIAL_GROUP_SCHEDULE_PREFIX}{group_id}.{schedule_id}", schedule)
+    return schedule
 
 
 @app.get("/social/study-groups/{group_id}/messages")
@@ -3528,7 +3777,12 @@ def list_study_group_messages(
     if before:
         messages = [item for item in messages if str(item.get("created_at") or "") < before]
     bounded_limit = max(1, min(limit, 100))
-    return {"messages": messages[-bounded_limit:]}
+    return {
+        "messages": [
+            _social_group_message_response(message, user_id)
+            for message in messages[-bounded_limit:]
+        ]
+    }
 
 
 @app.post("/social/study-groups/{group_id}/messages", status_code=status.HTTP_201_CREATED)
@@ -3564,7 +3818,7 @@ def create_study_group_message(
         rows.sort(key=lambda row: str((_social_kv_value(row) or {}).get("created_at") or ""))
         for row in rows[: len(rows) - _SOCIAL_GROUP_MESSAGE_LIMIT]:
             _social_delete_kv(str(row.get("user_id") or owner_id), str(row.get("key") or ""))
-    return message
+    return _social_group_message_response(message, user_id)
 
 
 @app.get("/social/study-groups/notices/my/system")

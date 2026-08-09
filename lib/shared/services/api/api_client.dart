@@ -112,10 +112,8 @@ class StudyGroup {
   final bool lockEnabled;
   final String ownerRole;
   final String? inviteCode;
-  final List<String> memberIds;
   final String? password;
   final DateTime? createdAt;
-  final String creatorId;
 
   StudyGroup({
     required this.id,
@@ -128,10 +126,8 @@ class StudyGroup {
     this.lockEnabled = false,
     this.ownerRole = 'student',
     this.inviteCode,
-    this.memberIds = const [],
     this.password,
     this.createdAt,
-    this.creatorId = '',
   });
 
   String get groupId => id;
@@ -141,7 +137,6 @@ class StudyGroup {
   /// 필요한 변수는 서버 그룹 JSON과 숫자·목록 필드다.
   /// 작동 원리: 웹에서 null·문자열·숫자가 섞여 와도 안전하게 문자열과 정수로 정규화해 런타임 형변환 오류를 막는다.
   factory StudyGroup.fromJson(Map<String, dynamic> json) {
-    final rawMemberIds = json['member_ids'];
     return StudyGroup(
       id: (json['group_id'] ?? json['id'] ?? '').toString(),
       name: (json['name'] ?? '').toString(),
@@ -157,16 +152,10 @@ class StudyGroup {
       lockEnabled: json['lock_enabled'] == true,
       ownerRole: (json['owner_role'] ?? 'student').toString(),
       inviteCode: json['invite_code']?.toString(),
-      memberIds: rawMemberIds is List
-          ? rawMemberIds
-                .map((value) => value.toString())
-                .toList(growable: false)
-          : const [],
       password: json['password']?.toString(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
-      creatorId: (json['creator_id'] ?? '').toString(),
     );
   }
 }
@@ -188,18 +177,41 @@ List<StudyGroup> parseStudyGroupListPayload(Object? data) {
 }
 
 class StudyGroupMember {
-  final String userId;
   final String username;
+  final String role;
 
-  const StudyGroupMember({required this.userId, required this.username});
+  const StudyGroupMember({required this.username, this.role = 'member'});
 
-  /// 필요한 변수는 서버가 반환한 사용자 ID와 닉네임이다.
-  /// 작동 원리는 닉네임이 비어 있거나 이전 서버 응답일 때 사용자 ID를 대체값으로 사용해 멤버 행이 비어 보이지 않게 하는 것이다.
+  /// 필요한 변수는 서버가 반환한 닉네임과 역할이다.
+  /// 작동 원리는 멤버 UUID를 앱으로 가져오지 않고 화면에 필요한 공개 값만 변환한다.
   factory StudyGroupMember.fromJson(Map<String, dynamic> json) {
-    final userId = (json['user_id'] ?? json['id'] ?? '').toString();
-    final username = (json['username'] ?? json['name'] ?? userId).toString();
-    return StudyGroupMember(userId: userId, username: username);
+    return StudyGroupMember(
+      username: (json['username'] ?? json['name'] ?? '').toString(),
+      role: (json['role'] ?? 'member').toString(),
+    );
   }
+}
+
+class StudyGroupInvitation {
+  const StudyGroupInvitation({
+    required this.groupId,
+    required this.groupName,
+    required this.inviterUsername,
+    required this.createdAt,
+  });
+
+  final String groupId;
+  final String groupName;
+  final String inviterUsername;
+  final String createdAt;
+
+  factory StudyGroupInvitation.fromJson(Map<String, dynamic> json) =>
+      StudyGroupInvitation(
+        groupId: (json['group_id'] ?? '').toString(),
+        groupName: (json['group_name'] ?? '').toString(),
+        inviterUsername: (json['inviter_username'] ?? '').toString(),
+        createdAt: (json['created_at'] ?? '').toString(),
+      );
 }
 
 class StudyGroupInviteMeta {
@@ -1997,6 +2009,64 @@ class ApiClient {
     });
     await invalidateCachePath('/social/study-groups/$groupId/members');
     await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-group-invitations');
+  }
+
+  Future<List<StudyGroupInvitation>> listStudyGroupInvitations() async {
+    final res = await _get(
+      '/social/study-group-invitations',
+      parser: (d) => ((d['invitations'] as List?) ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                StudyGroupInvitation.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList(growable: false),
+      useCache: false,
+    );
+    return res.data ?? const [];
+  }
+
+  Future<void> resolveStudyGroupInvitation({
+    required String groupId,
+    required bool accept,
+  }) async {
+    await _post(
+      '/social/study-group-invitations/$groupId/${accept ? 'accept' : 'reject'}',
+      const <String, dynamic>{},
+    );
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-group-invitations');
+  }
+
+  Future<void> changeStudyGroupMemberRole({
+    required String groupId,
+    required String username,
+    required String role,
+  }) async {
+    await _post(
+      '/social/study-groups/$groupId/members/${Uri.encodeComponent(username)}/role',
+      {'role': role},
+    );
+    await invalidateCachePath('/social/study-groups/$groupId/members');
+    await invalidateCachePath('/social/study-groups/mine');
+  }
+
+  Future<void> removeStudyGroupMember({
+    required String groupId,
+    required String username,
+  }) async {
+    await _delete(
+      '/social/study-groups/$groupId/members/${Uri.encodeComponent(username)}',
+    );
+    await invalidateCachePath('/social/study-groups/$groupId/members');
+    await invalidateCachePath('/social/study-groups/mine');
+  }
+
+  Future<void> deleteStudyGroup(String groupId) async {
+    await _delete('/social/study-groups/$groupId');
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-groups/search');
   }
 
   Future<StudyGroup> joinStudyGroupByInviteCode({
@@ -3911,6 +3981,7 @@ class StudyGroupMessage {
   final String messageType;
   final Map<String, dynamic>? payload;
   final String createdAt;
+  final bool isMine;
   const StudyGroupMessage({
     this.messageId = '',
     this.userId = '',
@@ -3919,6 +3990,7 @@ class StudyGroupMessage {
     this.messageType = 'text',
     this.payload,
     this.createdAt = '',
+    this.isMine = false,
   });
 }
 
@@ -5454,6 +5526,7 @@ extension ApiClientLegacyCompat on ApiClient {
                 ? Map<String, dynamic>.from(m['payload'] as Map)
                 : null,
             createdAt: (m['created_at'] ?? '').toString(),
+            isMine: m['is_mine'] == true,
           );
         }).toList();
       },
@@ -5482,6 +5555,7 @@ extension ApiClientLegacyCompat on ApiClient {
               ? Map<String, dynamic>.from(m['payload'] as Map)
               : null,
           createdAt: (m['created_at'] ?? '').toString(),
+          isMine: m['is_mine'] == true,
         );
       },
     );

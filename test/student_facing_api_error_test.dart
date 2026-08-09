@@ -24,7 +24,7 @@ void main() {
     expect(groups, hasLength(1));
     expect(groups.single.id, '17');
     expect(groups.single.memberCount, 3);
-    expect(groups.single.memberIds, ['1', '2']);
+    expect(groups.single.name, '수학 그룹');
   });
 
   test('원시 API 예외 대신 학생용 상태 안내를 반환한다', () {

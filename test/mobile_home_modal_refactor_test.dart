@@ -207,6 +207,63 @@ void main() {
     expect(find.text('alice01님과 친구가 되었습니다.'), findsOneWidget);
   });
 
+  testWidgets('알림 센터에서 그룹 초대를 확인하고 거절할 수 있다', (tester) async {
+    _setMobileView(tester);
+    await ApiClient.instance.setToken('group-invitation-token');
+    var resolvedPath = '';
+    ApiClient.instance.setHttpClientForTest(
+      MockClient((request) async {
+        if (request.method == 'POST') {
+          resolvedPath = request.url.path;
+          return http.Response('{}', 200);
+        }
+        final body = switch (request.url.path) {
+          '/social/study-group-invitations' => {
+            'invitations': [
+              {
+                'group_id': 'group-1',
+                'group_name': '수학 집중방',
+                'inviter_username': 'alice01',
+                'created_at': '2026-08-09T00:00:00Z',
+              },
+            ],
+          },
+          '/social/friend-requests' => {'requests': []},
+          '/social/study-groups/notices/my/system' => {'notices': []},
+          _ => {'items': []},
+        };
+        return http.Response(
+          jsonEncode(body),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showStudentNotifications(context),
+              child: const Text('공지 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('공지 열기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('수학 집중방 그룹 초대'));
+    await tester.pumpAndSettle();
+    expect(find.text('alice01님이 그룹에 초대했습니다.'), findsOneWidget);
+    await tester.tap(find.text('거절'));
+    await tester.pumpAndSettle();
+
+    expect(resolvedPath, '/social/study-group-invitations/group-1/reject');
+    expect(find.text('수학 집중방 그룹 초대'), findsNothing);
+  });
+
   testWidgets('알림 센터는 읽지 않은 쪽지를 수신 알림으로 표시한다', (tester) async {
     _setMobileView(tester);
     SocialNotificationStore.clear();

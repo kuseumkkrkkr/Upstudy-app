@@ -546,12 +546,14 @@ class _StudentNotificationSnapshot {
     required this.academyNotices,
     required this.friendRequests,
     required this.directMessages,
+    required this.groupInvitations,
   });
 
   final List<StudyGroupNotice> globalNotices;
   final List<StudyGroupNotice> academyNotices;
   final List<FriendRequest> friendRequests;
   final List<DirectMessage> directMessages;
+  final List<StudyGroupInvitation> groupInvitations;
 }
 
 class _StudentNotificationsSheet extends StatefulWidget {
@@ -568,6 +570,7 @@ class _StudentNotificationsSheetState
     extends State<_StudentNotificationsSheet> {
   late final Future<_StudentNotificationSnapshot> _future = _load();
   final Set<String> _resolvedRequestIds = <String>{};
+  final Set<String> _resolvedGroupIds = <String>{};
 
   /// 필요한 변수는 전체 공지, 내 학원 공지, 친구 요청 API다.
   /// 작동 원리는 세 GET을 병렬 실행해 순차 요청 없이 알림 패널을 한 번에 갱신하는 것이다.
@@ -585,6 +588,9 @@ class _StudentNotificationsSheetState
       ApiClient.instance
           .fetchConversationThreads(forceRefresh: true)
           .onError((_, _) => const <DirectMessage>[]),
+      ApiClient.instance.listStudyGroupInvitations().onError(
+        (_, _) => const <StudyGroupInvitation>[],
+      ),
     ]);
     final friendRequests = results[2] as List<FriendRequest>;
     final directMessages = results[3] as List<DirectMessage>;
@@ -604,7 +610,45 @@ class _StudentNotificationsSheetState
       academyNotices: results[1] as List<StudyGroupNotice>,
       friendRequests: friendRequests,
       directMessages: directMessages,
+      groupInvitations: results[4] as List<StudyGroupInvitation>,
     );
+  }
+
+  Future<void> _confirmGroupInvitation(StudyGroupInvitation invitation) async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${invitation.groupName} 초대'),
+        content: Text('${invitation.inviterUsername}님이 그룹에 초대했습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('거절'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('수락'),
+          ),
+        ],
+      ),
+    );
+    if (accepted == null) return;
+    try {
+      await ApiClient.instance.resolveStudyGroupInvitation(
+        groupId: invitation.groupId,
+        accept: accepted,
+      );
+      if (!mounted) return;
+      setState(() => _resolvedGroupIds.add(invitation.groupId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(accepted ? '그룹 초대를 수락했습니다.' : '그룹 초대를 거절했습니다.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('그룹 초대를 처리하지 못했습니다.')));
+    }
   }
 
   /// 필요한 변수는 받은 친구 요청이다.
@@ -709,6 +753,12 @@ class _StudentNotificationsSheetState
                       !_resolvedRequestIds.contains(request.requestId),
                 )
                 .toList(growable: false);
+            final groupInvitations = data.groupInvitations
+                .where(
+                  (invitation) =>
+                      !_resolvedGroupIds.contains(invitation.groupId),
+                )
+                .toList(growable: false);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -726,6 +776,14 @@ class _StudentNotificationsSheetState
                         : '눌러서 요청을 확인하고 수락할 수 있어요.',
                     meta: '확인',
                     onTap: () => _confirmFriendRequest(request),
+                  ),
+                for (final invitation in groupInvitations)
+                  _UtilityNoticeRow(
+                    title: '${invitation.groupName} 그룹 초대',
+                    detail:
+                        '${invitation.inviterUsername}님이 초대했습니다. 눌러서 수락 또는 거절하세요.',
+                    meta: '확인',
+                    onTap: () => _confirmGroupInvitation(invitation),
                   ),
                 if (incomingRequests.isEmpty)
                   const _UtilityNoticeRow(

@@ -46,7 +46,16 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   List<String> _flowTags = const [];
   String _flowUserId = '';
   int? _flowRecentDays;
-  String _currentUserId = '';
+  String _currentUsername = '';
+
+  String get _currentRole =>
+      _members
+          .where((member) => member.username == _currentUsername)
+          .map((member) => member.role)
+          .firstOrNull ??
+      'member';
+
+  bool get _canManageGroup => const {'admin', 'deputy'}.contains(_currentRole);
 
   /// 필요한 변수는 선택적 그룹·멤버 초기값이다.
   /// 작동 원리는 초기값이 있으면 즉시 렌더하고 실제 진입은 그룹과 멤버 GET을 병렬 실행하는 것이다.
@@ -117,7 +126,11 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   Future<void> _loadCurrentUser() async {
     try {
       final profile = await ApiClient.instance.getMyProfile();
-      if (mounted) setState(() => _currentUserId = profile.userId);
+      if (mounted) {
+        setState(() {
+          _currentUsername = profile.username;
+        });
+      }
     } catch (_) {
       // 권한 버튼만 숨기고 그룹 조회는 계속 진행한다.
     }
@@ -143,7 +156,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   /// 검증하고, 성공 응답만 현재 일정 목록에 삽입한다.
   Future<void> _openScheduleComposer() async {
     final group = _group;
-    if (group == null || group.memberIds.isEmpty) return;
+    if (group == null || !_canManageGroup) return;
     final titleController = TextEditingController();
     var selectedDate = DateTime.now();
     TimeOfDay? selectedTime;
@@ -304,8 +317,6 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       builder: (context) => _GroupChatSheet(
         groupId: widget.groupId,
         groupName: _group?.name ?? '그룹',
-        memberCount: _members.length,
-        currentUserId: _currentUserId,
         initialMessages: widget.initialChatMessages,
       ),
     );
@@ -314,51 +325,38 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   /// 필요한 변수는 현재 그룹의 사용자 ID·닉네임 목록이다.
   /// 작동 원리는 소셜 그룹 API가 반환한 실제 계정 ID와 닉네임을 그대로 목록에 표시해 예비 하드코딩 멤버를 제거하는 것이다.
   Future<void> _openMembers() async {
-    final inviteRequested = await showModalBottomSheet<bool>(
+    final result = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => _GroupActionSheet(
-        kicker: '${_members.length} MEMBERS',
-        title: '그룹 멤버',
-        description: '현재 그룹의 멤버와 역할을 확인합니다.',
-        children: [
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              key: const ValueKey('group-invite-friend'),
-              onPressed: () => Navigator.of(context).pop(true),
-              icon: const Icon(Icons.person_add_alt_1_rounded),
-              label: const Text('내 친구 초대'),
-            ),
-          ),
-          for (final member in _members)
-            _GroupActionRow(
-              title: member.username,
-              detail: '사용자 ID · ${member.userId}',
-              meta: '멤버',
-            ),
-          if (_members.isEmpty)
-            const _GroupActionRow(
-              title: '표시할 멤버가 없습니다.',
-              detail: '그룹 멤버 정보를 불러오지 못했거나 아직 참여자가 없습니다.',
-              meta: '',
-            ),
-        ],
+      builder: (context) => _GroupMembersSheet(
+        groupId: widget.groupId,
+        groupName: _group?.name ?? '그룹',
+        currentUsername: _currentUsername,
+        initialMembers: _members,
       ),
     );
-    if (inviteRequested == true && mounted) {
+    if (result == 'deleted' && mounted) {
+      Navigator.of(context).pop(true);
+      return;
+    }
+    if (result == 'invite' && mounted) {
       final invited = await showModalBottomSheet<bool>(
         context: context,
         showDragHandle: true,
         isScrollControlled: true,
         builder: (context) => _GroupFriendInviteSheet(
           groupId: widget.groupId,
-          memberIds: _members.map((member) => member.userId).toSet(),
+          memberUsernames: _members.map((member) => member.username).toSet(),
         ),
       );
-      if (invited == true && mounted) await _load();
+      if (invited == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('그룹 초대를 보냈습니다. 상대방이 수락하면 참여합니다.')),
+        );
+      }
     }
+    if (mounted) await _load();
   }
 
   /// 필요한 변수는 현재 자료 탭이다.
@@ -499,8 +497,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                     memberCount: memberCount,
                     schedules: _schedules,
                     canCreateSchedule:
-                        group?.creatorId == _currentUserId &&
-                        _currentUserId.isNotEmpty,
+                        _canManageGroup && _currentUsername.isNotEmpty,
                     onCreateSchedule: _openScheduleComposer,
                     onMembers: _openMembers,
                     onChat: _openChat,
@@ -615,8 +612,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                                   memberCount: _members.length,
                                   schedules: _schedules,
                                   canCreateSchedule:
-                                      group?.creatorId == _currentUserId &&
-                                      _currentUserId.isNotEmpty,
+                                      _canManageGroup &&
+                                      _currentUsername.isNotEmpty,
                                   onCreateSchedule: _openScheduleComposer,
                                   onMembers: _openMembers,
                                 ),
@@ -1492,14 +1489,228 @@ class _SharedResourceTile extends StatelessWidget {
   );
 }
 
-class _GroupFriendInviteSheet extends StatefulWidget {
-  const _GroupFriendInviteSheet({
+class _GroupMembersSheet extends StatefulWidget {
+  const _GroupMembersSheet({
     required this.groupId,
-    required this.memberIds,
+    required this.groupName,
+    required this.currentUsername,
+    required this.initialMembers,
   });
 
   final String groupId;
-  final Set<String> memberIds;
+  final String groupName;
+  final String currentUsername;
+  final List<StudyGroupMember> initialMembers;
+
+  @override
+  State<_GroupMembersSheet> createState() => _GroupMembersSheetState();
+}
+
+class _GroupMembersSheetState extends State<_GroupMembersSheet> {
+  late List<StudyGroupMember> _members = widget.initialMembers;
+  String? _busyUsername;
+
+  String get _myRole =>
+      _members
+          .where((member) => member.username == widget.currentUsername)
+          .map((member) => member.role)
+          .firstOrNull ??
+      'member';
+
+  String _roleLabel(String role) => switch (role) {
+    'admin' => '관리자',
+    'deputy' => '부관리자',
+    _ => '멤버',
+  };
+
+  List<PopupMenuEntry<String>> _actionsFor(StudyGroupMember member) {
+    if (member.username == widget.currentUsername) return const [];
+    final actions = <PopupMenuEntry<String>>[];
+    if (_myRole == 'admin' && member.role != 'admin') {
+      actions.add(
+        PopupMenuItem(
+          value: member.role == 'deputy' ? 'member' : 'deputy',
+          child: Text(member.role == 'deputy' ? '부관리자 해제' : '부관리자 임명'),
+        ),
+      );
+      actions.add(const PopupMenuItem(value: 'admin', child: Text('관리자 양도')));
+    }
+    final canRemove =
+        member.role != 'admin' &&
+        (_myRole == 'admin' ||
+            (_myRole == 'deputy' && member.role == 'member'));
+    if (canRemove) {
+      actions.add(const PopupMenuItem(value: 'remove', child: Text('그룹에서 추방')));
+    }
+    return actions;
+  }
+
+  Future<bool> _confirm(String title, String content) async =>
+      await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('취소'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+
+  Future<void> _runAction(StudyGroupMember member, String action) async {
+    if (_busyUsername != null) return;
+    if (action == 'admin' &&
+        !await _confirm('관리자 양도', '${member.username}님에게 관리자 권한을 양도할까요?')) {
+      return;
+    }
+    if (action == 'remove' &&
+        !await _confirm('멤버 추방', '${member.username}님을 그룹에서 추방할까요?')) {
+      return;
+    }
+    setState(() => _busyUsername = member.username);
+    try {
+      if (action == 'remove') {
+        await ApiClient.instance.removeStudyGroupMember(
+          groupId: widget.groupId,
+          username: member.username,
+        );
+      } else {
+        await ApiClient.instance.changeStudyGroupMemberRole(
+          groupId: widget.groupId,
+          username: member.username,
+          role: action,
+        );
+      }
+      final members = await ApiClient.instance.listStudyGroupMembers(
+        widget.groupId,
+      );
+      if (mounted) setState(() => _members = members);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('멤버 권한을 변경하지 못했습니다.')));
+      }
+    } finally {
+      if (mounted) setState(() => _busyUsername = null);
+    }
+  }
+
+  Future<void> _deleteGroup() async {
+    if (!await _confirm('그룹 삭제', '${widget.groupName} 그룹과 모든 대화를 삭제할까요?')) {
+      return;
+    }
+    try {
+      await ApiClient.instance.deleteStudyGroup(widget.groupId);
+      if (mounted) Navigator.of(context).pop('deleted');
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('그룹을 삭제하지 못했습니다.')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: SizedBox(
+      height: MediaQuery.sizeOf(context).height * .72,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 4, 18, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '그룹 멤버',
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              key: const ValueKey('group-invite-friend'),
+              onPressed: () => Navigator.of(context).pop('invite'),
+              icon: const Icon(Icons.person_add_alt_1_rounded),
+              label: const Text('내 친구 초대'),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.separated(
+                key: const ValueKey('group-member-scroll'),
+                itemCount: _members.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final member = _members[index];
+                  final actions = _actionsFor(member);
+                  return Container(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF6F6F8),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            member.username,
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                        Text(
+                          _roleLabel(member.role),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        if (_busyUsername == member.username)
+                          const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        else if (actions.isNotEmpty)
+                          PopupMenuButton<String>(
+                            key: ValueKey('member-actions-${member.username}'),
+                            onSelected: (action) => _runAction(member, action),
+                            itemBuilder: (_) => actions,
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (_myRole == 'admin') ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                key: const ValueKey('delete-study-group'),
+                onPressed: _deleteGroup,
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: const Text('그룹 삭제'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _GroupFriendInviteSheet extends StatefulWidget {
+  const _GroupFriendInviteSheet({
+    required this.groupId,
+    required this.memberUsernames,
+  });
+
+  final String groupId;
+  final Set<String> memberUsernames;
 
   @override
   State<_GroupFriendInviteSheet> createState() =>
@@ -1528,7 +1739,9 @@ class _GroupFriendInviteSheetState extends State<_GroupFriendInviteSheet> {
       if (!mounted) return;
       setState(() {
         _friends = friends
-            .where((friend) => !widget.memberIds.contains(friend.userId))
+            .where(
+              (friend) => !widget.memberUsernames.contains(friend.username),
+            )
             .toList(growable: false);
       });
     } catch (_) {
@@ -1638,15 +1851,11 @@ class _GroupChatSheet extends StatefulWidget {
   const _GroupChatSheet({
     required this.groupId,
     required this.groupName,
-    required this.memberCount,
-    required this.currentUserId,
     this.initialMessages,
   });
 
   final String groupId;
   final String groupName;
-  final int memberCount;
-  final String currentUserId;
   final List<StudyGroupMessage>? initialMessages;
 
   /// 필요한 변수는 그룹·멤버·선택적 초기 메시지다.
@@ -1663,6 +1872,7 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
   bool _loading = true;
   bool _loadingPrevious = false;
   bool _sending = false;
+  bool _hasPrevious = true;
   String? _error;
 
   /// 필요한 변수는 서버의 ISO-8601 시간 문자열이다.
@@ -1694,7 +1904,6 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
   /// 작동 원리는 서버 닉네임을 우선 사용하고, 구형 응답에는 안전한 대체 문구를 적용하는 것이다.
   String _senderName(StudyGroupMessage message) {
     if (message.senderName.trim().isNotEmpty) return message.senderName.trim();
-    if (message.userId.trim().isNotEmpty) return message.userId.trim();
     return '그룹 멤버';
   }
 
@@ -1705,9 +1914,7 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
   /// 필요한 변수는 메시지와 말풍선 방향·색상이다.
   /// 작동 원리는 본인 메시지는 오른쪽, 다른 멤버 메시지는 왼쪽에 배치하고 닉네임·본문·시각을 하나의 말풍선으로 묶는 것이다.
   Widget _buildMessageBubble(StudyGroupMessage message) {
-    final isMine =
-        widget.currentUserId.isNotEmpty &&
-        message.userId == widget.currentUserId;
+    final isMine = message.isMine;
     final sender = _senderName(message);
     final bubbleColor = isMine ? const Color(0xFF202022) : Colors.white;
     final textColor = isMine ? Colors.white : const Color(0xFF202124);
@@ -1798,6 +2005,14 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.hasClients &&
+          _scrollController.position.pixels <= 80 &&
+          _hasPrevious &&
+          !_loadingPrevious) {
+        unawaited(_loadPrevious());
+      }
+    });
     unawaited(_loadInitial());
   }
 
@@ -1814,12 +2029,14 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
   /// 작동 원리는 미리보기 데이터가 있으면 API를 건너뛰고 운영 진입만 최근 메시지를 조회한다.
   Future<void> _loadInitial() async {
     try {
-      _messages =
+      final messages =
           widget.initialMessages ??
           await ApiClient.instance.fetchStudyGroupMessages(
             groupId: widget.groupId,
             limit: 30,
           );
+      _messages = messages;
+      _hasPrevious = widget.initialMessages == null && messages.length == 30;
     } catch (_) {
       _error = '최근 대화를 불러오지 못했습니다.';
     } finally {
@@ -1840,7 +2057,10 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
   /// 필요한 변수는 현재 가장 오래된 메시지 시각과 그룹 ID다.
   /// 작동 원리는 이전 30개를 앞에 합치고 중복 ID를 제거하며 최대 500개까지만 보존하는 것이다.
   Future<void> _loadPrevious() async {
-    if (_loadingPrevious || _messages.isEmpty) return;
+    if (_loadingPrevious || !_hasPrevious || _messages.isEmpty) return;
+    final oldMaxExtent = _scrollController.hasClients
+        ? _scrollController.position.maxScrollExtent
+        : 0.0;
     setState(() => _loadingPrevious = true);
     try {
       final previous = await ApiClient.instance.fetchStudyGroupMessages(
@@ -1851,10 +2071,18 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
       if (!mounted) return;
       final ids = _messages.map((item) => item.messageId).toSet();
       setState(() {
+        _hasPrevious = previous.length == 30;
         _messages = [
           ...previous.where((item) => !ids.contains(item.messageId)),
           ..._messages,
         ].take(_maxMessages).toList(growable: false);
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          final addedExtent =
+              _scrollController.position.maxScrollExtent - oldMaxExtent;
+          _scrollController.jumpTo(addedExtent.clamp(0, double.infinity));
+        }
       });
     } catch (_) {
       if (!mounted) return;
@@ -1921,7 +2149,7 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 14, 16),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                 child: Row(
                   children: [
                     Container(
@@ -1940,40 +2168,19 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.groupName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${widget.memberCount}명 · 최근 30개부터 표시',
-                            style: const TextStyle(
-                              color: Colors.black45,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        widget.groupName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: '이전 메시지 불러오기',
-                      onPressed: _messages.isEmpty || _loadingPrevious
-                          ? null
-                          : _loadPrevious,
-                      icon: const Icon(Icons.history_rounded),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: Color(0xFFE5E6EB)),
               Expanded(
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
@@ -1984,29 +2191,11 @@ class _GroupChatSheetState extends State<_GroupChatSheet> {
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
-                        itemCount: _messages.length + 1,
+                        itemCount: _messages.length,
                         itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 18),
-                                child: TextButton.icon(
-                                  onPressed: _loadingPrevious
-                                      ? null
-                                      : _loadPrevious,
-                                  icon: const Icon(
-                                    Icons.keyboard_arrow_up_rounded,
-                                  ),
-                                  label: Text(
-                                    _loadingPrevious ? '불러오는 중…' : '이전 메시지 더보기',
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-                          final message = _messages[index - 1];
-                          final previous = index > 1
-                              ? _messages[index - 2]
+                          final message = _messages[index];
+                          final previous = index > 0
+                              ? _messages[index - 1]
                               : null;
                           final showDate =
                               previous == null ||

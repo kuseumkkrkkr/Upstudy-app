@@ -210,7 +210,8 @@ def test_study_group_create_and_list_contract(monkeypatch):
         )
         assert created.status_code == 201
         assert created.json()["members"] == 1
-        assert created.json()["member_ids"] == ["user-alice"]
+        assert "member_ids" not in created.json()
+        assert "creator_id" not in created.json()
         assert "password" not in created.text
 
         listed = client.get("/social/study-groups/mine", headers=alice)
@@ -220,7 +221,7 @@ def test_study_group_create_and_list_contract(monkeypatch):
 
         members = client.get(f"/social/study-groups/{created.json()['group_id']}/members", headers=alice)
         assert members.status_code == 200
-        assert members.json() == [{"user_id": "user-alice", "username": "alice01"}]
+        assert members.json() == [{"username": "alice01", "role": "admin"}]
 
 
 def test_study_group_search_invite_and_join_contract(monkeypatch):
@@ -276,6 +277,7 @@ def test_study_group_search_invite_and_join_contract(monkeypatch):
 
         members = client.get(f"/social/study-groups/{created['group_id']}/members", headers=alice)
         assert {member["username"] for member in members.json()} == {"alice01", "bob0001"}
+        assert all("user_id" not in member for member in members.json())
 
 
 def test_study_group_friend_invite_and_member_chat_contract(monkeypatch):
@@ -319,15 +321,27 @@ def test_study_group_friend_invite_and_member_chat_contract(monkeypatch):
             json={"username": "bob0001"},
         )
         assert invited.status_code == 200
-        assert invited.json()["members"] == 2
+        assert invited.json()["group_id"] == group_id
+        assert client.get("/social/study-groups/mine", headers=bob).json()["groups"] == []
+        pending = client.get("/social/study-group-invitations", headers=bob)
+        assert pending.status_code == 200
+        assert pending.json()["invitations"][0]["group_name"] == "친구 수학방"
+        assert "invited_by_user_id" not in pending.text
         repeated = client.post(
             f"/social/study-groups/{group_id}/invite-friend",
             headers=alice,
             json={"username": "bob0001"},
         )
         assert repeated.status_code == 200
-        assert repeated.json()["members"] == 2
+        assert len(client.get("/social/study-group-invitations", headers=bob).json()["invitations"]) == 1
+        accepted = client.post(
+            f"/social/study-group-invitations/{group_id}/accept",
+            headers=bob,
+        )
+        assert accepted.status_code == 200
+        assert accepted.json()["members"] == 2
         assert client.get("/social/study-groups/mine", headers=bob).json()["groups"][0]["group_id"] == group_id
+        assert client.get("/social/study-group-invitations", headers=bob).json()["invitations"] == []
 
         first = client.post(
             f"/social/study-groups/{group_id}/messages",
@@ -337,6 +351,8 @@ def test_study_group_friend_invite_and_member_chat_contract(monkeypatch):
         assert first.status_code == 201
         assert first.json()["text"] == "첫 메시지"
         assert first.json()["sender_name"] == "앨리스"
+        assert first.json()["is_mine"] is True
+        assert "user_id" not in first.json()
         assert client.get(
             f"/social/study-groups/{group_id}/messages",
             headers=bob,
@@ -365,3 +381,108 @@ def test_study_group_friend_invite_and_member_chat_contract(monkeypatch):
             headers=bobby,
             json={"text": "침입"},
         ).status_code == 404
+
+
+def test_study_group_roles_schedule_removal_transfer_and_delete(monkeypatch):
+    """초대 거절과 관리자 계층의 일정·추방·양도·삭제 권한을 서버에서 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeSocialDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    alice = _headers(module, "user-alice")
+    bob = _headers(module, "user-bob")
+    bobby = _headers(module, "user-bobby")
+
+    with TestClient(module.app) as client:
+        for username, target_headers in (("bob0001", bob), ("bobby02", bobby)):
+            request = client.post(
+                "/social/friend-requests",
+                headers=alice,
+                json={"username": username},
+            ).json()
+            assert client.post(
+                f"/social/friend-requests/{request['request_id']}/accept",
+                headers=target_headers,
+            ).status_code == 200
+
+        group_id = client.post(
+            "/social/study-groups",
+            headers=alice,
+            json={"name": "권한 검증방", "max_members": 5},
+        ).json()["group_id"]
+
+        assert client.post(
+            f"/social/study-groups/{group_id}/invite-friend",
+            headers=alice,
+            json={"username": "bobby02"},
+        ).status_code == 200
+        assert client.post(
+            f"/social/study-group-invitations/{group_id}/reject",
+            headers=bobby,
+        ).status_code == 200
+        assert client.get("/social/study-groups/mine", headers=bobby).json()["groups"] == []
+
+        for username, target_headers in (("bob0001", bob), ("bobby02", bobby)):
+            assert client.post(
+                f"/social/study-groups/{group_id}/invite-friend",
+                headers=alice,
+                json={"username": username},
+            ).status_code == 200
+            assert client.post(
+                f"/social/study-group-invitations/{group_id}/accept",
+                headers=target_headers,
+            ).status_code == 200
+
+        promoted = client.post(
+            f"/social/study-groups/{group_id}/members/bob0001/role",
+            headers=alice,
+            json={"role": "deputy"},
+        )
+        assert promoted.status_code == 200
+        assert {member["username"]: member["role"] for member in promoted.json()} == {
+            "alice01": "admin",
+            "bob0001": "deputy",
+            "bobby02": "member",
+        }
+        assert client.post(
+            f"/social/study-groups/{group_id}/members/bobby02/role",
+            headers=bob,
+            json={"role": "deputy"},
+        ).status_code == 403
+
+        schedule = client.post(
+            f"/social/study-groups/{group_id}/schedules",
+            headers=bob,
+            json={"title": "부관리자 일정", "scheduled_date": "2099-01-01", "scheduled_time": "18:30"},
+        )
+        assert schedule.status_code == 201
+        assert client.post(
+            f"/social/study-groups/{group_id}/schedules",
+            headers=bobby,
+            json={"title": "권한 없음", "scheduled_date": "2099-01-01"},
+        ).status_code == 403
+        assert client.get(
+            f"/social/study-groups/{group_id}/schedules",
+            headers=alice,
+        ).json()["schedules"][0]["title"] == "부관리자 일정"
+
+        assert client.delete(
+            f"/social/study-groups/{group_id}/members/bobby02",
+            headers=bob,
+        ).status_code == 200
+        assert client.get(f"/social/study-groups/{group_id}/members", headers=bobby).status_code == 404
+
+        transferred = client.post(
+            f"/social/study-groups/{group_id}/members/bob0001/role",
+            headers=alice,
+            json={"role": "admin"},
+        )
+        assert transferred.status_code == 200
+        assert {member["username"]: member["role"] for member in transferred.json()} == {
+            "bob0001": "admin",
+            "alice01": "member",
+        }
+        assert client.delete(f"/social/study-groups/{group_id}", headers=alice).status_code == 403
+        assert client.delete(f"/social/study-groups/{group_id}", headers=bob).status_code == 200
+        assert client.get("/social/study-groups/mine", headers=alice).json()["groups"] == []
+        assert client.get("/social/study-groups/mine", headers=bob).json()["groups"] == []

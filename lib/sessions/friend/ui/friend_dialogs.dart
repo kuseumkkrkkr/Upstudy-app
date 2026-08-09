@@ -83,7 +83,7 @@ class _GroupCreateDialogBodyState extends State<_GroupCreateDialogBody> {
           name: group.name,
           description: group.description ?? '',
           maxMembers: group.maxMembers,
-          members: group.memberIds.length,
+          members: group.memberCount,
           isPublic: group.isPublic,
           logoIndex: group.logoIndex,
           lockEnabled: group.lockEnabled,
@@ -414,6 +414,15 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   @override
   void initState() {
     super.initState();
+    _chatScroll.addListener(() {
+      if (_chatScroll.hasClients &&
+          _chatScroll.position.pixels <= 80 &&
+          _chatHasMore &&
+          !_chatLoading &&
+          _messages.isNotEmpty) {
+        _loadMessages(loadMore: true);
+      }
+    });
     _bootstrap();
   }
 
@@ -830,6 +839,9 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
     if (_chatLoading || (!loadMore && !_chatHasMore && _messages.isNotEmpty)) {
       return;
     }
+    final oldMaxExtent = _chatScroll.hasClients
+        ? _chatScroll.position.maxScrollExtent
+        : 0.0;
     setState(() => _chatLoading = true);
     try {
       final fetched = await ApiClient.instance.fetchStudyGroupMessages(
@@ -838,13 +850,23 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
         before: loadMore ? _chatBefore : null,
       );
       if (!mounted) return;
-      final next = loadMore ? [..._messages, ...fetched] : fetched;
+      final next = loadMore ? [...fetched, ..._messages] : fetched;
       setState(() {
         _messages = next;
-        _chatBefore = fetched.isNotEmpty ? fetched.last.messageId : _chatBefore;
+        _chatBefore = fetched.isNotEmpty
+            ? fetched.first.createdAt
+            : _chatBefore;
         _chatHasMore = fetched.length >= 30;
       });
-      if (!loadMore) {
+      if (loadMore) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_chatScroll.hasClients) {
+            final addedExtent =
+                _chatScroll.position.maxScrollExtent - oldMaxExtent;
+            _chatScroll.jumpTo(addedExtent.clamp(0.0, double.infinity));
+          }
+        });
+      } else {
         await Future<void>.delayed(const Duration(milliseconds: 50));
         if (_chatScroll.hasClients) {
           _chatScroll.jumpTo(_chatScroll.position.maxScrollExtent);
@@ -1250,21 +1272,6 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
   Widget _chatPanel() {
     return Column(
       children: [
-        Row(
-          children: [
-            Text(
-              '최대 500개 메시지 · 최근 30개부터 표시',
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: _chatHasMore && !_chatLoading
-                  ? () => _loadMessages(loadMore: true)
-                  : null,
-              child: const Text('이전 메시지 더보기'),
-            ),
-          ],
-        ),
         Expanded(
           child: Container(
             decoration: BoxDecoration(
@@ -1282,17 +1289,13 @@ class _GroupDetailDialogState extends State<_GroupDetailDialog>
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final msg = _messages[index];
-                      final isMe =
-                          _myUsername != null &&
-                          _myUsername!.isNotEmpty &&
-                          msg.userId == _myUsername;
                       return _buildChatBubble(
                         text: msg.text,
                         senderName: msg.senderName.isNotEmpty
                             ? msg.senderName
                             : msg.userId,
                         timeLabel: _formatChatTime(msg.createdAt),
-                        isMe: isMe,
+                        isMe: msg.isMine,
                         messageType: msg.messageType,
                         payload: msg.payload,
                       );
