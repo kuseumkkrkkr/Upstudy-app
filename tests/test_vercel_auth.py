@@ -225,7 +225,14 @@ def test_personal_schedule_round_trip(monkeypatch):
         saved = client.put(
             "/academy/students/me/schedule",
             headers=headers,
-            json={"tasks_by_date": {"2026-08-09": ["오답 복습"], "2026-08-10": ["개념 정리"]}},
+            json={
+                "tasks_by_date": {
+                    "2026-08-09": [
+                        {"title": "오답 복습", "start_time": "18:00", "end_time": "19:00"}
+                    ],
+                    "2026-08-10": ["개념 정리"],
+                }
+            },
         )
         assert saved.status_code == 200
 
@@ -235,12 +242,26 @@ def test_personal_schedule_round_trip(monkeypatch):
             ("2026-08-09", "오답 복습"),
             ("2026-08-10", "개념 정리"),
         ]
+        assert loaded.json()["items"][0]["start_time"] == "18:00"
+        assert loaded.json()["items"][0]["end_time"] == "19:00"
         invalid = client.put(
             "/academy/students/me/schedule",
             headers=headers,
             json={"tasks_by_date": {"2026-02-30": ["잘못된 날짜"]}},
         )
         assert invalid.status_code == 400
+        invalid_time = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={
+                "tasks_by_date": {
+                    "2026-08-09": [
+                        {"title": "잘못된 시간", "start_time": "19:00", "end_time": "18:00"}
+                    ]
+                }
+            },
+        )
+        assert invalid_time.status_code == 400
 
 
 def test_marketplace_catalog_search_and_pagination(monkeypatch):

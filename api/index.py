@@ -646,9 +646,9 @@ class SolveHistoryCreateRequest(BaseModel):
 
 
 class StudentScheduleSyncRequest(BaseModel):
-    """필요 변수: 날짜별 개인 일정 제목. 작동 원리: 전체 일정 스냅샷을 사용자 단위로 교체한다."""
+    """필요 변수: 날짜별 개인 일정. 작동 원리: 제목과 선택 시간을 사용자 단위 스냅샷으로 교체한다."""
 
-    tasks_by_date: dict[str, list[str]]
+    tasks_by_date: dict[str, list[Any]]
 
 
 class MarketplaceProgressRequest(BaseModel):
@@ -2271,11 +2271,11 @@ def list_empty_student_tasks(_user_id: str = Depends(_current_user)) -> dict[str
 _STUDENT_SCHEDULE_STORAGE_KEY = "student.schedule.v1"
 
 
-def _normalize_student_schedule(tasks_by_date: dict[str, list[str]]) -> dict[str, list[str]]:
-    """필요 변수: 날짜별 제목 목록. 작동 원리: 크기·날짜·제목을 제한하고 중복을 제거한다."""
+def _normalize_student_schedule(tasks_by_date: dict[str, list[Any]]) -> dict[str, list[dict[str, str]]]:
+    """필요 변수: 날짜별 일정 목록. 작동 원리: 과거 문자열도 받아 제목·시간 객체로 정규화한다."""
     if len(tasks_by_date) > 366:
         raise HTTPException(status_code=400, detail="Too many schedule dates")
-    normalized: dict[str, list[str]] = {}
+    normalized: dict[str, list[dict[str, str]]] = {}
     task_count = 0
     for date_key, raw_titles in tasks_by_date.items():
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_key):
@@ -2284,31 +2284,60 @@ def _normalize_student_schedule(tasks_by_date: dict[str, list[str]]) -> dict[str
             date.fromisoformat(date_key)
         except ValueError as error:
             raise HTTPException(status_code=400, detail="Invalid schedule date") from error
-        titles: list[str] = []
-        for raw_title in raw_titles:
-            title = raw_title.strip()
+        tasks: list[dict[str, str]] = []
+        seen: set[tuple[str, str, str]] = set()
+        for raw_task in raw_titles:
+            if isinstance(raw_task, str):
+                title = raw_task.strip()
+                start_time = ""
+                end_time = ""
+            elif isinstance(raw_task, dict):
+                title = str(raw_task.get("title", "")).strip()
+                start_time = str(raw_task.get("start_time", "")).strip()
+                end_time = str(raw_task.get("end_time", "")).strip()
+            else:
+                raise HTTPException(status_code=400, detail="Schedule task must be a string or object")
             if not title or len(title) > 60:
                 raise HTTPException(status_code=400, detail="Schedule title must be 1-60 characters")
-            if title not in titles:
-                titles.append(title)
-                task_count += 1
-                if task_count > 500:
-                    raise HTTPException(status_code=400, detail="Too many schedule tasks")
-        if titles:
-            normalized[date_key] = titles
+            for value in (start_time, end_time):
+                if value and not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", value):
+                    raise HTTPException(status_code=400, detail="Schedule time must be HH:MM")
+            if end_time and not start_time:
+                raise HTTPException(status_code=400, detail="Schedule start time is required")
+            if start_time and end_time and end_time <= start_time:
+                raise HTTPException(status_code=400, detail="Schedule end time must be after start time")
+            signature = (title, start_time, end_time)
+            if signature in seen:
+                continue
+            seen.add(signature)
+            task = {"title": title}
+            if start_time:
+                task["start_time"] = start_time
+            if end_time:
+                task["end_time"] = end_time
+            tasks.append(task)
+            task_count += 1
+            if task_count > 500:
+                raise HTTPException(status_code=400, detail="Too many schedule tasks")
+        if tasks:
+            normalized[date_key] = tasks
     return dict(sorted(normalized.items()))
 
 
-def _student_schedule_items(user_id: str, tasks_by_date: dict[str, list[str]]) -> list[dict[str, str]]:
+def _student_schedule_items(
+    user_id: str, tasks_by_date: dict[str, list[dict[str, str]]]
+) -> list[dict[str, str]]:
     """필요 변수: 사용자 ID와 정규화 일정. 작동 원리: 재조회에도 안정적인 일정 ID를 생성한다."""
     return [
         {
-            "task_id": hashlib.sha256(f"{user_id}:{date_key}:{index}:{title}".encode()).hexdigest()[:24],
+            "task_id": hashlib.sha256(
+                f"{user_id}:{date_key}:{index}:{json.dumps(task, sort_keys=True)}".encode()
+            ).hexdigest()[:24],
             "date": date_key,
-            "title": title,
+            **task,
         }
-        for date_key, titles in tasks_by_date.items()
-        for index, title in enumerate(titles)
+        for date_key, tasks in tasks_by_date.items()
+        for index, task in enumerate(tasks)
     ]
 
 

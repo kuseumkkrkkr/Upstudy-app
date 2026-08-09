@@ -1233,17 +1233,23 @@ class StudentScheduleTask {
     required this.taskId,
     required this.date,
     required this.title,
+    this.startTime,
+    this.endTime,
   });
 
   final String taskId;
   final String date;
   final String title;
+  final String? startTime;
+  final String? endTime;
 
   factory StudentScheduleTask.fromJson(Map<String, dynamic> json) {
     return StudentScheduleTask(
       taskId: json['task_id']?.toString() ?? '',
       date: json['date']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
+      startTime: json['start_time']?.toString(),
+      endTime: json['end_time']?.toString(),
     );
   }
 }
@@ -3254,11 +3260,19 @@ class ApiClient {
   }
 
   Future<ApiResponse<void>> syncMyStudentSchedule(
-    Map<DateTime, List<String>> tasksByDate,
+    Map<DateTime, List<StudentScheduleTask>> tasksByDate,
   ) async {
-    final payload = <String, List<String>>{
+    final payload = <String, List<Map<String, String>>>{
       for (final entry in tasksByDate.entries)
-        _dateKey(entry.key): List<String>.from(entry.value),
+        _dateKey(entry.key): [
+          for (final task in entry.value)
+            {
+              'title': task.title,
+              if (task.startTime?.isNotEmpty == true)
+                'start_time': task.startTime!,
+              if (task.endTime?.isNotEmpty == true) 'end_time': task.endTime!,
+            },
+        ],
     };
     final response = await _put('/academy/students/me/schedule', {
       'tasks_by_date': payload,
