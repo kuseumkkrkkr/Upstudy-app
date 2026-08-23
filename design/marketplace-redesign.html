@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<style>
+@keyframes fade-up { from { opacity:0; transform:translateY(8px); } }
+body { margin:0; }
+* { box-sizing: border-box; }
+</style>
+</helmet>
+<div style="width:390px;height:844px;margin:0 auto;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Pretendard,'Noto Sans KR',system-ui,sans-serif;color:#09090b;position:relative;display:flex;flex-direction:column;overflow:hidden;">
+
+  <!-- Tabs -->
+  <div style="position:sticky;top:0;z-index:40;display:flex;background:#fff;border-bottom:1px solid #ececef;padding:0 16px;">
+    <sc-for list="{{ mainTabs }}" as="tab" hint-placeholder-count="3">
+      <button onClick="{{ tab.onSelect }}" style="flex:1;min-height:50px;color:{{ tab.color }};border:none;background:transparent;border-bottom:{{ tab.borderBottom }};font-size:13px;font-weight:850;cursor:pointer;position:relative;">{{ tab.label }}</button>
+    </sc-for>
+  </div>
+
+  <main style="padding:20px 16px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+
+    <!-- Learning Library / Course / Exam / Problems Tab -->
+    <sc-if value="{{ isContentTab }}" hint-placeholder-val="{{ true }}">
+      <!-- Hero -->
+      <section style="margin-bottom:24px;">
+        <h1 style="margin:0 0 8px;font-size:26px;line-height:1.1;letter-spacing:-0.04em;font-weight:900;">학습 자료실</h1>
+      </section>
+
+      <!-- Search & Filter -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <div style="display:grid;grid-template-columns:18px minmax(0,1fr);align-items:center;gap:8px;flex:1;min-height:40px;padding:0 12px;background:#fff;border:1px solid #ececef;border-radius:14px;">
+          <span style="color:#a1a1aa;font-size:14px;">⌕</span>
+          <input placeholder="검색" style="background:transparent;border:0;outline:0;font-size:12px;font-family:inherit;" />
+        </div>
+        <button style="min-height:40px;padding:0 12px;color:#09090b;background:#f2f2f4;border:1px solid #ececef;border-radius:10px;font-size:11px;font-weight:900;cursor:pointer;">필터</button>
+      </div>
+
+      <!-- Filter buttons -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 0 16px 0;">
+        <button onClick="{{ selectFilter }}" data-filter="전체" style="padding:8px 12px;border:none;background:{{ filter === '전체' ? '#f2f2f4' : 'transparent' }};color:{{ filter === '전체' ? '#09090b' : '#71717a' }};border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center;">전체</button>
+        <button onClick="{{ selectFilter }}" data-filter="코스" style="padding:8px 12px;border:none;background:{{ filter === '코스' ? '#0a0a0b' : 'transparent' }};color:{{ filter === '코스' ? '#fff' : '#71717a' }};border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center;">코스</button>
+        <button onClick="{{ selectFilter }}" data-filter="시험지" style="padding:8px 12px;border:none;background:{{ filter === '시험지' ? '#0a0a0b' : 'transparent' }};color:{{ filter === '시험지' ? '#fff' : '#71717a' }};border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center;">시험지</button>
+        <button onClick="{{ selectFilter }}" data-filter="문제집" style="padding:8px 12px;border:none;background:{{ filter === '문제집' ? '#0a0a0b' : 'transparent' }};color:{{ filter === '문제집' ? '#fff' : '#71717a' }};border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center;">문제집</button>
+      </div>
+
+      <!-- Trend Section -->
+      <section style="margin-bottom:28px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <h2 style="margin:0;font-size:16px;font-weight:900;">인기 자료</h2>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <sc-for list="{{ displayTrending }}" as="item" hint-placeholder-count="3">
+            <button style="display:flex;flex-direction:column;min-height:200px;padding:12px;background:#fff;border:1px solid #ececef;border-radius:14px;cursor:pointer;position:relative;overflow:hidden;">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg, {{ item.gradientStart }} 0%, {{ item.gradientEnd }} 100%);"></div>
+              <div style="position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:space-between;">
+                <span style="display:inline-block;padding:4px 8px;background:{{ filterTypeColor(item.type) }};color:#000;border-radius:999px;font-size:8px;font-weight:800;width:fit-content;">{{ item.type }}</span>
+                <div>
+                  <b style="display:block;color:#000;font-size:12px;line-height:1.3;margin-bottom:4px;">{{ item.title }}</b>
+                  <small style="display:block;color:#333;font-size:9px;">{{ item.meta }}</small>
+                </div>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ hasMoreTrending }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ toggleTrendingExpand }}" style="width:100%;min-height:44px;margin-top:12px;color:#09090b;background:#fff;border:1px solid #ececef;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">+더보기</button>
+        </sc-if>
+      </section>
+
+      <!-- Recommendation Section -->
+      <section>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <h2 style="margin:0;font-size:16px;font-weight:900;">개인 맞춤형 추천</h2>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <sc-for list="{{ displayRecommended }}" as="item" hint-placeholder-count="3">
+            <button style="display:flex;flex-direction:column;min-height:200px;padding:12px;background:#fff;border:1px solid #ececef;border-radius:14px;cursor:pointer;position:relative;overflow:hidden;">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg, {{ item.gradientStart }} 0%, {{ item.gradientEnd }} 100%);"></div>
+              <div style="position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:space-between;">
+                <span style="display:inline-block;padding:4px 8px;background:{{ filterTypeColor(item.type) }};color:#000;border-radius:999px;font-size:8px;font-weight:800;width:fit-content;">{{ item.type }}</span>
+                <div>
+                  <b style="display:block;color:#000;font-size:12px;line-height:1.3;margin-bottom:4px;">{{ item.title }}</b>
+                  <small style="display:block;color:#333;font-size:9px;">{{ item.meta }}</small>
+                </div>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ hasMoreRecommend }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ toggleRecommendExpand }}" style="width:100%;min-height:44px;margin-top:12px;margin-bottom:32px;color:#09090b;background:#fff;border:1px solid #ececef;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">+더보기</button>
+        </sc-if>
+      </section>
+    </sc-if>
+
+    <!-- Points Store Tab -->
+    <sc-if value="{{ isPointsTab }}" hint-placeholder-val="{{ false }}">
+      <section style="margin-bottom:24px;">
+        <h1 style="margin:0 0 8px;font-size:26px;line-height:1.1;letter-spacing:-0.04em;font-weight:900;">포인트 상점</h1>
+      </section>
+
+      <!-- Points Card -->
+      <div style="padding:20px;background:linear-gradient(135deg, #0a0a0b 0%, #2a2a2b 100%);border-radius:18px;color:#fff;margin-bottom:20px;box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+        <span style="display:block;font-size:11px;font-weight:800;color:rgba(255,255,255,0.7);margin-bottom:8px;">TOTAL POINTS</span>
+        <b style="display:block;font-size:36px;font-weight:900;margin-bottom:16px;">12,840</b>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button style="min-height:36px;color:#0a0a0b;background:#fff;border:none;border-radius:10px;font-size:11px;font-weight:900;cursor:pointer;">포인트 획득</button>
+          <button style="min-height:36px;color:#fff;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:10px;font-size:11px;font-weight:900;cursor:pointer;">사용 내역</button>
+        </div>
+      </div>
+
+      <!-- Rewards Grid -->
+      <div style="display:grid;gap:12px;">
+        <sc-for list="{{ rewards }}" as="reward" hint-placeholder-count="4">
+          <div style="padding:16px;background:#fff;border:1px solid #ececef;border-radius:14px;display:flex;gap:12px;align-items:center;">
+            <div style="display:inline-flex;width:48px;height:48px;flex:0 0 auto;align-items:center;justify-content:center;background:#f2f2f4;border-radius:12px;font-size:20px;color:#09090b;font-weight:900;">●</div>
+            <div style="flex:1;min-width:0;">
+              <b style="display:block;font-size:13px;margin-bottom:2px;">{{ reward.name }}</b>
+              <small style="display:block;color:#71717a;font-size:10px;">{{ reward.cost }}P</small>
+            </div>
+            <button style="min-height:36px;padding:0 12px;color:#fff;background:#0a0a0b;border:none;border-radius:9px;font-size:10px;font-weight:900;cursor:pointer;">받기</button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Subscription Tab -->
+    <sc-if value="{{ isSubscriptionTab }}" hint-placeholder-val="{{ false }}">
+      <section style="margin-bottom:24px;">
+        <h1 style="margin:0 0 8px;font-size:26px;line-height:1.1;letter-spacing:-0.04em;font-weight:900;">구독</h1>
+      </section>
+
+      <!-- Subscription Plans -->
+      <div style="display:grid;gap:12px;margin-bottom:32px;">
+        <sc-for list="{{ subscriptions }}" as="plan" hint-placeholder-count="2">
+          <div style="padding:22px;background:{{ plan.bgColor }};border:{{ plan.border }};border-radius:16px;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:{{ plan.accentColor }};border-radius:50%;opacity:0.1;transform:translate(40px, -40px);pointer-events:none;"></div>
+            <div style="position:relative;z-index:1;display:flex;flex-direction:column;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px;">
+                <b style="font-size:18px;color:{{ plan.textColor }};flex:1;">{{ plan.name }}</b>
+                {{ plan.badge ? `<span style="padding:4px 10px;background:${plan.badgeBg};color:${plan.badgeColor};border-radius:999px;font-size:9px;font-weight:850;flex:0 0 auto;">` + plan.badge + `</span>` : '' }}
+              </div>
+              <div style="margin-bottom:14px;">
+                <span style="display:block;color:{{ plan.priceColor }};font-size:24px;font-weight:900;">{{ plan.price }}</span>
+                <small style="display:block;color:{{ plan.metaColor }};font-size:10px;">{{ plan.period }}</small>
+              </div>
+              <ul style="list-style:none;padding:0;margin:0 0 14px;display:grid;gap:8px;flex:1;">
+                <sc-for list="{{ plan.features }}" as="feature" hint-placeholder-count="3">
+                  <li style="color:{{ plan.textColor }};font-size:11px;">✓ {{ feature }}</li>
+                </sc-for>
+              </ul>
+              <button style="width:100%;min-height:40px;color:{{ plan.btnColor }};background:{{ plan.btnBg }};border:{{ plan.btnBorder }};border-radius:11px;font-size:12px;font-weight:900;cursor:pointer;margin-top:auto;">{{ plan.btnText }}</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+  </main>
+
+  <!-- Bottom nav -->
+  <nav style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:390px;display:flex;justify-content:space-around;align-items:center;gap:2px;background:#0a0a0b;padding:8px 8px calc(8px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,0.1);z-index:50;">
+    <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+      <button style="display:grid;place-items:center;gap:2px;min-width:52px;min-height:44px;padding:4px 6px;color:{{ n.color }};background:{{ n.bg }};border:0;border-radius:16px;font-size:8px;font-weight:750;cursor:pointer;">
+        <span style="font-size:14px;">■</span>
+        <span>{{ n.label }}</span>
+      </button>
+    </sc-for>
+  </nav>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 390, &quot;height&quot;: 900}}">
+
+class Component extends DCLogic {
+  state = { activeTab: '학습자료실', initialized: false, filter: '전체', trendingExpanded: false, recommendExpanded: false };
+
+  componentDidMount() {
+    if (!this.state.initialized) {
+      this.setState({ initialized: true, activeTab: '학습자료실' });
+    }
+  }
+
+  setTab(tab) {
+    this.setState({ activeTab: tab });
+  }
+
+  setFilter(filter) {
+    this.setState({ filter });
+  }
+
+  toggleTrendingExpand() {
+    this.setState(s => ({ trendingExpanded: !s.trendingExpanded }));
+  }
+
+  toggleRecommendExpand() {
+    this.setState(s => ({ recommendExpanded: !s.recommendExpanded }));
+  }
+
+  filterTypeColor(type) {
+    const colors = {
+      '코스': 'rgba(255,255,255,0.25)',
+      '시험지': 'rgba(255,255,255,0.25)',
+      '문제집': 'rgba(255,255,255,0.25)',
+    };
+    return colors[type] || 'rgba(255,255,255,0.15)';
+  }
+
+  renderVals() {
+    const mainTabs = [
+      { label: '학습자료실', value: '학습자료실' },
+      { label: '포인트상점', value: '포인트상점' },
+      { label: '구독', value: '구독' },
+    ];
+
+    const categories = [
+      { label: '전체', bg: '#f2f2f4', color: '#09090b', border: '1px solid #ececef' },
+      { label: '코스', bg: '#0a0a0b', color: '#fff', border: 'none' },
+      { label: '시험지', bg: 'transparent', color: '#71717a', border: '1px solid #ececef' },
+      { label: '문제집', bg: 'transparent', color: '#71717a', border: '1px solid #ececef' },
+    ];
+
+    const gradients = [
+      { start: '#FF6B6B', end: '#FF8E8E' },
+      { start: '#4ECDC4', end: '#6EE7DE' },
+      { start: '#FFE66D', end: '#FFED4E' },
+      { start: '#95E1D3', end: '#B8E6D8' },
+      { start: '#C7B3E5', end: '#E0C9F7' },
+      { start: '#F38181', end: '#FCBAD3' },
+    ];
+
+    const trending = [
+      { type: '코스', title: '중2 함수 마스터', meta: '4.9 ★ · 1.2K', ...gradients[0] },
+      { type: '시험지', title: '2024 중2 1학기 모의고사', meta: '무료 · 500+', ...gradients[1] },
+      { type: '문제집', title: '일차함수 실전 100제', meta: '중상 · 100문', ...gradients[2] },
+      { type: '코스', title: '도형의 닮음 완성', meta: '4.7 ★ · 850', ...gradients[3] },
+      { type: '시험지', title: '확률 기출 분석', meta: '유료 · 320', ...gradients[4] },
+      { type: '문제집', title: '그래프 해석 40문제', meta: '중 · 40문', ...gradients[5] },
+    ];
+
+    const recommended = [
+      { type: '코스', title: '일차방정식 기초', meta: '8강 · 2주', ...gradients[0] },
+      { type: '시험지', title: '중2 2학기 기출', meta: '유료 · 120문', ...gradients[1] },
+      { type: '문제집', title: '도형 성질 연습', meta: '기초 · 60문', ...gradients[2] },
+      { type: '코스', title: '확률의 기초', meta: '10강 · 3주', ...gradients[3] },
+      { type: '시험지', title: '함수 심화 문제', meta: '유료 · 150문', ...gradients[4] },
+      { type: '문제집', title: '닮음비 완성', meta: '중상 · 45문', ...gradients[5] },
+    ];
+
+    const rewards = [
+      { icon: '📚', name: '교재 이용권', cost: 5000 },
+      { icon: '🎯', name: '맞춤 문제 팩', cost: 3000 },
+      { icon: '⭐', name: 'OVR 부스트', cost: 8000 },
+      { icon: '🏆', name: '코스 인증서', cost: 6000 },
+    ];
+
+    const subscriptions = [
+      {
+        name: '무료',
+        price: '$0',
+        period: '영구',
+        bgColor: '#f9f9fa',
+        border: '1px solid #ececef',
+        textColor: '#09090b',
+        priceColor: '#09090b',
+        metaColor: '#a1a1aa',
+        accentColor: '#0a0a0b',
+        features: ['기본 검색', '월 5회 학습', '커뮤니티 접근'],
+        btnBg: '#f2f2f4',
+        btnColor: '#09090b',
+        btnBorder: '1px solid #ececef',
+        btnText: '지금 사용 중',
+      },
+      {
+        name: 'Standard',
+        price: '$4.99',
+        period: '월 / 결제 시',
+        bgColor: '#f9f9fa',
+        border: '1px solid #ececef',
+        textColor: '#09090b',
+        priceColor: '#09090b',
+        metaColor: '#a1a1aa',
+        accentColor: '#0a0a0b',
+        features: ['무제한 검색', '기본 자료 접근', '주간 이벤트'],
+        btnBg: '#0a0a0b',
+        btnColor: '#fff',
+        btnBorder: 'none',
+        btnText: '구독하기',
+      },
+      {
+        name: 'Premium',
+        badge: '인기',
+        price: '$9.99',
+        period: '월 / 결제 시',
+        bgColor: '#0a0a0b',
+        border: '2px solid #0a0a0b',
+        textColor: '#fff',
+        priceColor: '#fff',
+        metaColor: '#b9b9c0',
+        accentColor: '#fff',
+        badgeBg: 'rgba(255,255,255,0.2)',
+        badgeColor: '#fff',
+        features: ['무제한 검색', '전체 자료 접근', '커뮤니티 프리미엄', '월간 이벤트'],
+        btnBg: '#fff',
+        btnColor: '#0a0a0b',
+        btnBorder: 'none',
+        btnText: '구독하기',
+      },
+    ];
+
+    const navItems = [
+      { label: '홈' },
+      { label: '코스' },
+      { label: '마켓', active: true },
+      { label: '대결' },
+      { label: '소셜' },
+    ];
+
+    const filterType = this.state.filter;
+    const filteredTrending = filterType === '전체'
+      ? trending
+      : trending.filter(t => t.type === filterType);
+    
+    const filteredRecommended = filterType === '전체'
+      ? recommended
+      : recommended.filter(r => r.type === filterType);
+
+    const displayTrending = this.state.trendingExpanded ? filteredTrending : filteredTrending.slice(0, 3);
+    const hasMoreTrending = filteredTrending.length > 3 && !this.state.trendingExpanded;
+    
+    const displayRecommended = this.state.recommendExpanded ? filteredRecommended : filteredRecommended.slice(0, 3);
+    const hasMoreRecommend = filteredRecommended.length > 3 && !this.state.recommendExpanded;
+
+    return {
+      activeTab: this.state.activeTab,
+      filter: this.state.filter === '전체' ? '전체' : (this.state.activeTab === '코스' ? '코스' : this.state.activeTab === '시험지' ? '시험지' : this.state.activeTab === '문제집' ? '문제집' : this.state.filter),
+      isLearningTab: this.state.activeTab === '학습자료실',
+      isContentTab: ['학습자료실', '코스', '시험지', '문제집'].includes(this.state.activeTab),
+      isPointsTab: this.state.activeTab === '포인트상점',
+      isSubscriptionTab: this.state.activeTab === '구독',
+      filterTypeColor: (type) => this.filterTypeColor(type),
+      selectFilter: (e) => {
+        const filter = e.target.getAttribute('data-filter') || e.target.parentElement.getAttribute('data-filter');
+        this.setFilter(filter);
+      },
+      mainTabs: mainTabs.map(t => ({
+        ...t,
+        onSelect: () => this.setTab(t.value),
+        color: t.value === this.state.activeTab ? '#0a0a0b' : '#a1a1aa',
+        borderBottom: t.value === this.state.activeTab ? '2px solid #0a0a0b' : 'none',
+      })),
+      toggleTrendingExpand: () => this.toggleTrendingExpand(),
+      toggleRecommendExpand: () => this.toggleRecommendExpand(),
+      trendingExpanded: this.state.trendingExpanded,
+      recommendExpanded: this.state.recommendExpanded,
+      categories,
+      trending,
+      displayTrending,
+      hasMoreTrending,
+      recommended,
+      displayRecommended,
+      hasMoreRecommend,
+      rewards,
+      subscriptions,
+      navItems: navItems.map(n => ({
+        ...n,
+        color: n.active ? '#fff' : '#71717a',
+        bg: n.active ? 'rgba(255,255,255,0.1)' : 'transparent',
+      })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
