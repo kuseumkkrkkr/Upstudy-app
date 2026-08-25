@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upstudy - AI 기반 맞춤형 수학 학습</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans KR', sans-serif; color: #1a1a1a; line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; min-height: 100vh; background: white;">
+
+<!-- 네비게이션 바 -->
+<nav style="display: flex; justify-content: space-between; align-items: center; padding: 16px 48px; border-bottom: 1px solid #e8e8e8; position: sticky; top: 0; background: white; z-index: 100;">
+  <div style="font-size: 24px; font-weight: 700; color: #4a90e2;">Upstudy</div>
+  <div style="display: flex; gap: 40px; align-items: center;">
+    <a href="#features" style="font-size: 14px; font-weight: 500; color: #666;">주요 기능</a>
+    <a href="#how-to-use" style="font-size: 14px; font-weight: 500; color: #666;">사용 방법</a>
+    <a href="#pricing" style="font-size: 14px; font-weight: 500; color: #666;">가격</a>
+    <a href="#faq" style="font-size: 14px; font-weight: 500; color: #666;">FAQ</a>
+    <button style="padding: 10px 20px; background: #4a90e2; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">로그인</button>
+  </div>
+</nav>
+
+<!-- 히어로 섹션 -->
+<section style="display: flex; align-items: center; justify-content: space-between; padding: 80px 48px; background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%); min-height: 600px;">
+  <div style="flex: 1; max-width: 500px;">
+    <h1 style="font-size: 48px; font-weight: 700; color: #1a1a1a; margin-bottom: 24px; line-height: 1.2;">
+      과정으로 결과를 만든다
+    </h1>
+    <p style="font-size: 18px; color: #666; margin-bottom: 32px; line-height: 1.6;">
+      AI 기반 맞춤형 수학 학습으로 수능 최고점을 목표로 합니다. 개념부터 문제풀이까지 단계별 학습으로 확실한 성장을 경험하세요.
+    </p>
+    <div style="display: flex; gap: 16px;">
+      <button style="padding: 14px 32px; background: #4a90e2; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">지금 시작하기</button>
+      <button style="padding: 14px 32px; background: white; color: #4a90e2; border: 2px solid #4a90e2; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">더 알아보기</button>
+    </div>
+  </div>
+  <div style="flex: 1; text-align: center; padding: 40px;">
+    <div style="width: 300px; height: 400px; background: linear-gradient(135deg, #e8f0ff 0%, #d4e3ff 100%); border-radius: 20px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #4a90e2;">📱</div>
+  </div>
+</section>
+
+<!-- 주요 기능 -->
+<section id="features" style="padding: 80px 48px; background: white;">
+  <h2 style="font-size: 40px; font-weight: 700; text-align: center; margin-bottom: 60px;">주요 기능</h2>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; max-width: 1200px; margin: 0 auto;">
+    
+    <div style="padding: 32px; background: #f9f9f9; border-radius: 12px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 20px;">🎯</div>
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">맞춤형 학습</h3>
+      <p style="font-size: 14px; color: #666; line-height: 1.6;">AI가 당신의 약점을 분석하고 최적의 학습 경로를 제시합니다.</p>
+    </div>
+
+    <div style="padding: 32px; background: #f9f9f9; border-radius: 12px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">실시간 분석</h3>
+      <p style="font-size: 14px; color: #666; line-height: 1.6;">학습 진도와 성취도를 실시간으로 추적하고 개선 방안을 제안합니다.</p>
+    </div>
+
+    <div style="padding: 32px; background: #f9f9f9; border-radius: 12px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 20px;">💡</div>
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">상세한 풀이</h3>
+      <p style="font-size: 14px; color: #666; line-height: 1.6;">모든 문제의 풀이 과정을 단계별로 설명하고 개념을 강화합니다.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 사용 방법 -->
+<section id="how-to-use" style="padding: 80px 48px; background: #f5f7ff;">
+  <h2 style="font-size: 40px; font-weight: 700; text-align: center; margin-bottom: 60px;">어떻게 사용하나요?</h2>
+  <div style="max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;">
+    
+    <div style="text-align: center;">
+      <div style="width: 80px; height: 80px; background: #4a90e2; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; font-weight: 700;">1</div>
+      <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">가입하기</h4>
+      <p style="font-size: 13px; color: #666;">이메일로 간단히 회원가입을 완료합니다.</p>
+    </div>
+
+    <div style="text-align: center;">
+      <div style="width: 80px; height: 80px; background: #4a90e2; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; font-weight: 700;">2</div>
+      <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">과정 선택</h4>
+      <p style="font-size: 13px; color: #666;">자신의 수준과 목표에 맞는 과정을 선택합니다.</p>
+    </div>
+
+    <div style="text-align: center;">
+      <div style="width: 80px; height: 80px; background: #4a90e2; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; font-weight: 700;">3</div>
+      <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">학습 시작</h4>
+      <p style="font-size: 13px; color: #666;">맞춤형 콘텐츠로 체계적인 학습을 시작합니다.</p>
+    </div>
+
+    <div style="text-align: center;">
+      <div style="width: 80px; height: 80px; background: #4a90e2; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; font-weight: 700;">4</div>
+      <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">성장 추적</h4>
+      <p style="font-size: 13px; color: #666;">실시간 분석으로 당신의 성장을 확인합니다.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 사용자 후기 -->
+<section style="padding: 80px 48px; background: white;">
+  <h2 style="font-size: 40px; font-weight: 700; text-align: center; margin-bottom: 60px;">사용자 후기</h2>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; max-width: 1200px; margin: 0 auto;">
+    
+    <div style="padding: 32px; background: #f9f9f9; border-radius: 12px; border-left: 4px solid #4a90e2;">
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">⭐⭐⭐⭐⭐</div>
+      <p style="font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.6;">"Upstudy 덕분에 수학이 정말 재미있어졌어요. AI 풀이가 정말 자세해서 이해하기 쉬워요."</p>
+      <p style="font-size: 14px; font-weight: 600; color: #1a1a1a;">- 김지은 (고3)</p>
+    </div>
+
+    <div style="padding: 32px; background: #f9f9f9; border-radius: 12px; border-left: 4px solid #4a90e2;">
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">⭐⭐⭐⭐⭐</div>
+      <p style="font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.6;">"약점을 정확히 파악해서 효율적으로 공부할 수 있었어요. 추천합니다!"</p>
+      <p style="font-size: 14px; font-weight: 600; color: #1a1a1a;">- 이준호 (고2)</p>
+    </div>
+
+    <div style="padding: 32px; background: #f9f9f9; border-radius: 12px; border-left: 4px solid #4a90e2;">
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">⭐⭐⭐⭐⭐</div>
+      <p style="font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.6;">"다른 앱들보다 훨씬 체계적이고, 실제로 성적이 올랐어요."</p>
+      <p style="font-size: 14px; font-weight: 600; color: #1a1a1a;">- 박민주 (고3)</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 가격 -->
+<section id="pricing" style="padding: 80px 48px; background: #f5f7ff;">
+  <h2 style="font-size: 40px; font-weight: 700; text-align: center; margin-bottom: 60px;">가격 안내</h2>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; max-width: 1100px; margin: 0 auto;">
+    
+    <div style="padding: 40px; background: white; border-radius: 12px; border: 1px solid #e8e8e8; text-align: center;">
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">무료</h3>
+      <p style="font-size: 32px; font-weight: 700; color: #4a90e2; margin-bottom: 24px;">₩0<span style="font-size: 14px; color: #666;">/월</span></p>
+      <ul style="list-style: none; margin-bottom: 32px; text-align: left; font-size: 13px; color: #666; line-height: 2;">
+        <li>✓ 기본 문제 풀이</li>
+        <li>✓ 개념 학습 (제한)</li>
+        <li>✗ 맞춤형 분석</li>
+        <li>✗ 전체 콘텐츠 접근</li>
+      </ul>
+      <button style="width: 100%; padding: 12px; background: #f0f0f0; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">시작하기</button>
+    </div>
+
+    <div style="padding: 40px; background: white; border-radius: 12px; border: 2px solid #4a90e2; text-align: center; transform: scale(1.05);">
+      <div style="display: inline-block; background: #4a90e2; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 16px;">추천</div>
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">프리미엄</h3>
+      <p style="font-size: 32px; font-weight: 700; color: #4a90e2; margin-bottom: 24px;">₩9,900<span style="font-size: 14px; color: #666;">/월</span></p>
+      <ul style="list-style: none; margin-bottom: 32px; text-align: left; font-size: 13px; color: #666; line-height: 2;">
+        <li>✓ 전체 문제 풀이</li>
+        <li>✓ 모든 개념 학습</li>
+        <li>✓ AI 맞춤형 분석</li>
+        <li>✓ 모든 콘텐츠 접근</li>
+      </ul>
+      <button style="width: 100%; padding: 12px; background: #4a90e2; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">구독하기</button>
+    </div>
+
+    <div style="padding: 40px; background: white; border-radius: 12px; border: 1px solid #e8e8e8; text-align: center;">
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">플러스</h3>
+      <p style="font-size: 32px; font-weight: 700; color: #4a90e2; margin-bottom: 24px;">₩19,900<span style="font-size: 14px; color: #666;">/월</span></p>
+      <ul style="list-style: none; margin-bottom: 32px; text-align: left; font-size: 13px; color: #666; line-height: 2;">
+        <li>✓ 프리미엄 전체 포함</li>
+        <li>✓ 1:1 멘토링</li>
+        <li>✓ 실시간 질문 답변</li>
+        <li>✓ 학습 계획 수립 지원</li>
+      </ul>
+      <button style="width: 100%; padding: 12px; background: #f0f0f0; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">구독하기</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" style="padding: 80px 48px; background: white;">
+  <h2 style="font-size: 40px; font-weight: 700; text-align: center; margin-bottom: 60px;">자주하는 질문</h2>
+  <div style="max-width: 700px; margin: 0 auto;">
+    
+    <div style="padding: 20px; border-bottom: 1px solid #e8e8e8;">
+      <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; cursor: pointer;">📌 무료 버전으로는 어디까지 이용할 수 있나요?</h4>
+      <p style="font-size: 14px; color: #666; line-height: 1.6;">무료 버전에서는 기본 문제 풀이와 제한된 개념 학습을 이용할 수 있습니다. 맞춤형 분석과 전체 콘텐츠는 프리미엄 이상에서 이용 가능합니다.</p>
+    </div>
+
+    <div style="padding: 20px; border-bottom: 1px solid #e8e8e8;">
+      <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; cursor: pointer;">📌 구독을 언제든 취소할 수 있나요?</h4>
+      <p style="font-size: 14px; color: #666; line-height: 1.6;">네, 언제든지 구독을 취소할 수 있습니다. 취소 후 남은 기간까지 프리미엄을 이용할 수 있으며, 환불은 정책에 따릅니다.</p>
+    </div>
+
+    <div style="padding: 20px; border-bottom: 1px solid #e8e8e8;">
+      <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; cursor: pointer;">📌 오프라인에서도 학습할 수 있나요?</h4>
+      <p style="font-size: 14px; color: #666; line-height: 1.6;">현재는 온라인 학습만 지원하고 있습니다. 오프라인 다운로드 기능은 추후에 추가될 예정입니다.</p>
+    </div>
+
+    <div style="padding: 20px;">
+      <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; cursor: pointer;">📌 문제가 있을 때 고객 지원을 받을 수 있나요?</h4>
+      <p style="font-size: 14px; color: #666; line-height: 1.6;">네, 이메일과 인앱 채팅으로 24시간 고객 지원을 받을 수 있습니다. 플러스 이상의 구독자는 우선 지원을 받습니다.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA 섹션 -->
+<section style="padding: 80px 48px; background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%); color: white; text-align: center;">
+  <h2 style="font-size: 40px; font-weight: 700; margin-bottom: 24px;">지금 시작하세요</h2>
+  <p style="font-size: 18px; margin-bottom: 40px; opacity: 0.9;">과정으로 결과를 만드는 Upstudy의 변화를 직접 경험해보세요.</p>
+  <button style="padding: 16px 48px; background: white; color: #4a90e2; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer;">무료로 시작하기</button>
+</section>
+
+<!-- 푸터 -->
+<footer style="padding: 40px 48px; background: #1a1a1a; color: #999; font-size: 13px; border-top: 1px solid #333;">
+  <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px;">
+    <div>
+      <p style="color: white; font-weight: 700; margin-bottom: 16px;">Upstudy</p>
+      <p style="line-height: 1.8;">AI 기반 맞춤형 수학 학습 플랫폼</p>
+    </div>
+    <div>
+      <p style="color: white; font-weight: 700; margin-bottom: 16px;">서비스</p>
+      <p style="line-height: 1.8;"><a href="#" style="color: #999; text-decoration: none;">주요 기능</a><br><a href="#" style="color: #999; text-decoration: none;">가격</a><br><a href="#" style="color: #999; text-decoration: none;">Blog</a></p>
+    </div>
+    <div>
+      <p style="color: white; font-weight: 700; margin-bottom: 16px;">회사</p>
+      <p style="line-height: 1.8;"><a href="#" style="color: #999; text-decoration: none;">소개</a><br><a href="#" style="color: #999; text-decoration: none;">채용</a><br><a href="#" style="color: #999; text-decoration: none;">연락처</a></p>
+    </div>
+    <div>
+      <p style="color: white; font-weight: 700; margin-bottom: 16px;">법적</p>
+      <p style="line-height: 1.8;"><a href="#" style="color: #999; text-decoration: none;">이용약관</a><br><a href="#" style="color: #999; text-decoration: none;">개인정보</a></p>
+    </div>
+  </div>
+  <div style="margin-top: 40px; padding-top: 40px; border-top: 1px solid #333; text-align: center;">
+    <p>© 2026 Upstudy. All rights reserved.</p>
+  </div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
