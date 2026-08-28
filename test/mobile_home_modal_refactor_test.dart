@@ -16,7 +16,7 @@ void _setMobileView(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets('학습 시작은 전체 화면 패널 대신 2열 Material 하단 시트를 연다', (tester) async {
+  testWidgets('학습 시작은 시안과 같은 1열 학습 카드 하단 시트를 연다', (tester) async {
     _setMobileView(tester);
     await tester.pumpWidget(
       MaterialApp(
@@ -37,12 +37,13 @@ void main() {
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.byType(StudypageCopyWidget), findsOneWidget);
     expect(find.text('어떤 방식으로 공부할까요?'), findsNothing);
-    expect(find.text('STUDY MODE'), findsNothing);
+    expect(find.text('STUDY MODE'), findsOneWidget);
+    expect(find.text('학습하기'), findsOneWidget);
     expect(find.text('이어하기'), findsOneWidget);
     expect(find.text('교재보기'), findsOneWidget);
-    expect(find.text('마지막 학습 위치'), findsNothing);
-    expect(find.text('보유 문제세트 이어풀기'), findsNothing);
-    expect(find.text('책가방에서 교재 선택'), findsNothing);
+    expect(find.text('마지막 학습 위치'), findsOneWidget);
+    expect(find.text('보유 문제세트 이어풀기'), findsOneWidget);
+    expect(find.text('책가방에서 교재 선택'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
