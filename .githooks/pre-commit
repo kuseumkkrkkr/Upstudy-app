@@ -1,12 +1,16 @@
 #!/bin/sh
 
-# 필요한 변수: 현재 Git 브랜치 이름.
-# 작동 원리: main이 아닌 브랜치와 detached HEAD에서 새 커밋을 차단한다.
+# 필요한 변수: 현재 Git 브랜치 이름과 허용된 Gitflow 브랜치 목록.
+# 작동 원리: 최종본(main), Vercel 카나리(hotfix), 배포 후보(feature)에서만
+# 새 커밋을 허용하고, 그 외 브랜치와 detached HEAD는 차단한다.
 branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
 
-if [ "$branch" != "main" ]; then
-  echo "커밋이 차단되었습니다. 이 저장소는 main 브랜치에서만 커밋할 수 있습니다." >&2
-  exit 1
-fi
+case "$branch" in
+  main|hotfix|feature) ;;
+  *)
+    echo "커밋이 차단되었습니다. main, hotfix 또는 feature 브랜치에서만 커밋할 수 있습니다." >&2
+    exit 1
+    ;;
+esac
 
 exit 0
