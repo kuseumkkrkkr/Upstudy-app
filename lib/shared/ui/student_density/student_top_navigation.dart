@@ -31,7 +31,7 @@ List<Ios26NavItem> studentTopNavItems(
         ),
         (
           destination: StudentTopDestination.bookbag,
-          label: '책가방',
+          label: '자료실',
           route: '/bookbag',
         ),
         (

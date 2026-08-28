@@ -162,7 +162,7 @@ void main() {
     await _verifyViewport(tester, const Size(1280, 900), mobile: false);
   });
 
-  testWidgets('모바일 드로어에서 코스·책가방·소셜·마켓으로 이동한다', (tester) async {
+  testWidgets('모바일 드로어에서 코스·자료실·소셜·마켓으로 이동한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -188,7 +188,7 @@ void main() {
     expect(find.text('홈'), findsOneWidget);
     expect(find.text('학습터'), findsOneWidget);
     expect(find.text('코스'), findsOneWidget);
-    expect(find.text('책가방'), findsOneWidget);
+    expect(find.text('자료실'), findsOneWidget);
     expect(find.text('친구/소셜'), findsOneWidget);
     expect(find.text('마켓플레이스'), findsOneWidget);
 
@@ -226,7 +226,7 @@ void main() {
     expect(find.text('홈'), findsOneWidget);
     expect(find.text('학습터'), findsOneWidget);
     expect(find.text('코스'), findsOneWidget);
-    expect(find.text('책가방'), findsOneWidget);
+    expect(find.text('자료실'), findsOneWidget);
     expect(find.text('친구/소셜'), findsOneWidget);
     expect(find.text('마켓플레이스'), findsOneWidget);
 
