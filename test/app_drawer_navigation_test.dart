@@ -11,9 +11,9 @@ const _drawerDestinations = <String, String>{
   '홈': '/student/dashboard',
   '일정': '/schedule',
   '코스': '/courses',
-  '자료실': '/bookbag',
+  '책가방': '/bookbag',
   '오답 노트': '/wrong_answers',
-  '레벨 테스트': '/level_test',
+  '보고서 보기': '/level_test',
   '대결': '/arena',
   '친구/소셜': '/social',
   '스터디 그룹': '/groups',
@@ -29,17 +29,15 @@ const _mobilePrimaryDestinations = <String, String>{
 };
 
 const _mobileMoreDestinations = <String, String>{
-  '현재 코스': '/courses',
   '일정': '/schedule',
-  '자료실': '/bookbag',
-  '레벨 테스트': '/level_test',
-};
-
-const _mobileMoreTabs = <String, String>{
-  '현재 코스': '학습',
-  '일정': '내 메뉴',
-  '자료실': '내 메뉴',
-  '레벨 테스트': '학습',
+  '책가방': '/bookbag',
+  '오답 노트': '/wrong_answers',
+  '보고서 보기': '/level_test',
+  '대결': '/arena',
+  '친구/소셜': '/social',
+  '스터디 그룹': '/groups',
+  '학습 도구': '/tools',
+  '설정': '/settings',
 };
 
 /// 필요한 변수는 테스트할 메뉴 항목의 목적지다.
@@ -178,25 +176,13 @@ void main() {
       '/profile': (_) => const Scaffold(body: Text('/profile 도착')),
     };
 
-    final mobileEntries = _mobileMoreDestinations.entries.toList();
-    for (var entryIndex = 0; entryIndex < mobileEntries.length; entryIndex++) {
-      final entry = mobileEntries[entryIndex];
+    for (final entry in _mobileMoreDestinations.entries) {
       await tester.pumpWidget(
         _mobileBottomFixture(routes, key: ValueKey('more-${entry.value}')),
       );
       await tester.tap(find.text('더보기'));
       await tester.pumpAndSettle();
 
-      final tab = _mobileMoreTabs[entry.key]!;
-      await tester.tap(find.byKey(ValueKey('mobile-more-tab-$tab')));
-      await tester.pump();
-      if (tab == '내 메뉴' && entryIndex >= 6) {
-        await tester.drag(
-          find.byKey(const ValueKey('mobile-more-menu-list')),
-          const Offset(0, -500),
-        );
-        await tester.pump();
-      }
       final destination = find.byKey(ValueKey('mobile-more-${entry.value}'));
       await tester.ensureVisible(destination);
       await tester.pumpAndSettle();
@@ -211,14 +197,12 @@ void main() {
     );
     await tester.tap(find.text('더보기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('mobile-more-/profile')));
+    await tester.tap(find.byKey(const ValueKey('mobile-more-profile')));
     await tester.pumpAndSettle();
     expect(find.text('/profile 도착'), findsOneWidget);
   });
 
-  testWidgets('모바일 더보기는 시안의 세 분류와 메뉴 항목을 표시한다', (tester) async {
+  testWidgets('모바일 더보기의 검색과 알림 버튼이 전용 패널을 연다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -229,48 +213,7 @@ void main() {
     );
     await tester.tap(find.text('더보기'));
     await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('mobile-more-tab-학습')), findsOneWidget);
-    expect(find.byKey(const ValueKey('mobile-more-tab-도구')), findsOneWidget);
-    expect(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')), findsOneWidget);
-    expect(find.text('현재 코스'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-도구')));
-    await tester.pump();
-    expect(find.text('그래프'), findsOneWidget);
-    expect(find.text('노트패드'), findsOneWidget);
-    expect(find.text('타이머'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
-    await tester.pump();
-    expect(find.text('검색'), findsOneWidget);
-    expect(find.text('알림'), findsOneWidget);
-    await tester.fling(
-      find.byKey(const ValueKey('mobile-more-menu-list')),
-      const Offset(0, -400),
-      1200,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('AIFlow 학원 찾기'), findsOneWidget);
-    expect(find.text('과외 찾기'), findsOneWidget);
-    expect(find.text('스터디 그룹'), findsNothing);
-    expect(find.text('학습 이력'), findsNothing);
-  });
-
-  testWidgets('모바일 더보기의 검색과 알림은 실제 유틸리티 패널을 연다', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(
-      _mobileBottomFixture(const {}, key: const ValueKey('more-utilities')),
-    );
-    await tester.tap(find.text('더보기'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('mobile-more-검색')));
+    await tester.tap(find.byKey(const ValueKey('mobile-more-search')));
     await tester.pump();
     expect(find.text('전체 검색'), findsOneWidget);
 
@@ -279,14 +222,48 @@ void main() {
     );
     await tester.tap(find.text('더보기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('mobile-more-알림')));
+    await tester.tap(find.byKey(const ValueKey('mobile-more-notifications')));
     await tester.pump();
     expect(find.text('알림 센터'), findsOneWidget);
   });
 
-  testWidgets('모바일 더보기의 시안 전용 기능은 가짜 화면을 열지 않는다', (tester) async {
+  testWidgets('내 정보 저장 후 로그인 화면이 아닌 학생 홈으로 돌아간다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        initialRoute: '/student/dashboard',
+        routes: {
+          '/': (_) => const Scaffold(body: Text('로그인 화면')),
+          '/student/dashboard': (_) => const Scaffold(
+            body: Text('학생 홈'),
+            bottomNavigationBar: MobileStudentBottomAppBar(),
+          ),
+          '/profile': (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('저장하기'),
+            ),
+          ),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('더보기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('mobile-more-profile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('저장하기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('학생 홈'), findsOneWidget);
+    expect(find.text('로그인 화면'), findsNothing);
+  });
+
+  testWidgets('모바일 전체 검색은 수학 키워드를 실제 학습 화면과 연결한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -297,20 +274,15 @@ void main() {
     );
     await tester.tap(find.text('더보기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
+    await tester.tap(find.byKey(const ValueKey('mobile-more-search')));
     await tester.pump();
-    await tester.fling(
-      find.byKey(const ValueKey('mobile-more-menu-list')),
-      const Offset(0, -400),
-      1200,
-    );
-    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '수학');
+    await tester.pump();
 
-    final unavailable = find.byKey(const ValueKey('mobile-more-AIFlow 학원 찾기'));
-    await tester.tap(unavailable);
-    await tester.pumpAndSettle();
-    expect(find.text('AIFlow 학원 찾기 기능은 준비 중입니다.'), findsOneWidget);
-    expect(find.byKey(const ValueKey('mobile-more-sheet')), findsNothing);
+    expect(find.text('코스'), findsAtLeastNWidgets(1));
+    expect(find.text('AI 학습 튜터'), findsOneWidget);
+    expect(find.text('마켓플레이스'), findsOneWidget);
+    expect(find.text('연결할 검색 화면이 없습니다.'), findsNothing);
   });
 
   testWidgets('모바일 탐색은 큰 글꼴·터치 높이와 선택 대비를 유지한다', (tester) async {
@@ -348,44 +320,25 @@ void main() {
 
     final moreTitles = tester
         .widgetList<Text>(find.text('더보기'))
-        .where((widget) => widget.style?.fontSize == 22);
-    final scheduleLabel = tester.widget<Text>(find.text('현재 코스'));
+        .where((widget) => widget.style?.fontSize == 28);
+    final scheduleLabel = tester.widget<Text>(find.text('일정'));
+    final searchLabel = tester.widget<Text>(find.text('검색'));
 
     expect(moreTitles, hasLength(1));
-    expect(scheduleLabel.style?.fontSize, greaterThanOrEqualTo(13));
+    expect(find.text('학습과 계정 기능을 한곳에서 열어요'), findsNothing);
+    expect(find.byKey(const ValueKey('mobile-more-close')), findsNothing);
+    expect(scheduleLabel.style?.fontSize, greaterThanOrEqualTo(17));
+    expect(searchLabel.style?.fontSize, greaterThanOrEqualTo(15));
+    expect(searchLabel.style?.color, Colors.white);
     expect(
-      tester.getSize(find.byKey(const ValueKey('mobile-more-/courses'))).height,
-      closeTo(56, 1),
+      tester
+          .getSize(find.byKey(const ValueKey('mobile-more-/schedule')))
+          .height,
+      greaterThanOrEqualTo(64),
     );
     expect(
-      tester.getSize(find.byKey(const ValueKey('mobile-more-close'))).height,
-      closeTo(48, 1),
+      tester.getSize(find.byKey(const ValueKey('mobile-more-search'))).height,
+      greaterThanOrEqualTo(76),
     );
-  });
-
-  testWidgets('모바일 더보기 시트는 하단 탭 위에서 닫힌다', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(
-      _mobileBottomFixture(const {}, key: const ValueKey('more-geometry')),
-    );
-    await tester.tap(find.text('더보기'));
-    await tester.pumpAndSettle();
-
-    final sheet = tester.getRect(
-      find.byKey(const ValueKey('mobile-more-sheet')),
-    );
-    final nav = tester.getRect(find.byType(MobileStudentBottomAppBar));
-    expect(sheet.top, closeTo(456, 2));
-    expect(sheet.height, closeTo(320, 2));
-    expect(sheet.bottom, closeTo(nav.top, 2));
-    expect(find.byKey(const ValueKey('mobile-more-scrim')), findsOneWidget);
-
-    await tester.tapAt(const Offset(8, 250));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('mobile-more-sheet')), findsNothing);
   });
 }

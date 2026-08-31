@@ -641,7 +641,7 @@ class _MobileMarketplaceBody extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       const Text(
-        '마켓플레이스',
+        '코스 찾기',
         style: TextStyle(
           fontSize: 40,
           height: 1,
@@ -764,7 +764,7 @@ class _MobileMarketSearch extends StatelessWidget {
     onSubmitted: (_) => onSearch(),
     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
     decoration: InputDecoration(
-      hintText: '코스 · 시험지 · 문제세트 검색',
+      hintText: '코스 · 시험지 검색',
       hintStyle: const TextStyle(
         fontSize: 17,
         color: Color(0xFF88888E),
