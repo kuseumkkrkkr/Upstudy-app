@@ -41,6 +41,8 @@ class _FakeProfileDataApi(_FakeAuthDataApi):
 
     def request(self, method, path, *, query=None, body=None, prefer=None):
         """필요 변수: PostgREST 호출. 작동 원리: PATCH·DELETE·KV upsert를 메모리 상태에 반영한다."""
+        if path == "level_test_session":
+            return []
         if path == "canary_user_kv":
             user_id = (body or {}).get("user_id") or (query or {}).get("user_id", "").removeprefix("eq.")
             key = (body or {}).get("key") or (query or {}).get("key", "").removeprefix("eq.")
@@ -183,6 +185,85 @@ def test_new_user_dashboard_endpoints(monkeypatch):
             "team_exam",
         ]
         assert all(item["coming_soon"] is True for item in arena["queues"])
+
+def test_public_textbook_list_and_detail(monkeypatch):
+    """신규 책가방은 공개 교재 목록과 실제로 열 수 있는 본문을 함께 제공한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={
+                "username": "bookbag01",
+                "password": "password123",
+                "name": "책가방 사용자",
+                "grade": "1학년",
+            },
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        textbooks = client.get("/textbooks", headers=headers).json()["textbooks"]
+        assert textbooks
+        textbook_id = textbooks[0]["textbook_id"]
+        detail = client.get(f"/textbooks/{textbook_id}", headers=headers)
+        assert detail.status_code == 200
+        assert detail.json()["chapters"]
+        assert client.get("/textbooks/missing", headers=headers).status_code == 404
+
+
+def test_personal_schedule_round_trip(monkeypatch):
+    """필요 변수: 로그인 사용자와 날짜별 일정. 작동 원리: PUT 저장값이 다음 GET에서 같은 사용자 일정으로 복원되는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student09", "password": "password123", "name": "학생9", "grade": "1학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        saved = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={
+                "tasks_by_date": {
+                    "2026-08-09": [
+                        {"title": "오답 복습", "start_time": "18:00", "end_time": "19:00"}
+                    ],
+                    "2026-08-10": ["개념 정리"],
+                }
+            },
+        )
+        assert saved.status_code == 200
+
+        loaded = client.get("/academy/students/me/schedule", headers=headers)
+        assert loaded.status_code == 200
+        assert [(item["date"], item["title"]) for item in loaded.json()["items"]] == [
+            ("2026-08-09", "오답 복습"),
+            ("2026-08-10", "개념 정리"),
+        ]
+        assert loaded.json()["items"][0]["start_time"] == "18:00"
+        assert loaded.json()["items"][0]["end_time"] == "19:00"
+        invalid = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={"tasks_by_date": {"2026-02-30": ["잘못된 날짜"]}},
+        )
+        assert invalid.status_code == 400
+        invalid_time = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={
+                "tasks_by_date": {
+                    "2026-08-09": [
+                        {"title": "잘못된 시간", "start_time": "19:00", "end_time": "18:00"}
+                    ]
+                }
+            },
+        )
+        assert invalid_time.status_code == 400
 
 
 def test_marketplace_catalog_search_and_pagination(monkeypatch):

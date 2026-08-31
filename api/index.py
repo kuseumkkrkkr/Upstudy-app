@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import hashlib
 import hmac
+import math
 import os
 import re
 import secrets
@@ -16,7 +17,9 @@ from typing import Any
 
 import jwt
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -830,10 +833,467 @@ def _start_lightning_studio() -> None:
         return
 
 
+def _lightning_app_base_url() -> str:
+    """필요 변수: Lightning 공개 wake URL. 작동 원리: 비밀 환경값에서 `/wake`만 제거해 전체 앱 API 기준 주소를 만든다."""
+    wake_url = os.getenv("LIGHTNING_WAKE_URL", "").strip()
+    if not wake_url:
+        raise HTTPException(status_code=503, detail="Lightning app URL is not configured")
+    parsed = urllib.parse.urlsplit(wake_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise HTTPException(status_code=503, detail="Lightning app URL is invalid")
+    path = parsed.path.rstrip("/")
+    if path.endswith("/wake"):
+        path = path[: -len("/wake")]
+    return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, path, "", "")).rstrip("/")
+
+
+def _forward_lightning_request(
+    method: str,
+    path: str,
+    query: str,
+    body: bytes,
+    headers: dict[str, str],
+) -> Response:
+    """필요 변수: HTTP 메서드·상대 경로·쿼리·본문·허용 헤더. 작동 원리: 24초 제한으로 전체 앱 서버 응답을 상태 코드와 함께 그대로 전달한다."""
+    normalized_path = "/" + path.lstrip("/")
+    target = f"{_lightning_app_base_url()}{normalized_path}"
+    if query:
+        target = f"{target}?{query}"
+    request = urllib.request.Request(
+        target,
+        data=body or None,
+        headers=headers,
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=24) as upstream:
+            payload = upstream.read()
+            content_type = upstream.headers.get("Content-Type", "application/json")
+            return Response(
+                content=payload,
+                status_code=upstream.status,
+                media_type=content_type.split(";", 1)[0],
+            )
+    except urllib.error.HTTPError as error:
+        payload = error.read()
+        content_type = error.headers.get("Content-Type", "application/json")
+        return Response(
+            content=payload,
+            status_code=error.code,
+            media_type=content_type.split(";", 1)[0],
+        )
+    except OSError as error:
+        raise HTTPException(status_code=502, detail="Lightning app is unavailable") from error
+
+
+@app.api_route(
+    "/api/app/{path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+)
+async def proxy_lightning_app(path: str, request: Request) -> Response:
+    """필요 변수: Flutter 앱의 상대 API 경로와 요청 문맥. 작동 원리: 인증·본문 헤더만 선별해 Lightning 전체 서버로 전달하고 이벤트 루프 차단을 피한다."""
+    try:
+        await run_in_threadpool(_start_lightning_studio)
+    except (urllib.error.HTTPError, OSError):
+        pass
+    forwarded_headers = {
+        name: value
+        for name in ("Authorization", "Content-Type", "X-Idempotency-Key")
+        if (value := request.headers.get(name))
+    }
+    body = await request.body()
+    return await run_in_threadpool(
+        _forward_lightning_request,
+        request.method,
+        path,
+        request.url.query,
+        body,
+        forwarded_headers,
+    )
+
+
+LEVEL_TEST_QUESTION_COUNT = 25
+LEVEL_TEST_TIME_LIMIT_SECONDS = 60 * 60
+
+
+class LevelTestPlacementAnswerRequest(BaseModel):
+    item_index: int = Field(ge=1, le=LEVEL_TEST_QUESTION_COUNT)
+    quest_id: str = Field(min_length=1, max_length=200)
+    is_correct: bool
+    answer_time: float | None = Field(default=None, ge=0, le=LEVEL_TEST_TIME_LIMIT_SECONDS)
+    step_correctness: list[dict[str, Any]] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+
+
+def _level_test_storage_error(error: RuntimeError) -> HTTPException:
+    del error
+    return HTTPException(status_code=503, detail="Level test storage is unavailable")
+
+
+def _level_test_kv_key(session_id: str | None = None) -> str:
+    return f"level_test.result::{session_id}" if session_id else "level_test.latest_result"
+
+
+def _load_level_test_kv(user_id: str, *, session_id: str | None = None) -> dict[str, Any] | None:
+    try:
+        rows = _data_api().request(
+            "GET",
+            "canary_user_kv",
+            query={
+                "select": "value",
+                "user_id": f"eq.{user_id}",
+                "key": f"eq.{_level_test_kv_key(session_id)}",
+                "limit": "1",
+            },
+        ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    if not rows:
+        return None
+    try:
+        decoded = json.loads(str(rows[0].get("value") or "{}"))
+    except json.JSONDecodeError:
+        return None
+    return decoded if isinstance(decoded, dict) else None
+
+
+def _save_level_test_kv(user_id: str, result: dict[str, Any], *, session_id: str | None = None) -> None:
+    try:
+        _data_api().request(
+            "POST",
+            "canary_user_kv",
+            query={"on_conflict": "user_id,key"},
+            body={
+                "user_id": user_id,
+                "key": _level_test_kv_key(session_id),
+                "value": json.dumps(result, ensure_ascii=False, separators=(",", ":")),
+            },
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+
+
+def _get_level_test_session(session_id: str, user_id: str) -> dict[str, Any]:
+    try:
+        rows = _data_api().request(
+            "GET",
+            "level_test_session",
+            query={
+                "select": "session_id,user_id,template_id,status,estimated_rating,estimated_ovr,confidence",
+                "session_id": f"eq.{session_id}",
+                "limit": "1",
+            },
+        ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    if not rows or str(rows[0].get("user_id") or "") != user_id:
+        raise HTTPException(status_code=404, detail="Placement session not found")
+    return dict(rows[0])
+
+
+def _level_test_template_items(template_id: str) -> list[dict[str, Any]]:
+    try:
+        items = _data_api().request(
+            "GET",
+            "level_test_template_item",
+            query={
+                "select": "item_index,phase,subject_key,hash_tags,difficulty_tier,quest_id,problem_rating",
+                "template_id": f"eq.{template_id}",
+                "item_index": f"lte.{LEVEL_TEST_QUESTION_COUNT}",
+                "order": "item_index.asc",
+                "limit": str(LEVEL_TEST_QUESTION_COUNT),
+            },
+        ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    return [dict(item) for item in items]
+
+
+def _level_test_problem_payloads(quest_ids: list[str]) -> dict[str, dict[str, Any]]:
+    unique_ids = list(dict.fromkeys(value for value in quest_ids if value))
+    if not unique_ids:
+        return {}
+    quoted_ids = ",".join(f'"{value.replace(chr(34), "")}"' for value in unique_ids)
+    try:
+        rows = _data_api().request(
+            "GET",
+            "problem_payload",
+            query={
+                "select": "quest_id,payload",
+                "quest_id": f"in.({quoted_ids})",
+                "limit": str(LEVEL_TEST_QUESTION_COUNT),
+            },
+        ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    return {
+        str(row.get("quest_id") or ""): dict(row.get("payload") or {})
+        for row in rows
+        if isinstance(row.get("payload"), dict)
+    }
+
+
+def _estimate_level_test_rating(samples: list[dict[str, Any]]) -> float:
+    best_rating = 1200.0
+    best_score = float("-inf")
+    for rating in range(800, 2201, 5):
+        score = 0.0
+        for sample in samples:
+            problem_rating = float(sample.get("problem_rating") or 1200.0)
+            expected = 1.0 / (1.0 + 10 ** ((problem_rating - rating) / 400.0))
+            expected = max(0.001, min(0.999, expected))
+            score += math.log(expected if sample.get("is_correct") else 1.0 - expected)
+        if score > best_score:
+            best_score = score
+            best_rating = float(rating)
+    return best_rating
+
+
+def _level_test_tag_results(samples: list[dict[str, Any]], global_rating: float) -> dict[str, float]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for sample in samples:
+        for raw_tag in sample.get("tags") or []:
+            tag = str(raw_tag).strip().lstrip("#").strip().lower()
+            if tag:
+                grouped.setdefault(tag, []).append(sample)
+    results: dict[str, float] = {}
+    for tag, tag_samples in grouped.items():
+        local_rating = _estimate_level_test_rating(tag_samples)
+        shrink = len(tag_samples) / (len(tag_samples) + 5.0)
+        results[tag] = shrink * local_rating + (1.0 - shrink) * global_rating
+    return results
+
+
+@app.post("/level-tests/placement/start")
+def start_level_test_placement(user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    try:
+        templates = _data_api().request(
+            "GET",
+            "level_test_template",
+            query={
+                "select": "template_id,version,form_index",
+                "active": "eq.true",
+                "order": "form_index.asc",
+                "limit": "50",
+            },
+        ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    if not templates:
+        raise HTTPException(status_code=503, detail="No placement template available")
+    template_index = int(hashlib.sha256(user_id.encode("utf-8")).hexdigest()[:8], 16) % len(templates)
+    template_id = str(templates[template_index].get("template_id") or "")
+    items = _level_test_template_items(template_id)
+    if len(items) != LEVEL_TEST_QUESTION_COUNT:
+        raise HTTPException(status_code=503, detail="Placement template is incomplete")
+    payloads = _level_test_problem_payloads([str(item.get("quest_id") or "") for item in items])
+    questions = []
+    for item in items:
+        quest_id = str(item.get("quest_id") or "")
+        quest = payloads.get(quest_id)
+        if quest is None:
+            raise HTTPException(status_code=503, detail="Placement problem payload is incomplete")
+        questions.append({**item, "quest": quest})
+    session_id = str(uuid.uuid4())
+    try:
+        _data_api().request(
+            "POST",
+            "level_test_session",
+            body={
+                "session_id": session_id,
+                "user_id": user_id,
+                "template_id": template_id,
+                "status": "started",
+            },
+            prefer="return=minimal",
+        )
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    return {
+        "success": True,
+        "data": {
+            "session_id": session_id,
+            "template_id": template_id,
+            "question_count": len(questions),
+            "time_limit_seconds": LEVEL_TEST_TIME_LIMIT_SECONDS,
+            "questions": questions,
+        },
+        "message": "Placement test started",
+    }
+
+
+@app.post("/level-tests/placement/{session_id}/answer")
+def save_level_test_placement_answer(
+    session_id: str,
+    payload: LevelTestPlacementAnswerRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    session = _get_level_test_session(session_id, user_id)
+    if str(session.get("status") or "") == "graded":
+        raise HTTPException(status_code=409, detail="Placement session already submitted")
+    try:
+        assigned = _data_api().request(
+            "GET",
+            "level_test_template_item",
+            query={
+                "select": "quest_id,hash_tags",
+                "template_id": f"eq.{session['template_id']}",
+                "item_index": f"eq.{payload.item_index}",
+                "limit": "1",
+            },
+        ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    if not assigned or str(assigned[0].get("quest_id") or "") != payload.quest_id:
+        raise HTTPException(status_code=400, detail="Answer does not match the assigned placement problem")
+    try:
+        _data_api().request(
+            "POST",
+            "level_test_answer",
+            query={"on_conflict": "session_id,item_index"},
+            body={
+                "session_id": session_id,
+                "item_index": payload.item_index,
+                "quest_id": payload.quest_id,
+                "is_correct": payload.is_correct,
+                "answer_time": payload.answer_time,
+                "step_correctness": payload.step_correctness,
+                "tags": assigned[0].get("hash_tags") or [],
+            },
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    return {"success": True, "data": {"ok": True}, "message": "Placement answer saved"}
+
+
+@app.post("/level-tests/placement/{session_id}/submit")
+def submit_level_test_placement(
+    session_id: str,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    replay = _load_level_test_kv(user_id, session_id=session_id)
+    if replay is not None:
+        return {"success": True, "data": replay, "message": "Placement rating applied"}
+    session = _get_level_test_session(session_id, user_id)
+    try:
+        answers = _data_api().request(
+            "GET",
+            "level_test_answer",
+            query={
+                "select": "item_index,quest_id,is_correct,answer_time,tags",
+                "session_id": f"eq.{session_id}",
+                "order": "item_index.asc",
+                "limit": str(LEVEL_TEST_QUESTION_COUNT),
+            },
+        ) or []
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    if len(answers) != LEVEL_TEST_QUESTION_COUNT:
+        raise HTTPException(status_code=400, detail="Placement test is not complete")
+    item_by_index = {
+        int(item.get("item_index") or 0): item
+        for item in _level_test_template_items(str(session.get("template_id") or ""))
+    }
+    samples = []
+    for answer in answers:
+        index = int(answer.get("item_index") or 0)
+        item = item_by_index.get(index)
+        if item is None or str(item.get("quest_id") or "") != str(answer.get("quest_id") or ""):
+            raise HTTPException(status_code=409, detail="Placement answer set is inconsistent")
+        samples.append(
+            {
+                "is_correct": bool(answer.get("is_correct")),
+                "problem_rating": float(item.get("problem_rating") or 1200.0),
+                "tags": item.get("hash_tags") or [],
+            }
+        )
+    rating = _estimate_level_test_rating(samples)
+    tag_ratings = _level_test_tag_results(samples, rating)
+    ordered_strong = sorted(tag_ratings.items(), key=lambda pair: pair[1], reverse=True)[:5]
+    ordered_weak = sorted(tag_ratings.items(), key=lambda pair: pair[1])[:5]
+    previous = _load_level_test_kv(user_id) or {}
+    previous_ovr = float(previous.get("ovr") or 1200.0)
+    correct_count = sum(1 for sample in samples if sample["is_correct"])
+    result = {
+        "session_id": session_id,
+        "rating": rating,
+        "ovr": rating,
+        "ovr_delta": rating - previous_ovr,
+        "recent_accuracy": correct_count / LEVEL_TEST_QUESTION_COUNT,
+        "lose_streak": 0 if samples[-1]["is_correct"] else 1,
+        "confidence": len(samples) / LEVEL_TEST_QUESTION_COUNT,
+        "strong_tags": [{"tag": tag, "rating": round(value, 2)} for tag, value in ordered_strong],
+        "weak_tags": [{"tag": tag, "rating": round(value, 2)} for tag, value in ordered_weak],
+    }
+    try:
+        _data_api().request(
+            "PATCH",
+            "level_test_session",
+            query={"session_id": f"eq.{session_id}", "user_id": f"eq.{user_id}"},
+            body={
+                "status": "graded",
+                "estimated_rating": rating,
+                "estimated_ovr": rating,
+                "confidence": result["confidence"],
+                "strong_tags": result["strong_tags"],
+                "weak_tags": result["weak_tags"],
+            },
+            prefer="return=minimal",
+        )
+    except RuntimeError as error:
+        raise _level_test_storage_error(error) from error
+    try:
+        _save_level_test_kv(user_id, result, session_id=session_id)
+        _save_level_test_kv(user_id, result)
+    except HTTPException as error:
+        if error.status_code != 503:
+            raise
+        # The canonical result is already committed on level_test_session.
+        # Anonymous canary users intentionally have no canary_users FK row,
+        # and a transient profile-cache failure must not lose the test result.
+        print("level_test_result_cache_unavailable")
+    return {"success": True, "data": result, "message": "Placement rating applied"}
+
+
+@app.api_route(
+    "/level-tests/{path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+)
+async def proxy_level_tests(path: str, request: Request) -> Response:
+    """기존 웹 번들의 레벨테스트 경로를 Lightning API로 전달한다."""
+    return await proxy_lightning_app(f"level-tests/{path}", request)
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     """필요 변수: 없음. 작동 원리: DB나 모델 없이 Vercel 함수 생존만 확인한다."""
     return {"status": "ok", "service": "aiflow-ocr-queue"}
+
+
+@app.get("/health/level-test")
+def level_test_health() -> dict[str, Any]:
+    """Report whether the Supabase placement tables are available without exposing data."""
+    checks: dict[str, bool] = {}
+    for table, column in (
+        ("level_test_template", "template_id"),
+        ("level_test_template_item", "template_id"),
+        ("problem_payload", "quest_id"),
+        ("level_test_session", "session_id"),
+        ("level_test_answer", "session_id"),
+    ):
+        try:
+            _data_api().request(
+                "GET",
+                table,
+                query={"select": column, "limit": "1"},
+            )
+            checks[table] = True
+        except RuntimeError:
+            checks[table] = False
+    ready = all(checks.values())
+    return {"status": "ok" if ready else "unavailable", "checks": checks}
 
 
 @app.post("/auth/register", status_code=status.HTTP_201_CREATED)
@@ -1057,7 +1517,16 @@ def get_account_summary(_user_id: str = Depends(_current_user)) -> dict[str, Any
 @app.get("/rating/user")
 def get_user_rating(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
     """필요 변수: 인증 사용자. 작동 원리: 풀이 이력이 없는 신규 사용자의 초기 레이팅을 반환한다."""
-    return {"rating": 0.0, "ovr": 0.0, "ovr_delta": 0.0, "recent_accuracy": 0.0, "lose_streak": 0}
+    latest = _load_level_test_kv(_user_id)
+    if latest is None:
+        return {"rating": 0.0, "ovr": 0.0, "ovr_delta": 0.0, "recent_accuracy": 0.0, "lose_streak": 0}
+    return {
+        "rating": float(latest.get("rating") or 0.0),
+        "ovr": float(latest.get("ovr") or 0.0),
+        "ovr_delta": float(latest.get("ovr_delta") or 0.0),
+        "recent_accuracy": float(latest.get("recent_accuracy") or 0.0),
+        "lose_streak": int(latest.get("lose_streak") or 0),
+    }
 
 
 def _empty_arena_queue(queue_type: str) -> dict[str, Any]:
@@ -1221,7 +1690,22 @@ def get_arena_rankings(
 @app.get("/rating/tags")
 def get_tag_ratings(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
     """필요 변수: 인증 사용자. 작동 원리: 태그 풀이 이력이 없으면 빈 목록을 반환한다."""
-    return {"tags": []}
+    latest = _load_level_test_kv(_user_id)
+    if latest is None:
+        return {"tags": []}
+    tags: dict[str, dict[str, Any]] = {}
+    for item in list(latest.get("strong_tags") or []) + list(latest.get("weak_tags") or []):
+        if not isinstance(item, dict):
+            continue
+        tag = str(item.get("tag") or "").strip()
+        if tag:
+            tags[tag] = {
+                "tag": tag,
+                "attempts": LEVEL_TEST_QUESTION_COUNT,
+                "rating": float(item.get("rating") or 0.0),
+                "delta": 0.0,
+            }
+    return {"tags": list(tags.values())}
 
 
 @app.get("/weakness/tags")

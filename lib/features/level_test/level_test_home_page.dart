@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:s11/features/level_test/level_test_result_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
@@ -10,7 +12,9 @@ import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 class LevelTestHomePage extends StatefulWidget {
-  const LevelTestHomePage({super.key});
+  const LevelTestHomePage({super.key, this.initialStats});
+
+  final LevelTestPlacementStats? initialStats;
 
   static const routeName = '/level_test';
 
@@ -21,9 +25,51 @@ class LevelTestHomePage extends StatefulWidget {
 class _LevelTestHomePageState extends State<LevelTestHomePage> {
   bool _loading = false;
   String? _error;
+  LevelTestPlacementStats? _stats;
+  LevelTestPlacementResult? _completedResult;
+  Timer? _statsTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _stats = widget.initialStats;
+    if (_stats == null) unawaited(_loadStats());
+    unawaited(_loadStatus());
+    _statsTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => unawaited(_loadStats()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _statsTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadStatus() async {
+    try {
+      final status = await ApiClient.instance.fetchLevelTestPlacementStatus();
+      if (!mounted) return;
+      setState(
+        () => _completedResult = status.completed ? status.result : null,
+      );
+    } catch (_) {
+      // 상태 조회 실패는 통계와 안내 화면 렌더링을 막지 않는다.
+    }
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final stats = await ApiClient.instance.fetchLevelTestPlacementStats();
+      if (mounted) setState(() => _stats = stats);
+    } catch (_) {
+      // 통계 조회 실패가 시험 시작을 막지는 않는다.
+    }
+  }
 
   Future<void> _startPlacement() async {
-    if (_loading) return;
+    if (_loading || _completedResult != null) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -35,53 +81,31 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       if (questions.isEmpty) {
         throw Exception('레벨테스트 문제를 불러오지 못했어요');
       }
-      final byIndex = {
-        for (final question in questions) question.itemIndex: question,
-      };
       final config = ProblemSolveConfig(
         questionCount: questions.length,
+        timeLimitSeconds: session.timeLimitSeconds,
         hashTags: questions.expand((q) => q.hashTags).toSet().toList(),
-        gradeImmediately: true,
+        gradeImmediately: false,
         minDifficultyTier: 2,
         maxDifficultyTier: 5,
-        passRate: 1,
+        passRate: 0,
         ratingEnabled: false,
+        placementExam: true,
         quests: questions.map((q) => q.quest).toList(),
-        onProblemGraded:
+        onPlacementSubmit:
             ({
-              required int itemIndex,
-              required Map<String, dynamic>? quest,
-              required bool isCorrect,
-              required List<Map<String, dynamic>> stepCorrectness,
-              int? selectedIndex,
-              int? elapsedSeconds,
-            }) async {
-              final question = byIndex[itemIndex];
-              final questId = question?.questId ?? _questIdOf(quest);
-              if (questId.isEmpty) return;
-              await ApiClient.instance.submitLevelTestPlacementAnswer(
-                sessionId: session.sessionId,
-                itemIndex: itemIndex,
-                questId: questId,
-                isCorrect: isCorrect,
-                answerTime: elapsedSeconds,
-                stepCorrectness: stepCorrectness,
-                tags: question?.hashTags ?? _tagsOf(quest),
-              );
-            },
-        onComplete:
-            ({
-              required int correctCount,
-              required int totalCount,
-              required bool passed,
-              int? elapsedSeconds,
-            }) {
-              _finishPlacement(session.sessionId);
-            },
+              required List<PlacementExamAnswer> answers,
+              required int elapsedSeconds,
+            }) => _finishPlacement(
+              session.sessionId,
+              answers: answers,
+              elapsedSeconds: elapsedSeconds,
+            ),
       );
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => BuildpageWidget(config: config)),
       );
+      if (mounted) setState(() => _loading = false);
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -96,70 +120,59 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
     }
   }
 
-  Future<void> _finishPlacement(String sessionId) async {
-    try {
-      final result = await ApiClient.instance.submitLevelTestPlacement(
-        sessionId,
-      );
-      RatingStore.updateFromRating(result.toUserRating());
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => LevelTestResultPage(placementResult: result),
-        ),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            studentFacingApiError(
-              error,
-              fallback: '결과를 저장하지 못했어요.',
-              unavailable: '결과 저장 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
-            ),
-          ),
-        ),
-      );
-    }
-  }
-
-  String _questIdOf(Map<String, dynamic>? quest) {
-    final header = quest?['header'];
-    if (header is Map) return (header['quest_id'] ?? '').toString();
-    return '';
-  }
-
-  List<String> _tagsOf(Map<String, dynamic>? quest) {
-    final info = quest?['info'];
-    if (info is! Map) return const <String>[];
-    return (info['hash_tag'] as List<dynamic>? ?? const [])
-        .map((tag) => tag.toString())
-        .toList();
+  Future<void> _finishPlacement(
+    String sessionId, {
+    required List<PlacementExamAnswer> answers,
+    required int elapsedSeconds,
+  }) async {
+    final result = await ApiClient.instance.submitLevelTestPlacement(
+      sessionId,
+      answers: answers
+          .map(
+            (answer) => <String, dynamic>{
+              'item_index': answer.itemIndex,
+              'quest_id': answer.questId,
+              'user_answer': answer.userAnswer,
+              'selected_index': answer.selectedIndex,
+            },
+          )
+          .toList(growable: false),
+      elapsedSeconds: elapsedSeconds,
+    );
+    RatingStore.updateFromRating(result.toUserRating());
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => LevelTestResultPage(placementResult: result),
+      ),
+    );
   }
 
   /// 필요한 변수는 배치 테스트 로딩·오류 상태와 화면 폭이다.
   /// 실제 제출 로직 위에 HTML의 OVR 히어로, 측정 과정, 시작 전 확인 영역을 순서대로 배치한다.
   @override
   Widget build(BuildContext context) {
+    if (_completedResult != null) {
+      return LevelTestResultPage(placementResult: _completedResult);
+    }
     final mobile = isStudentDensityMobile(context);
     return Scaffold(
       key: const ValueKey('level-test-screen'),
       backgroundColor: StudentDensityTokens.background,
-      drawer: mobile ? null : const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/level_test')
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
             Builder(
               builder: (context) => Ios26TopBar(
                 brandColor: StudentDensityTokens.dark,
-                onMenu: mobile ? null : () => Scaffold.of(context).openDrawer(),
+                onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 showLevelIndicator: false,
-                showUtilityActions: !mobile,
-                hideOnMobile: true,
+                showUtilityActions: true,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,
@@ -173,6 +186,7 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
                       ? _MobilePlacementBody(
                           loading: _loading,
                           error: _error,
+                          stats: _stats,
                           onStart: _startPlacement,
                         )
                       : Column(
@@ -182,7 +196,7 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
                             const SizedBox(height: 34),
                             const _PlacementIntro(),
                             const SizedBox(height: 18),
-                            const _PlacementProcess(),
+                            _PlacementStatistics(stats: _stats),
                             const SizedBox(height: 14),
                             _PlacementReady(
                               loading: _loading,
@@ -208,11 +222,13 @@ class _MobilePlacementBody extends StatelessWidget {
   const _MobilePlacementBody({
     required this.loading,
     required this.error,
+    required this.stats,
     required this.onStart,
   });
 
   final bool loading;
   final String? error;
+  final LevelTestPlacementStats? stats;
   final VoidCallback onStart;
 
   @override
@@ -253,7 +269,7 @@ class _MobilePlacementBody extends StatelessWidget {
                 const SizedBox(width: 14),
                 const Expanded(
                   child: Text(
-                    '50문제로\n실력을 확인해요',
+                    '25문제로\n첫 OVR을 배정해요',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -266,7 +282,7 @@ class _MobilePlacementBody extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              '약 60분 · 자동 저장 · OVR 분석',
+              '30분 · 자유 이동 · 마지막에 한 번 채점',
               style: TextStyle(
                 color: Colors.white60,
                 fontSize: 14,
@@ -292,7 +308,7 @@ class _MobilePlacementBody extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Text(
-                        '테스트 시작',
+                        '레벨 테스트 시작',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
@@ -311,95 +327,9 @@ class _MobilePlacementBody extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 26),
-      const Text(
-        '진행 방식',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-      ),
-      const SizedBox(height: 10),
-      Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: const Column(
-          children: [
-            _MobilePlacementStep(
-              icon: Icons.quiz_outlined,
-              title: '문제 풀기',
-              subtitle: '주요 개념 50문항',
-            ),
-            _MobilePlacementStep(
-              icon: Icons.insights_outlined,
-              title: '풀이 분석',
-              subtitle: '정오답과 풀이 시간 확인',
-            ),
-            _MobilePlacementStep(
-              icon: Icons.route_outlined,
-              title: '학습 추천',
-              subtitle: 'OVR과 다음 코스 제공',
-            ),
-          ],
-        ),
-      ),
+      _PlacementStatistics(stats: stats),
       const SizedBox(height: 32),
     ],
-  );
-}
-
-/// 필요한 변수는 단계 아이콘·제목·짧은 설명이다.
-/// 작동 원리: 과정 설명을 카드 세 개 대신 한 그룹 안의 큰 Material 목록 행으로 표시한다.
-class _MobilePlacementStep extends StatelessWidget {
-  const _MobilePlacementStep({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-    child: Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: StudentDensityTokens.surfaceMuted,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, size: 21),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: StudentDensityTokens.muted,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
   );
 }
 
@@ -407,7 +337,7 @@ class _PlacementHero extends StatelessWidget {
   const _PlacementHero();
 
   /// 필요한 변수는 화면 폭과 고정 배치 테스트 메타다.
-  /// HTML 시안의 밝은 그라데이션 안에 소개 문구·OVR 궤도·50문항 지표를 반응형으로 배치한다.
+  /// HTML 시안의 밝은 그라데이션 안에 소개 문구·OVR 궤도·25문항 지표를 반응형으로 배치한다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
@@ -457,7 +387,7 @@ class _PlacementHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    '50개의 문제로 지금의 학습 위치를 찾습니다.\n첫 OVR은 앞으로의 코스와 난이도를 결정합니다.',
+                    '25개의 문제를 마지막에 한 번 채점해\n현재 실력을 나타내는 첫 OVR을 배정합니다.',
                     style: TextStyle(
                       color: StudentDensityTokens.muted,
                       fontSize: mobile ? 11 : 13,
@@ -563,11 +493,11 @@ class _PlacementMeta extends StatelessWidget {
   Widget build(BuildContext context) => const Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Expanded(child: _MetaCell('QUESTIONS', '50')),
+      Expanded(child: _MetaCell('QUESTIONS', '25')),
       SizedBox(width: 8),
-      Expanded(child: _MetaCell('DIFFICULTY', '중상–상')),
+      Expanded(child: _MetaCell('DIFFICULTY', '기초–심화')),
       SizedBox(width: 8),
-      Expanded(child: _MetaCell('RESULT', 'OVR + 태그')),
+      Expanded(child: _MetaCell('RESULT', 'OVR')),
     ],
   );
 }
@@ -628,7 +558,7 @@ class _PlacementIntro extends StatelessWidget {
         const StudentDensityEyebrow('HOW IT WORKS'),
         const SizedBox(height: 10),
         Text(
-          mobile ? '점수가 아니라,\n학습의 출발점을 찾습니다.' : '점수가 아니라,\n학습의 출발점을 찾습니\n다.',
+          '30분 뒤,\n첫 OVR을 배정합니다.',
           style: TextStyle(
             fontSize: mobile ? 34 : 54,
             height: 1,
@@ -639,7 +569,7 @@ class _PlacementIntro extends StatelessWidget {
       ],
     );
     const copy = Text(
-      '모든 답은 개념 태그와 풀이 시간으로 함께 분석됩니다. 맞힌 개수만 세지 않고 어떤 영역에서 빠르고 정확한지 확인합니다.',
+      '제한 시간 30분 동안 문항을 자유롭게 오간 뒤 전체 답안을 한 번에 채점해 첫 OVR을 배정합니다.',
       style: TextStyle(
         fontSize: 13,
         height: 1.6,
@@ -657,94 +587,271 @@ class _PlacementIntro extends StatelessWidget {
   }
 }
 
-class _PlacementProcess extends StatelessWidget {
-  const _PlacementProcess();
+class _PlacementStatistics extends StatelessWidget {
+  const _PlacementStatistics({required this.stats});
 
-  /// 필요한 변수는 화면 폭과 세 측정 단계다.
-  /// 모바일은 세로, PC는 3열 카드로 배치 테스트 과정을 표시한다.
+  final LevelTestPlacementStats? stats;
+
+  static const _fallbackDifficulty = [
+    LevelTestDifficultyBand(tier: 2, label: '기초', questionCount: 5),
+    LevelTestDifficultyBand(tier: 3, label: '기본', questionCount: 10),
+    LevelTestDifficultyBand(tier: 4, label: '응용', questionCount: 7),
+    LevelTestDifficultyBand(tier: 5, label: '심화', questionCount: 3),
+  ];
+  static const _fallbackEstimates = [
+    LevelTestEstimatedBand(
+      grade: '9등급',
+      ovrMin: 800,
+      ovrMax: 827,
+      expectedCorrect: 2.0,
+    ),
+    LevelTestEstimatedBand(
+      grade: '8등급',
+      ovrMin: 828,
+      ovrMax: 923,
+      expectedCorrect: 3.7,
+    ),
+    LevelTestEstimatedBand(
+      grade: '7등급',
+      ovrMin: 924,
+      ovrMax: 1060,
+      expectedCorrect: 5.8,
+    ),
+    LevelTestEstimatedBand(
+      grade: '6등급',
+      ovrMin: 1061,
+      ovrMax: 1170,
+      expectedCorrect: 8.2,
+    ),
+    LevelTestEstimatedBand(
+      grade: '5등급',
+      ovrMin: 1171,
+      ovrMax: 1279,
+      expectedCorrect: 10.7,
+    ),
+    LevelTestEstimatedBand(
+      grade: '4등급',
+      ovrMin: 1280,
+      ovrMax: 1378,
+      expectedCorrect: 13.2,
+    ),
+    LevelTestEstimatedBand(
+      grade: '3등급',
+      ovrMin: 1379,
+      ovrMax: 1478,
+      expectedCorrect: 15.6,
+    ),
+    LevelTestEstimatedBand(
+      grade: '2등급',
+      ovrMin: 1479,
+      ovrMax: 1606,
+      expectedCorrect: 18.1,
+    ),
+    LevelTestEstimatedBand(
+      grade: '1등급',
+      ovrMin: 1607,
+      ovrMax: 2200,
+      expectedCorrect: 22.6,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    const cards = [
-      _ProcessCard('01', '50', '폭넓게 확인', '선별된 50문항으로 주요 개념을 고르게 확인합니다.'),
-      _ProcessCard('02', '⌁', '풀이 패턴 분석', '정오답, 풀이 시간과 사고 흐름을 문항마다 누적합니다.'),
-      _ProcessCard('03', 'OVR', '첫 기준점 생성', '첫 OVR과 신뢰도, 강한 태그와 보완 태그를 제공합니다.'),
-    ];
-    if (isStudentDensityMobile(context)) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          cards[0],
-          const SizedBox(height: 10),
-          cards[1],
-          const SizedBox(height: 10),
-          cards[2],
-        ],
-      );
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final difficulty = stats?.difficultyBands.isNotEmpty == true
+        ? stats!.difficultyBands
+        : _fallbackDifficulty;
+    final estimates = stats?.estimatedBands ?? _fallbackEstimates;
+    return Column(
+      key: const ValueKey('level-test-statistics'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(child: cards[0]),
-        const SizedBox(width: 10),
-        Expanded(child: cards[1]),
-        const SizedBox(width: 10),
-        Expanded(child: cards[2]),
+        const Text(
+          '시험 난이도',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: StudentDensityTokens.line),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                '25문항 난이도 배치',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: SizedBox(
+                  height: 12,
+                  child: Row(
+                    children: [
+                      for (var index = 0; index < difficulty.length; index++)
+                        Expanded(
+                          flex: difficulty[index].questionCount,
+                          child: ColoredBox(
+                            color: [
+                              const Color(0xFFD6D6D3),
+                              const Color(0xFF9E9E9A),
+                              const Color(0xFF5F5F5C),
+                              const Color(0xFF191919),
+                            ][index.clamp(0, 3).toInt()],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 14,
+                runSpacing: 8,
+                children: difficulty
+                    .map(
+                      (band) => Text(
+                        '${band.label} ${band.questionCount}',
+                        style: const TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          '등급대별 추정 결과',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '기존 OVR 분포와 25문항 난이도 기준 · 30초마다 자동 갱신',
+          style: TextStyle(color: StudentDensityTokens.muted, fontSize: 12),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          key: const ValueKey('level-test-grade-chart'),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: StudentDensityTokens.line),
+          ),
+          child: _EstimatedOvrChart(bands: estimates),
+        ),
       ],
     );
   }
 }
 
-class _ProcessCard extends StatelessWidget {
-  const _ProcessCard(this.number, this.mark, this.title, this.copy);
+class _EstimatedOvrChart extends StatelessWidget {
+  const _EstimatedOvrChart({required this.bands});
 
-  final String number;
-  final String mark;
-  final String title;
-  final String copy;
+  final List<LevelTestEstimatedBand> bands;
 
-  /// 필요한 변수는 단계 번호·표식·제목·설명이다.
-  /// 흰 카드 안에 큰 측정 표식과 설명을 동일한 최소 높이로 표시한다.
   @override
-  Widget build(BuildContext context) => StudentDensitySurface(
-    radius: 24,
-    padding: const EdgeInsets.all(22),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          number,
-          style: const TextStyle(
-            fontSize: 9,
-            color: StudentDensityTokens.muted,
-            fontWeight: FontWeight.w900,
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Row(
+        children: [
+          Text(
+            '예상 정답 수',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
           ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          mark,
-          style: const TextStyle(
-            fontSize: 42,
-            height: 1,
-            fontWeight: FontWeight.w900,
+          Spacer(),
+          Text(
+            '0–25문항',
+            style: TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
           ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          copy,
-          style: const TextStyle(
-            fontSize: 11,
-            height: 1.5,
-            color: StudentDensityTokens.muted,
-          ),
-        ),
-      ],
-    ),
+        ],
+      ),
+      const SizedBox(height: 10),
+      SizedBox(
+        key: const ValueKey('level-test-estimated-ovr-line-chart'),
+        height: 190,
+        child: CustomPaint(painter: _EstimatedOvrChartPainter(bands)),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        '예: ${bands.last.grade} · ${bands.last.expectedCorrect.toStringAsFixed(1)}개 · OVR ${bands.last.ovrMin}+',
+        textAlign: TextAlign.right,
+        style: const TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
+      ),
+    ],
   );
+}
+
+class _EstimatedOvrChartPainter extends CustomPainter {
+  const _EstimatedOvrChartPainter(this.bands);
+
+  final List<LevelTestEstimatedBand> bands;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (bands.isEmpty) return;
+    const left = 24.0;
+    const top = 12.0;
+    const bottom = 30.0;
+    final chartWidth = size.width - left - 8;
+    final chartHeight = size.height - top - bottom;
+    final grid = Paint()
+      ..color = const Color(0xFFE5E5E2)
+      ..strokeWidth = 1;
+    final line = Paint()
+      ..color = StudentDensityTokens.dark
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    for (final value in const [0, 5, 10, 15, 20, 25]) {
+      final y = top + chartHeight * (1 - value / 25);
+      canvas.drawLine(Offset(left, y), Offset(size.width - 8, y), grid);
+    }
+    final path = Path();
+    final divisor = bands.length > 1 ? bands.length - 1 : 1;
+    for (var index = 0; index < bands.length; index++) {
+      final x = left + chartWidth * index / divisor;
+      final y = top + chartHeight * (1 - bands[index].expectedCorrect / 25);
+      if (index == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(path, line);
+    final dot = Paint()..color = StudentDensityTokens.dark;
+    for (var index = 0; index < bands.length; index++) {
+      final x = left + chartWidth * index / divisor;
+      final y = top + chartHeight * (1 - bands[index].expectedCorrect / 25);
+      canvas.drawCircle(Offset(x, y), 4, dot);
+      final label = TextPainter(
+        text: TextSpan(
+          text: bands[index].grade.replaceAll('등급', ''),
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      label.paint(canvas, Offset(x - label.width / 2, size.height - 17));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _EstimatedOvrChartPainter oldDelegate) =>
+      oldDelegate.bands != bands;
 }
 
 class _PlacementReady extends StatelessWidget {
@@ -775,10 +882,9 @@ class _PlacementReady extends StatelessWidget {
             style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
           ),
           SizedBox(height: 16),
-          _ReadyCheck('50문항 · 약 60–90분'),
-          _ReadyCheck('중간 진행 자동 저장'),
-          _ReadyCheck('정답은 제출 후 분석'),
-          _ReadyCheck('최초 OVR은 이후 학습으로 계속 보정'),
+          _ReadyCheck('25문항 · 제한 시간 30분'),
+          _ReadyCheck('빈 답 허용 · 이전/다음 자유 이동'),
+          _ReadyCheck('마지막 제출에서 한 번만 채점'),
         ],
       ),
     );

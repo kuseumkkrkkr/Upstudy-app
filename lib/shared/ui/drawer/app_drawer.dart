@@ -6,6 +6,7 @@ import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dar
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -87,6 +88,8 @@ class MobileStudentBottomAppBar extends StatelessWidget {
     switch (entry.action) {
       case _MobileMoreAction.route:
         _goToRoute(pageContext, entry.route!);
+      case _MobileMoreAction.graph:
+        _goToRoute(pageContext, '/graph');
       case _MobileMoreAction.timer:
         Navigator.of(
           pageContext,
@@ -99,6 +102,10 @@ class MobileStudentBottomAppBar extends StatelessWidget {
         await showStudyModeModal(context: pageContext);
       case _MobileMoreAction.ratingDetail:
         await showRatingDetailModal(context: pageContext);
+      case _MobileMoreAction.search:
+        showStudentQuickSearch(pageContext);
+      case _MobileMoreAction.notifications:
+        showStudentNotifications(pageContext);
       case _MobileMoreAction.unavailable:
         if (!pageContext.mounted) return;
         ScaffoldMessenger.of(pageContext)
@@ -122,9 +129,13 @@ class MobileStudentBottomAppBar extends StatelessWidget {
   static void _goToRoute(BuildContext context, String route) {
     final current = ModalRoute.of(context)?.settings.name;
     if (current == route) return;
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(route, (entry) => entry.isFirst);
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      route,
+      (entry) =>
+          entry.settings.name == '/student/dashboard' ||
+          entry.settings.name == '/app' ||
+          entry.isFirst,
+    );
   }
 
   bool _isActive(_DrawerDestination item, String route) {
@@ -469,10 +480,13 @@ enum _MobileMoreTab {
 
 enum _MobileMoreAction {
   route,
+  graph,
   timer,
   notepad,
   studyMode,
   ratingDetail,
+  search,
+  notifications,
   unavailable,
   logout,
 }
@@ -530,7 +544,7 @@ const _mobileToolEntries = <_MobileMoreEntry>[
   _MobileMoreEntry(
     label: '그래프',
     icon: Icons.account_tree_outlined,
-    action: _MobileMoreAction.unavailable,
+    action: _MobileMoreAction.graph,
   ),
   _MobileMoreEntry(
     label: '노트패드',
@@ -545,6 +559,16 @@ const _mobileToolEntries = <_MobileMoreEntry>[
 ];
 
 const _mobileMyMenuEntries = <_MobileMoreEntry>[
+  _MobileMoreEntry(
+    label: '검색',
+    icon: Icons.search_rounded,
+    action: _MobileMoreAction.search,
+  ),
+  _MobileMoreEntry(
+    label: '알림',
+    icon: Icons.notifications_none_rounded,
+    action: _MobileMoreAction.notifications,
+  ),
   _MobileMoreEntry(
     label: '자료실',
     icon: Icons.menu_book_outlined,

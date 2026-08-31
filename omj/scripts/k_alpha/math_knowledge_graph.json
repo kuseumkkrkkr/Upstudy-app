@@ -1,0 +1,90 @@
+{
+  "version": "2026.07.25-kalpha-v1",
+  "nodes": [
+    {
+      "node_id": "kg_arith_basic",
+      "name_kr": "기초 산수",
+      "name_en": "Arithmetic Basics",
+      "grade_min": 9,
+      "grade_max": 9,
+      "school_stage": [
+        "초1",
+        "초2",
+        "초3",
+        "초4",
+        "초5",
+        "초6",
+        "중1",
+        "중2",
+        "중3"
+      ],
+      "topics": [
+        "덧셈",
+        "뺄셈",
+        "곱셈",
+        "나눗셈",
+        "분수",
+        "소수",
+        "비율"
+      ],
+      "symptom": "수식 계산 전개 능력, 자리수 개념, 기본 규칙"
+    },
+    {
+      "node_id": "kg_sequence",
+      "name_kr": "수열",
+      "name_en": "Sequences",
+      "grade_min": 7,
+      "grade_max": 8,
+      "school_stage": [
+        "초4",
+        "초5",
+        "초6",
+        "중1",
+        "중2",
+        "중3"
+      ],
+      "topics": [
+        "등차수열",
+        "일반항",
+        "규칙 찾기"
+      ],
+      "symptom": "등차/간단한 등비 수열의 n항 계산"
+    },
+    {
+      "node_id": "kg_set",
+      "name_kr": "집합",
+      "name_en": "Set",
+      "grade_min": 7,
+      "grade_max": 9,
+      "school_stage": [
+        "중1",
+        "중2",
+        "중3"
+      ],
+      "topics": [
+        "합집합",
+        "교집합",
+        "부분집합",
+        "개수"
+      ],
+      "symptom": "원소 개수와 집합 연산의 기본 원리"
+    },
+    {
+      "node_id": "kg_quadratic_intro",
+      "name_kr": "이차식 기초",
+      "name_en": "Intro Quadratic",
+      "grade_min": 8,
+      "grade_max": 9,
+      "school_stage": [
+        "중2",
+        "중3"
+      ],
+      "topics": [
+        "이차방정식",
+        "판별식",
+        "근의 공식"
+      ],
+      "symptom": "인수분해 중심의 정수해형 이차방정식"
+    }
+  ]
+}

@@ -145,6 +145,7 @@ class Ios26TopBar extends StatelessWidget {
                       ),
                     if (hasLeadingControl) SizedBox(width: compact ? 7 : 10),
                     GestureDetector(
+                      key: const ValueKey('student-brand-home'),
                       onTap: onTitleTap,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -304,7 +305,7 @@ class _StoredProfileState extends State<_StoredProfile> {
 }
 
 /// 필요한 변수는 현재 Navigator 문맥이다.
-/// 작동 원리는 HTML QUICK FIND와 같은 검색 시트를 열고 코스·교재·친구·마켓 명명 라우트로 연결하는 것이다.
+/// 작동 원리는 HTML QUICK FIND와 같은 검색 시트를 열고 여덟 학생 목적지의 명명 라우트로 연결하는 것이다.
 void showStudentQuickSearch(BuildContext context) {
   _showStudentUtilityPanel(
     context: context,
@@ -383,7 +384,7 @@ class _StudentQuickSearchSheet extends StatefulWidget {
   const _StudentQuickSearchSheet();
 
   /// 필요한 변수는 검색 시트 위젯이다.
-  /// 작동 원리는 입력값에 따라 네 개 핵심 학생 목적지를 즉시 필터링하는 상태를 만든다.
+  /// 작동 원리는 입력값에 따라 여덟 핵심 학생 목적지를 즉시 필터링하는 상태를 만든다.
   @override
   State<_StudentQuickSearchSheet> createState() =>
       _StudentQuickSearchSheetState();
@@ -453,7 +454,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
     navigator.pushNamed(destination.route);
   }
 
-  /// 필요한 변수는 검색어와 네 목적지 메타다.
+  /// 필요한 변수는 검색어와 여덟 목적지 메타다.
   /// 작동 원리는 제목·설명에 포함되는 목적지만 HTML식 고밀도 목록으로 표시하는 것이다.
   @override
   Widget build(BuildContext context) {
@@ -545,11 +546,15 @@ class _StudentNotificationSnapshot {
     required this.globalNotices,
     required this.academyNotices,
     required this.friendRequests,
+    required this.directMessages,
+    required this.groupInvitations,
   });
 
   final List<StudyGroupNotice> globalNotices;
   final List<StudyGroupNotice> academyNotices;
   final List<FriendRequest> friendRequests;
+  final List<DirectMessage> directMessages;
+  final List<StudyGroupInvitation> groupInvitations;
 }
 
 class _StudentNotificationsSheet extends StatefulWidget {
@@ -565,6 +570,8 @@ class _StudentNotificationsSheet extends StatefulWidget {
 class _StudentNotificationsSheetState
     extends State<_StudentNotificationsSheet> {
   late final Future<_StudentNotificationSnapshot> _future = _load();
+  final Set<String> _resolvedRequestIds = <String>{};
+  final Set<String> _resolvedGroupIds = <String>{};
 
   /// 필요한 변수는 전체 공지, 내 학원 공지, 친구 요청 API다.
   /// 작동 원리는 세 GET을 병렬 실행해 순차 요청 없이 알림 패널을 한 번에 갱신하는 것이다.
@@ -579,12 +586,112 @@ class _StudentNotificationsSheetState
       ApiClient.instance.listFriendRequests().onError(
         (_, _) => const <FriendRequest>[],
       ),
+      ApiClient.instance
+          .fetchConversationThreads(forceRefresh: true)
+          .onError((_, _) => const <DirectMessage>[]),
+      ApiClient.instance.listStudyGroupInvitations().onError(
+        (_, _) => const <StudyGroupInvitation>[],
+      ),
     ]);
+    final friendRequests = results[2] as List<FriendRequest>;
+    final directMessages = results[3] as List<DirectMessage>;
+    SocialNotificationStore.update(
+      friendRequests: friendRequests
+          .where(
+            (request) =>
+                request.direction == 'incoming' && request.status == 'pending',
+          )
+          .length,
+      unreadMessages: directMessages
+          .where((message) => !message.isMine && !message.isRead)
+          .length,
+    );
     return _StudentNotificationSnapshot(
       globalNotices: results[0] as List<StudyGroupNotice>,
       academyNotices: results[1] as List<StudyGroupNotice>,
-      friendRequests: results[2] as List<FriendRequest>,
+      friendRequests: friendRequests,
+      directMessages: directMessages,
+      groupInvitations: results[4] as List<StudyGroupInvitation>,
     );
+  }
+
+  Future<void> _confirmGroupInvitation(StudyGroupInvitation invitation) async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${invitation.groupName} 초대'),
+        content: Text('${invitation.inviterUsername}님이 그룹에 초대했습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('거절'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('수락'),
+          ),
+        ],
+      ),
+    );
+    if (accepted == null) return;
+    try {
+      await ApiClient.instance.resolveStudyGroupInvitation(
+        groupId: invitation.groupId,
+        accept: accepted,
+      );
+      if (!mounted) return;
+      setState(() => _resolvedGroupIds.add(invitation.groupId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(accepted ? '그룹 초대를 수락했습니다.' : '그룹 초대를 거절했습니다.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('그룹 초대를 처리하지 못했습니다.')));
+    }
+  }
+
+  /// 필요한 변수는 받은 친구 요청이다.
+  /// 작동 원리는 발신자와 메시지를 확인한 뒤 기존 수락 API를 호출하고 성공한 요청만 현재 알림에서 제거하는 것이다.
+  Future<void> _confirmFriendRequest(FriendRequest request) async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${request.username}님의 친구 요청'),
+        content: Text(
+          request.message?.trim().isNotEmpty == true
+              ? request.message!.trim()
+              : '친구 요청을 수락하시겠어요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('나중에'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('수락'),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true) return;
+    try {
+      await ApiClient.instance.acceptFriendRequest(request.requestId);
+      if (!mounted) return;
+      setState(() => _resolvedRequestIds.add(request.requestId));
+      final current = SocialNotificationStore.notifier.value.friendRequests;
+      SocialNotificationStore.update(friendRequests: current - 1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${request.username}님과 친구가 되었습니다.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('친구 요청을 수락하지 못했습니다. 다시 시도해 주세요.')),
+      );
+    }
   }
 
   /// 필요한 변수는 소셜 알림 상태와 전체·학원 공지·친구 요청 비동기 결과다.
@@ -595,9 +702,8 @@ class _StudentNotificationsSheetState
     return _StudentUtilitySheet(
       kicker: 'LIVE STATUS',
       title: '알림 센터',
-      description: mobile
-          ? '메시지, 친구 요청과 공지를 확인해요.'
-          : '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
+      showMobileClose: false,
+      description: mobile ? '' : '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
       children: [
         const _UtilitySectionTitle('알림'),
         ValueListenableBuilder<SocialNotificationSnapshot>(
@@ -637,16 +743,55 @@ class _StudentNotificationsSheetState
               );
             }
             final data = snapshot.data!;
+            final unreadMessages = data.directMessages
+                .where((message) => !message.isMine && !message.isRead)
+                .toList(growable: false);
+            final incomingRequests = data.friendRequests
+                .where(
+                  (request) =>
+                      request.direction == 'incoming' &&
+                      request.status == 'pending' &&
+                      !_resolvedRequestIds.contains(request.requestId),
+                )
+                .toList(growable: false);
+            final groupInvitations = data.groupInvitations
+                .where(
+                  (invitation) =>
+                      !_resolvedGroupIds.contains(invitation.groupId),
+                )
+                .toList(growable: false);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _UtilityNoticeRow(
-                  title: '친구 요청',
-                  detail: data.friendRequests.isEmpty
-                      ? '새로운 친구 요청이 없습니다.'
-                      : '받은 요청을 친구/소셜에서 확인하세요.',
-                  meta: '${data.friendRequests.length}',
-                ),
+                for (final message in unreadMessages)
+                  _UtilityNoticeRow(
+                    title: '${message.from}님의 새 쪽지',
+                    detail: message.text,
+                    meta: '새 쪽지',
+                  ),
+                for (final request in incomingRequests)
+                  _UtilityNoticeRow(
+                    title: '${request.username}님의 친구 요청',
+                    detail: request.message?.trim().isNotEmpty == true
+                        ? request.message!.trim()
+                        : '눌러서 요청을 확인하고 수락할 수 있어요.',
+                    meta: '확인',
+                    onTap: () => _confirmFriendRequest(request),
+                  ),
+                for (final invitation in groupInvitations)
+                  _UtilityNoticeRow(
+                    title: '${invitation.groupName} 그룹 초대',
+                    detail:
+                        '${invitation.inviterUsername}님이 초대했습니다. 눌러서 수락 또는 거절하세요.',
+                    meta: '확인',
+                    onTap: () => _confirmGroupInvitation(invitation),
+                  ),
+                if (incomingRequests.isEmpty)
+                  const _UtilityNoticeRow(
+                    title: '친구 요청',
+                    detail: '새로운 친구 요청이 없습니다.',
+                    meta: '0',
+                  ),
                 const SizedBox(height: 24),
                 const _UtilitySectionTitle('공지'),
                 for (final notice in data.globalNotices)
@@ -686,12 +831,14 @@ class _StudentUtilitySheet extends StatelessWidget {
     required this.title,
     required this.description,
     required this.children,
+    this.showMobileClose = true,
   });
 
   final String kicker;
   final String title;
   final String description;
   final List<Widget> children;
+  final bool showMobileClose;
 
   /// 필요한 변수는 시트 제목·설명·본문이다.
   /// 작동 원리는 HTML 공용 액션 모달의 여백·타이포·최대 높이를 모든 화면에서 동일하게 유지하는 것이다.
@@ -736,18 +883,19 @@ class _StudentUtilitySheet extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: '닫기',
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                  style: IconButton.styleFrom(
-                    fixedSize: const Size.square(48),
-                    backgroundColor: mobile ? Colors.white : null,
-                    side: mobile
-                        ? BorderSide.none
-                        : const BorderSide(color: Color(0xFFB9B9BD)),
+                if (!mobile || showMobileClose)
+                  IconButton(
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    style: IconButton.styleFrom(
+                      fixedSize: const Size.square(48),
+                      backgroundColor: mobile ? Colors.white : null,
+                      side: mobile
+                          ? BorderSide.none
+                          : const BorderSide(color: Color(0xFFB9B9BD)),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -761,15 +909,17 @@ class _StudentUtilitySheet extends StatelessWidget {
                 MediaQuery.viewInsetsOf(context).bottom + 24,
               ),
               children: [
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: mobile ? Colors.black54 : Colors.black45,
-                    fontSize: mobile ? 15 : null,
-                    height: 1.4,
+                if (description.isNotEmpty) ...[
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: mobile ? Colors.black54 : Colors.black45,
+                      fontSize: mobile ? 15 : null,
+                      height: 1.4,
+                    ),
                   ),
-                ),
-                SizedBox(height: mobile ? 24 : 18),
+                  SizedBox(height: mobile ? 24 : 18),
+                ],
                 ...children,
               ],
             ),

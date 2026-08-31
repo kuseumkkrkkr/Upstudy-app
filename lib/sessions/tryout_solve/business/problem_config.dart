@@ -1,5 +1,19 @@
 part of 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 
+class PlacementExamAnswer {
+  const PlacementExamAnswer({
+    required this.itemIndex,
+    required this.questId,
+    this.userAnswer,
+    this.selectedIndex,
+  });
+
+  final int itemIndex;
+  final String questId;
+  final String? userAnswer;
+  final int? selectedIndex;
+}
+
 class ProblemSolveConfig {
   const ProblemSolveConfig({
     this.questionCount = 3,
@@ -14,7 +28,10 @@ class ProblemSolveConfig {
     this.onComplete,
     this.ratingEnabled = true,
     this.mobileQuickSolve = false,
+    this.timeLimitSeconds,
     this.onProblemGraded,
+    this.placementExam = false,
+    this.onPlacementSubmit,
   });
 
   final int questionCount;
@@ -28,6 +45,8 @@ class ProblemSolveConfig {
   final List<Map<String, dynamic>> quests;
   final bool ratingEnabled;
   final bool mobileQuickSolve;
+  final int? timeLimitSeconds;
+  final bool placementExam;
 
   /// Called when all problems are graded with [correctCount], [totalCount],
   /// and whether the student [passed] the module.
@@ -47,6 +66,11 @@ class ProblemSolveConfig {
     int? elapsedSeconds,
   })?
   onProblemGraded;
+  final FutureOr<void> Function({
+    required List<PlacementExamAnswer> answers,
+    required int elapsedSeconds,
+  })?
+  onPlacementSubmit;
 
   ProblemSolveConfig copyWith({
     int? questionCount,
@@ -67,6 +91,7 @@ class ProblemSolveConfig {
     onComplete,
     bool? ratingEnabled,
     bool? mobileQuickSolve,
+    int? timeLimitSeconds,
     FutureOr<void> Function({
       required int itemIndex,
       required Map<String, dynamic>? quest,
@@ -76,6 +101,12 @@ class ProblemSolveConfig {
       int? elapsedSeconds,
     })?
     onProblemGraded,
+    bool? placementExam,
+    FutureOr<void> Function({
+      required List<PlacementExamAnswer> answers,
+      required int elapsedSeconds,
+    })?
+    onPlacementSubmit,
   }) {
     return ProblemSolveConfig(
       questionCount: questionCount ?? this.questionCount,
@@ -90,7 +121,10 @@ class ProblemSolveConfig {
       onComplete: onComplete ?? this.onComplete,
       ratingEnabled: ratingEnabled ?? this.ratingEnabled,
       mobileQuickSolve: mobileQuickSolve ?? this.mobileQuickSolve,
+      timeLimitSeconds: timeLimitSeconds ?? this.timeLimitSeconds,
       onProblemGraded: onProblemGraded ?? this.onProblemGraded,
+      placementExam: placementExam ?? this.placementExam,
+      onPlacementSubmit: onPlacementSubmit ?? this.onPlacementSubmit,
     );
   }
 
@@ -114,6 +148,8 @@ class ProblemSolveConfig {
       unitIndex: (json['unit_index'] as num?)?.toInt(),
       ratingEnabled: json['rating_enabled'] as bool? ?? true,
       mobileQuickSolve: json['mobile_quick_solve'] as bool? ?? false,
+      timeLimitSeconds: (json['time_limit_seconds'] as num?)?.toInt(),
+      placementExam: json['placement_exam'] as bool? ?? false,
       quests: (json['quests'] as List<dynamic>? ?? const [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
@@ -132,6 +168,8 @@ class ProblemSolveConfig {
       if (unitIndex != null) 'unit_index': unitIndex,
       'rating_enabled': ratingEnabled,
       'mobile_quick_solve': mobileQuickSolve,
+      if (timeLimitSeconds != null) 'time_limit_seconds': timeLimitSeconds,
+      'placement_exam': placementExam,
       'quests': quests,
     };
   }

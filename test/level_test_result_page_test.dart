@@ -10,7 +10,14 @@ Future<void> _pumpResult(WidgetTester tester, Size size, Widget child) async {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(MaterialApp(home: child));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: child,
+      routes: {
+        '/student/dashboard': (_) => const Scaffold(body: Text('학생 홈 도착')),
+      },
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -41,8 +48,10 @@ void main() {
     );
 
     expect(find.text('18.6'), findsOneWidget);
-    expect(find.text('강점 태그'), findsOneWidget);
-    expect(find.text('#일차함수 19.2'), findsOneWidget);
+    expect(find.text('OVR 배정 결과'), findsOneWidget);
+    expect(find.text('21 / 25'), findsWidgets);
+    expect(find.text('30분'), findsWidgets);
+    expect(find.text('강점 태그'), findsNothing);
     expect(find.byKey(const ValueKey('level-result-overview')), findsOneWidget);
     expect(find.byKey(const ValueKey('level-result-analysis')), findsOneWidget);
   });
@@ -64,6 +73,39 @@ void main() {
     }
   });
 
+  testWidgets('레벨 결과는 780px 이하에서 모바일 단일 열을, 781px부터 PC 2열을 유지한다', (
+    tester,
+  ) async {
+    for (final width in [760.0, 780.0, 781.0, 1280.0]) {
+      await _pumpResult(
+        tester,
+        Size(width, 1000),
+        const LevelTestResultPage(placementResult: _placement),
+      );
+
+      final overview = tester.getRect(
+        find.byKey(const ValueKey('level-result-overview')),
+      );
+      final analysis = tester.getRect(
+        find.byKey(const ValueKey('level-result-analysis')),
+      );
+      final mobile = width <= 780;
+
+      if (mobile) {
+        expect(find.text('홈'), findsOneWidget);
+        expect(find.text('학습 홈으로'), findsNothing);
+        expect(analysis.left, closeTo(overview.left, 0.1));
+        expect(analysis.top, greaterThan(overview.bottom));
+      } else {
+        expect(find.text('홈'), findsNothing);
+        expect(find.text('학습 홈으로'), findsOneWidget);
+        expect(analysis.top, closeTo(overview.top, 0.1));
+        expect(analysis.left, greaterThan(overview.left));
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('일반 결과도 기존 정답 수와 통과 상태를 시안형 리포트에 보존한다', (tester) async {
     await _pumpResult(
       tester,
@@ -74,5 +116,18 @@ void main() {
     expect(find.text('80%'), findsOneWidget);
     expect(find.text('8 / 10 문항 정답'), findsOneWidget);
     expect(find.text('PASS'), findsOneWidget);
+  });
+
+  testWidgets('결과 홈 버튼은 최초 랜딩이 아니라 학생 홈으로 이동한다', (tester) async {
+    await _pumpResult(
+      tester,
+      const Size(390, 844),
+      const LevelTestResultPage(placementResult: _placement),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('level-result-home-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('학생 홈 도착'), findsOneWidget);
   });
 }

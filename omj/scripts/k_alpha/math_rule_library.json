@@ -1,0 +1,94 @@
+{
+  "version": "2026.07.25-kalpha-v1",
+  "rules": [
+    {
+      "rule_id": "R_SEQ_AP",
+      "name_kr": "등차수열 일반항",
+      "name_en": "Arithmetic Progression Formula",
+      "domain_node": "kg_sequence",
+      "lhs": "a_n",
+      "rhs": "a1 + (n - 1) * d",
+      "conditions": {
+        "requires": [
+          "a1",
+          "d",
+          "n"
+        ],
+        "tags": [
+          "수열",
+          "등차수열"
+        ]
+      },
+      "inverse": "a_n_to_d",
+      "risk": "low",
+      "notes": "등차수열에서 a1,d,n이 모두 정수일 때 a_n도 정수로 계산할 수 있다."
+    },
+    {
+      "rule_id": "R_SET_UNION",
+      "name_kr": "합집합의 원소 개수 공식",
+      "name_en": "Set Union Cardinality",
+      "domain_node": "kg_set",
+      "lhs": "|A∪B|",
+      "rhs": "|A| + |B| - |A∩B|",
+      "conditions": {
+        "requires": [
+          "a",
+          "b",
+          "c"
+        ],
+        "tags": [
+          "집합",
+          "합집합",
+          "교집합"
+        ]
+      },
+      "inverse": "union_to_intersection",
+      "risk": "low",
+      "notes": "모든 크기는 양의 정수로 제한."
+    },
+    {
+      "rule_id": "R_QUAD_DELTA_INT_ROOT",
+      "name_kr": "이차식 정수해 판별",
+      "name_en": "Quadratic Integer Root by Discriminant",
+      "domain_node": "kg_quadratic_intro",
+      "lhs": "ax^2+bx+c=0",
+      "rhs": "x = (-b ± √D)/(2a), D=b²-4ac",
+      "conditions": {
+        "requires": [
+          "a",
+          "b",
+          "c"
+        ],
+        "tags": [
+          "이차방정식",
+          "판별식"
+        ]
+      },
+      "inverse": "coeff_from_root",
+      "risk": "medium",
+      "notes": "정수해만 정답 후보로 사용한다."
+    },
+    {
+      "rule_id": "R_RATIO_RATE_PERCENT",
+      "name_kr": "비율 기본 정리",
+      "name_en": "Ratio Basic Reduction",
+      "domain_node": "kg_arith_basic",
+      "lhs": "비",
+      "rhs": "ratio(a,b)=a/b",
+      "conditions": {
+        "requires": [
+          "a",
+          "b"
+        ],
+        "tags": [
+          "비",
+          "비율",
+          "분수"
+        ]
+      },
+      "inverse": "ratio_to_fraction",
+      "risk": "low",
+      "notes": "분모가 0이면 미정의."
+    }
+  ]
+}

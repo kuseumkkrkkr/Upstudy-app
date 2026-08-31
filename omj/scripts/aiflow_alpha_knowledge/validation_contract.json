@@ -1,0 +1,28 @@
+{
+  "version": "2026.07.25-alpha",
+  "validation": {
+    "core_checks": [
+      "question_not_empty",
+      "answer_not_empty",
+      "steps_count_ge_2",
+      "tags_match_domains"
+    ],
+    "wa_checks": {
+      "enabled": true,
+      "sample_ratio": 0.1,
+      "formats_priority": ["ShortAnswer", "PodPlaintext", "Result"],
+      "max_latency_ms": 2500,
+      "mismatch_policy": "warn_only"
+    },
+    "reject_codes": {
+      "format_drift": "표기형식 불일치",
+      "not_interpretable": "WA 해석 실패",
+      "wrong_domain": "문항-도메인 불일치",
+      "answer_conflict": "정답 충돌"
+    },
+    "hard_gates": {
+      "steps_count_min": 2,
+      "required_domains": ["수열", "이차방정식", "집합"]
+    }
+  }
+}

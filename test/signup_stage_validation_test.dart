@@ -3,6 +3,41 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 
 void main() {
+  testWidgets('가입 화면은 780px 이하에서 단일열, 781px부터 데스크톱 조합을 쓴다', (tester) async {
+    for (final width in [720.0, 780.0, 781.0, 1280.0]) {
+      tester.view.physicalSize = Size(width, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const MaterialApp(home: SignupPage(preview: true)),
+      );
+      await tester.pumpAndSettle();
+
+      final nameField = find.widgetWithText(TextFormField, '이름');
+      final trackField = find.widgetWithText(
+        DropdownButtonFormField<String>,
+        '중학교',
+      );
+      final copyTitle = find.text('먼저 학생 정보를\n알려주세요.');
+      final nameRect = tester.getRect(nameField);
+      final trackRect = tester.getRect(trackField);
+      final copyRect = tester.getRect(copyTitle);
+      final mobile = width <= 780;
+
+      if (mobile) {
+        expect(trackRect.top, greaterThan(nameRect.bottom));
+        expect(copyRect.top, greaterThan(nameRect.bottom));
+      } else {
+        expect(trackRect.top, closeTo(nameRect.top, 0.1));
+        expect(trackRect.left, greaterThan(nameRect.left));
+        expect(copyRect.left, lessThan(nameRect.left));
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('빈 기본 정보로는 회원가입 다음 단계를 열 수 없다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;

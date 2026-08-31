@@ -1,0 +1,77 @@
+{
+  "version": "2026.07.25-alpha",
+  "nodes": [
+    {
+      "id": "hs1_function_basic",
+      "name_kr": "고1 함수 기초",
+      "name_en": "High School 1 Function Basics",
+      "topics": ["함수", "정의역", "치역", "함숫값", "일차함수"],
+      "grade": 10,
+      "difficulty_band": "중상",
+      "prerequisites": ["cm_algebra_basic"]
+    },
+    {
+      "id": "hs1_polynomial_factor",
+      "name_kr": "고1 다항식과 인수분해",
+      "name_en": "High School 1 Polynomial Factorization",
+      "topics": ["다항식", "인수분해", "나머지정리", "인수정리"],
+      "grade": 10,
+      "difficulty_band": "중상",
+      "prerequisites": ["cm_algebra_basic"]
+    },
+    {
+      "id": "hs1_probability_stats",
+      "name_kr": "고1 경우의 수와 확률",
+      "name_en": "High School 1 Probability",
+      "topics": ["순열", "조합", "확률", "조건부확률"],
+      "grade": 10,
+      "difficulty_band": "상",
+      "prerequisites": ["cm_set"]
+    },
+    {
+      "id": "cm_arith_sequence",
+      "name_kr": "수열",
+      "name_en": "Sequence",
+      "topics": ["등차수열", "등비수열", "일반항"],
+      "grade": 12,
+      "difficulty_band": "중",
+      "prerequisites": ["cm_set_basic"]
+    },
+    {
+      "id": "cm_quadratic",
+      "name_kr": "이차방정식",
+      "name_en": "Quadratic Equation",
+      "topics": ["이차방정식", "근의공식", "판별식"],
+      "grade": 12,
+      "difficulty_band": "중상",
+      "prerequisites": ["cm_algebra_basic"]
+    },
+    {
+      "id": "cm_set",
+      "name_kr": "집합",
+      "name_en": "Set",
+      "topics": ["합집합", "교집합", "포함관계"],
+      "grade": 11,
+      "difficulty_band": "하",
+      "prerequisites": []
+    },
+    {
+      "id": "cm_algebra_basic",
+      "name_kr": "기본대수",
+      "name_en": "Algebra Basic",
+      "topics": ["일차방정식", "전개", "인수분해", "대수변형"],
+      "grade": 11,
+      "difficulty_band": "하",
+      "prerequisites": []
+    },
+    {
+      "id": "cm_set_basic",
+      "name_kr": "집합 기초",
+      "name_en": "Set Basics",
+      "topics": ["원소", "포함", "집합연산"],
+      "grade": 10,
+      "difficulty_band": "하",
+      "prerequisites": []
+    }
+  ]
+}

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
@@ -34,7 +33,7 @@ class _SchedulePageState extends State<SchedulePage> {
   List<Map<String, dynamic>> _schedule = const [];
   List<StudentScheduleTask> _personalTasks = const [];
   bool _savingPersonalTask = false;
-  bool _weekly = true;
+  bool _daily = true;
   late DateTime _selectedDate;
 
   /// 필요한 변수는 선택 날짜와 선택적 초기 일정이다.
@@ -70,37 +69,40 @@ class _SchedulePageState extends State<SchedulePage> {
   /// 작동 원리: 서버의 전체 동기화 계약에 맞춰 기존 날짜별 제목을 보존한 뒤 새 일정 하나를 추가하고 화면 상태를 즉시 갱신한다.
   Future<void> _savePersonalSchedule(_PersonalScheduleDraft draft) async {
     if (_savingPersonalTask) return;
-    final tasksByDate = <DateTime, List<String>>{};
+    final tasksByDate = <DateTime, List<StudentScheduleTask>>{};
     for (final task in _personalTasks) {
       final date = DateTime.tryParse(task.date);
-      final title = task.title.trim();
-      if (date == null || title.isEmpty) continue;
+      if (date == null || task.title.trim().isEmpty) continue;
       tasksByDate
-          .putIfAbsent(DateUtils.dateOnly(date), () => <String>[])
-          .add(title);
+          .putIfAbsent(DateUtils.dateOnly(date), () => <StudentScheduleTask>[])
+          .add(task);
     }
     final selectedDate = DateUtils.dateOnly(draft.date);
-    final titles = tasksByDate.putIfAbsent(selectedDate, () => <String>[]);
-    if (titles.contains(draft.title)) {
-      _showScheduleMessage('같은 날짜에 이미 등록된 일정이에요.');
+    final tasks = tasksByDate.putIfAbsent(
+      selectedDate,
+      () => <StudentScheduleTask>[],
+    );
+    if (tasks.any(
+      (task) => task.title == draft.title && task.startTime == draft.startTime,
+    )) {
+      _showScheduleMessage('같은 날짜와 시간에 이미 등록된 일정이에요.');
       return;
     }
-    titles.add(draft.title);
+    final newTask = StudentScheduleTask(
+      taskId: 'local-${DateTime.now().microsecondsSinceEpoch}',
+      date: _scheduleDateKey(selectedDate),
+      title: draft.title,
+      startTime: draft.startTime,
+      endTime: draft.endTime,
+    );
+    tasks.add(newTask);
 
     setState(() => _savingPersonalTask = true);
     try {
       await ApiClient.instance.syncMyStudentSchedule(tasksByDate);
-      final dateKey = _scheduleDateKey(selectedDate);
       if (!mounted) return;
       setState(() {
-        _personalTasks = [
-          ..._personalTasks,
-          StudentScheduleTask(
-            taskId: 'local-${DateTime.now().microsecondsSinceEpoch}',
-            date: dateKey,
-            title: draft.title,
-          ),
-        ];
+        _personalTasks = [..._personalTasks, newTask];
         _selectedDate = selectedDate;
       });
       _showScheduleMessage('개인 일정을 저장했어요.');
@@ -118,12 +120,48 @@ class _SchedulePageState extends State<SchedulePage> {
     }
   }
 
+  Future<void> _deletePersonalSchedule(String taskId) async {
+    if (_savingPersonalTask) return;
+    final remaining = _personalTasks
+        .where((task) => task.taskId != taskId)
+        .toList(growable: false);
+    if (remaining.length == _personalTasks.length) return;
+    final tasksByDate = <DateTime, List<StudentScheduleTask>>{};
+    for (final task in remaining) {
+      final date = DateTime.tryParse(task.date);
+      if (date == null || task.title.trim().isEmpty) continue;
+      tasksByDate
+          .putIfAbsent(DateUtils.dateOnly(date), () => <StudentScheduleTask>[])
+          .add(task);
+    }
+    setState(() => _savingPersonalTask = true);
+    try {
+      await ApiClient.instance.syncMyStudentSchedule(tasksByDate);
+      if (!mounted) return;
+      setState(() => _personalTasks = remaining);
+      _showScheduleMessage('개인 일정이 삭제됐어요.');
+    } catch (error) {
+      if (!mounted) return;
+      _showScheduleMessage(
+        studentFacingApiError(
+          error,
+          fallback: '개인 일정을 삭제하지 못했어요.',
+          unavailable: '일정 저장 연결이 불안정해요. 잠시 후 다시 시도해 주세요.',
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _savingPersonalTask = false);
+    }
+  }
+
   /// 필요한 변수는 선택 날짜와 모바일 화면 문맥이다.
   /// 작동 원리: 레퍼런스형 둥근 바텀시트에서 제목·날짜를 검증하고 사용자가 저장을 확정한 경우에만 서버 동기화를 시작한다.
   Future<void> _openAddPersonalSchedule() async {
     final titleController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     var draftDate = _selectedDate;
+    var draftStart = const TimeOfDay(hour: 18, minute: 0);
+    var draftEnd = const TimeOfDay(hour: 19, minute: 0);
     final draft = await showModalBottomSheet<_PersonalScheduleDraft>(
       context: context,
       isScrollControlled: true,
@@ -168,7 +206,7 @@ class _SchedulePageState extends State<SchedulePage> {
                     ),
                     const SizedBox(height: 7),
                     const Text(
-                      '내 학습 계획에 표시할 일정과 날짜를 입력하세요.',
+                      '날짜와 시작·종료 시간을 지정해 학습 계획에 추가하세요.',
                       style: TextStyle(
                         color: Colors.black54,
                         fontSize: 14,
@@ -218,6 +256,63 @@ class _SchedulePageState extends State<SchedulePage> {
                         alignment: Alignment.centerLeft,
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            key: const ValueKey('personal-schedule-start'),
+                            onPressed: () async {
+                              final selected = await showTimePicker(
+                                context: context,
+                                initialTime: draftStart,
+                              );
+                              if (selected == null) return;
+                              setSheetState(() {
+                                draftStart = selected;
+                                if (_minutesOf(draftEnd) <=
+                                    _minutesOf(draftStart)) {
+                                  draftEnd = selected.hour == 23
+                                      ? const TimeOfDay(hour: 23, minute: 59)
+                                      : TimeOfDay(
+                                          hour: selected.hour + 1,
+                                          minute: selected.minute,
+                                        );
+                                }
+                              });
+                            },
+                            icon: const Icon(Icons.schedule_rounded),
+                            label: Text('시작 ${_timeLabel(draftStart)}'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            key: const ValueKey('personal-schedule-end'),
+                            onPressed: () async {
+                              final selected = await showTimePicker(
+                                context: context,
+                                initialTime: draftEnd,
+                              );
+                              if (selected == null) return;
+                              if (!context.mounted) return;
+                              if (_minutesOf(selected) <=
+                                  _minutesOf(draftStart)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('종료 시간은 시작 시간보다 늦어야 합니다.'),
+                                  ),
+                                );
+                                return;
+                              }
+                              setSheetState(() => draftEnd = selected);
+                            },
+                            icon: const Icon(Icons.schedule_outlined),
+                            label: Text('종료 ${_timeLabel(draftEnd)}'),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 16),
                     FilledButton(
                       key: const ValueKey('personal-schedule-save'),
@@ -227,6 +322,8 @@ class _SchedulePageState extends State<SchedulePage> {
                           _PersonalScheduleDraft(
                             title: titleController.text.trim(),
                             date: draftDate,
+                            startTime: _timeValue(draftStart),
+                            endTime: _timeValue(draftEnd),
                           ),
                         );
                       },
@@ -312,32 +409,35 @@ class _SchedulePageState extends State<SchedulePage> {
     }
   }
 
-  DateTime get _weekStart => _selectedDate.subtract(
-    Duration(days: _selectedDate.weekday - DateTime.monday),
-  );
-
-  /// 필요한 변수는 현재 주 시작일과 이동 방향이다.
-  /// 작동 원리는 7일 단위로 선택 날짜를 이동해 주간 카드 전체를 갱신하는 것이다.
-  void _moveWeek(int delta) {
+  void _moveMonth(int delta) {
+    final targetMonth = DateTime(
+      _selectedDate.year,
+      _selectedDate.month + delta,
+    );
+    final targetDay = _selectedDate.day.clamp(
+      1,
+      DateUtils.getDaysInMonth(targetMonth.year, targetMonth.month),
+    );
     setState(
-      () => _selectedDate = _selectedDate.add(Duration(days: delta * 7)),
+      () => _selectedDate = DateTime(
+        targetMonth.year,
+        targetMonth.month,
+        targetDay,
+      ),
     );
   }
 
   /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리는 PC에서는 공용 드로어를 유지하고 모바일에서는 하단 앱바에 탐색을 맡기는 것이다.
+  /// 작동 원리는 모든 폭에서 공용 드로어를 햄버거로 열고, PC만 중앙 메뉴를 추가하는 것이다.
   Widget _buildHeader(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
     return Ios26TopBar(
       brandColor: Colors.black,
       showLevelIndicator: false,
-      showUtilityActions: !mobile,
-      hideOnMobile: true,
-      onMenu: mobile ? null : () => toggleAppDrawer(context),
-      onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainStudentPage()),
-        (route) => false,
-      ),
+      showUtilityActions: true,
+      onMenu: () => toggleAppDrawer(context),
+      onTitleTap: () => Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
       items: studentTopNavItems(
         context,
         active: StudentTopDestination.learning,
@@ -350,61 +450,56 @@ class _SchedulePageState extends State<SchedulePage> {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final personalSchedule = mobile
-        ? _personalTasks
-              .where(
-                (task) => DateUtils.isSameDay(
-                  DateTime.tryParse(task.date),
-                  _selectedDate,
-                ),
-              )
-              .map(
-                (task) => <String, dynamic>{
-                  'task_id': task.taskId,
-                  'date': task.date,
-                  'title': task.title,
-                  'type': '개인',
-                  'detail': '내 학습 일정',
-                  'status': '예정',
-                  'time': '자율',
-                },
-              )
-              .toList(growable: false)
-        : const <Map<String, dynamic>>[];
+    final personalSchedule = _personalTasks
+        .map(
+          (task) => <String, dynamic>{
+            'task_id': task.taskId,
+            'date': task.date,
+            'title': task.title,
+            'type': '개인',
+            'detail': '내 학습 일정',
+            'status': '예정',
+            'time': _studentScheduleTimeLabel(task),
+            'start_time': task.startTime,
+            'end_time': task.endTime,
+            'personal_task_id': task.taskId,
+          },
+        )
+        .toList(growable: false);
     final visibleSchedule = <Map<String, dynamic>>[
       ..._schedule,
       ...personalSchedule,
     ];
+    final selectedSchedule = visibleSchedule
+        .where((item) => _scheduleMatchesDate(item, _selectedDate))
+        .toList(growable: false);
     final scheduleCard = _loading
         ? const _ScheduleLoadingCard()
         : _error != null
         ? _EmptyScheduleCard(message: _error!)
-        : _weekly
-        ? _WeeklyScheduleCard(
-            weekStart: _weekStart,
+        : _daily
+        ? _DailyScheduleCard(
             selectedDate: _selectedDate,
-            schedule: visibleSchedule,
-            onSelectDate: (date) => setState(() => _selectedDate = date),
-            onMoveWeek: _moveWeek,
+            schedule: selectedSchedule,
           )
         : _MonthlyScheduleCard(
             selectedDate: _selectedDate,
             schedule: visibleSchedule,
             onSelectDate: (date) => setState(() => _selectedDate = date),
+            onMoveMonth: _moveMonth,
           );
     final summaryCard = _TodaySummaryCard(
       selectedDate: _selectedDate,
-      schedule: visibleSchedule,
+      schedule: selectedSchedule,
       savingPersonalTask: _savingPersonalTask,
-      onAddPersonalSchedule: mobile ? _openAddPersonalSchedule : null,
+      title: _daily ? '오늘 일정' : '선택한 날짜',
+      onAddPersonalSchedule: _openAddPersonalSchedule,
+      onDeletePersonalSchedule: _deletePersonalSchedule,
     );
 
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
-      drawer: mobile ? null : const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/schedule')
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -428,11 +523,17 @@ class _SchedulePageState extends State<SchedulePage> {
                           StudentDensityPageHeader(
                             eyebrow: _monthLabel(_selectedDate),
                             title: '학습 일정',
-                            description: '주간의 하루 흐름과 월간 계획을 한 페이지에서 전환해 확인합니다.',
+                            description: '오늘의 시간표와 월간 계획을 한 화면에서 전환해 확인합니다.',
                             action: _ScheduleModeSwitch(
-                              weekly: _weekly,
-                              onChanged: (value) =>
-                                  setState(() => _weekly = value),
+                              daily: _daily,
+                              onChanged: (value) => setState(() {
+                                _daily = value;
+                                if (value) {
+                                  _selectedDate = DateUtils.dateOnly(
+                                    DateTime.now(),
+                                  );
+                                }
+                              }),
                             ),
                           ),
                           SizedBox(height: mobile ? 14 : 20),
@@ -470,8 +571,8 @@ class _SchedulePageState extends State<SchedulePage> {
 }
 
 class _ScheduleModeSwitch extends StatelessWidget {
-  const _ScheduleModeSwitch({required this.weekly, required this.onChanged});
-  final bool weekly;
+  const _ScheduleModeSwitch({required this.daily, required this.onChanged});
+  final bool daily;
   final ValueChanged<bool> onChanged;
 
   /// 필요한 변수는 주간 선택 여부다.
@@ -489,13 +590,13 @@ class _ScheduleModeSwitch extends StatelessWidget {
       child: Row(
         children: [
           _ModeButton(
-            label: '주간(일별)',
-            selected: weekly,
+            label: '일간',
+            selected: daily,
             onTap: () => onChanged(true),
           ),
           _ModeButton(
             label: '월간',
-            selected: !weekly,
+            selected: !daily,
             onTap: () => onChanged(false),
           ),
         ],
@@ -540,26 +641,21 @@ class _ModeButton extends StatelessWidget {
   );
 }
 
-class _WeeklyScheduleCard extends StatelessWidget {
-  const _WeeklyScheduleCard({
-    required this.weekStart,
+class _DailyScheduleCard extends StatelessWidget {
+  const _DailyScheduleCard({
     required this.selectedDate,
     required this.schedule,
-    required this.onSelectDate,
-    required this.onMoveWeek,
   });
-  final DateTime weekStart;
   final DateTime selectedDate;
   final List<Map<String, dynamic>> schedule;
-  final ValueChanged<DateTime> onSelectDate;
-  final ValueChanged<int> onMoveWeek;
 
-  /// 필요한 변수는 주 시작일·선택일·일정 목록이다.
-  /// 작동 원리는 7일 선택 행과 시간순 일정 행을 HTML의 한 흰색 카드에 결합하는 것이다.
+  /// 필요한 변수는 오늘 날짜와 일정 목록이다.
+  /// 작동 원리는 0시부터 23시까지 시간축에 일정을 시작 시간순으로 배치한다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final weekEnd = weekStart.add(const Duration(days: 6));
+    final sorted = [...schedule]
+      ..sort((a, b) => _scheduleStartTime(a).compareTo(_scheduleStartTime(b)));
     return Container(
       padding: EdgeInsets.fromLTRB(
         mobile ? 14 : 20,
@@ -578,78 +674,84 @@ class _WeeklyScheduleCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (!mobile) ...[
-                      const Text(
-                        'THIS WEEK',
-                        style: TextStyle(
-                          fontSize: 10,
-                          letterSpacing: 1.6,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    Text(
-                      '${weekStart.month}월 ${weekStart.day}일 – ${weekEnd.day}일',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
+              const Expanded(
+                child: Text(
+                  '오늘 시간표',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
                 ),
               ),
-              _CircleAction(
-                icon: Icons.chevron_left,
-                onTap: () => onMoveWeek(-1),
-              ),
-              const SizedBox(width: 8),
-              _CircleAction(
-                icon: Icons.chevron_right,
-                onTap: () => onMoveWeek(1),
+              Text(
+                _scheduleDateLabel(selectedDate),
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              for (var index = 0; index < 7; index++) ...[
-                Expanded(
-                  child: _DayButton(
-                    date: weekStart.add(Duration(days: index)),
-                    selected: DateUtils.isSameDay(
-                      weekStart.add(Duration(days: index)),
-                      selectedDate,
-                    ),
-                    hasTask: index == 0 || index == 3 || index == 5,
-                    onTap: onSelectDate,
-                  ),
-                ),
-                if (index != 6) const SizedBox(width: 4),
-              ],
-            ],
-          ),
-          const Divider(height: 44, color: Color(0xFFE3E3E5)),
-          if (schedule.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 30),
-              child: Center(child: Text('선택한 날짜의 일정이 없습니다.')),
-            )
-          else
-            for (final item in schedule.take(3)) _TimelineItem(data: item),
+          for (var hour = 0; hour <= 23; hour++)
+            _HourlyScheduleRow(
+              hour: hour,
+              items: sorted
+                  .where((item) => _scheduleStartHour(item) == hour)
+                  .toList(growable: false),
+            ),
         ],
       ),
     );
   }
 }
 
-class _DayButton extends StatelessWidget {
-  const _DayButton({
+class _HourlyScheduleRow extends StatelessWidget {
+  const _HourlyScheduleRow({required this.hour, required this.items});
+  final int hour;
+  final List<Map<String, dynamic>> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 52,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                '${hour.toString().padLeft(2, '0')}:00',
+                style: const TextStyle(
+                  color: Colors.black45,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          Container(width: 1, color: const Color(0xFFE1E1E3)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 48),
+              padding: const EdgeInsets.only(bottom: 6),
+              child: items.isEmpty
+                  ? const SizedBox.shrink()
+                  : Column(
+                      children: [
+                        for (final item in items) _TimelineItem(data: item),
+                      ],
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MonthDayButton extends StatelessWidget {
+  const _MonthDayButton({
     required this.date,
     required this.selected,
     required this.hasTask,
@@ -660,46 +762,27 @@ class _DayButton extends StatelessWidget {
   final bool hasTask;
   final ValueChanged<DateTime> onTap;
 
-  static const _days = ['월', '화', '수', '목', '금', '토', '일'];
-
   /// 필요한 변수는 날짜·선택 상태·과제 존재 여부다.
   /// 작동 원리는 모바일의 미선택 날짜는 배경·외곽선을 없애고 선택일만 검은 면으로 강조하는 것이다.
   @override
   Widget build(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      key: ValueKey('schedule-month-day-${_scheduleDateKey(date)}'),
+      borderRadius: BorderRadius.circular(10),
       onTap: () => onTap(date),
-      child: Container(
-        height: mobile ? 76 : 82,
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFF202022)
-              : mobile
-              ? Colors.transparent
-              : const Color(0xFFF7F7F8),
-          borderRadius: BorderRadius.circular(14),
-          border: mobile ? null : Border.all(color: const Color(0xFFDEDEE1)),
+          color: selected ? Colors.black : const Color(0xFFF7F7F8),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              _days[date.weekday - 1],
-              style: TextStyle(
-                color: selected ? Colors.white70 : Colors.black45,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
               '${date.day}',
-              style: TextStyle(
-                color: selected ? Colors.white : Colors.black,
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(color: selected ? Colors.white : Colors.black),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 3),
             if (hasTask)
               Container(
                 width: 5,
@@ -729,6 +812,7 @@ class _TimelineItem extends StatelessWidget {
     final type = data['type']?.toString() ?? '과제';
     final detail = data['detail']?.toString() ?? '오늘 학습';
     final status = data['status']?.toString() ?? '예정';
+    final dDay = _scheduleDday(data);
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Row(
@@ -806,12 +890,27 @@ class _TimelineItem extends StatelessWidget {
                             ],
                           ),
                         ),
-                        Text(
-                          status,
-                          style: const TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              status,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (dDay != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                dDay,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
@@ -828,15 +927,19 @@ class _TimelineItem extends StatelessWidget {
 
 class _TodaySummaryCard extends StatelessWidget {
   const _TodaySummaryCard({
+    required this.title,
     required this.selectedDate,
     required this.schedule,
     required this.savingPersonalTask,
     this.onAddPersonalSchedule,
+    this.onDeletePersonalSchedule,
   });
+  final String title;
   final DateTime selectedDate;
   final List<Map<String, dynamic>> schedule;
   final bool savingPersonalTask;
   final VoidCallback? onAddPersonalSchedule;
+  final ValueChanged<String>? onDeletePersonalSchedule;
 
   static const _weekdays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
 
@@ -871,10 +974,13 @@ class _TodaySummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '오늘 요약',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                  title,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               Container(
@@ -953,7 +1059,14 @@ class _TodaySummaryCard extends StatelessWidget {
             )
           else
             for (final item in summaryItems.take(3)) ...[
-              _SummaryTaskItem(data: item),
+              _SummaryTaskItem(
+                data: item,
+                onDelete: item['personal_task_id'] == null
+                    ? null
+                    : () => onDeletePersonalSchedule?.call(
+                        item['personal_task_id'].toString(),
+                      ),
+              ),
               const SizedBox(height: 8),
             ],
           SizedBox(
@@ -987,15 +1100,23 @@ class _TodaySummaryCard extends StatelessWidget {
 }
 
 class _PersonalScheduleDraft {
-  const _PersonalScheduleDraft({required this.title, required this.date});
+  const _PersonalScheduleDraft({
+    required this.title,
+    required this.date,
+    required this.startTime,
+    required this.endTime,
+  });
 
   final String title;
   final DateTime date;
+  final String startTime;
+  final String endTime;
 }
 
 class _SummaryTaskItem extends StatelessWidget {
-  const _SummaryTaskItem({required this.data});
+  const _SummaryTaskItem({required this.data, this.onDelete});
   final Map<String, dynamic> data;
+  final VoidCallback? onDelete;
 
   /// 필요한 변수는 일정 종류·제목·상세·상태다.
   /// 작동 원리는 진행 중 일정은 검은 배경으로 강조하고 나머지는 얇은 테두리 행으로 요약한다.
@@ -1005,6 +1126,7 @@ class _SummaryTaskItem extends StatelessWidget {
     final type = data['type']?.toString() ?? '과제';
     final detail = data['detail']?.toString() ?? '오늘 학습';
     final status = data['status']?.toString() ?? '예정';
+    final dDay = _scheduleDday(data);
     final active = status.contains('진행');
     final foreground = active ? Colors.white : Colors.black;
     return Container(
@@ -1060,7 +1182,26 @@ class _SummaryTaskItem extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, color: foreground, size: 18),
+          if (dDay != null)
+            Text(
+              dDay,
+              style: TextStyle(
+                color: active ? Colors.white70 : Colors.black54,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          if (onDelete != null)
+            IconButton(
+              key: ValueKey(
+                'delete-personal-schedule-${data['personal_task_id']}',
+              ),
+              tooltip: '일정 삭제',
+              onPressed: onDelete,
+              icon: Icon(Icons.delete_outline_rounded, color: foreground),
+            )
+          else
+            Icon(Icons.chevron_right_rounded, color: foreground, size: 18),
         ],
       ),
     );
@@ -1072,10 +1213,12 @@ class _MonthlyScheduleCard extends StatelessWidget {
     required this.selectedDate,
     required this.schedule,
     required this.onSelectDate,
+    required this.onMoveMonth,
   });
   final DateTime selectedDate;
   final List<Map<String, dynamic>> schedule;
   final ValueChanged<DateTime> onSelectDate;
+  final ValueChanged<int> onMoveMonth;
 
   /// 필요한 변수는 선택 월과 날짜 선택 콜백이다.
   /// 작동 원리는 월의 첫 요일과 일수를 계산해 7열 달력으로 표시하고 날짜를 누르면 주간 보기로 복귀하는 것이다.
@@ -1093,9 +1236,29 @@ class _MonthlyScheduleCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _monthLabel(selectedDate),
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _monthLabel(selectedDate),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              _CircleAction(
+                key: const ValueKey('schedule-previous-month'),
+                icon: Icons.chevron_left,
+                onTap: () => onMoveMonth(-1),
+              ),
+              const SizedBox(width: 8),
+              _CircleAction(
+                key: const ValueKey('schedule-next-month'),
+                icon: Icons.chevron_right,
+                onTap: () => onMoveMonth(1),
+              ),
+            ],
           ),
           const SizedBox(height: 18),
           GridView.builder(
@@ -1112,21 +1275,15 @@ class _MonthlyScheduleCard extends StatelessWidget {
               final day = index - leading + 1;
               final date = DateTime(selectedDate.year, selectedDate.month, day);
               final selected = DateUtils.isSameDay(date, selectedDate);
-              return InkWell(
-                onTap: () => onSelectDate(date),
-                child: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: selected ? Colors.black : const Color(0xFFF7F7F8),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '$day',
-                    style: TextStyle(
-                      color: selected ? Colors.white : Colors.black,
-                    ),
-                  ),
-                ),
+              final hasSchedule = schedule.any((item) {
+                final itemDate = _scheduleItemDate(item);
+                return itemDate != null && DateUtils.isSameDay(itemDate, date);
+              });
+              return _MonthDayButton(
+                date: date,
+                selected: selected,
+                hasTask: hasSchedule,
+                onTap: onSelectDate,
               );
             },
           ),
@@ -1137,7 +1294,7 @@ class _MonthlyScheduleCard extends StatelessWidget {
 }
 
 class _CircleAction extends StatelessWidget {
-  const _CircleAction({required this.icon, required this.onTap});
+  const _CircleAction({super.key, required this.icon, required this.onTap});
   final IconData icon;
   final VoidCallback onTap;
 
@@ -1213,6 +1370,53 @@ String _scheduleDateKey(DateTime date) {
 String _scheduleDateLabel(DateTime date) {
   const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
   return '${date.year}년 ${date.month}월 ${date.day}일 (${weekdays[date.weekday - 1]})';
+}
+
+int _minutesOf(TimeOfDay time) => time.hour * 60 + time.minute;
+
+String _timeValue(TimeOfDay time) =>
+    '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
+String _timeLabel(TimeOfDay time) => _timeValue(time);
+
+String _studentScheduleTimeLabel(StudentScheduleTask task) {
+  final start = task.startTime?.trim() ?? '';
+  final end = task.endTime?.trim() ?? '';
+  if (start.isEmpty) return '20:00';
+  return end.isEmpty ? start : '$start–$end';
+}
+
+String _scheduleStartTime(Map<String, dynamic> item) {
+  final start = item['start_time']?.toString().trim() ?? '';
+  if (start.isNotEmpty) return start;
+  final time = item['time']?.toString().trim() ?? '';
+  final match = RegExp(r'\d{2}:\d{2}').firstMatch(time);
+  return match?.group(0) ?? _timeFromDueDate(item['due_date']);
+}
+
+int _scheduleStartHour(Map<String, dynamic> item) {
+  return int.tryParse(_scheduleStartTime(item).split(':').first) ?? 20;
+}
+
+DateTime? _scheduleItemDate(Map<String, dynamic> item) {
+  final raw = item['date'] ?? item['due_date'];
+  final parsed = DateTime.tryParse(raw?.toString() ?? '');
+  if (parsed == null) return null;
+  return DateUtils.dateOnly(parsed.isUtc ? parsed.toLocal() : parsed);
+}
+
+bool _scheduleMatchesDate(Map<String, dynamic> item, DateTime date) {
+  final itemDate = _scheduleItemDate(item);
+  return itemDate == null || DateUtils.isSameDay(itemDate, date);
+}
+
+String? _scheduleDday(Map<String, dynamic> item, [DateTime? now]) {
+  final itemDate = _scheduleItemDate(item);
+  if (itemDate == null) return null;
+  final today = DateUtils.dateOnly(now ?? DateTime.now());
+  final days = itemDate.difference(today).inDays;
+  if (days == 0) return 'D-DAY';
+  return days > 0 ? 'D-$days' : 'D+${days.abs()}';
 }
 
 /// 필요한 변수는 서버 due_date 값이다.

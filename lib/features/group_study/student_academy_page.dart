@@ -156,6 +156,10 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 onMenu: () => toggleAppDrawer(context),
                 items: studentTopNavItems(
                   context,

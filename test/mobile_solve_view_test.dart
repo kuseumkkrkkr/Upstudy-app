@@ -168,6 +168,48 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('한 획으로 쓴 짧은 답도 최소 풀이량으로 인정한다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: BuildpageWidget(
+          config: ProblemSolveConfig(
+            ratingEnabled: false,
+            quests: [
+              {
+                'header': {'quest_id': 'mobile-one-stroke-submit-test'},
+                'data': {'quest_title': '답을 한 획으로 작성하세요.'},
+              },
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final canvas = find.byWidgetPredicate(
+      (widget) => widget is GestureDetector && widget.onPanStart != null,
+    );
+    expect(canvas, findsOneWidget);
+    await tester.ensureVisible(canvas);
+    await tester.pump();
+    await tester.dragFrom(
+      tester.getTopLeft(canvas) + const Offset(45, 40),
+      const Offset(90, 18),
+    );
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(FilledButton, '제출'));
+    await tester.pump();
+
+    expect(find.text('올바른 풀이를 작성해주세요'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('간편풀이에서 Flow 노드를 드래그해 조립하고 객관식 답을 선택한다', (tester) async {
     SharedPreferences.setMockInitialValues({
       'settings.mobile_quick_solve': true,

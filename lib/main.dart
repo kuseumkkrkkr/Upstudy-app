@@ -114,6 +114,7 @@ ThemeData _studentDensityTheme() {
   );
   return ThemeData(
     useMaterial3: true,
+    fontFamily: 'Noto Sans KR',
     colorScheme: scheme,
     scaffoldBackgroundColor: StudentDensityTokens.background,
     dividerColor: StudentDensityTokens.line,

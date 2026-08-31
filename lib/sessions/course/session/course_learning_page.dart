@@ -29,6 +29,13 @@ const _shadow = BoxShadow(
 
 int _courseNumber(Course course) => course.id.hashCode & 0xFFFF;
 
+/// 780px 모바일 셸과 넓은 PC 셸 사이에서는 표면 내부만 압축한다.
+/// 상단 PC 네비게이션과 실제 코스·미션 상태는 그대로 유지한다.
+bool _isCourseLearningCompactDesktop(BuildContext context) {
+  final width = MediaQuery.sizeOf(context).width;
+  return width > StudentDensityTokens.mobileBreakpoint && width < 1024;
+}
+
 /// 필요한 변수는 숫자 또는 문자열 형태로 온 서버 값과 기본값이다.
 /// 작동 원리: 비정상 값을 기본값으로 바꾸고 음수 시간을 막아 화면 계산이 안전하게 유지되도록 한다.
 int _runtimeSeconds(dynamic value, {int fallback = 0}) {
@@ -516,6 +523,11 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
                 builder: (context) => Ios26TopBar(
                   brandColor: StudentDensityTokens.dark,
                   onMenu: () => Scaffold.of(context).openDrawer(),
+                  onTitleTap: () =>
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/student/dashboard',
+                        (route) => false,
+                      ),
                   showLevelIndicator: false,
                   items: studentTopNavItems(
                     context,
@@ -1251,11 +1263,12 @@ class _LearningHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    final compactDesktop = _isCourseLearningCompactDesktop(context);
     final tags = _courseContextLabels(course);
     return ClipRRect(
       borderRadius: BorderRadius.circular(mobile ? 22 : 28),
       child: Container(
-        height: mobile ? 130 : 252,
+        height: mobile ? 130 : (compactDesktop ? 300 : 252),
         decoration: const BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -1271,7 +1284,9 @@ class _LearningHero extends StatelessWidget {
           children: [
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(mobile ? 17 : 30),
+                padding: EdgeInsets.all(
+                  mobile ? 17 : (compactDesktop ? 24 : 30),
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1280,24 +1295,26 @@ class _LearningHero extends StatelessWidget {
                       spacing: 6,
                       runSpacing: 6,
                       children: [
-                        for (final tag in tags.take(mobile ? 2 : 4))
+                        for (final tag in tags.take(
+                          mobile ? 2 : (compactDesktop ? 3 : 4),
+                        ))
                           _LearningPill(tag),
                       ],
                     ),
-                    SizedBox(height: mobile ? 9 : 16),
+                    SizedBox(height: mobile ? 9 : (compactDesktop ? 12 : 16)),
                     Text(
                       _courseDisplaySummary(course),
-                      maxLines: mobile ? 3 : 4,
+                      maxLines: mobile ? 3 : (compactDesktop ? 3 : 4),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: mobile ? 22 : 40,
+                        fontSize: mobile ? 22 : (compactDesktop ? 34 : 40),
                         height: .98,
                         letterSpacing: -1.5,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     if (!mobile) ...[
-                      const SizedBox(height: 28),
+                      SizedBox(height: compactDesktop ? 18 : 28),
                       const Text(
                         '교재, 문제, 레벨 테스트와 시험을 정해진 학습 순서로 이어갑니다.',
                         style: TextStyle(
@@ -1311,7 +1328,7 @@ class _LearningHero extends StatelessWidget {
               ),
             ),
             SizedBox(
-              width: mobile ? 118 : 300,
+              width: mobile ? 118 : (compactDesktop ? 240 : 300),
               child: _LearningProgress(course: course, mobile: mobile),
             ),
           ],
@@ -1509,6 +1526,7 @@ class _CurrentLearning extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    final compactDesktop = _isCourseLearningCompactDesktop(context);
     final currentIndex = _currentCourseUnitIndex(course);
     final index = currentIndex < 0 ? 0 : currentIndex;
     final unit = currentIndex < 0 ? null : course.units[currentIndex];
@@ -1526,6 +1544,22 @@ class _CurrentLearning extends StatelessWidget {
         : rawDescription;
     final elapsedSeconds = _courseElapsedSeconds(course);
     final progress = course.progress.clamp(0.0, 1.0);
+    final missionButton = FilledButton(
+      onPressed: mission == null ? null : () => onMissionTap(unit!, mission),
+      style: FilledButton.styleFrom(
+        backgroundColor: StudentDensityTokens.dark,
+        minimumSize: const Size(108, 44),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      ),
+      child: Text(
+        _missionActionLabel(mission),
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+    );
+    final policyButton = OutlinedButton(
+      onPressed: () => showCoursePolicyDialog(context),
+      child: const Text('완료 조건'),
+    );
     final main = Padding(
       padding: EdgeInsets.all(mobile ? 18 : 30),
       child: Row(
@@ -1579,35 +1613,17 @@ class _CurrentLearning extends StatelessWidget {
               ],
             ),
           ),
-          if (!mobile) ...[
-            FilledButton(
-              onPressed: mission == null
-                  ? null
-                  : () => onMissionTap(unit!, mission),
-              style: FilledButton.styleFrom(
-                backgroundColor: StudentDensityTokens.dark,
-                minimumSize: const Size(108, 44),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              child: Text(
-                _missionActionLabel(mission),
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
+          if (!mobile && !compactDesktop) ...[
+            missionButton,
             const SizedBox(width: 8),
-            OutlinedButton(
-              onPressed: () => showCoursePolicyDialog(context),
-              child: const Text('완료 조건'),
-            ),
+            policyButton,
           ],
         ],
       ),
     );
     final time = Container(
-      width: mobile ? double.infinity : 280,
-      padding: EdgeInsets.all(mobile ? 18 : 26),
+      width: mobile || compactDesktop ? double.infinity : 280,
+      padding: EdgeInsets.all(mobile ? 18 : (compactDesktop ? 22 : 26)),
       color: StudentDensityTokens.surfaceMuted,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1670,6 +1686,25 @@ class _CurrentLearning extends StatelessWidget {
                           child: const Text('완료 조건'),
                         ),
                         const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  time,
+                ],
+              )
+            : compactDesktop
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  main,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(30, 0, 30, 22),
+                    child: Row(
+                      children: [
+                        Expanded(child: missionButton),
+                        const SizedBox(width: 8),
+                        policyButton,
                       ],
                     ),
                   ),

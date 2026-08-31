@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/friend/shared/social_message_hub.dart';
@@ -32,6 +34,8 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
   List<DirectMessage> _messages = const [];
   bool _loading = true;
   bool _sending = false;
+  bool _polling = false;
+  Timer? _pollTimer;
 
   /// 필요한 변수는 미리보기 여부와 상대 사용자명이다.
   /// 작동 원리는 미리보기는 고정 대화를, 실제 화면은 최근 30개 서버 메시지를 로드하고 실시간 허브를 구독하는 것이다.
@@ -76,6 +80,10 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
       _loading = false;
     } else {
       _loadMessages();
+      _pollTimer = Timer.periodic(
+        const Duration(seconds: 3),
+        (_) => unawaited(_pollMessages()),
+      );
     }
   }
 
@@ -83,6 +91,7 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
   /// 작동 원리는 화면 종료 시 입력·스크롤 자원과 메시지 리스너를 모두 정리하는 것이다.
   @override
   void dispose() {
+    _pollTimer?.cancel();
     SocialMessageHub.removeListener(_onIncomingMessage);
     _controller.dispose();
     _scrollController.dispose();
@@ -106,22 +115,42 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
 
   /// 필요한 변수는 상대 사용자명이다.
   /// 작동 원리는 최근 메시지를 시간순으로 정렬하고 서버 실패는 빈 대화 상태로 안전하게 표시하는 것이다.
-  Future<void> _loadMessages() async {
+  Future<void> _loadMessages({
+    bool forceRefresh = false,
+    bool silent = false,
+  }) async {
     try {
       final messages = await ApiClient.instance.fetchDirectMessages(
         peerUsername: widget.peerUsername,
         limit: 30,
+        forceRefresh: forceRefresh,
       );
       messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       if (!mounted) return;
+      final previousIds = _messages.map((message) => message.id).toSet();
+      final hasNew = messages.any(
+        (message) => !previousIds.contains(message.id),
+      );
       setState(() {
         _messages = messages;
         _loading = false;
       });
-      _scrollToBottom();
+      if (!silent || hasNew) _scrollToBottom();
     } catch (_) {
       if (!mounted) return;
-      setState(() => _loading = false);
+      if (!silent) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _pollMessages() async {
+    if (_polling || !mounted || ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    _polling = true;
+    try {
+      await _loadMessages(forceRefresh: true, silent: true);
+    } finally {
+      _polling = false;
     }
   }
 
@@ -143,7 +172,6 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
-    _controller.clear();
     setState(() => _sending = true);
     try {
       final sent = widget.preview
@@ -160,9 +188,15 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
               text: text,
             );
       if (!mounted) return;
+      _controller.clear();
       setState(() => _messages = [..._messages, sent]);
       widget.onMessageSent?.call(sent);
       _scrollToBottom();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('메시지를 보내지 못했어요. 다시 시도해 주세요.')),
+      );
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -226,10 +260,130 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
     ),
   );
 
+  Widget _messageList() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_messages.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(28),
+          child: Text(
+            '아직 대화가 없어요.\n첫 메시지를 보내보세요.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black45, height: 1.5),
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+      itemCount: _messages.length,
+      itemBuilder: (_, index) => _bubble(_messages[index]),
+    );
+  }
+
+  Widget _mobileComposer() => SafeArea(
+    top: false,
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE1E1E3))),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              key: const ValueKey('mobile-chat-input'),
+              controller: _controller,
+              minLines: 1,
+              maxLines: 4,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _sendMessage(),
+              decoration: InputDecoration(
+                hintText: '메시지 입력',
+                filled: true,
+                fillColor: const Color(0xFFF4F4F6),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            key: const ValueKey('mobile-chat-send'),
+            onPressed: _sending ? null : _sendMessage,
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFF202022),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(46, 46),
+            ),
+            icon: _sending
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.arrow_upward_rounded),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildMobileChat() => Scaffold(
+    key: const ValueKey('mobile-direct-chat'),
+    backgroundColor: StudentDensityTokens.background,
+    appBar: AppBar(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      titleSpacing: 0,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.peerUsername,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+          ),
+          Text(
+            widget.peerStatus,
+            style: const TextStyle(fontSize: 11, color: Colors.black45),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          onPressed: _deleteThread,
+          tooltip: '대화 삭제',
+          icon: const Icon(Icons.more_horiz_rounded),
+        ),
+      ],
+    ),
+    body: Column(
+      children: [
+        Expanded(child: _messageList()),
+        _mobileComposer(),
+      ],
+    ),
+  );
+
   /// 필요한 변수는 메시지 목록·입력 상태·상대 정보다.
   /// 작동 원리는 HTML의 상단 제목, 새 메시지, 대화 카드, 기능 태그 순서를 실제 API 동작과 결합하는 것이다.
   @override
   Widget build(BuildContext context) {
+    if (isStudentDensityMobile(context)) return _buildMobileChat();
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
@@ -241,6 +395,10 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
                 brandColor: Colors.black,
                 showLevelIndicator: false,
                 onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 items: const [],
               ),
             ),

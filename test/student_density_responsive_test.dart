@@ -46,8 +46,8 @@ Widget _responsiveFixture() {
               showLevelIndicator: false,
               onMenu: () {},
               items: const [
-                Ios26NavItem(label: '홈'),
                 Ios26NavItem(label: '학습터', active: true),
+                Ios26NavItem(label: '코스'),
                 Ios26NavItem(label: '책가방'),
                 Ios26NavItem(label: '친구/소셜'),
                 Ios26NavItem(label: '마켓플레이스'),
@@ -141,7 +141,6 @@ Future<void> _verifyViewport(
   await tester.pumpAndSettle();
 
   expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
-  expect(find.text('홈'), mobile ? findsNothing : findsOneWidget);
   expect(find.text('학습터'), mobile ? findsNothing : findsOneWidget);
   expect(find.byType(BottomNavigationBar), findsNothing);
   expect(find.byType(NavigationRail), findsNothing);
@@ -186,7 +185,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('홈'), findsOneWidget);
-    expect(find.text('학습터'), findsOneWidget);
     expect(find.text('코스'), findsOneWidget);
     expect(find.text('자료실'), findsOneWidget);
     expect(find.text('친구/소셜'), findsOneWidget);
@@ -199,7 +197,7 @@ void main() {
     expect(find.text('마켓 도착'), findsOneWidget);
   });
 
-  testWidgets('PC 공용 상단 메뉴는 여섯 목적지와 명명 라우트를 공유한다', (tester) async {
+  testWidgets('PC 공용 상단 메뉴는 시안의 다섯 목적지와 명명 라우트를 공유한다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -223,7 +221,6 @@ void main() {
       ),
     );
 
-    expect(find.text('홈'), findsOneWidget);
     expect(find.text('학습터'), findsOneWidget);
     expect(find.text('코스'), findsOneWidget);
     expect(find.text('자료실'), findsOneWidget);
@@ -253,7 +250,7 @@ void main() {
     expect(find.text('상단 마켓 도착'), findsOneWidget);
   });
 
-  testWidgets('PC 상단 홈과 학습터는 서로 다른 경로로 이동한다', (tester) async {
+  testWidgets('PC 상단 학습터는 학생 홈 명명 라우트로 이동한다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -274,27 +271,16 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        key: const ValueKey('home-active-navigation'),
-        routes: {'/study-center': (_) => const Scaffold(body: Text('학습터 도착'))},
-        home: navigation(active: StudentTopDestination.home),
+        key: const ValueKey('courses-active-navigation'),
+        routes: {
+          '/student/dashboard': (_) => const Scaffold(body: Text('학습터 도착')),
+        },
+        home: navigation(active: StudentTopDestination.courses),
       ),
     );
     await tester.tap(find.text('학습터'));
     await tester.pumpAndSettle();
     expect(find.text('학습터 도착'), findsOneWidget);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        key: const ValueKey('learning-active-navigation'),
-        routes: {
-          '/student/dashboard': (_) => const Scaffold(body: Text('홈 도착')),
-        },
-        home: navigation(active: StudentTopDestination.learning),
-      ),
-    );
-    await tester.tap(find.text('홈'));
-    await tester.pumpAndSettle();
-    expect(find.text('홈 도착'), findsOneWidget);
   });
 
   testWidgets('복습 화면은 500px에서 히어로와 문제 행동을 세로 배치한다', (tester) async {
@@ -376,7 +362,6 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final today = DateUtils.dateOnly(DateTime.now());
 
     await tester.pumpWidget(
       const MaterialApp(
@@ -406,13 +391,24 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: TodayTasksModal(
-            initialTasksByDate: {
-              today: const ['개인 복습 20분'],
-            },
-            lockedTasksByDate: {
-              today: const ['문제 12개', '교재 3장 읽기'],
-            },
-            onTasksChanged: (_) {},
+            tasks: const [
+              TodayTaskEntry(
+                title: '문제 12개',
+                caption: '오늘 풀 문제를 이어서 학습합니다.',
+                icon: Icons.edit_note_rounded,
+              ),
+              TodayTaskEntry(
+                title: '교재 3장 읽기',
+                caption: '교재 읽기 목표를 확인합니다.',
+                icon: Icons.menu_book_rounded,
+              ),
+              TodayTaskEntry(
+                title: '개인 복습 20분',
+                caption: '오답과 약점 태그를 복습합니다.',
+                icon: Icons.replay_rounded,
+              ),
+            ],
+            onTaskTap: (_) {},
           ),
         ),
       ),
@@ -421,9 +417,6 @@ void main() {
     expect(find.text('문제 12개'), findsOneWidget);
     expect(find.text('교재 3장 읽기'), findsOneWidget);
     expect(find.text('개인 복습 20분'), findsOneWidget);
-    await tester.tap(find.text('일정 달력에서 보기'));
-    await tester.pump();
-    expect(find.text('${today.year}년 ${today.month}월'), findsOneWidget);
   });
 
   testWidgets('500px 시험지는 HTML 페이지 배지와 통합 도구 레일을 유지한다', (tester) async {
@@ -506,7 +499,7 @@ void main() {
     expect(find.text('2v2 문제풀이'), findsNothing);
   });
 
-  testWidgets('500px 마켓은 HTML 검색·필터·추천 상세 흐름을 유지한다', (tester) async {
+  testWidgets('500px 자료실은 Atlas 검색·필터·추천 상세 흐름을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -536,17 +529,17 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('COMMUNITY'), findsOneWidget);
-    expect(find.text('마켓'), findsOneWidget);
-    expect(find.text('시험지 · 문제세트 · 코스 · 태그 검색'), findsOneWidget);
+    expect(find.text('MATERIAL LIBRARY'), findsOneWidget);
+    expect(find.text('자료실'), findsOneWidget);
+    expect(find.text('자료명·과목·태그 검색'), findsOneWidget);
     expect(find.text('중2 함수 실전 100제'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ChoiceChip, '코스'));
+    await tester.tap(find.byKey(const ValueKey('market-type-코스')));
     await tester.pump();
     expect(find.text('중2 함수 실전 100제'), findsNothing);
-    await tester.tap(find.widgetWithText(ChoiceChip, '필터+'));
+    await tester.tap(find.byKey(const ValueKey('market-mobile-filter')));
     await tester.pumpAndSettle();
-    expect(find.text('MARKET FILTER'), findsOneWidget);
-    expect(find.text('카테고리'), findsOneWidget);
+    expect(find.text('상세 필터'), findsOneWidget);
+    expect(find.text('자료 유형'), findsOneWidget);
     expect(find.text('과정'), findsOneWidget);
     expect(find.text('가격'), findsOneWidget);
     await tester.tap(find.widgetWithText(ChoiceChip, '무료'));
@@ -555,7 +548,7 @@ void main() {
     expect(find.text('개념이 보이는 그래프 코스'), findsOneWidget);
     await tester.tap(find.text('개념이 보이는 그래프 코스'));
     await tester.pumpAndSettle();
-    expect(find.text('확인'), findsOneWidget);
+    expect(find.text('코스 미리보기'), findsOneWidget);
   });
 
   testWidgets('500px 일정은 HTML 주간 타임라인과 월간 전환을 유지한다', (tester) async {
@@ -623,14 +616,7 @@ void main() {
           initialShareExams: const [],
           initialChatMessages: const [],
           initialGroup: group,
-          initialMembers: [
-            AcademyGroupMember(
-              memberId: 'm1',
-              groupId: 'g1',
-              userId: '이수학',
-              role: 'leader',
-            ),
-          ],
+          initialMembers: [StudyGroupMember(username: '이수학', role: 'leader')],
         ),
       ),
     );
@@ -893,7 +879,7 @@ void main() {
     expect(find.text('먼저 학생 정보를\n알려주세요.'), findsOneWidget);
   });
 
-  testWidgets('500px 프로필은 축약 히어로와 큰 편집 필드를 유지한다', (tester) async {
+  testWidgets('500px 프로필은 기준 시안의 계정 계층과 큰 편집 필드를 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -922,8 +908,8 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('MY ACCOUNT'), findsNothing);
-    expect(find.text('STUDENT PROFILE'), findsNothing);
+    expect(find.text('MY ACCOUNT'), findsOneWidget);
+    expect(find.text('STUDENT PROFILE'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('profile-mobile-compact-hero')),
       findsOneWidget,
@@ -932,11 +918,11 @@ void main() {
     expect(find.text('B'), findsOneWidget);
     expect(find.text('246'), findsOneWidget);
     expect(find.text('@student01 · AIFlow 중학교'), findsOneWidget);
-    expect(find.text('LEARNING PROFILE'), findsNothing);
+    expect(find.text('LEARNING PROFILE'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -720));
     await tester.pumpAndSettle();
     expect(find.text('비밀번호 변경'), findsOneWidget);
-    expect(find.text('SECURITY'), findsNothing);
+    expect(find.text('SECURITY'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -720));
     await tester.pumpAndSettle();
     expect(find.text('DANGER ZONE'), findsOneWidget);
@@ -948,7 +934,7 @@ void main() {
     expect(find.text('현재 비밀번호'), findsOneWidget);
   });
 
-  testWidgets('500px 설정은 단일 Material 설정 목록을 유지한다', (tester) async {
+  testWidgets('500px 설정은 기준 시안의 계층형 설정 패널을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -957,23 +943,31 @@ void main() {
       const MaterialApp(home: SettingsPage(preview: true)),
     );
     await tester.pump();
-    expect(find.text('PREFERENCES'), findsNothing);
-    expect(find.text('LOCAL'), findsNothing);
+    expect(find.text('PREFERENCES'), findsOneWidget);
+    expect(find.text('LOCAL PREFERENCES'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('settings-mobile-profile-link')),
       findsOneWidget,
     );
     expect(
       find.byKey(const ValueKey('settings-mobile-flat-list')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('settings-mobile-panel-01')),
       findsOneWidget,
     );
-    expect(find.text('교재 페이지'), findsOneWidget);
-    expect(find.text('알림'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-mobile-panel-03')),
+      findsOneWidget,
+    );
+    expect(find.text('PDF형 페이지 보기'), findsOneWidget);
+    expect(find.text('모든 알림'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -900));
     await tester.pumpAndSettle();
     expect(find.text('STORAGE CONTRACT'), findsNothing);
     expect(find.text('settings.notifications_enabled'), findsNothing);
-    expect(find.text('자동 저장'), findsNothing);
+    expect(find.text('자동 저장'), findsOneWidget);
   });
 
   testWidgets('500px 학습 액션은 HTML처럼 전체 화면 패널과 하단 닫기를 사용한다', (tester) async {
@@ -1054,7 +1048,7 @@ void main() {
     expect((duel.dy - team.dy).abs(), lessThan(40));
   });
 
-  testWidgets('390px 마켓은 검색과 필터를 세로로 쌓는다', (tester) async {
+  testWidgets('390px 자료실은 검색/필터 첫 줄과 자료 유형 둘째 줄을 쓴다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -1078,19 +1072,24 @@ void main() {
     await tester.pump();
 
     expect(
-      find.byKey(const ValueKey('market-mobile-search-panel')),
+      find.byKey(const ValueKey('market-mobile-controls')),
       findsOneWidget,
     );
-    final field = tester.getTopLeft(
+    final field = tester.getRect(
       find.byKey(const ValueKey('market-search-field')),
     );
-    final filters = tester.getTopLeft(
-      find.byKey(const ValueKey('market-mobile-filters')),
+    final filter = tester.getRect(
+      find.byKey(const ValueKey('market-mobile-filter')),
     );
-    expect(filters.dy, greaterThan(field.dy + 45));
+    final tabs = tester.getRect(
+      find.byKey(const ValueKey('market-mobile-type-tabs')),
+    );
+    expect((filter.top - field.top).abs(), lessThan(12));
+    expect(filter.left, greaterThan(field.left));
+    expect(tabs.top, greaterThan(field.bottom));
   });
 
-  testWidgets('1280px 마켓은 HTML형 검색·버튼·필터 한 줄을 사용한다', (tester) async {
+  testWidgets('1280px 자료실은 검색/필터 첫 줄과 자료 유형 둘째 줄을 쓴다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -1114,17 +1113,21 @@ void main() {
     await tester.pump();
 
     expect(
-      find.byKey(const ValueKey('market-desktop-search-panel')),
+      find.byKey(const ValueKey('market-desktop-controls')),
       findsOneWidget,
     );
-    final field = tester.getTopLeft(
+    final field = tester.getRect(
       find.byKey(const ValueKey('market-search-field')),
     );
-    final filters = tester.getTopLeft(
-      find.byKey(const ValueKey('market-desktop-filters')),
+    final filter = tester.getRect(
+      find.byKey(const ValueKey('market-desktop-filter')),
     );
-    expect((filters.dy - field.dy).abs(), lessThan(24));
-    expect(filters.dx, greaterThan(field.dx + 300));
+    final tabs = tester.getRect(
+      find.byKey(const ValueKey('market-desktop-type-tabs')),
+    );
+    expect((filter.top - field.top).abs(), lessThan(12));
+    expect(filter.left, greaterThan(field.right));
+    expect(tabs.top, greaterThan(field.bottom));
   });
 
   testWidgets('500px 코스 완료 조건은 HTML 전체 화면 액션 패널로 열린다', (tester) async {

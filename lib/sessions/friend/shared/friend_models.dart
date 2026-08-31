@@ -1,4 +1,4 @@
-﻿part of 'package:s11/sessions/friend/friend.dart';
+part of 'package:s11/sessions/friend/friend.dart';
 
 enum _FriendRequestDirection { incoming, outgoing }
 
@@ -133,11 +133,18 @@ class _FriendInfo {
     required this.name,
     required this.status,
     required this.ovr,
+    this.userId,
+    this.displayName,
+    this.profileImage,
   });
 
+  /// The username remains the peer key for the existing message/removal APIs.
   final String name;
   final String status;
   final double ovr;
+  final String? userId;
+  final String? displayName;
+  final String? profileImage;
 }
 
 class _MessageInfo {

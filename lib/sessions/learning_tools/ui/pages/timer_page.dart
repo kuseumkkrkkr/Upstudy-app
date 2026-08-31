@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:s11/shared/theme/theme.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 class TimerPage extends StatefulWidget {
   const TimerPage({super.key});
@@ -195,38 +198,72 @@ class _TimerPageState extends State<TimerPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final mobile = isStudentDensityMobile(context);
     final progress = _isTimerMode && _timerTotalSeconds > 0
         ? (_remainingSeconds / _timerTotalSeconds).clamp(0.0, 1.0)
         : null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      key: const ValueKey('timer-tool-page'),
+      backgroundColor: StudentDensityTokens.background,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
-            _TimerHeader(onBack: () => Navigator.of(context).pop()),
+            Builder(
+              builder: (headerContext) => Ios26TopBar(
+                brandColor: StudentDensityTokens.dark,
+                onBack: () => Navigator.maybePop(context),
+                onMenu: () => toggleAppDrawer(headerContext),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
+                showMenuWithBack: true,
+                showLevelIndicator: false,
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.learning,
+                ),
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 720),
-                    child: Column(
-                      children: [
-                        _buildModeToggle(cs),
-                        const SizedBox(height: 16),
-                        _buildDisplayCard(cs, progress),
-                        const SizedBox(height: 16),
-                        if (_isTimerMode) ...[
-                          _buildTimerSetup(cs),
-                          const SizedBox(height: 16),
+                physics: const BouncingScrollPhysics(),
+                child: StudentDensityPage(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 900),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          StudentDensityPageHeader(
+                            eyebrow: 'LEARNING TOOL',
+                            title: '집중 타이머',
+                            description: '스톱워치와 타이머를 한 화면에서 기록합니다.',
+                            showMobileDescription: true,
+                            action: StudentDensityButton(
+                              label: '도구 닫기',
+                              icon: Icons.close_rounded,
+                              onPressed: () => Navigator.maybePop(context),
+                            ),
+                          ),
+                          SizedBox(height: mobile ? 16 : 22),
+                          _buildModeToggle(cs),
+                          const SizedBox(height: 14),
+                          _buildDisplayCard(cs, progress),
+                          const SizedBox(height: 14),
+                          if (_isTimerMode) ...[
+                            _buildTimerSetup(cs),
+                            const SizedBox(height: 14),
+                          ],
+                          if (!_isTimerMode && _laps.isNotEmpty) ...[
+                            _buildLapsCard(cs),
+                            const SizedBox(height: 14),
+                          ],
+                          _buildControls(cs),
                         ],
-                        if (!_isTimerMode && _laps.isNotEmpty) ...[
-                          _buildLapsCard(cs),
-                          const SizedBox(height: 16),
-                        ],
-                        _buildControls(cs),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -239,13 +276,10 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   Widget _buildModeToggle(ColorScheme cs) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE4E4E7)),
-      ),
+    return StudentDensitySurface(
+      key: const ValueKey('timer-mode-toggle'),
       padding: const EdgeInsets.all(4),
+      radius: StudentDensityTokens.radiusMedium,
       child: Row(
         children: [
           Expanded(
@@ -273,20 +307,13 @@ class _TimerPageState extends State<TimerPage> {
     final seconds = _isTimerMode ? _remainingSeconds : _elapsedSeconds;
     const accentSoft = Color(0xFFF4F4F5);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE4E4E7)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
+    return StudentDensitySurface(
+      key: const ValueKey('timer-display-card'),
+      padding: EdgeInsets.fromLTRB(
+        isStudentDensityMobile(context) ? 18 : 24,
+        22,
+        isStudentDensityMobile(context) ? 18 : 24,
+        24,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,14 +425,9 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   Widget _buildTimerSetup(ColorScheme cs) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE4E4E7)),
-      ),
+    return StudentDensitySurface(
+      key: const ValueKey('timer-setup-card'),
+      padding: EdgeInsets.all(isStudentDensityMobile(context) ? 18 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -479,14 +501,8 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   Widget _buildLapsCard(ColorScheme cs) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE4E4E7)),
-      ),
+    return StudentDensitySurface(
+      padding: EdgeInsets.all(isStudentDensityMobile(context) ? 18 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -523,8 +539,8 @@ class _TimerPageState extends State<TimerPage> {
                   ),
                   decoration: BoxDecoration(
                     color: isLatest
-                        ? AppColors.primary.withValues(alpha: 0.08)
-                        : const Color(0xFFF6F7F8),
+                        ? StudentDensityTokens.dark.withValues(alpha: 0.08)
+                        : StudentDensityTokens.surfaceMuted,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -534,7 +550,9 @@ class _TimerPageState extends State<TimerPage> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: isLatest ? AppColors.primary : cs.onSurface,
+                          color: isLatest
+                              ? StudentDensityTokens.dark
+                              : cs.onSurface,
                         ),
                       ),
                       const Spacer(),
@@ -591,60 +609,6 @@ class _TimerPageState extends State<TimerPage> {
           enabled: _isTimerMode || _running,
         ),
       ],
-    );
-  }
-}
-
-class _TimerHeader extends StatelessWidget {
-  const _TimerHeader({required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 82,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'LEARNING TOOL · SESSION',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                    color: Color(0xFF71717A),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '타이머',
-                  style: AppTypography.title(context).copyWith(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: onBack,
-            icon: const Icon(Icons.close_rounded),
-            style: IconButton.styleFrom(
-              shape: const CircleBorder(
-                side: BorderSide(color: Color(0xFFE4E4E7)),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

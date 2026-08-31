@@ -1,0 +1,62 @@
+{
+  "version": "2026.07.25-alpha",
+  "templates": [
+    {
+      "template_id": "tpl_seq_arith_n",
+      "domain": "cm_arith_sequence",
+      "difficulty": "basic",
+      "problem_type": "sequence",
+      "prompt": "등차수열 a1, d, n이 주어질 때 a_n을 구하시오.",
+      "slots": ["a1", "d", "n"],
+      "constraints": {
+        "max_steps": 3,
+        "requires_rules": ["ar_seq_an_formula"]
+      },
+      "flow_tags": ["정의 정리", "일반항 대입", "정답 검산"],
+      "answer_check": {
+        "type": "integer",
+        "range_min": -10000,
+        "range_max": 10000
+      },
+      "grade": 12
+    },
+    {
+      "template_id": "tpl_quad_delta",
+      "domain": "cm_quadratic",
+      "difficulty": "intermediate",
+      "problem_type": "quadratic",
+      "prompt": "ax²+bx+c=0의 정수해를 구하시오.",
+      "slots": ["a", "b", "c"],
+      "constraints": {
+        "max_steps": 4,
+        "requires_rules": ["quad_delta_root"]
+      },
+      "flow_tags": ["판별식 계산", "근 공식 적용", "근 검증"],
+      "answer_check": {
+        "type": "integer",
+        "range_min": -10000,
+        "range_max": 10000
+      },
+      "grade": 12
+    },
+    {
+      "template_id": "tpl_set_union_count",
+      "domain": "cm_set",
+      "difficulty": "basic",
+      "problem_type": "set",
+      "prompt": "|A|,|B|,|A∩B|가 주어질 때 |A∪B|를 구하시오.",
+      "slots": ["a", "b", "c"],
+      "constraints": {
+        "max_steps": 2,
+        "requires_rules": ["set_union_identity"]
+      },
+      "flow_tags": ["식 정리", "식 적용"],
+      "answer_check": {
+        "type": "integer",
+        "range_min": 0,
+        "range_max": 200
+      },
+      "grade": 11
+    }
+  ]
+}

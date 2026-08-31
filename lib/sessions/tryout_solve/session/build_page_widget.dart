@@ -61,6 +61,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   late final String _ratingSessionId;
   bool _continueLoaded = false;
   bool _mobileQuickSolve = false;
+  bool _placementExam = false;
+  bool _placementWritingMode = false;
+  final List<String> _placementAnswers = <String>[];
   bool _mobileNoteExpanded = false;
   int _mobileFlowNextIndex = 0;
 
@@ -83,6 +86,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   bool _scrollEnabled = false;
   bool _noteLinesEnabled = true;
   int _timerDisplaySeconds = 0;
+  int? _timeLimitSeconds;
+  bool _timeLimitReached = false;
 
   Offset? _eraserPosition;
   bool _eraserActive = false;
@@ -116,14 +121,14 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _scheduleSolveTimerTick(updateNow: true);
     if (_quests.whereType<Map<String, dynamic>>().isEmpty) {
       _loadQuestsForTags();
-    } else {
+    } else if (!_placementExam) {
       unawaited(_loadContinueForCurrentQuest());
     }
   }
 
   @override
   void dispose() {
-    unawaited(_saveContinueForCurrentQuest());
+    if (!_placementExam) unawaited(_saveContinueForCurrentQuest());
     _scrollController.dispose();
     _paintVersion.dispose();
     _solveTimer?.cancel();
@@ -137,6 +142,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   /// 필요한 변수는 기기별 모바일 간편풀이 저장값이다.
   /// 작동 원리는 설정 화면과 풀이 화면이 같은 로컬 키를 공유해 네트워크 요청 없이 모드를 결정하는 것이다.
   Future<void> _loadMobileQuickSolvePreference() async {
+    if (_placementExam) return;
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(
@@ -182,7 +188,10 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _hashTags = List<String>.from(config.hashTags);
     _gradeImmediately = config.gradeImmediately;
     _ratingEnabled = config.ratingEnabled;
-    _mobileQuickSolve = config.mobileQuickSolve;
+    _placementExam = config.placementExam;
+    _mobileQuickSolve = _placementExam ? false : config.mobileQuickSolve;
+    _timeLimitSeconds = config.timeLimitSeconds?.clamp(1, 24 * 60 * 60).toInt();
+    _timeLimitReached = false;
     _mobileNoteExpanded = false;
     _mobileFlowNextIndex = 0;
     final minTier = math
@@ -232,6 +241,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _problemGraded
       ..clear()
       ..addAll(List<bool>.filled(_problemCount, false));
+    _placementAnswers
+      ..clear()
+      ..addAll(List<String>.filled(_problemCount, ''));
     _questError = null;
     _questLoading = false;
     if (config.quests.isNotEmpty) {
@@ -398,8 +410,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       return;
     }
     if (_currentProblemIndex < _problemGraded.length &&
-        _problemGraded[_currentProblemIndex])
+        _problemGraded[_currentProblemIndex]) {
       return;
+    }
     final quest = _currentQuest;
     final fingerprint = _problemFingerprint(quest, _currentProblemIndex);
     if (_currentProblemIndex < _problemGraded.length) {
@@ -522,7 +535,10 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     if (!mounted && !updateNow) return;
 
     final elapsed = _sessionClock.elapsed.inSeconds;
-    final displaySeconds = elapsed >= 40 * 60 ? 40 * 60 : elapsed;
+    final limit = _timeLimitSeconds;
+    final displaySeconds = limit == null
+        ? (elapsed >= 40 * 60 ? 40 * 60 : elapsed)
+        : (limit - elapsed).clamp(0, limit).toInt();
     if (displaySeconds != _timerDisplaySeconds) {
       if (mounted && !updateNow) {
         setState(() => _timerDisplaySeconds = displaySeconds);
@@ -530,18 +546,155 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         _timerDisplaySeconds = displaySeconds;
       }
     }
-    if (elapsed >= 40 * 60) return;
+    if (limit != null && elapsed >= limit) {
+      if (!_timeLimitReached) {
+        _timeLimitReached = true;
+        unawaited(_completeAtTimeLimit());
+      }
+      return;
+    }
+    if (limit == null && elapsed >= 40 * 60) return;
 
-    final delay = elapsed < 5 * 60
+    final useSecondTicks = limit == null
+        ? elapsed < 5 * 60
+        : displaySeconds <= 5 * 60;
+    final delay = useSecondTicks
         ? const Duration(seconds: 1)
         : Duration(seconds: 60 - (elapsed % 60));
     _solveTimer = Timer(delay, _scheduleSolveTimerTick);
   }
 
+  Future<void> _completeAtTimeLimit() async {
+    if (_completionReported) return;
+    if (_placementExam) {
+      await _submitPlacementExam();
+      return;
+    }
+    if (mounted) setState(() => _analysisBusy = true);
+    try {
+      for (var index = 0; index < _problemCount; index++) {
+        if (_problemGraded[index]) continue;
+        _problemGraded[index] = true;
+        _gradedCount += 1;
+        await widget.config?.onProblemGraded?.call(
+          itemIndex: index + 1,
+          quest: _quests[index],
+          isCorrect: false,
+          stepCorrectness: const <Map<String, dynamic>>[],
+          elapsedSeconds: 0,
+        );
+      }
+      _completeCourseModuleIfNeeded();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(error, fallback: '제한 시간 종료 처리를 완료하지 못했어요.'),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _analysisBusy = false);
+    }
+  }
+
+  bool _placementAnsweredAt(int index) {
+    if (index < 0 || index >= _problemCount) return false;
+    final quest = index < _quests.length ? _quests[index] : null;
+    final data = quest?['data'];
+    final options = data is Map ? data['quest_options'] : null;
+    if (options is List && options.isNotEmpty) {
+      return index < _selectedChoices.length && _selectedChoices[index] != null;
+    }
+    return index < _placementAnswers.length &&
+        _placementAnswers[index].trim().isNotEmpty;
+  }
+
+  void _goToPlacementProblem(int index) {
+    if (index < 0 || index >= _problemCount || index == _currentProblemIndex) {
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    if (_toolMode == _ToolMode.pen) {
+      _finishStroke();
+    } else {
+      _finishEraser();
+    }
+    _activePointer = null;
+    _saveCurrentProblem();
+    setState(() {
+      _currentProblemIndex = index;
+      _loadProblem(index);
+    });
+  }
+
+  void _setPlacementWritingMode(bool writing) {
+    if (_placementWritingMode == writing) return;
+    if (!writing) {
+      if (_toolMode == _ToolMode.pen) {
+        _finishStroke();
+      } else {
+        _finishEraser();
+      }
+    }
+    setState(() => _placementWritingMode = writing);
+  }
+
+  void _updatePlacementAnswer(String value) {
+    if (_currentProblemIndex < 0 ||
+        _currentProblemIndex >= _placementAnswers.length) {
+      return;
+    }
+    _placementAnswers[_currentProblemIndex] = value;
+    setState(() {});
+  }
+
+  Future<void> _submitPlacementExam() async {
+    if (_analysisBusy || _completionReported) return;
+    setState(() => _analysisBusy = true);
+    try {
+      final answers = List<PlacementExamAnswer>.generate(_problemCount, (
+        index,
+      ) {
+        final header = _quests[index]?['header'];
+        final questId = header is Map
+            ? (header['quest_id'] ?? '').toString()
+            : '';
+        return PlacementExamAnswer(
+          itemIndex: index + 1,
+          questId: questId,
+          userAnswer: _placementAnswers[index].trim().isEmpty
+              ? null
+              : _placementAnswers[index].trim(),
+          selectedIndex: _selectedChoices[index],
+        );
+      }, growable: false);
+      await widget.config?.onPlacementSubmit?.call(
+        answers: answers,
+        elapsedSeconds: _sessionClock.elapsed.inSeconds
+            .clamp(0, _timeLimitSeconds ?? 30 * 60)
+            .toInt(),
+      );
+      _completionReported = true;
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(error, fallback: '레벨 테스트를 제출하지 못했어요.'),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _analysisBusy = false);
+    }
+  }
+
   /// 필요한 변수는 누적 풀이 초다.
   /// 작동 원리는 5분 전에는 분·초, 이후에는 분 단위로 집중 헤더의 시간을 간결하게 표시하는 것이다.
   String _formatSolveElapsed(int seconds) {
-    final clamped = seconds.clamp(0, 40 * 60).toInt();
+    final clamped = seconds.clamp(0, _timeLimitSeconds ?? 40 * 60).toInt();
     if (clamped < 5 * 60) {
       final minutes = clamped ~/ 60;
       final remain = clamped % 60;
@@ -564,7 +717,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       nextStrokeId: _nextStrokeId,
       elapsedSeconds: _problemElapsedOffset,
     );
-    unawaited(_saveContinueForCurrentQuest());
+    if (!_placementExam) unawaited(_saveContinueForCurrentQuest());
   }
 
   void _loadProblem(int index) {
@@ -600,7 +753,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _eraserPosition = null;
     _currentEraserStroke = null;
     _bumpPaint();
-    unawaited(_loadContinueForCurrentQuest());
+    if (!_placementExam) unawaited(_loadContinueForCurrentQuest());
   }
 
   void _goToProblem(int index) {
@@ -1070,8 +1223,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    if (width <= 600) return _buildMobileSolveScaffold();
+    if (_placementExam) return _buildPlacementExamScaffold();
+    if (isStudentDensityMobile(context)) return _buildMobileSolveScaffold();
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Stack(
@@ -2354,7 +2507,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       await _handleObjectiveGrade();
       return;
     }
-    if (_strokes.length <= 2) {
+    if (_strokes.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,

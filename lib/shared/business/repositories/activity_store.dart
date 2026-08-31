@@ -362,6 +362,12 @@ class ActivityStore {
         lastProblemConfig: priorConfig,
       ),
     );
+    await ApiClient.instance.recordSolveHistory(
+      questId: problemId,
+      isCorrect: true,
+      codebaseId: (meta?['codebase_id'] as num?)?.toInt(),
+      seed: (meta?['seed'] as num?)?.toInt(),
+    );
     if (!isDuplicate) {
       unawaited(
         _syncActivityScoreDelta(
@@ -410,6 +416,12 @@ class ActivityStore {
         lastEvent: event,
         lastProblemConfig: priorConfig,
       ),
+    );
+    await ApiClient.instance.recordSolveHistory(
+      questId: problemId,
+      isCorrect: false,
+      codebaseId: (meta?['codebase_id'] as num?)?.toInt(),
+      seed: (meta?['seed'] as num?)?.toInt(),
     );
   }
 

@@ -112,10 +112,8 @@ class StudyGroup {
   final bool lockEnabled;
   final String ownerRole;
   final String? inviteCode;
-  final List<String> memberIds;
   final String? password;
   final DateTime? createdAt;
-  final String creatorId;
 
   StudyGroup({
     required this.id,
@@ -128,10 +126,8 @@ class StudyGroup {
     this.lockEnabled = false,
     this.ownerRole = 'student',
     this.inviteCode,
-    this.memberIds = const [],
     this.password,
     this.createdAt,
-    this.creatorId = '',
   });
 
   String get groupId => id;
@@ -141,7 +137,6 @@ class StudyGroup {
   /// 필요한 변수는 서버 그룹 JSON과 숫자·목록 필드다.
   /// 작동 원리: 웹에서 null·문자열·숫자가 섞여 와도 안전하게 문자열과 정수로 정규화해 런타임 형변환 오류를 막는다.
   factory StudyGroup.fromJson(Map<String, dynamic> json) {
-    final rawMemberIds = json['member_ids'];
     return StudyGroup(
       id: (json['group_id'] ?? json['id'] ?? '').toString(),
       name: (json['name'] ?? '').toString(),
@@ -157,16 +152,10 @@ class StudyGroup {
       lockEnabled: json['lock_enabled'] == true,
       ownerRole: (json['owner_role'] ?? 'student').toString(),
       inviteCode: json['invite_code']?.toString(),
-      memberIds: rawMemberIds is List
-          ? rawMemberIds
-                .map((value) => value.toString())
-                .toList(growable: false)
-          : const [],
       password: json['password']?.toString(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
-      creatorId: (json['creator_id'] ?? '').toString(),
     );
   }
 }
@@ -188,18 +177,41 @@ List<StudyGroup> parseStudyGroupListPayload(Object? data) {
 }
 
 class StudyGroupMember {
-  final String userId;
   final String username;
+  final String role;
 
-  const StudyGroupMember({required this.userId, required this.username});
+  const StudyGroupMember({required this.username, this.role = 'member'});
 
-  /// 필요한 변수는 서버가 반환한 사용자 ID와 닉네임이다.
-  /// 작동 원리는 닉네임이 비어 있거나 이전 서버 응답일 때 사용자 ID를 대체값으로 사용해 멤버 행이 비어 보이지 않게 하는 것이다.
+  /// 필요한 변수는 서버가 반환한 닉네임과 역할이다.
+  /// 작동 원리는 멤버 UUID를 앱으로 가져오지 않고 화면에 필요한 공개 값만 변환한다.
   factory StudyGroupMember.fromJson(Map<String, dynamic> json) {
-    final userId = (json['user_id'] ?? json['id'] ?? '').toString();
-    final username = (json['username'] ?? json['name'] ?? userId).toString();
-    return StudyGroupMember(userId: userId, username: username);
+    return StudyGroupMember(
+      username: (json['username'] ?? json['name'] ?? '').toString(),
+      role: (json['role'] ?? 'member').toString(),
+    );
   }
+}
+
+class StudyGroupInvitation {
+  const StudyGroupInvitation({
+    required this.groupId,
+    required this.groupName,
+    required this.inviterUsername,
+    required this.createdAt,
+  });
+
+  final String groupId;
+  final String groupName;
+  final String inviterUsername;
+  final String createdAt;
+
+  factory StudyGroupInvitation.fromJson(Map<String, dynamic> json) =>
+      StudyGroupInvitation(
+        groupId: (json['group_id'] ?? '').toString(),
+        groupName: (json['group_name'] ?? '').toString(),
+        inviterUsername: (json['inviter_username'] ?? '').toString(),
+        createdAt: (json['created_at'] ?? '').toString(),
+      );
 }
 
 class StudyGroupInviteMeta {
@@ -1233,17 +1245,23 @@ class StudentScheduleTask {
     required this.taskId,
     required this.date,
     required this.title,
+    this.startTime,
+    this.endTime,
   });
 
   final String taskId;
   final String date;
   final String title;
+  final String? startTime;
+  final String? endTime;
 
   factory StudentScheduleTask.fromJson(Map<String, dynamic> json) {
     return StudentScheduleTask(
       taskId: json['task_id']?.toString() ?? '',
       date: json['date']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
+      startTime: json['start_time']?.toString(),
+      endTime: json['end_time']?.toString(),
     );
   }
 }
@@ -1466,6 +1484,22 @@ class ApiClient {
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return UserProfile.fromJson(res.data ?? const <String, dynamic>{});
+  }
+
+  /// 공개 그래프 좌표 API에 제한된 함수식과 뷰포트를 보내 실제 렌더링 좌표를 받는다.
+  Future<Map<String, dynamic>> sampleGraph(Map<String, dynamic> payload) async {
+    final uri = ApiContract.uri('/graphs/sample');
+    log('POST $uri', name: 'ApiClient');
+    final response = await _httpClient.post(
+      uri,
+      headers: const {'Content-Type': 'application/json; charset=utf-8'},
+      body: jsonEncode(payload),
+    );
+    final parsed = _parse<Map<String, dynamic>>(
+      response,
+      (data) => Map<String, dynamic>.from(data as Map),
+    );
+    return parsed.data ?? const <String, dynamic>{};
   }
 
   Future<UserProfile> updateMyProfile({
@@ -1947,6 +1981,7 @@ class ApiClient {
       if (inviteCode != null && inviteCode.trim().isNotEmpty)
         'invite_code': inviteCode.trim(),
     }, parser: (d) => StudyGroup.fromJson(d));
+    await invalidateCachePath('/social/study-groups/mine');
     return res.data ??
         StudyGroup(
           id: '',
@@ -1961,6 +1996,77 @@ class ApiClient {
     String? password,
   }) async {
     await _post('/social/study-groups/$groupId/join', {'password': password});
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-groups/search');
+  }
+
+  Future<void> inviteFriendToStudyGroup({
+    required String groupId,
+    required String username,
+  }) async {
+    await _post('/social/study-groups/$groupId/invite-friend', {
+      'username': username.trim(),
+    });
+    await invalidateCachePath('/social/study-groups/$groupId/members');
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-group-invitations');
+  }
+
+  Future<List<StudyGroupInvitation>> listStudyGroupInvitations() async {
+    final res = await _get(
+      '/social/study-group-invitations',
+      parser: (d) => ((d['invitations'] as List?) ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                StudyGroupInvitation.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList(growable: false),
+      useCache: false,
+    );
+    return res.data ?? const [];
+  }
+
+  Future<void> resolveStudyGroupInvitation({
+    required String groupId,
+    required bool accept,
+  }) async {
+    await _post(
+      '/social/study-group-invitations/$groupId/${accept ? 'accept' : 'reject'}',
+      const <String, dynamic>{},
+    );
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-group-invitations');
+  }
+
+  Future<void> changeStudyGroupMemberRole({
+    required String groupId,
+    required String username,
+    required String role,
+  }) async {
+    await _post(
+      '/social/study-groups/$groupId/members/${Uri.encodeComponent(username)}/role',
+      {'role': role},
+    );
+    await invalidateCachePath('/social/study-groups/$groupId/members');
+    await invalidateCachePath('/social/study-groups/mine');
+  }
+
+  Future<void> removeStudyGroupMember({
+    required String groupId,
+    required String username,
+  }) async {
+    await _delete(
+      '/social/study-groups/$groupId/members/${Uri.encodeComponent(username)}',
+    );
+    await invalidateCachePath('/social/study-groups/$groupId/members');
+    await invalidateCachePath('/social/study-groups/mine');
+  }
+
+  Future<void> deleteStudyGroup(String groupId) async {
+    await _delete('/social/study-groups/$groupId');
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-groups/search');
   }
 
   Future<StudyGroup> joinStudyGroupByInviteCode({
@@ -1972,6 +2078,8 @@ class ApiClient {
       {'invite_code': inviteCode.trim(), 'password': password},
       parser: (d) => StudyGroup.fromJson(Map<String, dynamic>.from(d as Map)),
     );
+    await invalidateCachePath('/social/study-groups/mine');
+    await invalidateCachePath('/social/study-groups/search');
     return res.data ?? StudyGroup(id: '', name: '', memberCount: 0);
   }
 
@@ -1997,7 +2105,7 @@ class ApiClient {
         );
   }
 
-  Future<List<FriendProfile>> listFriends() async {
+  Future<List<FriendProfile>> listFriends({bool forceRefresh = false}) async {
     final res = await _get(
       '/social/friends',
       parser: (d) {
@@ -2007,13 +2115,15 @@ class ApiClient {
           source: 'friend_list',
         );
       },
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(minutes: 1),
     );
     return res.data ?? const [];
   }
 
-  Future<List<FriendRequest>> listFriendRequests() async {
+  Future<List<FriendRequest>> listFriendRequests({
+    bool forceRefresh = false,
+  }) async {
     final res = await _get(
       '/social/friend-requests',
       parser: (d) {
@@ -2023,7 +2133,7 @@ class ApiClient {
           source: 'friend_request_list',
         );
       },
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(minutes: 1),
     );
     return res.data ?? const [];
@@ -3220,11 +3330,19 @@ class ApiClient {
   }
 
   Future<ApiResponse<void>> syncMyStudentSchedule(
-    Map<DateTime, List<String>> tasksByDate,
+    Map<DateTime, List<StudentScheduleTask>> tasksByDate,
   ) async {
-    final payload = <String, List<String>>{
+    final payload = <String, List<Map<String, String>>>{
       for (final entry in tasksByDate.entries)
-        _dateKey(entry.key): List<String>.from(entry.value),
+        _dateKey(entry.key): [
+          for (final task in entry.value)
+            {
+              'title': task.title,
+              if (task.startTime?.isNotEmpty == true)
+                'start_time': task.startTime!,
+              if (task.endTime?.isNotEmpty == true) 'end_time': task.endTime!,
+            },
+        ],
     };
     final response = await _put('/academy/students/me/schedule', {
       'tasks_by_date': payload,
@@ -3506,12 +3624,14 @@ class UserRating {
   final double ovrDelta;
   final double recentAccuracy;
   final int loseStreak;
+  final bool placementCompleted;
   const UserRating({
     required this.rating,
     required this.ovr,
     required this.ovrDelta,
     required this.recentAccuracy,
     required this.loseStreak,
+    this.placementCompleted = false,
   });
   factory UserRating.fromJson(Map<String, dynamic> json) => UserRating(
     rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
@@ -3519,6 +3639,7 @@ class UserRating {
     ovrDelta: (json['ovr_delta'] as num?)?.toDouble() ?? 0.0,
     recentAccuracy: (json['recent_accuracy'] as num?)?.toDouble() ?? 0.0,
     loseStreak: (json['lose_streak'] as num?)?.toInt() ?? 0,
+    placementCompleted: json['placement_completed'] == true,
   );
 }
 
@@ -3563,12 +3684,14 @@ class LevelTestPlacementSession {
   final String sessionId;
   final String templateId;
   final int questionCount;
+  final int timeLimitSeconds;
   final List<LevelTestPlacementQuestion> questions;
 
   const LevelTestPlacementSession({
     required this.sessionId,
     required this.templateId,
     required this.questionCount,
+    required this.timeLimitSeconds,
     required this.questions,
   });
 
@@ -3577,6 +3700,8 @@ class LevelTestPlacementSession {
       sessionId: (json['session_id'] ?? '').toString(),
       templateId: (json['template_id'] ?? '').toString(),
       questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
+      timeLimitSeconds:
+          (json['time_limit_seconds'] as num?)?.toInt() ?? 30 * 60,
       questions: (json['questions'] as List<dynamic>? ?? const [])
           .map(
             (e) => LevelTestPlacementQuestion.fromJson(
@@ -3586,6 +3711,79 @@ class LevelTestPlacementSession {
           .toList(),
     );
   }
+}
+
+class LevelTestDifficultyBand {
+  final int tier;
+  final String label;
+  final int questionCount;
+
+  const LevelTestDifficultyBand({
+    required this.tier,
+    required this.label,
+    required this.questionCount,
+  });
+
+  factory LevelTestDifficultyBand.fromJson(Map<String, dynamic> json) =>
+      LevelTestDifficultyBand(
+        tier: (json['tier'] as num?)?.toInt() ?? 0,
+        label: (json['label'] ?? '').toString(),
+        questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class LevelTestEstimatedBand {
+  final String grade;
+  final int ovrMin;
+  final int ovrMax;
+  final double expectedCorrect;
+
+  const LevelTestEstimatedBand({
+    required this.grade,
+    required this.ovrMin,
+    required this.ovrMax,
+    required this.expectedCorrect,
+  });
+
+  factory LevelTestEstimatedBand.fromJson(Map<String, dynamic> json) =>
+      LevelTestEstimatedBand(
+        grade: (json['grade'] ?? '').toString(),
+        ovrMin: (json['ovr_min'] as num?)?.toInt() ?? 0,
+        ovrMax: (json['ovr_max'] as num?)?.toInt() ?? 0,
+        expectedCorrect: (json['expected_correct'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+class LevelTestPlacementStats {
+  final int questionCount;
+  final List<LevelTestDifficultyBand> difficultyBands;
+  final List<LevelTestEstimatedBand> estimatedBands;
+
+  const LevelTestPlacementStats({
+    required this.questionCount,
+    required this.difficultyBands,
+    required this.estimatedBands,
+  });
+
+  factory LevelTestPlacementStats.fromJson(Map<String, dynamic> json) =>
+      LevelTestPlacementStats(
+        questionCount: (json['question_count'] as num?)?.toInt() ?? 25,
+        difficultyBands:
+            (json['difficulty_bands'] as List<dynamic>? ?? const [])
+                .map(
+                  (entry) => LevelTestDifficultyBand.fromJson(
+                    Map<String, dynamic>.from(entry as Map),
+                  ),
+                )
+                .toList(),
+        estimatedBands: (json['estimated_bands'] as List<dynamic>? ?? const [])
+            .map(
+              (entry) => LevelTestEstimatedBand.fromJson(
+                Map<String, dynamic>.from(entry as Map),
+              ),
+            )
+            .toList(),
+      );
 }
 
 class LevelTestPlacementResult {
@@ -3636,6 +3834,26 @@ class LevelTestPlacementResult {
       ovrDelta: ovrDelta,
       recentAccuracy: recentAccuracy,
       loseStreak: loseStreak,
+      placementCompleted: true,
+    );
+  }
+}
+
+class LevelTestPlacementStatus {
+  final bool completed;
+  final LevelTestPlacementResult? result;
+
+  const LevelTestPlacementStatus({required this.completed, this.result});
+
+  factory LevelTestPlacementStatus.fromJson(Map<String, dynamic> json) {
+    final rawResult = json['result'];
+    return LevelTestPlacementStatus(
+      completed: json['completed'] == true,
+      result: rawResult is Map
+          ? LevelTestPlacementResult.fromJson(
+              Map<String, dynamic>.from(rawResult),
+            )
+          : null,
     );
   }
 }
@@ -3711,6 +3929,7 @@ class DirectMessage {
   final String text;
   final DateTime createdAt;
   final bool isMine;
+  final bool isRead;
   const DirectMessage({
     required this.id,
     required this.from,
@@ -3718,6 +3937,7 @@ class DirectMessage {
     required this.text,
     required this.createdAt,
     this.isMine = false,
+    this.isRead = false,
   });
   factory DirectMessage.fromJson(Map<String, dynamic> json) => DirectMessage(
     id: (json['id'] ?? json['message_id'] ?? '').toString(),
@@ -3728,6 +3948,7 @@ class DirectMessage {
         DateTime.tryParse((json['created_at'] ?? '').toString()) ??
         DateTime.now(),
     isMine: json['is_mine'] == true,
+    isRead: json['is_read'] == true,
   );
 }
 
@@ -3783,6 +4004,7 @@ class StudyGroupMessage {
   final String messageType;
   final Map<String, dynamic>? payload;
   final String createdAt;
+  final bool isMine;
   const StudyGroupMessage({
     this.messageId = '',
     this.userId = '',
@@ -3791,6 +4013,7 @@ class StudyGroupMessage {
     this.messageType = 'text',
     this.payload,
     this.createdAt = '',
+    this.isMine = false,
   });
 }
 
@@ -4455,35 +4678,32 @@ extension ApiClientLegacyCompat on ApiClient {
     return LevelTestPlacementSession.fromJson(res.data ?? const {});
   }
 
-  Future<void> submitLevelTestPlacementAnswer({
-    required String sessionId,
-    required int itemIndex,
-    required String questId,
-    required bool isCorrect,
-    num? answerTime,
-    List<Map<String, dynamic>> stepCorrectness = const [],
-    List<String> tags = const [],
-  }) async {
-    await _post<Map<String, dynamic>>(
-      '/level-tests/placement/$sessionId/answer',
-      {
-        'item_index': itemIndex,
-        'quest_id': questId,
-        'is_correct': isCorrect,
-        if (answerTime != null) 'answer_time': answerTime,
-        'step_correctness': stepCorrectness,
-        'tags': tags,
-      },
+  Future<LevelTestPlacementStats> fetchLevelTestPlacementStats() async {
+    final res = await _get<Map<String, dynamic>>(
+      '/level-tests/placement/stats',
       parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: false,
     );
+    return LevelTestPlacementStats.fromJson(res.data ?? const {});
+  }
+
+  Future<LevelTestPlacementStatus> fetchLevelTestPlacementStatus() async {
+    final res = await _get<Map<String, dynamic>>(
+      '/level-tests/placement/status',
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+      useCache: false,
+    );
+    return LevelTestPlacementStatus.fromJson(res.data ?? const {});
   }
 
   Future<LevelTestPlacementResult> submitLevelTestPlacement(
-    String sessionId,
-  ) async {
+    String sessionId, {
+    required List<Map<String, dynamic>> answers,
+    required int elapsedSeconds,
+  }) async {
     final res = await _post<Map<String, dynamic>>(
       '/level-tests/placement/$sessionId/submit',
-      const <String, dynamic>{},
+      <String, dynamic>{'answers': answers, 'elapsed_seconds': elapsedSeconds},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return LevelTestPlacementResult.fromJson(res.data ?? const {});
@@ -4885,6 +5105,23 @@ extension ApiClientLegacyCompat on ApiClient {
     bool allowBack = false,
   }) async {}
 
+  Future<void> recordSolveHistory({
+    required String questId,
+    required bool isCorrect,
+    int? codebaseId,
+    int? seed,
+    List<String> tags = const [],
+  }) async {
+    await _post<Map<String, dynamic>>('/history/solve', {
+      'quest_id': questId,
+      'is_correct': isCorrect,
+      if (codebaseId != null) 'codebase_id': codebaseId,
+      if (seed != null) 'seed': seed,
+      'tags': tags,
+    }, parser: (d) => Map<String, dynamic>.from(d as Map));
+    await invalidateCachePath('/history/solve');
+  }
+
   Future<List<SolveHistoryItem>> fetchSolveHistory({
     int? days,
     String? tag,
@@ -4986,6 +5223,7 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<List<DirectMessage>> fetchConversationThreads({
     int limit = 20,
     String? before,
+    bool forceRefresh = false,
   }) async {
     final query = <String, String>{'limit': '$limit'};
     if (before != null && before.isNotEmpty) query['before'] = before;
@@ -5000,7 +5238,7 @@ extension ApiClientLegacyCompat on ApiClient {
           source: 'conversation_threads',
         );
       },
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(seconds: 10),
     );
     return res.data ?? const [];
@@ -5012,11 +5250,13 @@ extension ApiClientLegacyCompat on ApiClient {
     int limit = 50,
     String? before,
     String? beforeMessageId,
+    bool forceRefresh = false,
   }) async {
     final target = peer ?? peerUsername;
     if (target == null || target.isEmpty) return const [];
     final query = <String, String>{'peer': target, 'limit': '$limit'};
-    if (before != null && before.isNotEmpty) query['before'] = before;
+    final cursor = before ?? beforeMessageId;
+    if (cursor != null && cursor.isNotEmpty) query['before'] = cursor;
     final res = await _get(
       '/social/messages',
       query: query,
@@ -5028,7 +5268,7 @@ extension ApiClientLegacyCompat on ApiClient {
           source: 'direct_messages',
         );
       },
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(seconds: 10),
     );
     return res.data ?? const [];
@@ -5317,6 +5557,7 @@ extension ApiClientLegacyCompat on ApiClient {
                 ? Map<String, dynamic>.from(m['payload'] as Map)
                 : null,
             createdAt: (m['created_at'] ?? '').toString(),
+            isMine: m['is_mine'] == true,
           );
         }).toList();
       },
@@ -5345,6 +5586,7 @@ extension ApiClientLegacyCompat on ApiClient {
               ? Map<String, dynamic>.from(m['payload'] as Map)
               : null,
           createdAt: (m['created_at'] ?? '').toString(),
+          isMine: m['is_mine'] == true,
         );
       },
     );

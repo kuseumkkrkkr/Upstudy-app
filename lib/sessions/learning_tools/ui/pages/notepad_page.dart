@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/storage/local_db.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 //=============================================================================
 // 노트패드 (삼성노트 스타일) - 우측 사이드바 툴바
@@ -23,6 +24,7 @@ class NotepadPage extends StatefulWidget {
 class _NotepadPageState extends State<NotepadPage>
     with TickerProviderStateMixin {
   static const _storageKey = 'notepad_strokes_v2';
+  static const _textStorageKey = 'notepad_text_v1';
   static const _baseHeight = 1400.0;
   static const _extendHeight = 1200.0;
   static const _maxHeight = 50000.0;
@@ -40,6 +42,7 @@ class _NotepadPageState extends State<NotepadPage>
   static const List<double> _penWidths = [1, 3, 5, 8];
 
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _textController = TextEditingController();
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
   final List<_Stroke> _strokes = <_Stroke>[];
   final List<_UndoAction> _undoStack = <_UndoAction>[];
@@ -48,6 +51,7 @@ class _NotepadPageState extends State<NotepadPage>
   double _canvasHeight = _baseHeight;
   _Stroke? _currentStroke;
   _ToolMode _toolMode = _ToolMode.pen;
+  _MobileInputMode _mobileInputMode = _MobileInputMode.pen;
   int _nextStrokeOrder = 0;
   Offset? _lastFilteredPoint;
   Offset? _lastPoint;
@@ -76,6 +80,7 @@ class _NotepadPageState extends State<NotepadPage>
   @override
   void dispose() {
     _scrollController.dispose();
+    _textController.dispose();
     _paintVersion.dispose();
     _saveTimer?.cancel();
     super.dispose();
@@ -139,6 +144,10 @@ class _NotepadPageState extends State<NotepadPage>
   Future<void> _loadStrokes() async {
     if (!_canPersist) return;
     final raw = await LocalDb.instance.getString(_storageKey);
+    final savedText = await LocalDb.instance.getString(_textStorageKey);
+    if (savedText != null) {
+      _textController.text = savedText;
+    }
     if (raw == null || raw.isEmpty) return;
     try {
       final decoded = jsonDecode(raw);
@@ -184,6 +193,7 @@ class _NotepadPageState extends State<NotepadPage>
     if (!_canPersist) return;
     final payload = jsonEncode(_strokes.map((e) => e.toJson()).toList());
     await LocalDb.instance.setString(_storageKey, payload);
+    await LocalDb.instance.setString(_textStorageKey, _textController.text);
   }
 
   void _startStroke(Offset position, double pressure) {
@@ -370,6 +380,7 @@ class _NotepadPageState extends State<NotepadPage>
                             color: color,
                             selected: _penColor == color,
                             onTap: () => updateSheet(() {
+                              _mobileInputMode = _MobileInputMode.pen;
                               _penColor = color;
                               _toolMode = _ToolMode.pen;
                             }),
@@ -412,6 +423,7 @@ class _NotepadPageState extends State<NotepadPage>
                       onChanged: (value) => updateSheet(() {
                         _isHighlighter = value;
                         if (value) {
+                          _mobileInputMode = _MobileInputMode.pen;
                           _toolMode = _ToolMode.pen;
                         }
                       }),
@@ -531,7 +543,7 @@ class _NotepadPageState extends State<NotepadPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isMobile = MediaQuery.sizeOf(context).width < 720;
+    final isMobile = isStudentDensityMobile(context);
     // 학습 도구 세션 레퍼런스에 맞춰 캔버스와 툴바를 중립 흑백으로 고정한다.
     const bgColor = Color(0xFFF7F7F7);
     const paperColor = Colors.white;
@@ -559,6 +571,11 @@ class _NotepadPageState extends State<NotepadPage>
                           thumbVisibility: true,
                           child: SingleChildScrollView(
                             controller: _scrollController,
+                            physics:
+                                isMobile &&
+                                    _mobileInputMode != _MobileInputMode.move
+                                ? const NeverScrollableScrollPhysics()
+                                : const BouncingScrollPhysics(),
                             child: Container(
                               margin: EdgeInsets.all(isMobile ? 10 : 16),
                               decoration: BoxDecoration(
@@ -580,57 +597,92 @@ class _NotepadPageState extends State<NotepadPage>
                                 borderRadius: BorderRadius.circular(
                                   isMobile ? 20 : 12,
                                 ),
-                                child: Listener(
-                                  key: const ValueKey('notepad-canvas'),
-                                  behavior: HitTestBehavior.opaque,
-                                  onPointerDown: (event) {
-                                    _closeAllPanels();
-                                    final pos = event.localPosition;
-                                    if (_toolMode == _ToolMode.pen) {
-                                      _startStroke(pos, event.pressure);
-                                    } else {
-                                      _startEraser(pos);
-                                    }
-                                  },
-                                  onPointerMove: (event) {
-                                    final pos = event.localPosition;
-                                    if (_toolMode == _ToolMode.pen) {
-                                      _updateStroke(pos, event.pressure);
-                                    } else {
-                                      _updateEraser(pos);
-                                    }
-                                  },
-                                  onPointerUp: (_) {
-                                    if (_toolMode == _ToolMode.pen) {
-                                      _endStroke();
-                                    } else {
-                                      _finishEraser();
-                                    }
-                                  },
-                                  onPointerCancel: (_) {
-                                    if (_toolMode == _ToolMode.pen) {
-                                      _endStroke();
-                                    } else {
-                                      _finishEraser();
-                                    }
-                                  },
-                                  child: SizedBox(
-                                    height: _canvasHeight,
-                                    width: double.infinity,
-                                    child: CustomPaint(
-                                      painter: _NotepadPainter(
-                                        strokes: _strokes,
-                                        current: _currentStroke,
-                                        toolMode: _toolMode,
-                                        eraserRadius: _eraserRadius,
-                                        eraserPosition: _eraserPosition,
-                                        showLines: _showLines,
-                                        isDark: isDark,
-                                        repaint: _paintVersion,
+                                child:
+                                    isMobile &&
+                                        _mobileInputMode ==
+                                            _MobileInputMode.typing
+                                    ? SizedBox(
+                                        key: const ValueKey(
+                                          'notepad-text-editor',
+                                        ),
+                                        height: _canvasHeight,
+                                        child: TextField(
+                                          controller: _textController,
+                                          autofocus: true,
+                                          expands: true,
+                                          maxLines: null,
+                                          minLines: null,
+                                          keyboardType: TextInputType.multiline,
+                                          textAlignVertical:
+                                              TextAlignVertical.top,
+                                          onChanged: (_) => _scheduleSave(),
+                                          decoration: const InputDecoration(
+                                            hintText: '내용을 입력하세요',
+                                            border: InputBorder.none,
+                                            contentPadding: EdgeInsets.all(24),
+                                          ),
+                                        ),
+                                      )
+                                    : IgnorePointer(
+                                        ignoring:
+                                            isMobile &&
+                                            _mobileInputMode ==
+                                                _MobileInputMode.move,
+                                        child: Listener(
+                                          key: const ValueKey('notepad-canvas'),
+                                          behavior: HitTestBehavior.opaque,
+                                          onPointerDown: (event) {
+                                            _closeAllPanels();
+                                            final pos = event.localPosition;
+                                            if (_toolMode == _ToolMode.pen) {
+                                              _startStroke(pos, event.pressure);
+                                            } else {
+                                              _startEraser(pos);
+                                            }
+                                          },
+                                          onPointerMove: (event) {
+                                            final pos = event.localPosition;
+                                            if (_toolMode == _ToolMode.pen) {
+                                              _updateStroke(
+                                                pos,
+                                                event.pressure,
+                                              );
+                                            } else {
+                                              _updateEraser(pos);
+                                            }
+                                          },
+                                          onPointerUp: (_) {
+                                            if (_toolMode == _ToolMode.pen) {
+                                              _endStroke();
+                                            } else {
+                                              _finishEraser();
+                                            }
+                                          },
+                                          onPointerCancel: (_) {
+                                            if (_toolMode == _ToolMode.pen) {
+                                              _endStroke();
+                                            } else {
+                                              _finishEraser();
+                                            }
+                                          },
+                                          child: SizedBox(
+                                            height: _canvasHeight,
+                                            width: double.infinity,
+                                            child: CustomPaint(
+                                              painter: _NotepadPainter(
+                                                strokes: _strokes,
+                                                current: _currentStroke,
+                                                toolMode: _toolMode,
+                                                eraserRadius: _eraserRadius,
+                                                eraserPosition: _eraserPosition,
+                                                showLines: _showLines,
+                                                isDark: isDark,
+                                                repaint: _paintVersion,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ),
                               ),
                             ),
                           ),
@@ -703,15 +755,25 @@ class _NotepadPageState extends State<NotepadPage>
             ),
             if (isMobile)
               _MobileNotepadToolbar(
+                key: const ValueKey('notepad-mobile-toolbar'),
+                inputMode: _mobileInputMode,
                 toolMode: _toolMode,
                 penColor: _penColor,
                 isHighlighter: _isHighlighter,
                 canUndo: _undoStack.isNotEmpty,
+                onTyping: () =>
+                    setState(() => _mobileInputMode = _MobileInputMode.typing),
+                onMove: () {
+                  FocusScope.of(context).unfocus();
+                  setState(() => _mobileInputMode = _MobileInputMode.move);
+                },
                 onPen: () => setState(() {
+                  _mobileInputMode = _MobileInputMode.pen;
                   _toolMode = _ToolMode.pen;
                   _isHighlighter = false;
                 }),
                 onEraser: () => setState(() {
+                  _mobileInputMode = _MobileInputMode.pen;
                   _toolMode = _ToolMode.eraser;
                 }),
                 onUndo: _undo,
@@ -725,23 +787,30 @@ class _NotepadPageState extends State<NotepadPage>
 }
 
 /// 필요한 변수는 현재 도구·펜 색상·실행 취소 가능 여부와 각 동작 콜백이다.
-/// 작동 원리는 모바일에서 엄지손가락이 닿는 화면 하단에 핵심 도구 네 개만 크게 고정한다.
+/// 작동 원리는 모바일 하단에서 입력·이동·필기 상태와 편집 도구를 명시적으로 분리한다.
 class _MobileNotepadToolbar extends StatelessWidget {
   const _MobileNotepadToolbar({
+    super.key,
+    required this.inputMode,
     required this.toolMode,
     required this.penColor,
     required this.isHighlighter,
     required this.canUndo,
+    required this.onTyping,
+    required this.onMove,
     required this.onPen,
     required this.onEraser,
     required this.onUndo,
     required this.onTools,
   });
 
+  final _MobileInputMode inputMode;
   final _ToolMode toolMode;
   final Color penColor;
   final bool isHighlighter;
   final bool canUndo;
+  final VoidCallback onTyping;
+  final VoidCallback onMove;
   final VoidCallback onPen;
   final VoidCallback onEraser;
   final VoidCallback onUndo;
@@ -761,10 +830,31 @@ class _MobileNotepadToolbar extends StatelessWidget {
             children: [
               Expanded(
                 child: _MobileNotepadAction(
+                  tooltip: '타이핑 모드',
+                  label: '타이핑',
+                  icon: Icons.keyboard_rounded,
+                  selected: inputMode == _MobileInputMode.typing,
+                  onTap: onTyping,
+                ),
+              ),
+              Expanded(
+                child: _MobileNotepadAction(
+                  tooltip: '페이지 이동 모드',
+                  label: '이동',
+                  icon: Icons.pan_tool_alt_outlined,
+                  selected: inputMode == _MobileInputMode.move,
+                  onTap: onMove,
+                ),
+              ),
+              Expanded(
+                child: _MobileNotepadAction(
                   tooltip: '펜',
                   label: '펜',
                   icon: Icons.edit_rounded,
-                  selected: toolMode == _ToolMode.pen && !isHighlighter,
+                  selected:
+                      inputMode == _MobileInputMode.pen &&
+                      toolMode == _ToolMode.pen &&
+                      !isHighlighter,
                   indicatorColor: penColor,
                   onTap: onPen,
                 ),
@@ -774,7 +864,9 @@ class _MobileNotepadToolbar extends StatelessWidget {
                   tooltip: '지우개',
                   label: '지우개',
                   icon: Icons.auto_fix_high_rounded,
-                  selected: toolMode == _ToolMode.eraser,
+                  selected:
+                      inputMode == _MobileInputMode.pen &&
+                      toolMode == _ToolMode.eraser,
                   onTap: onEraser,
                 ),
               ),
@@ -1910,6 +2002,8 @@ class _StrokePainter extends CustomPainter {
 }
 
 enum _ToolMode { pen, eraser }
+
+enum _MobileInputMode { typing, move, pen }
 
 abstract class _UndoAction {
   const _UndoAction();

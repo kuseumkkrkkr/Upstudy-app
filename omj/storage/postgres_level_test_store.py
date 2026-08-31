@@ -97,9 +97,25 @@ class PostgresLevelTestStore:
             return dict(row) if row else None
 
     def create_session(self, *, user_id: str, template_id: str) -> str:
-        """필요 변수: 사용자·폼 ID. 작동 원리: UUID 세션을 PostgreSQL에 원자적으로 생성한다."""
+        """사용자별 advisory lock으로 완료 후 재응시와 동시 다중 세션을 원자적으로 막는다."""
         session_id = str(uuid.uuid4())
-        with self._connection() as connection, connection.transaction(), connection.cursor() as cursor:
+        with self._connection() as connection, connection.transaction(), connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"placement:{user_id}",))
+            cursor.execute(
+                """SELECT session_id, status FROM level_test_session
+                   WHERE user_id = %s ORDER BY started_at DESC LIMIT 1""",
+                (user_id,),
+            )
+            current = cursor.fetchone()
+            if current and current["status"] == "graded":
+                raise ValueError("Placement test already completed")
+            if current and current["status"] == "started":
+                session_id = str(current["session_id"])
+                cursor.execute(
+                    "UPDATE level_test_session SET template_id=%s, started_at=NOW() WHERE session_id=%s",
+                    (template_id, session_id),
+                )
+                return session_id
             cursor.execute(
                 "INSERT INTO level_test_session(session_id, user_id, template_id, status) VALUES (%s, %s, %s, 'started')",
                 (session_id, user_id, template_id),
@@ -110,6 +126,18 @@ class PostgresLevelTestStore:
         """필요 변수: 세션 ID. 작동 원리: 세션 소유자와 상태를 단건 조회한다."""
         with self._connection() as connection, connection.cursor(row_factory=dict_row) as cursor:
             cursor.execute("SELECT * FROM level_test_session WHERE session_id = %s", (session_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def get_latest_graded_session(self, user_id: str) -> Optional[dict[str, Any]]:
+        """사용자의 최초 배치 완료 여부와 보고서를 같은 세션 원장에서 읽는다."""
+        with self._connection() as connection, connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                """SELECT * FROM level_test_session
+                   WHERE user_id = %s AND status = 'graded'
+                   ORDER BY submitted_at DESC LIMIT 1""",
+                (user_id,),
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
 
@@ -128,6 +156,55 @@ class PostgresLevelTestStore:
                 """,
                 (session_id, item_index, quest_id, is_correct, answer_time, Jsonb(step_correctness), Jsonb(tags)),
             )
+
+    def upsert_answers(self, answers: list[dict[str, Any]]) -> None:
+        """필요 변수: 최종 답안 25개. 작동 원리: 한 트랜잭션의 bulk UPSERT로 일괄 채점을 멱등 저장한다."""
+        rows = [
+            (
+                answer["session_id"],
+                answer["item_index"],
+                answer["quest_id"],
+                answer["is_correct"],
+                answer.get("answer_time"),
+                Jsonb(answer.get("step_correctness") or []),
+                Jsonb(answer.get("tags") or []),
+            )
+            for answer in answers
+        ]
+        with self._connection() as connection, connection.transaction(), connection.cursor() as cursor:
+            cursor.executemany(
+                """
+                INSERT INTO level_test_answer(session_id, item_index, quest_id, is_correct, answer_time, step_correctness, tags)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (session_id, item_index) DO UPDATE SET
+                    quest_id=EXCLUDED.quest_id, is_correct=EXCLUDED.is_correct,
+                    answer_time=EXCLUDED.answer_time, step_correctness=EXCLUDED.step_correctness,
+                    tags=EXCLUDED.tags, submitted_at=NOW()
+                """,
+                rows,
+            )
+
+    def placement_stats(self) -> list[dict[str, Any]]:
+        """필요 변수: 완료 세션. 작동 원리: 학년별 표본 3명 이상인 평균 정답 수와 OVR을 한 쿼리로 집계한다."""
+        with self._connection() as connection, connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(
+                """
+                WITH answer_totals AS (
+                    SELECT session_id, COUNT(*) AS answer_count,
+                           SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) AS correct_count
+                    FROM level_test_answer GROUP BY session_id
+                )
+                SELECT u.grade, COUNT(*) AS sample_size,
+                       AVG(a.correct_count)::float AS average_correct,
+                       AVG(s.estimated_ovr)::float AS average_ovr
+                FROM level_test_session s
+                JOIN answer_totals a ON a.session_id = s.session_id AND a.answer_count = 25
+                JOIN users u ON u.user_id = s.user_id
+                WHERE s.status = 'graded' AND NULLIF(BTRIM(u.grade), '') IS NOT NULL
+                GROUP BY u.grade HAVING COUNT(*) >= 3 ORDER BY u.grade
+                """
+            )
+            return [dict(row) for row in cursor.fetchall()]
 
     def list_answers(self, session_id: str) -> list[dict[str, Any]]:
         """필요 변수: 세션 ID. 작동 원리: 저장된 답안을 문항 순서로 일괄 조회한다."""

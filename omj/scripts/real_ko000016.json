@@ -1,0 +1,8 @@
+{
+  "id": "Ko-Math-000016",
+  "subject": "수학",
+  "question": "두 사건 \\( A, B \\)에 대하여 \\( P(A) = \\tfrac{2}{5}, P(B|A) = \\tfrac{5}{6} \\)일 때, \\( P(A \\cap B) \\)의 값은? [3점]\n① \\( \\tfrac{1}{15} \\)   ② \\( \\tfrac{2}{15} \\)   ③ \\( \\tfrac{1}{5} \\)   ④ \\( \\tfrac{4}{15} \\)   ⑤ \\( \\tfrac{1}{3} \\)",
+  "answer": "⑤ \\( \\tfrac{1}{3} \\)",
+  "explanation": "조건부 확률의 정의에 따라\n\\[\nP(B|A) = \\frac{P(A \\cap B)}{P(A)}\n\\]\n따라서\n\\[\nP(A \\cap B) = P(A) \\cdot P(B|A) = \\frac{2}{5} \\times \\frac{5}{6} = \\frac{10}{30} = \\frac{1}{3}\n\\]\n따라서 정답은 ⑤ \\( \\tfrac{1}{3} \\)이다.",
+  "knowledge_point": "조건부 확률의 정의와 곱의 법칙"
+}

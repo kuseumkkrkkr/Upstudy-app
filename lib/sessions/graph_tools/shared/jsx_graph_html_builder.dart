@@ -769,7 +769,8 @@ String buildAiFlowGraphHtml(
                   function (x) {
                     return evaluator(x);
                   },
-                  [left, right],
+                  left,
+                  right,
                 ],
                 {
                   strokeColor: color,
@@ -814,17 +815,21 @@ String buildAiFlowGraphHtml(
                 }
                 hasRenderable = true;
               } else {
-                const polyLine = board.create(
-                  'polyline',
-                  points,
+                const curve = board.create(
+                  'curve',
+                  [
+                    points.map((point) => point[0]),
+                    points.map((point) => point[1]),
+                  ],
                   {
                     strokeColor: color,
                     strokeWidth: 2,
                     fillColor: 'none',
+                    fixed: true,
                   },
                 );
-                renderedElements.push(polyLine);
-                functionItems.push(polyLine);
+                renderedElements.push(curve);
+                functionItems.push(curve);
                 hasRenderable = true;
               }
             }

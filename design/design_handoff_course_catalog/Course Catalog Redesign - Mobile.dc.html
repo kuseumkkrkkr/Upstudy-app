@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<style>
+@keyframes fade-up { from { opacity:0; transform:translateY(8px); } }
+body { margin:0; }
+* { box-sizing: border-box; }
+</style>
+</helmet>
+<div style="width:390px;min-height:844px;margin:0 auto;background:#f2f2f4;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Pretendard,'Noto Sans KR',system-ui,sans-serif;color:#09090b;padding-bottom:96px;position:relative;">
+
+  <div style="padding:24px 16px 0;">
+
+    <!-- Page head -->
+    <div style="margin-bottom:18px;">
+      <h1 style="margin:0;font-size:32px;line-height:1.05;letter-spacing:-0.045em;">내 코스</h1>
+      <p style="margin:8px 0 0;color:#71717a;font-size:12px;line-height:1.55;">현재 학습을 이어가거나 완료한 코스를 확인하세요.</p>
+    </div>
+
+    <!-- Filter row -->
+    <div style="position:sticky;top:12px;z-index:4;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:16px;">
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="2">
+        <button onClick="{{ f.onSelect }}" style="{{ f.style }}">{{ f.label }}</button>
+      </sc-for>
+    </div>
+
+    <!-- My courses -->
+    <div style="display:grid;gap:12px;">
+      <sc-for list="{{ courses }}" as="c" hint-placeholder-count="4">
+        <div style="padding:18px;background:#fff;border:1px solid rgba(9,9,11,0.1);border-radius:22px;box-shadow:0 10px 28px rgba(0,0,0,0.05);">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="position:relative;width:52px;height:52px;flex:0 0 auto;">
+              <svg width="52" height="52" viewBox="0 0 52 52" style="transform:rotate(-90deg);">
+                <circle cx="26" cy="26" r="22" fill="none" stroke="#ececef" stroke-width="4.5" />
+                <circle cx="26" cy="26" r="22" fill="none" stroke="{{ c.ringColor }}" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="{{ c.dashArray }}" />
+              </svg>
+              <span style="position:absolute;inset:0;display:grid;place-items:center;font-size:14px;">{{ c.ringGlyph }}</span>
+            </div>
+            <div style="min-width:0;flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <b style="font-size:16px;font-weight:900;letter-spacing:-0.02em;">{{ c.title }}</b>
+              </div>
+              <small style="display:block;margin-top:4px;color:#71717a;font-size:11px;">{{ c.meta }}</small>
+              <span style="display:inline-flex;margin-top:6px;padding:3px 8px;color:{{ c.statusTextColor }};background:{{ c.statusBg }};border-radius:999px;font-size:9px;font-weight:850;">{{ c.statusLabel }}</span>
+            </div>
+          </div>
+          <button style="width:100%;margin-top:14px;min-height:46px;color:{{ c.ctaTextColor }};background:{{ c.ctaBg }};border:{{ c.ctaBorder }};border-radius:14px;font-size:13px;font-weight:900;cursor:pointer;">{{ c.cta }} ›</button>
+        </div>
+      </sc-for>
+      <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:40px 20px;text-align:center;color:#71717a;font-size:12px;background:#fff;border:1px solid rgba(9,9,11,0.1);border-radius:22px;">해당하는 코스가 없습니다.</div>
+      </sc-if>
+    </div>
+
+  </div>
+
+  <!-- Bottom nav (from student-app.css .mobile-nav spec) -->
+  <nav style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:390px;display:flex;justify-content:space-around;align-items:center;gap:4px;background:#0a0a0b;padding:10px 8px calc(10px + env(safe-area-inset-bottom));">
+    <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+      <button style="display:grid;place-items:center;gap:2px;min-width:56px;min-height:48px;padding:6px 8px;color:{{ n.color }};background:{{ n.bg }};border:0;border-radius:18px;font-size:9px;font-weight:750;cursor:pointer;">
+        <span style="font-size:18px;">{{ n.icon }}</span>
+        <span>{{ n.label }}</span>
+      </button>
+    </sc-for>
+  </nav>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 390, &quot;height&quot;: 900}}">
+
+class Component extends DCLogic {
+  state = { filter: '수강중' };
+
+  filterLabels = ['수강중', '완료코스'];
+
+  courseData = [
+    { title: '일차함수 완성', meta: '그래프 이해 · 06번째 모듈', status: 'active', progress: 0.42, cta: '이어하기' },
+    { title: '도형의 닮음', meta: '닮음비 · 03번째 모듈', status: 'active', progress: 0.18, cta: '이어하기' },
+    { title: '일차방정식 기초', meta: '완료 · 100%', status: 'done', progress: 1, cta: '다시보기' },
+  ];
+
+  navData = [
+    { icon: '⌂', label: '홈' },
+    { icon: '▦', label: '코스', active: true },
+    { icon: '▧', label: '책가방' },
+    { icon: 'A', label: '대결' },
+    { icon: '♧', label: '소셜' },
+  ];
+
+  setFilter(label) {
+    this.setState({ filter: label });
+  }
+
+  renderVals() {
+    const filters = this.filterLabels.map((label) => {
+      const active = label === this.state.filter;
+      return {
+        label,
+        onSelect: () => this.setFilter(label),
+        style: `min-height:40px;color:${active ? '#fff' : '#71717a'};background:${active ? '#0a0a0b' : '#f6f6f8'};border:1px solid ${active ? '#0a0a0b' : 'rgba(9,9,11,0.1)'};border-radius:12px;font-size:11px;font-weight:800;cursor:pointer;`,
+      };
+    });
+
+    const statusMap = {
+      active: '수강중',
+      done: '완료',
+    };
+    const filterMatch = {
+      '수강중': (c) => c.status === 'active',
+      '완료코스': (c) => c.status === 'done',
+    };
+
+    const visible = this.courseData.filter(filterMatch[this.state.filter]);
+    const circumference = 2 * Math.PI * 22;
+
+    const courses = visible.map((c) => {
+      const dash = circumference * c.progress;
+      const isDone = c.status === 'done';
+      return {
+        title: c.title,
+        meta: c.meta,
+        cta: c.cta,
+        ringColor: '#0a0a0b',
+        dashArray: `${dash.toFixed(1)} ${circumference.toFixed(1)}`,
+        ringGlyph: isDone ? '✓' : Math.round(c.progress * 100) + '%',
+        statusLabel: statusMap[c.status],
+        statusBg: '#f6f6f8',
+        statusTextColor: '#71717a',
+        ctaBg: '#0a0a0b',
+        ctaTextColor: '#fff',
+        ctaBorder: 'none',
+      };
+    });
+
+    const navItems = this.navData.map((n) => ({
+      icon: n.icon,
+      label: n.label,
+      color: n.active ? '#fff' : '#94949a',
+      bg: n.active ? 'rgba(255,255,255,0.12)' : 'transparent',
+    }));
+
+    return {
+      filters,
+      courses,
+      isEmpty: courses.length === 0,
+      navItems,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

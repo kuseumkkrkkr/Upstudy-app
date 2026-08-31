@@ -243,6 +243,14 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
     await tester.pump();
+    await tester.scrollUntilVisible(
+      find.text('AIFlow 학원 찾기'),
+      120,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('mobile-more-menu-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     expect(find.text('AIFlow 학원 찾기'), findsOneWidget);
     expect(find.text('과외 찾기'), findsOneWidget);
     expect(find.text('스터디 그룹'), findsNothing);
@@ -262,6 +270,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
     await tester.pump();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('mobile-more-AIFlow 학원 찾기')),
+      120,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('mobile-more-menu-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
 
     await tester.tap(find.byKey(const ValueKey('mobile-more-AIFlow 학원 찾기')));
     await tester.pumpAndSettle();

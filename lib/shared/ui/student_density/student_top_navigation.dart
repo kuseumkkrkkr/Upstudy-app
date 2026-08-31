@@ -21,7 +21,7 @@ List<Ios26NavItem> studentTopNavItems(
       <({StudentTopDestination destination, String label, String route})>[
         (
           destination: StudentTopDestination.home,
-          label: '홈',
+          label: '학습터',
           route: '/student/dashboard',
         ),
         (
@@ -49,8 +49,14 @@ List<Ios26NavItem> studentTopNavItems(
       .map(
         (item) => Ios26NavItem(
           label: item.label,
-          active: item.destination == active,
-          onTap: item.destination == active
+          active:
+              item.destination == active ||
+              (active == StudentTopDestination.learning &&
+                  item.destination == StudentTopDestination.home),
+          onTap:
+              item.destination == active ||
+                  (active == StudentTopDestination.learning &&
+                      item.destination == StudentTopDestination.home)
               ? null
               : () => Navigator.of(context).pushNamed(item.route),
         ),

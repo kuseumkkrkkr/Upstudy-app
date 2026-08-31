@@ -1,0 +1,26 @@
+{
+  "version": "2026.07.25-kalpha-v1",
+  "validation": {
+    "allowed_grade_codes": [
+      "7",
+      "8",
+      "9"
+    ],
+    "allowed_answer_types": [
+      "integer",
+      "fraction_or_integer",
+      "single_exact"
+    ],
+    "max_expr_len": 220,
+    "numeric_bounds": {
+      "min": -100000,
+      "max": 100000
+    },
+    "review_modes": [
+      "manual",
+      "rejected_by_parser",
+      "rule_inconsistent",
+      "grade_out_of_scope"
+    ]
+  }
+}
