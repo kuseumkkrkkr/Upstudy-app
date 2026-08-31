@@ -167,6 +167,152 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('390 친구 프로필은 받은 정보만 표시하고 기존 쪽지 화면으로 잇는다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await ApiClient.instance.setToken('friend-profile-mobile-token');
+    final requests = <http.Request>[];
+    ApiClient.instance.setHttpClientForTest(
+      MockClient((request) async {
+        requests.add(request);
+        if (request.method == 'GET' && request.url.path == '/social/friends') {
+          return http.Response(
+            jsonEncode({
+              'friends': [
+                {
+                  'user_id': 'peer-graph-1',
+                  'username': 'graph-user',
+                  'name': '김그래프',
+                  'profile_image': '',
+                  'ovr': 87.5,
+                  'status': '함수 단원 학습 중',
+                },
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.method == 'GET' &&
+            request.url.path == '/social/friend-requests') {
+          return http.Response(
+            jsonEncode({'requests': <Object>[]}),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.method == 'GET' &&
+            (request.url.path == '/social/conversations' ||
+                request.url.path == '/social/messages')) {
+          return http.Response(
+            jsonEncode({'messages': <Object>[]}),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response(
+          jsonEncode({'detail': 'unexpected ${request.url.path}'}),
+          404,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: SoWidget()));
+    await tester.pumpAndSettle();
+
+    final friendRow = find.byKey(const ValueKey('social-friend-peer-graph-1'));
+    await tester.ensureVisible(friendRow);
+    await tester.tap(friendRow);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('프로필 보기'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('mobile-friend-profile-sheet')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('friend-profile-avatar-fallback')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('friend-profile-display-name')),
+      findsOneWidget,
+    );
+    expect(find.text('김그래프'), findsOneWidget);
+    expect(find.text('@graph-user'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('friend-profile-status')),
+        matching: find.text('함수 단원 학습 중'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('friend-profile-ovr')),
+        matching: find.text('88'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('peer-graph-1'), findsNothing);
+    expect(find.text('프로필 보기 기능은 준비 중입니다.'), findsNothing);
+
+    final friendRequestsBefore = requests
+        .where((request) => request.url.path == '/social/friends')
+        .length;
+    await tester.tap(
+      find.byKey(const ValueKey('friend-profile-message-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StudentDirectChatPage), findsOneWidget);
+    expect(
+      requests.where((request) => request.url.path == '/social/friends').length,
+      friendRequestsBefore,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('1280 친구 프로필은 제한된 데스크톱 다이얼로그다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: SoWidget(preview: true)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('social-friend-이수학')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('프로필 보기'));
+    await tester.pumpAndSettle();
+
+    final dialog = find.byKey(const ValueKey('desktop-friend-profile-dialog'));
+    expect(dialog, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('mobile-friend-profile-sheet')),
+      findsNothing,
+    );
+    expect(tester.getSize(dialog).width, lessThanOrEqualTo(440));
+    expect(tester.getSize(dialog).height, lessThanOrEqualTo(430));
+    expect(
+      find.byKey(const ValueKey('friend-profile-message-button')),
+      findsOneWidget,
+    );
+    expect(find.text('프로필 보기 기능은 준비 중입니다.'), findsNothing);
+
+    await tester.tap(find.byTooltip('닫기').last);
+    await tester.pumpAndSettle();
+    expect(dialog, findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('모바일 친구 소셜과 스터디 그룹은 서로 다른 페이지다', (tester) async {
     tester.view.physicalSize = const Size(390, 1600);
     tester.view.devicePixelRatio = 1;

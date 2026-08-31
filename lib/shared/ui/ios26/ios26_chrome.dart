@@ -305,7 +305,7 @@ class _StoredProfileState extends State<_StoredProfile> {
 }
 
 /// 필요한 변수는 현재 Navigator 문맥이다.
-/// 작동 원리는 HTML QUICK FIND와 같은 검색 시트를 열고 코스·교재·친구·마켓 명명 라우트로 연결하는 것이다.
+/// 작동 원리는 HTML QUICK FIND와 같은 검색 시트를 열고 여덟 학생 목적지의 명명 라우트로 연결하는 것이다.
 void showStudentQuickSearch(BuildContext context) {
   _showStudentUtilityPanel(
     context: context,
@@ -384,7 +384,7 @@ class _StudentQuickSearchSheet extends StatefulWidget {
   const _StudentQuickSearchSheet();
 
   /// 필요한 변수는 검색 시트 위젯이다.
-  /// 작동 원리는 입력값에 따라 네 개 핵심 학생 목적지를 즉시 필터링하는 상태를 만든다.
+  /// 작동 원리는 입력값에 따라 여덟 핵심 학생 목적지를 즉시 필터링하는 상태를 만든다.
   @override
   State<_StudentQuickSearchSheet> createState() =>
       _StudentQuickSearchSheetState();
@@ -454,7 +454,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
     navigator.pushNamed(destination.route);
   }
 
-  /// 필요한 변수는 검색어와 네 목적지 메타다.
+  /// 필요한 변수는 검색어와 여덟 목적지 메타다.
   /// 작동 원리는 제목·설명에 포함되는 목적지만 HTML식 고밀도 목록으로 표시하는 것이다.
   @override
   Widget build(BuildContext context) {

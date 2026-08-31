@@ -2022,61 +2022,64 @@ class _BookWidgetState extends State<BookWidget> {
                       final entry = ordered[index];
                       final checked = selected.contains(entry.examId);
                       final isPinned = _pinnedExamId == entry.examId;
-                      return ListTile(
-                        leading: editMode
-                            ? Checkbox(
-                                value: checked,
-                                onChanged: (v) => setState(() {
-                                  if (v == true) {
-                                    selected.add(entry.examId);
-                                  } else {
-                                    selected.remove(entry.examId);
-                                  }
-                                }),
-                              )
-                            : CircleAvatar(
-                                backgroundColor: BookWidget.mediumGreen,
-                                child: const Icon(
-                                  Icons.file_copy_outlined,
-                                  color: Colors.white,
+                      return Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          leading: editMode
+                              ? Checkbox(
+                                  value: checked,
+                                  onChanged: (v) => setState(() {
+                                    if (v == true) {
+                                      selected.add(entry.examId);
+                                    } else {
+                                      selected.remove(entry.examId);
+                                    }
+                                  }),
+                                )
+                              : CircleAvatar(
+                                  backgroundColor: BookWidget.mediumGreen,
+                                  child: const Icon(
+                                    Icons.file_copy_outlined,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                        title: _LatexLine(_examTitle(entry)),
-                        subtitle: _LatexLine(
-                          _examSubtitle(entry),
-                          style: const TextStyle(
-                            color: Colors.black54,
-                            fontSize: 12.5,
+                          title: _LatexLine(_examTitle(entry)),
+                          subtitle: _LatexLine(
+                            _examSubtitle(entry),
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 12.5,
+                            ),
                           ),
+                          trailing: editMode
+                              ? null
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      tooltip: isPinned ? '고정해제' : '고정',
+                                      onPressed: () => _setPinnedExam(
+                                        isPinned ? null : entry.examId,
+                                      ),
+                                      icon: Icon(
+                                        isPinned
+                                            ? Icons.push_pin
+                                            : Icons.push_pin_outlined,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                          onTap: () {
+                            if (editMode) return;
+                            Navigator.of(dialogContext).pop();
+                            _openExamPaper(rootContext, entry);
+                          },
                         ),
-                        trailing: editMode
-                            ? null
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    tooltip: isPinned ? '고정해제' : '고정',
-                                    onPressed: () => _setPinnedExam(
-                                      isPinned ? null : entry.examId,
-                                    ),
-                                    icon: Icon(
-                                      isPinned
-                                          ? Icons.push_pin
-                                          : Icons.push_pin_outlined,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 16,
-                                  ),
-                                ],
-                              ),
-                        onTap: () {
-                          if (editMode) return;
-                          Navigator.of(dialogContext).pop();
-                          _openExamPaper(rootContext, entry);
-                        },
                       );
                     },
                   );
@@ -2117,60 +2120,63 @@ class _BookWidgetState extends State<BookWidget> {
                         final book = filtered[index];
                         final checked = selected.contains(book.id);
                         final isPinned = _pinnedBook?.id == book.id;
-                        return ListTile(
-                          leading: editMode
-                              ? Checkbox(
-                                  value: checked,
-                                  onChanged: (v) => setState(() {
-                                    if (v == true) {
-                                      selected.add(book.id);
-                                    } else {
-                                      selected.remove(book.id);
-                                    }
-                                  }),
-                                )
-                              : CircleAvatar(
-                                  backgroundColor:
-                                      book.coverColor ?? BookWidget.darkGreen,
-                                  child: const Icon(
-                                    Icons.book_outlined,
-                                    color: Colors.white,
+                        return Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            leading: editMode
+                                ? Checkbox(
+                                    value: checked,
+                                    onChanged: (v) => setState(() {
+                                      if (v == true) {
+                                        selected.add(book.id);
+                                      } else {
+                                        selected.remove(book.id);
+                                      }
+                                    }),
+                                  )
+                                : CircleAvatar(
+                                    backgroundColor:
+                                        book.coverColor ?? BookWidget.darkGreen,
+                                    child: const Icon(
+                                      Icons.book_outlined,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                ),
-                          title: _LatexLine(book.title),
-                          subtitle: _LatexLine(
-                            _bookSubtitle(book),
-                            style: const TextStyle(
-                              color: Colors.black54,
-                              fontSize: 12.5,
+                            title: _LatexLine(book.title),
+                            subtitle: _LatexLine(
+                              _bookSubtitle(book),
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 12.5,
+                              ),
                             ),
-                          ),
-                          trailing: editMode
-                              ? null
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      tooltip: isPinned ? '고정해제' : '고정',
-                                      onPressed: () => _pinBook(book),
-                                      icon: Icon(
-                                        isPinned
-                                            ? Icons.push_pin
-                                            : Icons.push_pin_outlined,
-                                        size: 18,
+                            trailing: editMode
+                                ? null
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: isPinned ? '고정해제' : '고정',
+                                        onPressed: () => _pinBook(book),
+                                        icon: Icon(
+                                          isPinned
+                                              ? Icons.push_pin
+                                              : Icons.push_pin_outlined,
+                                          size: 18,
+                                        ),
                                       ),
-                                    ),
-                                    const Icon(
-                                      Icons.chevron_right_rounded,
-                                      size: 16,
-                                    ),
-                                  ],
-                                ),
-                          onTap: () {
-                            if (editMode) return;
-                            Navigator.of(dialogContext).pop();
-                            _openTextbook(rootContext, book);
-                          },
+                                      const Icon(
+                                        Icons.chevron_right_rounded,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
+                            onTap: () {
+                              if (editMode) return;
+                              Navigator.of(dialogContext).pop();
+                              _openTextbook(rootContext, book);
+                            },
+                          ),
                         );
                       },
                     );

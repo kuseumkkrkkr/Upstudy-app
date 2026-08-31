@@ -106,10 +106,28 @@ class _GroupListPageState extends State<GroupListPage> {
   /// 필요한 변수는 HTML 그룹 생성 폼 값이다.
   /// 작동 원리는 실제 소셜 그룹 생성 API 성공 후 내 그룹 목록을 다시 조회하는 것이다.
   Future<void> _openCreateDialog() async {
-    final form = await showDialog<_CreateGroupForm>(
-      context: context,
-      builder: (_) => const _CreateGroupDialog(),
-    );
+    final _CreateGroupForm? form;
+    if (isStudentDensityMobile(context)) {
+      form = await showModalBottomSheet<_CreateGroupForm>(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        showDragHandle: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        builder: (_) => const FractionallySizedBox(
+          heightFactor: 0.86,
+          child: _CreateGroupDialog(mobileSheet: true),
+        ),
+      );
+    } else {
+      form = await showDialog<_CreateGroupForm>(
+        context: context,
+        builder: (_) => const _CreateGroupDialog(),
+      );
+    }
     if (form == null) return;
 
     try {
@@ -141,6 +159,23 @@ class _GroupListPageState extends State<GroupListPage> {
   /// 필요한 변수는 그룹 검색·초대 참가 API와 목록 갱신 콜백이다.
   /// 작동 원리는 독립 모달에서 서버 검색과 코드 확인 후 참가를 실제로 수행하는 것이다.
   void _openFindSheet() {
+    if (isStudentDensityMobile(context)) {
+      showModalBottomSheet<void>(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        showDragHandle: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        builder: (_) => FractionallySizedBox(
+          heightFactor: 0.86,
+          child: _GroupFindDialog(onJoined: _load, mobileSheet: true),
+        ),
+      );
+      return;
+    }
     showDialog<void>(
       context: context,
       builder: (_) => _GroupFindDialog(onJoined: _load),
@@ -632,9 +667,10 @@ class _MobileGroupActions extends StatelessWidget {
 }
 
 class _GroupFindDialog extends StatefulWidget {
-  const _GroupFindDialog({required this.onJoined});
+  const _GroupFindDialog({required this.onJoined, this.mobileSheet = false});
 
   final Future<void> Function() onJoined;
+  final bool mobileSheet;
 
   /// 필요한 변수는 가입 후 목록 갱신 콜백이다.
   /// 작동 원리는 서버 그룹 검색과 초대 코드 참가를 하나의 독립 모달 상태로 관리하는 것이다.
@@ -700,25 +736,7 @@ class _GroupFindDialogState extends State<_GroupFindDialog> {
     try {
       final meta = await ApiClient.instance.fetchStudyGroupInviteMeta(code);
       if (!mounted) return;
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(meta.name),
-          content: Text(
-            '${meta.description}\n\n${meta.members} / ${meta.maxMembers}명${meta.lockEnabled ? '\n비밀번호가 필요한 그룹입니다.' : ''}',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('취소'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('참가'),
-            ),
-          ],
-        ),
-      );
+      final confirmed = await _confirmInvite(meta);
       if (confirmed != true || !mounted) return;
       await ApiClient.instance.joinStudyGroupByInviteCode(
         inviteCode: code,
@@ -746,168 +764,278 @@ class _GroupFindDialogState extends State<_GroupFindDialog> {
     }
   }
 
+  Future<bool?> _confirmInvite(StudyGroupInviteMeta meta) {
+    if (widget.mobileSheet) {
+      return showModalBottomSheet<bool>(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        showDragHandle: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        builder: (_) => _GroupInviteConfirmSheet(meta: meta),
+      );
+    }
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(meta.name),
+        content: Text(
+          '${meta.description}\n\n${meta.members} / ${meta.maxMembers}명${meta.lockEnabled ? '\n비밀번호가 필요한 그룹입니다.' : ''}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('참가'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 필요한 변수는 검색 결과와 코드 참가 상태다.
   /// 작동 원리는 검색과 초대 코드 참가를 구획으로 나눈 고정 폭 모달에 배치해 빈 메인 화면을 유지하는 것이다.
   @override
-  Widget build(BuildContext context) => Dialog(
-    insetPadding: const EdgeInsets.all(20),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'FIND STUDY GROUP',
-                        style: TextStyle(
-                          fontSize: 10,
-                          letterSpacing: 1.7,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w900,
-                        ),
+  Widget build(BuildContext context) {
+    final content = Padding(
+      key: widget.mobileSheet
+          ? const ValueKey('mobile-group-find-sheet')
+          : null,
+      padding: EdgeInsets.fromLTRB(
+        widget.mobileSheet ? 20 : 28,
+        widget.mobileSheet ? 8 : 28,
+        widget.mobileSheet ? 20 : 28,
+        widget.mobileSheet ? 20 : 28,
+      ),
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'FIND STUDY GROUP',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.7,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
                       ),
-                      SizedBox(height: 7),
-                      Text(
-                        '그룹 찾기',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                        ),
+                    ),
+                    SizedBox(height: 7),
+                    Text(
+                      '그룹 찾기',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
                       ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: '닫기',
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '이름으로 공개 그룹을 찾거나 초대 코드로 바로 참가하세요.',
-              style: TextStyle(color: Colors.black45),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _query,
-              onSubmitted: (_) => _search(),
-              decoration: InputDecoration(
-                labelText: '그룹 이름',
-                hintText: '예: 중등 수학',
-                suffixIcon: IconButton(
-                  tooltip: '그룹 검색',
-                  onPressed: _searching ? null : _search,
-                  icon: _searching
-                      ? const Padding(
-                          padding: EdgeInsets.all(14),
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.search_rounded),
+                    ),
+                  ],
                 ),
               ),
+              IconButton(
+                tooltip: '닫기',
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '이름으로 공개 그룹을 찾거나 초대 코드로 바로 참가하세요.',
+            style: TextStyle(color: Colors.black45),
+          ),
+          const SizedBox(height: 24),
+          TextField(
+            key: const ValueKey('group-find-query-field'),
+            controller: _query,
+            onSubmitted: (_) => _search(),
+            decoration: InputDecoration(
+              labelText: '그룹 이름',
+              hintText: '예: 중등 수학',
+              suffixIcon: IconButton(
+                key: const ValueKey('group-find-search-button'),
+                tooltip: '그룹 검색',
+                onPressed: _searching ? null : _search,
+                icon: _searching
+                    ? const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.search_rounded),
+              ),
             ),
-            if (_results.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              for (final group in _results)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F7F8),
-                    borderRadius: BorderRadius.circular(16),
+          ),
+          if (_results.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            for (final group in _results)
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F7F8),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
                   ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    title: Text(
-                      group.name,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    subtitle: Text(
-                      '${group.description ?? '그룹 스터디'} · ${group.memberCount}/${group.maxMembers}명',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: TextButton(
-                      onPressed: () async {
-                        try {
-                          await ApiClient.instance.joinStudyGroup(
-                            groupId: group.id,
-                            password: group.password,
-                          );
-                          await widget.onJoined();
-                          if (context.mounted) Navigator.of(context).pop();
-                        } catch (error) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                studentFacingApiError(
-                                  error,
-                                  fallback: '그룹에 참가하지 못했어요.',
-                                  notFound: '이 그룹을 찾지 못했어요.',
-                                  unavailable:
-                                      '그룹 참가 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
-                                ),
+                  title: Text(
+                    group.name,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: Text(
+                    '${group.description ?? '그룹 스터디'} · ${group.memberCount}/${group.maxMembers}명',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: TextButton(
+                    key: ValueKey('group-search-join-${group.id}'),
+                    onPressed: () async {
+                      try {
+                        await ApiClient.instance.joinStudyGroup(
+                          groupId: group.id,
+                          password: group.password,
+                        );
+                        await widget.onJoined();
+                        if (context.mounted) Navigator.of(context).pop();
+                      } catch (error) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              studentFacingApiError(
+                                error,
+                                fallback: '그룹에 참가하지 못했어요.',
+                                notFound: '이 그룹을 찾지 못했어요.',
+                                unavailable:
+                                    '그룹 참가 연결이 잠시 불안정해요. 잠시 후 다시 시도해 주세요.',
                               ),
                             ),
-                          );
-                        }
-                      },
-                      child: const Text('참가'),
-                    ),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('참가'),
                   ),
                 ),
-            ],
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 22),
-              child: Divider(height: 1),
-            ),
-            const Text(
-              '초대 코드로 참가',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _invite,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(
-                labelText: '초대 코드',
-                hintText: 'AF-24K8',
               ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _password,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: '비밀번호',
-                hintText: '비밀번호가 있는 경우에만 입력',
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF202022),
-                minimumSize: const Size.fromHeight(50),
-              ),
-              onPressed: _joining ? null : _joinByCode,
-              child: Text(_joining ? '확인 중…' : '코드 확인 후 참가'),
-            ),
           ],
-        ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 22),
+            child: Divider(height: 1),
+          ),
+          const Text(
+            '초대 코드로 참가',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey('group-invite-code-field'),
+            controller: _invite,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(
+              labelText: '초대 코드',
+              hintText: 'AF-24K8',
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            key: const ValueKey('group-invite-password-field'),
+            controller: _password,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: '비밀번호',
+              hintText: '비밀번호가 있는 경우에만 입력',
+            ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            key: const ValueKey('group-invite-verify-button'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF202022),
+              minimumSize: const Size.fromHeight(50),
+            ),
+            onPressed: _joining ? null : _joinByCode,
+            child: Text(_joining ? '확인 중…' : '코드 확인 후 참가'),
+          ),
+        ],
+      ),
+    );
+    if (widget.mobileSheet) return content;
+    return Dialog(
+      key: const ValueKey('desktop-group-find-dialog'),
+      insetPadding: const EdgeInsets.all(20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: ConstrainedBox(
+        key: const ValueKey('desktop-group-find-panel'),
+        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
+        child: content,
+      ),
+    );
+  }
+}
+
+class _GroupInviteConfirmSheet extends StatelessWidget {
+  const _GroupInviteConfirmSheet({required this.meta});
+
+  final StudyGroupInviteMeta meta;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    key: const ValueKey('mobile-group-invite-confirm-sheet'),
+    padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+    child: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            meta.name,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          Text(meta.description, style: const TextStyle(color: Colors.black54)),
+          const SizedBox(height: 16),
+          Text(
+            '${meta.members} / ${meta.maxMembers}명${meta.lockEnabled ? '\n비밀번호가 필요한 그룹입니다.' : ''}',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('취소'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: FilledButton(
+                  key: const ValueKey('group-invite-confirm-button'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF202022),
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('참가'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     ),
   );
@@ -1425,7 +1553,9 @@ class _CreateGroupForm {
 }
 
 class _CreateGroupDialog extends StatefulWidget {
-  const _CreateGroupDialog();
+  const _CreateGroupDialog({this.mobileSheet = false});
+
+  final bool mobileSheet;
 
   @override
   State<_CreateGroupDialog> createState() => _CreateGroupDialogState();
@@ -1453,166 +1583,178 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
   /// 작동 원리는 각 입력의 역할과 제약을 분명히 나누고, 유효한 값만 상위 API 호출용 폼으로 반환하는 것이다.
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    final content = Padding(
+      key: widget.mobileSheet
+          ? const ValueKey('mobile-group-create-sheet')
+          : null,
+      padding: EdgeInsets.fromLTRB(
+        widget.mobileSheet ? 20 : 28,
+        widget.mobileSheet ? 8 : 28,
+        widget.mobileSheet ? 20 : 28,
+        widget.mobileSheet ? 20 : 28,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'NEW STUDY GROUP',
-                            style: TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 1.7,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          SizedBox(height: 7),
-                          Text(
-                            '그룹 만들기',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: '닫기',
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '함께 공부할 사람을 위한 그룹 정보를 입력하세요.',
-                  style: TextStyle(color: Colors.black45),
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: _name,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: '그룹 이름',
-                    hintText: '예: 매일 수학 한 문제',
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _description,
-                  minLines: 3,
-                  maxLines: 4,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: '그룹 소개',
-                    hintText: '어떤 공부를 함께 할지 알려주세요. (선택)',
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _maxMembers,
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: '최대 인원',
-                    helperText: '2명부터 100명까지 설정할 수 있어요.',
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _password,
-                  keyboardType: TextInputType.number,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: '비밀번호',
-                    hintText: '숫자 4~10자리 (선택)',
-                    helperText: '입력하면 비밀번호가 있는 비공개 참가 그룹이 됩니다.',
-                  ),
-                ),
-                if (_validationMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _validationMessage!,
-                    style: const TextStyle(
-                      color: Color(0xFFB3261E),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 22),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('취소'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF202022),
-                          minimumSize: const Size.fromHeight(48),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'NEW STUDY GROUP',
+                        style: TextStyle(
+                          fontSize: 10,
+                          letterSpacing: 1.7,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w900,
                         ),
-                        onPressed: () {
-                          final maxMembers = int.tryParse(
-                            _maxMembers.text.trim(),
-                          );
-                          final password = _password.text.trim();
-                          String? message;
-                          if (_name.text.trim().isEmpty) {
-                            message = '그룹 이름을 입력하세요.';
-                          } else if (maxMembers == null ||
-                              maxMembers < 2 ||
-                              maxMembers > 100) {
-                            message = '최대 인원은 2명에서 100명 사이로 입력하세요.';
-                          } else if (password.isNotEmpty &&
-                              (password.length < 4 ||
-                                  password.length > 10 ||
-                                  int.tryParse(password) == null)) {
-                            message = '비밀번호는 숫자 4~10자리로 입력하세요.';
-                          }
-                          if (message != null) {
-                            setState(() => _validationMessage = message);
-                            return;
-                          }
-                          Navigator.of(context).pop(
-                            _CreateGroupForm(
-                              name: _name.text.trim(),
-                              maxMembers: maxMembers!,
-                              description: _description.text.trim().isEmpty
-                                  ? null
-                                  : _description.text.trim(),
-                              password: password.isEmpty ? null : password,
-                            ),
-                          );
-                        },
-                        child: const Text('그룹 만들기'),
                       ),
-                    ),
-                  ],
+                      SizedBox(height: 7),
+                      Text(
+                        '그룹 만들기',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: '닫기',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 8),
+            const Text(
+              '함께 공부할 사람을 위한 그룹 정보를 입력하세요.',
+              style: TextStyle(color: Colors.black45),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              key: const ValueKey('group-create-name-field'),
+              controller: _name,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: '그룹 이름',
+                hintText: '예: 매일 수학 한 문제',
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('group-create-description-field'),
+              controller: _description,
+              minLines: 3,
+              maxLines: 4,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: '그룹 소개',
+                hintText: '어떤 공부를 함께 할지 알려주세요. (선택)',
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('group-create-max-members-field'),
+              controller: _maxMembers,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: '최대 인원',
+                helperText: '2명부터 100명까지 설정할 수 있어요.',
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('group-create-password-field'),
+              controller: _password,
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: '비밀번호',
+                hintText: '숫자 4~10자리 (선택)',
+                helperText: '입력하면 비밀번호가 있는 비공개 참가 그룹이 됩니다.',
+              ),
+            ),
+            if (_validationMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _validationMessage!,
+                style: const TextStyle(color: Color(0xFFB3261E), fontSize: 13),
+              ),
+            ],
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('취소'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    key: const ValueKey('group-create-submit-button'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF202022),
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    onPressed: () {
+                      final maxMembers = int.tryParse(_maxMembers.text.trim());
+                      final password = _password.text.trim();
+                      String? message;
+                      if (_name.text.trim().isEmpty) {
+                        message = '그룹 이름을 입력하세요.';
+                      } else if (maxMembers == null ||
+                          maxMembers < 2 ||
+                          maxMembers > 100) {
+                        message = '최대 인원은 2명에서 100명 사이로 입력하세요.';
+                      } else if (password.isNotEmpty &&
+                          (password.length < 4 ||
+                              password.length > 10 ||
+                              int.tryParse(password) == null)) {
+                        message = '비밀번호는 숫자 4~10자리로 입력하세요.';
+                      }
+                      if (message != null) {
+                        setState(() => _validationMessage = message);
+                        return;
+                      }
+                      Navigator.of(context).pop(
+                        _CreateGroupForm(
+                          name: _name.text.trim(),
+                          maxMembers: maxMembers!,
+                          description: _description.text.trim().isEmpty
+                              ? null
+                              : _description.text.trim(),
+                          password: password.isEmpty ? null : password,
+                        ),
+                      );
+                    },
+                    child: const Text('그룹 만들기'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
+      ),
+    );
+    if (widget.mobileSheet) return content;
+    return Dialog(
+      key: const ValueKey('desktop-group-create-dialog'),
+      insetPadding: const EdgeInsets.all(20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: ConstrainedBox(
+        key: const ValueKey('desktop-group-create-panel'),
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: content,
       ),
     );
   }

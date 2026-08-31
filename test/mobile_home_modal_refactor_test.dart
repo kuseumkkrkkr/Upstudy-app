@@ -160,6 +160,77 @@ void main() {
     expect(find.byType(OutlinedButton), findsNothing);
   });
 
+  testWidgets('홈 공지 상세는 390과 780에서 같은 읽기 전용 하단 시트를 쓴다', (tester) async {
+    final notice = StudyGroupNotice(
+      scope: 'global',
+      title: '9월 수업 일정',
+      contentHtml: '<p>9월 1일부터 수업 시간이 변경됩니다.</p>',
+    );
+
+    for (final size in const [Size(390, 844), Size(780, 900)]) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => showStudentNoticeDetail(context, notice),
+                child: const Text('공지 상세 열기'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('공지 상세 열기'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text('9월 수업 일정'), findsOneWidget);
+      expect(find.text('9월 1일부터 수업 시간이 변경됩니다.'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('닫기'));
+      await tester.pumpAndSettle();
+    }
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  });
+
+  testWidgets('홈 공지 상세는 PC에서 제한 폭 대화상자를 쓴다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    const notice = StudyGroupNotice(
+      scope: 'group',
+      groupName: '수학반',
+      title: '과제 안내',
+      contentHtml: '<p>교재 2단원을 풀어 오세요.</p>',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showStudentNoticeDetail(context, notice),
+              child: const Text('공지 상세 열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('공지 상세 열기'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(find.text('과제 안내'), findsOneWidget);
+    expect(find.text('교재 2단원을 풀어 오세요.'), findsOneWidget);
+  });
+
   testWidgets('알림 센터의 받은 친구 요청을 눌러 확인하고 수락한다', (tester) async {
     _setMobileView(tester);
     await ApiClient.instance.setToken('notification-request-token');

@@ -175,16 +175,16 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     return _badArgumentsRoute(settings, expected: 'Map<String, dynamic>');
   }
 
-  // Wrong answer solve (needs sourceType)
+  // Legacy wrong-answer solve deep link.
+  //
+  // The old route only carried a source label, not the review item/config that
+  // a real solve session needs. Route it to the existing review list instead
+  // of exposing the unfinished placeholder.
   if (name == AppRoutes.wrongAnswerSolve) {
-    final args = settings.arguments;
-    if (args is String) {
-      return MaterialPageRoute(
-        settings: settings,
-        builder: (_) => WrongAnswerSolvePage(sourceType: args),
-      );
-    }
-    return _badArgumentsRoute(settings, expected: 'String (sourceType)');
+    return MaterialPageRoute<void>(
+      settings: const RouteSettings(name: AppRoutes.wrongAnswers),
+      builder: (_) => const WrongAnswerListPage(),
+    );
   }
 
   // Group detail (needs groupId)
