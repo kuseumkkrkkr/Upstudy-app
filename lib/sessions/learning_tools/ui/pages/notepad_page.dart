@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/storage/local_db.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 //=============================================================================
 // 노트패드 (삼성노트 스타일) - 우측 사이드바 툴바
@@ -542,7 +543,7 @@ class _NotepadPageState extends State<NotepadPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isMobile = MediaQuery.sizeOf(context).width < 720;
+    final isMobile = isStudentDensityMobile(context);
     // 학습 도구 세션 레퍼런스에 맞춰 캔버스와 툴바를 중립 흑백으로 고정한다.
     const bgColor = Color(0xFFF7F7F7);
     const paperColor = Colors.white;
@@ -754,6 +755,7 @@ class _NotepadPageState extends State<NotepadPage>
             ),
             if (isMobile)
               _MobileNotepadToolbar(
+                key: const ValueKey('notepad-mobile-toolbar'),
                 inputMode: _mobileInputMode,
                 toolMode: _toolMode,
                 penColor: _penColor,
@@ -788,6 +790,7 @@ class _NotepadPageState extends State<NotepadPage>
 /// 작동 원리는 모바일 하단에서 입력·이동·필기 상태와 편집 도구를 명시적으로 분리한다.
 class _MobileNotepadToolbar extends StatelessWidget {
   const _MobileNotepadToolbar({
+    super.key,
     required this.inputMode,
     required this.toolMode,
     required this.penColor,

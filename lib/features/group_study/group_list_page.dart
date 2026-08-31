@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
@@ -168,12 +167,14 @@ class _GroupListPageState extends State<GroupListPage> {
     key: const ValueKey('mobile-active-groups-card'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      const StudentDensityEyebrow('CONTINUE TOGETHER'),
+      const SizedBox(height: 8),
       Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           const Expanded(
             child: Text(
-              '참여 중인 그룹',
+              '내 그룹',
               style: TextStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.w900,
@@ -182,7 +183,7 @@ class _GroupListPageState extends State<GroupListPage> {
             ),
           ),
           Text(
-            '${_groups.length}개',
+            '${_groups.length}/3',
             style: const TextStyle(
               color: Colors.black45,
               fontSize: 13,
@@ -423,20 +424,7 @@ class _GroupListPageState extends State<GroupListPage> {
     final mobile = isStudentDensityMobile(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: mobile ? null : const AppDrawer(),
-      appBar: mobile
-          ? AppBar(
-              title: const Text(
-                '스터디 그룹',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-              backgroundColor: const Color(0xFFF4F4F6),
-              surfaceTintColor: Colors.transparent,
-            )
-          : null,
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/groups')
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -444,11 +432,10 @@ class _GroupListPageState extends State<GroupListPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                showUtilityActions: !mobile,
-                hideOnMobile: true,
-                onMenu: mobile ? null : () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const MainStudentPage()),
+                showUtilityActions: true,
+                onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
                   (route) => false,
                 ),
                 items: studentTopNavItems(
@@ -474,6 +461,8 @@ class _GroupListPageState extends State<GroupListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (mobile) ...[
+                            const _GroupListHeading(fontSize: 40),
+                            const SizedBox(height: 18),
                             _buildMobileActiveGroupsCard(),
                             const SizedBox(height: 18),
                             _buildMobileInsightsCard(),
@@ -596,7 +585,7 @@ class _GroupListHeading extends StatelessWidget {
 }
 
 /// 필요한 변수: 그룹 찾기·만들기 콜백이다.
-/// 작동 원리: 모바일의 두 핵심 행동만 같은 높이의 둥근 버튼으로 나란히 배치한다.
+/// 작동 원리: 기준 시안처럼 찾기·코드 참가와 그룹 만들기를 전폭 행동으로 차례로 배치한다.
 class _MobileGroupActions extends StatelessWidget {
   const _MobileGroupActions({required this.onFind, required this.onCreate});
 
@@ -604,41 +593,38 @@ class _MobileGroupActions extends StatelessWidget {
   final VoidCallback onCreate;
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => Column(
     key: const ValueKey('group-mobile-actions'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Expanded(
-        child: SizedBox(
-          height: 46,
-          child: OutlinedButton(
-            onPressed: onFind,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF202022),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              side: const BorderSide(color: Color(0xFFB9B9BE)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+      SizedBox(
+        height: 46,
+        child: OutlinedButton(
+          onPressed: onFind,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF202022),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            side: const BorderSide(color: Color(0xFFB9B9BE)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const FittedBox(child: Text('찾기 · 코드 참가')),
           ),
+          child: const Text('그룹 찾기 · 코드 참가'),
         ),
       ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: SizedBox(
-          height: 46,
-          child: FilledButton(
-            onPressed: onCreate,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF202022),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+      const SizedBox(height: 8),
+      SizedBox(
+        height: 46,
+        child: FilledButton(
+          onPressed: onCreate,
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF202022),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('그룹 만들기'),
           ),
+          child: const Text('그룹 만들기'),
         ),
       ),
     ],

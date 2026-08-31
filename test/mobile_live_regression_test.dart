@@ -50,7 +50,7 @@ void main() {
     await ApiClient.instance.clearToken();
   });
 
-  testWidgets('프로필은 모바일 하단 앱 셸을 사용하고 햄버거를 숨긴다', (tester) async {
+  testWidgets('프로필은 모바일 상단바와 햄버거 드로어를 사용한다', (tester) async {
     _setMobileView(tester);
     await tester.pumpWidget(
       MaterialApp(
@@ -62,16 +62,19 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
-    expect(find.byType(Drawer), findsNothing);
-    expect(find.byKey(const ValueKey('student-mobile-menu')), findsNothing);
+    expect(find.byType(MobileStudentBottomAppBar), findsNothing);
+    expect(
+      tester.state<ScaffoldState>(find.byType(Scaffold).first).hasDrawer,
+      isTrue,
+    );
+    expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
     expect(find.text('프로필'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('프로필 조회 실패도 모바일 앱 셸과 재시도 동작을 유지한다', (tester) async {
+  testWidgets('프로필 조회 실패도 모바일 상단 셸과 재시도 동작을 유지한다', (tester) async {
     // 필요한 변수는 HTML 응답 파싱 실패를 반환하는 프로필 로더다.
-    // 작동 원리는 원시 예외를 숨기고 큰 오류 카드·하단 탐색·재시도 버튼을 제공하는지 확인한다.
+    // 작동 원리는 원시 예외를 숨기고 큰 오류 카드·상단 탐색·재시도 버튼을 제공하는지 확인한다.
     _setMobileView(tester);
     await tester.pumpWidget(
       MaterialApp(
@@ -83,7 +86,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
+    expect(find.byType(MobileStudentBottomAppBar), findsNothing);
+    expect(
+      tester.state<ScaffoldState>(find.byType(Scaffold).first).hasDrawer,
+      isTrue,
+    );
+    expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
     expect(find.text('프로필을 열지 못했어요'), findsOneWidget);
     expect(find.textContaining('프로필을 불러오지 못했어요.'), findsOneWidget);
     expect(find.textContaining('Unexpected token'), findsNothing);

@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 typedef MarketplacePurchaseHandler = Future<void> Function(String listingId);
@@ -388,19 +388,16 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리는 PC 공용 메뉴에서 마켓을 활성화하고 모바일에서는 하단 앱바에 탐색을 맡기는 것이다.
+  /// 작동 원리는 PC·모바일 모두 공용 상단바와 오버레이 메뉴에서 마켓을 활성화하는 것이다.
   Widget _buildHeader(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 720;
     return Ios26TopBar(
       brandColor: Colors.black,
       showLevelIndicator: false,
-      showUtilityActions: !mobile,
-      hideOnMobile: true,
-      onMenu: mobile ? null : () => toggleAppDrawer(context),
-      onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainStudentPage()),
-        (route) => false,
-      ),
+      showUtilityActions: true,
+      onMenu: () => toggleAppDrawer(context),
+      onTitleTap: () => Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
       items: studentTopNavItems(
         context,
         active: StudentTopDestination.marketplace,
@@ -415,14 +412,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
     final items = _initialFilteredItems;
     final size = MediaQuery.sizeOf(context);
     final desktop = size.width >= 1000;
-    // 웹의 600~720px 세로 뷰포트도 휴대폰 UI로 분류해 태블릿형 정보 카드가 노출되지 않게 한다.
-    final portraitMobile = size.width <= 720 && size.height > size.width;
+    // 공용 학생 셸과 동일하게 780px 이하를 모바일로 취급한다.
+    // 그렇지 않으면 상단 바는 숨는데 본문은 데스크톱 drawer를 택하는 seam이 생긴다.
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: portraitMobile ? null : const AppDrawer(),
-      bottomNavigationBar: portraitMobile
-          ? const MobileStudentBottomAppBar()
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -432,21 +427,19 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 onRefresh: _search,
                 child: ListView(
                   key: ValueKey(
-                    portraitMobile
-                        ? 'market-mobile-scroll'
-                        : 'market-wide-scroll',
+                    mobile ? 'market-mobile-scroll' : 'market-wide-scroll',
                   ),
                   padding: EdgeInsets.fromLTRB(
-                    portraitMobile ? 16 : (desktop ? 40 : 14),
-                    portraitMobile ? 18 : 24,
-                    portraitMobile ? 16 : (desktop ? 40 : 14),
-                    portraitMobile ? 28 : 40,
+                    mobile ? 16 : (desktop ? 40 : 14),
+                    mobile ? 18 : 24,
+                    mobile ? 16 : (desktop ? 40 : 14),
+                    mobile ? 28 : 40,
                   ),
                   children: [
                     Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1280),
-                        child: portraitMobile
+                        child: mobile
                             ? _MobileMarketplaceBody(
                                 controller: _queryController,
                                 corners: _corners,

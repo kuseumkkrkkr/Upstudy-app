@@ -15,7 +15,9 @@ import 'package:s11/features/student_schedule/student_schedule.dart';
 import 'package:s11/features/wrong_answer/wrong_answer.dart';
 import 'package:s11/features/group_study/group_study.dart';
 import 'package:s11/features/arena/arena_page.dart';
+import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
@@ -42,6 +44,8 @@ class AppRoutes {
   static const String social = '/social';
   static const String marketplace = '/marketplace';
   static const String arena = '/arena';
+  static const String learningTools = '/learning-tools';
+  static const String graph = '/graph';
   static const String tools = '/tools';
 
   // ─── Learning ───
@@ -104,8 +108,14 @@ Map<String, WidgetBuilder> appRoutes() {
     AppRoutes.social: (_) => const SoWidget(),
     AppRoutes.marketplace: (_) => const MarketplacePage(),
     AppRoutes.arena: (_) => const ArenaPage(),
+    // 필요한 변수는 노트·타이머·집중 모드를 여는 도구 허브다.
+    // 작동 원리: 학생 내비게이션의 학습 도구는 시안의 모달형 도구 목록으로 연결한다.
+    AppRoutes.learningTools: (_) => const StudentLearningToolsPage(),
+    // 필요한 변수는 독립적인 함수 그래프 작업 공간이다.
+    // 작동 원리: 홈 카드 외에도 전체 메뉴에서 실제 그래프 도구로 도달하게 한다.
+    AppRoutes.graph: (_) => const JsxGraphPage(),
     // 필요한 변수는 서버 AI 챗봇과 전체 화면 표시 여부다.
-    // 작동 원리: 도구·설정의 학습 도구 메뉴를 별도 도구 목록 대신 AI 학습 튜터 전용 화면으로 연다.
+    // 작동 원리: 기존 /tools 딥링크는 AI 학습 튜터로 유지해 기존 공유 링크와 문제 풀이 동선을 끊지 않는다.
     AppRoutes.tools: (_) => const ServerChatPage(standalone: true),
 
     // Learning

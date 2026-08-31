@@ -2606,31 +2606,19 @@ class _SoWidgetState extends State<SoWidget> {
       child: Scaffold(
         key: _scaffoldKey,
         backgroundColor: StudentDensityTokens.background,
-        drawer: mobile ? null : const AppDrawer(),
-        appBar: mobile
-            ? AppBar(
-                title: const Text(
-                  '친구 · 소셜',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                backgroundColor: StudentDensityTokens.background,
-                surfaceTintColor: Colors.transparent,
-              )
-            : null,
-        bottomNavigationBar: mobile
-            ? const MobileStudentBottomAppBar(activeRoute: '/social')
-            : null,
+        drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
             children: [
               Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                showUtilityActions: !mobile,
-                hideOnMobile: true,
-                onMenu: mobile
-                    ? null
-                    : () => _scaffoldKey.currentState?.openDrawer(),
+                showUtilityActions: true,
+                onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.social,
@@ -2683,23 +2671,47 @@ class _SoWidgetState extends State<SoWidget> {
   }
 
   /// 필요한 변수는 친구 추가 동작이다.
-  /// 작동 원리는 제목은 모바일 AppBar에 맡기고 첫 행동만 전폭 버튼으로 제공한다.
-  Widget _buildMobileSocialHeader() => OutlinedButton.icon(
-    key: const ValueKey('mobile-social-add-friend'),
-    onPressed: _openAddFriendModal,
-    icon: const Icon(Icons.person_add_alt_1_outlined, size: 19),
-    label: const Text('친구 추가'),
-    style: OutlinedButton.styleFrom(
-      foregroundColor: StudentDensityTokens.ink,
-      minimumSize: const Size.fromHeight(48),
-      side: const BorderSide(color: StudentDensityTokens.line),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-    ),
+  /// 작동 원리는 기준 시안의 제목·설명·전폭 CTA를 한 묶음으로 제공한다.
+  Widget _buildMobileSocialHeader() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const StudentDensityEyebrow('FRIENDS & SOCIAL'),
+      const SizedBox(height: 8),
+      const Text(
+        '친구/소셜',
+        style: TextStyle(
+          fontSize: 40,
+          height: 1,
+          letterSpacing: -1.8,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        '새 소식을 먼저 처리하고 친구 · 그룹 학습으로 자연스럽게 이어집니다.',
+        style: TextStyle(color: Colors.black45, fontSize: 12),
+      ),
+      const SizedBox(height: 18),
+      FilledButton.icon(
+        key: const ValueKey('mobile-social-add-friend'),
+        onPressed: _openAddFriendModal,
+        icon: const Icon(Icons.person_add_alt_1_outlined, size: 19),
+        label: const Text('친구 추가'),
+        style: FilledButton.styleFrom(
+          backgroundColor: StudentDensityTokens.dark,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(46),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+        ),
+      ),
+    ],
   );
 
-  /// 필요한 변수는 받은 요청과 안 읽은 쪽지 개수다.
-  /// 작동 원리는 친구 페이지에 해당하는 두 소식만 표시해 그룹 페이지와 경계를 나눈다.
+  /// 필요한 변수는 받은 요청·안 읽은 쪽지·참여 그룹 상태다.
+  /// 작동 원리는 시안의 세 소식 행을 실제 친구 요청·대화·그룹 화면으로 연결한다.
   Widget _buildSocialSummary({required bool mobile}) => Container(
     key: mobile ? const ValueKey('mobile-social-summary-card') : null,
     clipBehavior: Clip.antiAlias,
@@ -2731,12 +2743,27 @@ class _SoWidgetState extends State<SoWidget> {
                 : '${_messages.first.name} 외 ${(_messages.length - 1).clamp(0, 99)}명',
             count: _unreadMessages,
             horizontal: !mobile,
-            last: true,
+            last: !mobile,
             onTap: _messages.isEmpty
                 ? null
                 : () => _openMessageThread(_messages.first),
           ),
         ),
+        if (mobile)
+          _socialAdaptiveChild(
+            mobile: true,
+            child: _SocialNoticeRow(
+              icon: Icons.groups_2_outlined,
+              title: '그룹 새 소식',
+              subtitle: _groups.isEmpty
+                  ? '참여 중인 그룹 없음'
+                  : '참여 중인 그룹 ${_groups.length}개',
+              count: _groups.length,
+              horizontal: false,
+              last: true,
+              onTap: () => Navigator.of(context).pushNamed('/groups'),
+            ),
+          ),
       ],
     ),
   );
@@ -3484,10 +3511,11 @@ class _SoWidgetState extends State<SoWidget> {
                               ? Navigator.of(context).pop()
                               : state.openDrawer();
                         },
-                  onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const MainStudentPage()),
-                    (route) => false,
-                  ),
+                  onTitleTap: () =>
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/student/dashboard',
+                        (route) => false,
+                      ),
                   items: studentTopNavItems(
                     context,
                     active: StudentTopDestination.social,

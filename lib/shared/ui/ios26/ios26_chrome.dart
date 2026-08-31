@@ -145,6 +145,7 @@ class Ios26TopBar extends StatelessWidget {
                       ),
                     if (hasLeadingControl) SizedBox(width: compact ? 7 : 10),
                     GestureDetector(
+                      key: const ValueKey('student-brand-home'),
                       onTap: onTitleTap,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
