@@ -23,9 +23,13 @@ String buildAiFlowGraphHtml(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AIFlow Graph</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/jsxgraph@1.13.1/distrib/jsxgraph.css"
+    />
     <script
       id="jsxgraph-script"
-      src="https://jsxgraph.org/distrib/jsxgraphcore.js"
+      src="https://cdn.jsdelivr.net/npm/jsxgraph@1.13.1/distrib/jsxgraphcore.js"
       async
     ></script>
     <style>
@@ -56,6 +60,9 @@ String buildAiFlowGraphHtml(
         height: 100%;
         box-sizing: border-box;
         min-height: 120px;
+        position: relative;
+        overflow: hidden;
+        touch-action: none;
         border: 1px solid #d6e2d7;
         border-radius: 8px;
         background: #ffffff;
@@ -232,7 +239,7 @@ String buildAiFlowGraphHtml(
       let currentPayload = {};
       let renderedElements = [];
       let parameterValues = {};
-      let initialViewport = null;
+        let initialViewport = null;
       let useFallback = false;
       let libraryLoadAttempted = false;
       let libraryLoadCompleted = false;
@@ -643,6 +650,27 @@ String buildAiFlowGraphHtml(
           return board;
         }
 
+        function refreshBoardSize() {
+          if (!board || !graphHostElement) return;
+          const width = graphHostElement.clientWidth;
+          const height = graphHostElement.clientHeight;
+          if (width < 2 || height < 2) return;
+          try {
+            board.resizeContainer(width, height, true);
+            board.fullUpdate();
+          } catch (_) {}
+        }
+
+        if (window.ResizeObserver && graphHostElement) {
+          const graphResizeObserver = new ResizeObserver(() => {
+            window.requestAnimationFrame(refreshBoardSize);
+          });
+          graphResizeObserver.observe(graphHostElement);
+        }
+        window.addEventListener('resize', () => {
+          window.requestAnimationFrame(refreshBoardSize);
+        });
+
         function renderControls(parameters) {
           controlsElement.innerHTML = '';
           for (const parameter of parameters) {
@@ -787,17 +815,21 @@ String buildAiFlowGraphHtml(
                 }
                 hasRenderable = true;
               } else {
-                const polyLine = board.create(
-                  'polyline',
-                  points,
+                const curve = board.create(
+                  'curve',
+                  [
+                    points.map((point) => point[0]),
+                    points.map((point) => point[1]),
+                  ],
                   {
                     strokeColor: color,
                     strokeWidth: 2,
                     fillColor: 'none',
+                    fixed: true,
                   },
                 );
-                renderedElements.push(polyLine);
-                functionItems.push(polyLine);
+                renderedElements.push(curve);
+                functionItems.push(curve);
                 hasRenderable = true;
               }
             }
@@ -846,6 +878,7 @@ String buildAiFlowGraphHtml(
               return;
             }
             renderCurrentGraph();
+            window.requestAnimationFrame(refreshBoardSize);
           } else {
             renderCurrentGraph();
           }

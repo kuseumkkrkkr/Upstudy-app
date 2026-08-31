@@ -159,6 +159,11 @@ def get_placement_session(session_id: str) -> Optional[Dict[str, Any]]:
     return postgres_level_test_store.get_session(session_id)
 
 
+def get_completed_placement(user_id: str) -> Optional[Dict[str, Any]]:
+    """사용자의 최근 완료 배치 세션을 반환한다."""
+    return postgres_level_test_store.get_latest_graded_session(user_id)
+
+
 def upsert_placement_answer(
     *,
     session_id: str,
@@ -184,6 +189,16 @@ def upsert_placement_answer(
 def list_placement_answers(session_id: str) -> List[Dict[str, Any]]:
     """필요 변수: PostgreSQL 세션 ID. 작동 원리: JSONB 답안을 문항 순서로 일괄 조회한다."""
     return postgres_level_test_store.list_answers(session_id)
+
+
+def upsert_placement_answers(answers: List[Dict[str, Any]]) -> None:
+    """필요 변수: 최종 답안 목록. 작동 원리: PostgreSQL의 단일 bulk UPSERT로 25문항을 저장한다."""
+    postgres_level_test_store.upsert_answers(answers)
+
+
+def get_placement_stats() -> List[Dict[str, Any]]:
+    """필요 변수: 없음. 작동 원리: PostgreSQL의 학년별 완료 응시 통계를 반환한다."""
+    return postgres_level_test_store.placement_stats()
 
 
 def complete_placement_session(

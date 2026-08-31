@@ -120,6 +120,7 @@ Map<String, dynamic> _arenaResponsiveSummary() => {
         'losses': 9,
         'draws': 2,
         'estimated_wait_seconds': 12,
+        'coming_soon': type != 'duel_exam',
       },
   ],
 };
@@ -454,7 +455,7 @@ void main() {
     expect(find.text('페이지 미리보기'), findsOneWidget);
   });
 
-  testWidgets('500px 아레나는 두 인원 대결 큐를 함께 보여 준다', (tester) async {
+  testWidgets('500px 아레나는 즉시 입장 가능한 1v1 버튼을 먼저 보여 준다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -486,6 +487,7 @@ void main() {
                   'losses': 9,
                   'draws': 2,
                   'estimated_wait_seconds': 12,
+                  'coming_soon': type != 'duel_exam',
                 },
             ],
           },
@@ -494,14 +496,14 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('RANKED MATCH'), findsOneWidget);
-    expect(find.text('실력으로 증명하는\n20분.'), findsOneWidget);
-    expect(find.text('1,580'), findsOneWidget);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -700));
-    await tester.pump();
-    expect(find.text('대결 방식 선택'), findsOneWidget);
+    expect(find.text('REAL-TIME MATCH'), findsOneWidget);
+    expect(find.text('대결장'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('arena-mobile-join-button')),
+      findsOneWidget,
+    );
     expect(find.text('1v1 문제풀이'), findsOneWidget);
-    expect(find.text('2v2 문제풀이'), findsOneWidget);
+    expect(find.text('2v2 문제풀이'), findsNothing);
   });
 
   testWidgets('500px 마켓은 HTML 검색·필터·추천 상세 흐름을 유지한다', (tester) async {
@@ -606,7 +608,8 @@ void main() {
     await tester.pump();
     expect(find.text('GROUP STUDY'), findsOneWidget);
     expect(find.text('중2 심화 스터디'), findsOneWidget);
-    await tester.tap(find.text('그룹 찾기 · 코드 참가'));
+    expect(find.byKey(const ValueKey('group-mobile-actions')), findsOneWidget);
+    await tester.tap(find.text('코드로 참여'));
     await tester.pumpAndSettle();
     expect(find.text('그룹 찾기'), findsWidgets);
     await tester.tapAt(const Offset(10, 10));
@@ -890,7 +893,7 @@ void main() {
     expect(find.text('먼저 학생 정보를\n알려주세요.'), findsOneWidget);
   });
 
-  testWidgets('500px 프로필은 HTML 학생 히어로와 학습 정보를 유지한다', (tester) async {
+  testWidgets('500px 프로필은 축약 히어로와 큰 편집 필드를 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -919,17 +922,21 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('MY ACCOUNT'), findsOneWidget);
-    expect(find.text('STUDENT PROFILE'), findsOneWidget);
+    expect(find.text('MY ACCOUNT'), findsNothing);
+    expect(find.text('STUDENT PROFILE'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('profile-mobile-compact-hero')),
+      findsOneWidget,
+    );
     expect(find.text('18.6'), findsOneWidget);
     expect(find.text('B'), findsOneWidget);
     expect(find.text('246'), findsOneWidget);
-    expect(find.text('@student01 · AIFlow 중학교 2학년'), findsOneWidget);
-    expect(find.text('중학교   수학'), findsOneWidget);
-    expect(find.text('LEARNING PROFILE'), findsOneWidget);
+    expect(find.text('@student01 · AIFlow 중학교'), findsOneWidget);
+    expect(find.text('LEARNING PROFILE'), findsNothing);
     await tester.drag(find.byType(ListView).first, const Offset(0, -720));
     await tester.pumpAndSettle();
-    expect(find.text('SECURITY'), findsOneWidget);
+    expect(find.text('비밀번호 변경'), findsOneWidget);
+    expect(find.text('SECURITY'), findsNothing);
     await tester.drag(find.byType(ListView).first, const Offset(0, -720));
     await tester.pumpAndSettle();
     expect(find.text('DANGER ZONE'), findsOneWidget);
@@ -941,7 +948,7 @@ void main() {
     expect(find.text('현재 비밀번호'), findsOneWidget);
   });
 
-  testWidgets('500px 설정은 HTML 로컬 히어로와 세 설정 카드를 유지한다', (tester) async {
+  testWidgets('500px 설정은 단일 Material 설정 목록을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -950,15 +957,23 @@ void main() {
       const MaterialApp(home: SettingsPage(preview: true)),
     );
     await tester.pump();
-    expect(find.text('PREFERENCES'), findsOneWidget);
-    expect(find.text('LOCAL PREFERENCES'), findsOneWidget);
-    expect(find.text('교재 보기'), findsOneWidget);
+    expect(find.text('PREFERENCES'), findsNothing);
+    expect(find.text('LOCAL'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('settings-mobile-profile-link')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('settings-mobile-flat-list')),
+      findsOneWidget,
+    );
+    expect(find.text('교재 페이지'), findsOneWidget);
     expect(find.text('알림'), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -900));
     await tester.pumpAndSettle();
     expect(find.text('STORAGE CONTRACT'), findsNothing);
     expect(find.text('settings.notifications_enabled'), findsNothing);
-    expect(find.text('자동 저장'), findsOneWidget);
+    expect(find.text('자동 저장'), findsNothing);
   });
 
   testWidgets('500px 학습 액션은 HTML처럼 전체 화면 패널과 하단 닫기를 사용한다', (tester) async {
@@ -989,7 +1004,7 @@ void main() {
     expect(find.text('닫기'), findsOneWidget);
   });
 
-  testWidgets('390px 아레나는 단일 열에서 두 인원 큐를 함께 유지한다', (tester) async {
+  testWidgets('390px 아레나는 세로 화면에서 1v1 입장 버튼을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -1000,15 +1015,16 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('arena-mobile-overview')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('arena-mobile-entry-card')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('arena-mobile-queue-list')),
       findsOneWidget,
     );
-    await tester.drag(find.byType(ListView).first, const Offset(0, -620));
-    await tester.pump();
     expect(find.text('1v1 문제풀이'), findsOneWidget);
-    expect(find.text('2v2 문제풀이'), findsOneWidget);
+    expect(find.text('2v2 문제풀이'), findsNothing);
   });
 
   testWidgets('1280px 아레나는 HTML형 양열 overview와 큐 그리드를 사용한다', (tester) async {

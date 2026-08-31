@@ -75,4 +75,72 @@ void main() {
     await client.setToken('cache-cleanup-token');
     expect(client.hasMemoryCacheForTest('/arena/summary'), isFalse);
   });
+
+  test('오답 저장 후 풀이 이력 캐시를 즉시 무효화한다', () async {
+    final client = ApiClient.instance;
+    await client.setToken('wrong-answer-token');
+    await client.seedCacheForTest('/history/solve', '{"items":[]}');
+    Map<String, dynamic>? requestBody;
+    client.setHttpClientForTest(
+      MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/history/solve');
+        requestBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{"item":{}}', 200);
+      }),
+    );
+
+    await client.recordSolveHistory(questId: 'quest-wrong-1', isCorrect: false);
+
+    expect(requestBody?['quest_id'], 'quest-wrong-1');
+    expect(requestBody?['is_correct'], isFalse);
+    expect(client.hasMemoryCacheForTest('/history/solve'), isFalse);
+  });
+
+  test('그룹 생성 후 내 그룹 목록 캐시를 즉시 무효화한다', () async {
+    final client = ApiClient.instance;
+    await client.setToken('study-group-token');
+    await client.seedCacheForTest('/social/study-groups/mine', '{"groups":[]}');
+    client.setHttpClientForTest(
+      MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/social/study-groups');
+        return http.Response(
+          '{"group_id":"group-1","name":"매일 수학","members":1}',
+          201,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+
+    final group = await client.createStudyGroup(name: '매일 수학', maxMembers: 12);
+
+    expect(group.id, 'group-1');
+    expect(client.hasMemoryCacheForTest('/social/study-groups/mine'), isFalse);
+  });
+
+  test('그룹 참가 후 내 그룹과 검색 캐시를 즉시 무효화한다', () async {
+    final client = ApiClient.instance;
+    await client.setToken('study-group-join-token');
+    await client.seedCacheForTest('/social/study-groups/mine', '{"groups":[]}');
+    await client.seedCacheForTest(
+      '/social/study-groups/search',
+      '{"groups":[]}',
+    );
+    client.setHttpClientForTest(
+      MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/social/study-groups/group-1/join');
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await client.joinStudyGroup(groupId: 'group-1');
+
+    expect(client.hasMemoryCacheForTest('/social/study-groups/mine'), isFalse);
+    expect(
+      client.hasMemoryCacheForTest('/social/study-groups/search'),
+      isFalse,
+    );
+  });
 }

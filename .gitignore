@@ -52,3 +52,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+.vercel
+.env*
+
+# 로컬 배포 검증용 바이너리 산출물은 Git에 포함하지 않는다.
+/artifacts/

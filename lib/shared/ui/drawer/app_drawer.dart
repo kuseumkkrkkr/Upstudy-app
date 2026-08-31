@@ -1,12 +1,458 @@
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/auth/auth_storage.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
 
   @override
   State<AppDrawer> createState() => _AppDrawerState();
+}
+
+/// 필요한 변수는 현재 학생 라우트와 하단 목적지 목록이다.
+/// 작동 원리는 모바일에서 넓은 측면 드로어 대신 자주 쓰는 홈·코스·마켓을 고정하고,
+/// 나머지 메뉴만 바텀시트로 축약해 화면 전환 중에도 탐색 동선을 유지하는 것이다.
+class MobileStudentBottomAppBar extends StatelessWidget {
+  const MobileStudentBottomAppBar({super.key, this.activeRoute});
+
+  final String? activeRoute;
+
+  static const _primaryItems = <_DrawerDestination>[
+    _DrawerDestination(
+      icon: Icons.home_outlined,
+      label: '홈',
+      route: '/student/dashboard',
+      activeRoutes: ['/student/dashboard', '/app'],
+    ),
+    _DrawerDestination(
+      icon: Icons.route_outlined,
+      label: '코스',
+      route: '/courses',
+      activeRoutes: ['/courses', '/course_runtime'],
+    ),
+    _DrawerDestination(
+      icon: Icons.storefront_outlined,
+      label: '마켓',
+      route: '/marketplace',
+      activeRoutes: ['/marketplace'],
+    ),
+  ];
+
+  /// 필요한 변수는 현재 Navigator와 드로어 전체 메뉴다.
+  /// 작동 원리는 검색·알림·프로필과 보조 목적지를 그룹형 전면 시트에 담아
+  /// 상단 앱바에 기대지 않고 한 손으로 모든 학생 기능에 접근하게 하는 것이다.
+  static Future<void> openMore(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: const Color(0xFFF8F8F6),
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: 0.86,
+        child: _MobileMoreSheet(
+          onRouteSelected: (route) {
+            Navigator.of(sheetContext).pop();
+            _goToRoute(context, route);
+          },
+          onSearch: () {
+            Navigator.of(sheetContext).pop();
+            showStudentQuickSearch(context);
+          },
+          onNotifications: () {
+            Navigator.of(sheetContext).pop();
+            showStudentNotifications(context);
+          },
+          onProfile: () {
+            Navigator.of(sheetContext).pop();
+            _goToRoute(context, '/profile');
+          },
+        ),
+      ),
+    );
+  }
+
+  /// 필요한 변수는 선택한 명명 라우트다.
+  /// 작동 원리는 중복 탭에서는 현재 화면을 보존하고 다른 탭은 루트 위에 한 번만 쌓아
+  /// 모바일 하단 탭을 반복해도 뒤로가기 스택이 길어지지 않게 하는 것이다.
+  static void _goToRoute(BuildContext context, String route) {
+    final current = ModalRoute.of(context)?.settings.name;
+    if (current == route) return;
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      route,
+      (entry) =>
+          entry.settings.name == '/student/dashboard' ||
+          entry.settings.name == '/app' ||
+          entry.isFirst,
+    );
+  }
+
+  bool _isActive(_DrawerDestination item, String route) {
+    return item.activeRoutes.any(
+      (candidate) => route == candidate || route.startsWith('$candidate/'),
+    );
+  }
+
+  /// 필요한 변수는 현재 라우트와 고정 탭 목록이다.
+  /// 작동 원리는 보조 화면에서는 더보기를 선택 상태로 표시하고 주요 화면은 해당 탭만 강조한다.
+  @override
+  Widget build(BuildContext context) {
+    final route = activeRoute ?? ModalRoute.of(context)?.settings.name ?? '';
+    final moreActive =
+        route.isNotEmpty &&
+        !_primaryItems.any((item) => _isActive(item, route));
+    return SafeArea(
+      top: false,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0x1409090B))),
+        ),
+        child: SizedBox(
+          height: 68,
+          child: Row(
+            children: [
+              for (final item in _primaryItems)
+                Expanded(
+                  child: _MobileBottomDestination(
+                    item: item,
+                    active: _isActive(item, route),
+                    onTap: () => _goToRoute(context, item.route),
+                  ),
+                ),
+              Expanded(
+                child: _MobileBottomDestination(
+                  item: const _DrawerDestination(
+                    icon: Icons.more_horiz_rounded,
+                    label: '더보기',
+                    route: '',
+                  ),
+                  active: moreActive,
+                  onTap: () => openMore(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileBottomDestination extends StatelessWidget {
+  const _MobileBottomDestination({
+    required this.item,
+    required this.active,
+    required this.onTap,
+  });
+
+  final _DrawerDestination item;
+  final bool active;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 탭 아이콘·라벨, 선택 여부와 탭 콜백이다.
+  /// 작동 원리는 선택 탭에 짙은 캡슐과 흰색 콘텐츠를 적용해 작은 모바일 영역에서도 대비를 확보한다.
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? Colors.white : const Color(0xFF626269);
+    return InkWell(
+      onTap: onTap,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 9),
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFF101012) : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(item.icon, color: color, size: 24),
+              const SizedBox(height: 3),
+              Text(
+                item.label,
+                maxLines: 1,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: active ? FontWeight.w900 : FontWeight.w700,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 빠른 행동과 각 학생 기능의 명명 라우트 콜백이다.
+/// 작동 원리는 레퍼런스의 큰 제목·드래그 핸들·여유 있는 아이콘 행을 사용하고,
+/// 메뉴 그룹을 유지해 긴 목록에서도 기능 위치를 빠르게 찾게 한다.
+class _MobileMoreSheet extends StatelessWidget {
+  const _MobileMoreSheet({
+    required this.onRouteSelected,
+    required this.onSearch,
+    required this.onNotifications,
+    required this.onProfile,
+  });
+
+  final ValueChanged<String> onRouteSelected;
+  final VoidCallback onSearch;
+  final VoidCallback onNotifications;
+  final VoidCallback onProfile;
+
+  /// 필요한 변수는 현재 그룹의 항목 목록이다.
+  /// 작동 원리는 하단 고정 탭과 중복되는 목적지를 제외해 보조 기능만 표시한다.
+  List<_DrawerDestination> _secondaryItems(_DrawerNavigationGroup group) {
+    return group.items
+        .where(
+          (item) => !MobileStudentBottomAppBar._primaryItems.any(
+            (primary) => primary.route == item.route,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 2, 24, 18),
+          child: const Text(
+            '더보기',
+            style: TextStyle(
+              color: Color(0xFF101012),
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1.1,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: _MobileMoreQuickAction(
+                  key: const ValueKey('mobile-more-search'),
+                  icon: Icons.search_rounded,
+                  label: '검색',
+                  onTap: onSearch,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MobileMoreQuickAction(
+                  key: const ValueKey('mobile-more-notifications'),
+                  icon: Icons.notifications_none_rounded,
+                  label: '알림',
+                  onTap: onNotifications,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MobileMoreQuickAction(
+                  key: const ValueKey('mobile-more-profile'),
+                  icon: Icons.person_outline_rounded,
+                  label: '내 정보',
+                  onTap: onProfile,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Divider(height: 1, color: Color(0x1609090B)),
+        Expanded(
+          child: ListView(
+            key: const ValueKey('mobile-more-menu-list'),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            children: [
+              for (final group in _navigationGroups)
+                if (_secondaryItems(group).isNotEmpty)
+                  _MobileMoreGroup(
+                    group: group,
+                    items: _secondaryItems(group),
+                    onRouteSelected: onRouteSelected,
+                  ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MobileMoreQuickAction extends StatelessWidget {
+  const _MobileMoreQuickAction({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 행동 아이콘·라벨과 탭 콜백이다.
+  /// 작동 원리는 자주 쓰는 유틸리티를 큰 터치 카드로 분리해 상단 앱바 의존도를 낮춘다.
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF101012),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          height: 76,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 25),
+              const SizedBox(height: 7),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileMoreGroup extends StatelessWidget {
+  const _MobileMoreGroup({
+    required this.group,
+    required this.items,
+    required this.onRouteSelected,
+  });
+
+  final _DrawerNavigationGroup group;
+  final List<_DrawerDestination> items;
+  final ValueChanged<String> onRouteSelected;
+
+  /// 필요한 변수는 그룹명, 표시할 메뉴와 라우트 선택 콜백이다.
+  /// 작동 원리는 같은 성격의 기능을 제목 아래 60px 행으로 묶고 행 사이 선으로 탐색 대비를 만든다.
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+            child: Text(
+              group.label,
+              style: const TextStyle(
+                color: Color(0xFF85858D),
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.1,
+              ),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0x1409090B)),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                for (var index = 0; index < items.length; index++) ...[
+                  _MobileMoreDestination(
+                    item: items[index],
+                    onTap: () => onRouteSelected(items[index].route),
+                  ),
+                  if (index != items.length - 1)
+                    const Divider(
+                      height: 1,
+                      indent: 62,
+                      color: Color(0x1409090B),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileMoreDestination extends StatelessWidget {
+  const _MobileMoreDestination({required this.item, required this.onTap});
+
+  final _DrawerDestination item;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 메뉴 아이콘·라벨과 이동 콜백이다.
+  /// 작동 원리는 레퍼런스와 같은 큰 아이콘·17px 글꼴·60px 이상의 터치 행을 제공한다.
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      key: ValueKey('mobile-more-${item.route}'),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: SizedBox(
+        height: 64,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 30,
+                child: Icon(
+                  item.icon,
+                  color: const Color(0xFF4D4D55),
+                  size: 25,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: const TextStyle(
+                    color: Color(0xFF18181B),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.35,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF9A9AA1),
+                size: 23,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _AppDrawerState extends State<AppDrawer> {
@@ -53,9 +499,10 @@ class _AppDrawerState extends State<AppDrawer> {
   /// 최신 학생 시안의 작은 브랜드·이어 학습·그룹형 메뉴·하단 프로필 칩 순서로 드로어를 구성한다.
   @override
   Widget build(BuildContext context) {
-    final drawerWidth = (MediaQuery.sizeOf(context).width - 40)
-        .clamp(0, 310)
-        .toDouble();
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final drawerWidth = mobile
+        ? (MediaQuery.sizeOf(context).width - 16).clamp(0, 420).toDouble()
+        : (MediaQuery.sizeOf(context).width - 40).clamp(0, 310).toDouble();
 
     return Drawer(
       width: drawerWidth,
@@ -65,7 +512,12 @@ class _AppDrawerState extends State<AppDrawer> {
       shape: const RoundedRectangleBorder(),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 20, 14, 20),
+          padding: EdgeInsets.fromLTRB(
+            mobile ? 16 : 14,
+            mobile ? 16 : 20,
+            mobile ? 16 : 14,
+            mobile ? 16 : 20,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -112,17 +564,18 @@ class _DrawerBrand extends StatelessWidget {
   /// 최신 시안의 34px 검정 브랜드 마크와 STUDENT 보조 라벨을 한 줄 헤더로 표시한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     return Stack(
       children: [
         InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: onTap,
-          child: const Padding(
-            padding: EdgeInsets.fromLTRB(8, 6, 48, 18),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(8, 6, mobile ? 58 : 48, 18),
             child: Row(
               children: [
-                _SquareIcon(icon: null, label: 'A'),
-                SizedBox(width: 11),
+                const _SquareIcon(icon: null, label: 'A'),
+                SizedBox(width: mobile ? 14 : 11),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -130,17 +583,17 @@ class _DrawerBrand extends StatelessWidget {
                       'AIFlow',
                       style: TextStyle(
                         color: _AppDrawerState._ink,
-                        fontSize: 17,
+                        fontSize: mobile ? 22 : 17,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.5,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'STUDENT',
                       style: TextStyle(
                         color: _AppDrawerState._muted,
-                        fontSize: 9,
+                        fontSize: mobile ? 11 : 9,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.2,
                       ),
@@ -157,9 +610,9 @@ class _DrawerBrand extends StatelessWidget {
           child: IconButton(
             tooltip: '메뉴 닫기',
             onPressed: onClose,
-            icon: const Icon(Icons.close_rounded, size: 20),
+            icon: Icon(Icons.close_rounded, size: mobile ? 25 : 20),
             style: IconButton.styleFrom(
-              fixedSize: const Size(38, 38),
+              fixedSize: Size.square(mobile ? 48 : 38),
               backgroundColor: Colors.white.withValues(alpha: 0.76),
               side: const BorderSide(color: _AppDrawerState._line),
             ),
@@ -179,6 +632,7 @@ class _ResumeCard extends StatelessWidget {
   /// 별도 DB 조회 없이 최신 시안의 검정 이어 학습 카드를 제공해 드로어를 열 때 추가 부하를 만들지 않는다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 2, 2, 9),
       child: Material(
@@ -189,14 +643,14 @@ class _ResumeCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: onTap,
-          child: const SizedBox(
-            height: 82,
+          child: SizedBox(
+            height: mobile ? 112 : 82,
             child: Padding(
-              padding: EdgeInsets.all(12),
+              padding: EdgeInsets.all(mobile ? 16 : 12),
               child: Row(
                 children: [
-                  _SquareIcon(icon: Icons.play_arrow_rounded),
-                  SizedBox(width: 11),
+                  const _SquareIcon(icon: Icons.play_arrow_rounded),
+                  SizedBox(width: mobile ? 14 : 11),
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -204,38 +658,38 @@ class _ResumeCard extends StatelessWidget {
                       children: [
                         Text(
                           '이어 학습',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF8F8F98),
-                            fontSize: 9,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
                           '최근 코스에서 계속하기',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: mobile ? 17 : 12,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
                           '코스 선택 후 학습을 이어갑니다',
                           style: TextStyle(
-                            color: Color(0xFFA1A1AA),
-                            fontSize: 9,
+                            color: const Color(0xFFA1A1AA),
+                            fontSize: mobile ? 12 : 9,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Icon(
+                  const Icon(
                     Icons.chevron_right_rounded,
                     color: Color(0xFF92929A),
-                    size: 20,
+                    size: 24,
                   ),
                 ],
               ),
@@ -262,8 +716,9 @@ class _DrawerGroup extends StatelessWidget {
   /// 메뉴를 42px 슬림 행으로 쌓고 현재 화면만 검정 캡슐로 강조한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     return Padding(
-      padding: const EdgeInsets.only(top: 5, bottom: 3),
+      padding: EdgeInsets.only(top: mobile ? 10 : 5, bottom: mobile ? 5 : 3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -271,9 +726,9 @@ class _DrawerGroup extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 5),
             child: Text(
               group.label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: _AppDrawerState._faint,
-                fontSize: 10,
+                fontSize: mobile ? 12 : 10,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.1,
               ),
@@ -306,33 +761,38 @@ class _DrawerNavItem extends StatelessWidget {
   /// 비활성 메뉴는 투명 배경, 활성 메뉴는 최신 시안과 같은 검정 배경과 흰 글자로 렌더한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     final foreground = active ? Colors.white : const Color(0xFF505057);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
       child: Material(
         color: active ? _AppDrawerState._ink : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(mobile ? 18 : 14),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(mobile ? 18 : 14),
           onTap: onTap,
           child: SizedBox(
-            height: 42,
+            height: mobile ? 58 : 42,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 11),
+              padding: EdgeInsets.symmetric(horizontal: mobile ? 16 : 11),
               child: Row(
                 children: [
                   SizedBox(
-                    width: 21,
-                    child: Icon(item.icon, size: 19, color: foreground),
+                    width: mobile ? 28 : 21,
+                    child: Icon(
+                      item.icon,
+                      size: mobile ? 24 : 19,
+                      color: foreground,
+                    ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: mobile ? 14 : 10),
                   Expanded(
                     child: Text(
                       item.label,
                       style: TextStyle(
                         color: foreground,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                        fontSize: mobile ? 17 : 13,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
@@ -356,6 +816,7 @@ class _ProfileChip extends StatelessWidget {
   /// 구형 로그아웃 버튼 대신 최신 시안의 원형 아바타와 학생 요약 칩을 드로어 하단에 고정한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
     final initial = data.username.characters.first.toUpperCase();
     return Material(
       color: Colors.white.withValues(alpha: 0.76),
@@ -364,7 +825,7 @@ class _ProfileChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(9),
+          padding: EdgeInsets.all(mobile ? 12 : 9),
           decoration: BoxDecoration(
             border: Border.all(color: _AppDrawerState._line),
             borderRadius: BorderRadius.circular(18),
@@ -372,13 +833,13 @@ class _ProfileChip extends StatelessWidget {
           child: Row(
             children: [
               CircleAvatar(
-                radius: 16,
+                radius: mobile ? 22 : 16,
                 backgroundColor: _AppDrawerState._ink,
                 child: Text(
                   initial,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: mobile ? 16 : 12,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -392,27 +853,27 @@ class _ProfileChip extends StatelessWidget {
                       data.username,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _AppDrawerState._ink,
-                        fontSize: 12,
+                        fontSize: mobile ? 16 : 12,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 3),
-                    const Text(
+                    Text(
                       'AIFlow STUDENT',
                       style: TextStyle(
                         color: _AppDrawerState._muted,
-                        fontSize: 10,
+                        fontSize: mobile ? 12 : 10,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 color: _AppDrawerState._muted,
-                size: 20,
+                size: mobile ? 25 : 20,
               ),
             ],
           ),
@@ -433,21 +894,35 @@ class _SquareIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBrand = label != null;
+    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final size = isBrand
+        ? mobile
+              ? 44.0
+              : 34.0
+        : mobile
+        ? 48.0
+        : 38.0;
     return Container(
-      width: isBrand ? 34 : 38,
-      height: isBrand ? 34 : 38,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: isBrand ? _AppDrawerState._ink : Colors.white,
-        borderRadius: BorderRadius.circular(isBrand ? 12 : 13),
+        borderRadius: BorderRadius.circular(
+          mobile
+              ? 15
+              : isBrand
+              ? 12
+              : 13,
+        ),
       ),
       child: icon != null
-          ? Icon(icon, color: _AppDrawerState._ink, size: 18)
+          ? Icon(icon, color: _AppDrawerState._ink, size: mobile ? 23 : 18)
           : Text(
               label!,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: mobile ? 20 : 16,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -522,8 +997,8 @@ const _navigationGroups = <_DrawerNavigationGroup>[
         activeRoutes: ['/wrong_answers', '/wrong_answer_solve'],
       ),
       _DrawerDestination(
-        icon: Icons.speed_outlined,
-        label: '레벨 테스트',
+        icon: Icons.analytics_outlined,
+        label: '보고서 보기',
         route: '/level_test',
         activeRoutes: ['/level_test'],
       ),

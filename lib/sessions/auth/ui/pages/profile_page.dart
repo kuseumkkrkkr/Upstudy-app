@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/theme/app_colors.dart';
@@ -11,6 +12,8 @@ import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+
+typedef ProfileLoader = Future<UserProfile> Function();
 
 class ProfilePage extends StatefulWidget {
   static const routeName = '/profile';
@@ -22,6 +25,7 @@ class ProfilePage extends StatefulWidget {
     this.initialTotalSolvedCount,
     this.initialTextbookPageMode,
     this.showDeleteDialogOnStart = false,
+    this.loadProfile,
   });
 
   final UserProfile? initialProfile;
@@ -29,6 +33,7 @@ class ProfilePage extends StatefulWidget {
   final int? initialTotalSolvedCount;
   final bool? initialTextbookPageMode;
   final bool showDeleteDialogOnStart;
+  final ProfileLoader? loadProfile;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -109,7 +114,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadProfile() async {
     try {
       final results = await Future.wait<Object?>([
-        ApiClient.instance.getMyProfile(),
+        widget.loadProfile?.call() ?? ApiClient.instance.getMyProfile(),
         TextbookReaderPreferences.loadPageMode(),
         _loadRating(),
         _loadActivity(),
@@ -129,7 +134,11 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorText = error.toString();
+        _errorText = studentFacingApiError(
+          error,
+          fallback: '프로필을 불러오지 못했어요.',
+          notFound: '프로필 정보를 찾지 못했어요.',
+        );
         _loading = false;
       });
     }
@@ -189,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorText = error.toString();
+        _errorText = studentFacingApiError(error, fallback: '프로필을 저장하지 못했어요.');
       });
     } finally {
       if (mounted) {
@@ -243,7 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorText = error.toString();
+        _errorText = studentFacingApiError(error, fallback: '계정을 삭제하지 못했어요.');
       });
     } finally {
       if (mounted) {
@@ -256,6 +265,7 @@ class _ProfilePageState extends State<ProfilePage> {
   /// 작동 원리는 HTML DANGER ZONE 버튼에서 설명·비밀번호·취소·삭제를 갖춘 전용 모달을 여는 것이다.
   Future<void> _openDeleteModal() async {
     _deletePasswordController.clear();
+    final formKey = GlobalKey<FormState>();
     final delete = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: .48),
@@ -288,10 +298,16 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: TextStyle(color: Colors.black54, height: 1.45),
               ),
               const SizedBox(height: 20),
-              _field(
-                controller: _deletePasswordController,
-                label: '현재 비밀번호',
-                obscureText: true,
+              Form(
+                key: formKey,
+                child: _field(
+                  controller: _deletePasswordController,
+                  label: '현재 비밀번호',
+                  obscureText: true,
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? '현재 비밀번호를 입력해 주세요.'
+                      : null,
+                ),
               ),
               const SizedBox(height: 18),
               Row(
@@ -305,7 +321,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: FilledButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                      onPressed: () {
+                        if (formKey.currentState?.validate() != true) return;
+                        Navigator.of(dialogContext).pop(true);
+                      },
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                       ),
@@ -446,12 +465,14 @@ class _ProfilePageState extends State<ProfilePage> {
     final name = _nameController.text.trim().isEmpty
         ? _usernameController.text.trim()
         : _nameController.text.trim();
-    if (!isStudentDensityMobile(context)) {
+    final mobile = isStudentDensityMobile(context);
+    if (!mobile) {
       return _buildDesktopProfile(context, name);
     }
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      drawer: null,
+      bottomNavigationBar: const MobileStudentBottomAppBar(),
       body: SafeArea(
         child: Column(
           children: [
@@ -459,7 +480,9 @@ class _ProfilePageState extends State<ProfilePage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
+                showUtilityActions: false,
+                hideOnMobile: true,
+                onMenu: null,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,
@@ -472,34 +495,30 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
                   children: [
-                    const Text(
-                      'MY ACCOUNT',
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.7,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            '프로필',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          key: const ValueKey('profile-mobile-settings'),
+                          tooltip: '설정',
+                          onPressed: _openSettings,
+                          icon: const Icon(Icons.settings_outlined),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            minimumSize: const Size(48, 48),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '프로필',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '학습 정보와 계정 정보를 확인하고 필요한 항목만 수정합니다.',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: _openSettings,
-                      child: const Text('설정'),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 18),
                     _ProfileHero(
                       name: name,
                       username: _usernameController.text,
@@ -513,36 +532,21 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: _profileCardDecoration(),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'LEARNING PROFILE',
-                            style: TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 1.6,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
                             '학생 정보',
                             style: TextStyle(
-                              fontSize: 26,
+                              fontSize: 22,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '코스 추천과 학습 분석에 사용하는 정보입니다.',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.black45,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 16),
                           _field(
                             controller: _nameController,
                             label: '이름',
@@ -996,61 +1000,65 @@ class _ProfilePageState extends State<ProfilePage> {
     ),
   );
 
-  /// 필요한 변수는 없으며 프로필 카드의 공용 표면을 만든다.
-  /// 작동 원리는 흰 배경과 28px 둥근 모서리로 HTML 정보 카드를 재현하는 것이다.
-  BoxDecoration _profileCardDecoration() => BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(28),
-    border: Border.all(color: const Color(0xFFE0E0E2)),
-  );
-
   /// 필요한 변수는 섹션 표식·제목·설명·내부 컨트롤이다.
-  /// 작동 원리는 프로필 하단의 SECURITY·READER·SESSION 카드를 HTML과 같은 간격으로 재사용하는 것이다.
+  /// 작동 원리는 모바일에서 영문 표식·반복 설명·외곽선을 숨기고 PC는 기존 정보 카드를 유지한다.
   Widget _htmlAccountCard({
     required String eyebrow,
     required String title,
     required String description,
     required List<Widget> children,
-  }) => Material(
-    color: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(28),
-      side: const BorderSide(color: Color(0xFFE0E0E2)),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            eyebrow,
-            style: const TextStyle(
-              fontSize: 10,
-              letterSpacing: 1.6,
-              color: Colors.black54,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 18),
-          ...children,
-        ],
+  }) {
+    final mobile = isStudentDensityMobile(context);
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(mobile ? 24 : 28),
+        side: mobile
+            ? BorderSide.none
+            : const BorderSide(color: Color(0xFFE0E0E2)),
       ),
-    ),
-  );
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!mobile) ...[
+              Text(
+                eyebrow,
+                style: const TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.6,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: mobile ? 22 : 24,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            if (!mobile) ...[
+              const SizedBox(height: 7),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.black54,
+                  height: 1.45,
+                ),
+              ),
+            ],
+            const SizedBox(height: 18),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) => _buildHtmlProfile(context);
@@ -1058,7 +1066,13 @@ class _ProfilePageState extends State<ProfilePage> {
   /// 필요한 변수는 기존 프로필 상태이다.
   /// 작동 원리는 데이터 로드 오류일 때 기존 재시도 화면을 제공하는 것이다.
   Widget _buildLegacyProfile(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     if (_loading) {
+      if (mobile) {
+        return _buildMobileProfileState(
+          child: const Center(child: CircularProgressIndicator()),
+        );
+      }
       return const Scaffold(
         backgroundColor: Color(0xFFF6F6F1),
         body: Center(child: CircularProgressIndicator()),
@@ -1066,6 +1080,106 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     if (_profile == null) {
+      if (mobile) {
+        return _buildMobileProfileState(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+            children: [
+              const Text(
+                'MY ACCOUNT',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.7,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '프로필',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE1E1E3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFECE9),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.person_off_outlined,
+                        color: Color(0xFF8A2D25),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      '프로필을 열지 못했어요',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _errorText ?? '네트워크 연결을 확인한 뒤 다시 시도해 주세요.',
+                      style: const TextStyle(
+                        color: Color(0xFF5D5D62),
+                        fontSize: 15,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: FilledButton.icon(
+                        key: const ValueKey('profile-mobile-retry-button'),
+                        onPressed: _loadProfile,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF202022),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text(
+                          '다시 시도',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: TextButton.icon(
+                        onPressed: _openSettings,
+                        icon: const Icon(Icons.settings_outlined),
+                        label: const Text('설정 열기'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
       return Scaffold(
         backgroundColor: const Color(0xFFF6F6F1),
         appBar: AppBar(
@@ -1404,6 +1518,35 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
+  /// 필요한 변수: 로딩 또는 오류 상태를 나타내는 본문 위젯.
+  /// 작동 원리: 정상 프로필과 동일한 상단·하단 모바일 셸을 유지해 오류 중에도 탐색이 끊기지 않게 한다.
+  Widget _buildMobileProfileState({required Widget child}) => Scaffold(
+    backgroundColor: const Color(0xFFF4F4F6),
+    bottomNavigationBar: const MobileStudentBottomAppBar(
+      activeRoute: ProfilePage.routeName,
+    ),
+    body: SafeArea(
+      child: Column(
+        children: [
+          Builder(
+            builder: (context) => Ios26TopBar(
+              brandColor: Colors.black,
+              showLevelIndicator: false,
+              showUtilityActions: false,
+              hideOnMobile: true,
+              onMenu: null,
+              items: studentTopNavItems(
+                context,
+                active: StudentTopDestination.learning,
+              ),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ProfileHero extends StatelessWidget {
@@ -1435,6 +1578,83 @@ class _ProfileHero extends StatelessWidget {
       track.trim(),
       subject.trim(),
     ].where((value) => value.isNotEmpty).join('   ');
+    if (isStudentDensityMobile(context)) {
+      return Container(
+        key: const ValueKey('profile-mobile-compact-hero'),
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF202022),
+          borderRadius: BorderRadius.circular(26),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    name.isEmpty ? '?' : name.characters.first,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '@$username · $schoolLabel',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _ProfileMetric(
+                  label: 'OVR',
+                  value: _formatProfileOvr(rating?.ovr),
+                ),
+                _ProfileMetric(
+                  label: '티어',
+                  value: _profileTier(rating?.rating),
+                ),
+                _ProfileMetric(
+                  label: '풀이',
+                  value: totalSolvedCount?.toString() ?? '--',
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
       decoration: BoxDecoration(

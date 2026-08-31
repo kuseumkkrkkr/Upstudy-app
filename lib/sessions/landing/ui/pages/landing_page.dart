@@ -6,12 +6,17 @@ import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends StatefulWidget {
   static const routeName = '/';
   static const _contactEmail = 'aiflow683@gmail.com';
 
   const LandingPage({super.key});
 
+  @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
   /// 필요한 변수는 현재 화면의 Navigator와 Dialog 컨텍스트입니다.
   /// 작동 원리는 랜딩 위에 반응형 로그인 모달을 표시하고 성공 시 기존 인증 이동 흐름을 유지하는 것입니다.
   void _goToLogin(BuildContext context) {
@@ -50,7 +55,7 @@ class LandingPage extends StatelessWidget {
   Future<void> _contactByEmail(BuildContext context) async {
     final uri = Uri(
       scheme: 'mailto',
-      path: _contactEmail,
+      path: LandingPage._contactEmail,
       queryParameters: const {
         'subject': 'AIFlow 문의',
         'body': '안녕하세요. AIFlow 도입 문의드립니다.',
@@ -66,7 +71,8 @@ class LandingPage extends StatelessWidget {
   }
 
   /// 필요한 변수는 로그인·가입·소개·문의 콜백과 화면 폭입니다.
-  /// 작동 원리는 데스크톱에서 소개와 인증 선택을 2열로, 모바일에서는 한 열로 재배치하는 것입니다.
+  /// 작동 원리는 데스크톱에서 소개와 인증 선택을 2열로 두고, 모바일에서는
+  /// 일반 앱 로그인처럼 브랜드와 폼을 한 열로 두어 작은 세로 화면에서도 입력을 보장하는 것입니다.
   @override
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
@@ -87,16 +93,13 @@ class LandingPage extends StatelessWidget {
         child: Stack(
           children: [
             const Positioned(top: -130, right: -100, child: _AmbientOrb()),
-            SingleChildScrollView(
-              padding: EdgeInsets.all(mobile ? 14 : 28),
-              child: Center(
-                child: ConstrainedBox(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final content = ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1440),
                   child: Container(
                     constraints: BoxConstraints(
-                      minHeight: mobile
-                          ? 0
-                          : MediaQuery.sizeOf(context).height - 56,
+                      minHeight: mobile ? 0 : constraints.maxHeight - 56,
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(mobile ? 28 : 38),
@@ -110,10 +113,7 @@ class LandingPage extends StatelessWidget {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: mobile
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [story, entry],
-                          )
+                        ? entry
                         : IntrinsicHeight(
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -124,8 +124,26 @@ class LandingPage extends StatelessWidget {
                             ),
                           ),
                   ),
-                ),
-              ),
+                );
+                if (mobile) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 28),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: (constraints.maxHeight - 44).clamp(
+                          0,
+                          double.infinity,
+                        ),
+                      ),
+                      child: Center(child: content),
+                    ),
+                  );
+                }
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(28),
+                  child: Center(child: content),
+                );
+              },
             ),
           ],
         ),
@@ -212,64 +230,100 @@ class _LandingEntry extends StatelessWidget {
   final bool showSignupButton;
 
   /// 필요한 변수는 로그인·가입 콜백과 현재 화면 폭입니다.
-  /// 작동 원리는 가장 빈번한 두 인증 행동을 큰 전폭 버튼과 상태 안내로 제공하는 것입니다.
+  /// 작동 원리는 모바일에서는 홍보 배너 대신 친숙한 브랜드 헤더와 로그인 폼을 바로 표시하고,
+  /// 넓은 화면에서는 기존 모달 진입과 가입 선택을 유지하는 것입니다.
   @override
   Widget build(BuildContext context) {
     final mobile = isAuthMobile(context);
     return Container(
-      color: AuthDesignTokens.surface.withValues(alpha: .96),
+      color: AuthDesignTokens.surface,
       padding: EdgeInsets.all(mobile ? 24 : 54),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (mobile) const _LandingBrand(light: false),
-          if (mobile) const SizedBox(height: 42),
-          const Text(
-            'START A SESSION',
-            style: TextStyle(
-              color: AuthDesignTokens.muted,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.6,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'AIFlow 시작하기',
-            style: TextStyle(
-              color: AuthDesignTokens.ink,
-              fontSize: mobile ? 34 : 44,
-              letterSpacing: -2,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            '계정이 있다면 학습 기록을 이어가고, 처음이라면 맞춤 학습 프로필을 만들어 보세요.',
-            style: TextStyle(
-              color: AuthDesignTokens.muted,
-              fontSize: 13,
-              height: 1.55,
-            ),
-          ),
-          const SizedBox(height: 34),
-          AuthPrimaryButton(label: '로그인', onPressed: onLogin),
-          if (showSignupButton) ...[
-            const SizedBox(height: 10),
-            OutlinedButton(
-              onPressed: onSignup,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                foregroundColor: AuthDesignTokens.ink,
-                side: const BorderSide(color: AuthDesignTokens.line),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+          if (mobile) ...[
+            const Row(
+              children: [
+                _LandingBrand(light: false),
+                Spacer(),
+                Text(
+                  '학습 계정',
+                  style: TextStyle(
+                    color: AuthDesignTokens.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                textStyle: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              child: const Text('새 계정 만들기'),
+              ],
             ),
+            const SizedBox(height: 42),
+            const Text(
+              '로그인',
+              style: TextStyle(
+                color: AuthDesignTokens.ink,
+                fontSize: 27,
+                letterSpacing: -1.4,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '로그인하고 오늘의 학습을 이어가세요.',
+              style: TextStyle(
+                color: AuthDesignTokens.muted,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+            const LoginPage(embedded: true),
+          ] else ...[
+            const Text(
+              'START A SESSION',
+              style: TextStyle(
+                color: AuthDesignTokens.muted,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.6,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'AIFlow 시작하기',
+              style: TextStyle(
+                color: AuthDesignTokens.ink,
+                fontSize: 44,
+                letterSpacing: -2,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '계정이 있다면 학습 기록을 이어가고, 처음이라면 맞춤 학습 프로필을 만들어 보세요.',
+              style: TextStyle(
+                color: AuthDesignTokens.muted,
+                fontSize: 13,
+                height: 1.55,
+              ),
+            ),
+            const SizedBox(height: 34),
+            AuthPrimaryButton(label: '로그인', onPressed: onLogin),
+            if (showSignupButton) ...[
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: onSignup,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  foregroundColor: AuthDesignTokens.ink,
+                  side: const BorderSide(color: AuthDesignTokens.line),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                child: const Text('새 계정 만들기'),
+              ),
+            ],
           ],
         ],
       ),

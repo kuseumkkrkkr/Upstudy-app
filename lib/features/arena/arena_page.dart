@@ -6,9 +6,15 @@ import 'package:flutter/services.dart';
 
 import 'arena_api.dart';
 import 'package:s11/shared/data/models/content_block.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+
+typedef ArenaJoinCallback =
+    Future<Map<String, dynamic>> Function(String queueType);
+typedef ArenaSummaryCallback = Future<Map<String, dynamic>> Function();
 
 /// 학생 대시보드에서 실시간 대결장을 연다.
 Future<void> showArena(BuildContext context) => Navigator.of(
@@ -18,9 +24,16 @@ Future<void> showArena(BuildContext context) => Navigator.of(
 /// 필요한 변수: 서버의 네 큐 요약.
 /// 1v1/2v2 시험·OX 큐와 독립 티어를 한 화면에 표시한다.
 class ArenaPage extends StatefulWidget {
-  const ArenaPage({super.key, this.initialSummary});
+  const ArenaPage({
+    super.key,
+    this.initialSummary,
+    this.joinQueue,
+    this.loadSummary,
+  });
 
   final Map<String, dynamic>? initialSummary;
+  final ArenaJoinCallback? joinQueue;
+  final ArenaSummaryCallback? loadSummary;
 
   @override
   State<ArenaPage> createState() => _ArenaPageState();
@@ -54,11 +67,30 @@ class _ArenaPageState extends State<ArenaPage> {
 
   /// 필요한 변수 없음. 레이팅 요약을 서버에서 다시 읽는다.
   Future<void> _load() async {
+    if (mounted) setState(() => _error = null);
     try {
-      final value = await ArenaApi.instance.summary();
-      if (mounted) setState(() => _summary = value);
+      final value =
+          await (widget.loadSummary?.call() ?? ArenaApi.instance.summary());
+      if (mounted) {
+        setState(() {
+          _summary = value;
+          _error = null;
+        });
+      }
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) {
+        setState(() {
+          // 로딩 실패도 완료 상태로 전환해 진행 표시기가 무한히 남지 않게 한다.
+          _summary = const <String, dynamic>{
+            'queues': <Map<String, dynamic>>[],
+          };
+          _error = studentFacingApiError(
+            error,
+            fallback: '대결 정보를 불러오지 못했어요.',
+            notFound: '대결 기능을 준비하고 있어요.',
+          );
+        });
+      }
     }
   }
 
@@ -70,7 +102,9 @@ class _ArenaPageState extends State<ArenaPage> {
       _error = null;
     });
     try {
-      final result = await ArenaApi.instance.join(queueType);
+      final result =
+          await (widget.joinQueue?.call(queueType) ??
+              ArenaApi.instance.join(queueType));
       if (!mounted) return;
       final matchId = result['match_id']?.toString();
       final practiceMatchId = result['practice_match_id']?.toString();
@@ -87,7 +121,7 @@ class _ArenaPageState extends State<ArenaPage> {
         _matchPoller?.cancel();
         setState(() {
           _waitingQueue = null;
-          _error = error.toString();
+          _error = studentFacingApiError(error, fallback: '매칭을 시작하지 못했어요.');
         });
       }
     }
@@ -107,7 +141,14 @@ class _ArenaPageState extends State<ArenaPage> {
           return;
         }
       } catch (error) {
-        if (mounted) setState(() => _error = error.toString());
+        if (mounted) {
+          setState(
+            () => _error = studentFacingApiError(
+              error,
+              fallback: '매칭 상태를 확인하지 못했어요.',
+            ),
+          );
+        }
       }
       if (mounted && _waitingQueue == queueType) _scheduleMatchPoll(queueType);
     });
@@ -126,11 +167,194 @@ class _ArenaPageState extends State<ArenaPage> {
       }
     } catch (error) {
       if (mounted) {
-        setState(() => _error = error.toString());
+        setState(
+          () => _error = studentFacingApiError(
+            error,
+            fallback: '매칭 취소를 완료하지 못했어요.',
+          ),
+        );
         if (queueType != null && _waitingQueue == queueType) {
           _scheduleMatchPoll(queueType);
         }
       }
+    }
+  }
+
+  /// 필요한 변수는 선택한 모바일 큐의 유형·예상 대기 시간·문항 수다.
+  /// 작동 원리는 실제 서버 매칭 전에 참조형 바텀시트로 조건을 다시 보여
+  /// 실수로 대결에 참가하는 것을 막고 최종 버튼에서만 참가 요청을 보낸다.
+  Future<void> _confirmMobileJoin(Map<String, dynamic> queue) async {
+    final queueType = queue['queue_type']?.toString() ?? '';
+    if (queueType.isEmpty) {
+      return;
+    }
+    final waitSeconds = (queue['estimated_wait_seconds'] as num? ?? 0).round();
+    final questionCount = (queue['question_count'] as num? ?? 10).round();
+    final durationMinutes = (queue['duration_minutes'] as num? ?? 20).round();
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Container(
+          key: const ValueKey('arena-mobile-confirm-sheet'),
+          margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x26000000),
+                blurRadius: 36,
+                offset: Offset(0, -8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD6D6D8),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                '대결 시작',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                '매칭을 시작하면 상대를 찾는 동안 이 화면을 유지합니다.',
+                style: TextStyle(
+                  color: Color(0xFF68686E),
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF171719),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                      child: const Icon(
+                        Icons.sports_mma_rounded,
+                        color: Colors.black,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '1v1 문제풀이',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$questionCount문항 · $durationMinutes분'
+                            '${waitSeconds > 0 ? ' · 약 $waitSeconds초 대기' : ''}',
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F3F4),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Text(
+                  '실전 대결 결과는 티어와 레이팅에 반영될 수 있습니다.',
+                  style: TextStyle(
+                    color: Color(0xFF55555A),
+                    fontSize: 14,
+                    height: 1.4,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton(
+                  key: const ValueKey('arena-mobile-confirm-join'),
+                  onPressed: () => Navigator.of(sheetContext).pop(true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF202022),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(17),
+                    ),
+                  ),
+                  child: const Text(
+                    '매칭 시작',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(false),
+                  child: const Text(
+                    '취소',
+                    style: TextStyle(
+                      color: Color(0xFF67676C),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _join(queueType);
     }
   }
 
@@ -149,7 +373,9 @@ class _ArenaPageState extends State<ArenaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final desktop = MediaQuery.sizeOf(context).width >= 1000;
+    final width = MediaQuery.sizeOf(context).width;
+    final desktop = width >= 1000;
+    final mobile = width <= StudentDensityTokens.mobileBreakpoint;
     final queues = List<Map<String, dynamic>>.from(
       (_summary?['queues'] as List? ?? const []).map(
         (e) => Map<String, dynamic>.from(e as Map),
@@ -180,9 +406,17 @@ class _ArenaPageState extends State<ArenaPage> {
               queue['queue_type'] == 'team_exam',
         )
         .toList(growable: false);
+    // 모바일은 현재 참가 가능한 모드만 첫 화면에 둔다.
+    // 준비 중인 2v2 카드와 전적 정보가 실제 1v1 입장 버튼을 화면 아래로 밀지 않게 한다.
+    final joinableQueues = visibleQueues
+        .where((queue) => queue['coming_soon'] != true)
+        .toList(growable: false);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/arena')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -190,7 +424,9 @@ class _ArenaPageState extends State<ArenaPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
+                showUtilityActions: !mobile,
+                hideOnMobile: true,
+                onMenu: mobile ? null : () => toggleAppDrawer(context),
               ),
             ),
             Expanded(
@@ -210,25 +446,28 @@ class _ArenaPageState extends State<ArenaPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _ArenaHero(
-                              tier: tier,
-                              rating: rating,
-                              wins: wins,
-                              losses: losses,
-                              draws: draws,
-                              winRate: winRate,
-                              desktop: desktop,
-                              recentResults: recentResults,
-                              onTierTap: () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => ArenaRankingPage(
-                                    queueType:
-                                        profile['queue_type']?.toString() ??
-                                        'duel_exam',
+                            if (desktop)
+                              _ArenaHero(
+                                tier: tier,
+                                rating: rating,
+                                wins: wins,
+                                losses: losses,
+                                draws: draws,
+                                winRate: winRate,
+                                desktop: true,
+                                recentResults: recentResults,
+                                onTierTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => ArenaRankingPage(
+                                      queueType:
+                                          profile['queue_type']?.toString() ??
+                                          'duel_exam',
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              )
+                            else
+                              const _ArenaMobileHeader(),
                             if (resumableMatchId != null &&
                                 resumableMatchId.isNotEmpty)
                               Padding(
@@ -237,17 +476,19 @@ class _ArenaPageState extends State<ArenaPage> {
                                   onResume: () => _openMatch(resumableMatchId),
                                 ),
                               ),
-                            if (_error != null)
+                            if (_error != null && _summary != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 12),
-                                child: Text(
-                                  _error!,
-                                  style: const TextStyle(color: Colors.red),
+                                child: _ArenaErrorBanner(
+                                  message: _error!,
+                                  onRetry: _load,
                                 ),
                               ),
-                            const SizedBox(height: 56),
-                            const _ArenaMatchHeader(),
-                            const SizedBox(height: 20),
+                            SizedBox(height: desktop ? 56 : 28),
+                            if (desktop) ...[
+                              const _ArenaMatchHeader(),
+                              const SizedBox(height: 20),
+                            ],
                             if (_summary == null)
                               const Center(child: CircularProgressIndicator())
                             else if (desktop)
@@ -293,36 +534,25 @@ class _ArenaPageState extends State<ArenaPage> {
                               Column(
                                 key: const ValueKey('arena-mobile-queue-list'),
                                 children: [
-                                  for (
-                                    var index = 0;
-                                    index < visibleQueues.length;
-                                    index++
-                                  )
-                                    _QueueCard(
-                                      data: visibleQueues[index],
-                                      // 모바일에서도 두 모드의 반전 색상 규칙을 유지한다.
-                                      featured:
-                                          visibleQueues[index]['queue_type'] ==
-                                          'duel_exam',
+                                  for (final queue in joinableQueues)
+                                    _ArenaMobileEntryCard(
+                                      data: queue,
                                       waiting:
-                                          _waitingQueue ==
-                                          visibleQueues[index]['queue_type'],
+                                          _waitingQueue == queue['queue_type'],
                                       disabled:
-                                          visibleQueues[index]['coming_soon'] ==
-                                              true ||
-                                          (_waitingQueue != null &&
-                                              _waitingQueue !=
-                                                  visibleQueues[index]['queue_type']),
-                                      onJoin: () => _join(
-                                        visibleQueues[index]['queue_type']
-                                            .toString(),
-                                      ),
+                                          _waitingQueue != null &&
+                                          _waitingQueue != queue['queue_type'],
+                                      onJoin: () => _confirmMobileJoin(queue),
                                       onCancel: _cancel,
                                     ),
+                                  if (joinableQueues.isEmpty)
+                                    _ArenaUnavailableCard(onRetry: _load),
                                 ],
                               ),
-                            const SizedBox(height: 14),
-                            _ArenaRules(desktop: desktop),
+                            if (desktop) ...[
+                              const SizedBox(height: 20),
+                              const _ArenaRules(desktop: true),
+                            ],
                           ],
                         ),
                       ),
@@ -336,6 +566,189 @@ class _ArenaPageState extends State<ArenaPage> {
       ),
     );
   }
+}
+
+/// 필요한 변수 없음.
+/// 작동 원리: 세로 화면에서는 영문 라벨·긴 설명·전적을 생략하고 기능명만 크게 표시한다.
+class _ArenaMobileHeader extends StatelessWidget {
+  const _ArenaMobileHeader();
+
+  @override
+  Widget build(BuildContext context) => const Text(
+    '대결장',
+    style: TextStyle(
+      fontSize: 34,
+      letterSpacing: -1.8,
+      fontWeight: FontWeight.w900,
+    ),
+  );
+}
+
+/// 필요한 변수: 참가 가능한 큐, 대기 상태와 참가·취소 콜백.
+/// 작동 원리: 모바일 세로폭에서 버튼을 카드 전체 폭으로 분리해
+/// 작은 가로 Row의 눌림 영역·오버플로우 때문에 대결장에 들어가지 못하는 일을 막는다.
+class _ArenaMobileEntryCard extends StatelessWidget {
+  const _ArenaMobileEntryCard({
+    required this.data,
+    required this.waiting,
+    required this.disabled,
+    required this.onJoin,
+    required this.onCancel,
+  });
+
+  final Map<String, dynamic> data;
+  final bool waiting;
+  final bool disabled;
+  final VoidCallback onJoin;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final waitSeconds = (data['estimated_wait_seconds'] as num? ?? 0).round();
+    return Container(
+      key: const ValueKey('arena-mobile-entry-card'),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFF171719),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '1v1 문제풀이',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              letterSpacing: -1.2,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '10문항 · 20분${waitSeconds > 0 ? ' · 약 $waitSeconds초 대기' : ''}',
+            style: const TextStyle(color: Colors.white60, fontSize: 13),
+          ),
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: FilledButton(
+              key: const ValueKey('arena-mobile-join-button'),
+              onPressed: disabled ? null : (waiting ? onCancel : onJoin),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                disabledBackgroundColor: Colors.white24,
+                disabledForegroundColor: Colors.white54,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                waiting ? '매칭 취소' : '대결 시작',
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 필요한 변수 없음.
+/// 작동 원리: 서버가 활성 큐를 반환하지 못하면 테두리 없는 빈 상태와 큰 재시도 버튼을 제공한다.
+class _ArenaUnavailableCard extends StatelessWidget {
+  const _ArenaUnavailableCard({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.sports_mma_rounded, size: 30),
+        const SizedBox(height: 14),
+        const Text(
+          '참가 가능한 대결이 없어요',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 7),
+        const Text(
+          '잠시 후 다시 확인하거나 새로고침해 주세요.',
+          style: TextStyle(color: Colors.black54, fontSize: 15),
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: FilledButton.icon(
+            key: const ValueKey('arena-mobile-retry-button'),
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text(
+              '다시 확인',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F2),
+              foregroundColor: Colors.black,
+              elevation: 0,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// 필요한 변수: 학생용 오류 문구와 재시도 콜백.
+/// 작동 원리: 원시 서버 예외 대신 대비가 충분한 안내와 즉시 복구 동작을 함께 제공한다.
+class _ArenaErrorBanner extends StatelessWidget {
+  const _ArenaErrorBanner({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF0EE),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFE8AAA3)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.info_outline_rounded, color: Color(0xFF9A3027)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: Color(0xFF76251F),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: '다시 시도',
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF76251F)),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ArenaHero extends StatelessWidget {
@@ -1512,7 +1925,14 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
       try {
         await _load();
       } catch (error) {
-        if (mounted) setState(() => _feedback = error.toString());
+        if (mounted) {
+          setState(
+            () => _feedback = studentFacingApiError(
+              error,
+              fallback: '경기 상태를 갱신하지 못했어요.',
+            ),
+          );
+        }
       }
       if (mounted && !_switchingMatch && !_showingResult) {
         _startFallbackPolling();
@@ -1568,7 +1988,12 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
     } catch (error) {
       if (!mounted) return;
       _showingResult = false;
-      setState(() => _feedback = '경기는 종료됐지만 결과를 불러오지 못했습니다: $error');
+      setState(
+        () => _feedback = studentFacingApiError(
+          error,
+          fallback: '경기는 종료됐지만 결과를 불러오지 못했어요.',
+        ),
+      );
       _startFallbackPolling();
     }
   }
@@ -1697,7 +2122,7 @@ class _ArenaMatchPageState extends State<ArenaMatchPage> {
       if (mounted) {
         setState(() {
           _submitting = false;
-          _feedback = error.toString();
+          _feedback = studentFacingApiError(error, fallback: '답안을 제출하지 못했어요.');
         });
       }
     }
@@ -1973,7 +2398,14 @@ class _ArenaResultPageState extends State<ArenaResultPage> {
         });
       }
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) {
+        setState(
+          () => _error = studentFacingApiError(
+            error,
+            fallback: '경기 결과를 불러오지 못했어요.',
+          ),
+        );
+      }
     }
   }
 

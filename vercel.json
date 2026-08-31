@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "functions": {
+    "api/index.py": { "maxDuration": 30 }
+  },
+  "headers": [
+    {
+      "source": "/(index.html|flutter_bootstrap.js|flutter_service_worker.js|main.dart.js)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }
+      ]
+    }
+  ],
+  "routes": [
+    { "handle": "filesystem" },
+    {
+      "src": "/(health|auth|user|account|rating|arena|weakness|history|courses|academy|challenges|marketplace|analysis|social|textbooks|quests|exams|serverchat|level-tests|api)(/.*)?",
+      "dest": "/api/index.py"
+    },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

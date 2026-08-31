@@ -475,6 +475,10 @@ def append_message(
     is_mine: bool,
     max_total: int = 2000,
 ) -> None:
+    """필요 변수는 송수신 사용자·메시지 본문·보관 상한이다.
+    작동 원리는 새 메시지를 기록한 뒤 같은 대화의 오래된 행만 OFFSET 기준으로
+    제거하는 것이다. PostgreSQL과 SQLite 모두에서 허용되는 SQL만 사용한다.
+    """
     init_social_db()
     conn = db.connect()
     cur = conn.cursor()
@@ -493,7 +497,7 @@ def append_message(
                 SELECT id FROM messages
                 WHERE user_id = ? AND peer_id = ?
                 ORDER BY created_at DESC
-                LIMIT -1 OFFSET ?
+                OFFSET ?
             )
             """,
             (user_id, peer_id, max_total),

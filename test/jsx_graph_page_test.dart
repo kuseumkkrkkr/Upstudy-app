@@ -61,6 +61,116 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('모바일 그래프 입력 영역은 한손 조작 배치를 유지한다', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: JsxGraphPage(
+          embedEnabled: false,
+          sampleGraph: (_) async => const <String, dynamic>{},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('고급 모드'), findsOneWidget);
+    expect(find.text('초보자 모드'), findsOneWidget);
+    expect(find.text('그래프 그리기'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('mobile-graph-page-scroll')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('mobile-math-keypad')), findsOneWidget);
+    final mathFieldFinder = find.byKey(
+      const ValueKey('mobile-math-expression-0'),
+    );
+    final mathField = tester.widget<TextField>(mathFieldFinder);
+    expect(mathField.readOnly, isTrue);
+    await tester.tap(mathFieldFinder);
+    await tester.pump();
+    expect(tester.testTextInput.isVisible, isFalse);
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/jsx_graph_mobile_layout.png'),
+    );
+    await tester.drag(
+      find.byKey(const ValueKey('mobile-graph-page-scroll')),
+      const Offset(0, -400),
+    );
+    await tester.pumpAndSettle();
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('mobile-graph-page-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(scrollable.position.pixels, greaterThan(0));
+  });
+
+  testWidgets('모바일 수식은 반영 버튼을 누르면 정규화되어 그래프 상태에 적용된다', (tester) async {
+    // 필요한 변수는 모바일 그래프 화면과 암시적 곱셈이 포함된 수식이다.
+    // 작동 원리는 반영 버튼이 입력을 검증하고 2x를 2*x로 정규화해 문서 재생성 상태를 만드는지 확인한다.
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    Map<String, dynamic>? sentPayload;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: JsxGraphPage(
+          embedEnabled: false,
+          sampleGraph: (payload) async {
+            sentPayload = payload;
+            return {
+              'series': [
+                {
+                  'id': 'custom-0',
+                  'label': '함수 1',
+                  'color_hex': '#2F7CF6',
+                  'segments': [
+                    {
+                      'x_values': [-1, 0, 1],
+                      'y_values': [-1, 1, 3],
+                    },
+                  ],
+                },
+              ],
+            };
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final expressionField = find.byKey(
+      const ValueKey('mobile-math-expression-0'),
+    );
+    for (final label in ['2', '×', 'x', '+', '1']) {
+      final key = find.text(label).first;
+      await tester.ensureVisible(key);
+      await tester.pumpAndSettle();
+      await tester.tap(key);
+      await tester.pump();
+    }
+    final applyButton = find.byKey(const ValueKey('mobile-graph-apply'));
+    expect(applyButton, findsOneWidget);
+    await tester.ensureVisible(applyButton);
+    await tester.pumpAndSettle();
+    await tester.tap(applyButton);
+    await tester.pump();
+
+    final field = tester.widget<TextField>(expressionField);
+    expect(field.controller?.text, '2*x+1');
+    expect((sentPayload?['expressions'] as List).first['expression'], '2*x+1');
+    expect(find.text('3개 좌표를 API에서 받았습니다.'), findsOneWidget);
+    expect(find.text('검증된 형식으로 바꾼 뒤 다시 갱신하세요.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   test('직접 그리기용 HTML은 내부 매개변수 슬라이더만 숨길 수 있다', () {
     // 필요한 변수는 빈 그래프 문서와 조작부 표시 옵션이다.
     // 작동 원리는 교재 기본 HTML은 슬라이더를 유지하고 직접 그리기 HTML만 display:none을 주입하는지 확인한다.
@@ -102,6 +212,9 @@ void main() {
 
     expect(html, contains('#board {'));
     expect(html, contains('height: 100%;'));
+    expect(html, contains('jsxgraph@1.13.1/distrib/jsxgraph.css'));
+    expect(html, contains('position: relative;'));
+    expect(html, contains('touch-action: none;'));
     expect(
       html,
       isNot(contains('#board {\n        width: 100%;\n        height: 220px;')),
@@ -128,5 +241,26 @@ void main() {
 
     expect(html, contains('                  left,\n                  right,'));
     expect(html, isNot(contains('                  [left, right],')));
+  });
+
+  test('API 좌표 시리즈는 JSXGraph curve 요소로 렌더링한다', () {
+    const document = AiFlowGraphDocument(
+      items: [
+        AiFlowGraphItem(
+          id: 'api-line',
+          type: AiFlowGraphItemType.line,
+          label: 'y=x^2',
+          colorHex: '#2F7CF6',
+          xValues: [-1, 0, 1],
+          yValues: [1, 0, 1],
+        ),
+      ],
+      settings: AiFlowGraphSettings(),
+    );
+
+    final html = buildAiFlowGraphHtml(document);
+
+    expect(html, contains("'curve'"));
+    expect(html, isNot(contains("'polyline'")));
   });
 }

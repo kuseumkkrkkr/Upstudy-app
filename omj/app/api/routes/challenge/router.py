@@ -72,8 +72,12 @@ async def get_daily_quests(
 async def apply_daily_quest_event(
     request: Request,
     body: dict[str, Any],
-    _user=Depends(require_role("admin")),
+    _user=Depends(require_role("student")),
 ):
+    """필요 변수: 로그인한 학생 ID와 이벤트 종류·값이다.
+    작동 원리: 인증 미들웨어가 설정한 본인 ID만 사용해 일일 퀘스트 진행도를 갱신하므로,
+    학생 클라이언트의 정상 학습 이벤트가 관리자 권한 오류로 막히지 않게 한다.
+    """
     user_id: str = request.state.user_id
     data, _updated = service.apply_daily_quest_event(user_id, body)
     return ApiResponse(status=JobStatus.done, data=data, message="Daily quest event applied")

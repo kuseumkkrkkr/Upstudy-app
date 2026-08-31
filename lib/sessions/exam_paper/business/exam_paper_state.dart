@@ -131,7 +131,7 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   bool _gradingCancelled = false;
   int _gradingCompleted = 0;
   int _gradingTotal = 0;
-  final Map<int, _GradeResult> _gradeResults = <int, _GradeResult>{};
+  final Map<int, ExamGradeResult> _gradeResults = <int, ExamGradeResult>{};
   final Map<String, Map<String, dynamic>> _questCache =
       <String, Map<String, dynamic>>{};
   bool _examFinished = false;

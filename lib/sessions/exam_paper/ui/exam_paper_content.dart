@@ -5,6 +5,7 @@ class _ExamPaperContent extends StatelessWidget {
     required this.layout,
     required this.pageNumber,
     required this.totalPages,
+    this.examTitle,
     this.statusMessage,
     this.selectedOptions = const <int, int?>{},
     this.onOptionSelected,
@@ -16,6 +17,7 @@ class _ExamPaperContent extends StatelessWidget {
   final _PageLayout? layout;
   final int pageNumber;
   final int totalPages;
+  final String? examTitle;
   final String? statusMessage;
   final Map<int, int?> selectedOptions;
   final void Function(int itemIndex, int optionIndex)? onOptionSelected;
@@ -84,7 +86,9 @@ class _ExamPaperContent extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '2025학년도 대학수학능력시험 문제지',
+                  examTitle?.trim().isNotEmpty == true
+                      ? examTitle!.trim()
+                      : '2025학년도 대학수학능력시험 문제지',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 21, fontFamily: 'Batang'),
                 ),

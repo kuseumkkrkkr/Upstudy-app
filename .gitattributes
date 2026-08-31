@@ -1,0 +1,4 @@
+# Vercel deploys Flutter's generated web output directly. Keep its emitted
+# bytes stable across Windows and CI checkouts so a known-good artifact is not
+# silently rewritten by text line-ending conversion.
+public/** -text

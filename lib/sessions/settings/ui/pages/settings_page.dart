@@ -27,10 +27,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   static const _notificationsKey = 'settings.notifications_enabled';
+  static const _mobileQuickSolveKey = 'settings.mobile_quick_solve';
 
   bool _loading = true;
   bool _notificationsEnabled = true;
   bool _textbookPageMode = false;
+  bool _mobileQuickSolve = false;
 
   @override
   void initState() {
@@ -49,10 +51,12 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_notificationsKey);
     final textbookPageMode = await TextbookReaderPreferences.loadPageMode();
+    final mobileQuickSolve = prefs.getBool(_mobileQuickSolveKey) ?? false;
     if (!mounted) return;
     setState(() {
       _notificationsEnabled = enabled ?? true;
       _textbookPageMode = textbookPageMode;
+      _mobileQuickSolve = mobileQuickSolve;
       _loading = false;
     });
   }
@@ -66,6 +70,14 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _setTextbookPageMode(bool value) async {
     setState(() => _textbookPageMode = value);
     await TextbookReaderPreferences.savePageMode(value);
+  }
+
+  /// 필요한 변수는 모바일 간편풀이 선택값이다.
+  /// 작동 원리는 기기 로컬 설정만 저장하고 다음 문제풀이 진입부터 즉시 적용하는 것이다.
+  Future<void> _setMobileQuickSolve(bool value) async {
+    setState(() => _mobileQuickSolve = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_mobileQuickSolveKey, value);
   }
 
   void _showLicenses() {
@@ -129,18 +141,23 @@ class _SettingsPageState extends State<SettingsPage> {
     required Widget trailing,
     VoidCallback? onTap,
   }) {
+    final mobile = isStudentDensityMobile(context);
     final tile = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      key: mobile ? ValueKey('settings-mobile-tile-$title') : null,
+      padding: EdgeInsets.symmetric(
+        horizontal: mobile ? 14 : 16,
+        vertical: mobile ? 15 : 14,
+      ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F4),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8E6DC)),
+        color: mobile ? const Color(0xFFF4F4F6) : const Color(0xFFF7F7F4),
+        borderRadius: BorderRadius.circular(mobile ? 18 : 20),
+        border: mobile ? null : Border.all(color: const Color(0xFFE8E6DC)),
       ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: mobile ? 42 : 46,
+            height: mobile ? 42 : 46,
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
@@ -154,17 +171,17 @@ class _SettingsPageState extends State<SettingsPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: mobile ? 17 : 16,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: mobile ? 3 : 4),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: mobile ? 13 : 12,
                     height: 1.35,
                     color: Colors.black.withValues(alpha: 0.58),
                   ),
@@ -181,13 +198,121 @@ class _SettingsPageState extends State<SettingsPage> {
     if (onTap == null) return tile;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(mobile ? 18 : 20),
       child: tile,
     );
   }
 
+  /// 필요한 변수는 아이콘·제목·상태 문구·우측 제어와 선택 콜백이다.
+  /// 작동 원리: 개별 카드 대신 한 그룹 안의 68px Material 행으로 설정을 바로 조작한다.
+  Widget _mobileSettingRow({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
+    VoidCallback? onTap,
+  }) {
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F6),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, size: 21, color: const Color(0xFF202022)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.black45, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          trailing,
+        ],
+      ),
+    );
+    if (onTap == null) return content;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: content,
+    );
+  }
+
+  /// 필요한 변수는 현재 교재·간편풀이·알림 상태와 저장 콜백이다.
+  /// 작동 원리: 네 설정을 하나의 큰 흰 표면에 모아 중첩 카드·번호 배지·반복 설명을 제거한다.
+  Widget _buildMobileSettingsList() => Container(
+    key: const ValueKey('settings-mobile-flat-list'),
+    padding: const EdgeInsets.all(6),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(26),
+    ),
+    child: Column(
+      children: [
+        _mobileSettingRow(
+          icon: Icons.auto_stories_outlined,
+          title: '교재 페이지',
+          subtitle: _textbookPageMode ? '페이지 단위' : '연속 스크롤',
+          trailing: Switch.adaptive(
+            value: _textbookPageMode,
+            onChanged: _setTextbookPageMode,
+          ),
+          onTap: () => _setTextbookPageMode(!_textbookPageMode),
+        ),
+        _mobileSettingRow(
+          icon: Icons.route_outlined,
+          title: '간편풀이',
+          subtitle: _mobileQuickSolve ? '사용 중' : '일반 필기 사용 중',
+          trailing: Switch.adaptive(
+            value: _mobileQuickSolve,
+            onChanged: _setMobileQuickSolve,
+          ),
+          onTap: () => _setMobileQuickSolve(!_mobileQuickSolve),
+        ),
+        _mobileSettingRow(
+          icon: Icons.notifications_none_rounded,
+          title: '알림',
+          subtitle: _notificationsEnabled ? '켜짐' : '꺼짐',
+          trailing: Switch.adaptive(
+            value: _notificationsEnabled,
+            onChanged: _setNotificationsEnabled,
+          ),
+          onTap: () => _setNotificationsEnabled(!_notificationsEnabled),
+        ),
+        _mobileSettingRow(
+          icon: Icons.receipt_long_outlined,
+          title: '오픈소스 정보',
+          subtitle: '라이선스 보기',
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: _showLicenses,
+        ),
+      ],
+    ),
+  );
+
   /// 필요한 변수는 교재 보기·알림·로딩 상태이다.
-  /// 작동 원리는 HTML의 로컬 환경 히어로와 세 개 번호 카드에 기존 저장 콜백을 연결하는 것이다.
+  /// 작동 원리는 모바일은 단일 설정 그룹, PC는 기존 정보형 카드에 같은 저장 콜백을 연결하는 것이다.
   Widget _buildHtmlSettings(BuildContext context) {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -195,7 +320,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!isStudentDensityMobile(context)) return _buildDesktopSettings(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
+      drawer: null,
+      bottomNavigationBar: const MobileStudentBottomAppBar(),
       body: SafeArea(
         child: Column(
           children: [
@@ -203,7 +329,8 @@ class _SettingsPageState extends State<SettingsPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
+                showUtilityActions: false,
+                hideOnMobile: true,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,
@@ -214,128 +341,36 @@ class _SettingsPageState extends State<SettingsPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
                 children: [
-                  const Text(
-                    'PREFERENCES',
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 1.7,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '설정',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    '실제로 저장되는 학습 환경만 간결하게 조정합니다.',
-                    style: TextStyle(color: Colors.black45),
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ProfilePage()),
-                    ),
-                    child: const Text('프로필로 돌아가기'),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF202022),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: const Row(
-                      children: [
-                        _SettingsHeroIcon(),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'LOCAL PREFERENCES',
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 9,
-                                  letterSpacing: 1.5,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              SizedBox(height: 14),
-                              Text(
-                                '이 기기의 학습 환경',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '자동 저장',
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '설정',
                           style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 10,
+                            fontSize: 32,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SettingsPanel(
-                    number: '01',
-                    title: '교재 보기',
-                    subtitle: '본문을 연속 스크롤 또는 PDF형 페이지로 봅니다.',
-                    child: _settingTile(
-                      icon: Icons.auto_stories_outlined,
-                      title: 'PDF형 페이지 보기',
-                      subtitle: _textbookPageMode
-                          ? '현재 페이지 단위로 열립니다.'
-                          : '현재 연속 스크롤로 열립니다.',
-                      trailing: Switch.adaptive(
-                        value: _textbookPageMode,
-                        onChanged: _setTextbookPageMode,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SettingsPanel(
-                    number: '02',
-                    title: '알림',
-                    subtitle: '멤버 모든 알림을 한 번에 켜거나 끕니다.',
-                    child: _settingTile(
-                      icon: Icons.notifications_none_rounded,
-                      title: '모든 알림',
-                      subtitle: _notificationsEnabled
-                          ? '현재 모든 알림이 켜져 있습니다.'
-                          : '현재 모든 알림이 꺼져 있습니다.',
-                      trailing: Switch.adaptive(
-                        value: _notificationsEnabled,
-                        onChanged: _setNotificationsEnabled,
+                      IconButton(
+                        key: const ValueKey('settings-mobile-profile-link'),
+                        tooltip: '프로필',
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ProfilePage(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.person_outline_rounded),
+                        style: IconButton.styleFrom(
+                          foregroundColor: const Color(0xFF202022),
+                          backgroundColor: Colors.white,
+                          minimumSize: const Size(48, 48),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _SettingsPanel(
-                    number: '03',
-                    title: '앱 정보',
-                    subtitle: 'AIFlow에 포함된 오픈소스 라이선스를 확인합니다.',
-                    child: _settingTile(
-                      icon: Icons.receipt_long_outlined,
-                      title: '라이선스 보기',
-                      subtitle: 'Flutter와 포함된 패키지 정보',
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: _showLicenses,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildPreferenceNotice(),
+                  const SizedBox(height: 18),
+                  _buildMobileSettingsList(),
                 ],
               ),
             ),
@@ -447,6 +482,21 @@ class _SettingsPageState extends State<SettingsPage> {
       const SizedBox(height: 16),
       _SettingsPanel(
         number: '02',
+        title: '모바일 문제풀이',
+        subtitle: '세로 모바일에서 풀이 흐름을 순서대로 확인합니다.',
+        child: _settingTile(
+          icon: Icons.route_outlined,
+          title: '모바일 간편풀이',
+          subtitle: _mobileQuickSolve ? '모바일 간편풀이를 사용합니다.' : '일반 필기 풀이를 사용합니다.',
+          trailing: Switch.adaptive(
+            value: _mobileQuickSolve,
+            onChanged: _setMobileQuickSolve,
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      _SettingsPanel(
+        number: '03',
         title: '알림',
         subtitle: '앱의 모든 알림을 한 번에 켜거나 끕니다.',
         child: _settingTile(
@@ -463,7 +513,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       const SizedBox(height: 16),
       _SettingsPanel(
-        number: '03',
+        number: '04',
         title: '앱 정보',
         subtitle: 'AIFlow에 포함된 오픈소스 라이선스를 확인합니다.',
         child: _settingTile(
@@ -755,55 +805,66 @@ class _SettingsPanel extends StatelessWidget {
   final Widget child;
 
   /// 필요한 변수는 순서·제목·설명·설정 제어다.
-  /// 작동 원리는 HTML의 큰 흰색 카드 안에 번호 배지와 실제 제어를 수직 배치하는 것이다.
+  /// 작동 원리: 모바일은 테두리와 중첩 여백을 줄이고 PC는 기존 번호 카드 구조를 유지한다.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: const Color(0xFFE0E0E2)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: const Color(0xFF202022),
-                borderRadius: BorderRadius.circular(10),
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return Container(
+      key: mobile ? ValueKey('settings-mobile-panel-$number') : null,
+      padding: EdgeInsets.all(mobile ? 14 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(mobile ? 24 : 28),
+        border: mobile ? null : Border.all(color: const Color(0xFFE0E0E2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: mobile ? 30 : 32,
+                height: mobile ? 30 : 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF202022),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  number,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
-              child: Text(
-                number,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
+              SizedBox(width: mobile ? 12 : 14),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: mobile ? 20 : 25,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.only(left: 46),
-          child: Text(
-            subtitle,
-            style: const TextStyle(fontSize: 10, color: Colors.black45),
+            ],
           ),
-        ),
-        const SizedBox(height: 22),
-        child,
-      ],
-    ),
-  );
+          SizedBox(height: mobile ? 8 : 20),
+          Padding(
+            padding: EdgeInsets.only(left: mobile ? 42 : 46),
+            child: Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: mobile ? 14 : 10,
+                height: mobile ? 1.4 : null,
+                color: Colors.black45,
+              ),
+            ),
+          ),
+          SizedBox(height: mobile ? 14 : 22),
+          child,
+        ],
+      ),
+    );
+  }
 }

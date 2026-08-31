@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -283,12 +282,169 @@ void showActivityBadgeDialog({
   required ActivitySnapshot snapshot,
   int accountLevel = 0,
 }) {
+  // 필요한 변수는 현재 화면 크기와 업적 진행 기록이다.
+  // 작동 원리: 세로 모바일은 한 손 스크롤에 맞춘 전폭 바텀시트를 열고,
+  // 태블릿·PC는 기존 정보 밀도가 높은 중앙 다이얼로그를 유지한다.
+  final media = MediaQuery.of(context);
+  final isPortraitMobile =
+      media.size.width <= 720 && media.size.height >= media.size.width;
+  if (isPortraitMobile) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.34),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.93,
+        minChildSize: 0.72,
+        maxChildSize: 0.98,
+        expand: false,
+        builder: (context, scrollController) => _MobileActivityBadgeSheet(
+          snapshot: snapshot,
+          accountLevel: accountLevel,
+          scrollController: scrollController,
+        ),
+      ),
+    );
+    return;
+  }
   showDialog<void>(
     context: context,
     barrierDismissible: true,
     builder: (context) =>
         _ActivityBadgeDialog(snapshot: snapshot, accountLevel: accountLevel),
   );
+}
+
+class _MobileActivityBadgeSheet extends StatelessWidget {
+  const _MobileActivityBadgeSheet({
+    required this.snapshot,
+    required this.accountLevel,
+    required this.scrollController,
+  });
+
+  final ActivitySnapshot snapshot;
+  final int accountLevel;
+  final ScrollController scrollController;
+
+  /// 필요한 변수는 활동 기록, 계정 레벨, 바텀시트 스크롤 컨트롤러다.
+  /// 작동 원리: 전체 업적을 가족 단위 세로 카드로 나누고 각 카드는 최고 해금
+  /// 트로피 한 개와 다음 단계 진행률만 보여준다. 12단계 상세는 카드 선택 시 연다.
+  @override
+  Widget build(BuildContext context) {
+    final all = ActivityBadgeCatalog.evaluate(
+      snapshot,
+      accountLevel: accountLevel,
+    );
+    final earnedCount = all.where((entry) => entry.isEarned).length;
+    final groups = _groupBadgeProgress(all);
+
+    return Material(
+      key: const ValueKey('activity-badge-mobile-sheet'),
+      color: const Color(0xFFF5F5F7),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(34)),
+      clipBehavior: Clip.antiAlias,
+      child: CustomScrollView(
+        controller: scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 14, 18),
+              child: Column(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4A4A52),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '업적 보관함',
+                              style: TextStyle(
+                                fontSize: 30,
+                                height: 1.08,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$earnedCount개 획득 · 항목을 눌러 12단계 확인',
+                              style: const TextStyle(
+                                color: Color(0xFF66666D),
+                                fontSize: 14,
+                                height: 1.35,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Semantics(
+                        button: true,
+                        label: '업적 보관함 닫기',
+                        child: Material(
+                          color: Colors.white,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => Navigator.of(context).pop(),
+                            child: const SizedBox(
+                              width: 54,
+                              height: 54,
+                              child: Icon(Icons.close_rounded, size: 29),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            sliver: SliverList.separated(
+              itemCount: groups.length,
+              itemBuilder: (context, index) =>
+                  _MobileBadgeGroupCard(group: groups[index]),
+              separatorBuilder: (context, index) => const SizedBox(height: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileBadgeGroupCard extends StatelessWidget {
+  const _MobileBadgeGroupCard({required this.group});
+
+  final _BadgeProgressGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = group.items.first.badge;
+    return _TrophySectionCard(
+      key: ValueKey('activity-badge-mobile-group-${first.family}'),
+      group: group,
+      mobile: true,
+    );
+  }
 }
 
 class _ActivityBadgeDialog extends StatelessWidget {
@@ -347,7 +503,7 @@ class _ActivityBadgeDialog extends StatelessWidget {
                           ),
                           SizedBox(height: 4 * scale),
                           Text(
-                            '총 ${ActivityBadgeCatalog.allBadges.length}종 · 획득 $earnedCount개 · 잠긴 트로피를 누르면 미리볼 수 있어요',
+                            '총 ${ActivityBadgeCatalog.allBadges.length}종 · 획득 $earnedCount개 · 항목을 눌러 12단계를 확인하세요',
                             style: _textStyle(
                               size: 12 * scale,
                               color: Colors.black54,
@@ -369,23 +525,19 @@ class _ActivityBadgeDialog extends StatelessWidget {
               ),
               Divider(height: 1, color: Colors.black.withValues(alpha: 0.08)),
               Expanded(
-                child: GridView.builder(
+                child: ListView.separated(
                   padding: EdgeInsets.fromLTRB(
                     16 * scale,
                     14 * scale,
                     16 * scale,
                     18 * scale,
                   ),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _groupGridColumns(context),
-                    mainAxisSpacing: 12 * scale,
-                    crossAxisSpacing: 12 * scale,
-                    childAspectRatio: _groupAspectRatio(context),
-                  ),
                   itemCount: groups.length,
                   itemBuilder: (context, index) {
                     return _BadgeGroupCard(group: groups[index]);
                   },
+                  separatorBuilder: (context, index) =>
+                      SizedBox(height: 12 * scale),
                 ),
               ),
             ],
@@ -403,208 +555,222 @@ class _BadgeGroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = _scale(context);
     final first = group.items.first.badge;
-    final title = ActivityBadgeCatalog.familyTitleOf(first.family);
-    final earned = group.items.where((entry) => entry.isEarned).length;
-    final next = _firstLocked(group.items);
-    final color = first.color;
-
-    return Container(
-      padding: EdgeInsets.all(16 * scale),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10 * scale),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.07),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 32 * scale,
-                height: 32 * scale,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(8 * scale),
-                ),
-                child: Icon(first.icon, color: color, size: 18 * scale),
-              ),
-              SizedBox(width: 9 * scale),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: _textStyle(
-                        size: 13 * scale,
-                        weight: FontWeight.w900,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 2 * scale),
-                    Text(
-                      '$earned/${group.items.length} · ${first.metricLabel}',
-                      style: _textStyle(
-                        size: 10 * scale,
-                        color: Colors.black54,
-                        weight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final tile = _badgeTileSize(constraints.maxWidth, scale);
-                return Wrap(
-                  spacing: 10 * scale,
-                  runSpacing: 10 * scale,
-                  children: [
-                    for (final progress in group.items)
-                      SizedBox(
-                        width: tile,
-                        child: _CompactBadgeTile(
-                          progress: progress,
-                          iconSize: math.min(tile * 0.72, 54 * scale),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          if (next == null)
-            Text(
-              '이 그룹을 모두 획득했습니다.',
-              style: _textStyle(
-                size: 10 * scale,
-                color: color,
-                weight: FontWeight.w800,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            )
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '다음: ${next.badge.title} · ${next.progressText}',
-                  style: _textStyle(size: 10 * scale, color: Colors.black54),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 5 * scale),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: next.progress,
-                    minHeight: 5 * scale,
-                    backgroundColor: Colors.black.withValues(alpha: 0.06),
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
+    return _TrophySectionCard(
+      key: ValueKey('activity-badge-desktop-group-${first.family}'),
+      group: group,
     );
   }
 }
 
-class _CompactBadgeTile extends StatefulWidget {
-  const _CompactBadgeTile({required this.progress, required this.iconSize});
+class _TrophySectionCard extends StatefulWidget {
+  const _TrophySectionCard({
+    super.key,
+    required this.group,
+    this.mobile = false,
+  });
 
-  final ActivityBadgeProgress progress;
-  final double iconSize;
+  final _BadgeProgressGroup group;
+  final bool mobile;
 
   @override
-  State<_CompactBadgeTile> createState() => _CompactBadgeTileState();
+  State<_TrophySectionCard> createState() => _TrophySectionCardState();
 }
 
-class _CompactBadgeTileState extends State<_CompactBadgeTile> {
-  Timer? _previewTimer;
-  bool _previewActive = false;
-
-  @override
-  void dispose() {
-    _previewTimer?.cancel();
-    super.dispose();
-  }
-
-  void _showPreview() {
-    if (widget.progress.isEarned) return;
-    _previewTimer?.cancel();
-    setState(() => _previewActive = true);
-    _previewTimer = Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      setState(() => _previewActive = false);
-    });
-  }
+class _TrophySectionCardState extends State<_TrophySectionCard> {
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    final scale = _scale(context);
-    final displayProgress = _previewActive
-        ? ActivityBadgeProgress(
-            badge: widget.progress.badge,
-            value: widget.progress.badge.threshold,
-            progress: 1,
-            isEarned: true,
-          )
-        : widget.progress;
+    final scale = widget.mobile ? 1.0 : _scale(context);
+    final items = widget.group.items;
+    final first = items.first.badge;
+    final earned = items.where((entry) => entry.isEarned).toList();
+    final unlockedCount = earned.length;
+    final trophy = earned.isEmpty ? items.first : earned.last;
+    final next = _firstLocked(items);
+    final color = trophy.badge.color;
+    final title = ActivityBadgeCatalog.familyTitleOf(first.family);
+    final radius = widget.mobile ? 28.0 : 18.0 * scale;
 
-    return Tooltip(
-      message:
-          '${widget.progress.badge.title}\n${widget.progress.progressText}',
-      child: Semantics(
-        button: !widget.progress.isEarned,
-        label: widget.progress.badge.title,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.progress.isEarned ? null : _showPreview,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(radius),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => setState(() => _expanded = !_expanded),
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.fromLTRB(
+            18 * scale,
+            18 * scale,
+            16 * scale,
+            16 * scale,
+          ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ActivityBadgeIcon(
-                progress: displayProgress,
-                size: widget.iconSize,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Semantics(
+                    label: unlockedCount == 0
+                        ? '$title 아직 해금 전'
+                        : '$title 최고 트로피 ${trophy.badge.tier}단계',
+                    child: ActivityBadgeIcon(
+                      progress: trophy,
+                      size: (widget.mobile ? 72 : 62) * scale,
+                    ),
+                  ),
+                  SizedBox(width: 16 * scale),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: _textStyle(
+                            size: (widget.mobile ? 19 : 16) * scale,
+                            weight: FontWeight.w900,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 4 * scale),
+                        Text(
+                          unlockedCount == 0
+                              ? '12개 중 아직 해금 전 · ${first.metricLabel}'
+                              : '12개 중 $unlockedCount번째까지 해금 · ${trophy.badge.title}',
+                          key: ValueKey(
+                            'activity-badge-unlock-position-${first.family}',
+                          ),
+                          style: _textStyle(
+                            size: (widget.mobile ? 13 : 11) * scale,
+                            color: const Color(0xFF66666D),
+                            weight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 9 * scale),
+                        Text(
+                          next == null
+                              ? '모든 단계 해금 완료'
+                              : '다음 ${next.badge.tier}단계 · ${next.progressText}',
+                          style: _textStyle(
+                            size: (widget.mobile ? 12 : 10) * scale,
+                            color: next == null ? color : Colors.black54,
+                            weight: FontWeight.w800,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 6 * scale),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: next?.progress ?? 1,
+                            minHeight: (widget.mobile ? 7 : 6) * scale,
+                            backgroundColor: const Color(0xFFF0F0F2),
+                            color: color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8 * scale),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.black54,
+                      size: (widget.mobile ? 28 : 24) * scale,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 4 * scale),
-              Text(
-                '${widget.progress.badge.tier}',
-                style: _textStyle(
-                  size: 9 * scale,
-                  weight: FontWeight.w900,
-                  color: displayProgress.isEarned
-                      ? widget.progress.badge.color
-                      : Colors.black38,
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 180),
+                crossFadeState: _expanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                firstChild: const SizedBox(width: double.infinity),
+                secondChild: Padding(
+                  key: ValueKey('activity-badge-details-${first.family}'),
+                  padding: EdgeInsets.only(top: 18 * scale),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '해금 단계 $unlockedCount / ${items.length}',
+                        style: _textStyle(
+                          size: (widget.mobile ? 14 : 12) * scale,
+                          weight: FontWeight.w900,
+                          color: color,
+                        ),
+                      ),
+                      SizedBox(height: 10 * scale),
+                      _TrophyStepRail(items: items, color: color, scale: scale),
+                      SizedBox(height: 10 * scale),
+                      Text(
+                        next == null
+                            ? '${trophy.badge.title} · ${trophy.badge.description}'
+                            : '다음 목표: ${next.badge.title} · ${next.badge.description}',
+                        style: _textStyle(
+                          size: (widget.mobile ? 12 : 10) * scale,
+                          color: Colors.black54,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TrophyStepRail extends StatelessWidget {
+  const _TrophyStepRail({
+    required this.items,
+    required this.color,
+    required this.scale,
+  });
+
+  final List<ActivityBadgeProgress> items;
+  final Color color;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          Expanded(
+            child: Semantics(
+              label: '${index + 1}단계 ${items[index].isEarned ? '해금' : '잠김'}',
+              child: Container(
+                key: ValueKey(
+                  'activity-badge-stage-${items.first.badge.family}-${index + 1}',
+                ),
+                height: 8 * scale,
+                decoration: BoxDecoration(
+                  color: items[index].isEarned
+                      ? color
+                      : Colors.black.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ),
+          if (index != items.length - 1) SizedBox(width: 3 * scale),
+        ],
+      ],
     );
   }
 }
@@ -888,25 +1054,6 @@ ActivityBadgeProgress? _firstLocked(List<ActivityBadgeProgress> badges) {
     if (!badge.isEarned) return badge;
   }
   return null;
-}
-
-double _badgeTileSize(double maxWidth, double scale) {
-  final gap = 10 * scale;
-  final columns = maxWidth >= 300 * scale ? 6 : 4;
-  return (maxWidth - gap * (columns - 1)) / columns;
-}
-
-int _groupGridColumns(BuildContext context) {
-  final width = MediaQuery.of(context).size.width;
-  if (width >= 900) return 2;
-  return 1;
-}
-
-double _groupAspectRatio(BuildContext context) {
-  final width = MediaQuery.of(context).size.width;
-  if (width >= 900) return 1.75;
-  if (width >= 620) return 2.2;
-  return 1.25;
 }
 
 class _BadgeProgressGroup {

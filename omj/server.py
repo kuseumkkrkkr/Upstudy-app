@@ -9,6 +9,7 @@ import json
 
 import os
 import random
+import re
 from infra.db import postgres_compat as db
 
 import urllib.error
@@ -56,6 +57,8 @@ from auth import (
 
     authenticate_user,
 
+    create_demo_session,
+
     create_token,
 
     decode_token,
@@ -71,6 +74,10 @@ from auth import (
     get_user_role,
 
     init_user_db,
+
+    is_demo_session_active,
+
+    purge_expired_demo_sessions,
 
     register_teacher,
 
@@ -681,6 +688,19 @@ def _list_variant_tray_items(*, user_id: str, limit: int = 100) -> List[Dict[str
     return items
 
 
+async def _demo_session_purge_loop() -> None:
+    """필요 변수: 60초 정리 주기와 PostgreSQL 시연 세션 테이블.
+    작동 원리: 비동기 웹 루프를 막지 않고 만료 계정·사용자 기록을 주기적으로 삭제해,
+    사용자가 다시 요청하지 않아도 30분 시연 데이터가 자동 파기되게 한다.
+    """
+    while True:
+        try:
+            await asyncio.to_thread(purge_expired_demo_sessions)
+        except Exception as exc:
+            logger.warning("demo session purge failed: %s", type(exc).__name__)
+        await asyncio.sleep(60)
+
+
 @app.on_event("startup")
 async def _startup_event() -> None:
     """필요 변수: PostgreSQL·Redis 시크릿과 마이그레이션.
@@ -689,6 +709,10 @@ async def _startup_event() -> None:
     postgres_rating_store.require_ready()
     init_student_account_db()
     init_user_db()
+    purged_demo_sessions = await asyncio.to_thread(purge_expired_demo_sessions)
+    if purged_demo_sessions:
+        logger.info("purged %s expired demo sessions at startup", purged_demo_sessions)
+    app.state.demo_session_purge_task = asyncio.create_task(_demo_session_purge_loop())
     init_user_kv_db()
     # 교사 문서함과 코스 빌더가 첫 요청부터 기본 교재를 조회할 수 있게 준비한다.
     init_textbook_db()
@@ -729,7 +753,7 @@ async def _startup_event() -> None:
 async def _shutdown_event() -> None:
     if hasattr(app.state, "job_worker"):
         await app.state.job_worker.stop()
-    for task_name in ("seed_validator_task",):
+    for task_name in ("seed_validator_task", "demo_session_purge_task"):
         task = getattr(app.state, task_name, None)
         if task is None:
             continue
@@ -1080,6 +1104,65 @@ def _exam_paper_runtime_items(exam_id: str) -> Optional[List[Dict[str, Any]]]:
                 "flow_count": raw.get("flow_count"),
                 "codebase_id": raw.get("codebase_id") or data.get("codebase_id"),
                 "seed": raw.get("seed") or data.get("seed"),
+                "error": None if quest else "quest not found",
+            }
+        )
+    return items
+
+
+def _marketplace_exam_runtime_items(
+    user_id: str,
+    listing_id: str,
+) -> Optional[List[Dict[str, Any]]]:
+    """필요 변수는 로그인 사용자와 마켓 시험지 상품 ID다.
+    작동 원리는 보유 원장을 먼저 확인한 뒤 상품의 고정 문제 ID를 시험지 응답 형식으로
+    복원하는 것이다. 별도 생성 시험 레코드가 없는 마켓 시험지도 구매자에게만 공개한다.
+    """
+    from domain.marketplace import purchase_repository
+    from domain.marketplace import repository as marketplace_repository
+
+    listing = marketplace_repository.get_published(listing_id)
+    if listing is None or str(listing.get("kind") or "") != "exam":
+        return None
+
+    owned_listing_ids = {
+        str(purchase.get("listing_id") or "")
+        for purchase in purchase_repository.list_owned(user_id)
+    }
+    if listing_id not in owned_listing_ids:
+        return None
+
+    raw_problem_ids = listing.get("problem_ids")
+    if not isinstance(raw_problem_ids, list):
+        return []
+
+    items: List[Dict[str, Any]] = []
+    for index, raw_quest_id in enumerate(raw_problem_ids):
+        quest_id = str(raw_quest_id or "").strip()
+        if not quest_id:
+            continue
+        quest = get_quest(quest_id)
+        data = quest.get("data", {}) if quest else {}
+        hash_tags = data.get("hash_tag") or data.get("hash_tags") or []
+        if isinstance(hash_tags, str):
+            hash_tags = [hash_tags]
+        if not isinstance(hash_tags, list):
+            hash_tags = []
+        items.append(
+            {
+                "item_index": index,
+                "status": "done",
+                "subject_key": str(data.get("subject_key") or "math"),
+                "hash_tags": [str(tag) for tag in hash_tags],
+                "difficulty_tier": int(data.get("difficulty_tier") or 3),
+                "solves_count": int(data.get("solves_count") or 1),
+                "strategy_level": int(data.get("strategy_level") or 1),
+                "branch_conditions": int(data.get("branch_conditions") or 0),
+                "question_type": data.get("question_type"),
+                "quest_id": quest_id,
+                "flow_count": len(quest.get("solves", [])) if quest else None,
+                "codebase_id": data.get("codebase_id"),
+                "seed": data.get("seed"),
                 "error": None if quest else "quest not found",
             }
         )
@@ -1470,6 +1553,11 @@ class TokenResponse(BaseModel):
     token: str
 
     user_id: str
+
+
+class DemoSessionResponse(TokenResponse):
+    expires_at: str
+    name: str = "Test"
 
 
 
@@ -1868,6 +1956,7 @@ class VariantGradeRequest(BaseModel):
     quest_id: str
     selected_index: Optional[int] = None
     user_answer: Optional[str] = None
+    flow_order: Optional[List[int]] = None
     hints_forbidden: bool = True
 
 
@@ -3018,6 +3107,10 @@ def _get_user_id(
     user = resolve_token_payload_user(payload)
     if not user["user_id"]:
         raise HTTPException(status_code=401, detail="Invalid token")
+    if payload.get("demo") is True and not is_demo_session_active(user["user_id"]):
+        # 만료 JWT가 남은 클라이언트도 즉시 차단하고 다음 정리 주기 전에 사용자 기록을 지운다.
+        purge_expired_demo_sessions()
+        raise HTTPException(status_code=401, detail="Demo session expired")
     return user["user_id"]
 
 
@@ -3032,6 +3125,9 @@ def _get_auth_payload(
     user = resolve_token_payload_user(payload)
     if not user["user_id"]:
         raise HTTPException(status_code=401, detail="Invalid token")
+    if payload.get("demo") is True and not is_demo_session_active(user["user_id"]):
+        purge_expired_demo_sessions()
+        raise HTTPException(status_code=401, detail="Demo session expired")
     return {**payload, "sub": user["user_id"], "username": user["username"], "role": user["role"]}
 
 
@@ -3207,19 +3303,34 @@ def _to_user_profile_payload(profile: Dict[str, Optional[str]]) -> Dict[str, Opt
 
 
 @app.get("/auth/me", response_model=UserProfile)
-def get_profile(user_id: str = Depends(_get_user_id)) -> UserProfile:
+def get_profile(auth_payload: Dict[str, Any] = Depends(_get_auth_payload)) -> UserProfile:
+    """필요 변수: 인증 payload와 사용자 프로필.
+    작동 원리: 시연 JWT는 저장된 Test 이름만 반환해 클라이언트 캐시나 프로필 값이
+    시연 참가자별 이름으로 바뀌지 않게 한다.
+    """
+    user_id = str(auth_payload["sub"])
     profile = get_auth_user_by_id(user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
     payload = _to_user_profile_payload(profile)
+    if auth_payload.get("demo") is True:
+        payload["name"] = "Test"
+        payload["username"] = "Test"
     return UserProfile(**payload)
 
 
 @app.put("/auth/me", response_model=UserProfile)
 def update_profile(
     payload: UserProfileUpdateRequest,
-    user_id: str = Depends(_get_user_id),
+    auth_payload: Dict[str, Any] = Depends(_get_auth_payload),
 ) -> UserProfile:
+    """필요 변수: 인증 payload와 프로필 수정 요청.
+    작동 원리: 정식 계정은 기존 수정 흐름을 유지하고, 30분 시연 계정은 Test 표기를
+    고정하기 위해 프로필 변경을 차단한다.
+    """
+    if auth_payload.get("demo") is True:
+        raise HTTPException(status_code=403, detail="Demo profile is fixed to Test")
+    user_id = str(auth_payload["sub"])
     try:
         updated = update_user_profile(
             user_id=user_id,
@@ -3258,6 +3369,24 @@ def issue_anonymous_token() -> TokenResponse:
     user_id = str(uuid.uuid4())
 
     return TokenResponse(token=create_token(user_id), user_id=user_id)
+
+
+@app.post("/auth/demo-session", response_model=DemoSessionResponse, status_code=201)
+def issue_demo_session() -> DemoSessionResponse:
+    """필요 변수: 30분 시연 계정 생성기.
+    작동 원리: 회원가입 입력 없이 새 Test 계정과 짧은 JWT를 발급하고, 만료 시각은
+    서버 정리 루프와 JWT 양쪽에서 강제해 시연 데이터가 장기 보관되지 않게 한다.
+    """
+    try:
+        session = create_demo_session()
+    except Exception as exc:
+        logger.exception("demo session creation failed")
+        raise HTTPException(status_code=503, detail="Demo session is temporarily unavailable") from exc
+    return DemoSessionResponse(
+        token=str(session["token"]),
+        user_id=str(session["user_id"]),
+        expires_at=str(session["expires_at"]),
+    )
 
 
 
@@ -4329,6 +4458,13 @@ def get_exam_handler(
     exam = get_exam(exam_id)
 
     if exam is None:
+        marketplace_items = _marketplace_exam_runtime_items(user_id, exam_id)
+        if marketplace_items is not None:
+            return ExamStatusResponse(
+                exam_id=exam_id,
+                status="done",
+                items=_resolve_items(marketplace_items),
+            )
         if not _can_access_exam_via_course(user_id, exam_id, course_id):
             raise HTTPException(status_code=404, detail="Exam not found")
         paper_items = _exam_paper_runtime_items(exam_id)
@@ -6032,6 +6168,49 @@ def convert_variant_to_mcq(
     return VariantGenerateResponse(success=True, quest=quest, rejection=None)
 
 
+def _variant_plain_content_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(value)
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        return " ".join(filter(None, (_variant_plain_content_text(item) for item in value))).strip()
+    if isinstance(value, dict):
+        if isinstance(value.get("blocks"), list):
+            return _variant_plain_content_text(value["blocks"])
+        for key in ("content", "text", "latex"):
+            text = _variant_plain_content_text(value.get(key))
+            if text:
+                return text
+    return ""
+
+
+def _variant_normalize_numeric_answer(value: Any) -> Optional[str]:
+    text = _variant_plain_content_text(value).strip().strip("$").strip()
+    if not re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", text):
+        return None
+    negative = text.startswith("-")
+    unsigned = text.lstrip("+-")
+    whole, _, fraction = unsigned.partition(".")
+    whole = whole.lstrip("0") or "0"
+    fraction = fraction.rstrip("0")
+    normalized = whole if not fraction else f"{whole}.{fraction}"
+    if normalized == "0":
+        return "0"
+    return f"-{normalized}" if negative else normalized
+
+
+def _variant_flow_step_count(value: Any) -> int:
+    if isinstance(value, list):
+        return sum(_variant_flow_step_count(item) for item in value)
+    if not isinstance(value, dict):
+        return 0
+    own = 1 if _variant_plain_content_text(value.get("flow")) else 0
+    return own + _variant_flow_step_count(value.get("branches"))
+
+
 @app.post("/analysis/solve/variant-grade")
 def grade_variant_solve(
     payload: VariantGradeRequest,
@@ -6041,21 +6220,42 @@ def grade_variant_solve(
     if not quest:
         raise HTTPException(status_code=404, detail="Quest not found")
     data = (quest.get("data", {}) or {})
-    is_mcq = str(data.get("question_type") or "").lower() in {"multiple_choice", "mcq"}
+    options = data.get("quest_options")
+    is_mcq = (
+        isinstance(options, list)
+        and bool(options)
+        or str(data.get("question_type") or "").lower() in {"multiple_choice", "mcq"}
+    )
     mcq_meta = data.get("mcq_conversion", {}) if isinstance(data.get("mcq_conversion"), dict) else {}
     answer_index = data.get("choice_answer_index")
     if answer_index is None:
         answer_index = mcq_meta.get("answer_index")
-    selected = payload.selected_index
-    raw_correct = bool(selected is not None and answer_index is not None and int(selected) == int(answer_index))
-    pass_result = raw_correct
+    if is_mcq:
+        selected = payload.selected_index
+        answer_correct = bool(
+            selected is not None
+            and answer_index is not None
+            and int(selected) == int(answer_index)
+        )
+        answer_reason = "normal" if answer_correct else "incorrect_choice"
+    else:
+        expected_answer = _variant_normalize_numeric_answer(data.get("quest_answer"))
+        submitted_answer = _variant_normalize_numeric_answer(payload.user_answer)
+        answer_correct = expected_answer is not None and submitted_answer == expected_answer
+        answer_reason = "normal" if answer_correct else "incorrect_numeric_answer"
+
+    flow_count = _variant_flow_step_count(quest.get("solves"))
+    flow_correct = flow_count == 0 or payload.flow_order == list(range(flow_count))
+    raw_correct = answer_correct and flow_correct
     return {
         "quest_id": payload.quest_id,
-        "question_type": data.get("question_type"),
+        "question_type": "multiple_choice" if is_mcq else "short_answer",
         "raw_correct": raw_correct,
-        "pass": pass_result,
+        "pass": raw_correct,
+        "answer_correct": answer_correct,
+        "flow_correct": flow_correct,
         "hints_forbidden": True,
-        "reason": "incorrect_choice" if is_mcq and not raw_correct else "normal",
+        "reason": "normal" if raw_correct else ("incorrect_flow" if not flow_correct else answer_reason),
     }
 
 

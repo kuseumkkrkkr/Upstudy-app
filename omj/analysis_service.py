@@ -14,6 +14,10 @@ from services.ai.sam_client import (
 )
 from services.ai.prompts import solve_grading_prompt, solve_ocr_prompt
 from services.ocr.texteller_grid import extract_math_with_texteller_grid
+from services.ocr.handwriting_probability import (
+    TextCandidate,
+    resolve_with_discrete_prior,
+)
 
 load_env()
 
@@ -21,6 +25,7 @@ load_env()
 ANALYSIS_MODEL = DEFAULT_ANALYSIS_MODEL
 # 로컬 TexTeller 실패 때만 사용하는 Qwen 비전 OCR 모델이다.
 QWEN_OCR_MODEL = os.getenv("OMJ_OCR_QWEN_MODEL", "fw-qwen3.7-plus")
+DISCRETE_GUARD_ENABLED = os.getenv("OMJ_OCR_DISCRETE_GUARD", "1").strip().lower() in {"1", "true", "yes", "y"}
 
 _DEFAULT_OCR_PROMPT = solve_ocr_prompt()
 _DEFAULT_GRADING_PROMPT = solve_grading_prompt()
@@ -203,7 +208,21 @@ def analyze_pregrade(
     if texteller_result.get("accepted"):
         result_json: Dict[str, Any] = {}
         warning: Optional[str] = None
-        ocr_result = texteller_result
+        if DISCRETE_GUARD_ENABLED:
+            qwen_result = _run_qwen_ocr(
+                prompt=prompt,
+                model=analysis_model,
+                images=images,
+                gen_config=ocr_gen_config,
+            )
+            warnings.extend(_normalize_warning_list(qwen_result.get("warnings")))
+            ocr_result = _merge_ocr_with_discrete_prior(
+                texteller_result,
+                qwen_result,
+                review_context="texteller_accepted_with_guard",
+            )
+        else:
+            ocr_result = texteller_result
     else:
         # TexTeller가 실패·포화·비정상 출력일 때만 Qwen이 원본 이미지 OCR을 담당한다.
         warnings.extend(_normalize_warning_list(texteller_result.get("warnings")))
@@ -264,7 +283,100 @@ def analyze_pregrade(
         "user_answer": user_answer,
         "warnings": warnings,
         "ocr_source": str(ocr_result.get("ocr_source") or "qwen_vision_empty"),
+        "ocr_guard": ocr_result.get("ocr_guard"),
         "debug": debug_info,
+    }
+
+
+def _run_qwen_ocr(
+    *,
+    prompt: str,
+    model: str,
+    images: List[bytes],
+    gen_config: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """필요 변수: OCR 프롬프트/모델/이미지/옵션.
+    작동 원리: Qwen OCR을 단일 호출로 돌리고 통일 포맷으로 정규화한다."""
+    result_json, warning = _generate_json_with_images(
+        prompt=prompt,
+        model=model,
+        images=images,
+        gen_config=gen_config,
+    )
+    formulas = _normalize_ocr_list(result_json.get("all_formulas"))
+    purple_formulas = _normalize_ocr_list(result_json.get("purple_formulas"))
+    ocr_payload: Dict[str, Any] = {
+        **result_json,
+        "all_formulas": formulas,
+        "purple_formulas": purple_formulas,
+        "ocr_source": "qwen_vision" if formulas else "qwen_vision_empty",
+        "accepted": bool(formulas),
+        "warnings": _normalize_warning_list(result_json.get("warnings")),
+    }
+    if warning:
+        ocr_payload["warnings"].append(f"Qwen OCR failed: {warning}")
+    if not formulas and not warning:
+        ocr_payload["warnings"].append("Qwen OCR returned no formulas")
+    return ocr_payload
+
+
+def _merge_ocr_with_discrete_prior(
+    texteller_result: Dict[str, Any],
+    qwen_result: Dict[str, Any],
+    *,
+    review_context: str,
+) -> Dict[str, Any]:
+    """필요 변수: TexTeller 결과, Qwen 결과.
+    작동 원리: 동일 위치 문자열 후보를 이산확률 사전으로 재채점하고, 낮은 점수면 REVIEW 플래그를 붙인다."""
+    texteller_formulas = _normalize_ocr_list(texteller_result.get("all_formulas"))
+    qwen_formulas = _normalize_ocr_list(qwen_result.get("all_formulas"))
+
+    all_count = max(len(texteller_formulas), len(qwen_formulas))
+    resolved_all: list[str] = []
+    guard_details: list[Dict[str, Any]] = []
+    need_review = False
+    for idx in range(all_count):
+        baseline = texteller_formulas[idx] if idx < len(texteller_formulas) else ""
+        qwen_text = qwen_formulas[idx] if idx < len(qwen_formulas) else ""
+        candidates = [TextCandidate(text=baseline, confidence=0.92, source="texteller")]
+        if qwen_text:
+            candidates.append(TextCandidate(text=qwen_text, confidence=0.85, source="qwen"))
+        guard = resolve_with_discrete_prior(
+            candidates=candidates,
+            baseline_text=baseline or qwen_text,
+            min_confidence=0.0,
+        )
+        if not baseline:
+            baseline = qwen_text
+            guard["status"] = "ACCEPT"
+            guard["text"] = qwen_text
+        if guard["status"] != "ACCEPT":
+            need_review = True
+        resolved_all.append(str(guard.get("text", baseline)))
+        guard_details.append(
+            {
+                "index": idx,
+                "status": guard.get("status"),
+                "selected": str(guard.get("text", "")),
+                "score": guard.get("score", 0.0),
+                "need_manual_review": bool(guard.get("need_manual_review", False)),
+            }
+        )
+
+    merged_source = texteller_result.get("ocr_source", "texteller_grid")
+    purple_result = _normalize_ocr_list(texteller_result.get("purple_formulas"))
+    return {
+        **texteller_result,
+        "all_formulas": resolved_all,
+        "purple_formulas": purple_result,
+        "ocr_source": f"{merged_source}+qwen_discrete_guard",
+        "accepted": bool(resolved_all),
+        "ocr_guard": {
+            "enabled": True,
+            "context": review_context,
+            "need_manual_review": need_review,
+            "details": guard_details,
+        },
     }
 
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:ui_web' as ui_web;
@@ -40,6 +41,7 @@ class _JsxGraphEmbedWebState extends State<_JsxGraphEmbedWeb> {
 
   late final String _viewType;
   late final web.HTMLIFrameElement _iframe;
+  late final StreamSubscription<web.Event> _loadSubscription;
   late String _payloadJson;
 
   @override
@@ -60,6 +62,7 @@ class _JsxGraphEmbedWebState extends State<_JsxGraphEmbedWeb> {
         directManipulationMode: widget.directManipulationMode,
       ),
     );
+    _loadSubscription = _iframe.onLoad.listen((_) => _postLatestPayload());
 
     ui_web.platformViewRegistry.registerViewFactory(_viewType, (int viewId) {
       return _iframe;
@@ -72,14 +75,22 @@ class _JsxGraphEmbedWebState extends State<_JsxGraphEmbedWeb> {
     final nextPayloadJson = jsonEncode(widget.document.toJson());
     if (_payloadJson != nextPayloadJson) {
       _payloadJson = nextPayloadJson;
-      _iframe.contentWindow?.postMessage(_payloadJson.toJS, '*'.toJS);
+      _postLatestPayload();
     }
+  }
+
+  /// 필요한 변수는 iframe의 현재 창과 마지막으로 직렬화한 그래프 문서다.
+  /// 작동 원리는 모바일에서 iframe 로드 전 입력된 수식도 load 이벤트 직후 다시
+  /// 보내어 JSXGraph가 빈 초기 문서로 남는 상황을 막는 것이다.
+  void _postLatestPayload() {
+    _iframe.contentWindow?.postMessage(_payloadJson.toJS, '*'.toJS);
   }
 
   /// 필요한 변수는 현재 iframe DOM 요소다.
   /// 작동 원리는 교재 페이지를 떠날 때 플랫폼 뷰를 즉시 숨기고 DOM에서 제거해 다음 Flutter 장면에 합성 레이어가 남지 않게 한다.
   @override
   void dispose() {
+    _loadSubscription.cancel();
     _iframe.style.display = 'none';
     _iframe.remove();
     super.dispose();

@@ -15,8 +15,7 @@ import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
-import 'package:s11/sessions/learning_tools/ui/pages/timer_page.dart';
-import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
 import 'package:s11/sessions/student_dashboard/business/activity_badge_catalog.dart';
@@ -63,6 +62,12 @@ const int _ratingEstimateMinSolved = 50;
 const double _ratingDeltaPercentMax = 0.5;
 const double _homeFooterDesktopHeight = 384;
 const double _homeFooterSixWeekHeight = 438;
+
+/// 필요한 변수는 현재 모바일 viewport의 공용 바깥 여백이다.
+/// 작동 원리: 홈의 인사·학습·현황 섹션에 14px 안쪽 여백을 더해 같은 수직축을 만든다.
+double _mobileHomeContentInset(BuildContext context) {
+  return studentDensityHorizontalPadding(context) + 14;
+}
 
 double _ratingDisplay(double rating) {
   return (math.max(rating, _ratingFloor) - _ratingFloor)
@@ -432,22 +437,30 @@ class _MainStudentPageState extends State<MainStudentPage> {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    final portraitMobile =
+        mobile && MediaQuery.orientationOf(context) == Orientation.portrait;
     final todayTasks = [..._todayTeacherTasks, ..._todayPersonalTasks];
-    // 필요한 변수는 모바일 본문 여백과 2줄 인사 문구의 실제 높이다.
-    // 작동 원리: 좁은 폭에서도 인사·보조 설명이 잘리지 않도록 시안의 압축 히어로를
-    // 고정 210px이 아닌 내용이 들어가는 250px 높이로 유지한다.
-    final heroExtent = mobile ? 250.0 : 294.0;
+    // 필요한 변수는 화면 방향과 인사 문구의 실제 높이다.
+    // 작동 원리: 세로형 모바일은 설명을 덜어낸 전용 히어로를 사용하고,
+    // 가로형·태블릿은 기존 정보형 히어로를 유지한다.
+    final heroExtent = portraitMobile
+        ? 156.0
+        : mobile
+        ? 250.0
+        : 294.0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: StudentDensityTokens.background,
-        drawer: const AppDrawer(),
+        drawer: mobile ? null : const AppDrawer(),
+        bottomNavigationBar: mobile ? const MobileStudentBottomAppBar() : null,
         body: SafeArea(
           child: Column(
             children: [
               _Header(
                 displayName: _displayName,
+                mobile: mobile,
                 onProfileChanged: _refreshDisplayName,
               ),
               Expanded(
@@ -457,12 +470,17 @@ class _MainStudentPageState extends State<MainStudentPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _HeroSection(username: _displayName, height: heroExtent),
+                      _HeroSection(
+                        username: _displayName,
+                        height: heroExtent,
+                        portraitMobile: portraitMobile,
+                      ),
                       _CourseLoader(
                         key: _courseLoaderKey,
                         builder: (course) => _LearningSection(
                           todayTasks: todayTasks,
                           activeCourse: course,
+                          portraitMobile: portraitMobile,
                           onCourseTap: _handleCourseTap,
                           onTodayTasksTap: () => showTodayTasksModal(
                             context: context,
@@ -537,9 +555,14 @@ class _CourseLoaderState extends State<_CourseLoader> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.displayName, required this.onProfileChanged});
+  const _Header({
+    required this.displayName,
+    required this.mobile,
+    required this.onProfileChanged,
+  });
 
   final String? displayName;
+  final bool mobile;
   final Future<void> Function() onProfileChanged;
 
   /// 필요 변수는 현재 Navigator와 프로필 변경 후 실행할 새로고침 함수다.
@@ -555,8 +578,10 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Ios26TopBar(
       brandColor: _green,
-      onMenu: () => toggleAppDrawer(context),
+      onMenu: mobile ? null : () => toggleAppDrawer(context),
       showLevelIndicator: false,
+      showUtilityActions: !mobile,
+      hideOnMobile: true,
       profileLabel: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()
           : null,
@@ -656,16 +681,30 @@ class _AppBarLevelIndicatorState extends State<_AppBarLevelIndicator> {
 }
 
 class _HeroSection extends StatelessWidget {
-  const _HeroSection({required this.username, required this.height});
+  const _HeroSection({
+    required this.username,
+    required this.height,
+    required this.portraitMobile,
+  });
   final String? username;
   final double? height;
+  final bool portraitMobile;
 
   /// 필요 변수: 로그인 사용자 이름과 화면 폭.
   /// 작동 원리: 배경 사진과 통계 회전을 제거하고 최신 시안의 짧은 인사 문맥만 먼저 표시합니다.
   @override
   Widget build(BuildContext context) {
     final name = username?.trim();
-    final displayName = (name == null || name.isEmpty) ? '사용자' : name;
+    final hasDisplayName = name != null && name.isNotEmpty;
+    final greeting = portraitMobile
+        ? hasDisplayName
+              ? '$name님,\n바로 시작해요.'
+              : '오늘도,\n바로 시작해요.'
+        : hasDisplayName
+        ? '$name님,\n오늘도 시작해 볼까요?'
+        : isStudentDensityMobile(context)
+        ? '오늘도,\n학습을 시작해 볼까요?'
+        : '사용자님,\n오늘도 시작해 볼까요?';
     final now = DateTime.now();
     final mobile = isStudentDensityMobile(context);
     const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -675,14 +714,22 @@ class _HeroSection extends StatelessWidget {
       child: StudentDensityPage(
         padding: EdgeInsets.fromLTRB(
           studentDensityHorizontalPadding(context),
-          studentDensityVerticalPadding(context),
+          portraitMobile ? 18 : studentDensityVerticalPadding(context),
           studentDensityHorizontalPadding(context),
           0,
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: mobile ? 24 : 38,
-            vertical: mobile ? 24 : 30,
+            horizontal: portraitMobile
+                ? 14
+                : mobile
+                ? 24
+                : 38,
+            vertical: portraitMobile
+                ? 14
+                : mobile
+                ? 24
+                : 30,
           ),
           child: Align(
             alignment: Alignment.topLeft,
@@ -694,24 +741,34 @@ class _HeroSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '$displayName님,\n오늘도 시작해 볼까요?',
+                  greeting,
                   style: TextStyle(
                     color: StudentDensityTokens.ink,
-                    fontSize: mobile ? 38 : 56,
-                    height: 0.98,
+                    fontSize: portraitMobile
+                        ? 40
+                        : mobile
+                        ? 38
+                        : 56,
+                    height: portraitMobile ? 1.02 : 0.98,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: mobile ? -2 : -3.4,
+                    letterSpacing: portraitMobile
+                        ? -2.2
+                        : mobile
+                        ? -2
+                        : -3.4,
                   ),
                 ),
-                SizedBox(height: mobile ? 9 : 12),
-                Text(
-                  '어제 멈춘 학습과 오늘 일정은 아래 학습 영역에서 이어집니다.',
-                  style: TextStyle(
-                    color: StudentDensityTokens.muted,
-                    fontSize: mobile ? 11 : 14,
-                    height: 1.5,
+                if (!portraitMobile) ...[
+                  SizedBox(height: mobile ? 9 : 12),
+                  Text(
+                    '어제 멈춘 학습과 오늘 일정은 아래 학습 영역에서 이어집니다.',
+                    style: TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: mobile ? 11 : 14,
+                      height: 1.5,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -1154,11 +1211,13 @@ class _LearningSection extends StatelessWidget {
   const _LearningSection({
     required this.todayTasks,
     required this.activeCourse,
+    required this.portraitMobile,
     required this.onCourseTap,
     required this.onTodayTasksTap,
   });
   final List<_TodayTaskItem> todayTasks;
   final Course? activeCourse;
+  final bool portraitMobile;
   final VoidCallback onCourseTap;
   final VoidCallback onTodayTasksTap;
 
@@ -1176,17 +1235,11 @@ class _LearningSection extends StatelessWidget {
         : '진행률 $progressPercent%';
 
     /// 필요한 변수는 도구별 이동 콜백이다.
-    /// 작동 원리: HTML 학습 도구 카드의 네 빠른 실행을 기존 기능 화면과 연결한다.
+    /// 작동 원리: 홈의 세 빠른 실행을 기존 노트·그래프·AI 튜터 화면과 연결한다.
     final tools = LearningToolsStrip(
       onNotepad: () => Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const NotepadPage())),
-      onTimer: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const TimerPage())),
-      onFocusMode: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const FocusModePage())),
       onGraph: () {
         unawaited(
           ActivityStore.recordGraphPractice(
@@ -1198,6 +1251,11 @@ class _LearningSection extends StatelessWidget {
           context,
         ).push(MaterialPageRoute(builder: (_) => const JsxGraphPage()));
       },
+      onTutor: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const ServerChatPage(standalone: true),
+        ),
+      ),
     );
 
     // 필요한 변수는 학습 도구 제목·빠른 실행 배지·도구 목록이다.
@@ -1257,13 +1315,24 @@ class _LearningSection extends StatelessWidget {
           );
 
     final statusCards = [
-      Expanded(child: _DailyQuestProgressCard(courseId: activeCourse?.id)),
+      Expanded(
+        child: portraitMobile
+            ? _HomeStatusCard(
+                label: '현재 코스',
+                value: progressPercent == null ? '선택' : '$progressPercent%',
+                meta: '',
+                onTap: onCourseTap,
+                hideMeta: true,
+              )
+            : _DailyQuestProgressCard(courseId: activeCourse?.id),
+      ),
       Expanded(
         child: _HomeStatusCard(
           label: '오늘 할 일',
           value: '${todayTasks.length}개',
           meta: todayTasks.isEmpty ? '오늘 해야 할 일이 없습니다.' : '카드를 눌러 할 일을 확인하세요.',
           onTap: onTodayTasksTap,
+          hideMeta: portraitMobile,
         ),
       ),
     ];
@@ -1280,31 +1349,79 @@ class _LearningSection extends StatelessWidget {
         ),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-            studentDensityHorizontalPadding(context),
+            portraitMobile
+                ? _mobileHomeContentInset(context)
+                : studentDensityHorizontalPadding(context),
             0,
-            studentDensityHorizontalPadding(context),
-            14,
+            portraitMobile
+                ? _mobileHomeContentInset(context)
+                : studentDensityHorizontalPadding(context),
+            portraitMobile ? 6 : 14,
           ),
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.symmetric(
+              horizontal: portraitMobile ? 0 : 20,
+              vertical: portraitMobile ? 14 : 20,
+            ),
             decoration: BoxDecoration(
-              color: StudentDensityTokens.surfaceMuted,
-              borderRadius: BorderRadius.circular(34),
-              border: Border.all(color: StudentDensityTokens.line),
+              color: portraitMobile
+                  ? StudentDensityTokens.background
+                  : StudentDensityTokens.surfaceMuted,
+              borderRadius: BorderRadius.circular(portraitMobile ? 0 : 34),
+              border: portraitMobile
+                  ? null
+                  : Border.all(color: StudentDensityTokens.line),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _LearnBanner(onTap: () => showStudyModeModal(context: context)),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    statusCards[0],
-                    SizedBox(width: mobile ? 8 : 12),
-                    statusCards[1],
-                  ],
+                _LearnBanner(
+                  portraitMobile: portraitMobile,
+                  title: portraitMobile ? '학습하기' : null,
+                  description: portraitMobile ? '원하는 학습 방식을 선택하세요.' : null,
+                  onTap: () => showStudyModeModal(context: context),
                 ),
                 const SizedBox(height: 12),
-                moduleGrid,
+                if (portraitMobile)
+                  Column(
+                    children: [
+                      _MobileHomeStatusGroup(
+                        courseValue: progressPercent == null
+                            ? '코스 선택'
+                            : '진행률 $progressPercent%',
+                        taskValue: todayTasks.isEmpty
+                            ? '할 일 없음'
+                            : '${todayTasks.length}개 남음',
+                        onCourseTap: onCourseTap,
+                        onTodayTasksTap: onTodayTasksTap,
+                      ),
+                      const SizedBox(height: 24),
+                      Material(
+                        key: const ValueKey(
+                          'student-home-mobile-practical-tools',
+                        ),
+                        color: Colors.white,
+                        elevation: 4,
+                        shadowColor: Colors.black.withValues(alpha: 0.13),
+                        borderRadius: BorderRadius.circular(24),
+                        clipBehavior: Clip.antiAlias,
+                        child: toolCard,
+                      ),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      statusCards[0],
+                      SizedBox(width: mobile ? 8 : 12),
+                      statusCards[1],
+                    ],
+                  ),
+                // 세로 모바일은 위의 실제 도구 그룹을 사용하고, 넓은 화면은 기존 모듈 그리드를 유지한다.
+                if (!portraitMobile) ...[
+                  const SizedBox(height: 12),
+                  moduleGrid,
+                ],
               ],
             ),
           ),
@@ -1344,6 +1461,106 @@ class _DashboardPill extends StatelessWidget {
   }
 }
 
+/// 필요한 변수는 코스·오늘 할 일 상태와 각 이동 콜백이다.
+/// 작동 원리: 모바일의 상태 카드 두 개를 하나의 흰 Material 그룹 안 행으로 합쳐 도형 수를 줄인다.
+class _MobileHomeStatusGroup extends StatelessWidget {
+  const _MobileHomeStatusGroup({
+    required this.courseValue,
+    required this.taskValue,
+    required this.onCourseTap,
+    required this.onTodayTasksTap,
+  });
+
+  final String courseValue;
+  final String taskValue;
+  final VoidCallback onCourseTap;
+  final VoidCallback onTodayTasksTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    key: const ValueKey('student-home-mobile-status-group'),
+    color: Colors.white,
+    elevation: 3,
+    shadowColor: Colors.black.withValues(alpha: 0.12),
+    borderRadius: BorderRadius.circular(24),
+    clipBehavior: Clip.antiAlias,
+    child: Column(
+      children: [
+        _MobileHomeStatusRow(
+          icon: Icons.play_circle_outline_rounded,
+          label: '현재 코스',
+          value: courseValue,
+          onTap: onCourseTap,
+        ),
+        _MobileHomeStatusRow(
+          icon: Icons.today_outlined,
+          label: '오늘 할 일',
+          value: taskValue,
+          onTap: onTodayTasksTap,
+        ),
+      ],
+    ),
+  );
+}
+
+/// 필요한 변수는 상태 아이콘·이름·값·이동 콜백이다.
+/// 작동 원리: 68px 행 전체를 터치 영역으로 사용하고 보조 설명 없이 현재 값만 보여 준다.
+class _MobileHomeStatusRow extends StatelessWidget {
+  const _MobileHomeStatusRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: StudentDensityTokens.surfaceMuted,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(icon, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: StudentDensityTokens.muted,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _HomeStatusCard extends StatelessWidget {
   const _HomeStatusCard({
     required this.label,
@@ -1351,6 +1568,7 @@ class _HomeStatusCard extends StatelessWidget {
     required this.meta,
     required this.onTap,
     this.showBadge = false,
+    this.hideMeta = false,
   });
 
   final String label;
@@ -1358,6 +1576,7 @@ class _HomeStatusCard extends StatelessWidget {
   final String meta;
   final VoidCallback? onTap;
   final bool showBadge;
+  final bool hideMeta;
 
   /// 필요한 변수는 상태 라벨·핵심 수치·보조 설명과 탭 콜백이다.
   /// 작동 원리: HTML의 132px 홈 상태 버튼을 큰 수치 중심의 흰 카드로 재현한다.
@@ -1366,7 +1585,11 @@ class _HomeStatusCard extends StatelessWidget {
     final mobile = isStudentDensityMobile(context);
     return SizedBox(
       width: double.infinity,
-      height: mobile ? 118 : 132,
+      height: hideMeta
+          ? 126
+          : mobile
+          ? 118
+          : 132,
       child: Stack(
         fit: StackFit.expand,
         clipBehavior: Clip.none,
@@ -1385,29 +1608,39 @@ class _HomeStatusCard extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: StudentDensityTokens.muted,
-                      fontSize: mobile ? 10 : 12,
+                      fontSize: hideMeta
+                          ? 15
+                          : mobile
+                          ? 10
+                          : 12,
+                      fontWeight: hideMeta ? FontWeight.w800 : FontWeight.w400,
                     ),
                   ),
                   Text(
                     value,
                     style: TextStyle(
                       color: StudentDensityTokens.ink,
-                      fontSize: mobile ? 28 : 42,
+                      fontSize: hideMeta
+                          ? 38
+                          : mobile
+                          ? 28
+                          : 42,
                       height: 1,
                       fontWeight: FontWeight.w900,
                       letterSpacing: mobile ? -1.7 : -2.5,
                     ),
                   ),
-                  Text(
-                    meta,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: StudentDensityTokens.ink,
-                      fontSize: mobile ? 9 : 12,
-                      fontWeight: FontWeight.w800,
+                  if (!hideMeta)
+                    Text(
+                      meta,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: StudentDensityTokens.ink,
+                        fontSize: mobile ? 9 : 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -1554,28 +1787,64 @@ class _InlineCta extends StatelessWidget {
 }
 
 class _LearnBanner extends StatelessWidget {
-  const _LearnBanner({this.onTap});
+  const _LearnBanner({
+    this.onTap,
+    this.portraitMobile = false,
+    this.title,
+    this.description,
+  });
   final VoidCallback? onTap;
+  final bool portraitMobile;
+  final String? title;
+  final String? description;
 
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     return Container(
+      key: ValueKey(
+        portraitMobile
+            ? 'student-home-mobile-learn-banner'
+            : 'student-home-learn-banner',
+      ),
       width: double.infinity,
-      constraints: BoxConstraints(minHeight: mobile ? 118 : 150),
+      constraints: BoxConstraints(
+        minHeight: portraitMobile
+            ? 118
+            : mobile
+            ? 118
+            : 150,
+      ),
       decoration: BoxDecoration(
         color: StudentDensityTokens.darkSecondary,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(portraitMobile ? 24 : 28),
+        boxShadow: portraitMobile
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(portraitMobile ? 24 : 28),
           onTap: onTap,
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: mobile ? 20 : 28,
-              vertical: mobile ? 17 : 24,
+              horizontal: portraitMobile
+                  ? 18
+                  : mobile
+                  ? 20
+                  : 28,
+              vertical: portraitMobile
+                  ? 14
+                  : mobile
+                  ? 17
+                  : 24,
             ),
             child: Row(
               children: [
@@ -1584,44 +1853,67 @@ class _LearnBanner extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const StudentDensityEyebrow(
-                        'LEARNING START',
-                        color: Color(0xFF9B9BA3),
-                      ),
-                      const SizedBox(height: 3),
+                      if (!portraitMobile) ...[
+                        const StudentDensityEyebrow(
+                          'LEARNING START',
+                          color: Color(0xFF9B9BA3),
+                        ),
+                        const SizedBox(height: 3),
+                      ],
                       Text(
-                        '학습하기',
+                        title ?? (portraitMobile ? '학습 시작' : '학습하기'),
                         style: TextStyle(
-                          fontSize: mobile ? 26 : 38,
+                          fontSize: portraitMobile
+                              ? 26
+                              : mobile
+                              ? 26
+                              : 38,
                           height: 1.1,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 7),
-                      Text(
-                        '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFAFAFB6),
+                      if (description != null || !portraitMobile) ...[
+                        const SizedBox(height: 7),
+                        Text(
+                          description ?? '이어하기 · 코스보기 · 복습 · 문제세트 · 시험지 · 교재보기',
+                          maxLines: portraitMobile ? 2 : 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFAFAFB6),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(width: 18),
+                SizedBox(width: portraitMobile ? 14 : 18),
                 Container(
-                  width: mobile ? 56 : 58,
-                  height: mobile ? 56 : 58,
+                  width: portraitMobile
+                      ? 50
+                      : mobile
+                      ? 56
+                      : 58,
+                  height: portraitMobile
+                      ? 50
+                      : mobile
+                      ? 56
+                      : 58,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(
+                      portraitMobile ? 16 : 19,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
+                  child: Icon(
+                    portraitMobile
+                        ? Icons.arrow_forward_rounded
+                        : Icons.play_arrow_rounded,
                     color: StudentDensityTokens.dark,
-                    size: 34,
+                    size: portraitMobile ? 28 : 31,
                   ),
                 ),
               ],
@@ -1731,6 +2023,14 @@ class _BottomSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    // 필요한 변수는 모바일 여부다.
+    // 작동 원리: 모바일은 달력·대결 같은 중복 진입점을 제외하고 레이팅·업적·공지
+    // 상태만 부드러운 단일 그룹으로 요약하며, PC 정보 홈은 기존 구성을 유지한다.
+    if (mobile) {
+      return _MobileHomeInsights(
+        onRatingTap: (isEligible) => _handleRatingTap(context, isEligible),
+      );
+    }
     final horizontalPadding = studentDensityHorizontalPadding(context);
     return Center(
       child: ConstrainedBox(
@@ -1762,10 +2062,11 @@ class _BottomSection extends StatelessWidget {
                               0,
                               _ratingEstimateMinSolved,
                             );
-                        final isEligible = remainingCount == 0;
                         return ValueListenableBuilder<RatingSnapshot>(
                           valueListenable: RatingStore.notifier,
                           builder: (context, ratingSnapshot, _) {
+                            final isEligible =
+                                ratingSnapshot.placementCompleted;
                             final ovrText = ratingSnapshot.isLoaded
                                 ? _formatRatingOvr(ratingSnapshot.ovr)
                                 : '--';
@@ -1915,6 +2216,183 @@ class _BottomSection extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 필요한 변수는 활동·레이팅·계정 상태와 레이팅 상세 이동 함수다.
+/// 작동 원리: 모바일 홈에 필요한 상태 정보만 한 개의 무테 Material 그룹으로 묶고,
+/// 달력·대결·빠른 도구처럼 `더보기`와 겹치는 기능은 만들지 않는다.
+class _MobileHomeInsights extends StatelessWidget {
+  const _MobileHomeInsights({required this.onRatingTap});
+
+  final ValueChanged<bool> onRatingTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      key: const ValueKey('student-home-mobile-insights'),
+      padding: EdgeInsets.fromLTRB(
+        _mobileHomeContentInset(context),
+        0,
+        _mobileHomeContentInset(context),
+        24,
+      ),
+      child: ValueListenableBuilder<ActivitySnapshot>(
+        valueListenable: ActivityStore.notifier,
+        builder: (context, activity, _) {
+          return ValueListenableBuilder<RatingSnapshot>(
+            valueListenable: RatingStore.notifier,
+            builder: (context, rating, __) {
+              final isEligible = rating.placementCompleted;
+              return ValueListenableBuilder<AccountSummary?>(
+                valueListenable: ActivityStore.accountSummaryNotifier,
+                builder: (context, account, ___) {
+                  final badges = ActivityBadgeCatalog.evaluate(
+                    activity,
+                    accountLevel: account?.level ?? 0,
+                  );
+                  final earned = badges.where((item) => item.isEarned).length;
+                  final next = ActivityBadgeCatalog.nextBadges(
+                    activity,
+                    accountLevel: account?.level ?? 0,
+                    limit: 1,
+                  );
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 2, bottom: 12),
+                        child: Text(
+                          '학습 현황',
+                          style: TextStyle(
+                            fontSize: 23,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.8,
+                          ),
+                        ),
+                      ),
+                      Material(
+                        key: const ValueKey(
+                          'student-home-mobile-insights-group',
+                        ),
+                        color: Colors.white,
+                        elevation: 3,
+                        shadowColor: Colors.black.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(24),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            _MobileInsightRow(
+                              icon: Icons.insights_rounded,
+                              label: '레이팅',
+                              value: rating.isLoaded && isEligible
+                                  ? 'OVR ${_formatRatingOvr(rating.ovr)}'
+                                  : '레벨테스트 필요',
+                              darkIcon: true,
+                              onTap: () => onRatingTap(isEligible),
+                            ),
+                            _MobileInsightRow(
+                              icon: Icons.emoji_events_outlined,
+                              label: '업적',
+                              value: next.isEmpty
+                                  ? '$earned개 달성'
+                                  : '$earned개 · ${next.first.badge.title}',
+                              onTap: () => showActivityBadgeDialog(
+                                context: context,
+                                snapshot: activity,
+                                accountLevel: account?.level ?? 0,
+                              ),
+                            ),
+                            _MobileInsightRow(
+                              icon: Icons.notifications_none_rounded,
+                              label: '공지',
+                              value: '새 소식 확인',
+                              onTap: () => showStudentNotifications(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// 필요한 변수는 상태 아이콘·이름·짧은 값과 이동 콜백이다.
+/// 작동 원리: 선으로 구획하지 않고 72px 행의 여백과 잉크 반응만 사용해 단단한 카드
+/// 묶음 대신 하나의 부드러운 모바일 설정 그룹처럼 동작한다.
+class _MobileInsightRow extends StatelessWidget {
+  const _MobileInsightRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.darkIcon = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+  final bool darkIcon;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: darkIcon
+                  ? StudentDensityTokens.dark
+                  : StudentDensityTokens.surfaceMuted,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(
+              icon,
+              size: 22,
+              color: darkIcon ? Colors.white : StudentDensityTokens.ink,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: StudentDensityTokens.muted,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: StudentDensityTokens.muted,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _HomeRatingCard extends StatelessWidget {

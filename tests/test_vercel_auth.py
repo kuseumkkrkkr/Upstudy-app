@@ -1,0 +1,344 @@
+"""Vercel 카나리 회원가입·로그인·세션 계약 테스트."""
+from __future__ import annotations
+
+import importlib
+import time
+
+import jwt
+from fastapi.testclient import TestClient
+
+
+class _FakeAuthDataApi:
+    """필요 변수: 없음. 작동 원리: Supabase 사용자 행을 메모리에 보관해 인증 왕복을 검증한다."""
+
+    def __init__(self) -> None:
+        self.users: list[dict] = []
+
+    def request(self, method, path, *, query=None, body=None, prefer=None):
+        """필요 변수: Data API 호출. 작동 원리: canary_users의 삽입과 인덱스 조회만 모사한다."""
+        assert path == "canary_users"
+        if method == "POST":
+            if any(row["username"] == body["username"] for row in self.users):
+                raise RuntimeError('409: {"code":"23505"}')
+            row = {**body, "role": "student", "created_at": "2026-07-22T00:00:00Z"}
+            self.users.append(row)
+            return [dict(row)]
+        rows = self.users
+        for key in ("username", "user_id"):
+            expected = (query or {}).get(key)
+            if expected:
+                rows = [row for row in rows if str(row[key]) == expected.removeprefix("eq.")]
+        selected = (query or {}).get("select", "*").split(",")
+        return [{key: row.get(key) for key in selected} for row in rows[:1]]
+
+
+class _FakeProfileDataApi(_FakeAuthDataApi):
+    """필요 변수: 사용자·KV 메모리 행. 작동 원리: 프로필 수정과 사용자 저장소 CRUD를 함께 모사한다."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.kv: dict[tuple[str, str], str] = {}
+
+    def request(self, method, path, *, query=None, body=None, prefer=None):
+        """필요 변수: PostgREST 호출. 작동 원리: PATCH·DELETE·KV upsert를 메모리 상태에 반영한다."""
+        if path == "level_test_session":
+            return []
+        if path == "canary_user_kv":
+            user_id = (body or {}).get("user_id") or (query or {}).get("user_id", "").removeprefix("eq.")
+            key = (body or {}).get("key") or (query or {}).get("key", "").removeprefix("eq.")
+            item_key = (user_id, key)
+            if method == "POST":
+                self.kv[item_key] = body["value"]
+                return None
+            if method == "DELETE":
+                self.kv.pop(item_key, None)
+                return None
+            return [{"value": self.kv[item_key]}] if item_key in self.kv else []
+        if method == "PATCH":
+            user_id = query["user_id"].removeprefix("eq.")
+            for row in self.users:
+                if row["user_id"] == user_id:
+                    row.update(body)
+            return None
+        if method == "DELETE":
+            user_id = query["user_id"].removeprefix("eq.")
+            self.users = [row for row in self.users if row["user_id"] != user_id]
+            return None
+        return super().request(method, path, query=query, body=body, prefer=prefer)
+
+
+def test_register_login_and_profile(monkeypatch):
+    """필요 변수: 가짜 Supabase·JWT Secret. 작동 원리: 가입 토큰으로 로그인과 프로필 조회까지 이어지는지 확인한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeAuthDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    payload = {
+        "username": "student01",
+        "password": "password123",
+        "name": "김학생",
+        "grade": "2학년",
+        "track": "중학교",
+        "subject": "수학",
+        "school": "AIFlow 중학교",
+        "email": "student@example.com",
+    }
+    with TestClient(module.app) as client:
+        registered = client.post("/auth/register", json=payload)
+        assert registered.status_code == 201
+        token = registered.json()["token"]
+        claims = jwt.decode(token, "test-secret", algorithms=["HS256"])
+        assert claims["role"] == "student"
+        assert claims["exp"] > int(time.time())
+
+        profile = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert profile.status_code == 200
+        assert profile.json()["school"] == "AIFlow 중학교"
+
+        logged_in = client.post("/auth/login", json={"username": "student01", "password": "password123"})
+        assert logged_in.status_code == 200
+
+
+def test_duplicate_and_invalid_registration(monkeypatch):
+    """필요 변수: 중복 사용자와 잘못된 입력. 작동 원리: 중복은 409, 형식 오류는 400으로 구분한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeAuthDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    valid = {"username": "student02", "password": "password123", "name": "학생2", "grade": "2학년"}
+    with TestClient(module.app) as client:
+        assert client.post("/auth/register", json=valid).status_code == 201
+        assert client.post("/auth/register", json=valid).status_code == 409
+        invalid = {**valid, "username": "x"}
+        assert client.post("/auth/register", json=invalid).status_code == 400
+
+
+def test_profile_and_user_storage_round_trip(monkeypatch):
+    """필요 변수: 가입 사용자·KV 값. 작동 원리: 프로필 수정과 저장·조회·삭제를 동일 토큰으로 왕복한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student03", "password": "password123", "name": "학생3", "grade": "3학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        updated = client.put("/auth/me", headers=headers, json={"school": "테스트학교"})
+        assert updated.status_code == 200
+        assert updated.json()["school"] == "테스트학교"
+        assert client.put("/user/storage/activity", headers=headers, json={"value": '{"score":1}'}).status_code == 200
+        loaded = client.get("/user/storage/activity", headers=headers)
+        assert loaded.json()["value"] == '{"score":1}'
+        assert client.delete("/user/storage/activity", headers=headers).status_code == 200
+        assert client.get("/user/storage/activity", headers=headers).json()["value"] is None
+
+
+def test_new_user_dashboard_endpoints(monkeypatch):
+    """필요 변수: 신규 사용자 토큰. 작동 원리: 홈 초기 로딩 API가 404 없이 파싱 가능한 기본 응답을 주는지 순회한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student04", "password": "password123", "name": "학생4", "grade": "1학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        paths = [
+            "/account/summary",
+            "/rating/user",
+            "/arena/summary",
+            "/arena/rankings?queue_type=duel_exam",
+            "/rating/tags",
+            "/weakness/tags",
+            "/courses/v2",
+            "/courses",
+            "/courses/enrolled",
+            "/academy/assignments/my",
+            "/academy/students/me/schedule",
+            "/challenges/daily-quests?course_id=none",
+            "/marketplace/listings",
+            "/marketplace/my-items",
+            "/history/solve",
+            "/social/friends",
+            "/social/friend-requests",
+            "/social/friends/rankings",
+            "/social/conversations",
+            "/social/study-groups/mine",
+            "/account/system-notices",
+            "/textbooks",
+            "/quests",
+            "/quests/generation-tags",
+            "/exams",
+            "/serverchat/config",
+        ]
+        for path in paths:
+            response = client.get(path, headers=headers)
+            assert response.status_code == 200, path
+            assert isinstance(response.json(), dict), path
+        arena = client.get("/arena/summary", headers=headers).json()
+        assert [item["queue_type"] for item in arena["queues"]] == [
+            "duel_exam",
+            "team_exam",
+        ]
+        assert all(item["coming_soon"] is True for item in arena["queues"])
+
+def test_public_textbook_list_and_detail(monkeypatch):
+    """신규 책가방은 공개 교재 목록과 실제로 열 수 있는 본문을 함께 제공한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={
+                "username": "bookbag01",
+                "password": "password123",
+                "name": "책가방 사용자",
+                "grade": "1학년",
+            },
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        textbooks = client.get("/textbooks", headers=headers).json()["textbooks"]
+        assert textbooks
+        textbook_id = textbooks[0]["textbook_id"]
+        detail = client.get(f"/textbooks/{textbook_id}", headers=headers)
+        assert detail.status_code == 200
+        assert detail.json()["chapters"]
+        assert client.get("/textbooks/missing", headers=headers).status_code == 404
+
+
+def test_personal_schedule_round_trip(monkeypatch):
+    """필요 변수: 로그인 사용자와 날짜별 일정. 작동 원리: PUT 저장값이 다음 GET에서 같은 사용자 일정으로 복원되는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student09", "password": "password123", "name": "학생9", "grade": "1학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        saved = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={
+                "tasks_by_date": {
+                    "2026-08-09": [
+                        {"title": "오답 복습", "start_time": "18:00", "end_time": "19:00"}
+                    ],
+                    "2026-08-10": ["개념 정리"],
+                }
+            },
+        )
+        assert saved.status_code == 200
+
+        loaded = client.get("/academy/students/me/schedule", headers=headers)
+        assert loaded.status_code == 200
+        assert [(item["date"], item["title"]) for item in loaded.json()["items"]] == [
+            ("2026-08-09", "오답 복습"),
+            ("2026-08-10", "개념 정리"),
+        ]
+        assert loaded.json()["items"][0]["start_time"] == "18:00"
+        assert loaded.json()["items"][0]["end_time"] == "19:00"
+        invalid = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={"tasks_by_date": {"2026-02-30": ["잘못된 날짜"]}},
+        )
+        assert invalid.status_code == 400
+        invalid_time = client.put(
+            "/academy/students/me/schedule",
+            headers=headers,
+            json={
+                "tasks_by_date": {
+                    "2026-08-09": [
+                        {"title": "잘못된 시간", "start_time": "19:00", "end_time": "18:00"}
+                    ]
+                }
+            },
+        )
+        assert invalid_time.status_code == 400
+
+
+def test_marketplace_catalog_search_and_pagination(monkeypatch):
+    """필요 변수: 인증 사용자·코스 검색어·페이지 크기. 작동 원리: Vercel 카탈로그가 전체 81개와 검색·다음 페이지 계약을 실제로 반환하는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeAuthDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student05", "password": "password123", "name": "학생5", "grade": "1학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+
+        first_page = client.get("/marketplace/listings?kind=course&limit=20", headers=headers)
+        assert first_page.status_code == 200
+        assert first_page.json()["total"] == 81
+        assert len(first_page.json()["items"]) == 20
+        assert first_page.json()["next_offset"] == 20
+        assert all(item["price_points"] == 0 for item in first_page.json()["items"])
+
+        inventory = {
+            kind: client.get(
+                f"/marketplace/listings?kind={kind}&limit=1",
+                headers=headers,
+            ).json()["total"]
+            for kind in ("exam", "problem_set", "course")
+        }
+        all_items = client.get(
+            "/marketplace/listings?limit=1",
+            headers=headers,
+        ).json()
+        assert inventory == {"exam": 85, "problem_set": 166, "course": 81}
+        assert all_items["total"] == 332
+
+        searched = client.get(
+            "/marketplace/listings?kind=course&query=공통수학&grade_band=고1",
+            headers=headers,
+        )
+        assert searched.status_code == 200
+        assert searched.json()["total"] == 1
+        assert searched.json()["items"][0]["title"] == "공통수학 기초 완성"
+
+
+def test_free_marketplace_purchase_exposes_course(monkeypatch):
+    """필요 변수: 무료 코스 상품과 사용자 KV. 작동 원리: 0코인 구매 후 보유 자료·등록 코스·코스 상세이 모두 같은 asset ID로 조회되는지 검증한다."""
+    monkeypatch.setenv("OMJ_JWT_SECRET", "test-secret")
+    module = importlib.import_module("api.index")
+    fake = _FakeProfileDataApi()
+    monkeypatch.setattr(module, "_data_api", lambda: fake)
+    with TestClient(module.app) as client:
+        registered = client.post(
+            "/auth/register",
+            json={"username": "student06", "password": "password123", "name": "학생6", "grade": "1학년"},
+        )
+        headers = {"Authorization": f"Bearer {registered.json()['token']}"}
+        listing_id = "market-v2-course-foundation"
+
+        purchased = client.post(
+            f"/marketplace/listings/{listing_id}/purchase",
+            headers=headers,
+        )
+        assert purchased.status_code == 200
+        assert purchased.json()["price_points"] == 0
+        assert purchased.json()["owned"] is True
+
+        owned = client.get("/marketplace/my-items", headers=headers).json()["items"]
+        enrolled = client.get("/courses/enrolled", headers=headers).json()["items"]
+        assert owned[0]["id"] == listing_id
+        assert enrolled[0]["course_id"] == "market-course-foundation-v1"
+
+        detail = client.get(
+            "/courses/v2/market-course-foundation-v1",
+            headers=headers,
+        )
+        assert detail.status_code == 200
+        assert detail.json()["data"]["title"] == "공통수학 기초 완성"

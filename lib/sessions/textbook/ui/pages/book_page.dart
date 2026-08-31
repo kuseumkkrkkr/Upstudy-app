@@ -13,11 +13,15 @@ import 'package:s11/shared/business/repositories/bookmark_store.dart';
 import 'package:s11/shared/services/storage/local_db.dart';
 import 'package:s11/shared/business/repositories/textbook_store.dart';
 import 'package:s11/shared/services/textbook_reader_preferences.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 
-// 필요 변수: 교재 목록·선택 태그·카테고리. 작동 원리: 블러 배경 위에 필터된 교재함 모달을 연다.
+// 필요 변수: 교재 목록·선택 태그·카테고리와 화면 폭.
+// 작동 원리: 모바일은 둥근 전폭 교재 시트, PC는 기존 블러 대화상자를 연다.
 Future<T?> showBookLibraryModal<T>({
   required BuildContext context,
   String headerTitle = '교재보기',
@@ -27,6 +31,30 @@ Future<T?> showBookLibraryModal<T>({
   String? notice,
   String? category,
 }) {
+  if (isStudentDensityMobile(context)) {
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFFCFDFC),
+      barrierColor: Colors.black.withValues(alpha: .30),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) => FractionallySizedBox(
+        heightFactor: .90,
+        child: BookLibraryModal(
+          headerTitle: headerTitle,
+          libraryTitle: libraryTitle,
+          books: books,
+          selectedTags: selectedTags,
+          notice: notice,
+          category: category,
+          mobileSheet: true,
+        ),
+      ),
+    );
+  }
   return showDialog<T>(
     context: context,
     barrierDismissible: true,
@@ -90,6 +118,21 @@ class BookWidget extends StatefulWidget {
   State<BookWidget> createState() => _BookWidgetState();
 }
 
+class ResponsiveBookbagPage extends StatelessWidget {
+  const ResponsiveBookbagPage({super.key});
+
+  /// 필요한 변수는 현재 화면 너비와 방향이다.
+  /// 작동 원리는 세로형 720px 이하에서만 모바일 책가방 목록을 열고, 태블릿·PC는 기존 교재 리더 진입을 유지하는 것이다.
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final mobile = size.width <= 720 && size.height > size.width;
+    return mobile
+        ? const BookLibraryPage(libraryTitle: '책가방')
+        : const BookWidget();
+  }
+}
+
 class BookLibraryPage extends StatelessWidget {
   const BookLibraryPage({
     super.key,
@@ -135,6 +178,57 @@ class BookLibraryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final mobile = size.width <= 720 && size.height > size.width;
+    if (mobile) {
+      return Scaffold(
+        key: const ValueKey('bookbag-mobile-redesign'),
+        backgroundColor: StudentDensityTokens.background,
+        drawer: const AppDrawer(),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Builder(
+                builder: (headerContext) => Ios26TopBar(
+                  brandColor: Colors.black,
+                  showLevelIndicator: false,
+                  onMenu: () => toggleAppDrawer(headerContext),
+                  onTitleTap: () =>
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/student/dashboard',
+                        (route) => false,
+                      ),
+                  items: studentTopNavItems(
+                    context,
+                    active: StudentTopDestination.bookbag,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _BookLibraryLoader(
+                  onSelect: (book) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => BookWidget(book: book)),
+                    );
+                  },
+                  books: books,
+                  title: libraryTitle,
+                  selectedTags: selectedTags,
+                  notice: notice,
+                  category: category,
+                  useLibrary: true,
+                  enableDownload: enableDownload,
+                  onDownload: enableDownload
+                      ? (book) => _downloadBook(context, book)
+                      : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     const primary = Color(0xFF202022);
     const bg = Color(0xFFF8F8F8);
     const border = Color(0x1A000000);
@@ -245,6 +339,7 @@ class BookLibraryModal extends StatelessWidget {
     this.selectedTags = const [],
     this.notice,
     this.category,
+    this.mobileSheet = false,
   });
 
   final String headerTitle;
@@ -253,6 +348,7 @@ class BookLibraryModal extends StatelessWidget {
   final List<String> selectedTags;
   final String? notice;
   final String? category;
+  final bool mobileSheet;
 
   @override
   /// 필요한 변수는 화면 크기와 교재 목록이다.
@@ -261,32 +357,44 @@ class BookLibraryModal extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 640;
-        final width = compact
+        final width = mobileSheet
+            ? double.infinity
+            : compact
             ? constraints.maxWidth - 24
             : constraints.maxWidth.clamp(720.0, 1120.0) * .82;
-        final height = compact
+        final height = mobileSheet
+            ? double.infinity
+            : compact
             ? constraints.maxHeight - 24
             : constraints.maxHeight.clamp(560.0, 760.0) * .82;
         return Container(
+          key: mobileSheet ? const ValueKey('book-library-mobile-sheet') : null,
           width: width,
           height: height,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: const Color(0xFFFCFDFC),
-            borderRadius: BorderRadius.circular(compact ? 24 : 28),
-            border: Border.all(color: const Color(0x1A1F4D38)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x550A1D14),
-                blurRadius: 48,
-                offset: Offset(0, 20),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(
+              mobileSheet ? 0 : (compact ? 24 : 28),
+            ),
+            border: mobileSheet
+                ? null
+                : Border.all(color: const Color(0x1A1F4D38)),
+            boxShadow: mobileSheet
+                ? null
+                : const [
+                    BoxShadow(
+                      color: Color(0x550A1D14),
+                      blurRadius: 48,
+                      offset: Offset(0, 20),
+                    ),
+                  ],
           ),
           child: Column(
             children: [
               _buildHeader(context, compact: compact),
-              const Divider(height: 1, color: Color(0xFFE0E8E2)),
+              if (!mobileSheet)
+                const Divider(height: 1, color: Color(0xFFE0E8E2)),
               Expanded(
                 child: _BookLibraryLoader(
                   onSelect: (book) {
@@ -318,20 +426,13 @@ class BookLibraryModal extends StatelessWidget {
   Widget _buildHeader(BuildContext context, {required bool compact}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        compact ? 12 : 20,
-        12,
-        compact ? 16 : 24,
-        12,
+        mobileSheet ? 20 : (compact ? 12 : 20),
+        mobileSheet ? 2 : 12,
+        mobileSheet ? 14 : (compact ? 16 : 24),
+        mobileSheet ? 16 : 12,
       ),
       child: Row(
         children: [
-          IconButton(
-            tooltip: '닫기',
-            icon: const Icon(Icons.close_rounded, size: 24),
-            color: const Color(0xFF1F4D38),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          const SizedBox(width: 6),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,18 +441,31 @@ class BookLibraryModal extends StatelessWidget {
                   headerTitle,
                   style: TextStyle(
                     color: const Color(0xFF183C2C),
-                    fontSize: compact ? 20 : 22,
-                    fontWeight: FontWeight.w800,
+                    fontSize: mobileSheet ? 27 : (compact ? 20 : 22),
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 2),
-                const Text(
+                SizedBox(height: mobileSheet ? 5 : 2),
+                Text(
                   '학습 중인 교재와 공개 교재를 한 곳에서 이어 읽어요.',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF68766E)),
+                  style: TextStyle(
+                    fontSize: mobileSheet ? 14 : 12,
+                    color: const Color(0xFF68766E),
+                  ),
                 ),
               ],
+            ),
+          ),
+          IconButton(
+            tooltip: '닫기',
+            icon: const Icon(Icons.close_rounded, size: 24),
+            color: const Color(0xFF1F4D38),
+            onPressed: () => Navigator.of(context).pop(),
+            style: IconButton.styleFrom(
+              fixedSize: const Size.square(48),
+              backgroundColor: mobileSheet ? Colors.white : null,
             ),
           ),
           if (!compact)
@@ -462,6 +576,20 @@ class _BookLibraryBody extends StatelessWidget {
   /// 필요한 변수는 교재 메타데이터·진행률·선택 태그다.
   /// 작동 원리는 목록 전체를 한 번만 순회해 표지, 학습 상태, 재개 행동을 같은 카드에 배치하고 교재 수가 많아도 지연 렌더링을 유지하는 것이다.
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final mobile = size.width <= 720 && size.height > size.width;
+    if (mobile) {
+      return _MobileBookLibraryBody(
+        onSelect: onSelect,
+        books: books,
+        title: title,
+        selectedTags: selectedTags,
+        notice: notice,
+        enableDownload: enableDownload,
+        onDownload: onDownload,
+      );
+    }
+
     const primaryLight = Color(0xFF3DBE68);
     const border = Color(0xFFDCE7DE);
     final hasTags = selectedTags.isNotEmpty;
@@ -695,6 +823,414 @@ class _BookLibraryBody extends StatelessWidget {
       ],
     );
   }
+}
+
+class _MobileBookLibraryBody extends StatelessWidget {
+  const _MobileBookLibraryBody({
+    required this.onSelect,
+    required this.books,
+    required this.title,
+    required this.selectedTags,
+    required this.enableDownload,
+    this.notice,
+    this.onDownload,
+  });
+
+  final ValueChanged<BookData> onSelect;
+  final List<BookData> books;
+  final String title;
+  final List<String> selectedTags;
+  final String? notice;
+  final bool enableDownload;
+  final ValueChanged<BookData>? onDownload;
+
+  /// 필요한 변수는 모바일 교재 목록·선택 태그·이어 읽기 상태다.
+  /// 작동 원리는 첫 교재를 큰 재개 카드로 분리하고 나머지는 구분선 목록으로 압축해 한 화면의 정보량을 줄인다.
+  @override
+  Widget build(BuildContext context) {
+    final showNotice = notice?.trim().isNotEmpty == true;
+    final firstBook = books.isEmpty ? null : books.first;
+    final remaining = books.length <= 1
+        ? const <BookData>[]
+        : books.skip(1).toList(growable: false);
+
+    return CustomScrollView(
+      key: const ValueKey('bookbag-mobile-scroll'),
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(18, 22, 18, 0),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 40,
+                    height: 1,
+                    letterSpacing: -2,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${books.length}권의 교재',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: StudentDensityTokens.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (selectedTags.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final tag in selectedTags)
+                          Container(
+                            margin: const EdgeInsets.only(right: 7),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(99),
+                              border: Border.all(
+                                color: StudentDensityTokens.lineStrong,
+                              ),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showNotice) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    notice!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: StudentDensityTokens.muted,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 22),
+              ],
+            ),
+          ),
+        ),
+        if (firstBook == null)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: _MobileBookEmptyState(),
+          )
+        else ...[
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            sliver: SliverToBoxAdapter(
+              child: _MobileContinueBookCard(
+                book: firstBook,
+                onTap: () => onSelect(firstBook),
+              ),
+            ),
+          ),
+          if (remaining.isNotEmpty) ...[
+            const SliverPadding(
+              padding: EdgeInsets.fromLTRB(18, 26, 18, 12),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  '다른 교재',
+                  style: TextStyle(
+                    fontSize: 25,
+                    letterSpacing: -.8,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+              sliver: SliverToBoxAdapter(
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: StudentDensityTokens.lineStrong),
+                  ),
+                  child: Column(
+                    children: [
+                      for (
+                        var index = 0;
+                        index < remaining.length;
+                        index++
+                      ) ...[
+                        _MobileBookRow(
+                          book: remaining[index],
+                          enableDownload: enableDownload,
+                          onTap: () => onSelect(remaining[index]),
+                          onDownload: onDownload == null
+                              ? null
+                              : () => onDownload!(remaining[index]),
+                        ),
+                        if (index != remaining.length - 1)
+                          const Divider(
+                            height: 1,
+                            indent: 76,
+                            color: Color(0xFFE7E7EA),
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ] else
+            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+        ],
+      ],
+    );
+  }
+}
+
+class _MobileContinueBookCard extends StatelessWidget {
+  const _MobileContinueBookCard({required this.book, required this.onTap});
+
+  final BookData book;
+  final VoidCallback onTap;
+
+  /// 필요한 변수는 첫 교재와 진행률이다.
+  /// 작동 원리는 마지막 학습 교재를 검은 단일 카드로 강조하고 제목·진행·재개 동작만 보여 준다.
+  @override
+  Widget build(BuildContext context) {
+    final progress = book.progress.clamp(0.0, 1.0);
+    final started = progress > 0;
+    return Material(
+      key: const ValueKey('bookbag-mobile-continue'),
+      color: const Color(0xFF202023),
+      borderRadius: BorderRadius.circular(26),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(26),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: book.coverColor ?? const Color(0xFF5E7C68),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.auto_stories_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.black,
+                      size: 25,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                started ? '이어 읽기' : '첫 교재 시작',
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                book.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 25,
+                  height: 1.2,
+                  letterSpacing: -.8,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              if (book.subtitle.trim().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  book.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white60, fontSize: 14),
+                ),
+              ],
+              const SizedBox(height: 20),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 7,
+                  backgroundColor: Colors.white24,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                book.progressLabel.isNotEmpty
+                    ? book.progressLabel
+                    : '${(progress * 100).round()}% 읽음',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileBookRow extends StatelessWidget {
+  const _MobileBookRow({
+    required this.book,
+    required this.enableDownload,
+    required this.onTap,
+    this.onDownload,
+  });
+
+  final BookData book;
+  final bool enableDownload;
+  final VoidCallback onTap;
+  final VoidCallback? onDownload;
+
+  /// 필요한 변수는 교재 표지·제목·진행률과 선택 동작이다.
+  /// 작동 원리는 부가 설명을 한 줄로 제한하고 76px 안에서 읽기·다운로드 동작을 제공한다.
+  @override
+  Widget build(BuildContext context) {
+    final progress = book.progress.clamp(0.0, 1.0);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: book.coverColor ?? const Color(0xFF5E7C68),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.menu_book_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      book.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        letterSpacing: -.3,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      book.progressLabel.isNotEmpty
+                          ? book.progressLabel
+                          : '${(progress * 100).round()}% 읽음',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: StudentDensityTokens.muted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (enableDownload && onDownload != null)
+                IconButton(
+                  tooltip: '교재 저장',
+                  onPressed: onDownload,
+                  icon: const Icon(Icons.download_rounded, size: 22),
+                )
+              else
+                const Icon(Icons.chevron_right_rounded, size: 25),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileBookEmptyState extends StatelessWidget {
+  const _MobileBookEmptyState();
+
+  /// 필요한 변수는 없음이다.
+  /// 작동 원리는 비어 있는 책가방에서 긴 안내 대신 큰 아이콘과 한 문장만 표시한다.
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(32, 20, 32, 80),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(
+            Icons.auto_stories_outlined,
+            size: 48,
+            color: StudentDensityTokens.muted,
+          ),
+          SizedBox(height: 14),
+          Text(
+            '아직 담긴 교재가 없습니다.',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class BookmarkListPage extends StatefulWidget {

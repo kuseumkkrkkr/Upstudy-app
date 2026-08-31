@@ -51,6 +51,7 @@ class Ios26TopBar extends StatelessWidget {
     this.onProfile,
     this.leftInset,
     this.showMenuWithBack = false,
+    this.hideOnMobile = false,
   });
 
   final Color brandColor;
@@ -70,6 +71,7 @@ class Ios26TopBar extends StatelessWidget {
   final VoidCallback? onProfile;
   final double? leftInset;
   final bool showMenuWithBack;
+  final bool hideOnMobile;
 
   /// 필요한 변수는 상단 바 자신이 가진 Scaffold 문맥과 선택적 기존 메뉴 콜백이다.
   /// 작동 원리: 상단 바 아래의 Drawer를 먼저 직접 열어, 부모 화면의 오래된 문맥이 전달돼도 전체 메뉴가 열리게 한다.
@@ -92,7 +94,11 @@ class Ios26TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final compact = width <= StudentDensityTokens.mobileBreakpoint;
-    final barHeight = compact ? 58.0 : 68.0;
+    // 필요한 변수는 모바일 숨김 설정과 현재 화면 폭이다.
+    // 작동 원리: 하단 앱바와 화면 내부 제목이 탐색을 맡는 최상위 모바일 화면에서는
+    // 브랜드 바를 만들지 않고, PC와 뒤로가기가 필요한 상세 화면은 기존 상단 바를 유지한다.
+    if (compact && hideOnMobile) return const SizedBox.shrink();
+    final barHeight = compact ? 62.0 : 68.0;
     final effectiveLeftInset = leftInset ?? (compact ? 12.0 : 40.0);
     final showBackButton = onBack != null;
     final showMenuButton =
@@ -165,11 +171,11 @@ class Ios26TopBar extends StatelessWidget {
                           const SizedBox(width: 9),
                           Text(
                             title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: StudentDensityTokens.ink,
-                              fontSize: 17,
+                              fontSize: compact ? 20 : 17,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
+                              letterSpacing: compact ? -0.8 : -0.5,
                             ),
                           ),
                         ],
@@ -316,13 +322,35 @@ void showStudentNotifications(BuildContext context) {
 }
 
 /// 필요한 변수는 현재 Navigator 문맥과 검색·알림 패널 본문이다.
-/// 작동 원리: 전체 메뉴와 겹치지 않도록 검색과 알림은 PC에서 오른쪽 560px,
-/// 모바일에서는 오른쪽에서 들어오는 전체 화면 패널로 연다.
+/// 작동 원리: 검색과 알림은 PC에서 오른쪽 560px 패널로 열고,
+/// 모바일에서는 상단 앱바처럼 보이지 않는 둥근 바텀시트로 연다.
 Future<void> _showStudentUtilityPanel({
   required BuildContext context,
   required Widget child,
-}) {
-  return showGeneralDialog<void>(
+}) async {
+  if (isStudentDensityMobile(context)) {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFF4F4F6),
+      barrierColor: Colors.black.withValues(alpha: .30),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) => FractionallySizedBox(
+        heightFactor: .88,
+        child: Material(
+          color: const Color(0xFFF4F4F6),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          clipBehavior: Clip.antiAlias,
+          child: child,
+        ),
+      ),
+    );
+    return;
+  }
+  await showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
     barrierLabel: '닫기',
@@ -362,17 +390,64 @@ class _StudentQuickSearchSheet extends StatefulWidget {
 }
 
 class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
-  static const _destinations = <({String title, String detail, String route})>[
-    (title: '코스', detail: '수강 중·추천·완료 코스 찾기', route: '/courses'),
-    (title: '책가방', detail: '교재·시험지·북마크 찾기', route: '/bookbag'),
-    (title: '친구/소셜', detail: '친구·그룹·학원 찾기', route: '/social'),
-    (title: '마켓플레이스', detail: '문제·교재·태그 찾기', route: '/marketplace'),
-  ];
+  static const _destinations =
+      <({String title, String detail, String keywords, String route})>[
+        (
+          title: '코스',
+          detail: '수강 중·추천·완료 코스 찾기',
+          keywords: '수학 함수 개념 학습 강의',
+          route: '/courses',
+        ),
+        (
+          title: '책가방',
+          detail: '교재·시험지·북마크 찾기',
+          keywords: '책 문서 문제세트 보관함',
+          route: '/bookbag',
+        ),
+        (
+          title: '오답 노트',
+          detail: '틀린 문제와 오늘 복습 확인',
+          keywords: '오답 문제 복습 수학',
+          route: '/wrong_answers',
+        ),
+        (
+          title: '레벨 테스트',
+          detail: '현재 실력과 추천 난이도 확인',
+          keywords: '진단 평가 OVR 배치',
+          route: '/level_test',
+        ),
+        (
+          title: '친구/소셜',
+          detail: '친구 요청과 새 대화 확인',
+          keywords: '친구 쪽지 대화 소셜',
+          route: '/social',
+        ),
+        (
+          title: '스터디 그룹',
+          detail: '내 그룹과 초대 코드 참가',
+          keywords: '그룹 학원 같이 공부',
+          route: '/groups',
+        ),
+        (
+          title: 'AI 학습 튜터',
+          detail: '개념과 막힌 문제 질문',
+          keywords: 'AI 도구 질문 풀이 수학 함수',
+          route: '/tools',
+        ),
+        (
+          title: '마켓플레이스',
+          detail: '문제·교재·태그 찾기',
+          keywords: '문제세트 시험지 수학 자료',
+          route: '/marketplace',
+        ),
+      ];
   String _query = '';
 
   /// 필요한 변수는 선택 목적지와 현재 시트 Navigator다.
   /// 작동 원리는 시트를 먼저 닫고 루트 Navigator에서 공용 명명 라우트를 연다.
-  void _open(({String title, String detail, String route}) destination) {
+  void _open(
+    ({String title, String detail, String keywords, String route}) destination,
+  ) {
     final navigator = Navigator.of(context, rootNavigator: true);
     Navigator.of(context).pop();
     navigator.pushNamed(destination.route);
@@ -387,7 +462,9 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
         .where(
           (item) =>
               normalized.isEmpty ||
-              '${item.title} ${item.detail}'.toLowerCase().contains(normalized),
+              '${item.title} ${item.detail} ${item.keywords}'
+                  .toLowerCase()
+                  .contains(normalized),
         )
         .toList(growable: false);
     return _StudentUtilitySheet(
@@ -416,13 +493,51 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
             onTap: () => _open(item),
           ),
         if (visible.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: Text('연결할 검색 화면이 없습니다.')),
-          ),
+          isStudentDensityMobile(context)
+              ? const _QuickSearchEmpty()
+              : const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: Text('연결할 검색 화면이 없습니다.')),
+                ),
       ],
     );
   }
+}
+
+class _QuickSearchEmpty extends StatelessWidget {
+  const _QuickSearchEmpty();
+
+  /// 필요한 변수는 결과가 없는 통합 검색 상태다.
+  /// 작동 원리: 막힌 기능처럼 보이는 문구 대신 검색어를 바꿀 방법과 실제 탐색 가능한 범위를 안내한다.
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(top: 8),
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: const Color(0xFF202022),
+      borderRadius: BorderRadius.circular(22),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.search_off_rounded, color: Colors.white, size: 30),
+        SizedBox(height: 14),
+        Text(
+          '검색 결과가 없어요',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 19,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        SizedBox(height: 6),
+        Text(
+          '코스, 교재, 오답, 친구, 그룹처럼 기능 이름이나 학습 키워드로 다시 검색해 보세요.',
+          style: TextStyle(color: Colors.white70, height: 1.45),
+        ),
+      ],
+    ),
+  );
 }
 
 class _StudentNotificationSnapshot {
@@ -430,11 +545,15 @@ class _StudentNotificationSnapshot {
     required this.globalNotices,
     required this.academyNotices,
     required this.friendRequests,
+    required this.directMessages,
+    required this.groupInvitations,
   });
 
   final List<StudyGroupNotice> globalNotices;
   final List<StudyGroupNotice> academyNotices;
   final List<FriendRequest> friendRequests;
+  final List<DirectMessage> directMessages;
+  final List<StudyGroupInvitation> groupInvitations;
 }
 
 class _StudentNotificationsSheet extends StatefulWidget {
@@ -450,6 +569,8 @@ class _StudentNotificationsSheet extends StatefulWidget {
 class _StudentNotificationsSheetState
     extends State<_StudentNotificationsSheet> {
   late final Future<_StudentNotificationSnapshot> _future = _load();
+  final Set<String> _resolvedRequestIds = <String>{};
+  final Set<String> _resolvedGroupIds = <String>{};
 
   /// 필요한 변수는 전체 공지, 내 학원 공지, 친구 요청 API다.
   /// 작동 원리는 세 GET을 병렬 실행해 순차 요청 없이 알림 패널을 한 번에 갱신하는 것이다.
@@ -464,100 +585,243 @@ class _StudentNotificationsSheetState
       ApiClient.instance.listFriendRequests().onError(
         (_, _) => const <FriendRequest>[],
       ),
+      ApiClient.instance
+          .fetchConversationThreads(forceRefresh: true)
+          .onError((_, _) => const <DirectMessage>[]),
+      ApiClient.instance.listStudyGroupInvitations().onError(
+        (_, _) => const <StudyGroupInvitation>[],
+      ),
     ]);
+    final friendRequests = results[2] as List<FriendRequest>;
+    final directMessages = results[3] as List<DirectMessage>;
+    SocialNotificationStore.update(
+      friendRequests: friendRequests
+          .where(
+            (request) =>
+                request.direction == 'incoming' && request.status == 'pending',
+          )
+          .length,
+      unreadMessages: directMessages
+          .where((message) => !message.isMine && !message.isRead)
+          .length,
+    );
     return _StudentNotificationSnapshot(
       globalNotices: results[0] as List<StudyGroupNotice>,
       academyNotices: results[1] as List<StudyGroupNotice>,
-      friendRequests: results[2] as List<FriendRequest>,
+      friendRequests: friendRequests,
+      directMessages: directMessages,
+      groupInvitations: results[4] as List<StudyGroupInvitation>,
     );
+  }
+
+  Future<void> _confirmGroupInvitation(StudyGroupInvitation invitation) async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${invitation.groupName} 초대'),
+        content: Text('${invitation.inviterUsername}님이 그룹에 초대했습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('거절'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('수락'),
+          ),
+        ],
+      ),
+    );
+    if (accepted == null) return;
+    try {
+      await ApiClient.instance.resolveStudyGroupInvitation(
+        groupId: invitation.groupId,
+        accept: accepted,
+      );
+      if (!mounted) return;
+      setState(() => _resolvedGroupIds.add(invitation.groupId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(accepted ? '그룹 초대를 수락했습니다.' : '그룹 초대를 거절했습니다.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('그룹 초대를 처리하지 못했습니다.')));
+    }
+  }
+
+  /// 필요한 변수는 받은 친구 요청이다.
+  /// 작동 원리는 발신자와 메시지를 확인한 뒤 기존 수락 API를 호출하고 성공한 요청만 현재 알림에서 제거하는 것이다.
+  Future<void> _confirmFriendRequest(FriendRequest request) async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${request.username}님의 친구 요청'),
+        content: Text(
+          request.message?.trim().isNotEmpty == true
+              ? request.message!.trim()
+              : '친구 요청을 수락하시겠어요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('나중에'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('수락'),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true) return;
+    try {
+      await ApiClient.instance.acceptFriendRequest(request.requestId);
+      if (!mounted) return;
+      setState(() => _resolvedRequestIds.add(request.requestId));
+      final current = SocialNotificationStore.notifier.value.friendRequests;
+      SocialNotificationStore.update(friendRequests: current - 1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${request.username}님과 친구가 되었습니다.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('친구 요청을 수락하지 못했습니다. 다시 시도해 주세요.')),
+      );
+    }
   }
 
   /// 필요한 변수는 소셜 알림 상태와 전체·학원 공지·친구 요청 비동기 결과다.
   /// 작동 원리는 알림과 공지를 구역으로 나누고 공지를 누르면 실제 본문을 같은 패널 위에서 확인한다.
   @override
-  Widget build(BuildContext context) => _StudentUtilitySheet(
-    kicker: 'LIVE STATUS',
-    title: '알림 센터',
-    description: '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
-    children: [
-      const _UtilitySectionTitle('알림'),
-      ValueListenableBuilder<SocialNotificationSnapshot>(
-        valueListenable: SocialNotificationStore.notifier,
-        builder: (context, social, _) => Column(
-          children: [
-            _UtilityNoticeRow(
-              title: '새 메시지',
-              detail: social.unreadMessages == 0
-                  ? '읽지 않은 메시지가 없습니다.'
-                  : '친구와 그룹에서 도착한 메시지를 확인하세요.',
-              meta: '${social.unreadMessages}',
-            ),
-            if (social.friendRemovals > 0)
-              _UtilityNoticeRow(
-                title: '친구 상태 변경',
-                detail: '친구 목록에서 변경된 관계를 확인하세요.',
-                meta: '${social.friendRemovals}',
-              ),
-          ],
-        ),
-      ),
-      FutureBuilder<_StudentNotificationSnapshot>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Padding(
-              padding: EdgeInsets.all(28),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (snapshot.hasError) {
-            return const _UtilityNoticeRow(
-              title: '알림을 불러오지 못했습니다.',
-              detail: '네트워크 연결 후 알림 센터를 다시 열어 주세요.',
-              meta: '재시도',
-            );
-          }
-          final data = snapshot.data!;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return _StudentUtilitySheet(
+      kicker: 'LIVE STATUS',
+      title: '알림 센터',
+      showMobileClose: false,
+      description: mobile ? '' : '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
+      children: [
+        const _UtilitySectionTitle('알림'),
+        ValueListenableBuilder<SocialNotificationSnapshot>(
+          valueListenable: SocialNotificationStore.notifier,
+          builder: (context, social, _) => Column(
             children: [
               _UtilityNoticeRow(
-                title: '친구 요청',
-                detail: data.friendRequests.isEmpty
-                    ? '새로운 친구 요청이 없습니다.'
-                    : '받은 요청을 친구/소셜에서 확인하세요.',
-                meta: '${data.friendRequests.length}',
+                title: '새 메시지',
+                detail: social.unreadMessages == 0
+                    ? '읽지 않은 메시지가 없습니다.'
+                    : '친구와 그룹에서 도착한 메시지를 확인하세요.',
+                meta: '${social.unreadMessages}',
               ),
-              const SizedBox(height: 24),
-              const _UtilitySectionTitle('공지'),
-              for (final notice in data.globalNotices)
+              if (social.friendRemovals > 0)
                 _UtilityNoticeRow(
-                  title: notice.title.isEmpty ? '시스템 공지' : notice.title,
-                  detail: _plainNoticeContent(notice.contentHtml),
-                  meta: '전체 공지',
-                  onTap: () => showStudentNoticeDetail(context, notice),
-                ),
-              for (final notice in data.academyNotices)
-                _UtilityNoticeRow(
-                  title: notice.title.isEmpty ? '학원 공지' : notice.title,
-                  detail: _plainNoticeContent(notice.contentHtml),
-                  meta: notice.groupName?.trim().isNotEmpty == true
-                      ? notice.groupName!.trim()
-                      : '학원 공지',
-                  onTap: () => showStudentNoticeDetail(context, notice),
-                ),
-              if (data.globalNotices.isEmpty && data.academyNotices.isEmpty)
-                const _UtilityNoticeRow(
-                  title: '확인할 공지가 없습니다.',
-                  detail: '새 공지가 도착하면 이곳에 표시됩니다.',
-                  meta: '0',
+                  title: '친구 상태 변경',
+                  detail: '친구 목록에서 변경된 관계를 확인하세요.',
+                  meta: '${social.friendRemovals}',
                 ),
             ],
-          );
-        },
-      ),
-    ],
-  );
+          ),
+        ),
+        FutureBuilder<_StudentNotificationSnapshot>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Padding(
+                padding: EdgeInsets.all(28),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (snapshot.hasError) {
+              return const _UtilityNoticeRow(
+                title: '알림을 불러오지 못했습니다.',
+                detail: '네트워크 연결 후 알림 센터를 다시 열어 주세요.',
+                meta: '재시도',
+              );
+            }
+            final data = snapshot.data!;
+            final unreadMessages = data.directMessages
+                .where((message) => !message.isMine && !message.isRead)
+                .toList(growable: false);
+            final incomingRequests = data.friendRequests
+                .where(
+                  (request) =>
+                      request.direction == 'incoming' &&
+                      request.status == 'pending' &&
+                      !_resolvedRequestIds.contains(request.requestId),
+                )
+                .toList(growable: false);
+            final groupInvitations = data.groupInvitations
+                .where(
+                  (invitation) =>
+                      !_resolvedGroupIds.contains(invitation.groupId),
+                )
+                .toList(growable: false);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final message in unreadMessages)
+                  _UtilityNoticeRow(
+                    title: '${message.from}님의 새 쪽지',
+                    detail: message.text,
+                    meta: '새 쪽지',
+                  ),
+                for (final request in incomingRequests)
+                  _UtilityNoticeRow(
+                    title: '${request.username}님의 친구 요청',
+                    detail: request.message?.trim().isNotEmpty == true
+                        ? request.message!.trim()
+                        : '눌러서 요청을 확인하고 수락할 수 있어요.',
+                    meta: '확인',
+                    onTap: () => _confirmFriendRequest(request),
+                  ),
+                for (final invitation in groupInvitations)
+                  _UtilityNoticeRow(
+                    title: '${invitation.groupName} 그룹 초대',
+                    detail:
+                        '${invitation.inviterUsername}님이 초대했습니다. 눌러서 수락 또는 거절하세요.',
+                    meta: '확인',
+                    onTap: () => _confirmGroupInvitation(invitation),
+                  ),
+                if (incomingRequests.isEmpty)
+                  const _UtilityNoticeRow(
+                    title: '친구 요청',
+                    detail: '새로운 친구 요청이 없습니다.',
+                    meta: '0',
+                  ),
+                const SizedBox(height: 24),
+                const _UtilitySectionTitle('공지'),
+                for (final notice in data.globalNotices)
+                  _UtilityNoticeRow(
+                    title: notice.title.isEmpty ? '시스템 공지' : notice.title,
+                    detail: _plainNoticeContent(notice.contentHtml),
+                    meta: '전체 공지',
+                    onTap: () => showStudentNoticeDetail(context, notice),
+                  ),
+                for (final notice in data.academyNotices)
+                  _UtilityNoticeRow(
+                    title: notice.title.isEmpty ? '학원 공지' : notice.title,
+                    detail: _plainNoticeContent(notice.contentHtml),
+                    meta: notice.groupName?.trim().isNotEmpty == true
+                        ? notice.groupName!.trim()
+                        : '학원 공지',
+                    onTap: () => showStudentNoticeDetail(context, notice),
+                  ),
+                if (data.globalNotices.isEmpty && data.academyNotices.isEmpty)
+                  const _UtilityNoticeRow(
+                    title: '확인할 공지가 없습니다.',
+                    detail: '새 공지가 도착하면 이곳에 표시됩니다.',
+                    meta: '0',
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
 }
 
 class _StudentUtilitySheet extends StatelessWidget {
@@ -566,87 +830,116 @@ class _StudentUtilitySheet extends StatelessWidget {
     required this.title,
     required this.description,
     required this.children,
+    this.showMobileClose = true,
   });
 
   final String kicker;
   final String title;
   final String description;
   final List<Widget> children;
+  final bool showMobileClose;
 
   /// 필요한 변수는 시트 제목·설명·본문이다.
   /// 작동 원리는 HTML 공용 액션 모달의 여백·타이포·최대 높이를 모든 화면에서 동일하게 유지하는 것이다.
   @override
-  Widget build(BuildContext context) => SafeArea(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 18, 20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      kicker,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.7,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return SafeArea(
+      top: !mobile,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: mobile
+                ? const EdgeInsets.fromLTRB(20, 2, 14, 12)
+                : const EdgeInsets.fromLTRB(24, 24, 18, 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!mobile) ...[
+                        Text(
+                          kicker,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 1.7,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                      ],
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+                if (!mobile || showMobileClose)
+                  IconButton(
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    style: IconButton.styleFrom(
+                      fixedSize: const Size.square(48),
+                      backgroundColor: mobile ? Colors.white : null,
+                      side: mobile
+                          ? BorderSide.none
+                          : const BorderSide(color: Color(0xFFB9B9BD)),
                     ),
-                    const SizedBox(height: 7),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                      ),
+                  ),
+              ],
+            ),
+          ),
+          if (!mobile) const Divider(height: 1, color: Color(0xFFE4E4E6)),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                mobile ? 20 : 24,
+                mobile ? 8 : 28,
+                mobile ? 20 : 24,
+                MediaQuery.viewInsetsOf(context).bottom + 24,
+              ),
+              children: [
+                if (description.isNotEmpty) ...[
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: mobile ? Colors.black54 : Colors.black45,
+                      fontSize: mobile ? 15 : null,
+                      height: 1.4,
                     ),
-                  ],
+                  ),
+                  SizedBox(height: mobile ? 24 : 18),
+                ],
+                ...children,
+              ],
+            ),
+          ),
+          if (!mobile) ...[
+            const Divider(height: 1, color: Color(0xFFE4E4E6)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('닫기'),
                 ),
               ),
-              IconButton.outlined(
-                tooltip: '닫기',
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close_rounded),
-              ),
-            ],
-          ),
-        ),
-        const Divider(height: 1, color: Color(0xFFE4E4E6)),
-        Expanded(
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(
-              24,
-              28,
-              24,
-              MediaQuery.viewInsetsOf(context).bottom + 24,
             ),
-            children: [
-              Text(description, style: const TextStyle(color: Colors.black45)),
-              const SizedBox(height: 18),
-              ...children,
-            ],
-          ),
-        ),
-        const Divider(height: 1, color: Color(0xFFE4E4E6)),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('닫기'),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _UtilityNoticeRow extends StatelessWidget {
@@ -663,13 +956,31 @@ class _UtilityNoticeRow extends StatelessWidget {
   final VoidCallback? onTap;
 
   /// 필요한 변수는 알림 제목·본문·메타다.
-  /// 작동 원리는 각 알림을 얇은 구분선과 우측 상태로 압축해 공지 수가 늘어도 빠르게 스캔하게 한다.
+  /// 작동 원리는 PC에서는 구분선 목록을 유지하고 모바일에서는 큰 글자의 부드러운 알림 카드로 표시한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     final row = Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE4E4E6))),
+      margin: EdgeInsets.only(bottom: mobile ? 9 : 0),
+      padding: EdgeInsets.symmetric(
+        horizontal: mobile ? 16 : 0,
+        vertical: mobile ? 16 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: mobile ? Colors.white : Colors.transparent,
+        borderRadius: mobile ? BorderRadius.circular(20) : null,
+        border: mobile
+            ? null
+            : const Border(bottom: BorderSide(color: Color(0xFFE4E4E6))),
+        boxShadow: mobile
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: .055),
+                  blurRadius: 18,
+                  offset: const Offset(0, 7),
+                ),
+              ]
+            : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,14 +991,21 @@ class _UtilityNoticeRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    fontSize: mobile ? 16 : null,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: mobile ? 6 : 4),
                 Text(
                   detail,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(
+                    fontSize: mobile ? 14 : 12,
+                    height: 1.35,
+                    color: Colors.black54,
+                  ),
                 ),
               ],
             ),
@@ -695,11 +1013,14 @@ class _UtilityNoticeRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             meta,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              fontSize: mobile ? 12 : 10,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           if (onTap != null) ...[
             const SizedBox(width: 5),
-            const Icon(Icons.chevron_right_rounded, size: 16),
+            Icon(Icons.chevron_right_rounded, size: mobile ? 22 : 16),
           ],
         ],
       ),
@@ -707,7 +1028,11 @@ class _UtilityNoticeRow extends StatelessWidget {
     if (onTap == null) return row;
     return Material(
       color: Colors.transparent,
-      child: InkWell(onTap: onTap, child: row),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(mobile ? 20 : 0),
+        child: row,
+      ),
     );
   }
 }
@@ -718,19 +1043,22 @@ class _UtilitySectionTitle extends StatelessWidget {
   final String title;
 
   /// 필요한 변수는 알림 패널의 구역 제목이다.
-  /// 작동 원리는 알림과 공지 목록의 시작점을 작은 굵은 라벨로 구분하는 것이다.
+  /// 작동 원리는 모바일에서 18px 제목을 사용해 알림과 공지 목록의 시작점을 빠르게 구분하는 것이다.
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Text(
-      title,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
-        letterSpacing: .4,
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return Padding(
+      padding: EdgeInsets.only(bottom: mobile ? 10 : 6),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: mobile ? 18 : 12,
+          fontWeight: FontWeight.w900,
+          letterSpacing: mobile ? 0 : .4,
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// 필요한 변수는 HTML이 포함될 수 있는 공지 본문이다.
@@ -759,6 +1087,78 @@ Future<void> showStudentNoticeDetail(
             ? notice.groupName!.trim()
             : '학원 공지');
   final content = _plainNoticeContent(notice.contentHtml);
+  if (isStudentDensityMobile(context)) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFF4F4F6),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) => FractionallySizedBox(
+        heightFactor: .72,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        notice.title.isEmpty ? '공지사항' : notice.title,
+                        style: const TextStyle(
+                          fontSize: 27,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: '닫기',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      style: IconButton.styleFrom(
+                        fixedSize: const Size.square(48),
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  source,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Expanded(
+                  child: Material(
+                    color: Colors.white,
+                    elevation: 2,
+                    shadowColor: Colors.black.withValues(alpha: .10),
+                    borderRadius: BorderRadius.circular(22),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: SelectableText(
+                        content.isEmpty ? '공지 본문이 없습니다.' : content,
+                        style: const TextStyle(fontSize: 16, height: 1.65),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(

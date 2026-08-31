@@ -7,7 +7,7 @@ import time
 from math import ceil
 from concurrent.futures import ThreadPoolExecutor
 from threading import BoundedSemaphore, Lock
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 
 from difficulty_contract import DIFFICULTY_CONTRACTS, resolve_difficulty_score, resolve_difficulty_tier
 from student_problem_content_review import review_student_problem_contract
@@ -335,6 +335,29 @@ class PostgresProblemStore:
         if isinstance(payload, str):
             payload = json.loads(payload)
         return dict(payload) if isinstance(payload, dict) else None
+
+    def get_problems_by_ids(self, quest_ids: Iterable[str]) -> dict[str, dict[str, Any]]:
+        """필요 변수는 중복될 수 있는 문제 ID 목록이다.
+        작동 원리는 한 SQL IN 조회로 PostgreSQL payload를 복원해 코스 모듈의
+        N+1 연결을 막고, 호출자가 원래 문제 순서를 유지할 수 있게 ID 사전을 반환한다.
+        """
+        ordered_ids = list(dict.fromkeys(str(value).strip() for value in quest_ids if str(value).strip()))
+        if not ordered_ids:
+            return {}
+        pool = self.get_pool()
+        with pool.connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                "SELECT quest_id, payload FROM problem_payload WHERE quest_id = ANY(%s)",
+                (ordered_ids,),
+            )
+            rows = cur.fetchall()
+        results: dict[str, dict[str, Any]] = {}
+        for quest_id, payload in rows:
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            if isinstance(payload, dict):
+                results[str(quest_id)] = dict(payload)
+        return results
 
     def search_problems(
         self,

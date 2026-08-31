@@ -551,7 +551,7 @@ def _estimate_rating_from_samples(samples: List[Dict[str, Any]]) -> float:
     best_rating = CONFIG.DEFAULT_RATING
     best_score = float("-inf")
     for rating in [800 + i * 5 for i in range(281)]:
-        score = 0.0
+        score = -0.5 * ((rating - 1229.08) / 224.57) ** 2
         for sample in samples:
             expected = compute_expected_score(float(rating), float(sample["problem_rating"]))
             expected = _clamp(expected, 0.001, 0.999)

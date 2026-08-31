@@ -19,8 +19,30 @@ from services.ai.prompts import level_test_power_prompt, level_test_speed_prompt
 from services.ai.providers.base import AIProvider
 
 
-PLACEMENT_QUESTION_COUNT = 50
+PLACEMENT_QUESTION_COUNT = 25
+PLACEMENT_TIME_LIMIT_SECONDS = 30 * 60
+PLACEMENT_DIFFICULTY_COUNTS = {2: 5, 3: 10, 4: 7, 5: 3}
 PLACEMENT_VERSION = "placement-static-v1"
+
+
+def select_placement_items(items: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """50문항 폼을 난이도 2~5의 5·10·7·3문항으로 축약하고 시험 번호를 다시 매긴다."""
+    all_items = list(items)
+    selected: List[Dict[str, Any]] = []
+    for tier, count in PLACEMENT_DIFFICULTY_COUNTS.items():
+        group = [item for item in all_items if int(item.get("difficulty_tier") or 0) == tier]
+        if not group:
+            continue
+        if count >= len(group):
+            selected.extend(group)
+            continue
+        positions = [round(index * (len(group) - 1) / (count - 1)) for index in range(count)]
+        selected.extend(group[position] for position in positions)
+    if len(selected) < PLACEMENT_QUESTION_COUNT:
+        chosen = {str(item.get("quest_id") or "") for item in selected}
+        selected.extend(item for item in all_items if str(item.get("quest_id") or "") not in chosen)
+    selected = sorted(selected[:PLACEMENT_QUESTION_COUNT], key=lambda item: int(item.get("item_index") or 0))
+    return [{**item, "item_index": index} for index, item in enumerate(selected, start=1)]
 
 def generate_speed_test(
     user_id: str,
@@ -256,9 +278,9 @@ def build_placement_template_items(template_id: Optional[str] = None) -> List[Di
     if not selected_id:
         raise RuntimeError("PostgreSQL level-test contains no active template")
     items = postgres_level_test_store.get_template_items(selected_id)
-    if len(items) != PLACEMENT_QUESTION_COUNT:
+    if len(items) < PLACEMENT_QUESTION_COUNT:
         raise RuntimeError(f"PostgreSQL level-test template is incomplete: {selected_id}")
-    return items
+    return select_placement_items(items)
 
 
 def quest_payloads_for_template_items(items: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:

@@ -29,3 +29,8 @@ part 'shared/friend_theme.dart';
 part 'shared/friend_models.dart';
 part 'ui/friend_dialogs.dart';
 part 'ui/friend_screen.dart';
+
+typedef FriendSearchCallback =
+    Future<List<FriendProfile>> Function({String? query, int? limit});
+typedef FriendRequestCallback =
+    Future<FriendRequest> Function({required String username, String? message});

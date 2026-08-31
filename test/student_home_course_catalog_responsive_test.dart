@@ -70,6 +70,18 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('course-catalog-mobile-redesign')),
+        width < 760 ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('course-mobile-search-dock')),
+        width < 760 ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('course-mobile-search-button')),
+        width < 760 ? findsOneWidget : findsNothing,
+      );
       expect(tester.takeException(), isNull);
     }
   });
@@ -83,7 +95,10 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('오늘도 시작해 볼까요?'), findsOneWidget);
+      expect(
+        find.textContaining(width < 760 ? '바로 시작해요.' : '오늘도 시작해 볼까요?'),
+        findsOneWidget,
+      );
       expect(
         find.byKey(
           ValueKey(
@@ -96,11 +111,10 @@ void main() {
     }
   });
 
-  testWidgets('HTML 시안의 홈 하단 그리드가 PC·태블릿·모바일 분기를 유지한다', (tester) async {
+  testWidgets('홈 하단 정보는 PC·태블릿에 유지하고 세로 모바일은 핵심 행동만 남긴다', (tester) async {
     const cases = <(double, String)>[
       (1280, 'student-home-footer-desktop'),
       (900, 'student-home-footer-tablet'),
-      (500, 'student-home-footer-mobile'),
     ];
 
     for (final (width, layoutKey) in cases) {
@@ -117,5 +131,112 @@ void main() {
       expect(find.text('공지사항'), findsWidgets);
       expect(tester.takeException(), isNull);
     }
+
+    await _pumpAt(
+      tester,
+      const Size(500, 900),
+      const MainStudentPage(username: '김학생'),
+    );
+    await tester.pump();
+
+    expect(find.text('학습하기'), findsOneWidget);
+    expect(find.text('현재 코스'), findsOneWidget);
+    expect(find.text('오늘 할 일'), findsOneWidget);
+    expect(find.text('학습 현황'), findsOneWidget);
+    expect(find.text('레이팅'), findsOneWidget);
+    expect(find.text('업적'), findsOneWidget);
+    expect(find.text('공지'), findsOneWidget);
+    expect(find.text('AIFlow'), findsNothing);
+    expect(find.text('학습 도구'), findsOneWidget);
+    expect(find.text('빠른 실행'), findsOneWidget);
+    expect(find.text('노트패드'), findsOneWidget);
+    expect(find.text('타이머'), findsNothing);
+    expect(find.text('집중 모드'), findsNothing);
+    expect(find.text('그래프'), findsOneWidget);
+    expect(find.text('과외봇 (챗봇)'), findsOneWidget);
+    expect(find.text('오늘의 학습 루트'), findsNothing);
+    expect(find.text('일정 달력'), findsNothing);
+    expect(find.text('도전과제 / 업적'), findsNothing);
+    expect(find.text('공지사항'), findsNothing);
+    await tester.tap(find.text('학습하기'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('모바일 홈의 학습·상태·현황 그룹은 같은 가로축과 폭을 사용한다', (tester) async {
+    await _pumpAt(
+      tester,
+      const Size(390, 900),
+      const MainStudentPage(username: '김학생'),
+    );
+    await tester.pump();
+
+    final learnRect = tester.getRect(
+      find.byKey(const ValueKey('student-home-mobile-learn-banner')),
+    );
+    final statusRect = tester.getRect(
+      find.byKey(const ValueKey('student-home-mobile-status-group')),
+    );
+    final insightsRect = tester.getRect(
+      find.byKey(const ValueKey('student-home-mobile-insights-group')),
+    );
+
+    expect(statusRect.left, closeTo(learnRect.left, 0.1));
+    expect(insightsRect.left, closeTo(learnRect.left, 0.1));
+    expect(statusRect.width, closeTo(learnRect.width, 0.1));
+    expect(insightsRect.width, closeTo(learnRect.width, 0.1));
+    expect(learnRect.height, lessThanOrEqualTo(130));
+    expect(find.text('이어 하거나 새로 시작'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('세로 모바일 홈은 실제 학습 도구와 스크롤을 제공한다', (tester) async {
+    await _pumpAt(
+      tester,
+      const Size(390, 844),
+      const MainStudentPage(username: '김학생'),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('student-home-mobile-practical-tools')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('student-home-mobile-action-journey')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('learning-tools-mobile-group')),
+      findsOneWidget,
+    );
+
+    final scrollable = tester.state<ScrollableState>(
+      find.byType(Scrollable).first,
+    );
+    expect(scrollable.position.maxScrollExtent, greaterThan(250));
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -400),
+    );
+    await tester.pump();
+    expect(scrollable.position.pixels, greaterThan(0));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('모바일 실용 도구 그룹은 데스크톱 홈에 추가되지 않는다', (tester) async {
+    await _pumpAt(
+      tester,
+      const Size(1280, 900),
+      const MainStudentPage(username: '김학생'),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('student-home-mobile-practical-tools')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
   });
 }

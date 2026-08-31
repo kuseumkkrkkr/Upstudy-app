@@ -9,6 +9,28 @@ import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 
 Future<Course?> showCurriculumModal({required BuildContext context}) {
+  final mobile =
+      MediaQuery.sizeOf(context).width <= StudentDensityTokens.mobileBreakpoint;
+  if (mobile) {
+    // 필요한 변수는 모바일 화면과 현재 코스 목록이다.
+    // 작동 원리: 홈 위에 축소된 투명 다이얼로그를 띄우지 않고 80% 하단 시트에서
+    // 코스 선택·편집을 완료하며 선택 결과는 기존 Course 반환 계약을 유지한다.
+    return showModalBottomSheet<Course>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFF4F4F6),
+      barrierColor: Colors.black.withValues(alpha: 0.38),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (_) => const FractionallySizedBox(
+        heightFactor: 0.80,
+        child: CourseSelectModal(mobileSheet: true),
+      ),
+    );
+  }
   return showDialog<Course>(
     context: context,
     barrierDismissible: true,
@@ -31,7 +53,9 @@ Future<Course?> showCurriculumModal({required BuildContext context}) {
 }
 
 class CourseSelectModal extends StatefulWidget {
-  const CourseSelectModal({super.key});
+  const CourseSelectModal({super.key, this.mobileSheet = false});
+
+  final bool mobileSheet;
 
   @override
   State<CourseSelectModal> createState() => _CourseSelectModalState();
@@ -139,24 +163,45 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
             ? constraints.maxHeight
             : 600.0;
         final mobile = maxW <= StudentDensityTokens.mobileBreakpoint;
-        final width = math.min(980.0, maxW * (mobile ? 0.94 : 0.90));
-        final height = math.min(600.0, maxH * (mobile ? 0.92 : 0.86));
-        final scale = (width / 980.0).clamp(0.7, 1.0);
+        final width = widget.mobileSheet
+            ? maxW
+            : math.min(980.0, maxW * (mobile ? 0.94 : 0.90));
+        final height = widget.mobileSheet
+            ? maxH
+            : math.min(600.0, maxH * (mobile ? 0.92 : 0.86));
+        final scale = widget.mobileSheet
+            ? 1.0
+            : (width / 980.0).clamp(0.7, 1.0);
 
         return Container(
+          key: widget.mobileSheet
+              ? const ValueKey('course-select-mobile-sheet')
+              : null,
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: StudentDensityTokens.surface,
-            borderRadius: BorderRadius.circular(mobile ? 24 : 30),
-            border: Border.all(color: StudentDensityTokens.line),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 48,
-                offset: Offset(0, 18),
-              ),
-            ],
+            color: widget.mobileSheet
+                ? const Color(0xFFF4F4F6)
+                : StudentDensityTokens.surface,
+            borderRadius: BorderRadius.circular(
+              widget.mobileSheet
+                  ? 0
+                  : mobile
+                  ? 24
+                  : 30,
+            ),
+            border: widget.mobileSheet
+                ? null
+                : Border.all(color: StudentDensityTokens.line),
+            boxShadow: widget.mobileSheet
+                ? null
+                : const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 48,
+                      offset: Offset(0, 18),
+                    ),
+                  ],
           ),
           child: Column(
             children: [
@@ -169,7 +214,9 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                   children: [
                     IconButton.filledTonal(
                       style: IconButton.styleFrom(
-                        backgroundColor: StudentDensityTokens.surfaceMuted,
+                        backgroundColor: widget.mobileSheet
+                            ? Colors.white
+                            : StudentDensityTokens.surfaceMuted,
                         foregroundColor: StudentDensityTokens.ink,
                         minimumSize: const Size(40, 40),
                       ),
@@ -215,7 +262,11 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                   ],
                 ),
               ),
-              const Divider(height: 1, color: StudentDensityTokens.lineStrong),
+              if (!widget.mobileSheet)
+                const Divider(
+                  height: 1,
+                  color: StudentDensityTokens.lineStrong,
+                ),
               Expanded(
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
@@ -344,87 +395,88 @@ class _CourseSelectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final progressPercent = (course.progress * 100).round();
 
-    return InkWell(
-      onTap: onTap,
+    return Material(
+      color: Colors.white,
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(20 * scale),
-      child: Container(
-        padding: EdgeInsets.all(18 * scale),
-        decoration: BoxDecoration(
-          color: StudentDensityTokens.surfaceMuted,
-          borderRadius: BorderRadius.circular(20 * scale),
-          border: Border.all(color: StudentDensityTokens.line),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 440;
-            final details = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  course.title,
-                  style: TextStyle(
-                    color: StudentDensityTokens.ink,
-                    fontSize: 18 * scale,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                SizedBox(height: 6 * scale),
-                Text(
-                  course.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12 * scale,
-                    color: StudentDensityTokens.muted,
-                    height: 1.4,
-                  ),
-                ),
-                SizedBox(height: 14 * scale),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6 * scale),
-                  child: LinearProgressIndicator(
-                    value: course.progress,
-                    minHeight: 6 * scale,
-                    backgroundColor: const Color(0xFFE5E5E8),
-                    color: StudentDensityTokens.dark,
-                  ),
-                ),
-                SizedBox(height: 6 * scale),
-                Text(
-                  '진행률 $progressPercent%',
-                  style: TextStyle(
-                    fontSize: 11 * scale,
-                    color: StudentDensityTokens.muted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            );
-            final action = StudentDensityButton(
-              label: course.isDemo ? '맛보기' : '선택',
-              onPressed: onTap,
-              primary: true,
-            );
-            if (compact) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.all(18 * scale),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 440;
+              final details = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  details,
-                  SizedBox(height: 16 * scale),
-                  action,
+                  Text(
+                    course.title,
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: 18 * scale,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  SizedBox(height: 6 * scale),
+                  Text(
+                    course.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12 * scale,
+                      color: StudentDensityTokens.muted,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 14 * scale),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6 * scale),
+                    child: LinearProgressIndicator(
+                      value: course.progress,
+                      minHeight: 6 * scale,
+                      backgroundColor: const Color(0xFFE5E5E8),
+                      color: StudentDensityTokens.dark,
+                    ),
+                  ),
+                  SizedBox(height: 6 * scale),
+                  Text(
+                    '진행률 $progressPercent%',
+                    style: TextStyle(
+                      fontSize: 11 * scale,
+                      color: StudentDensityTokens.muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: details),
-                SizedBox(width: 20 * scale),
-                SizedBox(width: 108 * scale, child: action),
-              ],
-            );
-          },
+              final action = StudentDensityButton(
+                label: course.isDemo ? '맛보기' : '선택',
+                onPressed: onTap,
+                primary: true,
+              );
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    details,
+                    SizedBox(height: 16 * scale),
+                    action,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: details),
+                  SizedBox(width: 20 * scale),
+                  SizedBox(width: 108 * scale, child: action),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

@@ -489,6 +489,9 @@ mixin _ExamPaperUiMixin
             pageNumber: index + 1,
 
             totalPages: _pageCount,
+            examTitle: _examStatus?.items.isNotEmpty == true
+                ? _examStatus!.items.first.title
+                : null,
             selectedOptions: _selectedOptions,
             onOptionSelected: _handleOptionSelection,
             optionHitRegionKeyFor: _optionHitRegionKey,
@@ -1031,6 +1034,9 @@ mixin _ExamPaperUiMixin
                   layout: index < layouts.length ? layouts[index] : null,
                   pageNumber: index + 1,
                   totalPages: totalPages,
+                  examTitle: _examStatus?.items.isNotEmpty == true
+                      ? _examStatus!.items.first.title
+                      : null,
                   statusMessage: (index == 0 && index >= layouts.length)
                       ? statusMessage
                       : null,
