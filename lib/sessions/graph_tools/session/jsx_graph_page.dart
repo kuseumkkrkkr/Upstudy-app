@@ -11,7 +11,6 @@ import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 const _kGreen = Color(0xFF202022);
 const _kBorder = Color(0xFFE1E1E4);
@@ -418,10 +417,11 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       onDrawerChanged: _handleDrawerChanged,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
           child: Column(
             children: [
               _buildHeader(),
+              _buildToolStrip(),
               const SizedBox(height: 12),
               Expanded(
                 child: Padding(
@@ -489,64 +489,126 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   /// 작동 원리는 뒤로가기·전체 메뉴·작업 버튼을 공용 앱바 한 줄에 배치해
   /// 그래프 전용 제목 바가 본문 공간을 차지하지 않게 하는 것이다.
   Widget _buildHeader() {
-    final compact = MediaQuery.sizeOf(context).width < 720;
-    return Ios26TopBar(
-      brandColor: Colors.black,
-      showLevelIndicator: false,
-      showUtilityActions: false,
-      onBack: () => Navigator.of(context).maybePop(),
-      onMenu: () => _scaffoldKey.currentState?.openDrawer(),
-      showMenuWithBack: true,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    return Container(
+      height: 62,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: _kBorder)),
+      ),
+      child: Row(
         children: [
-          _buildAppBarAction(
-            compact: compact,
-            tooltip: '새 그래프',
-            icon: Icons.add_chart_rounded,
-            onPressed: _resetToBlankGraph,
+          IconButton(
+            tooltip: '뒤로가기',
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           ),
-          const SizedBox(width: 6),
-          _buildAppBarAction(
-            compact: compact,
+          const VerticalDivider(width: 18, indent: 16, endIndent: 16),
+          const Text(
+            '그래프 탐색기',
+            style: TextStyle(
+              color: _kGreen,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            tooltip: '전체 메뉴',
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            icon: const Icon(Icons.menu_rounded, size: 20),
+          ),
+          IconButton(
             tooltip: '예제 불러오기',
-            icon: Icons.folder_open_outlined,
             onPressed: _showInfoDialog,
-            outlined: true,
+            icon: const Icon(Icons.search_rounded, size: 21),
           ),
         ],
       ),
     );
   }
 
-  /// 필요한 변수는 화면 밀도·레이블·아이콘·콜백이다.
-  /// 작동 원리는 넓은 화면에서는 텍스트 버튼을, 좁은 화면에서는 동일한 도구 설명의
-  /// 아이콘 버튼을 보여 앱바가 넘치지 않게 하는 것이다.
-  Widget _buildAppBarAction({
-    required bool compact,
-    required String tooltip,
-    required IconData icon,
-    required VoidCallback onPressed,
-    bool outlined = false,
-  }) {
+  Widget _buildToolStrip() {
+    // Widget tests can supply a logical surface narrower than MediaQuery's
+    // default view; 900 keeps the mobile tool strip safely icon-only.
+    final compact = MediaQuery.sizeOf(context).width < 900;
     if (compact) {
-      return IconButton(
-        tooltip: tooltip,
-        onPressed: onPressed,
-        icon: Icon(icon, size: 19),
+      return Container(
+        height: 58,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: _kBorder)),
+        ),
+        child: Row(
+          children: [
+            const Spacer(),
+            IconButton(
+              tooltip: '새 그래프',
+              onPressed: _resetToBlankGraph,
+              icon: const Icon(Icons.stacked_line_chart_rounded, size: 20),
+            ),
+            IconButton(
+              tooltip: '예제 불러오기',
+              onPressed: _showInfoDialog,
+              icon: const Icon(Icons.menu_book_outlined, size: 20),
+            ),
+          ],
+        ),
       );
     }
-    if (outlined) {
-      return OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 17),
-        label: Text(tooltip),
-      );
-    }
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 17),
-      label: Text(tooltip),
+    return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: _kBorder)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _resetToBlankGraph,
+              icon: const Icon(
+                Icons.square_rounded,
+                size: 12,
+                color: Color(0xFF2F6DF6),
+              ),
+              label: const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('새 그래프'),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _kGreen,
+                alignment: Alignment.centerLeft,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+                side: const BorderSide(color: _kBorder),
+              ),
+            ),
+          ),
+          const SizedBox(width: 18),
+          TextButton.icon(
+            onPressed: _resetToBlankGraph,
+            icon: const Icon(Icons.stacked_line_chart_rounded, size: 17),
+            label: const Text('새 그래프'),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: _showInfoDialog,
+            icon: const Icon(Icons.menu_book_outlined, size: 17),
+            label: const Text('예제 불러오기'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _kGreen,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
+              side: const BorderSide(color: _kBorder),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -589,7 +651,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          compactMobile ? '함수 그리기' : '수식',
+          '함수 그리기',
           style: const TextStyle(
             color: _kGreen,
             fontSize: 22,
@@ -598,9 +660,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         ),
         const SizedBox(height: 6),
         Text(
-          compactMobile
-              ? '수식을 입력하면 좌표평면에 바로 반영됩니다.'
-              : '함수식을 직접 입력하고 좌표평면에서 결과를 확인하세요.',
+          compactMobile ? '함수식을 입력한 뒤 그래프에 반영하세요.' : '함수식을 입력한 뒤 그래프에 반영하세요.',
           style: const TextStyle(color: _kMuted, fontSize: 12.5, height: 1.45),
         ),
         if (_hasActiveExampleContext) ...[
@@ -1902,15 +1962,8 @@ class _SurfaceCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: _kSurface,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.zero,
         border: Border.all(color: _kBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x110B2617),
-            blurRadius: 24,
-            offset: Offset(0, 12),
-          ),
-        ],
       ),
       child: Padding(padding: padding, child: child),
     );
@@ -2471,7 +2524,7 @@ class _FunctionDraftTileState extends State<_FunctionDraftTile> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: _kSurfaceTint,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.zero,
         border: Border.all(
           color: draft.errorText == null ? _kBorder : const Color(0xFFE4AEAE),
         ),

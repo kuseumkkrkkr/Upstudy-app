@@ -440,7 +440,7 @@ class _BookWidgetState extends State<BookWidget> {
                             children: [
                               const Expanded(
                                 child: Text(
-                                  '책가방',
+                                  '자료실',
                                   style: TextStyle(
                                     fontSize: 40,
                                     height: 1,
@@ -451,7 +451,7 @@ class _BookWidgetState extends State<BookWidget> {
                               ),
                               IconButton.filled(
                                 key: const ValueKey('bookbag-mobile-search'),
-                                tooltip: '책가방 검색',
+                                tooltip: '자료실 검색',
                                 onPressed: () => _showGlobalSearch(context),
                                 style: IconButton.styleFrom(
                                   backgroundColor: Colors.black,
@@ -828,7 +828,7 @@ class _BookWidgetState extends State<BookWidget> {
         _BookbagEyebrow('STUDENT LIBRARY'),
         SizedBox(height: 10),
         Text(
-          '책가방',
+          '자료실',
           style: TextStyle(
             fontSize: 38,
             height: 1,

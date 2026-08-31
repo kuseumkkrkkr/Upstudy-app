@@ -16,11 +16,11 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('수식'), findsOneWidget);
+    expect(find.text('함수 그리기'), findsOneWidget);
     expect(find.text('함수 1'), findsOneWidget);
     expect(find.text('이차함수와 직선'), findsNothing);
-    expect(find.text('예제 불러오기'), findsOneWidget);
-    expect(find.text('그래프 그리기'), findsNothing);
+    expect(find.byTooltip('예제 불러오기'), findsAtLeastNWidgets(1));
+    expect(find.text('그래프 탐색기'), findsOneWidget);
     expect(find.text('좌표평면'), findsNothing);
   });
 
@@ -56,8 +56,11 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byIcon(Icons.add_chart_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.folder_open_outlined), findsOneWidget);
+    expect(
+      find.byIcon(Icons.stacked_line_chart_rounded),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.byIcon(Icons.menu_book_outlined), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
