@@ -61,6 +61,9 @@ class StudentLearningToolsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/tools')
+          : null,
       body: SafeArea(
         child: Column(
           children: [

@@ -426,6 +426,9 @@ class _BookWidgetState extends State<BookWidget> {
         key: const ValueKey('bookbag-mobile-redesign'),
         backgroundColor: const Color(0xFFF2F2F4),
         drawer: const AppDrawer(),
+        bottomNavigationBar: const MobileStudentBottomAppBar(
+          activeRoute: '/bookbag',
+        ),
         body: SafeArea(
           child: Column(
             children: [

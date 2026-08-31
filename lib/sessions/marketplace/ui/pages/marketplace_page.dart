@@ -414,6 +414,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/marketplace')
+          : null,
       body: SafeArea(
         child: Column(
           children: [

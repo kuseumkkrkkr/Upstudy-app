@@ -160,6 +160,9 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       key: const ValueKey('level-test-screen'),
       backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/level_test')
+          : null,
       body: SafeArea(
         child: Column(
           children: [

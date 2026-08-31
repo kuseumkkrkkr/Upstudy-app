@@ -474,6 +474,9 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
       key: const ValueKey('wrong-answers-screen'),
       backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/wrong_answers')
+          : null,
       body: SafeArea(
         child: Column(
           children: [

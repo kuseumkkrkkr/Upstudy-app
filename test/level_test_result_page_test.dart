@@ -92,7 +92,7 @@ void main() {
       final mobile = width <= 780;
 
       if (mobile) {
-        expect(find.text('홈'), findsOneWidget);
+        expect(find.text('홈'), findsWidgets);
         expect(find.text('학습 홈으로'), findsNothing);
         expect(analysis.left, closeTo(overview.left, 0.1));
         expect(analysis.top, greaterThan(overview.bottom));

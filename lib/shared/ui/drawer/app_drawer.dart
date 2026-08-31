@@ -34,7 +34,12 @@ class MobileStudentBottomAppBar extends StatelessWidget {
       icon: Icons.route_outlined,
       label: '코스',
       route: '/courses',
-      activeRoutes: ['/courses', '/course_runtime'],
+      activeRoutes: [
+        '/courses',
+        '/course_runtime',
+        '/wrong_answers',
+        '/wrong_answer_solve',
+      ],
     ),
     _DrawerDestination(
       icon: Icons.storefront_outlined,

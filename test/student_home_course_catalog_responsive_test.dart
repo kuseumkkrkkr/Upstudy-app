@@ -46,7 +46,7 @@ Future<void> _pumpAt(WidgetTester tester, Size size, Widget page) async {
 }
 
 void main() {
-  testWidgets('코스 카탈로그는 1280 PC와 390·500 모바일에서 모든 필터와 상태 카드를 유지한다', (
+  testWidgets('코스 카탈로그는 1280 PC와 390·500 모바일에서 OpenDesign 그룹 구조를 유지한다', (
     tester,
   ) async {
     for (final width in [1280.0, 390.0, 500.0]) {
@@ -60,7 +60,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('코스'), findsWidgets);
-      expect(find.text('완료 코스'), findsOneWidget);
+      // 2026년 8월 OpenDesign 모바일 시안은 필터 도크 대신
+      // '학습 중/코스 관리' 그룹으로 탐색을 압축한다.
+      expect(find.text('학습 중'), findsOneWidget);
+      expect(find.text('코스 관리'), findsOneWidget);
       expect(find.text('일차함수 완성'), findsWidgets);
       expect(
         find.byKey(
@@ -76,11 +79,11 @@ void main() {
       );
       expect(
         find.byKey(const ValueKey('course-mobile-search-dock')),
-        width < 760 ? findsOneWidget : findsNothing,
+        findsNothing,
       );
       expect(
         find.byKey(const ValueKey('course-mobile-search-button')),
-        width < 760 ? findsOneWidget : findsNothing,
+        findsNothing,
       );
       expect(tester.takeException(), isNull);
     }

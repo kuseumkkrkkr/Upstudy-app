@@ -207,6 +207,9 @@ class _TimerPageState extends State<TimerPage> {
       key: const ValueKey('timer-tool-page'),
       backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/tools')
+          : null,
       body: SafeArea(
         child: Column(
           children: [

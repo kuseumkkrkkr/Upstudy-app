@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 /// 레벨 테스트의 일반 결과와 배치 결과를 같은 학생용 리포트 표면으로 표시한다.
 /// 필요한 값은 채점 수치 또는 배치 API 결과이며, 홈 이동은 기존 Navigator 흐름을 그대로 사용한다.
@@ -52,8 +54,12 @@ class _LevelResultScaffold extends StatelessWidget {
   /// 780px 이하에서는 읽기 순서를 유지한 단일 열, 그보다 넓으면 요약과 분석을 분리한 2열로 배치한다.
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
       backgroundColor: _LevelResultTokens.canvas,
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/level_test/result')
+          : null,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

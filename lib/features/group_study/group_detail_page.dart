@@ -465,6 +465,9 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       key: const ValueKey('mobile-group-dashboard'),
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: const AppDrawer(),
+      bottomNavigationBar: const MobileStudentBottomAppBar(
+        activeRoute: '/group/detail',
+      ),
       body: SafeArea(
         child: Column(
           children: [

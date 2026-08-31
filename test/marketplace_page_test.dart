@@ -47,7 +47,7 @@ void main() {
     expect(find.byKey(const ValueKey('market-mobile-body')), findsOneWidget);
     expect(find.byKey(const ValueKey('market-mobile-grid')), findsOneWidget);
     expect(find.text('MATERIAL LIBRARY'), findsOneWidget);
-    expect(find.text('자료실'), findsOneWidget);
+    expect(find.text('자료실'), findsWidgets);
     expect(find.text('필요한 학습 자료를\n형태보다 목표로 찾으세요.'), findsOneWidget);
     expect(
       tester
@@ -95,7 +95,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('자료실'), findsOneWidget);
+    expect(find.text('자료실'), findsWidgets);
     expect(find.text('MARKET CORNERS'), findsNothing);
     expect(find.text('난이도 3 · 유형 훈련 코스'), findsOneWidget);
     expect(find.text('무료'), findsOneWidget);
@@ -229,7 +229,7 @@ void main() {
     expect(find.byType(MobileStudentBottomAppBar), findsNothing);
   });
 
-  testWidgets('390px 마켓은 표준 모바일 헤더를 유지하고 하단 탭을 만들지 않는다', (tester) async {
+  testWidgets('390px 마켓은 표준 모바일 헤더와 자료실 하단 탭을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -249,7 +249,7 @@ void main() {
     expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
     expect(find.byKey(const ValueKey('student-brand-home')), findsOneWidget);
     expect(find.byKey(const ValueKey('market-mobile-scroll')), findsOneWidget);
-    expect(find.byType(MobileStudentBottomAppBar), findsNothing);
+    expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
   });
 
   for (final width in <double>[720, 760, 780]) {
@@ -283,7 +283,7 @@ void main() {
       expect(find.byKey(const ValueKey('market-mobile-body')), findsOneWidget);
       expect(find.byKey(const ValueKey('market-wide-scroll')), findsNothing);
       expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
-      expect(find.byType(MobileStudentBottomAppBar), findsNothing);
+      expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
     });
   }
 }

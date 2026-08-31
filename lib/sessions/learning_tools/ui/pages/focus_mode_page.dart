@@ -123,6 +123,9 @@ class _FocusModePageState extends State<FocusModePage> {
       key: const ValueKey('focus-tool-page'),
       backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/tools')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
