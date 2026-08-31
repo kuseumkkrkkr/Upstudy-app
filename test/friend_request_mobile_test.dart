@@ -10,6 +10,13 @@ import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
+Future<void> _openMobileFriendsTab(WidgetTester tester) async {
+  expect(find.byKey(const ValueKey('mobile-social-tabs')), findsOneWidget);
+  await tester.tap(find.byKey(const ValueKey('mobile-social-tab-1')));
+  await tester.pumpAndSettle();
+  expect(find.byKey(const ValueKey('mobile-social-friends')), findsOneWidget);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -22,9 +29,9 @@ void main() {
     await ApiClient.instance.clearToken();
   });
 
-  testWidgets('모바일 친구 추가는 바텀시트에서 검색 후 요청을 한 번만 전송한다', (tester) async {
+  testWidgets('모바일 친구 찾기 페이지에서 검색 후 요청을 한 번만 전송한다', (tester) async {
     // 필요한 변수는 모바일 소셜 미리보기와 검색·요청 모의 API다.
-    // 작동 원리는 친구 추가 시트를 열어 검색 결과를 표시하고 요청 성공 뒤 버튼이
+    // 작동 원리는 친구 탭의 검색 페이지를 열어 결과를 표시하고 요청 성공 뒤 버튼이
     // 요청됨 상태로 잠기며 같은 사용자에게 중복 전송하지 않는지 확인한다.
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -65,13 +72,15 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.text('친구 추가').first);
+    await _openMobileFriendsTab(tester);
+    await tester.tap(find.byKey(const ValueKey('mobile-friend-add-open')));
     await tester.pumpAndSettle();
 
     expect(
-      find.byKey(const ValueKey('mobile-add-friend-sheet')),
+      find.byKey(const ValueKey('mobile-friend-add-page')),
       findsOneWidget,
     );
+    expect(find.text('친구 찾기'), findsOneWidget);
     expect(find.text('친구의 닉네임을 검색해 친구 요청을 보낼 수 있어요.'), findsOneWidget);
 
     await tester.enterText(
@@ -143,7 +152,8 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: SoWidget(preview: true)));
     await tester.pump();
-    await tester.tap(find.text('친구 요청'));
+    await _openMobileFriendsTab(tester);
+    await tester.tap(find.byKey(const ValueKey('mobile-friend-requests-open')));
     await tester.pumpAndSettle();
 
     expect(
@@ -167,35 +177,185 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('390 친구 프로필은 받은 정보만 표시하고 기존 쪽지 화면으로 잇는다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await ApiClient.instance.setToken('friend-profile-mobile-token');
+    final requests = <http.Request>[];
+    ApiClient.instance.setHttpClientForTest(
+      MockClient((request) async {
+        requests.add(request);
+        if (request.method == 'GET' && request.url.path == '/social/friends') {
+          return http.Response(
+            jsonEncode({
+              'friends': [
+                {
+                  'user_id': 'peer-graph-1',
+                  'username': 'graph-user',
+                  'name': '김그래프',
+                  'profile_image': '',
+                  'ovr': 87.5,
+                  'status': '함수 단원 학습 중',
+                },
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.method == 'GET' &&
+            request.url.path == '/social/friend-requests') {
+          return http.Response(
+            jsonEncode({'requests': <Object>[]}),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.method == 'GET' &&
+            (request.url.path == '/social/conversations' ||
+                request.url.path == '/social/messages')) {
+          return http.Response(
+            jsonEncode({'messages': <Object>[]}),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response(
+          jsonEncode({'detail': 'unexpected ${request.url.path}'}),
+          404,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: SoWidget()));
+    await tester.pumpAndSettle();
+    await _openMobileFriendsTab(tester);
+
+    final friendRow = find.byKey(const ValueKey('social-friend-peer-graph-1'));
+    await tester.ensureVisible(friendRow);
+    await tester.tap(friendRow);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('프로필 보기'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('mobile-friend-profile-sheet')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('friend-profile-avatar-fallback')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('friend-profile-display-name')),
+      findsOneWidget,
+    );
+    expect(find.text('김그래프'), findsOneWidget);
+    expect(find.text('@graph-user'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('friend-profile-status')),
+        matching: find.text('함수 단원 학습 중'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('friend-profile-ovr')),
+        matching: find.text('88'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('peer-graph-1'), findsNothing);
+    expect(find.text('프로필 보기 기능은 준비 중입니다.'), findsNothing);
+
+    final friendRequestsBefore = requests
+        .where((request) => request.url.path == '/social/friends')
+        .length;
+    await tester.tap(
+      find.byKey(const ValueKey('friend-profile-message-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StudentDirectChatPage), findsOneWidget);
+    expect(
+      requests.where((request) => request.url.path == '/social/friends').length,
+      friendRequestsBefore,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('1280 친구 프로필은 제한된 데스크톱 다이얼로그다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: SoWidget(preview: true)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('social-friend-이수학')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('프로필 보기'));
+    await tester.pumpAndSettle();
+
+    final dialog = find.byKey(const ValueKey('desktop-friend-profile-dialog'));
+    expect(dialog, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('mobile-friend-profile-sheet')),
+      findsNothing,
+    );
+    expect(tester.getSize(dialog).width, lessThanOrEqualTo(440));
+    expect(tester.getSize(dialog).height, lessThanOrEqualTo(430));
+    expect(
+      find.byKey(const ValueKey('friend-profile-message-button')),
+      findsOneWidget,
+    );
+    expect(find.text('프로필 보기 기능은 준비 중입니다.'), findsNothing);
+
+    await tester.tap(find.byTooltip('닫기').last);
+    await tester.pumpAndSettle();
+    expect(dialog, findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('모바일 친구 소셜과 스터디 그룹은 서로 다른 페이지다', (tester) async {
     tester.view.physicalSize = const Size(390, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: SoWidget(preview: true)));
+    RouteSettings? openedRoute;
+    await tester.pumpWidget(
+      MaterialApp(
+        onGenerateRoute: (settings) {
+          openedRoute = settings;
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const SizedBox(),
+          );
+        },
+        home: const SoWidget(preview: true),
+      ),
+    );
     await tester.pump();
 
-    expect(find.text('친구 · 소셜'), findsOneWidget);
+    expect(find.byKey(const ValueKey('mobile-social-topbar')), findsOneWidget);
+    expect(find.text('함께 공부'), findsOneWidget);
+    expect(find.byKey(const ValueKey('mobile-social-tabs')), findsOneWidget);
     expect(
-      tester
-          .getSize(find.byKey(const ValueKey('mobile-social-add-friend')))
-          .width,
-      greaterThan(330),
+      find.byKey(const ValueKey('mobile-social-messages')),
+      findsOneWidget,
     );
     expect(
       find.byKey(const ValueKey('mobile-social-summary-card')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(
-      find.byKey(const ValueKey('mobile-recent-conversations-card')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('mobile-friends-status-card')),
-      findsOneWidget,
-    );
-    expect(find.text('활동 중인 그룹'), findsNothing);
     expect(
       find.byKey(const ValueKey('mobile-active-groups-card')),
       findsNothing,
@@ -210,29 +370,25 @@ void main() {
     );
     expect(find.byKey(const ValueKey('mobile-my-rating-card')), findsNothing);
 
+    await tester.tap(find.byKey(const ValueKey('mobile-social-tab-2')));
+    await tester.pumpAndSettle();
+    expect(openedRoute?.name, '/groups');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
     await tester.pumpWidget(
       const MaterialApp(home: GroupListPage(initialGroups: <Object>[])),
     );
     await tester.pump();
-    expect(find.text('스터디 그룹'), findsOneWidget);
-    expect(find.text('참여 중인 그룹'), findsOneWidget);
+    expect(find.byKey(const ValueKey('groups-mobile-topbar')), findsOneWidget);
+    expect(find.byKey(const ValueKey('groups-mobile-tabs')), findsOneWidget);
+    expect(find.byKey(const ValueKey('groups-mobile-heading')), findsOneWidget);
+    expect(find.byKey(const ValueKey('groups-mobile-empty')), findsOneWidget);
+    expect(find.byKey(const ValueKey('mobile-group-insights')), findsNothing);
     expect(
       find.byKey(const ValueKey('mobile-active-groups-card')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const ValueKey('mobile-group-empty')), findsOneWidget);
-    expect(find.byKey(const ValueKey('mobile-group-insights')), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('mobile-study-together-card')),
       findsNothing,
     );
-    await tester.tap(find.text('학습 현황'));
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const ValueKey('mobile-friend-ranking-card')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const ValueKey('mobile-my-rating-card')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -267,10 +423,11 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('mobile-group-card-0')), findsOneWidget);
-    expect(find.text('4 / 12명 · 공개'), findsOneWidget);
+    final groupRow = find.byKey(const ValueKey('groups-mobile-row-group-1'));
+    expect(groupRow, findsOneWidget);
+    expect(find.text('4/12명 · 공개'), findsOneWidget);
     expect(find.text('그룹 공간 열기'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('mobile-group-card-0')));
+    await tester.tap(groupRow);
     await tester.pumpAndSettle();
     expect(openedRoute?.name, '/group/detail');
     expect(openedRoute?.arguments, 'group-1');

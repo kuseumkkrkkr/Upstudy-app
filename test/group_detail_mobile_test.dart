@@ -120,6 +120,11 @@ void main() {
       find.byKey(const ValueKey('mobile-group-dashboard')),
       findsOneWidget,
     );
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+    expect(find.byTooltip('뒤로가기'), findsOneWidget);
+    expect(find.byTooltip('검색'), findsOneWidget);
+    expect(find.byTooltip('알림'), findsOneWidget);
     expect(find.byKey(const ValueKey('mobile-group-overview')), findsOneWidget);
     expect(find.byKey(const ValueKey('mobile-group-schedule')), findsOneWidget);
     expect(
@@ -149,10 +154,7 @@ void main() {
     expect(find.textContaining('MEMBERS'), findsNothing);
     expect(find.text('현재 그룹의 멤버와 역할을 확인합니다.'), findsNothing);
     expect(find.textContaining('사용자 ID'), findsNothing);
-    expect(
-      find.byKey(const ValueKey('member-actions-수학친구')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('member-actions-수학친구')), findsOneWidget);
     expect(find.byKey(const ValueKey('delete-study-group')), findsOneWidget);
     expect(find.byKey(const ValueKey('group-invite-friend')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('group-invite-friend')));
@@ -189,6 +191,46 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('SHARE EXAM'), findsOneWidget);
     expect(find.text('선택 항목 공유'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('그룹 상세 PC는 친구/소셜 공용 내비게이션을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await ApiClient.instance.setToken('group-detail-desktop-token');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GroupDetailPage(
+          groupId: 'group-1',
+          initialGroup: StudyGroup(
+            id: 'group-1',
+            name: '중2 수학 챌린지',
+            description: '매일 한 문제씩 함께 풀어요',
+            memberCount: 2,
+            maxMembers: 12,
+          ),
+          initialMembers: const [
+            StudyGroupMember(username: '나', role: 'admin'),
+            StudyGroupMember(username: '수학친구'),
+          ],
+          initialShareHistory: const [],
+          initialShareExams: const [],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byKey(const ValueKey('student-top-nav-친구/소셜')), findsOneWidget);
+    expect(find.byTooltip('검색'), findsOneWidget);
+    expect(find.byTooltip('알림'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('student-mobile-menu')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(Drawer), findsOneWidget);
+    expect(find.text('STUDY GROUP'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

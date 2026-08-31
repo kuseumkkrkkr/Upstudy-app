@@ -395,6 +395,10 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
                 brandColor: Colors.black,
                 showLevelIndicator: false,
                 onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 items: const [],
               ),
             ),

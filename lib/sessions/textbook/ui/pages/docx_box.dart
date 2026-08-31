@@ -6,7 +6,6 @@ import 'package:s11/sessions/textbook/ui/pages/book_page.dart' as book_page;
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart'
     as exam_page;
 import 'package:s11/sessions/tryout_solve/ui/pages/solution_view_page.dart';
@@ -18,6 +17,7 @@ import 'package:s11/shared/business/repositories/problem_bookmark_store.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 
@@ -76,6 +76,10 @@ class BookWidget extends StatefulWidget {
 }
 
 class _BookWidgetState extends State<BookWidget> {
+  // The desktop header remains available from 781px, but the library body
+  // needs more room before its cards and actions can safely sit side by side.
+  static const double _bodyStackBreakpoint = 1000;
+
   // ── storage keys ──────────────────────────────────────────
   static const String _pinnedBookKey = 'pinned_textbook_id';
   static const String _pinnedExamKey = 'pinned_exam_id_v1';
@@ -368,8 +372,7 @@ class _BookWidgetState extends State<BookWidget> {
   // ── build root ────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final mobile = size.width <= 720 && size.height > size.width;
+    final mobile = isStudentDensityMobile(context);
     if (mobile) return _buildMobileBookbag(context);
 
     return GestureDetector(
@@ -386,6 +389,7 @@ class _BookWidgetState extends State<BookWidget> {
                 // 가능한 뷰포트를 사용해 데스크톱 휠·트랙패드와 모바일 드래그가
                 // 짧은 화면에서도 같은 방식으로 다음 섹션까지 이동하게 한다.
                 child: CustomScrollView(
+                  key: const ValueKey('bookbag-desktop-body'),
                   primary: true,
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
@@ -421,8 +425,7 @@ class _BookWidgetState extends State<BookWidget> {
       child: Scaffold(
         key: const ValueKey('bookbag-mobile-redesign'),
         backgroundColor: const Color(0xFFF2F2F4),
-        drawer: null,
-        bottomNavigationBar: const MobileStudentBottomAppBar(),
+        drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
             children: [
@@ -440,7 +443,7 @@ class _BookWidgetState extends State<BookWidget> {
                             children: [
                               const Expanded(
                                 child: Text(
-                                  '책가방',
+                                  '자료실',
                                   style: TextStyle(
                                     fontSize: 40,
                                     height: 1,
@@ -451,7 +454,7 @@ class _BookWidgetState extends State<BookWidget> {
                               ),
                               IconButton.filled(
                                 key: const ValueKey('bookbag-mobile-search'),
-                                tooltip: '책가방 검색',
+                                tooltip: '자료실 검색',
                                 onPressed: () => _showGlobalSearch(context),
                                 style: IconButton.styleFrom(
                                   backgroundColor: Colors.black,
@@ -765,18 +768,15 @@ class _BookWidgetState extends State<BookWidget> {
   //  HEADER
   // ══════════════════════════════════════════════════════════
   /// 필요한 변수는 현재 책가방 화면 문맥이다.
-  /// PC는 공용 학생 메뉴를 유지하고 모바일은 하단 앱바에 탐색과 유틸리티를 맡긴다.
+  /// PC·모바일 모두 공용 학생 상단바와 오버레이 메뉴를 유지한다.
   Widget _buildHeader(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 720;
     return Ios26TopBar(
       brandColor: BookWidget.primaryGreen,
-      showUtilityActions: !mobile,
-      hideOnMobile: true,
-      onMenu: mobile ? null : () => toggleAppDrawer(context),
-      onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainStudentPage()),
-        (route) => false,
-      ),
+      showUtilityActions: true,
+      onMenu: () => toggleAppDrawer(context),
+      onTitleTap: () => Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
       items: studentTopNavItems(context, active: StudentTopDestination.bookbag),
     );
   }
@@ -789,11 +789,14 @@ class _BookWidgetState extends State<BookWidget> {
   /// 보관함 진입 기능은 레퍼런스 순서대로 유지하는 것이다.
   Widget _buildHeroSection(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final vertical = width < 760;
+    final vertical = width < _bodyStackBreakpoint;
     final horizontalPadding = vertical ? 16.0 : 54.0;
 
     return Center(
       child: ConstrainedBox(
+        key: ValueKey(
+          vertical ? 'bookbag-hero-stacked' : 'bookbag-hero-columns',
+        ),
         constraints: const BoxConstraints(maxWidth: 1440),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
@@ -828,7 +831,7 @@ class _BookWidgetState extends State<BookWidget> {
         _BookbagEyebrow('STUDENT LIBRARY'),
         SizedBox(height: 10),
         Text(
-          '책가방',
+          '자료실',
           style: TextStyle(
             fontSize: 38,
             height: 1,
@@ -1314,9 +1317,12 @@ class _BookWidgetState extends State<BookWidget> {
   /// 작동 원리는 책가방 자료 카드 아래에 현재 코스·추천 코스·새 코스 찾기를 가로 또는 세로 목록으로 표시하는 것이다.
   Widget _buildBottomSection(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final vertical = width < 760;
+    final vertical = width < _bodyStackBreakpoint;
     return Center(
       child: ConstrainedBox(
+        key: ValueKey(
+          vertical ? 'bookbag-bottom-stacked' : 'bookbag-bottom-columns',
+        ),
         constraints: const BoxConstraints(maxWidth: 1440),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
@@ -2016,61 +2022,64 @@ class _BookWidgetState extends State<BookWidget> {
                       final entry = ordered[index];
                       final checked = selected.contains(entry.examId);
                       final isPinned = _pinnedExamId == entry.examId;
-                      return ListTile(
-                        leading: editMode
-                            ? Checkbox(
-                                value: checked,
-                                onChanged: (v) => setState(() {
-                                  if (v == true) {
-                                    selected.add(entry.examId);
-                                  } else {
-                                    selected.remove(entry.examId);
-                                  }
-                                }),
-                              )
-                            : CircleAvatar(
-                                backgroundColor: BookWidget.mediumGreen,
-                                child: const Icon(
-                                  Icons.file_copy_outlined,
-                                  color: Colors.white,
+                      return Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          leading: editMode
+                              ? Checkbox(
+                                  value: checked,
+                                  onChanged: (v) => setState(() {
+                                    if (v == true) {
+                                      selected.add(entry.examId);
+                                    } else {
+                                      selected.remove(entry.examId);
+                                    }
+                                  }),
+                                )
+                              : CircleAvatar(
+                                  backgroundColor: BookWidget.mediumGreen,
+                                  child: const Icon(
+                                    Icons.file_copy_outlined,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                        title: _LatexLine(_examTitle(entry)),
-                        subtitle: _LatexLine(
-                          _examSubtitle(entry),
-                          style: const TextStyle(
-                            color: Colors.black54,
-                            fontSize: 12.5,
+                          title: _LatexLine(_examTitle(entry)),
+                          subtitle: _LatexLine(
+                            _examSubtitle(entry),
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 12.5,
+                            ),
                           ),
+                          trailing: editMode
+                              ? null
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      tooltip: isPinned ? '고정해제' : '고정',
+                                      onPressed: () => _setPinnedExam(
+                                        isPinned ? null : entry.examId,
+                                      ),
+                                      icon: Icon(
+                                        isPinned
+                                            ? Icons.push_pin
+                                            : Icons.push_pin_outlined,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                          onTap: () {
+                            if (editMode) return;
+                            Navigator.of(dialogContext).pop();
+                            _openExamPaper(rootContext, entry);
+                          },
                         ),
-                        trailing: editMode
-                            ? null
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    tooltip: isPinned ? '고정해제' : '고정',
-                                    onPressed: () => _setPinnedExam(
-                                      isPinned ? null : entry.examId,
-                                    ),
-                                    icon: Icon(
-                                      isPinned
-                                          ? Icons.push_pin
-                                          : Icons.push_pin_outlined,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 16,
-                                  ),
-                                ],
-                              ),
-                        onTap: () {
-                          if (editMode) return;
-                          Navigator.of(dialogContext).pop();
-                          _openExamPaper(rootContext, entry);
-                        },
                       );
                     },
                   );
@@ -2111,60 +2120,63 @@ class _BookWidgetState extends State<BookWidget> {
                         final book = filtered[index];
                         final checked = selected.contains(book.id);
                         final isPinned = _pinnedBook?.id == book.id;
-                        return ListTile(
-                          leading: editMode
-                              ? Checkbox(
-                                  value: checked,
-                                  onChanged: (v) => setState(() {
-                                    if (v == true) {
-                                      selected.add(book.id);
-                                    } else {
-                                      selected.remove(book.id);
-                                    }
-                                  }),
-                                )
-                              : CircleAvatar(
-                                  backgroundColor:
-                                      book.coverColor ?? BookWidget.darkGreen,
-                                  child: const Icon(
-                                    Icons.book_outlined,
-                                    color: Colors.white,
+                        return Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            leading: editMode
+                                ? Checkbox(
+                                    value: checked,
+                                    onChanged: (v) => setState(() {
+                                      if (v == true) {
+                                        selected.add(book.id);
+                                      } else {
+                                        selected.remove(book.id);
+                                      }
+                                    }),
+                                  )
+                                : CircleAvatar(
+                                    backgroundColor:
+                                        book.coverColor ?? BookWidget.darkGreen,
+                                    child: const Icon(
+                                      Icons.book_outlined,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                ),
-                          title: _LatexLine(book.title),
-                          subtitle: _LatexLine(
-                            _bookSubtitle(book),
-                            style: const TextStyle(
-                              color: Colors.black54,
-                              fontSize: 12.5,
+                            title: _LatexLine(book.title),
+                            subtitle: _LatexLine(
+                              _bookSubtitle(book),
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 12.5,
+                              ),
                             ),
-                          ),
-                          trailing: editMode
-                              ? null
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      tooltip: isPinned ? '고정해제' : '고정',
-                                      onPressed: () => _pinBook(book),
-                                      icon: Icon(
-                                        isPinned
-                                            ? Icons.push_pin
-                                            : Icons.push_pin_outlined,
-                                        size: 18,
+                            trailing: editMode
+                                ? null
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: isPinned ? '고정해제' : '고정',
+                                        onPressed: () => _pinBook(book),
+                                        icon: Icon(
+                                          isPinned
+                                              ? Icons.push_pin
+                                              : Icons.push_pin_outlined,
+                                          size: 18,
+                                        ),
                                       ),
-                                    ),
-                                    const Icon(
-                                      Icons.chevron_right_rounded,
-                                      size: 16,
-                                    ),
-                                  ],
-                                ),
-                          onTap: () {
-                            if (editMode) return;
-                            Navigator.of(dialogContext).pop();
-                            _openTextbook(rootContext, book);
-                          },
+                                      const Icon(
+                                        Icons.chevron_right_rounded,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
+                            onTap: () {
+                              if (editMode) return;
+                              Navigator.of(dialogContext).pop();
+                              _openTextbook(rootContext, book);
+                            },
+                          ),
                         );
                       },
                     );

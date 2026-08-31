@@ -236,6 +236,7 @@ class WrongAnswerListPage extends StatefulWidget {
 class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
   String _filter = '전체';
   bool _latestFirst = true;
+  ReviewCourseType _selectedPlan = ReviewCourseType.daily;
   bool _loading = true;
   String? _error;
   List<_ReviewItem> _items = const <_ReviewItem>[];
@@ -311,6 +312,7 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
               : tags.map((tag) => tag.startsWith('#') ? tag : '#$tag').toList(),
           attempts: done ? '복습 완료' : '$incorrectCount회 틀림',
           done: done,
+          occurredAt: DateTime.tryParse(latest.createdAt)?.toLocal(),
         ),
       );
     }
@@ -357,30 +359,134 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
     return _latestFirst ? items : items.reversed.toList(growable: false);
   }
 
+  /// 필요한 변수는 선택한 복습 주기와 실제 오답 이력이다.
+  /// 작동 원리는 목록 API가 제공한 마지막 풀이 시각만 사용해 오늘·이번 주·이번 달 범위를
+  /// 나누고, 범위 밖 또는 날짜 없는 항목은 계획 수치에 넣지 않는 것이다.
+  List<_ReviewItem> _itemsForPlan(ReviewCourseType type) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final weekStart = today.subtract(Duration(days: today.weekday - 1));
+    return _items
+        .where((item) {
+          final occurredAt = item.occurredAt;
+          if (occurredAt == null) return false;
+          final date = DateTime(
+            occurredAt.year,
+            occurredAt.month,
+            occurredAt.day,
+          );
+          switch (type) {
+            case ReviewCourseType.daily:
+              return date == today;
+            case ReviewCourseType.weekly:
+              return !date.isBefore(weekStart) && !date.isAfter(today);
+            case ReviewCourseType.monthly:
+              return date.year == today.year && date.month == today.month;
+            case ReviewCourseType.manual:
+              return true;
+          }
+        })
+        .toList(growable: false);
+  }
+
+  /// 필요한 변수는 현재 주기·기간 안 실제 오답·약점 태그다.
+  /// 작동 원리는 시안의 복습 계획 문구를 유지하되 문제 수·진행률·태그 수를
+  /// 서버 이력에서만 계산해 임의의 계획 완료 상태를 만들지 않는 것이다.
+  _AtlasReviewPlan _planFor(ReviewCourseType type) {
+    final scopedItems = _itemsForPlan(type);
+    final pending = scopedItems.where((item) => !item.done).toList();
+    final repeated = pending.where((item) => item.incorrectCount >= 2).length;
+    final completed = scopedItems.where((item) => item.done).length;
+    final total = scopedItems.length;
+    final progress = total == 0 ? 0 : (completed / total * 100).round();
+    final problemCount = pending.length;
+    final minutes = problemCount == 0 ? 0 : (problemCount * 3).clamp(3, 45);
+    final topTag = _weaknessTags.isEmpty ? '취약 태그 없음' : _weaknessTags.first.tag;
+    final now = DateTime.now();
+
+    switch (type) {
+      case ReviewCourseType.daily:
+        return _AtlasReviewPlan(
+          type: type,
+          label: '오늘',
+          title: '오늘의 복습 코스',
+          due: '오늘 안에',
+          meta: '$problemCount문제 · 약 $minutes분',
+          progress: progress,
+          tasks: [
+            _AtlasReviewTask('오늘 오답 다시 풀기', '$problemCount문제', true),
+            _AtlasReviewTask('반복 오답 확인', '$repeated문제', true),
+            _AtlasReviewTask('취약 태그 요약 보기', topTag, false),
+          ],
+        );
+      case ReviewCourseType.weekly:
+        return _AtlasReviewPlan(
+          type: type,
+          label: '이번 주',
+          title: '이번 주 복습 코스',
+          due: '이번 주 안에',
+          meta: '$problemCount문제 · 약 $minutes분',
+          progress: progress,
+          tasks: [
+            _AtlasReviewTask('주간 오답 다시 풀기', '$problemCount문제', true),
+            _AtlasReviewTask('반복 오답 복습', '$repeated문제', true),
+            _AtlasReviewTask('취약 태그 확인', topTag, false),
+          ],
+        );
+      case ReviewCourseType.monthly:
+        return _AtlasReviewPlan(
+          type: type,
+          label: '이번 달',
+          title: '${now.month}월 다시보기',
+          due: '이번 달 안에',
+          meta: '$problemCount문제 · 약 $minutes분',
+          progress: progress,
+          tasks: [
+            _AtlasReviewTask('월간 오답 다시 풀기', '$problemCount문제', true),
+            _AtlasReviewTask('반복 오답 점검', '$repeated문제', true),
+            _AtlasReviewTask('주요 취약 개념 확인', topTag, false),
+          ],
+        );
+      case ReviewCourseType.manual:
+        return _AtlasReviewPlan(
+          type: type,
+          label: '기간 선택',
+          title: '기간을 골라 복습 만들기',
+          due: '선택 후 7일',
+          meta: '$problemCount문제 · 최근 30일 이력',
+          progress: progress,
+          tasks: [
+            _AtlasReviewTask('선택 기간 누적 오답', '$problemCount문제', true),
+            _AtlasReviewTask('취약 태그 집중 문제', topTag, true),
+            _AtlasReviewTask('반복 오답 점검', '$repeated문제', true),
+          ],
+        );
+    }
+  }
+
   /// 필요한 변수는 현재 필터·화면 폭·복습 항목이다.
   /// 공용 셸 아래에 HTML의 페이지 헤더, 검은 복습 히어로, 목록과 약점 카드를 순서대로 배치한다.
   @override
   Widget build(BuildContext context) {
-    final pending = _items.where((item) => !item.done).length;
-    final completed = _items.where((item) => item.done).length;
     final mobile = isStudentDensityMobile(context);
+    final plan = _planFor(_selectedPlan);
     return Scaffold(
       key: const ValueKey('wrong-answers-screen'),
       backgroundColor: StudentDensityTokens.background,
-      drawer: mobile ? null : const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/wrong_answers')
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
             Builder(
               builder: (context) => Ios26TopBar(
                 brandColor: StudentDensityTokens.dark,
-                onMenu: mobile ? null : () => Scaffold.of(context).openDrawer(),
+                onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 showLevelIndicator: false,
-                showUtilityActions: !mobile,
-                hideOnMobile: true,
+                showUtilityActions: true,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,
@@ -395,31 +501,29 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
                           loading: _loading,
                           hasLoadError: _error != null,
                           items: _visibleItems,
-                          pendingCount: pending,
-                          completedCount: completed,
                           weaknessTags: _weaknessTags,
                           filter: _filter,
                           latestFirst: _latestFirst,
+                          plan: plan,
+                          selectedPlan: _selectedPlan,
                           onFilter: (value) => setState(() => _filter = value),
                           onSort: () =>
                               setState(() => _latestFirst = !_latestFirst),
+                          onPlanSelected: (value) =>
+                              setState(() => _selectedPlan = value),
                           onRetry: _load,
                           onAction: _showReviewAction,
                         )
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _ReviewHeading(
+                            _AtlasReviewCenter(
+                              plan: plan,
+                              selectedPlan: _selectedPlan,
+                              onPlanSelected: (value) =>
+                                  setState(() => _selectedPlan = value),
                               onStart: () =>
-                                  _showReviewAction('맞춤 복습 시작', null),
-                            ),
-                            const SizedBox(height: 16),
-                            _ReviewHero(
-                              pendingCount: pending,
-                              completedCount: completed,
-                              weaknessTags: _weaknessTags,
-                              onStart: () =>
-                                  _showReviewAction('6문제 이어서 풀기', null),
+                                  _showReviewAction('복습 코스 시작', null),
                             ),
                             const SizedBox(height: 14),
                             LayoutBuilder(
@@ -476,18 +580,477 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
   }
 }
 
+/// 287 Atlas의 복습센터 제어 그룹을 실제 오답 데이터 위에 얹는 공용 표면이다.
+/// 모바일과 PC 모두 같은 계획 선택·시작 동작을 사용한다.
+class _AtlasReviewCenter extends StatelessWidget {
+  const _AtlasReviewCenter({
+    required this.plan,
+    required this.selectedPlan,
+    required this.onPlanSelected,
+    required this.onStart,
+  });
+
+  final _AtlasReviewPlan plan;
+  final ReviewCourseType selectedPlan;
+  final ValueChanged<ReviewCourseType> onPlanSelected;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 760),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '복습센터',
+            key: ValueKey('wrong-answer-atlas-title'),
+            style: TextStyle(
+              color: StudentDensityTokens.ink,
+              fontSize: 34,
+              height: 1,
+              letterSpacing: -1.8,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '틀린 문제를 기간별 복습 코스로 다시 정리합니다.',
+            style: TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _AtlasReviewGroup(
+            number: '01',
+            title: '학습 다시하기',
+            description: '복습할 방식을 선택합니다.',
+            child: _AtlasReviewAction(
+              key: const ValueKey('wrong-answer-start-course'),
+              icon: Icons.replay_outlined,
+              title: '문제 풀기',
+              description: '오답 코스 · 직접 다시 풀기',
+              actionLabel: '시작',
+              onTap: onStart,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _AtlasReviewGroup(
+            number: '02',
+            title: '복습 정보',
+            description: '코스 기간과 실제 복습 분량을 확인합니다.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _AtlasCadenceTabs(
+                  selected: selectedPlan,
+                  onSelected: onPlanSelected,
+                ),
+                _AtlasPlanPanel(plan: plan, onStart: onStart),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _AtlasReviewGroup extends StatelessWidget {
+  const _AtlasReviewGroup({
+    required this.number,
+    required this.title,
+    required this.description,
+    required this.child,
+  });
+
+  final String number;
+  final String title;
+  final String description;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: StudentDensityTokens.lineStrong),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  number,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        height: 1,
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 11,
+                        height: 1.4,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: StudentDensityTokens.line),
+        child,
+      ],
+    ),
+  );
+}
+
+class _AtlasReviewAction extends StatelessWidget {
+  const _AtlasReviewAction({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.actionLabel,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final String actionLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, size: 23),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              actionLabel,
+              style: const TextStyle(
+                color: StudentDensityTokens.muted,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_forward_rounded, size: 18),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _AtlasCadenceTabs extends StatelessWidget {
+  const _AtlasCadenceTabs({required this.selected, required this.onSelected});
+
+  final ReviewCourseType selected;
+  final ValueChanged<ReviewCourseType> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    const types = [
+      ReviewCourseType.daily,
+      ReviewCourseType.weekly,
+      ReviewCourseType.monthly,
+      ReviewCourseType.manual,
+    ];
+    return Row(
+      children: [
+        for (final type in types)
+          Expanded(
+            child: Semantics(
+              selected: selected == type,
+              button: true,
+              child: Material(
+                color: selected == type
+                    ? StudentDensityTokens.dark
+                    : Colors.white,
+                child: InkWell(
+                  key: ValueKey('wrong-answer-plan-${type.storageName}'),
+                  onTap: () => onSelected(type),
+                  child: SizedBox(
+                    height: 58,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          switch (type) {
+                            ReviewCourseType.daily => '오늘',
+                            ReviewCourseType.weekly => '이번 주',
+                            ReviewCourseType.monthly => '이번 달',
+                            ReviewCourseType.manual => '기간 선택',
+                          },
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: selected == type
+                                ? Colors.white
+                                : StudentDensityTokens.ink,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          type.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: selected == type
+                                ? Colors.white70
+                                : StudentDensityTokens.muted,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AtlasPlanPanel extends StatelessWidget {
+  const _AtlasPlanPanel({required this.plan, required this.onStart});
+
+  final _AtlasReviewPlan plan;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: ValueKey('wrong-answer-plan-panel-${plan.type.storageName}'),
+    padding: const EdgeInsets.all(18),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      border: Border(top: BorderSide(color: StudentDensityTokens.line)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '${plan.type.label} · ${plan.due}',
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          plan.title,
+          style: const TextStyle(
+            fontSize: 23,
+            height: 1,
+            letterSpacing: -1.1,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          plan.meta,
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: LinearProgressIndicator(
+                value: plan.progress / 100,
+                minHeight: 5,
+                color: StudentDensityTokens.dark,
+                backgroundColor: StudentDensityTokens.surfaceMuted,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              '${plan.progress}%',
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: StudentDensityTokens.line),
+          ),
+          child: Column(
+            children: [
+              for (var index = 0; index < plan.tasks.length; index++)
+                _AtlasPlanTaskRow(
+                  index: index,
+                  task: plan.tasks[index],
+                  isLast: index == plan.tasks.length - 1,
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        FilledButton(
+          key: const ValueKey('wrong-answer-plan-start'),
+          onPressed: onStart,
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+            backgroundColor: StudentDensityTokens.dark,
+            foregroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(),
+          ),
+          child: Text(
+            plan.type == ReviewCourseType.manual ? '기간 선택하기' : '첫 과제 시작 →',
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _AtlasPlanTaskRow extends StatelessWidget {
+  const _AtlasPlanTaskRow({
+    required this.index,
+    required this.task,
+    required this.isLast,
+  });
+
+  final int index;
+  final _AtlasReviewTask task;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    decoration: BoxDecoration(
+      border: isLast
+          ? null
+          : const Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+    ),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 30,
+          child: Text(
+            '${index + 1}'.padLeft(2, '0'),
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                task.title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                task.meta,
+                style: const TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          task.required ? '필수' : '선택',
+          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
+}
+
 class _MobileReviewContent extends StatelessWidget {
   const _MobileReviewContent({
     required this.loading,
     required this.hasLoadError,
     required this.items,
-    required this.pendingCount,
-    required this.completedCount,
     required this.weaknessTags,
     required this.filter,
     required this.latestFirst,
+    required this.plan,
+    required this.selectedPlan,
     required this.onFilter,
     required this.onSort,
+    required this.onPlanSelected,
     required this.onRetry,
     required this.onAction,
   });
@@ -495,13 +1058,14 @@ class _MobileReviewContent extends StatelessWidget {
   final bool loading;
   final bool hasLoadError;
   final List<_ReviewItem> items;
-  final int pendingCount;
-  final int completedCount;
   final List<WeaknessTag> weaknessTags;
   final String filter;
   final bool latestFirst;
+  final _AtlasReviewPlan plan;
+  final ReviewCourseType selectedPlan;
   final ValueChanged<String> onFilter;
   final VoidCallback onSort;
+  final ValueChanged<ReviewCourseType> onPlanSelected;
   final VoidCallback onRetry;
   final void Function(String, _ReviewItem?) onAction;
 
@@ -514,17 +1078,13 @@ class _MobileReviewContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        const Text(
-          '오답 노트',
-          style: TextStyle(
-            color: StudentDensityTokens.ink,
-            fontSize: 30,
-            height: 1.05,
-            letterSpacing: -1.4,
-            fontWeight: FontWeight.w900,
-          ),
+        _AtlasReviewCenter(
+          plan: plan,
+          selectedPlan: selectedPlan,
+          onPlanSelected: onPlanSelected,
+          onStart: () => onAction('복습 코스 시작', null),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
         if (loading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 72),
@@ -534,16 +1094,11 @@ class _MobileReviewContent extends StatelessWidget {
           if (hasLoadError) _MobileLoadNotice(onRetry: onRetry),
           const _MobileReviewEmpty(),
         ] else ...[
-          _MobileReviewSummary(
-            pendingCount: pendingCount,
-            completedCount: completedCount,
-            onStart: () => onAction('맞춤 복습 시작', null),
-          ),
           if (hasLoadError) ...[
             const SizedBox(height: 10),
             _MobileLoadNotice(onRetry: onRetry),
           ],
-          const SizedBox(height: 26),
+          const SizedBox(height: 20),
           Row(
             children: [
               const Expanded(
@@ -585,103 +1140,6 @@ class _MobileReviewContent extends StatelessWidget {
         ],
         const SizedBox(height: 32),
       ],
-    );
-  }
-}
-
-class _MobileReviewSummary extends StatelessWidget {
-  const _MobileReviewSummary({
-    required this.pendingCount,
-    required this.completedCount,
-    required this.onStart,
-  });
-
-  final int pendingCount;
-  final int completedCount;
-  final VoidCallback onStart;
-
-  /// 필요한 변수는 대기·완료 문제 수와 시작 콜백이다.
-  /// 작동 원리는 큰 원형 그래프와 삼단 지표를 제거하고 오늘 할 일과 단일 행동만 압축해 보여 주는 것이다.
-  @override
-  Widget build(BuildContext context) {
-    final hasPending = pendingCount > 0;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: StudentDensityTokens.dark,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white12,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  hasPending ? '오늘 $pendingCount문제' : '오늘 완료',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              if (completedCount > 0)
-                Text(
-                  '$completedCount문제 완료',
-                  style: const TextStyle(color: Colors.white54, fontSize: 10),
-                ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            hasPending ? '$pendingCount문제만 다시 보면 돼요.' : '지금은 복습할 문제가 없어요.',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              height: 1.12,
-              letterSpacing: -1.2,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            hasPending ? '최근 오답부터 짧게 끝내보세요.' : '문제를 풀면 틀린 문항이 여기에 자동으로 모여요.',
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 12,
-              height: 1.4,
-            ),
-          ),
-          if (hasPending) ...[
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: onStart,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-                backgroundColor: Colors.white,
-                foregroundColor: StudentDensityTokens.ink,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: const Text(
-                '복습 시작',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }
@@ -889,222 +1347,6 @@ class _MobileWeakPoints extends StatelessWidget {
         ],
       ),
     ],
-  );
-}
-
-class _ReviewHeading extends StatelessWidget {
-  const _ReviewHeading({required this.onStart});
-
-  final VoidCallback onStart;
-
-  /// 필요한 변수는 맞춤 복습 시작 콜백과 화면 폭이다.
-  /// 모바일은 전체 폭 버튼, PC는 제목 우측 버튼을 사용한다.
-  @override
-  Widget build(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
-    const copy = StudentDensityPageHeader(
-      eyebrow: 'REVIEW',
-      title: '복습',
-      description: '틀린 문제를 쌓아두지 않고, 지금 다시 풀 문제부터 차례로 끝냅니다.',
-    );
-    final button = FilledButton(
-      onPressed: onStart,
-      style: FilledButton.styleFrom(
-        backgroundColor: StudentDensityTokens.dark,
-        minimumSize: Size(mobile ? double.infinity : 112, 44),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      child: const Text(
-        '맞춤 복습 시작',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-    );
-    if (mobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [copy, const SizedBox(height: 16), button],
-      );
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        const Expanded(child: copy),
-        button,
-      ],
-    );
-  }
-}
-
-class _ReviewHero extends StatelessWidget {
-  const _ReviewHero({
-    required this.onStart,
-    required this.pendingCount,
-    required this.completedCount,
-    required this.weaknessTags,
-  });
-
-  final VoidCallback onStart;
-  final int pendingCount;
-  final int completedCount;
-  final List<WeaknessTag> weaknessTags;
-
-  /// 필요한 변수는 복습 시작 콜백과 화면 폭이다.
-  /// 오늘 분량·완료 링·주간 지표를 검은 단일 카드 안에 HTML 비율로 배치한다.
-  @override
-  Widget build(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(mobile ? 24 : 28),
-      child: Container(
-        color: const Color(0xFF1F1F20),
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                mobile ? 22 : 34,
-                mobile ? 22 : 30,
-                mobile ? 18 : 28,
-                mobile ? 18 : 24,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const StudentDensityEyebrow(
-                          'TODAY’S REVIEW',
-                          color: Colors.white54,
-                        ),
-                        SizedBox(height: mobile ? 26 : 40),
-                        Text(
-                          '오늘은 ${pendingCount.clamp(0, 6)}문제만\n다시 보면 돼요.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: mobile ? 34 : 52,
-                            height: .92,
-                            letterSpacing: -2.5,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        if (!mobile) ...[
-                          const SizedBox(height: 36),
-                          const Text(
-                            '최근 오답과 반복해서 놓친 개념을 우선순위로 정리했습니다.',
-                            style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 20),
-                        FilledButton(
-                          onPressed: onStart,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: StudentDensityTokens.ink,
-                          ),
-                          child: const Text(
-                            '6문제 이어서 풀기',
-                            style: TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _ReviewRing(
-                    completed: completedCount,
-                    total: pendingCount + completedCount,
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: Colors.white12),
-            Row(
-              children: [
-                Expanded(child: _HeroMetric('복습 대기', '$pendingCount문제')),
-                Expanded(child: _HeroMetric('복습 완료', '$completedCount문제')),
-                Expanded(
-                  child: _HeroMetric(
-                    '가장 약한 개념',
-                    weaknessTags.isEmpty ? '-' : weaknessTags.first.tag,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReviewRing extends StatelessWidget {
-  const _ReviewRing({required this.completed, required this.total});
-  final int completed;
-  final int total;
-
-  /// 필요한 변수는 오늘 완료 수 2/8이다.
-  /// 원형 진행 테두리 안에 완료 수를 표시한다.
-  @override
-  Widget build(BuildContext context) => Container(
-    width: isStudentDensityMobile(context) ? 82 : 108,
-    height: isStudentDensityMobile(context) ? 82 : 108,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      border: Border.all(color: Colors.white24, width: 8),
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          '$completed',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 38,
-            height: .9,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        Text(
-          '/ $total 완료',
-          style: const TextStyle(color: Colors.white60, fontSize: 8),
-        ),
-      ],
-    ),
-  );
-}
-
-class _HeroMetric extends StatelessWidget {
-  const _HeroMetric(this.label, this.value);
-
-  final String label;
-  final String value;
-
-  /// 필요한 변수는 히어로 하단 지표 이름과 값이다.
-  /// 동일한 3열 셀에 작은 이름과 굵은 값을 표시한다.
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
-    decoration: const BoxDecoration(
-      border: Border(left: BorderSide(color: Colors.white12)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 8)),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
-    ),
   );
 }
 
@@ -1422,6 +1664,7 @@ class _ReviewItem {
     required this.tags,
     required this.attempts,
     this.done = false,
+    this.occurredAt,
   });
 
   final String number;
@@ -1431,5 +1674,34 @@ class _ReviewItem {
   final List<String> tags;
   final String attempts;
   final bool done;
+  final DateTime? occurredAt;
   int get incorrectCount => int.tryParse(attempts.split('회').first) ?? 0;
+}
+
+class _AtlasReviewPlan {
+  const _AtlasReviewPlan({
+    required this.type,
+    required this.label,
+    required this.title,
+    required this.due,
+    required this.meta,
+    required this.progress,
+    required this.tasks,
+  });
+
+  final ReviewCourseType type;
+  final String label;
+  final String title;
+  final String due;
+  final String meta;
+  final int progress;
+  final List<_AtlasReviewTask> tasks;
+}
+
+class _AtlasReviewTask {
+  const _AtlasReviewTask(this.title, this.meta, this.required);
+
+  final String title;
+  final String meta;
+  final bool required;
 }

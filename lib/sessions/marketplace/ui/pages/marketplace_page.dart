@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 typedef MarketplacePurchaseHandler = Future<void> Function(String listingId);
@@ -276,7 +276,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   /// 필요한 변수는 현재 유형·과정·가격 필터다.
-  /// 작동 원리는 HTML의 필터+ 바텀시트에서 조건을 임시 선택한 뒤 적용 시 한 번만 목록 상태를 갱신한다.
+  /// 작동 원리는 Atlas의 상세 필터 시트에서 조건을 임시 선택한 뒤 적용 시 한 번만 목록 상태를 갱신하는 것이다.
   Future<void> _openMarketFilter() async {
     final result = await showModalBottomSheet<(String, String, String)>(
       context: context,
@@ -297,13 +297,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
     if (widget.initialData == null) unawaited(_search());
   }
 
-  /// 필요한 변수는 검색 패널이 전달한 기본 필터명이다.
-  /// 작동 원리는 필터+만 상세 시트를 열고 나머지 유형은 즉시 로컬 전환한다.
+  /// 필요한 변수는 검색 패널이 전달한 자료 유형이다.
+  /// 작동 원리는 유형 탭은 즉시 전환하고 상세 조건은 별도 필터 시트에서만 적용하는 것이다.
   void _handleFilterChanged(String value) {
-    if (value == '필터+') {
-      unawaited(_openMarketFilter());
-      return;
-    }
     setState(() => _filter = value);
     if (widget.initialData == null) unawaited(_search());
   }
@@ -388,19 +384,16 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리는 PC 공용 메뉴에서 마켓을 활성화하고 모바일에서는 하단 앱바에 탐색을 맡기는 것이다.
+  /// 작동 원리는 PC·모바일 모두 공용 상단바와 오버레이 메뉴에서 마켓을 활성화하는 것이다.
   Widget _buildHeader(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 720;
     return Ios26TopBar(
       brandColor: Colors.black,
       showLevelIndicator: false,
-      showUtilityActions: !mobile,
-      hideOnMobile: true,
-      onMenu: mobile ? null : () => toggleAppDrawer(context),
-      onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainStudentPage()),
-        (route) => false,
-      ),
+      showUtilityActions: true,
+      onMenu: () => toggleAppDrawer(context),
+      onTitleTap: () => Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
       items: studentTopNavItems(
         context,
         active: StudentTopDestination.marketplace,
@@ -415,14 +408,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
     final items = _initialFilteredItems;
     final size = MediaQuery.sizeOf(context);
     final desktop = size.width >= 1000;
-    // 웹의 600~720px 세로 뷰포트도 휴대폰 UI로 분류해 태블릿형 정보 카드가 노출되지 않게 한다.
-    final portraitMobile = size.width <= 720 && size.height > size.width;
+    // 공용 학생 셸과 동일하게 780px 이하를 모바일로 취급한다.
+    // 그렇지 않으면 상단 바는 숨는데 본문은 데스크톱 drawer를 택하는 seam이 생긴다.
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: portraitMobile ? null : const AppDrawer(),
-      bottomNavigationBar: portraitMobile
-          ? const MobileStudentBottomAppBar()
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -432,21 +423,19 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 onRefresh: _search,
                 child: ListView(
                   key: ValueKey(
-                    portraitMobile
-                        ? 'market-mobile-scroll'
-                        : 'market-wide-scroll',
+                    mobile ? 'market-mobile-scroll' : 'market-wide-scroll',
                   ),
                   padding: EdgeInsets.fromLTRB(
-                    portraitMobile ? 16 : (desktop ? 40 : 14),
-                    portraitMobile ? 18 : 24,
-                    portraitMobile ? 16 : (desktop ? 40 : 14),
-                    portraitMobile ? 28 : 40,
+                    mobile ? 16 : (desktop ? 40 : 14),
+                    mobile ? 18 : 24,
+                    mobile ? 16 : (desktop ? 40 : 14),
+                    mobile ? 28 : 40,
                   ),
                   children: [
                     Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1280),
-                        child: portraitMobile
+                        child: mobile
                             ? _MobileMarketplaceBody(
                                 controller: _queryController,
                                 corners: _corners,
@@ -468,6 +457,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 controller: _queryController,
                                 corners: _corners,
                                 selected: _filter,
+                                courseFilter: _courseFilter,
+                                priceFilter: _priceFilter,
                                 items: items,
                                 title: _recommendationTitle,
                                 total: _total,
@@ -476,6 +467,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                                 desktop: desktop,
                                 hasNextPage: _nextOffset != null,
                                 onSelected: _handleFilterChanged,
+                                onOpenFilter: _openMarketFilter,
                                 onSearch: _search,
                                 onOpen: _openItem,
                                 onLoadMore: () =>
@@ -499,6 +491,8 @@ class _WideMarketplaceBody extends StatelessWidget {
     required this.controller,
     required this.corners,
     required this.selected,
+    required this.courseFilter,
+    required this.priceFilter,
     required this.items,
     required this.title,
     required this.total,
@@ -507,6 +501,7 @@ class _WideMarketplaceBody extends StatelessWidget {
     required this.desktop,
     required this.hasNextPage,
     required this.onSelected,
+    required this.onOpenFilter,
     required this.onSearch,
     required this.onOpen,
     required this.onLoadMore,
@@ -515,6 +510,8 @@ class _WideMarketplaceBody extends StatelessWidget {
   final TextEditingController controller;
   final List<_MarketplaceCorner> corners;
   final String selected;
+  final String courseFilter;
+  final String priceFilter;
   final List<_MarketItem> items;
   final String title;
   final int total;
@@ -523,70 +520,66 @@ class _WideMarketplaceBody extends StatelessWidget {
   final bool desktop;
   final bool hasNextPage;
   final ValueChanged<String> onSelected;
+  final VoidCallback onOpenFilter;
   final VoidCallback onSearch;
   final ValueChanged<_MarketItem> onOpen;
   final VoidCallback onLoadMore;
 
-  /// 필요한 변수는 태블릿·PC용 마켓 상태다.
-  /// 작동 원리는 기존 넓은 화면 정보 구조를 그대로 보존해 모바일 전용 변경이 태블릿 레이아웃에 영향을 주지 않게 한다.
+  /// 필요한 변수는 태블릿·PC용 자료실 상태다.
+  /// 작동 원리는 Atlas의 검색·유형 탭·자료 카드 구조를 넓은 화면에도 같은 정보 순서로 적용하는 것이다.
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text(
-        'COMMUNITY',
-        style: TextStyle(
-          fontSize: 10,
-          letterSpacing: 1.7,
-          color: Colors.black54,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        '마켓',
-        style: TextStyle(
-          fontSize: desktop ? 50 : 32,
-          letterSpacing: desktop ? -2.4 : -1.4,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      const SizedBox(height: 6),
-      const Text(
-        '필요한 학습 자료를 찾아 내 학습으로 연결합니다.',
-        style: TextStyle(color: Colors.black45),
-      ),
-      const SizedBox(height: 28),
-      _MarketplaceCorners(
-        corners: corners,
-        selected: selected,
-        onSelected: onSelected,
-      ),
-      const SizedBox(height: 12),
+      _MarketplacePageHeading(desktop: desktop),
+      const SizedBox(height: 24),
       _SearchPanel(
         controller: controller,
+        corners: corners,
         loading: loading,
         filter: selected,
         desktop: desktop,
         onFilterChanged: onSelected,
+        onOpenFilter: onOpenFilter,
         onSearch: onSearch,
       ),
+      const SizedBox(height: 20),
+      _MarketplaceResultsHeading(
+        title: selected == '전체' ? title : selected,
+        total: total,
+      ),
+      if (courseFilter != '전체 과정' || priceFilter != '전체 가격') ...[
+        const SizedBox(height: 6),
+        _AppliedMarketFilters(
+          courseFilter: courseFilter,
+          priceFilter: priceFilter,
+        ),
+      ],
       const SizedBox(height: 12),
       if (error != null)
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Text(error!, style: const TextStyle(color: Colors.red)),
         ),
-      _RecommendationCard(
-        items: items.take(3).toList(),
-        title: title,
-        total: total,
-        onOpen: onOpen,
-      ),
-      if (items.length > 3) ...[
-        const SizedBox(height: 12),
-        _MoreResultsCard(items: items.skip(3).toList(), onOpen: onOpen),
-      ],
+      if (loading && items.isEmpty)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 64),
+          child: Center(child: CircularProgressIndicator(color: Colors.black)),
+        )
+      else if (items.isEmpty)
+        _MobileMarketMessage(
+          icon: Icons.search_off_rounded,
+          message: '찾는 자료가 없습니다.',
+          action: '전체 보기',
+          onPressed: () => onSelected('전체'),
+        )
+      else
+        _MarketplaceResourceResults(
+          rootKey: const ValueKey('market-wide-results'),
+          items: items,
+          desktop: desktop,
+          onOpen: onOpen,
+        ),
       if (hasNextPage) ...[
         const SizedBox(height: 12),
         Center(
@@ -633,67 +626,35 @@ class _MobileMarketplaceBody extends StatelessWidget {
   final ValueChanged<_MarketItem> onOpen;
   final VoidCallback onLoadMore;
 
-  /// 필요한 변수는 휴대폰 검색·카테고리·상품 결과다.
-  /// 작동 원리는 긴 소개 영역을 제거하고 검색, 카테고리, 2열 상품 순서로 한 손 탐색 동선을 만든다.
+  /// 필요한 변수는 휴대폰 검색·필터·상품 결과다.
+  /// 작동 원리는 Atlas의 검색/상세 필터 첫 줄과 자료 유형 탭 둘째 줄을 한 손 탐색 순서로 제공하는 것이다.
   @override
   Widget build(BuildContext context) => Column(
     key: const ValueKey('market-mobile-body'),
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text(
-        '코스 찾기',
-        style: TextStyle(
-          fontSize: 40,
-          height: 1,
-          letterSpacing: -2,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      const SizedBox(height: 18),
-      _MobileMarketSearch(
+      const _MarketplacePageHeading(desktop: false),
+      const SizedBox(height: 22),
+      _SearchPanel(
         controller: controller,
+        corners: corners,
         loading: loading,
+        filter: selected,
+        desktop: false,
+        onFilterChanged: onSelected,
+        onOpenFilter: onOpenFilter,
         onSearch: onSearch,
       ),
-      const SizedBox(height: 14),
-      _MobileMarketCategories(
-        corners: corners,
-        selected: selected,
-        onSelected: onSelected,
-      ),
       const SizedBox(height: 22),
-      Row(
-        children: [
-          Expanded(
-            child: Text(
-              selected == '전체' ? '추천 자료' : selected,
-              style: const TextStyle(
-                fontSize: 28,
-                letterSpacing: -.8,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          IconButton.filledTonal(
-            key: const ValueKey('market-mobile-filter'),
-            onPressed: onOpenFilter,
-            tooltip: '상세 필터',
-            icon: const Icon(Icons.tune_rounded, size: 23),
-          ),
-        ],
+      _MarketplaceResultsHeading(
+        title: selected == '전체' ? '추천 자료' : selected,
+        total: items.length,
       ),
       if (courseFilter != '전체 과정' || priceFilter != '전체 가격') ...[
-        const SizedBox(height: 8),
-        Text(
-          [
-            courseFilter,
-            priceFilter,
-          ].where((value) => !value.startsWith('전체')).join(' · '),
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF5E5E64),
-            fontWeight: FontWeight.w700,
-          ),
+        const SizedBox(height: 6),
+        _AppliedMarketFilters(
+          courseFilter: courseFilter,
+          priceFilter: priceFilter,
         ),
       ],
       const SizedBox(height: 14),
@@ -717,7 +678,12 @@ class _MobileMarketplaceBody extends StatelessWidget {
           onPressed: () => onSelected('전체'),
         )
       else
-        _MobileMarketGrid(items: items, onOpen: onOpen),
+        _MarketplaceResourceResults(
+          rootKey: const ValueKey('market-mobile-grid'),
+          items: items,
+          desktop: false,
+          onOpen: onOpen,
+        ),
       if (hasNextPage) ...[
         const SizedBox(height: 18),
         SizedBox(
@@ -743,271 +709,269 @@ class _MobileMarketplaceBody extends StatelessWidget {
   );
 }
 
-class _MobileMarketSearch extends StatelessWidget {
-  const _MobileMarketSearch({
-    required this.controller,
-    required this.loading,
-    required this.onSearch,
-  });
+class _MarketplacePageHeading extends StatelessWidget {
+  const _MarketplacePageHeading({required this.desktop});
 
-  final TextEditingController controller;
-  final bool loading;
-  final VoidCallback onSearch;
+  final bool desktop;
 
-  /// 필요한 변수는 검색어·로딩 상태다.
-  /// 작동 원리는 별도 검색 버튼 대신 입력창 안의 52px 동작 버튼으로 모바일 공간과 터치 동선을 줄인다.
   @override
-  Widget build(BuildContext context) => TextField(
-    key: const ValueKey('market-search-field'),
-    controller: controller,
-    textInputAction: TextInputAction.search,
-    onSubmitted: (_) => onSearch(),
-    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-    decoration: InputDecoration(
-      hintText: '코스 · 시험지 검색',
-      hintStyle: const TextStyle(
-        fontSize: 17,
-        color: Color(0xFF88888E),
-        fontWeight: FontWeight.w600,
-      ),
-      prefixIcon: const Icon(Icons.search_rounded, size: 26),
-      suffixIcon: Padding(
-        padding: const EdgeInsets.all(5),
-        child: IconButton.filled(
-          key: const ValueKey('market-mobile-search-button'),
-          onPressed: loading ? null : onSearch,
-          style: IconButton.styleFrom(backgroundColor: Colors.black),
-          icon: loading
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'MATERIAL LIBRARY',
+        style: TextStyle(
+          fontSize: 10,
+          letterSpacing: 1.7,
+          color: Color(0xFF5E5E64),
+          fontWeight: FontWeight.w900,
         ),
       ),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 19),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: Color(0xFFD9D9DD)),
+      const SizedBox(height: 8),
+      Text(
+        '자료실',
+        style: TextStyle(
+          fontSize: desktop ? 50 : 38,
+          height: .98,
+          letterSpacing: desktop ? -2.4 : -1.8,
+          fontWeight: FontWeight.w900,
+        ),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: Color(0xFFD9D9DD)),
+      const SizedBox(height: 10),
+      Text(
+        '필요한 학습 자료를\n형태보다 목표로 찾으세요.',
+        style: TextStyle(
+          fontSize: desktop ? 17 : 15,
+          height: 1.42,
+          color: const Color(0xFF5E5E64),
+          fontWeight: FontWeight.w600,
+        ),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: Colors.black, width: 1.5),
-      ),
-    ),
+    ],
   );
 }
 
-class _MobileMarketCategories extends StatelessWidget {
-  const _MobileMarketCategories({
-    required this.corners,
-    required this.selected,
-    required this.onSelected,
+class _MarketplaceResultsHeading extends StatelessWidget {
+  const _MarketplaceResultsHeading({required this.title, required this.total});
+
+  final String title;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 23,
+            letterSpacing: -.8,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+      Text(
+        '$total개',
+        style: const TextStyle(
+          fontSize: 13,
+          color: Color(0xFF68686D),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ],
+  );
+}
+
+class _AppliedMarketFilters extends StatelessWidget {
+  const _AppliedMarketFilters({
+    required this.courseFilter,
+    required this.priceFilter,
   });
 
-  final List<_MarketplaceCorner> corners;
-  final String selected;
-  final ValueChanged<String> onSelected;
+  final String courseFilter;
+  final String priceFilter;
 
-  /// 필요한 변수는 전체 항목과 세 마켓 카테고리다.
-  /// 작동 원리는 네 카테고리를 한 개의 흰 Material 그룹에 넣고 선택 항목만 검게 강조한다.
   @override
   Widget build(BuildContext context) {
-    final categories = [
-      const _MarketplaceCorner(
-        title: '전체',
-        description: '',
-        icon: Icons.grid_view_rounded,
-        filter: '전체',
-      ),
-      ...corners,
-    ];
-    return Container(
-      key: const ValueKey('market-mobile-categories'),
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(21),
-      ),
-      child: Row(
-        children: [
-          for (final category in categories)
-            Expanded(
-              child: _MobileMarketCategory(
-                corner: category,
-                selected: selected == category.filter,
-                onTap: () => onSelected(
-                  selected == category.filter ? '전체' : category.filter,
-                ),
-              ),
-            ),
-        ],
+    final labels = [
+      courseFilter,
+      priceFilter,
+    ].where((value) => !value.startsWith('전체')).toList(growable: false);
+    return Text(
+      labels.join(' · '),
+      style: const TextStyle(
+        fontSize: 13,
+        color: Color(0xFF5E5E64),
+        fontWeight: FontWeight.w700,
       ),
     );
   }
 }
 
-class _MobileMarketCategory extends StatelessWidget {
-  const _MobileMarketCategory({
-    required this.corner,
-    required this.selected,
-    required this.onTap,
+class _MarketplaceResourceResults extends StatelessWidget {
+  const _MarketplaceResourceResults({
+    required this.rootKey,
+    required this.items,
+    required this.desktop,
+    required this.onOpen,
   });
 
-  final _MarketplaceCorner corner;
-  final bool selected;
-  final VoidCallback onTap;
-
-  /// 필요한 변수는 카테고리·선택 상태다.
-  /// 작동 원리는 그룹 안의 64px 터치 셀에서 선택 항목만 채워 도형 수를 최소화한다.
-  @override
-  Widget build(BuildContext context) => Material(
-    key: ValueKey('market-corner-${corner.filter}'),
-    color: selected ? Colors.black : Colors.transparent,
-    borderRadius: BorderRadius.circular(16),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        height: 64,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              corner.icon,
-              size: 22,
-              color: selected ? Colors.white : Colors.black,
-            ),
-            const SizedBox(height: 5),
-            Text(
-              corner.title,
-              maxLines: 1,
-              style: TextStyle(
-                color: selected ? Colors.white : Colors.black,
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-class _MobileMarketGrid extends StatelessWidget {
-  const _MobileMarketGrid({required this.items, required this.onOpen});
-
+  final Key rootKey;
   final List<_MarketItem> items;
+  final bool desktop;
   final ValueChanged<_MarketItem> onOpen;
 
-  /// 필요한 변수는 현재 페이지 상품 목록과 열기 동작이다.
-  /// 작동 원리는 각 항목을 큰 캡슐로 반복하지 않고 하나의 흰 목록 안에서 구분선으로 나눠 스크롤 길이와 시각 소음을 줄인다.
+  /// 필요한 변수는 실제 자료 목록·화면 폭·열기 동작이다.
+  /// 작동 원리는 Atlas의 번호형 자료 커버와 목록을 휴대폰에는 한 열, 넓은 화면에는 두 열로 배치하는 것이다.
   @override
   Widget build(BuildContext context) => Container(
-    key: const ValueKey('market-mobile-grid'),
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0xFFDEDEE2)),
-    ),
-    child: Column(
-      children: [
-        for (var index = 0; index < items.length; index++) ...[
-          _MobileMarketCard(item: items[index], onOpen: onOpen),
-          if (index != items.length - 1)
-            const Divider(height: 1, indent: 72, color: Color(0xFFE8E8EB)),
-        ],
-      ],
+    key: rootKey,
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = desktop && constraints.maxWidth >= 860 ? 2 : 1;
+        final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (var index = 0; index < items.length; index++)
+              SizedBox(
+                width: width,
+                child: _MarketplaceResourceCard(
+                  item: items[index],
+                  index: index,
+                  desktop: desktop,
+                  onOpen: onOpen,
+                ),
+              ),
+          ],
+        );
+      },
     ),
   );
 }
 
-class _MobileMarketCard extends StatelessWidget {
-  const _MobileMarketCard({required this.item, required this.onOpen});
+class _MarketplaceResourceCard extends StatelessWidget {
+  const _MarketplaceResourceCard({
+    required this.item,
+    required this.index,
+    required this.desktop,
+    required this.onOpen,
+  });
 
   final _MarketItem item;
+  final int index;
+  final bool desktop;
   final ValueChanged<_MarketItem> onOpen;
 
-  /// 필요한 변수는 상품 유형·제목·학습 조건이다.
-  /// 작동 원리는 유형별 아이콘 표식과 한 줄 제목·조건만 사용해 시험지, 문제세트, 코스를 빠르게 구분하게 한다.
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: () => onOpen(item),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: item.mobileAccent,
-                borderRadius: BorderRadius.circular(14),
+  Widget build(BuildContext context) {
+    final action = item.owned
+        ? (item.completed ? '완료' : '열기')
+        : (item.pricePoints == 0 ? '무료' : '${item.pricePoints}P');
+    final coverWidth = desktop ? 74.0 : 62.0;
+    final coverHeight = desktop ? 92.0 : 76.0;
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFFDEDEE2)),
+      ),
+      child: InkWell(
+        onTap: () => onOpen(item),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: coverWidth,
+                height: coverHeight,
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: item.mobileAccent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.typeLabel,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: item.mobileForeground.withValues(alpha: .78),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      (index + 1).toString().padLeft(2, '0'),
+                      style: TextStyle(
+                        fontSize: desktop ? 24 : 21,
+                        height: 1,
+                        letterSpacing: -1,
+                        color: item.mobileForeground,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Icon(item.icon, size: 22, color: item.mobileForeground),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.mobileTitle,
+                      maxLines: desktop ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: desktop ? 18 : 16,
+                        height: 1.2,
+                        letterSpacing: -.35,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.compactSubtitle.isEmpty
+                          ? item.typeLabel
+                          : item.compactSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF707076),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    item.mobileTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    action,
                     style: const TextStyle(
-                      fontSize: 18,
-                      height: 1.2,
-                      letterSpacing: -.4,
+                      fontSize: 12,
+                      color: Color(0xFF303034),
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    '${item.typeLabel} · ${item.compactSubtitle}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF707076),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  const SizedBox(height: 6),
+                  const Icon(Icons.arrow_forward_rounded, size: 17),
                 ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F1F3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                '무료',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right_rounded, size: 24),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _MobileMarketMessage extends StatelessWidget {
@@ -1050,141 +1014,6 @@ class _MobileMarketMessage extends StatelessWidget {
   );
 }
 
-class _MarketplaceCorners extends StatelessWidget {
-  const _MarketplaceCorners({
-    required this.corners,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final List<_MarketplaceCorner> corners;
-  final String selected;
-  final ValueChanged<String> onSelected;
-
-  /// 필요한 변수는 마켓에서 제공할 코너 목록과 화면 너비다.
-  /// 작동 원리는 시험지·문제세트·코스를 동일한 카드 규격으로 보여 주고 좁은 화면에서는 세로로 재배치하는 것이다.
-  @override
-  Widget build(BuildContext context) {
-    final desktop = MediaQuery.sizeOf(context).width >= 760;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE0E0E2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'MARKET CORNERS',
-            style: TextStyle(
-              fontSize: 10,
-              letterSpacing: 1.6,
-              color: Colors.black54,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '마켓 코너',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 16),
-          desktop
-              ? Row(
-                  children: [
-                    for (var index = 0; index < corners.length; index++) ...[
-                      Expanded(
-                        child: _MarketplaceCornerCard(
-                          corner: corners[index],
-                          selected: selected == corners[index].filter,
-                          onTap: () => onSelected(corners[index].filter),
-                        ),
-                      ),
-                      if (index != corners.length - 1)
-                        const SizedBox(width: 10),
-                    ],
-                  ],
-                )
-              : Column(
-                  children: [
-                    for (var index = 0; index < corners.length; index++) ...[
-                      _MarketplaceCornerCard(
-                        corner: corners[index],
-                        selected: selected == corners[index].filter,
-                        onTap: () => onSelected(corners[index].filter),
-                      ),
-                      if (index != corners.length - 1)
-                        const SizedBox(height: 10),
-                    ],
-                  ],
-                ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MarketplaceCornerCard extends StatelessWidget {
-  const _MarketplaceCornerCard({
-    required this.corner,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final _MarketplaceCorner corner;
-  final bool selected;
-  final VoidCallback onTap;
-
-  /// 필요한 변수는 코너의 제목·설명·아이콘이다.
-  /// 작동 원리는 새 자료 탐색 기능을 연결하기 전에도 각 마켓 영역의 목적을 독립 카드로 명확히 안내하는 것이다.
-  @override
-  Widget build(BuildContext context) {
-    final foreground = selected ? Colors.white : Colors.black;
-    return Material(
-      key: ValueKey('market-corner-${corner.filter}'),
-      color: selected ? const Color(0xFF202022) : const Color(0xFFF7F7F8),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(corner.icon, size: 22, color: foreground),
-                  const Spacer(),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Text(
-                corner.title,
-                style: TextStyle(
-                  color: foreground,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                corner.description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: foreground.withValues(alpha: .58),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _MarketplaceCorner {
   const _MarketplaceCorner({
     required this.title,
@@ -1202,376 +1031,181 @@ class _MarketplaceCorner {
 class _SearchPanel extends StatelessWidget {
   const _SearchPanel({
     required this.controller,
+    required this.corners,
     required this.loading,
     required this.filter,
     required this.desktop,
     required this.onFilterChanged,
+    required this.onOpenFilter,
     required this.onSearch,
   });
 
   final TextEditingController controller;
+  final List<_MarketplaceCorner> corners;
   final bool loading;
   final String filter;
   final bool desktop;
   final ValueChanged<String> onFilterChanged;
+  final VoidCallback onOpenFilter;
   final VoidCallback onSearch;
 
   /// 필요한 변수는 검색어·필터·로딩 상태다.
-  /// 작동 원리는 한 개 입력과 명시적 검색 버튼으로 요청 수를 제한하고 세 유형 필터는 로컬 결과만 전환하는 것이다.
+  /// 작동 원리는 Atlas처럼 검색과 상세 필터를 첫 줄에, 자료 유형을 둘째 줄에 두고 실제 서버 검색은 명시적으로만 요청하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final categories = <_MarketplaceCorner>[
+      const _MarketplaceCorner(
+        title: '전체',
+        description: '',
+        icon: Icons.grid_view_rounded,
+        filter: '전체',
+      ),
+      for (final type in const ['코스', '시험지', '문제세트'])
+        corners.firstWhere((corner) => corner.filter == type),
+    ];
     final field = TextField(
       key: const ValueKey('market-search-field'),
       controller: controller,
       textInputAction: TextInputAction.search,
       onSubmitted: (_) => onSearch(),
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
       decoration: InputDecoration(
-        hintText: '시험지 · 문제세트 · 코스 · 태그 검색',
-        prefixIcon: const Icon(Icons.search_rounded),
+        hintText: '자료명·과목·태그 검색',
+        hintStyle: const TextStyle(
+          color: Color(0xFF88888E),
+          fontWeight: FontWeight.w600,
+        ),
+        prefixIcon: const Icon(Icons.search_rounded, size: 21),
+        suffixIcon: IconButton(
+          key: ValueKey(
+            desktop
+                ? 'market-desktop-search-button'
+                : 'market-mobile-search-button',
+          ),
+          tooltip: '검색',
+          onPressed: loading ? null : onSearch,
+          icon: loading
+              ? const SizedBox.square(
+                  dimension: 17,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.arrow_forward_rounded, size: 20),
+        ),
         filled: true,
-        fillColor: const Color(0xFFF7F7F8),
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Color(0xFFDEDEE1)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.black, width: 1.2),
         ),
       ),
     );
-    final button = FilledButton(
-      style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFF202022),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    final detailFilter = OutlinedButton.icon(
+      key: ValueKey(desktop ? 'market-desktop-filter' : 'market-mobile-filter'),
+      onPressed: onOpenFilter,
+      icon: const Icon(Icons.tune_rounded, size: 18),
+      label: const Text('필터'),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(78, 50),
+        foregroundColor: Colors.black,
+        side: const BorderSide(color: Color(0xFFBFC0C4)),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w900),
       ),
-      onPressed: loading ? null : onSearch,
-      child: Text(loading ? '검색 중' : '검색'),
     );
-    final filters = Wrap(
+    final filters = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       key: ValueKey(
-        desktop ? 'market-desktop-filters' : 'market-mobile-filters',
+        desktop ? 'market-desktop-type-tabs' : 'market-mobile-type-tabs',
       ),
-      spacing: 8,
-      runSpacing: 8,
-      children: ['전체', '시험지', '문제세트', '코스', '필터+']
-          .map(
-            (label) => ChoiceChip(
-              label: Text(label),
-              selected: filter == label,
-              showCheckmark: false,
-              selectedColor: Colors.black,
-              side: BorderSide(
-                color: filter == label ? Colors.black : const Color(0xFFDEDEE1),
+      child: Row(
+        children: [
+          for (var index = 0; index < categories.length; index++) ...[
+            _MarketplaceTypeTab(
+              category: categories[index],
+              selected: filter == categories[index].filter,
+              onTap: () => onFilterChanged(
+                filter == categories[index].filter
+                    ? '전체'
+                    : categories[index].filter,
               ),
-              labelStyle: TextStyle(
-                color: filter == label ? Colors.white : Colors.black,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-              onSelected: (isSelected) =>
-                  onFilterChanged(isSelected ? label : '전체'),
             ),
-          )
-          .toList(growable: false),
+            if (index != categories.length - 1) const SizedBox(width: 8),
+          ],
+        ],
+      ),
     );
     return Container(
       key: ValueKey(
-        desktop ? 'market-desktop-search-panel' : 'market-mobile-search-panel',
+        desktop ? 'market-desktop-controls' : 'market-mobile-controls',
       ),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE0E0E2)),
-      ),
-      child: desktop
-          ? Row(
-              children: [
-                Expanded(child: field),
-                const SizedBox(width: 8),
-                button,
-                const SizedBox(width: 12),
-                Flexible(child: filters),
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                field,
-                const SizedBox(height: 8),
-                SizedBox(width: double.infinity, child: button),
-                const SizedBox(height: 8),
-                Align(alignment: Alignment.centerLeft, child: filters),
-              ],
-            ),
-    );
-  }
-}
-
-class _RecommendationCard extends StatelessWidget {
-  const _RecommendationCard({
-    required this.items,
-    required this.title,
-    required this.total,
-    required this.onOpen,
-  });
-  final List<_MarketItem> items;
-  final String title;
-  final int total;
-  final ValueChanged<_MarketItem> onOpen;
-
-  /// 필요한 변수는 최대 세 추천 자료다.
-  /// 작동 원리는 HTML의 RECOMMENDED 제목과 구분선 행을 한 카드 안에 구성하는 것이다.
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 20, 18, 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE0E0E2)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'RECOMMENDED',
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.6,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _CountBadge(count: total),
+              Expanded(child: field),
+              const SizedBox(width: 8),
+              detailFilter,
             ],
           ),
-          const SizedBox(height: 18),
-          if (items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: Text('검색 결과가 없습니다.')),
-            )
-          else
-            for (var index = 0; index < items.length; index++) ...[
-              _MarketRow(
-                item: items[index],
-                featured: index == 0,
-                onOpen: onOpen,
-              ),
-              if (index != items.length - 1)
-                const Divider(height: 1, color: Color(0xFFE3E3E5)),
-            ],
+          const SizedBox(height: 10),
+          filters,
         ],
       ),
     );
   }
 }
 
-class _MoreResultsCard extends StatelessWidget {
-  const _MoreResultsCard({required this.items, required this.onOpen});
-  final List<_MarketItem> items;
-  final ValueChanged<_MarketItem> onOpen;
-
-  /// 필요한 변수는 추천 이후의 나머지 자료다.
-  /// 작동 원리는 동일한 행 컴포넌트를 재사용해 추가 API 없이 전체 결과를 이어서 표시하는 것이다.
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: const Color(0xFFE0E0E2)),
-    ),
-    child: Column(
-      children: [
-        for (var index = 0; index < items.length; index++) ...[
-          _MarketRow(item: items[index], featured: false, onOpen: onOpen),
-          if (index != items.length - 1)
-            const Divider(height: 1, color: Color(0xFFE3E3E5)),
-        ],
-      ],
-    ),
-  );
-}
-
-class _MarketRow extends StatelessWidget {
-  const _MarketRow({
-    required this.item,
-    required this.featured,
-    required this.onOpen,
+class _MarketplaceTypeTab extends StatelessWidget {
+  const _MarketplaceTypeTab({
+    required this.category,
+    required this.selected,
+    required this.onTap,
   });
-  final _MarketItem item;
-  final bool featured;
-  final ValueChanged<_MarketItem> onOpen;
 
-  /// 필요한 변수는 자료 정보와 대표 강조 여부다.
-  /// 작동 원리는 유형·제목·학습 조건·가격을 서로 다른 시각 계층으로 나누고,
-  /// 행 전체를 하나의 큰 클릭 영역으로 제공해 긴 목록에서도 빠르게 훑게 하는 것이다.
+  final _MarketplaceCorner category;
+  final bool selected;
+  final VoidCallback onTap;
+
   @override
-  Widget build(BuildContext context) {
-    final foreground = featured ? Colors.white : Colors.black;
-    final muted = featured ? Colors.white70 : const Color(0xFF68686D);
-    final surface = featured ? Colors.white : const Color(0xFFF5F5F6);
-    return Material(
-      color: featured ? const Color(0xFF202022) : Colors.transparent,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => onOpen(item),
+  Widget build(BuildContext context) => Material(
+    key: ValueKey('market-type-${category.filter}'),
+    color: selected ? Colors.black : const Color(0xFFF6F6F7),
+    borderRadius: BorderRadius.circular(9),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(9),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 42),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: featured ? Colors.white : const Color(0xFFE0E0E2),
-                  ),
-                ),
-                child: Icon(
-                  item.icon,
-                  size: 21,
-                  color: featured ? Colors.black : const Color(0xFF303034),
-                ),
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          child: Center(
+            child: Text(
+              category.title,
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: featured
-                                ? Colors.white.withValues(alpha: .16)
-                                : const Color(0xFFEDEDEF),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            item.typeLabel,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: featured ? Colors.white : Colors.black87,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 7),
-                        Flexible(
-                          child: Text(
-                            item.pricePoints == 0
-                                ? '무료'
-                                : '${item.pricePoints}P',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: muted,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: foreground,
-                        fontSize: 17,
-                        height: 1.15,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      item.subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: muted,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: featured ? Colors.white : Colors.black,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '열기',
-                  style: TextStyle(
-                    color: featured ? Colors.black : Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.count});
-  final int count;
-
-  /// 필요한 변수는 결과 개수다.
-  /// 작동 원리는 작은 회색 캡슐로 현재 추천 행 수를 표시하는 것이다.
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF5F5F6),
-      borderRadius: BorderRadius.circular(99),
-      border: Border.all(color: const Color(0xFFE0E0E2)),
-    ),
-    child: Text(
-      '$count개',
-      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
     ),
   );
 }
@@ -1592,12 +1226,12 @@ class _MarketFilterSheet extends StatefulWidget {
 }
 
 class _MarketFilterSheetState extends State<_MarketFilterSheet> {
-  late String _type = widget.type == '필터+' ? '전체' : widget.type;
+  late String _type = widget.type;
   late String _course = widget.course;
   late String _price = widget.price;
 
   /// 필요한 변수는 유형·과정·가격 임시 선택값이다.
-  /// 작동 원리는 HTML 필터 모달처럼 세 조건을 독립 칩으로 고르고 적용 시 부모 목록에 한 번 반환한다.
+  /// 작동 원리는 Atlas 상세 필터처럼 세 조건을 독립 칩으로 고르고 적용 시 부모 목록에 한 번 반환하는 것이다.
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -1608,7 +1242,7 @@ class _MarketFilterSheetState extends State<_MarketFilterSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'MARKET FILTER',
+              'MATERIAL LIBRARY',
               style: TextStyle(
                 fontSize: 10,
                 letterSpacing: 1.7,
@@ -1618,18 +1252,18 @@ class _MarketFilterSheetState extends State<_MarketFilterSheet> {
             ),
             const SizedBox(height: 7),
             const Text(
-              '마켓 필터',
+              '상세 필터',
               style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 5),
             const Text(
-              '카테고리와 과정, 가격 조건으로 마켓 자료를 좁힙니다.',
+              '자료 유형과 과정, 가격 조건으로 필요한 자료를 찾으세요.',
               style: TextStyle(color: Colors.black45),
             ),
             const SizedBox(height: 18),
             _FilterGroup(
-              label: '카테고리',
-              values: const ['전체', '시험지', '문제세트', '코스'],
+              label: '자료 유형',
+              values: const ['전체', '코스', '시험지', '문제세트'],
               selected: _type,
               onSelected: (value) => setState(() => _type = value),
             ),
@@ -1654,7 +1288,7 @@ class _MarketFilterSheetState extends State<_MarketFilterSheet> {
                 _price = '전체 가격';
               }),
               icon: const Icon(Icons.filter_alt_off_outlined),
-              label: const Text('전체 선택 해제'),
+              label: const Text('초기화'),
             ),
             const SizedBox(height: 4),
             FilledButton(

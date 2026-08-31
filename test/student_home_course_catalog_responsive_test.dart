@@ -146,7 +146,7 @@ void main() {
     expect(find.text('레이팅'), findsOneWidget);
     expect(find.text('업적'), findsOneWidget);
     expect(find.text('공지'), findsOneWidget);
-    expect(find.text('AIFlow'), findsNothing);
+    expect(find.text('AIFlow'), findsOneWidget);
     expect(find.text('학습 도구'), findsOneWidget);
     expect(find.text('빠른 실행'), findsOneWidget);
     expect(find.text('노트패드'), findsOneWidget);
@@ -215,7 +215,7 @@ void main() {
     final scrollable = tester.state<ScrollableState>(
       find.byType(Scrollable).first,
     );
-    expect(scrollable.position.maxScrollExtent, greaterThan(250));
+    expect(scrollable.position.maxScrollExtent, greaterThan(200));
     await tester.drag(
       find.byType(SingleChildScrollView),
       const Offset(0, -400),

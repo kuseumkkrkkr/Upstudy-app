@@ -38,11 +38,15 @@ class SoWidget extends StatefulWidget {
   const SoWidget({
     super.key,
     this.preview = false,
+    this.initialTab = 0,
     this.searchFriends,
     this.sendFriendRequest,
   });
 
   final bool preview;
+
+  /// 0=대화, 1=친구. 그룹은 실제 그룹 허브로 즉시 이동한다.
+  final int initialTab;
   final FriendSearchCallback? searchFriends;
   final FriendRequestCallback? sendFriendRequest;
 
@@ -51,6 +55,17 @@ class SoWidget extends StatefulWidget {
 
   @override
   State<SoWidget> createState() => _SoWidgetState();
+}
+
+/// 기존 SoWidget 호출을 유지하면서 그룹 허브가 친구 탭을 직접 열 수 있게 한다.
+class FriendScreen extends SoWidget {
+  const FriendScreen({
+    super.key,
+    super.preview,
+    super.initialTab,
+    super.searchFriends,
+    super.sendFriendRequest,
+  });
 }
 
 /// 필요한 변수는 친구 검색·결과 본문이다.
@@ -68,78 +83,115 @@ class _MobileAddFriendSheet extends StatelessWidget {
   final Key panelKey;
 
   @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: FractionallySizedBox(
-        heightFactor: .78,
-        child: Container(
-          key: panelKey,
-          margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x26000000),
-                blurRadius: 36,
-                offset: Offset(0, -8),
-              ),
-            ],
+  Widget build(BuildContext context) => Scaffold(
+    key: panelKey,
+    backgroundColor: Colors.white,
+    bottomNavigationBar: const MobileStudentBottomAppBar(
+      activeRoute: '/social',
+    ),
+    body: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          key: const ValueKey('mobile-friend-add-topbar'),
+          height: 64,
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD6D6D8),
-                    borderRadius: BorderRadius.circular(999),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: IconButton(
+                  key: const ValueKey('mobile-friend-add-back'),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                  style: IconButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                      side: BorderSide(color: Color(0xFFE1E1E3)),
+                      borderRadius: BorderRadius.zero,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                  ),
-                  IconButton.filledTonal(
-                    tooltip: '닫기',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F1F2),
-                      foregroundColor: const Color(0xFF202022),
-                      minimumSize: const Size(46, 46),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  child: child,
-                ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: child,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// 모바일 친구 찾기는 독립 페이지 레이아웃을 재사용한다.
+class _MobileFriendAddPage extends StatelessWidget {
+  const _MobileFriendAddPage({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    key: const ValueKey('mobile-friend-add-page'),
+    backgroundColor: Colors.white,
+    bottomNavigationBar: const MobileStudentBottomAppBar(
+      activeRoute: '/social',
+    ),
+    body: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          key: const ValueKey('mobile-friend-add-topbar'),
+          height: 64,
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: IconButton(
+                  key: const ValueKey('mobile-friend-add-back'),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                  style: IconButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                      side: BorderSide(color: Color(0xFFE1E1E3)),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                '친구 찾기',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: child,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _SocialNoticeRow extends StatelessWidget {
@@ -311,6 +363,7 @@ class _SocialSectionHeader extends StatelessWidget {
 
 class _SocialPersonRow extends StatelessWidget {
   const _SocialPersonRow({
+    super.key,
     required this.name,
     required this.subtitle,
     required this.trailing,
@@ -439,11 +492,13 @@ class _SoWidgetState extends State<SoWidget> {
   final Set<String> _sentRequestNames = <String>{};
   Timer? _socialPollTimer;
   bool _pollingSocial = false;
+  int _mobileSocialTab = 0;
 
   // ── 원본과 동일한 lifecycle ──────────────────────────────────
   @override
   void initState() {
     super.initState();
+    _mobileSocialTab = widget.initialTab == 1 ? 1 : 0;
     if (widget.preview) {
       _friends = const [
         _FriendInfo(name: '이수학', status: '학습 중 · B Tier', ovr: 76),
@@ -543,6 +598,9 @@ class _SoWidgetState extends State<SoWidget> {
                 name: profile.username,
                 status: profile.status.isNotEmpty ? profile.status : '상태 없음',
                 ovr: profile.ovr,
+                userId: profile.userId,
+                displayName: profile.name,
+                profileImage: profile.profileImage,
               ),
             )
             .toList();
@@ -1544,11 +1602,13 @@ class _SoWidgetState extends State<SoWidget> {
     double width = 720,
     double height = 700,
     EdgeInsets padding = const EdgeInsets.fromLTRB(24, 18, 24, 24),
+    Key? panelKey,
   }) {
     final screen = MediaQuery.of(context).size;
     final resolvedWidth = min(width, screen.width * 0.94);
     final resolvedHeight = min(height, screen.height * 0.9);
     return Container(
+      key: panelKey,
       width: resolvedWidth,
       constraints: BoxConstraints(maxHeight: resolvedHeight),
       padding: padding,
@@ -1703,6 +1763,9 @@ class _SoWidgetState extends State<SoWidget> {
                       name: p.username,
                       status: p.status.isNotEmpty ? p.status : '상태 없음',
                       ovr: p.ovr,
+                      userId: p.userId,
+                      displayName: p.name,
+                      profileImage: p.profileImage,
                     ),
                   )
                   .toList();
@@ -1933,11 +1996,10 @@ class _SoWidgetState extends State<SoWidget> {
 
     if (mobile) {
       unawaited(
-        showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => _MobileAddFriendSheet(child: modalBody),
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => _MobileFriendAddPage(child: modalBody),
+          ),
         ),
       );
       return;
@@ -2090,9 +2152,9 @@ class _SoWidgetState extends State<SoWidget> {
               ),
               onPressed: () {
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('프로필 보기 기능은 준비 중입니다.')),
-                );
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _openFriendProfile(friend);
+                });
               },
               icon: const Icon(Icons.person_outline, size: 17),
               label: const Text(
@@ -2145,6 +2207,187 @@ class _SoWidgetState extends State<SoWidget> {
       ),
     );
   }
+
+  /// 필요한 변수는 친구 목록에서 이미 받은 공개 프로필 값이다.
+  /// 작동 원리는 별도 peer API나 전역 경로를 만들지 않고, 현재 응답에 포함된
+  /// 정체성·상태·OVR만 읽기 전용 프로필 표면으로 연결하는 것이다.
+  void _openFriendProfile(_FriendInfo friend) {
+    final mobile = isStudentDensityMobile(context);
+    final body = _friendProfileBody(friend);
+    if (mobile) {
+      unawaited(
+        showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => _MobileAddFriendSheet(
+            title: '친구 프로필',
+            panelKey: const ValueKey('mobile-friend-profile-sheet'),
+            child: body,
+          ),
+        ),
+      );
+      return;
+    }
+    unawaited(
+      _showBlurDialog(
+        _dialogShell(
+          title: '친구 프로필',
+          width: 440,
+          height: 430,
+          panelKey: const ValueKey('desktop-friend-profile-dialog'),
+          child: body,
+        ),
+      ),
+    );
+  }
+
+  Widget _friendProfileBody(_FriendInfo friend) {
+    final suppliedName = friend.displayName?.trim();
+    final primaryName = suppliedName == null || suppliedName.isEmpty
+        ? friend.name
+        : suppliedName;
+    final showUsername = friend.name.isNotEmpty && primaryName != friend.name;
+    return Column(
+      key: const ValueKey('friend-profile-content'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(child: _friendProfileAvatar(friend, primaryName)),
+        const SizedBox(height: 14),
+        Text(
+          primaryName,
+          key: const ValueKey('friend-profile-display-name'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+        if (showUsername) ...[
+          const SizedBox(height: 4),
+          Text(
+            '@${friend.name}',
+            key: const ValueKey('friend-profile-username'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _textMuted,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+        const SizedBox(height: 20),
+        _friendProfileStat(
+          key: const ValueKey('friend-profile-status'),
+          icon: Icons.circle_outlined,
+          label: '상태',
+          value: friend.status,
+        ),
+        const SizedBox(height: 8),
+        _friendProfileStat(
+          key: const ValueKey('friend-profile-ovr'),
+          icon: Icons.auto_graph_rounded,
+          label: 'OVR',
+          value: _formatOvrLabel(friend.ovr),
+        ),
+        const SizedBox(height: 20),
+        OutlinedButton.icon(
+          key: const ValueKey('friend-profile-message-button'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: primaryColor,
+            side: const BorderSide(color: primaryColor),
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              final info = _ensureMessageThreadForFriend(friend);
+              _openMessageThread(info);
+            });
+          },
+          icon: const Icon(Icons.mail_outline, size: 18),
+          label: const Text(
+            '쪽지 보내기',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _friendProfileAvatar(_FriendInfo friend, String primaryName) {
+    final imageUrl = _safeFriendProfileImageUrl(friend.profileImage);
+    final fallback = Container(
+      key: const ValueKey('friend-profile-avatar-fallback'),
+      color: primaryColor.withValues(alpha: 0.12),
+      alignment: Alignment.center,
+      child: Text(
+        primaryName.isEmpty ? 'F' : primaryName.characters.first,
+        style: const TextStyle(
+          color: primaryColor,
+          fontSize: 30,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+    return Container(
+      width: 88,
+      height: 88,
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      child: imageUrl == null
+          ? fallback
+          : Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => fallback,
+            ),
+    );
+  }
+
+  String? _safeFriendProfileImageUrl(String? value) {
+    final candidate = value?.trim();
+    if (candidate == null || candidate.isEmpty) return null;
+    final uri = Uri.tryParse(candidate);
+    if (uri == null ||
+        uri.host.isEmpty ||
+        (uri.scheme != 'https' && uri.scheme != 'http')) {
+      return null;
+    }
+    return uri.toString();
+  }
+
+  Widget _friendProfileStat({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required String value,
+  }) => Container(
+    key: key,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: StudentDensityTokens.surfaceMuted,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: StudentDensityTokens.line),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, size: 18, color: _textMuted),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: const TextStyle(
+            color: _textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+      ],
+    ),
+  );
 
   // ── 그룹 검색 모달 (원본 로직 동일) ─────────────────────────
   void _openGroupSearchModal() {
@@ -2601,6 +2844,7 @@ class _SoWidgetState extends State<SoWidget> {
   /// 작동 원리는 780px 이하는 세로 모바일 흐름으로, 그보다 넓으면 PC·가로 태블릿용 다열 흐름으로 재배치하는 것이다.
   Widget _buildHtmlSocial(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    if (mobile) return _buildMobileSocial(context);
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -2767,6 +3011,7 @@ class _SoWidgetState extends State<SoWidget> {
       children: [
         for (final friend in _friends.take(3))
           _SocialPersonRow(
+            key: ValueKey('social-friend-${friend.userId ?? friend.name}'),
             name: friend.name,
             subtitle: friend.status,
             trailing: '쪽지 ›',
@@ -3431,6 +3676,356 @@ class _SoWidgetState extends State<SoWidget> {
     );
   }
 
+  void _selectMobileSocialTab(int tab) {
+    if (tab == 2) {
+      Navigator.of(context).pushNamed('/groups');
+      return;
+    }
+    setState(() => _mobileSocialTab = tab);
+  }
+
+  Widget _mobileTab(int tab, String label) {
+    final active = _mobileSocialTab == tab;
+    return Expanded(
+      child: InkWell(
+        key: ValueKey('mobile-social-tab-$tab'),
+        onTap: () => _selectMobileSocialTab(tab),
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: active ? Colors.black : Colors.transparent,
+                width: active ? 3 : 1,
+              ),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _mobilePersonRow({
+    Key? key,
+    required String name,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) => InkWell(
+    key: key,
+    onTap: onTap,
+    child: Container(
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            color: const Color(0xFF202020),
+            child: Text(
+              name.isEmpty ? '?' : name.substring(0, 1),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: _textMuted),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, size: 22),
+        ],
+      ),
+    ),
+  );
+
+  void _openMobileFriendRequests() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: .88,
+        child: Container(
+          key: const ValueKey('mobile-friend-requests-sheet'),
+          color: Colors.white,
+          child: Column(
+            children: [
+              Container(
+                height: 58,
+                padding: const EdgeInsets.only(left: 20),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '친구 요청',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: IconButton(
+                        key: const ValueKey('friend-requests-sheet-close'),
+                        tooltip: '닫기',
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  children: [
+                    if (_pendingIncomingRequests.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+                        child: Text(
+                          '받은 요청 ${_pendingIncomingRequests.length}',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      for (final request in _pendingIncomingRequests)
+                        _requestTile(request, incoming: true),
+                    ],
+                    if (_pendingOutgoingRequests.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+                        child: Text(
+                          '보낸 요청 ${_pendingOutgoingRequests.length}',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      for (final request in _pendingOutgoingRequests)
+                        _requestTile(request, incoming: false),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileSocial(BuildContext context) => Scaffold(
+    key: _scaffoldKey,
+    backgroundColor: Colors.white,
+    bottomNavigationBar: const MobileStudentBottomAppBar(
+      activeRoute: '/social',
+    ),
+    body: Column(
+      children: [
+        Container(
+          key: const ValueKey('mobile-social-topbar'),
+          height: 64,
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: IconButton(
+                  key: const ValueKey('mobile-social-back'),
+                  tooltip: '뒤로',
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                  style: IconButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                      side: BorderSide(color: Color(0xFFE1E1E3)),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  '함께 공부',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+              ),
+              if (_mobileSocialTab == 1)
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    key: const ValueKey('mobile-friend-add-open'),
+                    tooltip: '친구 찾기',
+                    onPressed: _openAddFriendModal,
+                    icon: const Icon(Icons.search_rounded, size: 22),
+                    style: IconButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        side: BorderSide(color: Color(0xFFE1E1E3)),
+                        borderRadius: BorderRadius.zero,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
+          ),
+        ),
+        SizedBox(
+          key: const ValueKey('mobile-social-tabs'),
+          height: 52,
+          child: Row(
+            children: [
+              _mobileTab(0, '대화'),
+              _mobileTab(1, '친구'),
+              _mobileTab(2, '그룹'),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _mobileSocialTab == 1
+              ? _buildMobileFriends()
+              : _buildMobileMessages(),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildMobileMessages() => ListView(
+    key: const ValueKey('mobile-social-messages'),
+    padding: EdgeInsets.zero,
+    children: [
+      const Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+        child: Text(
+          '최근 대화',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+      ),
+      if (_messages.isEmpty)
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
+          child: Text('최근 대화가 없습니다.', style: TextStyle(color: _textMuted)),
+        )
+      else
+        for (final message in _messages)
+          _mobilePersonRow(
+            name: message.name,
+            subtitle: '${message.lastMessage} · ${message.timeAgo}',
+            onTap: () => _openMessageThread(message),
+          ),
+    ],
+  );
+
+  Widget _buildMobileFriends() => ListView(
+    key: const ValueKey('mobile-social-friends'),
+    padding: EdgeInsets.zero,
+    children: [
+      const Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+        child: Text(
+          '친구',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+      ),
+      if (_pendingIncomingRequests.isNotEmpty ||
+          _pendingOutgoingRequests.isNotEmpty)
+        InkWell(
+          key: const ValueKey('mobile-friend-requests-open'),
+          onTap: _openMobileFriendRequests,
+          child: Container(
+            height: 76,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.person_add_alt_1_outlined),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '친구 요청',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        '받은 요청 ${_pendingIncomingRequests.length} · 보낸 요청 ${_pendingOutgoingRequests.length}',
+                        style: const TextStyle(fontSize: 12, color: _textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded),
+              ],
+            ),
+          ),
+        ),
+      if (_friends.isEmpty)
+        SizedBox(
+          height: 180,
+          child: Center(
+            child: FilledButton.icon(
+              key: const ValueKey('mobile-friend-empty-search'),
+              onPressed: _openAddFriendModal,
+              icon: const Icon(Icons.search_rounded, size: 18),
+              label: const Text('친구 찾기'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+            ),
+          ),
+        )
+      else
+        for (final friend in _friends)
+          _mobilePersonRow(
+            key: ValueKey('social-friend-${friend.userId ?? friend.name}'),
+            name: friend.name,
+            subtitle: friend.status,
+            onTap: () => _openFriendActionModal(friend),
+          ),
+    ],
+  );
+
   // BUILD
   // ══════════════════════════════════════════════════════════════
   /// 필요한 변수는 친구·그룹 상태와 현재 학생 화면 문맥이다.
@@ -3484,10 +4079,11 @@ class _SoWidgetState extends State<SoWidget> {
                               ? Navigator.of(context).pop()
                               : state.openDrawer();
                         },
-                  onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const MainStudentPage()),
-                    (route) => false,
-                  ),
+                  onTitleTap: () =>
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/student/dashboard',
+                        (route) => false,
+                      ),
                   items: studentTopNavItems(
                     context,
                     active: StudentTopDestination.social,

@@ -11,6 +11,31 @@ Future<T?> showDailyTestModal<T>({
   String? courseId,
   DailyQuestBundle? initialBundle,
 }) {
+  final mobile = MediaQuery.sizeOf(context).width <= 780;
+  if (mobile) {
+    // 필요한 변수는 활성 코스·초기 번들과 모바일 화면 높이다.
+    // 작동 원리: 모바일에서는 축소된 PC 대화상자 대신 86% 높이의 단일 열
+    // 하단 시트를 열고, 퀘스트 API와 보상 수령 콜백은 기존 상태 객체가 소유한다.
+    return showModalBottomSheet<T>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFF4F4F6),
+      barrierColor: Colors.black.withValues(alpha: 0.38),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.86,
+        child: DailyTestModal(
+          courseId: courseId,
+          initialBundle: initialBundle,
+          mobileSheet: true,
+        ),
+      ),
+    );
+  }
   return showDialog<T>(
     context: context,
     barrierDismissible: true,
@@ -38,10 +63,16 @@ Future<T?> showDailyTestModal<T>({
 }
 
 class DailyTestModal extends StatefulWidget {
-  const DailyTestModal({super.key, this.courseId, this.initialBundle});
+  const DailyTestModal({
+    super.key,
+    this.courseId,
+    this.initialBundle,
+    this.mobileSheet = false,
+  });
 
   final String? courseId;
   final DailyQuestBundle? initialBundle;
+  final bool mobileSheet;
 
   @override
   State<DailyTestModal> createState() => _DailyTestModalState();
@@ -157,17 +188,32 @@ class _DailyTestModalState extends State<DailyTestModal> {
 
     final size = MediaQuery.sizeOf(context);
     final mobile = size.width <= 780;
+    final mobileSheet = mobile && widget.mobileSheet;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: SizedBox(
+        key: mobileSheet
+            ? const ValueKey('daily-test-mobile-sheet')
+            : const ValueKey('daily-test-desktop-dialog'),
         width: mobile
-            ? size.width
-            : (size.width > 760 ? 720 : size.width * .94),
-        height: mobile ? size.height : size.height * .9,
+            ? double.infinity
+            : (size.width * .72).clamp(640.0, 920.0).toDouble(),
+        height: mobileSheet
+            ? double.infinity
+            : mobile
+            ? size.height
+            : size.height * .82,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Positioned.fill(child: _buildPanel(items, percentLabel, progress)),
+            Positioned.fill(
+              child: _buildPanel(
+                items,
+                percentLabel,
+                progress,
+                mobileSheet: mobileSheet,
+              ),
+            ),
             if (_rewardBurstPoints != null)
               _RewardBurst(points: _rewardBurstPoints!),
           ],
@@ -181,8 +227,9 @@ class _DailyTestModalState extends State<DailyTestModal> {
   Widget _buildPanel(
     List<DailyQuestItem> items,
     String percentLabel,
-    double progress,
-  ) {
+    double progress, {
+    required bool mobileSheet,
+  }) {
     final mobile = MediaQuery.sizeOf(context).width <= 780;
     return Container(
       decoration: BoxDecoration(
@@ -193,7 +240,12 @@ class _DailyTestModalState extends State<DailyTestModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 22, 18, 20),
+            padding: EdgeInsets.fromLTRB(
+              24,
+              mobileSheet ? 2 : 22,
+              14,
+              mobileSheet ? 14 : 20,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -223,22 +275,27 @@ class _DailyTestModalState extends State<DailyTestModal> {
                     ],
                   ),
                 ),
-                IconButton.outlined(
+                IconButton(
                   tooltip: '닫기',
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
+                  style: IconButton.styleFrom(
+                    fixedSize: const Size.square(48),
+                    backgroundColor: mobileSheet ? Colors.white : null,
+                    side: const BorderSide(color: Color(0xFFDCDCE0)),
+                  ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE4E4E6)),
+          if (!mobileSheet) const Divider(height: 1, color: Color(0xFFE4E4E6)),
           if (_loading)
             const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_error != null)
             Expanded(child: Center(child: Text(_error!)))
           else ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 34, 24, 0),
+              padding: EdgeInsets.fromLTRB(24, mobileSheet ? 22 : 34, 24, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -287,17 +344,19 @@ class _DailyTestModalState extends State<DailyTestModal> {
                     ),
             ),
           ],
-          const Divider(height: 1, color: Color(0xFFE4E4E6)),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('닫기'),
+          if (!mobileSheet) ...[
+            const Divider(height: 1, color: Color(0xFFE4E4E6)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('닫기'),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

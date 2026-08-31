@@ -8,6 +8,7 @@ import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/sessions/friend/friend.dart';
 
 class GroupListPage extends StatefulWidget {
   const GroupListPage({super.key, this.initialGroups});
@@ -416,11 +417,155 @@ class _GroupListPageState extends State<GroupListPage> {
     );
   }
 
+  void _openSocialTab(int tab) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => FriendScreen(initialTab: tab)),
+    );
+  }
+
+  Future<void> _openMobileAddSheet() async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(),
+      builder: (sheetContext) => SizedBox(
+        key: const ValueKey('group-mobile-add-sheet'),
+        height: 305,
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Container(width: 44, height: 4, color: const Color(0xFFB8B8BD)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 10, 8),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '그룹 추가',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          '검색하거나 초대 코드로 함께 시작하세요.',
+                          style: TextStyle(fontSize: 11, color: Colors.black45),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox.square(
+                    dimension: 48,
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        border: Border.fromBorderSide(
+                          BorderSide(color: Color(0xFFD8D8DC)),
+                        ),
+                      ),
+                      child: IconButton(
+                        key: const ValueKey('group-mobile-add-close'),
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            _MobileGroupSheetRow(
+              icon: Icons.search_rounded,
+              title: '공개 그룹 찾기',
+              detail: '이름으로 공개 그룹을 검색해 참가',
+              rowKey: const ValueKey('group-mobile-find'),
+              onTap: () => Navigator.of(sheetContext).pop('find'),
+            ),
+            const Divider(height: 1),
+            _MobileGroupSheetRow(
+              icon: Icons.key_rounded,
+              title: '코드로 참여',
+              detail: '선생님에게 받은 초대 코드 입력',
+              rowKey: const ValueKey('group-mobile-join-code'),
+              onTap: () => Navigator.of(sheetContext).pop('join'),
+            ),
+            const Divider(height: 1),
+            _MobileGroupSheetRow(
+              icon: Icons.add_rounded,
+              title: '그룹 만들기',
+              detail: '새 스터디 그룹을 직접 만들기',
+              rowKey: const ValueKey('group-mobile-create'),
+              onTap: () => Navigator.of(sheetContext).pop('create'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (action == 'find' || action == 'join') {
+      _openFindSheet();
+    } else if (action == 'create') {
+      _openCreateDialog();
+    }
+  }
+
+  Widget _buildMobilePage() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      bottomNavigationBar: const MobileStudentBottomAppBar(
+        activeRoute: '/groups',
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const _MobileGroupTopBar(),
+            _MobileGroupTabs(
+              onConversation: () => _openSocialTab(0),
+              onFriends: () => _openSocialTab(1),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _MobileGroupHeading(
+                      count: _groups.length,
+                      onAdd: _openMobileAddSheet,
+                    ),
+                    if (_loading)
+                      const SizedBox(
+                        key: ValueKey('groups-mobile-loading'),
+                        height: 92,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_error != null)
+                      _MobileGroupError(message: _error!, onRetry: _load)
+                    else if (_groups.isEmpty)
+                      _MobileGroupEmpty(onAdd: _openMobileAddSheet)
+                    else
+                      for (var index = 0; index < _groups.length; index++)
+                        _MobileGroupRow(group: _groups[index], index: index),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 필요한 변수는 내 그룹 상태와 현재 화면 폭이다.
   /// 작동 원리는 780px 이하에서는 전폭 세로 흐름을, PC에서는 제한된 본문 폭 안의 헤더·목록 카드를 사용한다.
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    if (mobile) return _buildMobilePage();
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
       drawer: mobile ? null : const AppDrawer(),
@@ -558,6 +703,363 @@ class _MobileRatingMetric extends StatelessWidget {
         ),
       ),
     ],
+  );
+}
+
+class _MobileGroupTopBar extends StatelessWidget {
+  const _MobileGroupTopBar();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    key: const ValueKey('groups-mobile-topbar'),
+    height: 64,
+    child: Row(
+      children: [
+        SizedBox.square(
+          dimension: 44,
+          child: IconButton(
+            key: const ValueKey('groups-mobile-back'),
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(Icons.arrow_back, size: 22),
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Text(
+          '함께 공부',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MobileGroupTabs extends StatelessWidget {
+  const _MobileGroupTabs({
+    required this.onConversation,
+    required this.onFriends,
+  });
+
+  final VoidCallback onConversation;
+  final VoidCallback onFriends;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    key: const ValueKey('groups-mobile-tabs'),
+    height: 52,
+    child: Row(
+      children: [
+        _MobileGroupTab(label: '대화', onTap: onConversation, active: false),
+        _MobileGroupTab(label: '친구', onTap: onFriends, active: false),
+        const _MobileGroupTab(label: '그룹', active: true),
+      ],
+    ),
+  );
+}
+
+class _MobileGroupTab extends StatelessWidget {
+  const _MobileGroupTab({
+    required this.label,
+    this.onTap,
+    required this.active,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: InkWell(
+      key: ValueKey('groups-mobile-tab-$label'),
+      onTap: onTap,
+      child: Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: active ? Colors.black : const Color(0xFFE2E2E4),
+              width: active ? 2 : 1,
+            ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: active ? FontWeight.w900 : FontWeight.w600,
+            color: active ? Colors.black : Colors.black54,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _MobileGroupHeading extends StatelessWidget {
+  const _MobileGroupHeading({required this.count, required this.onAdd});
+
+  final int count;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    key: const ValueKey('groups-mobile-heading'),
+    height: 85,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(14, 22, 14, 15),
+      child: Row(
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '그룹 $count/3',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                '참여 중인 그룹에서 학습을 이어가세요.',
+                style: TextStyle(fontSize: 10, color: Colors.black45),
+              ),
+            ],
+          ),
+          const Spacer(),
+          SizedBox(
+            width: 114,
+            height: 48,
+            child: OutlinedButton.icon(
+              key: const ValueKey('groups-mobile-add'),
+              onPressed: onAdd,
+              icon: const Icon(Icons.auto_awesome, size: 17),
+              label: const Text('그룹 추가'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.black,
+                side: const BorderSide(color: Color(0xFFD8D8DC)),
+                shape: const RoundedRectangleBorder(),
+                padding: EdgeInsets.zero,
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MobileGroupEmpty extends StatelessWidget {
+  const _MobileGroupEmpty({required this.onAdd});
+
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('groups-mobile-empty'),
+    height: 92,
+    margin: const EdgeInsets.symmetric(horizontal: 14),
+    child: Row(
+      children: [
+        const Expanded(
+          child: Text(
+            '참여 중인 그룹이 없어요.',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+        ),
+        SizedBox(
+          width: 114,
+          height: 60,
+          child: OutlinedButton.icon(
+            key: const ValueKey('groups-mobile-empty-add'),
+            onPressed: onAdd,
+            icon: const Icon(Icons.auto_awesome, size: 16),
+            label: const Text('그룹 추가'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.black,
+              side: const BorderSide(color: Color(0xFFD8D8DC)),
+              shape: const RoundedRectangleBorder(),
+              padding: EdgeInsets.zero,
+              textStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MobileGroupError extends StatelessWidget {
+  const _MobileGroupError({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('groups-mobile-error'),
+    margin: const EdgeInsets.symmetric(horizontal: 14),
+    padding: const EdgeInsets.all(14),
+    decoration: const BoxDecoration(
+      border: Border(
+        top: BorderSide(color: Color(0xFFD8D8DC)),
+        bottom: BorderSide(color: Color(0xFFD8D8DC)),
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(message, style: const TextStyle(fontSize: 13)),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 48,
+          child: OutlinedButton(
+            onPressed: onRetry,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.black,
+              shape: const RoundedRectangleBorder(),
+            ),
+            child: const Text('다시 시도'),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MobileGroupRow extends StatelessWidget {
+  const _MobileGroupRow({required this.group, required this.index});
+
+  final StudyGroup group;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: () =>
+        Navigator.pushNamed(context, '/group/detail', arguments: group.groupId),
+    child: Container(
+      key: ValueKey('groups-mobile-row-${group.id}'),
+      height: 92,
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFD8D8DC))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            key: ValueKey('groups-mobile-logo-${group.id}'),
+            width: 52,
+            height: 52,
+            alignment: Alignment.center,
+            color: index == 0 ? Colors.black : const Color(0xFFF0F0F2),
+            child: Text(
+              group.name.isEmpty ? 'G' : group.name.substring(0, 1),
+              style: TextStyle(
+                color: index == 0 ? Colors.white : Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  group.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  group.description ?? '함께 공부하는 그룹',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: Colors.black45),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${group.memberCount}/${group.maxMembers == 0 ? '—' : group.maxMembers}명 · ${group.isPublic ? '공개' : '비공개'}',
+                  style: const TextStyle(fontSize: 9, color: Colors.black38),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Icon(Icons.arrow_forward, size: 18),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MobileGroupSheetRow extends StatelessWidget {
+  const _MobileGroupSheetRow({
+    required this.icon,
+    required this.title,
+    required this.detail,
+    required this.rowKey,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String detail;
+  final Key rowKey;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    key: rowKey,
+    onTap: onTap,
+    child: SizedBox(
+      height: 59,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Row(
+          children: [
+            Icon(icon, size: 20),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    detail,
+                    style: const TextStyle(fontSize: 10, color: Colors.black45),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward, size: 16),
+          ],
+        ),
+      ),
+    ),
   );
 }
 

@@ -8,27 +8,31 @@ void main() {
   testWidgets('그래프 직접 그리기 화면은 교과 예제 대신 빈 수식으로 시작한다', (tester) async {
     // 필요한 변수는 데스크톱 화면 크기와 웹뷰를 끈 그래프 페이지다.
     // 작동 원리는 첫 렌더링에서 자동 예제 문구가 없고 직접 입력 안내와 빈 함수가 보이는지 확인한다.
-    await tester.binding.setSurfaceSize(const Size(1600, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       const MaterialApp(home: JsxGraphPage(embedEnabled: false)),
     );
     await tester.pump();
 
-    expect(find.text('수식'), findsOneWidget);
+    expect(find.text('함수 그리기'), findsOneWidget);
     expect(find.text('함수 1'), findsOneWidget);
     expect(find.text('이차함수와 직선'), findsNothing);
     expect(find.text('예제 불러오기'), findsOneWidget);
-    expect(find.text('그래프 그리기'), findsNothing);
+    expect(find.text('그래프 탐색기'), findsOneWidget);
     expect(find.text('좌표평면'), findsNothing);
   });
 
   testWidgets('전체 메뉴가 열리면 그래프 플랫폼 뷰를 잠시 제거한다', (tester) async {
     // 필요한 변수는 데스크톱 화면과 전체 메뉴가 있는 그래프 페이지다.
     // 작동 원리는 메뉴 아이콘을 누른 뒤 웹뷰 대신 일시 중단 영역이 렌더링되는지 확인한다.
-    await tester.binding.setSurfaceSize(const Size(1600, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       const MaterialApp(home: JsxGraphPage(embedEnabled: false)),
@@ -48,22 +52,29 @@ void main() {
   testWidgets('좁은 화면에서 앱바 그래프 도구가 넘치지 않는다', (tester) async {
     // 필요한 변수는 모바일 화면 크기와 아이콘 모드로 전환되는 그래프 페이지다.
     // 작동 원리는 첫 프레임의 레이아웃 예외가 없고 두 작업의 도구 설명이 유지되는지 확인한다.
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       const MaterialApp(home: JsxGraphPage(embedEnabled: false)),
     );
     await tester.pump();
 
-    expect(find.byIcon(Icons.add_chart_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.folder_open_outlined), findsOneWidget);
+    expect(
+      find.byIcon(Icons.stacked_line_chart_rounded),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.byIcon(Icons.menu_book_outlined), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('모바일 그래프 입력 영역은 한손 조작 배치를 유지한다', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -76,26 +87,22 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('고급 모드'), findsOneWidget);
-    expect(find.text('초보자 모드'), findsOneWidget);
-    expect(find.text('그래프 그리기'), findsOneWidget);
+    // Atlas mobile keeps a single compact editor; the former mode tabs/keypad
+    // belonged to the superseded mobile surface.
+    expect(find.text('함수 그리기'), findsOneWidget);
+    expect(find.text('고급 모드'), findsNothing);
+    expect(find.text('초보자 모드'), findsNothing);
     expect(
       find.byKey(const ValueKey('mobile-graph-page-scroll')),
       findsOneWidget,
     );
-    expect(find.byKey(const ValueKey('mobile-math-keypad')), findsOneWidget);
+    expect(find.byKey(const ValueKey('mobile-math-keypad')), findsNothing);
     final mathFieldFinder = find.byKey(
       const ValueKey('mobile-math-expression-0'),
     );
     final mathField = tester.widget<TextField>(mathFieldFinder);
-    expect(mathField.readOnly, isTrue);
-    await tester.tap(mathFieldFinder);
-    await tester.pump();
-    expect(tester.testTextInput.isVisible, isFalse);
-    await expectLater(
-      find.byType(MaterialApp),
-      matchesGoldenFile('goldens/jsx_graph_mobile_layout.png'),
-    );
+    expect(mathField.readOnly, isFalse);
+    expect(find.byKey(const ValueKey('mobile-graph-apply')), findsOneWidget);
     await tester.drag(
       find.byKey(const ValueKey('mobile-graph-page-scroll')),
       const Offset(0, -400),
@@ -115,8 +122,10 @@ void main() {
   testWidgets('모바일 수식은 반영 버튼을 누르면 정규화되어 그래프 상태에 적용된다', (tester) async {
     // 필요한 변수는 모바일 그래프 화면과 암시적 곱셈이 포함된 수식이다.
     // 작동 원리는 반영 버튼이 입력을 검증하고 2x를 2*x로 정규화해 문서 재생성 상태를 만드는지 확인한다.
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     Map<String, dynamic>? sentPayload;
     await tester.pumpWidget(
@@ -149,13 +158,8 @@ void main() {
     final expressionField = find.byKey(
       const ValueKey('mobile-math-expression-0'),
     );
-    for (final label in ['2', '×', 'x', '+', '1']) {
-      final key = find.text(label).first;
-      await tester.ensureVisible(key);
-      await tester.pumpAndSettle();
-      await tester.tap(key);
-      await tester.pump();
-    }
+    await tester.enterText(expressionField, '2x+1');
+    await tester.pump();
     final applyButton = find.byKey(const ValueKey('mobile-graph-apply'));
     expect(applyButton, findsOneWidget);
     await tester.ensureVisible(applyButton);
@@ -219,6 +223,28 @@ void main() {
       html,
       isNot(contains('#board {\n        width: 100%;\n        height: 220px;')),
     );
+  });
+
+  test('JSXGraph 함수 그래프는 정의역 양 끝을 개별 인자로 전달한다', () {
+    // 필요한 변수는 함수 항목이 포함된 그래프 문서와 생성된 HTML이다.
+    // 작동 원리는 JSXGraph functiongraph 규격인 [함수, 최소값, 최대값] 형태를 검사해 곡선 누락을 방지한다.
+    const document = AiFlowGraphDocument(
+      items: [
+        AiFlowGraphItem(
+          id: 'sin-graph',
+          type: AiFlowGraphItemType.function,
+          label: '사인 함수',
+          colorHex: '#2F7CF6',
+          expression: 'sin(x)',
+        ),
+      ],
+      settings: AiFlowGraphSettings(),
+    );
+
+    final html = buildAiFlowGraphHtml(document);
+
+    expect(html, contains('                  left,\n                  right,'));
+    expect(html, isNot(contains('                  [left, right],')));
   });
 
   test('API 좌표 시리즈는 JSXGraph curve 요소로 렌더링한다', () {

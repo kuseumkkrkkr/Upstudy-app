@@ -157,7 +157,7 @@ String buildAiFlowGraphHtml(
       body.direct-drawing .toolbar {
         position: absolute;
         right: 12px;
-        bottom: 12px;
+        top: 12px;
         z-index: 20;
         gap: 4px;
       }
@@ -206,8 +206,8 @@ String buildAiFlowGraphHtml(
     <div id="app">
       <div id="status"></div>
       <div class="toolbar">
-        <button id="zoomInBtn" aria-label="확대"><span class="long-label">확대</span><span class="compact-label">+</span></button>
         <button id="zoomOutBtn" aria-label="축소"><span class="long-label">축소</span><span class="compact-label">−</span></button>
+        <button id="zoomInBtn" aria-label="확대"><span class="long-label">확대</span><span class="compact-label">+</span></button>
         <button id="resetBtn" class="reset-control">초기화</button>
       </div>
       <div id="graphHost">
@@ -769,7 +769,8 @@ String buildAiFlowGraphHtml(
                   function (x) {
                     return evaluator(x);
                   },
-                  [left, right],
+                  left,
+                  right,
                 ],
                 {
                   strokeColor: color,
