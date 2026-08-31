@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:s11/shared/theme/app_colors.dart';
+
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 /// 커리큘럼 수행 이력 페이지.
 ///
@@ -67,13 +71,13 @@ class _CurriculumHistoryPageState extends State<CurriculumHistoryPage> {
   Color _statusColor(String status) {
     switch (status) {
       case '성공':
-        return AppColors.primaryLight;
+        return const Color(0xFF1E8E5A);
       case '실패':
-        return AppColors.error;
+        return const Color(0xFFC24141);
       case '재분배':
-        return Colors.orange;
+        return const Color(0xFFB46B12);
       default:
-        return Colors.grey;
+        return StudentDensityTokens.muted;
     }
   }
 
@@ -86,147 +90,195 @@ class _CurriculumHistoryPageState extends State<CurriculumHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        title: const Text(
-          '커리큘럼 이력',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Filter chip bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _filters.map((filter) {
-                  final isSelected = filter == _selectedFilter;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(filter),
-                      selected: isSelected,
-                      selectedColor: AppColors.primary,
-                      backgroundColor: Colors.grey.shade200,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      onSelected: (_) {
-                        setState(() {
-                          _selectedFilter = filter;
-                        });
-                      },
-                    ),
-                  );
-                }).toList(),
+      backgroundColor: StudentDensityTokens.background,
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Builder(
+              builder: (context) => Ios26TopBar(
+                brandColor: StudentDensityTokens.dark,
+                showLevelIndicator: false,
+                showUtilityActions: true,
+                onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.learning,
+                ),
               ),
             ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredItems.length,
-              itemBuilder: (context, index) {
-                final item = _filteredItems[index];
-                final oldStatus = item['oldStatus']!;
-                final newStatus = item['newStatus']!;
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Expanded(
+              child: SingleChildScrollView(
+                child: StudentDensityPage(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const StudentDensityPageHeader(
+                        eyebrow: 'LEARNING HISTORY',
+                        title: '커리큘럼 이력',
+                        description: '완료, 실패, 재분배된 학습 항목을 날짜순으로 확인하세요.',
+                        showMobileDescription: true,
+                      ),
+                      SizedBox(height: mobile ? 20 : 28),
+                      StudentDensitySurface(
+                        padding: EdgeInsets.all(mobile ? 14 : 18),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _filters
+                              .map((filter) {
+                                final isSelected = filter == _selectedFilter;
+                                return ChoiceChip(
+                                  key: ValueKey(
+                                    'curriculum-history-filter-$filter',
+                                  ),
+                                  label: Text(filter),
+                                  selected: isSelected,
+                                  selectedColor: StudentDensityTokens.dark,
+                                  backgroundColor:
+                                      StudentDensityTokens.surfaceMuted,
+                                  labelStyle: TextStyle(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : StudentDensityTokens.ink,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
+                                  ),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? StudentDensityTokens.dark
+                                        : StudentDensityTokens.line,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  onSelected: (_) =>
+                                      setState(() => _selectedFilter = filter),
+                                );
+                              })
+                              .toList(growable: false),
+                        ),
+                      ),
+                      SizedBox(height: mobile ? 14 : 20),
+                      for (final item in _filteredItems) ...[
+                        _CurriculumHistoryCard(
+                          item: item,
+                          statusColor: _statusColor(item['newStatus']!),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      const SizedBox(height: 32),
+                    ],
                   ),
-                  elevation: 1,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    title: Text(
-                      item['title']!,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CurriculumHistoryCard extends StatelessWidget {
+  const _CurriculumHistoryCard({required this.item, required this.statusColor});
+
+  final Map<String, String> item;
+  final Color statusColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final oldStatus = item['oldStatus']!;
+    final newStatus = item['newStatus']!;
+    return StudentDensitySurface(
+      padding: EdgeInsets.all(mobile ? 17 : 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(Icons.history_rounded, color: statusColor, size: 20),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item['title']!,
+                  style: const TextStyle(
+                    color: StudentDensityTokens.ink,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    Text(
+                      item['date']!,
                       style: const TextStyle(
-                        fontSize: 15,
+                        color: StudentDensityTokens.muted,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Row(
-                        children: [
-                          Text(
-                            item['date']!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              oldStatus,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4),
-                            child: Icon(
-                              Icons.arrow_forward,
-                              size: 14,
-                              color: Colors.black45,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _statusColor(newStatus)
-                                  .withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              newStatus,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: _statusColor(newStatus),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    _HistoryStatusPill(label: oldStatus),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 14,
+                      color: StudentDensityTokens.muted,
                     ),
-                  ),
-                );
-              },
+                    _HistoryStatusPill(label: newStatus, color: statusColor),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HistoryStatusPill extends StatelessWidget {
+  const _HistoryStatusPill({required this.label, this.color});
+
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = color ?? StudentDensityTokens.muted;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: foreground.withValues(alpha: color == null ? .10 : .12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: foreground,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

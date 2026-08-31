@@ -459,7 +459,10 @@ class _ProfilePageState extends State<ProfilePage> {
   /// 작동 원리는 HTML의 계정 히어로와 학습 정보 폼을 한 스크롤에 배치하고 기존 저장 로직을 연결하는 것이다.
   Widget _buildHtmlProfile(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      final loading = const Center(child: CircularProgressIndicator());
+      return isStudentDensityMobile(context)
+          ? _buildMobileProfileState(child: loading)
+          : _buildDesktopProfileState(child: loading);
     }
     if (_profile == null) return _buildLegacyProfile(context);
     final name = _nameController.text.trim().isEmpty
@@ -471,8 +474,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: null,
-      bottomNavigationBar: const MobileStudentBottomAppBar(),
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -480,9 +482,11 @@ class _ProfilePageState extends State<ProfilePage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                showUtilityActions: false,
-                hideOnMobile: true,
-                onMenu: null,
+                onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.learning,
@@ -493,27 +497,53 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Form(
                 key: _formKey,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 24, 14, 40),
+                  padding: const EdgeInsets.fromLTRB(14, 22, 14, 40),
                   children: [
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Expanded(
-                          child: Text(
-                            '프로필',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                            ),
+                        const Text(
+                          'MY ACCOUNT',
+                          style: TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 1.6,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                        IconButton(
+                        const SizedBox(height: 6),
+                        const Text(
+                          '프로필',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          '학습 정보와 계정 정보를 확인하고 필요한 항목만 수정합니다.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                            height: 1.45,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
                           key: const ValueKey('profile-mobile-settings'),
-                          tooltip: '설정',
-                          onPressed: _openSettings,
-                          icon: const Icon(Icons.settings_outlined),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            minimumSize: const Size(48, 48),
+                          child: OutlinedButton(
+                            onPressed: _openSettings,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(46),
+                              foregroundColor: const Color(0xFF202022),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Color(0xFFE0E0E2)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('설정'),
                           ),
                         ),
                       ],
@@ -540,10 +570,51 @@ class _ProfilePageState extends State<ProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
+                            'LEARNING PROFILE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              letterSpacing: 1.6,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
                             '학생 정보',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            '코스 추천과 학습 분석에 사용하는 정보입니다.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              height: 1.45,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4F4F6),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: const Color(0xFFE0E0E2),
+                              ),
+                            ),
+                            child: const Text(
+                              'GET /auth/me',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -724,6 +795,9 @@ class _ProfilePageState extends State<ProfilePage> {
               brandColor: Colors.black,
               showLevelIndicator: false,
               onMenu: () => toggleAppDrawer(context),
+              onTitleTap: () => Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
               items: studentTopNavItems(
                 context,
                 active: StudentTopDestination.learning,
@@ -1022,18 +1096,16 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (!mobile) ...[
-              Text(
-                eyebrow,
-                style: const TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 1.6,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w900,
-                ),
+            Text(
+              eyebrow,
+              style: const TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.6,
+                color: Colors.black54,
+                fontWeight: FontWeight.w900,
               ),
-              const SizedBox(height: 10),
-            ],
+            ),
+            const SizedBox(height: 10),
             Text(
               title,
               style: TextStyle(
@@ -1041,17 +1113,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 fontWeight: FontWeight.w900,
               ),
             ),
-            if (!mobile) ...[
-              const SizedBox(height: 7),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black54,
-                  height: 1.45,
-                ),
+            const SizedBox(height: 7),
+            Text(
+              description,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black54,
+                height: 1.45,
               ),
-            ],
+            ),
             const SizedBox(height: 18),
             ...children,
           ],
@@ -1073,9 +1143,8 @@ class _ProfilePageState extends State<ProfilePage> {
           child: const Center(child: CircularProgressIndicator()),
         );
       }
-      return const Scaffold(
-        backgroundColor: Color(0xFFF6F6F1),
-        body: Center(child: CircularProgressIndicator()),
+      return _buildDesktopProfileState(
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -1180,22 +1249,8 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         );
       }
-      return Scaffold(
-        backgroundColor: const Color(0xFFF6F6F1),
-        appBar: AppBar(
-          title: const Text('프로필'),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          actions: [
-            IconButton(
-              onPressed: _openSettings,
-              icon: const Icon(Icons.settings_rounded),
-              tooltip: '설정',
-            ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        body: Center(
+      return _buildDesktopProfileState(
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -1520,12 +1575,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /// 필요한 변수: 로딩 또는 오류 상태를 나타내는 본문 위젯.
-  /// 작동 원리: 정상 프로필과 동일한 상단·하단 모바일 셸을 유지해 오류 중에도 탐색이 끊기지 않게 한다.
+  /// 작동 원리: 정상 화면과 같은 상단바·오버레이 드로어를 유지해 상태 전환 중에도 탐색이 끊기지 않게 한다.
   Widget _buildMobileProfileState({required Widget child}) => Scaffold(
     backgroundColor: const Color(0xFFF4F4F6),
-    bottomNavigationBar: const MobileStudentBottomAppBar(
-      activeRoute: ProfilePage.routeName,
-    ),
+    drawer: const AppDrawer(),
     body: SafeArea(
       child: Column(
         children: [
@@ -1533,9 +1586,38 @@ class _ProfilePageState extends State<ProfilePage> {
             builder: (context) => Ios26TopBar(
               brandColor: Colors.black,
               showLevelIndicator: false,
-              showUtilityActions: false,
-              hideOnMobile: true,
-              onMenu: null,
+              onMenu: () => toggleAppDrawer(context),
+              onTitleTap: () => Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
+              items: studentTopNavItems(
+                context,
+                active: StudentTopDestination.learning,
+              ),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    ),
+  );
+
+  /// 필요한 변수: 로딩 또는 오류 상태를 나타내는 본문 위젯.
+  /// 작동 원리: PC에서도 프로필 본문과 같은 글래스 상단바와 오버레이 드로어를 유지한다.
+  Widget _buildDesktopProfileState({required Widget child}) => Scaffold(
+    backgroundColor: const Color(0xFFF4F4F6),
+    drawer: const AppDrawer(),
+    body: SafeArea(
+      child: Column(
+        children: [
+          Builder(
+            builder: (context) => Ios26TopBar(
+              brandColor: Colors.black,
+              showLevelIndicator: false,
+              onMenu: () => toggleAppDrawer(context),
+              onTitleTap: () => Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
               items: studentTopNavItems(
                 context,
                 active: StudentTopDestination.learning,
@@ -1578,35 +1660,51 @@ class _ProfileHero extends StatelessWidget {
       track.trim(),
       subject.trim(),
     ].where((value) => value.isNotEmpty).join('   ');
+    final profileTags = [
+      track.trim(),
+      subject.trim(),
+      '가입 상태 정상',
+    ].where((value) => value.isNotEmpty).toList(growable: false);
     if (isStudentDensityMobile(context)) {
       return Container(
         key: const ValueKey('profile-mobile-compact-hero'),
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: const Color(0xFF202022),
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(30),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'STUDENT PROFILE',
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 10,
+                letterSpacing: 1.6,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 64,
+                  height: 64,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     name.isEmpty ? '?' : name.characters.first,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1615,7 +1713,7 @@ class _ProfileHero extends StatelessWidget {
                         name,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 23,
+                          fontSize: 26,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -1634,22 +1732,54 @@ class _ProfileHero extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Row(
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                _ProfileMetric(
-                  label: 'OVR',
-                  value: _formatProfileOvr(rating?.ovr),
-                ),
-                _ProfileMetric(
-                  label: '티어',
-                  value: _profileTier(rating?.rating),
-                ),
-                _ProfileMetric(
-                  label: '풀이',
-                  value: totalSolvedCount?.toString() ?? '--',
-                ),
+                for (final tag in profileTags)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      tag,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
               ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  _ProfileMetric(
+                    label: '현재 OVR',
+                    value: _formatProfileOvr(rating?.ovr),
+                  ),
+                  _ProfileMetric(
+                    label: '티어',
+                    value: _profileTier(rating?.rating),
+                  ),
+                  _ProfileMetric(
+                    label: '누적 풀이',
+                    value: totalSolvedCount?.toString() ?? '--',
+                  ),
+                ],
+              ),
             ),
           ],
         ),

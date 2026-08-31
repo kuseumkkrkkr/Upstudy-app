@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as bookbag;
 import 'package:s11/shared/data/models/textbook.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
 
 void main() {
   const books = <BookData>[
@@ -113,4 +114,105 @@ void main() {
     expect(find.text('찾고, 고정하고,'), findsNothing);
     expect(find.text('진행 중인 코스'), findsNothing);
   });
+
+  testWidgets('781·900px 책가방 본문은 단일 열로 안전하게 전환한다', (tester) async {
+    // 필요한 변수는 모바일 셸 바로 다음의 세로형 데스크톱 폭이다.
+    // 작동 원리는 좁은 가로 카드/버튼 행을 단일 열로 바꿔 RenderFlex overflow를 막는 것이다.
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    for (final width in <double>[781, 900]) {
+      tester.view.physicalSize = Size(width, 1000);
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: KeyedSubtree(
+            key: ValueKey('bookbag-width-$width'),
+            child: const bookbag.BookWidget(previewMode: true),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull, reason: '${width}px overflow');
+      expect(
+        find.byKey(const ValueKey('bookbag-desktop-body')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('bookbag-hero-stacked')),
+        findsOneWidget,
+      );
+      await tester.drag(
+        find.byKey(const ValueKey('bookbag-desktop-body')),
+        const Offset(0, -2000),
+      );
+      await tester.pump();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: '${width}px lower body overflow',
+      );
+      expect(
+        find.byKey(const ValueKey('bookbag-bottom-stacked')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('찾고, 고정하고'), findsOneWidget);
+      expect(find.text('진행 중인 코스'), findsOneWidget);
+    }
+  });
+
+  testWidgets('1280px 책가방은 기존 가로 본문을 유지한다', (tester) async {
+    // 필요한 변수는 충분한 데스크톱 폭이다.
+    // 작동 원리는 중간 폭 전용 단일 열 전환이 기존 PC 구성을 바꾸지 않는지 확인한다.
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(home: bookbag.BookWidget(previewMode: true)),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const ValueKey('bookbag-desktop-body')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bookbag-hero-columns')), findsOneWidget);
+    await tester.drag(
+      find.byKey(const ValueKey('bookbag-desktop-body')),
+      const Offset(0, -2000),
+    );
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(
+      find.byKey(const ValueKey('bookbag-bottom-columns')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('찾고, 고정하고'), findsOneWidget);
+    expect(find.text('진행 중인 코스'), findsOneWidget);
+  });
+
+  for (final width in <double>[720, 760, 780]) {
+    testWidgets('${width}px 학생 셸 경계에서도 통합 책가방은 모바일 탐색을 쓴다', (tester) async {
+      tester.view.physicalSize = Size(width, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const MaterialApp(home: bookbag.BookWidget(previewMode: true)),
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('bookbag-mobile-redesign')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('bookbag-mobile-featured')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+      expect(find.byType(MobileStudentBottomAppBar), findsNothing);
+    });
+  }
 }

@@ -12,6 +12,8 @@ import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 const _kGreen = Color(0xFF202022);
 const _kBorder = Color(0xFFE1E1E4);
@@ -429,7 +431,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final compact = constraints.maxWidth < 1120;
-                      final mobileLayout = constraints.maxWidth < 720;
+                      final mobileLayout =
+                          constraints.maxWidth <=
+                          StudentDensityTokens.mobileBreakpoint;
                       final graphPanel = _buildGraphPanel(isLinux: isLinux);
                       final editorPanel = _buildEditorPanel(
                         compactMobile: mobileLayout,
@@ -489,33 +493,44 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   /// 작동 원리는 뒤로가기·전체 메뉴·작업 버튼을 공용 앱바 한 줄에 배치해
   /// 그래프 전용 제목 바가 본문 공간을 차지하지 않게 하는 것이다.
   Widget _buildHeader() {
-    final compact = MediaQuery.sizeOf(context).width < 720;
+    final compact =
+        MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint;
     return Ios26TopBar(
       brandColor: Colors.black,
       showLevelIndicator: false,
-      showUtilityActions: false,
-      onBack: () => Navigator.of(context).maybePop(),
+      showUtilityActions: true,
+      onBack: compact ? null : () => Navigator.of(context).maybePop(),
       onMenu: () => _scaffoldKey.currentState?.openDrawer(),
-      showMenuWithBack: true,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildAppBarAction(
-            compact: compact,
-            tooltip: '새 그래프',
-            icon: Icons.add_chart_rounded,
-            onPressed: _resetToBlankGraph,
-          ),
-          const SizedBox(width: 6),
-          _buildAppBarAction(
-            compact: compact,
-            tooltip: '예제 불러오기',
-            icon: Icons.folder_open_outlined,
-            onPressed: _showInfoDialog,
-            outlined: true,
-          ),
-        ],
+      onTitleTap: () => Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
+      showMenuWithBack: !compact,
+      items: studentTopNavItems(
+        context,
+        active: StudentTopDestination.learning,
       ),
+      trailing: compact
+          ? null
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildAppBarAction(
+                  compact: false,
+                  tooltip: '새 그래프',
+                  icon: Icons.add_chart_rounded,
+                  onPressed: _resetToBlankGraph,
+                ),
+                const SizedBox(width: 6),
+                _buildAppBarAction(
+                  compact: false,
+                  tooltip: '예제 불러오기',
+                  icon: Icons.folder_open_outlined,
+                  onPressed: _showInfoDialog,
+                  outlined: true,
+                ),
+              ],
+            ),
     );
   }
 
@@ -785,6 +800,32 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     return _SurfaceCard(
       child: Column(
         children: [
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    onPressed: _resetToBlankGraph,
+                    icon: const Icon(Icons.add_chart_rounded, size: 18),
+                    label: const Text('새 그래프'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    onPressed: _showInfoDialog,
+                    icon: const Icon(Icons.folder_open_outlined, size: 18),
+                    label: const Text('예제'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           Container(
             height: 52,
             decoration: BoxDecoration(

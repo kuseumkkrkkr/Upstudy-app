@@ -229,10 +229,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
     final mobile = isStudentDensityMobile(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F5),
-      drawer: mobile ? null : const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/tools')
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -240,9 +237,13 @@ class _ServerChatPageState extends State<ServerChatPage> {
               builder: (topBarContext) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                showUtilityActions: !mobile,
-                hideOnMobile: true,
-                onMenu: mobile ? null : () => toggleAppDrawer(topBarContext),
+                showUtilityActions: true,
+                onMenu: () => toggleAppDrawer(topBarContext),
+                onTitleTap: () =>
+                    Navigator.of(topBarContext).pushNamedAndRemoveUntil(
+                      '/student/dashboard',
+                      (route) => false,
+                    ),
                 items: studentTopNavItems(
                   topBarContext,
                   active: StudentTopDestination.learning,

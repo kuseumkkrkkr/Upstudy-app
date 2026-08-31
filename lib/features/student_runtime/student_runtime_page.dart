@@ -107,8 +107,13 @@ class _StudentRuntimePageState extends State<StudentRuntimePage> {
             Builder(
               builder: (context) => Ios26TopBar(
                 brandColor: StudentDensityTokens.dark,
-                onMenu: () => Scaffold.of(context).openDrawer(),
+                onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 showLevelIndicator: false,
+                showUtilityActions: true,
                 items: studentTopNavItems(
                   context,
                   active: StudentTopDestination.courses,

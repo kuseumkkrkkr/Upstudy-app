@@ -16,6 +16,7 @@ import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
 import 'package:s11/sessions/student_dashboard/business/activity_badge_catalog.dart';
@@ -453,14 +454,12 @@ class _MainStudentPageState extends State<MainStudentPage> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: StudentDensityTokens.background,
-        drawer: mobile ? null : const AppDrawer(),
-        bottomNavigationBar: mobile ? const MobileStudentBottomAppBar() : null,
+        drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
             children: [
               _Header(
                 displayName: _displayName,
-                mobile: mobile,
                 onProfileChanged: _refreshDisplayName,
               ),
               Expanded(
@@ -555,14 +554,9 @@ class _CourseLoaderState extends State<_CourseLoader> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({
-    required this.displayName,
-    required this.mobile,
-    required this.onProfileChanged,
-  });
+  const _Header({required this.displayName, required this.onProfileChanged});
 
   final String? displayName;
-  final bool mobile;
   final Future<void> Function() onProfileChanged;
 
   /// 필요 변수는 현재 Navigator와 프로필 변경 후 실행할 새로고침 함수다.
@@ -578,10 +572,9 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Ios26TopBar(
       brandColor: _green,
-      onMenu: mobile ? null : () => toggleAppDrawer(context),
+      onMenu: () => toggleAppDrawer(context),
       showLevelIndicator: false,
-      showUtilityActions: !mobile,
-      hideOnMobile: true,
+      showUtilityActions: true,
       profileLabel: displayName?.trim().isNotEmpty == true
           ? displayName!.trim()
           : null,
@@ -1235,11 +1228,9 @@ class _LearningSection extends StatelessWidget {
         : '진행률 $progressPercent%';
 
     /// 필요한 변수는 도구별 이동 콜백이다.
-    /// 작동 원리: 홈의 세 빠른 실행을 기존 노트·그래프·AI 튜터 화면과 연결한다.
+    /// 작동 원리: 홈의 세 빠른 실행을 노트 모달·그래프·AI 튜터 화면과 연결한다.
     final tools = LearningToolsStrip(
-      onNotepad: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const NotepadPage())),
+      onNotepad: () => showStudentToolModal(context, const NotepadPage()),
       onGraph: () {
         unawaited(
           ActivityStore.recordGraphPractice(

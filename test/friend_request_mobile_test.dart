@@ -176,7 +176,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SoWidget(preview: true)));
     await tester.pump();
 
-    expect(find.text('친구 · 소셜'), findsOneWidget);
+    expect(find.text('친구/소셜'), findsOneWidget);
     expect(
       tester
           .getSize(find.byKey(const ValueKey('mobile-social-add-friend')))
@@ -214,8 +214,8 @@ void main() {
       const MaterialApp(home: GroupListPage(initialGroups: <Object>[])),
     );
     await tester.pump();
-    expect(find.text('스터디 그룹'), findsOneWidget);
-    expect(find.text('참여 중인 그룹'), findsOneWidget);
+    expect(find.text('그룹 스터디'), findsOneWidget);
+    expect(find.text('내 그룹'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('mobile-active-groups-card')),
       findsOneWidget,

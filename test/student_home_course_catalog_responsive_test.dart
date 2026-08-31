@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/shared/data/models/course.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 
@@ -35,7 +36,7 @@ List<Course> _courses() {
 }
 
 /// 필요한 값은 논리 화면 크기와 실제 학생 화면이다.
-/// 390·500·1280 폭을 직접 주입해 공용 셸 수정 없이 화면 내부 반응형 키와 주요 문구를 검증한다.
+/// 390·780·1280 폭을 직접 주입해 공용 셸과 화면 내부 반응형 키·주요 문구를 함께 검증한다.
 Future<void> _pumpAt(WidgetTester tester, Size size, Widget page) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -45,11 +46,23 @@ Future<void> _pumpAt(WidgetTester tester, Size size, Widget page) async {
   await tester.pump();
 }
 
+/// 필요한 변수는 현재 폭이 모바일 공용 셸인지 여부다.
+/// 작동 원리는 780px 이하에서 바텀 탭 대신 햄버거·드로어를, 데스크톱에서는 중앙 캡슐 메뉴를 검증하는 것이다.
+void _expectReferenceShell({required bool mobile}) {
+  expect(find.byType(MobileStudentBottomAppBar), findsNothing);
+  expect(find.byType(NavigationRail), findsNothing);
+  expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+  expect(
+    find.byKey(const ValueKey('student-top-nav-코스')),
+    mobile ? findsNothing : findsOneWidget,
+  );
+}
+
 void main() {
-  testWidgets('코스 카탈로그는 1280 PC와 390·500 모바일에서 모든 필터와 상태 카드를 유지한다', (
+  testWidgets('코스 카탈로그는 1280 PC와 390·780 모바일에서 모든 필터와 상태 카드를 유지한다', (
     tester,
   ) async {
-    for (final width in [1280.0, 390.0, 500.0]) {
+    for (final width in [1280.0, 780.0, 390.0]) {
       await _pumpAt(
         tester,
         Size(width, 900),
@@ -65,29 +78,30 @@ void main() {
       expect(
         find.byKey(
           ValueKey(
-            width < 760 ? 'course-catalog-mobile' : 'course-catalog-desktop',
+            width <= 780 ? 'course-catalog-mobile' : 'course-catalog-desktop',
           ),
         ),
         findsOneWidget,
       );
       expect(
         find.byKey(const ValueKey('course-catalog-mobile-redesign')),
-        width < 760 ? findsOneWidget : findsNothing,
+        width <= 780 ? findsOneWidget : findsNothing,
       );
       expect(
         find.byKey(const ValueKey('course-mobile-search-dock')),
-        width < 760 ? findsOneWidget : findsNothing,
+        width <= 780 ? findsOneWidget : findsNothing,
       );
       expect(
         find.byKey(const ValueKey('course-mobile-search-button')),
-        width < 760 ? findsOneWidget : findsNothing,
+        width <= 780 ? findsOneWidget : findsNothing,
       );
+      _expectReferenceShell(mobile: width <= 780);
       expect(tester.takeException(), isNull);
     }
   });
 
-  testWidgets('학생 홈은 1280 PC와 390·500 모바일에서 학습 시작 흐름을 유지한다', (tester) async {
-    for (final width in [1280.0, 390.0, 500.0]) {
+  testWidgets('학생 홈은 1280 PC와 390·780 모바일에서 학습 시작 흐름을 유지한다', (tester) async {
+    for (final width in [1280.0, 780.0, 390.0]) {
       await _pumpAt(
         tester,
         Size(width, 900),
@@ -96,17 +110,18 @@ void main() {
       await tester.pump();
 
       expect(
-        find.textContaining(width < 760 ? '바로 시작해요.' : '오늘도 시작해 볼까요?'),
+        find.textContaining(width <= 780 ? '바로 시작해요.' : '오늘도 시작해 볼까요?'),
         findsOneWidget,
       );
       expect(
         find.byKey(
           ValueKey(
-            width < 760 ? 'student-home-mobile' : 'student-home-desktop',
+            width <= 780 ? 'student-home-mobile' : 'student-home-desktop',
           ),
         ),
         findsOneWidget,
       );
+      _expectReferenceShell(mobile: width <= 780);
       expect(tester.takeException(), isNull);
     }
   });
@@ -146,7 +161,7 @@ void main() {
     expect(find.text('레이팅'), findsOneWidget);
     expect(find.text('업적'), findsOneWidget);
     expect(find.text('공지'), findsOneWidget);
-    expect(find.text('AIFlow'), findsNothing);
+    expect(find.text('AIFlow'), findsOneWidget);
     expect(find.text('학습 도구'), findsOneWidget);
     expect(find.text('빠른 실행'), findsOneWidget);
     expect(find.text('노트패드'), findsOneWidget);
@@ -215,7 +230,8 @@ void main() {
     final scrollable = tester.state<ScrollableState>(
       find.byType(Scrollable).first,
     );
-    expect(scrollable.position.maxScrollExtent, greaterThan(250));
+    // 62px 공용 상단 바를 추가해도 도구 목록까지 스크롤할 충분한 길이는 남는다.
+    expect(scrollable.position.maxScrollExtent, greaterThan(200));
     await tester.drag(
       find.byType(SingleChildScrollView),
       const Offset(0, -400),

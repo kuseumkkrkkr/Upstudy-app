@@ -1044,8 +1044,14 @@ const _navigationGroups = <_DrawerNavigationGroup>[
       _DrawerDestination(
         icon: Icons.grid_view_outlined,
         label: '학습 도구',
-        route: '/tools',
-        activeRoutes: ['/tools'],
+        route: '/learning-tools',
+        activeRoutes: ['/learning-tools', '/tools'],
+      ),
+      _DrawerDestination(
+        icon: Icons.show_chart_rounded,
+        label: '그래프 도구',
+        route: '/graph',
+        activeRoutes: ['/graph'],
       ),
       _DrawerDestination(
         icon: Icons.settings_outlined,

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
@@ -429,19 +428,16 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리는 PC에서는 공용 드로어를 유지하고 모바일에서는 하단 앱바에 탐색을 맡기는 것이다.
+  /// 작동 원리는 모든 폭에서 공용 드로어를 햄버거로 열고, PC만 중앙 메뉴를 추가하는 것이다.
   Widget _buildHeader(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
     return Ios26TopBar(
       brandColor: Colors.black,
       showLevelIndicator: false,
-      showUtilityActions: !mobile,
-      hideOnMobile: true,
-      onMenu: mobile ? null : () => toggleAppDrawer(context),
-      onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainStudentPage()),
-        (route) => false,
-      ),
+      showUtilityActions: true,
+      onMenu: () => toggleAppDrawer(context),
+      onTitleTap: () => Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
       items: studentTopNavItems(
         context,
         active: StudentTopDestination.learning,
@@ -503,10 +499,7 @@ class _SchedulePageState extends State<SchedulePage> {
 
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
-      drawer: mobile ? null : const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/schedule')
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [

@@ -8,8 +8,10 @@ void main() {
   testWidgets('그래프 직접 그리기 화면은 교과 예제 대신 빈 수식으로 시작한다', (tester) async {
     // 필요한 변수는 데스크톱 화면 크기와 웹뷰를 끈 그래프 페이지다.
     // 작동 원리는 첫 렌더링에서 자동 예제 문구가 없고 직접 입력 안내와 빈 함수가 보이는지 확인한다.
-    await tester.binding.setSurfaceSize(const Size(1600, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       const MaterialApp(home: JsxGraphPage(embedEnabled: false)),
@@ -27,8 +29,10 @@ void main() {
   testWidgets('전체 메뉴가 열리면 그래프 플랫폼 뷰를 잠시 제거한다', (tester) async {
     // 필요한 변수는 데스크톱 화면과 전체 메뉴가 있는 그래프 페이지다.
     // 작동 원리는 메뉴 아이콘을 누른 뒤 웹뷰 대신 일시 중단 영역이 렌더링되는지 확인한다.
-    await tester.binding.setSurfaceSize(const Size(1600, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       const MaterialApp(home: JsxGraphPage(embedEnabled: false)),
@@ -48,8 +52,10 @@ void main() {
   testWidgets('좁은 화면에서 앱바 그래프 도구가 넘치지 않는다', (tester) async {
     // 필요한 변수는 모바일 화면 크기와 아이콘 모드로 전환되는 그래프 페이지다.
     // 작동 원리는 첫 프레임의 레이아웃 예외가 없고 두 작업의 도구 설명이 유지되는지 확인한다.
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       const MaterialApp(home: JsxGraphPage(embedEnabled: false)),
@@ -62,8 +68,10 @@ void main() {
   });
 
   testWidgets('모바일 그래프 입력 영역은 한손 조작 배치를 유지한다', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -115,8 +123,10 @@ void main() {
   testWidgets('모바일 수식은 반영 버튼을 누르면 정규화되어 그래프 상태에 적용된다', (tester) async {
     // 필요한 변수는 모바일 그래프 화면과 암시적 곱셈이 포함된 수식이다.
     // 작동 원리는 반영 버튼이 입력을 검증하고 2x를 2*x로 정규화해 문서 재생성 상태를 만드는지 확인한다.
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     Map<String, dynamic>? sentPayload;
     await tester.pumpWidget(

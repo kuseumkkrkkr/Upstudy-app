@@ -27,7 +27,7 @@ Future<T?> showStudyModeModal<T>({required BuildContext context}) async {
               borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
             ),
             builder: (_) => const FractionallySizedBox(
-              heightFactor: 0.70,
+              heightFactor: 0.86,
               child: StudypageCopyWidget(mobileSheet: true),
             ),
           )
@@ -169,25 +169,40 @@ class StudypageCopyWidget extends StatelessWidget {
   }
 
   /// 필요한 변수는 모바일 하단 시트 문맥과 여섯 학습 모드다.
-  /// 작동 원리: 세부 설명을 뺀 2열 Material 타일로 핵심 기능명만 빠르게 비교하고,
-  /// 낮아진 시트 높이로 원래 화면의 맥락을 유지한다.
+  /// 작동 원리: 디자인안과 같은 1열 학습 카드에 아이콘·제목·설명·화살표를 함께
+  /// 표시해 여섯 목적지의 의미와 이동 동작을 한 번에 확인한다.
   Widget _buildMobileSheet(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(22, 2, 14, 10),
+          padding: const EdgeInsets.fromLTRB(24, 2, 14, 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Expanded(
-                child: Text(
-                  '학습 시작',
-                  style: TextStyle(
-                    fontSize: 27,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'STUDY MODE',
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      '학습하기',
+                      style: TextStyle(
+                        fontSize: 27,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               IconButton(
@@ -203,22 +218,12 @@ class StudypageCopyWidget extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.4,
-            ),
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
             itemCount: _kModes.length,
-            itemBuilder: (context, index) {
-              final mode = _kModes[index];
-              return _MobileModeTile(
-                mode: mode,
-                onTap: _actionFor(context, mode.destination),
-              );
-            },
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) =>
+                _buildModeCard(context, _kModes[index]),
           ),
         ),
       ],
@@ -252,60 +257,6 @@ class StudypageCopyWidget extends StatelessWidget {
       _ModeDestination.none => null,
     };
   }
-}
-
-/// 필요한 변수는 학습 모드 메타와 선택 콜백이다.
-/// 작동 원리: 외곽선 없이 흰 면·짧은 그림자·잉크 반응을 조합하고 아이콘과 제목을
-/// 한 줄 제목만 배치해 모바일 홈 카드와 같은 Material 고도 체계를 사용한다.
-class _MobileModeTile extends StatelessWidget {
-  const _MobileModeTile({required this.mode, required this.onTap});
-
-  final _StudyMode mode;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white,
-    elevation: 2,
-    shadowColor: Colors.black.withValues(alpha: 0.12),
-    borderRadius: BorderRadius.circular(24),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(mode.icon, color: Colors.white, size: 22),
-                ),
-                const Spacer(),
-                const Icon(
-                  Icons.arrow_outward_rounded,
-                  color: Colors.black38,
-                  size: 18,
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              mode.label,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 const _kModes = [
@@ -391,6 +342,7 @@ class _ModeCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
       child: Container(
+        constraints: const BoxConstraints(minHeight: 92),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: BoxDecoration(
           color: Colors.white,
