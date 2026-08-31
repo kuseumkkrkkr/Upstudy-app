@@ -25,8 +25,9 @@ Future<T?> showTodayTasksModal<T>({
   final mobile = MediaQuery.sizeOf(context).width <= 780;
   if (mobile) {
     // 필요한 변수는 오늘 할 일 목록과 모바일 화면 높이다.
-    // 작동 원리: 빈 전체 화면을 띄우지 않고 68% 높이의 둥근 하단 시트에서
-    // 할 일만 보여 주며, 항목 선택 시 기존 목적지 이동 콜백을 그대로 실행한다.
+    // 작동 원리: 축소된 데스크톱 패널 대신 86% 높이의 단일 열 하단 시트에서
+    // 할 일의 우선순위와 목적지를 한 번에 보여 주며, 항목 선택 시 기존 이동
+    // 콜백을 그대로 실행한다.
     return showModalBottomSheet<T>(
       context: context,
       useSafeArea: true,
@@ -38,7 +39,7 @@ Future<T?> showTodayTasksModal<T>({
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       builder: (_) => FractionallySizedBox(
-        heightFactor: 0.68,
+        heightFactor: 0.86,
         child: TodayTasksModal(
           tasks: tasks,
           onTaskTap: onTaskTap,
@@ -81,17 +82,20 @@ class TodayTasksModal extends StatelessWidget {
   final bool mobileSheet;
 
   /// 필요한 변수는 화면 크기와 오늘의 할 일 목록이다.
-  /// 작동 원리: 모달 본문은 스크롤 가능한 상세 카드 목록만 두며, 일정 편집·달력·
-  /// 별도 상세보기 버튼은 제공하지 않는다.
+  /// 작동 원리: 작은 화면에서는 하나의 세로 목록, PC에서는 넓은 중앙 패널을
+  /// 사용하되 각 카드와 일정 버튼은 기존의 목적지 콜백만 호출한다.
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final mobile = size.width <= 780;
+    final scheduleTask = _scheduleTaskFor(tasks);
     return Container(
-      key: mobileSheet ? const ValueKey('today-tasks-mobile-sheet') : null,
+      key: mobileSheet
+          ? const ValueKey('today-tasks-mobile-sheet')
+          : const ValueKey('today-tasks-desktop-dialog'),
       width: mobile
           ? double.infinity
-          : (size.width > 760 ? 720 : size.width * .94),
+          : (size.width * .72).clamp(640.0, 920.0).toDouble(),
       constraints: BoxConstraints(
         maxHeight: mobileSheet
             ? double.infinity
@@ -101,13 +105,7 @@ class TodayTasksModal extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: mobileSheet ? const Color(0xFFF4F4F6) : Colors.white,
-        borderRadius: BorderRadius.circular(
-          mobileSheet
-              ? 0
-              : mobile
-              ? 0
-              : 28,
-        ),
+        borderRadius: BorderRadius.circular(mobileSheet || mobile ? 0 : 28),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,18 +123,16 @@ class TodayTasksModal extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (!mobileSheet) ...[
-                        const Text(
-                          'TODAY TASKS',
-                          style: TextStyle(
-                            color: Colors.black45,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.4,
-                          ),
+                      const Text(
+                        'TODAY TASKS',
+                        style: TextStyle(
+                          color: Colors.black45,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.4,
                         ),
-                        const SizedBox(height: 6),
-                      ],
+                      ),
+                      const SizedBox(height: 5),
                       const Text(
                         '오늘 할 일',
                         style: TextStyle(
@@ -156,12 +152,21 @@ class TodayTasksModal extends StatelessWidget {
                   style: IconButton.styleFrom(
                     fixedSize: const Size.square(48),
                     backgroundColor: mobileSheet ? Colors.white : null,
+                    side: const BorderSide(color: Color(0xFFDCDCE0)),
                   ),
                 ),
               ],
             ),
           ),
           if (!mobileSheet) const Divider(height: 1, color: Color(0xFFE4E4E6)),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(24, 22, 24, 0),
+            child: Text(
+              '별도 페이지를 열지 않고 홈에서 교사 과제와 개인 일정을 확인합니다.',
+              style: TextStyle(color: Colors.black54, fontSize: 14),
+            ),
+          ),
+          const SizedBox(height: 18),
           Expanded(
             child: tasks.isEmpty
                 ? const Center(
@@ -189,18 +194,47 @@ class TodayTasksModal extends StatelessWidget {
                       ],
                     ),
                   )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: tasks.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) => _TodayTaskCard(
-                      task: tasks[index],
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        onTaskTap(tasks[index]);
-                      },
-                    ),
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+                    children: [
+                      for (var index = 0; index < tasks.length; index++) ...[
+                        _TodayTaskCard(
+                          task: tasks[index],
+                          emphasized: index == 0,
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            onTaskTap(tasks[index]);
+                          },
+                        ),
+                        if (index < tasks.length - 1)
+                          const SizedBox(height: 12),
+                      ],
+                      if (scheduleTask != null) ...[
+                        const SizedBox(height: 16),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              onTaskTap(scheduleTask);
+                            },
+                            child: const Text('일정 달력에서 보기'),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE4E4E6)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('닫기'),
+              ),
+            ),
           ),
         ],
       ),
@@ -209,25 +243,35 @@ class TodayTasksModal extends StatelessWidget {
 }
 
 class _TodayTaskCard extends StatelessWidget {
-  const _TodayTaskCard({required this.task, required this.onTap});
+  const _TodayTaskCard({
+    required this.task,
+    required this.onTap,
+    required this.emphasized,
+  });
 
   final TodayTaskEntry task;
   final VoidCallback onTap;
+  final bool emphasized;
 
   /// 필요한 변수는 할 일의 제목·안내 문구·아이콘과 이동 콜백이다.
   /// 작동 원리: 카드 전체를 탭 영역으로 만들어 사용자가 상세보기 단계를 거치지 않고
   /// 지정된 코스·과제·일정으로 이동하게 한다.
   @override
   Widget build(BuildContext context) => Material(
-    color: Colors.white,
-    elevation: 2,
-    shadowColor: Colors.black.withValues(alpha: 0.11),
+    color: emphasized ? Colors.black : Colors.white,
     borderRadius: BorderRadius.circular(18),
     child: InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 72),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: emphasized ? Colors.black : const Color(0xFFDCDCE0),
+          ),
+        ),
         child: Row(
           children: [
             Container(
@@ -235,19 +279,24 @@ class _TodayTaskCard extends StatelessWidget {
               height: 48,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F1F3),
+                color: emphasized ? Colors.white : const Color(0xFFF4F4F6),
                 borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFDCDCE0)),
               ),
-              child: Icon(task.icon),
+              child: Icon(task.icon, color: Colors.black),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     task.title,
-                    style: const TextStyle(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: emphasized ? Colors.white : Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                     ),
@@ -255,15 +304,28 @@ class _TodayTaskCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     task.caption,
-                    style: const TextStyle(color: Colors.black54, fontSize: 13),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: emphasized ? Colors.white70 : Colors.black54,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.black45),
           ],
         ),
       ),
     ),
   );
+}
+
+/// 개인 일정 행이 있을 때만 참조 시안의 달력 CTA를 표시한다. 별도 라우트나
+/// 가짜 데이터를 만들지 않고, 이미 주입된 목적지 콜백을 그대로 재사용한다.
+TodayTaskEntry? _scheduleTaskFor(List<TodayTaskEntry> tasks) {
+  for (final task in tasks) {
+    if (task.icon == Icons.event_note_rounded) return task;
+  }
+  return null;
 }

@@ -295,17 +295,18 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     final rating = _formatVisibleOvr(RatingStore.notifier.value.ovr);
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
-      drawer: mobile ? null : const AppDrawer(),
-      bottomNavigationBar: mobile ? const MobileStudentBottomAppBar() : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
             Ios26TopBar(
               brandColor: StudentDensityTokens.dark,
-              onMenu: mobile ? null : () => toggleAppDrawer(context),
+              onMenu: () => toggleAppDrawer(context),
+              onTitleTap: () => Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
               showLevelIndicator: false,
-              showUtilityActions: !mobile,
-              hideOnMobile: true,
+              showUtilityActions: true,
               items: studentTopNavItems(
                 context,
                 active: StudentTopDestination.courses,

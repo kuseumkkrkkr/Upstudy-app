@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
 
 void main() {
   testWidgets('마켓 세 코너가 실제 목록을 필터링한다', (tester) async {
@@ -186,4 +187,39 @@ void main() {
       isTrue,
     );
   });
+
+  for (final width in <double>[720, 760, 780]) {
+    testWidgets('${width}px 학생 셸 경계에서도 마켓은 모바일 본문과 하단 탐색을 쓴다', (tester) async {
+      tester.view.physicalSize = Size(width, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MarketplacePage(
+            initialData: [
+              {
+                'id': 'seam-course',
+                'kind': 'course',
+                'title': '경계 폭 검증 코스',
+                'item_count': 10,
+                'price_points': 0,
+              },
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('market-mobile-scroll')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('market-mobile-body')), findsOneWidget);
+      expect(find.byKey(const ValueKey('market-wide-scroll')), findsNothing);
+      expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+      expect(find.byType(MobileStudentBottomAppBar), findsNothing);
+    });
+  }
 }

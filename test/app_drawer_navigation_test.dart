@@ -18,7 +18,8 @@ const _drawerDestinations = <String, String>{
   '친구/소셜': '/social',
   '스터디 그룹': '/groups',
   '마켓플레이스': '/marketplace',
-  '학습 도구': '/tools',
+  '학습 도구': '/learning-tools',
+  '그래프 도구': '/graph',
   '설정': '/settings',
 };
 
@@ -36,7 +37,8 @@ const _mobileMoreDestinations = <String, String>{
   '대결': '/arena',
   '친구/소셜': '/social',
   '스터디 그룹': '/groups',
-  '학습 도구': '/tools',
+  '학습 도구': '/learning-tools',
+  '그래프 도구': '/graph',
   '설정': '/settings',
 };
 

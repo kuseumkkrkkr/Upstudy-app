@@ -10,7 +10,7 @@ import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
-import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 typedef ArenaJoinCallback =
     Future<Map<String, dynamic>> Function(String queueType);
@@ -375,7 +375,6 @@ class _ArenaPageState extends State<ArenaPage> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final desktop = width >= 1000;
-    final mobile = width <= StudentDensityTokens.mobileBreakpoint;
     final queues = List<Map<String, dynamic>>.from(
       (_summary?['queues'] as List? ?? const []).map(
         (e) => Map<String, dynamic>.from(e as Map),
@@ -413,10 +412,7 @@ class _ArenaPageState extends State<ArenaPage> {
         .toList(growable: false);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F6),
-      drawer: mobile ? null : const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/arena')
-          : null,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -424,9 +420,16 @@ class _ArenaPageState extends State<ArenaPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
-                showUtilityActions: !mobile,
-                hideOnMobile: true,
-                onMenu: mobile ? null : () => toggleAppDrawer(context),
+                showUtilityActions: true,
+                onMenu: () => toggleAppDrawer(context),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.learning,
+                ),
               ),
             ),
             Expanded(

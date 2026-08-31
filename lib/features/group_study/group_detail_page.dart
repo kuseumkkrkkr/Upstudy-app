@@ -464,93 +464,107 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     return Scaffold(
       key: const ValueKey('mobile-group-dashboard'),
       backgroundColor: const Color(0xFFF4F4F6),
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: '그룹 목록으로',
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
-        title: const Text(
-          '그룹 스터디',
-          style: TextStyle(fontWeight: FontWeight.w900),
-        ),
-        backgroundColor: const Color(0xFFF4F4F6),
-        surfaceTintColor: Colors.transparent,
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(child: Text(_error!))
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  studentDensityHorizontalPadding(context),
-                  12,
-                  studentDensityHorizontalPadding(context),
-                  48,
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Builder(
+              builder: (headerContext) => Ios26TopBar(
+                brandColor: Colors.black,
+                showLevelIndicator: false,
+                showUtilityActions: true,
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
                 ),
-                children: [
-                  _MobileGroupOverview(
-                    group: group,
-                    memberCount: memberCount,
-                    schedules: _schedules,
-                    canCreateSchedule:
-                        _canManageGroup && _currentUsername.isNotEmpty,
-                    onCreateSchedule: _openScheduleComposer,
-                    onMembers: _openMembers,
-                    onChat: _openChat,
-                  ),
-                  const SizedBox(height: 26),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          '학습 자료',
-                          style: TextStyle(
-                            fontSize: 23,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.7,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${_sharedFlows.length + _sharedExams.length}개',
-                        style: const TextStyle(
-                          color: Colors.black45,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _ResourceSwitch(
-                    mobile: true,
-                    showExamPapers: _showExamPapers,
-                    flowCount: _sharedFlows.length,
-                    examCount: _sharedExams.length,
-                    onChanged: (value) =>
-                        setState(() => _showExamPapers = value),
-                  ),
-                  const SizedBox(height: 10),
-                  _SharedResourcesCard(
-                    mobile: true,
-                    showExamPapers: _showExamPapers,
-                    loading: _loadingResources,
-                    flows: _sharedFlows,
-                    exams: _sharedExams,
-                    flowTags: _flowTags,
-                    recentDays: _flowRecentDays,
-                    onFilter: _openResourceFilter,
-                    onShare: _openShareResource,
-                    onDeleteFlow: _deleteFlow,
-                  ),
-                ],
+                onBack: () => Navigator.of(context).maybePop(),
+                onMenu: () => toggleAppDrawer(headerContext),
+                showMenuWithBack: true,
+                items: studentTopNavItems(
+                  headerContext,
+                  active: StudentTopDestination.social,
+                ),
               ),
             ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                  ? Center(child: Text(_error!))
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          studentDensityHorizontalPadding(context),
+                          12,
+                          studentDensityHorizontalPadding(context),
+                          48,
+                        ),
+                        children: [
+                          _MobileGroupOverview(
+                            group: group,
+                            memberCount: memberCount,
+                            schedules: _schedules,
+                            canCreateSchedule:
+                                _canManageGroup && _currentUsername.isNotEmpty,
+                            onCreateSchedule: _openScheduleComposer,
+                            onMembers: _openMembers,
+                            onChat: _openChat,
+                          ),
+                          const SizedBox(height: 26),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  '학습 자료',
+                                  style: TextStyle(
+                                    fontSize: 23,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.7,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${_sharedFlows.length + _sharedExams.length}개',
+                                style: const TextStyle(
+                                  color: Colors.black45,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _ResourceSwitch(
+                            mobile: true,
+                            showExamPapers: _showExamPapers,
+                            flowCount: _sharedFlows.length,
+                            examCount: _sharedExams.length,
+                            onChanged: (value) =>
+                                setState(() => _showExamPapers = value),
+                          ),
+                          const SizedBox(height: 10),
+                          _SharedResourcesCard(
+                            mobile: true,
+                            showExamPapers: _showExamPapers,
+                            loading: _loadingResources,
+                            flows: _sharedFlows,
+                            exams: _sharedExams,
+                            flowTags: _flowTags,
+                            recentDays: _flowRecentDays,
+                            onFilter: _openResourceFilter,
+                            onShare: _openShareResource,
+                            onDeleteFlow: _deleteFlow,
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -571,6 +585,10 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
               builder: (context) => Ios26TopBar(
                 brandColor: Colors.black,
                 showLevelIndicator: false,
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
                 onMenu: () => toggleAppDrawer(context),
                 items: studentTopNavItems(
                   context,

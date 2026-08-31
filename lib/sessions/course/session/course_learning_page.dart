@@ -516,6 +516,11 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
                 builder: (context) => Ios26TopBar(
                   brandColor: StudentDensityTokens.dark,
                   onMenu: () => Scaffold.of(context).openDrawer(),
+                  onTitleTap: () =>
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/student/dashboard',
+                        (route) => false,
+                      ),
                   showLevelIndicator: false,
                   items: studentTopNavItems(
                     context,
