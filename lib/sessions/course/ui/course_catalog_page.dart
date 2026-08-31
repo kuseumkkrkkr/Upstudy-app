@@ -11,9 +11,45 @@ import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 enum CourseEntryTarget { learning, detail }
+
+enum OpenDesignIconName {
+  home,
+  courses,
+  market,
+  more,
+  back,
+  search,
+  bell,
+  analytics,
+  graph,
+}
+
+class OpenDesignIcon extends StatelessWidget {
+  const OpenDesignIcon(this.name, {super.key, this.size = 20, this.color});
+
+  final OpenDesignIconName name;
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => Icon(
+    switch (name) {
+      OpenDesignIconName.home => Icons.home_outlined,
+      OpenDesignIconName.courses => Icons.menu_book_outlined,
+      OpenDesignIconName.market => Icons.storefront_outlined,
+      OpenDesignIconName.more => Icons.more_horiz,
+      OpenDesignIconName.back => Icons.arrow_back,
+      OpenDesignIconName.search => Icons.search,
+      OpenDesignIconName.bell => Icons.notifications_none,
+      OpenDesignIconName.analytics => Icons.bar_chart,
+      OpenDesignIconName.graph => Icons.show_chart,
+    },
+    size: size,
+    color: color,
+  );
+}
 
 /// 필요한 변수는 선택 코스의 등록·완료 상태다.
 /// 작동 원리: 진행 중 등록 코스만 학습으로 직행하고 완료·미등록 코스는 읽기 가능한 상세로 보낸다.
@@ -278,6 +314,211 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     });
   }
 
+  Future<void> _showMobileCatalogSearch() async {
+    final tagGroups =
+        await (_tagGroupsFuture ?? Future.value(const <GenerationTagGroup>[]))
+            .catchError((_) => const <GenerationTagGroup>[]);
+    if (!mounted) return;
+    var resultsFuture = _future ?? Future.value(const <Course>[]);
+    await showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: false,
+      isScrollControlled: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: .38),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          void refreshResults() {
+            _load();
+            setSheetState(() {
+              resultsFuture = _future ?? Future.value(const <Course>[]);
+            });
+          }
+
+          return SizedBox(
+            height: 478,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 412,
+                  child: Material(
+                    key: const ValueKey('course-mobile-discovery-sheet'),
+                    color: StudentDensityTokens.surface,
+                    shape: const RoundedRectangleBorder(
+                      side: BorderSide(color: StudentDensityTokens.lineStrong),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    child: Column(
+                      children: [
+                        _MobileCourseSheetHeader(
+                          key: const ValueKey('course-mobile-discovery-header'),
+                          title: '새 코스 찾기',
+                          height: 68,
+                          closeKey: const ValueKey(
+                            'course-mobile-discovery-close',
+                          ),
+                          onClose: () => Navigator.of(sheetContext).pop(),
+                        ),
+                        Expanded(
+                          child: FutureBuilder<List<Course>>(
+                            future: resultsFuture,
+                            builder: (context, snapshot) {
+                              final matchingSubjects = tagGroups
+                                  .where((item) => item.name == _subjectName)
+                                  .toList(growable: false);
+                              final subject = matchingSubjects.isEmpty
+                                  ? null
+                                  : matchingSubjects.first;
+                              final results =
+                                  (snapshot.data ?? const <Course>[])
+                                      .where(
+                                        (course) =>
+                                            _matchesFilter(course, subject),
+                                      )
+                                      .toList(growable: false);
+                              return Column(
+                                children: [
+                                  SizedBox(
+                                    height: 108,
+                                    child: SingleChildScrollView(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        12,
+                                        8,
+                                        12,
+                                        4,
+                                      ),
+                                      child: _CourseSearchDock(
+                                        controller: _searchController,
+                                        filter: _filter,
+                                        tagGroups: tagGroups,
+                                        subjectName: _subjectName,
+                                        tag: _tag,
+                                        onFilter: (value) {
+                                          setState(() => _filter = value);
+                                          setSheetState(() {});
+                                        },
+                                        onTagFilter: (subjectName, tag) {
+                                          _selectTagFilter(subjectName, tag);
+                                          setSheetState(() {});
+                                        },
+                                        onSearch: refreshResults,
+                                      ),
+                                    ),
+                                  ),
+                                  const Divider(
+                                    height: 1,
+                                    color: StudentDensityTokens.line,
+                                  ),
+                                  Expanded(
+                                    child:
+                                        snapshot.connectionState ==
+                                            ConnectionState.waiting
+                                        ? const _MobileCourseLoadingRow()
+                                        : snapshot.hasError
+                                        ? _MobileCourseLoadErrorRow(
+                                            onRetry: refreshResults,
+                                          )
+                                        : results.isEmpty
+                                        ? const _MobileSearchEmptyRow()
+                                        : SingleChildScrollView(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                            ),
+                                            child: _MobileCourseList(
+                                              courses: results,
+                                              square: true,
+                                              onOpen: (course) {
+                                                Navigator.of(
+                                                  sheetContext,
+                                                ).pop();
+                                                Future<void>.microtask(() {
+                                                  if (mounted) {
+                                                    _openCourse(course);
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      12,
+                                      6,
+                                      12,
+                                      8,
+                                    ),
+                                    child: SizedBox(
+                                      key: const ValueKey(
+                                        'course-mobile-discovery-cta',
+                                      ),
+                                      width: double.infinity,
+                                      height: 47,
+                                      child: FilledButton(
+                                        onPressed: _loadingMoreCourses
+                                            ? null
+                                            : _hasMoreCourses &&
+                                                  !snapshot.hasError
+                                            ? () async {
+                                                await _loadMoreCourses();
+                                                if (!mounted) return;
+                                                setSheetState(() {
+                                                  resultsFuture =
+                                                      _future ??
+                                                      Future.value(
+                                                        const <Course>[],
+                                                      );
+                                                });
+                                              }
+                                            : refreshResults,
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor:
+                                              StudentDensityTokens.dark,
+                                          foregroundColor: Colors.white,
+                                          shape: const RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.zero,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          _loadingMoreCourses
+                                              ? '불러오는 중…'
+                                              : _hasMoreCourses &&
+                                                    !snapshot.hasError
+                                              ? '코스 더보기'
+                                              : '검색하기',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 66),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showMobileCourseAnalysis(List<Course> courses) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _MobileCourseAnalysisSheet(courses: courses),
+    );
+  }
+
   /// 필요한 변수는 선택 코스의 등록·완료 상태다.
   /// 작동 원리: 수강 중 코스는 학습으로, 완료·미등록 코스는 상세로 이동한다.
   void _openCourse(Course course) {
@@ -294,24 +535,17 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     final mobile = isStudentDensityMobile(context);
     final rating = _formatVisibleOvr(RatingStore.notifier.value.ovr);
     return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
+      backgroundColor: mobile
+          ? StudentDensityTokens.surface
+          : StudentDensityTokens.background,
+      drawer: mobile ? null : const AppDrawer(),
+      bottomNavigationBar: mobile
+          ? const MobileStudentBottomAppBar(activeRoute: '/courses')
+          : null,
       body: SafeArea(
         child: Column(
           children: [
-            Ios26TopBar(
-              brandColor: StudentDensityTokens.dark,
-              onMenu: () => toggleAppDrawer(context),
-              onTitleTap: () => Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
-              showLevelIndicator: false,
-              showUtilityActions: true,
-              items: studentTopNavItems(
-                context,
-                active: StudentTopDestination.courses,
-              ),
-            ),
+            if (mobile) _MobileCourseTopBar(onSearch: _showMobileCatalogSearch),
             Expanded(
               child: FutureBuilder<List<GenerationTagGroup>>(
                 future: _tagGroupsFuture,
@@ -342,12 +576,24 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                             (course) =>
                                 course.isEnrolled && !course.isCompleted,
                           )
-                          .take(2)
                           .toList(growable: false);
                       final recommended = _buildRecommendedCourses(
                         allCourses,
                         _lastRecommend,
                       );
+                      if (!mobile) {
+                        return _DesktopCourseShell(
+                          active: active,
+                          loading:
+                              snapshot.connectionState ==
+                              ConnectionState.waiting,
+                          hasError: snapshot.hasError,
+                          onRetry: _load,
+                          onDiscover: _showMobileCatalogSearch,
+                          onAnalysis: () => _showMobileCourseAnalysis(active),
+                          onOpen: _openCourse,
+                        );
+                      }
                       return SingleChildScrollView(
                         key: ValueKey(
                           mobile
@@ -355,6 +601,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                               : 'course-catalog-desktop',
                         ),
                         child: StudentDensityPage(
+                          padding: mobile ? EdgeInsets.zero : null,
                           child: mobile
                               ? _MobileCourseCatalog(
                                   rating: rating,
@@ -377,6 +624,9 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                                   onSearch: _load,
                                   onOpen: _openCourse,
                                   onLoadMore: _loadMoreCourses,
+                                  onAnalysis: () =>
+                                      _showMobileCourseAnalysis(active),
+                                  onDiscover: _showMobileCatalogSearch,
                                 )
                               : Column(
                                   crossAxisAlignment:
@@ -449,6 +699,1234 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
   }
 }
 
+class _DesktopCourseShell extends StatelessWidget {
+  const _DesktopCourseShell({
+    required this.active,
+    required this.loading,
+    required this.hasError,
+    required this.onRetry,
+    required this.onDiscover,
+    required this.onAnalysis,
+    required this.onOpen,
+  });
+
+  final List<Course> active;
+  final bool loading;
+  final bool hasError;
+  final VoidCallback onRetry;
+  final VoidCallback onDiscover;
+  final VoidCallback onAnalysis;
+  final ValueChanged<Course> onOpen;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    key: const ValueKey('course-desktop-shell'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const _DesktopCourseRail(),
+      Expanded(
+        child: Column(
+          children: [
+            _DesktopCourseToolbar(onSearch: onDiscover),
+            Expanded(
+              child: ColoredBox(
+                color: StudentDensityTokens.background,
+                child: SingleChildScrollView(
+                  key: const ValueKey('course-catalog-desktop'),
+                  padding: const EdgeInsets.fromLTRB(18, 22, 18, 48),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 760),
+                      child: DecoratedBox(
+                        key: const ValueKey('course-desktop-panel'),
+                        decoration: const BoxDecoration(
+                          color: StudentDensityTokens.surface,
+                          border: Border(
+                            top: BorderSide(color: StudentDensityTokens.ink),
+                            right: BorderSide(color: StudentDensityTokens.ink),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _DesktopCourseGroup(
+                              key: const ValueKey(
+                                'course-desktop-section-active',
+                              ),
+                              number: '01',
+                              title: '학습 중',
+                              child: loading
+                                  ? const _MobileCourseLoadingRow()
+                                  : hasError
+                                  ? _MobileCourseLoadErrorRow(onRetry: onRetry)
+                                  : active.isEmpty
+                                  ? _AtlasMobileCourseEmptyRow(
+                                      onDiscover: onDiscover,
+                                    )
+                                  : _DesktopCourseList(
+                                      courses: active,
+                                      onOpen: onOpen,
+                                    ),
+                            ),
+                            _DesktopCourseGroup(
+                              key: const ValueKey(
+                                'course-desktop-section-manage',
+                              ),
+                              number: '02',
+                              title: '코스 관리',
+                              child: Column(
+                                children: [
+                                  _DesktopCourseActionRow(
+                                    key: const ValueKey(
+                                      'course-desktop-discover',
+                                    ),
+                                    icon: OpenDesignIconName.search,
+                                    title: '새 코스 찾기',
+                                    detail: '자료실에서 내 학습에 맞는 코스 찾기',
+                                    action: '찾기',
+                                    onTap: onDiscover,
+                                  ),
+                                  _DesktopCourseActionRow(
+                                    key: const ValueKey(
+                                      'course-desktop-analysis',
+                                    ),
+                                    icon: OpenDesignIconName.analytics,
+                                    title: '코스 진행 분석',
+                                    detail: active.isEmpty
+                                        ? '평균 진행 0% · 학습 중 0개'
+                                        : '평균 진행 ${_averageProgress(active)}% · 학습 중 ${active.length}개',
+                                    action: '보기',
+                                    onTap: onAnalysis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _DesktopCourseRail extends StatelessWidget {
+  const _DesktopCourseRail();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('course-desktop-rail'),
+    width: 76,
+    decoration: const BoxDecoration(
+      color: StudentDensityTokens.surface,
+      border: Border(right: BorderSide(color: StudentDensityTokens.line)),
+    ),
+    child: Column(
+      children: [
+        SizedBox(
+          height: 64,
+          child: Center(
+            child: Container(
+              width: 34,
+              height: 34,
+              color: StudentDensityTokens.dark,
+              alignment: Alignment.center,
+              child: const Text(
+                'A',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const Spacer(),
+        _DesktopCourseRailItem(
+          icon: OpenDesignIconName.home,
+          label: '홈',
+          onTap: () => Navigator.of(context).pushNamed('/student/dashboard'),
+        ),
+        _DesktopCourseRailItem(
+          icon: OpenDesignIconName.courses,
+          label: '코스',
+          active: true,
+          onTap: () {},
+        ),
+        _DesktopCourseRailItem(
+          icon: OpenDesignIconName.market,
+          label: '자료실',
+          onTap: () => Navigator.of(context).pushNamed('/marketplace'),
+        ),
+        _DesktopCourseRailItem(
+          icon: OpenDesignIconName.more,
+          label: '더보기',
+          onTap: () => toggleAppDrawer(context),
+        ),
+        const Spacer(),
+        Container(
+          width: 34,
+          height: 34,
+          margin: const EdgeInsets.only(bottom: 18),
+          color: StudentDensityTokens.dark,
+          alignment: Alignment.center,
+          child: const Text(
+            '학',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _DesktopCourseRailItem extends StatelessWidget {
+  const _DesktopCourseRailItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+  });
+
+  final OpenDesignIconName icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 64,
+    height: 56,
+    child: Material(
+      color: active ? StudentDensityTokens.dark : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            OpenDesignIcon(
+              icon,
+              size: 19,
+              color: active ? Colors.white : StudentDensityTokens.ink,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: active ? Colors.white : StudentDensityTokens.ink,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _DesktopCourseToolbar extends StatelessWidget {
+  const _DesktopCourseToolbar({required this.onSearch});
+
+  final VoidCallback onSearch;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('course-desktop-toolbar'),
+    height: 64,
+    padding: const EdgeInsets.fromLTRB(22, 8, 18, 8),
+    decoration: const BoxDecoration(
+      color: StudentDensityTokens.surface,
+      border: Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+    ),
+    child: Row(
+      children: [
+        _DesktopCourseSquareButton(
+          icon: OpenDesignIconName.back,
+          tooltip: '뒤로',
+          onTap: () => Navigator.of(context).maybePop(),
+        ),
+        const SizedBox(width: 12),
+        const Text(
+          '나의 코스',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        ),
+        const Spacer(),
+        _DesktopCourseSquareButton(
+          icon: OpenDesignIconName.search,
+          tooltip: '코스 검색',
+          onTap: onSearch,
+        ),
+        const SizedBox(width: 8),
+        _DesktopCourseSquareButton(
+          icon: OpenDesignIconName.bell,
+          tooltip: '알림',
+          onTap: () => showStudentNotifications(context),
+        ),
+      ],
+    ),
+  );
+}
+
+class _DesktopCourseSquareButton extends StatelessWidget {
+  const _DesktopCourseSquareButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final OpenDesignIconName icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: SizedBox(
+      width: 44,
+      height: 44,
+      child: Material(
+        color: StudentDensityTokens.surface,
+        shape: const RoundedRectangleBorder(
+          side: BorderSide(color: StudentDensityTokens.line),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Center(child: OpenDesignIcon(icon, size: 20)),
+        ),
+      ),
+    ),
+  );
+}
+
+class _DesktopCourseGroup extends StatelessWidget {
+  const _DesktopCourseGroup({
+    super.key,
+    required this.number,
+    required this.title,
+    required this.child,
+  });
+
+  final String number;
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(34, 30, 34, 28),
+    decoration: const BoxDecoration(
+      border: Border(
+        left: BorderSide(color: StudentDensityTokens.ink),
+        bottom: BorderSide(color: StudentDensityTokens.ink),
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              number,
+              style: const TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 24,
+                letterSpacing: -1,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        DecoratedBox(
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: StudentDensityTokens.line)),
+          ),
+          child: child,
+        ),
+      ],
+    ),
+  );
+}
+
+class _DesktopCourseList extends StatelessWidget {
+  const _DesktopCourseList({required this.courses, required this.onOpen});
+
+  final List<Course> courses;
+  final ValueChanged<Course> onOpen;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (var index = 0; index < courses.length; index++)
+        _DesktopOwnedCourseRow(
+          key: ValueKey('course-desktop-row-${courses[index].id}'),
+          course: courses[index],
+          current: index == 0,
+          onTap: () => onOpen(courses[index]),
+        ),
+    ],
+  );
+}
+
+class _DesktopOwnedCourseRow extends StatelessWidget {
+  const _DesktopOwnedCourseRow({
+    super.key,
+    required this.course,
+    required this.current,
+    required this.onTap,
+  });
+
+  final Course course;
+  final bool current;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = course.progress.clamp(0.0, 1.0);
+    final meta = course.lastAction?.trim().isNotEmpty == true
+        ? course.lastAction!.trim()
+        : '${course.level} · ${course.duration}';
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 82,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 24,
+              child: OpenDesignIcon(OpenDesignIconName.courses, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          course.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      if (current) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          color: StudentDensityTokens.dark,
+                          padding: const EdgeInsets.fromLTRB(5, 2, 5, 2),
+                          child: const Text(
+                            '현재',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 7,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: 240,
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 4,
+                      color: StudentDensityTokens.dark,
+                      backgroundColor: StudentDensityTokens.surfaceMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            Text(
+              '${(progress * 100).round()}%',
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(width: 14),
+            Text(
+              current ? '이어하기' : '코스 보기',
+              style: const TextStyle(
+                color: StudentDensityTokens.muted,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Text(
+              '→',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopCourseActionRow extends StatelessWidget {
+  const _DesktopCourseActionRow({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.detail,
+    required this.action,
+    required this.onTap,
+  });
+
+  final OpenDesignIconName icon;
+  final String title;
+  final String detail;
+  final String action;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      height: 82,
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 24, child: OpenDesignIcon(icon, size: 22)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            action,
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(width: 14),
+          const Text(
+            '→',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MobileCourseSheetHeader extends StatelessWidget {
+  const _MobileCourseSheetHeader({
+    super.key,
+    required this.title,
+    required this.onClose,
+    this.height = 58,
+    this.closeKey,
+  });
+
+  final String title;
+  final VoidCallback onClose;
+  final double height;
+  final Key? closeKey;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: height,
+    child: Row(
+      children: [
+        const SizedBox(width: 18),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          ),
+        ),
+        _MobileCourseTopAction(
+          key: closeKey,
+          tooltip: '닫기',
+          icon: Icons.close,
+          onPressed: onClose,
+        ),
+        const SizedBox(width: 6),
+      ],
+    ),
+  );
+}
+
+class _MobileCourseTopBar extends StatelessWidget {
+  const _MobileCourseTopBar({required this.onSearch});
+
+  final VoidCallback onSearch;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('course-mobile-top-bar'),
+    height: 64,
+    padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+    decoration: const BoxDecoration(
+      color: StudentDensityTokens.surface,
+      border: Border(bottom: BorderSide(color: Color(0xFFE1E1E4))),
+    ),
+    child: Row(
+      children: [
+        _MobileCourseTopAction(
+          key: const ValueKey('course-mobile-back'),
+          tooltip: '뒤로',
+          icon: Icons.arrow_back_ios_new,
+          size: 44,
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Text(
+            '나의 코스',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          ),
+        ),
+        _MobileCourseTopAction(
+          key: const ValueKey('course-mobile-search'),
+          tooltip: '코스 검색',
+          icon: Icons.search,
+          onPressed: onSearch,
+        ),
+        const SizedBox(width: 7),
+        _MobileCourseTopAction(
+          tooltip: '알림',
+          icon: Icons.notifications_none,
+          onPressed: () => Navigator.of(context).pushNamed('/notifications'),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MobileCourseTopAction extends StatelessWidget {
+  const _MobileCourseTopAction({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+    this.size = 48,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: size,
+    height: size,
+    child: IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        shape: const RoundedRectangleBorder(),
+        side: const BorderSide(color: Color(0xFFE1E1E4)),
+      ),
+      icon: Icon(icon, size: 20),
+    ),
+  );
+}
+
+class _AtlasMobileCourseCatalog extends StatelessWidget {
+  const _AtlasMobileCourseCatalog({
+    required this.active,
+    required this.loading,
+    required this.hasError,
+    required this.onRetry,
+    required this.onDiscover,
+    required this.onAnalysis,
+    required this.onOpen,
+  });
+
+  final List<Course> active;
+  final bool loading;
+  final bool hasError;
+  final VoidCallback onRetry;
+  final VoidCallback onDiscover;
+  final VoidCallback onAnalysis;
+  final ValueChanged<Course> onOpen;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    key: const ValueKey('course-catalog-mobile-redesign'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _AtlasMobileCourseGroup(
+        key: const ValueKey('course-mobile-group-active'),
+        number: '01',
+        title: '학습 중',
+        child: loading
+            ? const _MobileCourseLoadingRow()
+            : hasError
+            ? _MobileCourseLoadErrorRow(onRetry: onRetry)
+            : active.isEmpty
+            ? _AtlasMobileCourseEmptyRow(onDiscover: onDiscover)
+            : _AtlasMobileCourseList(courses: active, onOpen: onOpen),
+      ),
+      _AtlasMobileCourseGroup(
+        key: const ValueKey('course-mobile-group-manage'),
+        number: '02',
+        title: '코스 관리',
+        child: Column(
+          children: [
+            _AtlasMobileCourseActionRow(
+              key: const ValueKey('course-mobile-discover'),
+              icon: Icons.search,
+              title: '새 코스 찾기',
+              detail: '자료실에서 내 학습에 맞는 코스 찾기',
+              onTap: onDiscover,
+            ),
+            _AtlasMobileCourseActionRow(
+              key: const ValueKey('course-mobile-analysis'),
+              icon: Icons.bar_chart,
+              title: '코스 진행 분석',
+              detail: active.isEmpty
+                  ? '평균 진행 0% · 학습 중 0개'
+                  : '평균 진행 ${_averageProgress(active)}% · 학습 중 ${active.length}개',
+              onTap: onAnalysis,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+int _averageProgress(List<Course> courses) {
+  if (courses.isEmpty) return 0;
+  final total = courses.fold<double>(
+    0,
+    (sum, course) => sum + course.progress.clamp(0, 1),
+  );
+  return (total / courses.length * 100).round();
+}
+
+class _MobileCourseAnalysisSheet extends StatelessWidget {
+  const _MobileCourseAnalysisSheet({required this.courses});
+
+  final List<Course> courses;
+
+  @override
+  Widget build(BuildContext context) => FractionallySizedBox(
+    heightFactor: .72,
+    child: Material(
+      key: const ValueKey('course-mobile-analysis-sheet'),
+      color: StudentDensityTokens.surface,
+      shape: const RoundedRectangleBorder(),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            _MobileCourseSheetHeader(
+              title: '코스 진행 분석',
+              onClose: () => Navigator.of(context).pop(),
+            ),
+            Container(
+              padding: const EdgeInsets.all(18),
+              color: StudentDensityTokens.dark,
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '보유한 코스의 진행 상태를 비교합니다.',
+                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                    ),
+                  ),
+                  Text(
+                    '${_averageProgress(courses)}%',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: courses.isEmpty
+                  ? const Center(
+                      child: Text(
+                        '분석할 진행 중 코스가 없어요',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      children: [
+                        for (final course in courses)
+                          _MobileCourseAnalysisRow(course: course),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _MobileCourseAnalysisRow extends StatelessWidget {
+  const _MobileCourseAnalysisRow({required this.course});
+
+  final Course course;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = course.progress.clamp(0.0, 1.0);
+    return SizedBox(
+      height: 60,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              course.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+            ),
+          ),
+          SizedBox(
+            width: 96,
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              color: StudentDensityTokens.dark,
+              backgroundColor: StudentDensityTokens.surfaceMuted,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '${(progress * 100).round()}%',
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AtlasMobileCourseGroup extends StatelessWidget {
+  const _AtlasMobileCourseGroup({
+    super.key,
+    required this.number,
+    required this.title,
+    required this.child,
+  });
+
+  final String number;
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(18, 24, 18, 22),
+    decoration: const BoxDecoration(
+      color: StudentDensityTokens.surface,
+      border: Border(bottom: BorderSide(color: Color(0xFFE1E1E4))),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 33,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 30,
+                child: Text(
+                  number,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 23,
+                  letterSpacing: -1,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        DecoratedBox(
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: Color(0xFFE1E1E4))),
+          ),
+          child: child,
+        ),
+      ],
+    ),
+  );
+}
+
+class _AtlasMobileCourseList extends StatelessWidget {
+  const _AtlasMobileCourseList({required this.courses, required this.onOpen});
+
+  final List<Course> courses;
+  final ValueChanged<Course> onOpen;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (var index = 0; index < courses.length; index++)
+        _AtlasMobileOwnedCourseRow(
+          key: ValueKey('course-mobile-row-${courses[index].id}'),
+          course: courses[index],
+          current: index == 0,
+          onTap: () => onOpen(courses[index]),
+        ),
+    ],
+  );
+}
+
+class _AtlasMobileOwnedCourseRow extends StatelessWidget {
+  const _AtlasMobileOwnedCourseRow({
+    super.key,
+    required this.course,
+    required this.current,
+    required this.onTap,
+  });
+
+  final Course course;
+  final bool current;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = course.progress.clamp(0.0, 1.0);
+    final meta = course.lastAction?.trim().isNotEmpty == true
+        ? course.lastAction!.trim()
+        : '${course.level} · ${course.duration}';
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 82,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Color(0xFFE1E1E4))),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 24,
+              child: Icon(Icons.bookmark_border, size: 21),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          course.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      if (current) ...[
+                        const SizedBox(width: 7),
+                        Container(
+                          color: StudentDensityTokens.dark,
+                          padding: const EdgeInsets.fromLTRB(5, 2, 5, 2),
+                          child: const Text(
+                            '현재',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 7,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 4,
+                    color: StudentDensityTokens.dark,
+                    backgroundColor: StudentDensityTokens.surfaceMuted,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 32,
+              child: Text(
+                '${(progress * 100).round()}%',
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_forward, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AtlasMobileCourseActionRow extends StatelessWidget {
+  const _AtlasMobileCourseActionRow({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.detail,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String detail;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      height: 82,
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE1E1E4))),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 24, child: Icon(icon, size: 21)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Icon(Icons.arrow_forward, size: 16),
+        ],
+      ),
+    ),
+  );
+}
+
+class _AtlasMobileCourseEmptyRow extends StatelessWidget {
+  const _AtlasMobileCourseEmptyRow({required this.onDiscover});
+
+  final VoidCallback onDiscover;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    key: const ValueKey('course-mobile-empty-state'),
+    onTap: onDiscover,
+    child: Container(
+      height: 82,
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE1E1E4))),
+      ),
+      child: const Row(
+        children: [
+          SizedBox(width: 24, child: Icon(Icons.bookmark_border, size: 21)),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '진행 중인 코스가 없어요',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+            ),
+          ),
+          Text(
+            '찾기',
+            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900),
+          ),
+          SizedBox(width: 10),
+          Icon(Icons.arrow_forward, size: 16),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MobileCourseLoadingRow extends StatelessWidget {
+  const _MobileCourseLoadingRow();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+    key: ValueKey('course-mobile-loading'),
+    height: 82,
+    child: Center(
+      child: SizedBox.square(
+        dimension: 22,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+    ),
+  );
+}
+
+class _MobileCourseLoadErrorRow extends StatelessWidget {
+  const _MobileCourseLoadErrorRow({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onRetry,
+    child: const SizedBox(
+      key: ValueKey('course-mobile-load-error'),
+      height: 82,
+      child: Row(
+        children: [
+          SizedBox(width: 24, child: Icon(Icons.refresh, size: 21)),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '코스를 불러오지 못했어요',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+            ),
+          ),
+          Text(
+            '다시 시도',
+            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900),
+          ),
+          SizedBox(width: 10),
+          Icon(Icons.arrow_forward, size: 16),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MobileSearchEmptyRow extends StatelessWidget {
+  const _MobileSearchEmptyRow();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+    height: 82,
+    child: Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        '조건에 맞는 코스가 없어요',
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+      ),
+    ),
+  );
+}
+
 /// 필요한 변수: 검색·필터 상태, 수강·추천·공개 코스와 진입 콜백이다.
 /// 작동 원리: 세로 화면은 PC용 추천 비교와 큰 정보 카드를 반복하지 않고,
 /// 검색 후 현재 코스 한 개를 바로 이어서 열고 압축 목록으로 다음 코스를 고르게 한다.
@@ -471,6 +1949,8 @@ class _MobileCourseCatalog extends StatelessWidget {
     required this.onSearch,
     required this.onOpen,
     required this.onLoadMore,
+    this.onAnalysis,
+    this.onDiscover,
   });
 
   final String rating;
@@ -490,9 +1970,21 @@ class _MobileCourseCatalog extends StatelessWidget {
   final VoidCallback onSearch;
   final ValueChanged<Course> onOpen;
   final Future<void> Function() onLoadMore;
+  final VoidCallback? onAnalysis;
+  final VoidCallback? onDiscover;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => _AtlasMobileCourseCatalog(
+    active: active,
+    loading: loading,
+    hasError: false,
+    onRetry: onSearch,
+    onDiscover: onDiscover ?? onSearch,
+    onAnalysis: onAnalysis ?? () {},
+    onOpen: onOpen,
+  );
+  /*
+  Widget buildLegacy(BuildContext context) {
     final featured = active.isNotEmpty
         ? active.first
         : (recommended.isEmpty ? null : recommended.first.course);
@@ -553,10 +2045,12 @@ class _MobileCourseCatalog extends StatelessWidget {
       ],
     );
   }
+*/
 }
 
 /// 필요한 변수: 표시용 OVR이다.
 /// 작동 원리: 모바일 상단을 제목과 한 줄 수준 정보로 제한해 목록 진입 행동을 첫 화면에 남긴다.
+// ignore: unused_element
 class _MobileCourseHeader extends StatelessWidget {
   const _MobileCourseHeader({required this.rating});
   final String rating;
@@ -596,6 +2090,7 @@ class _MobileCourseHeader extends StatelessWidget {
 
 /// 필요한 변수: 섹션 문구다.
 /// 작동 원리: 큰 부제와 장식 문구를 줄여 다음 행동의 구분만 제공한다.
+// ignore: unused_element
 class _MobileCourseSectionTitle extends StatelessWidget {
   const _MobileCourseSectionTitle({required this.label});
   final String label;
@@ -613,6 +2108,7 @@ class _MobileCourseSectionTitle extends StatelessWidget {
 
 /// 필요한 변수: 우선 노출할 코스와 현재 수강 여부다.
 /// 작동 원리: 진행률·현재 행동·한 개의 전체 폭 버튼만 남겨 세로 화면에서 즉시 학습을 시작한다.
+// ignore: unused_element
 class _MobileFeaturedCourse extends StatelessWidget {
   const _MobileFeaturedCourse({
     required this.course,
@@ -691,15 +2187,20 @@ class _MobileFeaturedCourse extends StatelessWidget {
 /// 필요한 변수: 목록 코스와 선택 콜백이다.
 /// 작동 원리: 긴 카드·중복 태그 대신 제목과 최소 메타만 가진 터치 행으로 공개 코스를 빠르게 훑는다.
 class _MobileCourseList extends StatelessWidget {
-  const _MobileCourseList({required this.courses, required this.onOpen});
+  const _MobileCourseList({
+    required this.courses,
+    required this.onOpen,
+    this.square = false,
+  });
   final List<Course> courses;
   final ValueChanged<Course> onOpen;
+  final bool square;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
       color: StudentDensityTokens.surface,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: square ? BorderRadius.zero : BorderRadius.circular(20),
       border: Border.all(color: StudentDensityTokens.line),
     ),
     child: Column(
@@ -707,21 +2208,29 @@ class _MobileCourseList extends StatelessWidget {
         for (var index = 0; index < courses.length; index++) ...[
           InkWell(
             onTap: () => onOpen(courses[index]),
-            borderRadius: index == 0
+            borderRadius: square
+                ? BorderRadius.zero
+                : index == 0
                 ? const BorderRadius.vertical(top: Radius.circular(20))
                 : index == courses.length - 1
                 ? const BorderRadius.vertical(bottom: Radius.circular(20))
                 : BorderRadius.zero,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Row(
-                children: [
-                  _MobileCourseStatusIcon(course: courses[index]),
-                  const SizedBox(width: 13),
-                  Expanded(child: _CourseRowCopy(course: courses[index])),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right_rounded, size: 20),
-                ],
+            child: SizedBox(
+              height: square ? 82 : null,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    _MobileCourseStatusIcon(course: courses[index]),
+                    const SizedBox(width: 13),
+                    Expanded(child: _CourseRowCopy(course: courses[index])),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right_rounded, size: 20),
+                  ],
+                ),
               ),
             ),
           ),
@@ -797,6 +2306,7 @@ class _MobileCourseProgress extends StatelessWidget {
 
 /// 필요한 변수 없음.
 /// 작동 원리: 필터 결과가 비어도 목록 영역의 의미를 보존하고 다음 검색을 안내한다.
+// ignore: unused_element
 class _MobileCourseEmptyState extends StatelessWidget {
   const _MobileCourseEmptyState();
 
