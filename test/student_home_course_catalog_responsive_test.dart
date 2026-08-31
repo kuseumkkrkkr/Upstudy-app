@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:s11/app/router.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
@@ -52,6 +53,23 @@ void _expectReferenceShell({required bool mobile}) {
   expect(find.byType(MobileStudentBottomAppBar), findsNothing);
   expect(find.byType(NavigationRail), findsNothing);
   expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+  expect(find.byTooltip('전체 메뉴'), findsOneWidget);
+  expect(
+    find.descendant(
+      of: find.byKey(const ValueKey('student-brand-home')),
+      matching: find.text('A'),
+    ),
+    findsOneWidget,
+  );
+  expect(
+    find.descendant(
+      of: find.byKey(const ValueKey('student-brand-home')),
+      matching: find.text('AIFlow'),
+    ),
+    findsOneWidget,
+  );
+  expect(find.byTooltip('검색'), findsOneWidget);
+  expect(find.byTooltip('알림'), findsOneWidget);
   expect(
     find.byKey(const ValueKey('student-top-nav-코스')),
     mobile ? findsNothing : findsOneWidget,
@@ -59,6 +77,24 @@ void _expectReferenceShell({required bool mobile}) {
 }
 
 void main() {
+  testWidgets('명명 /courses 라우트는 공용 셸을 가진 CourseCatalogPage를 연다', (
+    tester,
+  ) async {
+    Widget? resolved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            resolved = appRoutes()[AppRoutes.courses]!(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    expect(resolved, isA<CourseCatalogPage>());
+  });
+
   testWidgets('코스 카탈로그는 1280 PC와 390·780 모바일에서 모든 필터와 상태 카드를 유지한다', (
     tester,
   ) async {
