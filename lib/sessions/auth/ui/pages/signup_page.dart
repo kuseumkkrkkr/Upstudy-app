@@ -5,6 +5,11 @@ import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 
+const _signupMobileBreakpoint = 780.0;
+
+bool _isSignupCompact(BuildContext context) =>
+    MediaQuery.sizeOf(context).width <= _signupMobileBreakpoint;
+
 class SignupPage extends StatefulWidget {
   static const routeName = '/signup';
   const SignupPage({super.key, this.preview = false, this.initialStage = 0});
@@ -159,7 +164,7 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 720;
+    final compact = _isSignupCompact(context);
     // 필요한 변수는 회원가입 단계와 화면 폭이다.
     // 작동 원리: 인증 전용 스크롤 캔버스만 구성해 사용자·알림 상단바와
     // 인증이 필요한 데이터 접근을 분리하고, 좁은 화면은 한 열로 안전하게 흐르게 한다.
@@ -244,7 +249,7 @@ class _SignupPageState extends State<SignupPage> {
         onPressed: () => Navigator.of(context).maybePop(),
         child: const Text('로그인으로 돌아가기'),
       );
-      if (constraints.maxWidth < 720) {
+      if (_isSignupCompact(context)) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -324,7 +329,7 @@ class _SignupPageState extends State<SignupPage> {
   /// 작동 원리는 HTML처럼 PC에서는 기본 입력을 2열로, 모바일에서는 읽기 순서대로 1열로 배치하는 것이다.
   Widget _buildProfileFields() => LayoutBuilder(
     builder: (context, constraints) {
-      final compact = constraints.maxWidth < 720;
+      final compact = _isSignupCompact(context);
       final trackField = DropdownButtonFormField<String>(
         initialValue: _track,
         decoration: _signupDecoration('과정'),
@@ -566,7 +571,7 @@ class _SignupPageState extends State<SignupPage> {
       key: key,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth < 720) {
+          if (_isSignupCompact(context)) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

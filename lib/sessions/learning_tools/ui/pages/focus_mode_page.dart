@@ -3,6 +3,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 /// 집중 시간을 설정하고, 진행 중에는 남은 시간과 해제 상태만 보여주는 화면이다.
 /// 필요한 변수: 선택 시간, 남은 초, 집중·해제 타이머.
@@ -114,22 +118,57 @@ class _FocusModePageState extends State<FocusModePage> {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      key: const ValueKey('focus-tool-page'),
+      backgroundColor: StudentDensityTokens.background,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
           children: [
-            _ToolHeader(
-              title: '집중 모드',
-              onClose: () => Navigator.maybePop(context),
+            Builder(
+              builder: (headerContext) => Ios26TopBar(
+                brandColor: StudentDensityTokens.dark,
+                onBack: () => Navigator.maybePop(context),
+                onMenu: () => toggleAppDrawer(headerContext),
+                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/student/dashboard',
+                  (route) => false,
+                ),
+                showMenuWithBack: true,
+                showLevelIndicator: false,
+                items: studentTopNavItems(
+                  context,
+                  active: StudentTopDestination.learning,
+                ),
+              ),
             ),
             Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 700),
-                    child: _running ? _buildRunning() : _buildSetup(),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: StudentDensityPage(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 900),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          StudentDensityPageHeader(
+                            eyebrow: 'LEARNING TOOL',
+                            title: '집중 모드',
+                            description: '정한 시간 동안 학습에만 집중할 수 있도록 합니다.',
+                            showMobileDescription: true,
+                            action: StudentDensityButton(
+                              label: '도구 닫기',
+                              icon: Icons.close_rounded,
+                              onPressed: () => Navigator.maybePop(context),
+                            ),
+                          ),
+                          SizedBox(height: mobile ? 16 : 22),
+                          _running ? _buildRunning() : _buildSetup(),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -144,6 +183,7 @@ class _FocusModePageState extends State<FocusModePage> {
   /// 필요한 변수: [_selectedMinutes]와 프리셋 목록.
   Widget _buildSetup() {
     return _ToolSurface(
+      key: const ValueKey('focus-setup-surface'),
       child: Column(
         children: [
           const Text(
@@ -222,6 +262,7 @@ class _FocusModePageState extends State<FocusModePage> {
   Widget _buildRunning() {
     final progress = 1 - (_remainingSeconds / (_selectedMinutes * 60));
     return _ToolSurface(
+      key: const ValueKey('focus-running-surface'),
       child: Column(
         children: [
           SizedBox(
@@ -295,79 +336,12 @@ class _FocusModePageState extends State<FocusModePage> {
   }
 }
 
-class _ToolHeader extends StatelessWidget {
-  const _ToolHeader({required this.title, required this.onClose});
-  final String title;
-  final VoidCallback onClose;
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 82,
-    padding: const EdgeInsets.symmetric(horizontal: 24),
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7))),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'LEARNING TOOL · SESSION',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
-                  color: Color(0xFF71717A),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
-                ),
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          onPressed: onClose,
-          icon: const Icon(Icons.close_rounded),
-          style: IconButton.styleFrom(
-            shape: const CircleBorder(
-              side: BorderSide(color: Color(0xFFE4E4E7)),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 class _ToolSurface extends StatelessWidget {
-  const _ToolSurface({required this.child});
+  const _ToolSurface({super.key, required this.child});
   final Widget child;
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0xFFE4E4E7)),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x0F000000),
-          blurRadius: 28,
-          offset: Offset(0, 12),
-        ),
-      ],
-    ),
+  Widget build(BuildContext context) => StudentDensitySurface(
+    padding: EdgeInsets.all(isStudentDensityMobile(context) ? 18 : 28),
     child: child,
   );
 }
@@ -406,19 +380,11 @@ class _BlackButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: double.infinity,
-    child: FilledButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFF09090B),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-    ),
+  Widget build(BuildContext context) => StudentDensityButton(
+    label: label,
+    icon: icon,
+    primary: true,
+    onPressed: onTap,
   );
 }
 

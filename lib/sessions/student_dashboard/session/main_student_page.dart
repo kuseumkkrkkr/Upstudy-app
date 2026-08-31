@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/features/level_test/level_test.dart';
@@ -187,43 +186,6 @@ String _noticeDateLabel(String value) {
   if (parsed == null) return value;
   final local = parsed.toLocal();
   return '${local.month.toString().padLeft(2, '0')}.${local.day.toString().padLeft(2, '0')}';
-}
-
-String _buildNoticeHtmlDocument(String title, String body) {
-  return '''
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 20px;
-      color: #173321;
-      background: #f6fbf7;
-    }
-    article {
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 12px 28px rgba(27, 64, 43, 0.08);
-    }
-    h1 { margin-top: 0; font-size: 28px; }
-    img { max-width: 100%; height: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    td, th { border: 1px solid #d9e5dc; padding: 8px; }
-  </style>
-</head>
-<body>
-  <article>
-    <h1>$title</h1>
-    $body
-  </article>
-</body>
-</html>
-''';
 }
 
 double _singleLineWidth(String text, TextStyle style) {
@@ -2751,28 +2713,9 @@ class _SystemNoticeCardState extends State<_SystemNoticeCard> {
   }
 
   void _showNoticePreview(BuildContext context, StudyGroupNotice notice) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(notice.title),
-        content: SizedBox(
-          width: 720,
-          height: 520,
-          child: InAppWebView(
-            initialData: InAppWebViewInitialData(
-              data: _buildNoticeHtmlDocument(notice.title, notice.contentHtml),
-            ),
-            initialSettings: InAppWebViewSettings(transparentBackground: true),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('닫기'),
-          ),
-        ],
-      ),
-    );
+    // 홈 카드도 전역 알림 센터와 같은 상세 화면을 사용한다. 그래야 780px
+    // 이하에서 고정 폭 데스크톱 대화상자가 아니라 읽기 쉬운 하단 시트가 열린다.
+    showStudentNoticeDetail(context, notice);
   }
 }
 
@@ -3125,29 +3068,7 @@ class _ActivityHistoryCard extends StatefulWidget {
 }
 
 class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
-  void _showModal() {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        final media = MediaQuery.of(context);
-        final width = math.min(media.size.width - 28, 560.0);
-        final height = math.min(media.size.height - 40, 620.0);
-        return Dialog(
-          insetPadding: const EdgeInsets.all(14),
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: SizedBox(
-            width: width,
-            height: height,
-            child: const _ActivityHistorySheet(),
-          ),
-        );
-      },
-    );
-  }
+  void _showModal() => showActivityHistoryDetail(context);
 
   @override
   Widget build(BuildContext context) {
@@ -3256,6 +3177,52 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
       },
     );
   }
+}
+
+/// 필요한 변수는 홈의 현재 Navigator 문맥이다.
+/// 작동 원리: 공통 780px 이하에서는 전체 일정 기록을 바텀시트로 열고,
+/// 넓은 화면은 기존 크기 제한 다이얼로그를 그대로 사용한다.
+void showActivityHistoryDetail(BuildContext context) {
+  if (isStudentDensityMobile(context)) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.34),
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.9,
+        child: Material(
+          key: const ValueKey('activity-history-mobile-sheet'),
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          clipBehavior: Clip.antiAlias,
+          child: const _ActivityHistorySheet(),
+        ),
+      ),
+    );
+    return;
+  }
+  showDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    builder: (context) {
+      final media = MediaQuery.of(context);
+      final width = math.min(media.size.width - 28, 560.0);
+      final height = math.min(media.size.height - 40, 620.0);
+      return Dialog(
+        insetPadding: const EdgeInsets.all(14),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: SizedBox(
+          key: const ValueKey('activity-history-desktop-dialog'),
+          width: width,
+          height: height,
+          child: const _ActivityHistorySheet(),
+        ),
+      );
+    },
+  );
 }
 
 class _ActivityHistorySheet extends StatefulWidget {

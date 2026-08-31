@@ -1224,8 +1224,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   @override
   Widget build(BuildContext context) {
     if (_placementExam) return _buildPlacementExamScaffold();
-    final width = MediaQuery.sizeOf(context).width;
-    if (width <= 600) return _buildMobileSolveScaffold();
+    if (isStudentDensityMobile(context)) return _buildMobileSolveScaffold();
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Stack(

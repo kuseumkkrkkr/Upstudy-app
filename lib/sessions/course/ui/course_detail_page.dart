@@ -365,78 +365,91 @@ class _MetricGrid extends StatelessWidget {
       ),
       (label: '완료 학생', value: '1,284', note: '평균 4.8점'),
     ];
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border.fromBorderSide(
-            BorderSide(color: StudentDensityTokens.line),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x10000000),
-              blurRadius: 28,
-              offset: Offset(0, 14),
-            ),
-          ],
-        ),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: mobile ? 2 : 4,
-            childAspectRatio: mobile ? 2.1 : 2.3,
-          ),
-          itemCount: metrics.length,
-          itemBuilder: (context, index) {
-            final item = metrics[index];
-            return Container(
-              padding: EdgeInsets.all(mobile ? 14 : 20),
-              decoration: BoxDecoration(
-                border: Border(
-                  left: index % (mobile ? 2 : 4) == 0
-                      ? BorderSide.none
-                      : const BorderSide(color: StudentDensityTokens.line),
-                  top: mobile && index >= 2
-                      ? const BorderSide(color: StudentDensityTokens.line)
-                      : BorderSide.none,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = mobile ? 2 : 4;
+        final aspectRatio = mobile ? 2.1 : 2.3;
+        // 390과 desktop 전환 직후 폭에서는 기존 비율이 텍스트보다 낮은 셀을 만든다.
+        // 넓은 화면의 기존 비율은 유지하고, 필요한 경우에만 최소 높이를 보장한다.
+        final naturalExtent = constraints.maxWidth / columns / aspectRatio;
+        final mainAxisExtent = mobile
+            ? (naturalExtent < 120 ? 120.0 : null)
+            : (constraints.maxWidth < 900 ? 168.0 : null);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border.fromBorderSide(
+                BorderSide(color: StudentDensityTokens.line),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x10000000),
+                  blurRadius: 28,
+                  offset: Offset(0, 14),
                 ),
+              ],
+            ),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                childAspectRatio: aspectRatio,
+                mainAxisExtent: mainAxisExtent,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.label,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: StudentDensityTokens.muted,
+              itemCount: metrics.length,
+              itemBuilder: (context, index) {
+                final item = metrics[index];
+                return Container(
+                  padding: EdgeInsets.all(mobile ? 14 : 20),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: index % columns == 0
+                          ? BorderSide.none
+                          : const BorderSide(color: StudentDensityTokens.line),
+                      top: mobile && index >= 2
+                          ? const BorderSide(color: StudentDensityTokens.line)
+                          : BorderSide.none,
                     ),
                   ),
-                  const SizedBox(height: 7),
-                  Text(
-                    item.value,
-                    style: TextStyle(
-                      fontSize: mobile ? 30 : 40,
-                      height: .95,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: StudentDensityTokens.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        item.value,
+                        style: TextStyle(
+                          fontSize: mobile ? 30 : 40,
+                          height: .95,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        item.note,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 7),
-                  Text(
-                    item.note,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

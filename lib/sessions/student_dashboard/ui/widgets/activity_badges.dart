@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/business/repositories/activity_store.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/sessions/student_dashboard/business/activity_badge_catalog.dart';
 
 class ActivityBadgeSummary extends StatelessWidget {
@@ -282,13 +283,10 @@ void showActivityBadgeDialog({
   required ActivitySnapshot snapshot,
   int accountLevel = 0,
 }) {
-  // 필요한 변수는 현재 화면 크기와 업적 진행 기록이다.
-  // 작동 원리: 세로 모바일은 한 손 스크롤에 맞춘 전폭 바텀시트를 열고,
-  // 태블릿·PC는 기존 정보 밀도가 높은 중앙 다이얼로그를 유지한다.
-  final media = MediaQuery.of(context);
-  final isPortraitMobile =
-      media.size.width <= 720 && media.size.height >= media.size.width;
-  if (isPortraitMobile) {
+  // 필요한 변수는 현재 화면 폭과 업적 진행 기록이다.
+  // 작동 원리: 학생 공통 780px 이하에서는 전폭 바텀시트를 열고,
+  // 그보다 넓은 화면은 기존 정보 밀도가 높은 중앙 다이얼로그를 유지한다.
+  if (isStudentDensityMobile(context)) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
