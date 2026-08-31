@@ -13,6 +13,10 @@
     }
   ],
   "routes": [
+    {
+      "src": "/health/level-test",
+      "dest": "https://aiflow-ocr-canary.vercel.app/health/level-test"
+    },
     { "handle": "filesystem" },
     {
       "src": "/(health|auth|user|account|rating|arena|weakness|history|courses|academy|challenges|marketplace|analysis|social|textbooks|quests|exams|serverchat|level-tests|api)(/.*)?",
