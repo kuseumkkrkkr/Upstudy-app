@@ -311,6 +311,7 @@ class _SocialSectionHeader extends StatelessWidget {
 
 class _SocialPersonRow extends StatelessWidget {
   const _SocialPersonRow({
+    super.key,
     required this.name,
     required this.subtitle,
     required this.trailing,
@@ -543,6 +544,9 @@ class _SoWidgetState extends State<SoWidget> {
                 name: profile.username,
                 status: profile.status.isNotEmpty ? profile.status : '상태 없음',
                 ovr: profile.ovr,
+                userId: profile.userId,
+                displayName: profile.name,
+                profileImage: profile.profileImage,
               ),
             )
             .toList();
@@ -1544,11 +1548,13 @@ class _SoWidgetState extends State<SoWidget> {
     double width = 720,
     double height = 700,
     EdgeInsets padding = const EdgeInsets.fromLTRB(24, 18, 24, 24),
+    Key? panelKey,
   }) {
     final screen = MediaQuery.of(context).size;
     final resolvedWidth = min(width, screen.width * 0.94);
     final resolvedHeight = min(height, screen.height * 0.9);
     return Container(
+      key: panelKey,
       width: resolvedWidth,
       constraints: BoxConstraints(maxHeight: resolvedHeight),
       padding: padding,
@@ -1703,6 +1709,9 @@ class _SoWidgetState extends State<SoWidget> {
                       name: p.username,
                       status: p.status.isNotEmpty ? p.status : '상태 없음',
                       ovr: p.ovr,
+                      userId: p.userId,
+                      displayName: p.name,
+                      profileImage: p.profileImage,
                     ),
                   )
                   .toList();
@@ -2090,9 +2099,9 @@ class _SoWidgetState extends State<SoWidget> {
               ),
               onPressed: () {
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('프로필 보기 기능은 준비 중입니다.')),
-                );
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _openFriendProfile(friend);
+                });
               },
               icon: const Icon(Icons.person_outline, size: 17),
               label: const Text(
@@ -2145,6 +2154,187 @@ class _SoWidgetState extends State<SoWidget> {
       ),
     );
   }
+
+  /// 필요한 변수는 친구 목록에서 이미 받은 공개 프로필 값이다.
+  /// 작동 원리는 별도 peer API나 전역 경로를 만들지 않고, 현재 응답에 포함된
+  /// 정체성·상태·OVR만 읽기 전용 프로필 표면으로 연결하는 것이다.
+  void _openFriendProfile(_FriendInfo friend) {
+    final mobile = isStudentDensityMobile(context);
+    final body = _friendProfileBody(friend);
+    if (mobile) {
+      unawaited(
+        showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => _MobileAddFriendSheet(
+            title: '친구 프로필',
+            panelKey: const ValueKey('mobile-friend-profile-sheet'),
+            child: body,
+          ),
+        ),
+      );
+      return;
+    }
+    unawaited(
+      _showBlurDialog(
+        _dialogShell(
+          title: '친구 프로필',
+          width: 440,
+          height: 430,
+          panelKey: const ValueKey('desktop-friend-profile-dialog'),
+          child: body,
+        ),
+      ),
+    );
+  }
+
+  Widget _friendProfileBody(_FriendInfo friend) {
+    final suppliedName = friend.displayName?.trim();
+    final primaryName = suppliedName == null || suppliedName.isEmpty
+        ? friend.name
+        : suppliedName;
+    final showUsername = friend.name.isNotEmpty && primaryName != friend.name;
+    return Column(
+      key: const ValueKey('friend-profile-content'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(child: _friendProfileAvatar(friend, primaryName)),
+        const SizedBox(height: 14),
+        Text(
+          primaryName,
+          key: const ValueKey('friend-profile-display-name'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+        if (showUsername) ...[
+          const SizedBox(height: 4),
+          Text(
+            '@${friend.name}',
+            key: const ValueKey('friend-profile-username'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: _textMuted,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+        const SizedBox(height: 20),
+        _friendProfileStat(
+          key: const ValueKey('friend-profile-status'),
+          icon: Icons.circle_outlined,
+          label: '상태',
+          value: friend.status,
+        ),
+        const SizedBox(height: 8),
+        _friendProfileStat(
+          key: const ValueKey('friend-profile-ovr'),
+          icon: Icons.auto_graph_rounded,
+          label: 'OVR',
+          value: _formatOvrLabel(friend.ovr),
+        ),
+        const SizedBox(height: 20),
+        OutlinedButton.icon(
+          key: const ValueKey('friend-profile-message-button'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: primaryColor,
+            side: const BorderSide(color: primaryColor),
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              final info = _ensureMessageThreadForFriend(friend);
+              _openMessageThread(info);
+            });
+          },
+          icon: const Icon(Icons.mail_outline, size: 18),
+          label: const Text(
+            '쪽지 보내기',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _friendProfileAvatar(_FriendInfo friend, String primaryName) {
+    final imageUrl = _safeFriendProfileImageUrl(friend.profileImage);
+    final fallback = Container(
+      key: const ValueKey('friend-profile-avatar-fallback'),
+      color: primaryColor.withValues(alpha: 0.12),
+      alignment: Alignment.center,
+      child: Text(
+        primaryName.isEmpty ? 'F' : primaryName.characters.first,
+        style: const TextStyle(
+          color: primaryColor,
+          fontSize: 30,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+    return Container(
+      width: 88,
+      height: 88,
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      child: imageUrl == null
+          ? fallback
+          : Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => fallback,
+            ),
+    );
+  }
+
+  String? _safeFriendProfileImageUrl(String? value) {
+    final candidate = value?.trim();
+    if (candidate == null || candidate.isEmpty) return null;
+    final uri = Uri.tryParse(candidate);
+    if (uri == null ||
+        uri.host.isEmpty ||
+        (uri.scheme != 'https' && uri.scheme != 'http')) {
+      return null;
+    }
+    return uri.toString();
+  }
+
+  Widget _friendProfileStat({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required String value,
+  }) => Container(
+    key: key,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: StudentDensityTokens.surfaceMuted,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: StudentDensityTokens.line),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, size: 18, color: _textMuted),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: const TextStyle(
+            color: _textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+      ],
+    ),
+  );
 
   // ── 그룹 검색 모달 (원본 로직 동일) ─────────────────────────
   void _openGroupSearchModal() {
@@ -2794,6 +2984,7 @@ class _SoWidgetState extends State<SoWidget> {
       children: [
         for (final friend in _friends.take(3))
           _SocialPersonRow(
+            key: ValueKey('social-friend-${friend.userId ?? friend.name}'),
             name: friend.name,
             subtitle: friend.status,
             trailing: '쪽지 ›',

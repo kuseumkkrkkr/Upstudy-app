@@ -49,7 +49,7 @@ class _LevelResultScaffold extends StatelessWidget {
   final _LevelResultReport report;
 
   /// 필요한 값은 화면 폭과 결과 요약이다.
-  /// 760px 미만에서는 읽기 순서를 유지한 단일 열, 이상에서는 요약과 분석을 분리한 2열로 배치한다.
+  /// 780px 이하에서는 읽기 순서를 유지한 단일 열, 그보다 넓으면 요약과 분석을 분리한 2열로 배치한다.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,7 +57,7 @@ class _LevelResultScaffold extends StatelessWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final compact = constraints.maxWidth < 760;
+            final compact = constraints.maxWidth <= 780;
             final horizontal = compact ? 18.0 : 42.0;
             final content = ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1180),

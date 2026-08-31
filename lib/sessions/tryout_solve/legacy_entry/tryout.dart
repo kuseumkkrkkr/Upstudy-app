@@ -15,6 +15,7 @@ import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/business/usecases/heatmap_engine.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 part '../business/problem_config.dart';
 part '../session/build_page_widget.dart';
