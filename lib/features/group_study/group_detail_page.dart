@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/business/repositories/exam_paper_store.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/shared_flow_view_page.dart';
 
 class GroupDetailPage extends StatefulWidget {
@@ -461,113 +460,87 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     final memberCount = _members.isEmpty
         ? group?.memberCount ?? 0
         : _members.length;
-    return Scaffold(
+    return StudentHtmlShell(
       key: const ValueKey('mobile-group-dashboard'),
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
-      bottomNavigationBar: const MobileStudentBottomAppBar(
-        activeRoute: '/group/detail',
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (headerContext) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                showUtilityActions: true,
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
+      title: group?.name ?? '그룹 스터디',
+      activeRoute: '/groups',
+      onMenu: () => Navigator.of(context).maybePop(),
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(child: Text(_error!))
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  studentDensityHorizontalPadding(context),
+                  12,
+                  studentDensityHorizontalPadding(context),
+                  48,
                 ),
-                onBack: () => Navigator.of(context).maybePop(),
-                onMenu: () => toggleAppDrawer(headerContext),
-                showMenuWithBack: true,
-                items: studentTopNavItems(
-                  headerContext,
-                  active: StudentTopDestination.social,
-                ),
+                children: [
+                  _MobileGroupOverview(
+                    group: group,
+                    memberCount: memberCount,
+                    schedules: _schedules,
+                    canCreateSchedule:
+                        _canManageGroup && _currentUsername.isNotEmpty,
+                    onCreateSchedule: _openScheduleComposer,
+                    onMembers: _openMembers,
+                    onChat: _openChat,
+                  ),
+                  const SizedBox(height: 26),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '학습 자료',
+                          style: TextStyle(
+                            fontSize: 23,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.7,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${_sharedFlows.length + _sharedExams.length}개',
+                        style: const TextStyle(
+                          color: Colors.black45,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _ResourceSwitch(
+                    mobile: true,
+                    showExamPapers: _showExamPapers,
+                    flowCount: _sharedFlows.length,
+                    examCount: _sharedExams.length,
+                    onChanged: (value) =>
+                        setState(() => _showExamPapers = value),
+                  ),
+                  const SizedBox(height: 10),
+                  _SharedResourcesCard(
+                    mobile: true,
+                    showExamPapers: _showExamPapers,
+                    loading: _loadingResources,
+                    flows: _sharedFlows,
+                    exams: _sharedExams,
+                    flowTags: _flowTags,
+                    recentDays: _flowRecentDays,
+                    onFilter: _openResourceFilter,
+                    onShare: _openShareResource,
+                    onDeleteFlow: _deleteFlow,
+                  ),
+                ],
               ),
             ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                  ? Center(child: Text(_error!))
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.fromLTRB(
-                          studentDensityHorizontalPadding(context),
-                          12,
-                          studentDensityHorizontalPadding(context),
-                          48,
-                        ),
-                        children: [
-                          _MobileGroupOverview(
-                            group: group,
-                            memberCount: memberCount,
-                            schedules: _schedules,
-                            canCreateSchedule:
-                                _canManageGroup && _currentUsername.isNotEmpty,
-                            onCreateSchedule: _openScheduleComposer,
-                            onMembers: _openMembers,
-                            onChat: _openChat,
-                          ),
-                          const SizedBox(height: 26),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  '학습 자료',
-                                  style: TextStyle(
-                                    fontSize: 23,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.7,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '${_sharedFlows.length + _sharedExams.length}개',
-                                style: const TextStyle(
-                                  color: Colors.black45,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          _ResourceSwitch(
-                            mobile: true,
-                            showExamPapers: _showExamPapers,
-                            flowCount: _sharedFlows.length,
-                            examCount: _sharedExams.length,
-                            onChanged: (value) =>
-                                setState(() => _showExamPapers = value),
-                          ),
-                          const SizedBox(height: 10),
-                          _SharedResourcesCard(
-                            mobile: true,
-                            showExamPapers: _showExamPapers,
-                            loading: _loadingResources,
-                            flows: _sharedFlows,
-                            exams: _sharedExams,
-                            flowTags: _flowTags,
-                            recentDays: _flowRecentDays,
-                            onFilter: _openResourceFilter,
-                            onShare: _openShareResource,
-                            onDeleteFlow: _deleteFlow,
-                          ),
-                        ],
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -578,96 +551,75 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     final group = _group;
     final mobile = isStudentDensityMobile(context);
     if (mobile) return _buildMobileDashboard(group);
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                onMenu: () => toggleAppDrawer(context),
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.social,
-                ),
+    return StudentHtmlShell(
+      key: const ValueKey('group-detail-screen'),
+      title: group?.name ?? '그룹 스터디',
+      activeRoute: '/groups',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(child: Text(_error!))
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                children: [
+                  StudentDensityPage(
+                    padding: EdgeInsets.fromLTRB(
+                      studentDensityHorizontalPadding(context),
+                      studentDensityVerticalPadding(context),
+                      studentDensityHorizontalPadding(context),
+                      48,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _GroupDetailHeader(
+                          mobile: mobile,
+                          title: group?.name ?? '그룹 스터디',
+                          memberCount: _members.length,
+                          onBack: () => Navigator.of(context).maybePop(),
+                          onMembers: _openMembers,
+                          onChat: _openChat,
+                        ),
+                        SizedBox(height: mobile ? 14 : 18),
+                        _GroupHero(
+                          group: group,
+                          memberCount: _members.length,
+                          schedules: _schedules,
+                          canCreateSchedule:
+                              _canManageGroup && _currentUsername.isNotEmpty,
+                          onCreateSchedule: _openScheduleComposer,
+                          onMembers: _openMembers,
+                        ),
+                        const SizedBox(height: 12),
+                        _ResourceSwitch(
+                          showExamPapers: _showExamPapers,
+                          flowCount: _sharedFlows.length,
+                          examCount: _sharedExams.length,
+                          onChanged: (value) =>
+                              setState(() => _showExamPapers = value),
+                        ),
+                        const SizedBox(height: 12),
+                        _SharedResourcesCard(
+                          showExamPapers: _showExamPapers,
+                          loading: _loadingResources,
+                          flows: _sharedFlows,
+                          exams: _sharedExams,
+                          flowTags: _flowTags,
+                          recentDays: _flowRecentDays,
+                          onFilter: _openResourceFilter,
+                          onShare: _openShareResource,
+                          onDeleteFlow: _deleteFlow,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                  ? Center(child: Text(_error!))
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView(
-                        children: [
-                          StudentDensityPage(
-                            padding: EdgeInsets.fromLTRB(
-                              studentDensityHorizontalPadding(context),
-                              studentDensityVerticalPadding(context),
-                              studentDensityHorizontalPadding(context),
-                              48,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _GroupDetailHeader(
-                                  mobile: mobile,
-                                  title: group?.name ?? '그룹 스터디',
-                                  memberCount: _members.length,
-                                  onBack: () =>
-                                      Navigator.of(context).maybePop(),
-                                  onMembers: _openMembers,
-                                  onChat: _openChat,
-                                ),
-                                SizedBox(height: mobile ? 14 : 18),
-                                _GroupHero(
-                                  group: group,
-                                  memberCount: _members.length,
-                                  schedules: _schedules,
-                                  canCreateSchedule:
-                                      _canManageGroup &&
-                                      _currentUsername.isNotEmpty,
-                                  onCreateSchedule: _openScheduleComposer,
-                                  onMembers: _openMembers,
-                                ),
-                                const SizedBox(height: 12),
-                                _ResourceSwitch(
-                                  showExamPapers: _showExamPapers,
-                                  flowCount: _sharedFlows.length,
-                                  examCount: _sharedExams.length,
-                                  onChanged: (value) =>
-                                      setState(() => _showExamPapers = value),
-                                ),
-                                const SizedBox(height: 12),
-                                _SharedResourcesCard(
-                                  showExamPapers: _showExamPapers,
-                                  loading: _loadingResources,
-                                  flows: _sharedFlows,
-                                  exams: _sharedExams,
-                                  flowTags: _flowTags,
-                                  recentDays: _flowRecentDays,
-                                  onFilter: _openResourceFilter,
-                                  onShare: _openShareResource,
-                                  onDeleteFlow: _deleteFlow,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

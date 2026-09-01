@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/features/group_study/group_detail_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -121,10 +122,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
     expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
-    expect(find.byTooltip('뒤로가기'), findsOneWidget);
-    expect(find.byTooltip('검색'), findsOneWidget);
-    expect(find.byTooltip('알림'), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
+    expect(find.bySemanticsLabel('검색'), findsOneWidget);
+    expect(find.bySemanticsLabel('알림'), findsOneWidget);
     expect(find.byKey(const ValueKey('mobile-group-overview')), findsOneWidget);
     expect(find.byKey(const ValueKey('mobile-group-schedule')), findsOneWidget);
     expect(
@@ -224,13 +226,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AppBar), findsNothing);
-    expect(find.byKey(const ValueKey('student-top-nav-친구/소셜')), findsOneWidget);
-    expect(find.byTooltip('검색'), findsOneWidget);
-    expect(find.byTooltip('알림'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('student-mobile-menu')));
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(Drawer), findsOneWidget);
-    expect(find.text('STUDY GROUP'), findsOneWidget);
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
+    expect(find.byType(StudentHtmlRail), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
+    expect(find.bySemanticsLabel('검색'), findsOneWidget);
+    expect(find.bySemanticsLabel('알림'), findsOneWidget);
+    expect(find.text('중2 수학 챌린지'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }
