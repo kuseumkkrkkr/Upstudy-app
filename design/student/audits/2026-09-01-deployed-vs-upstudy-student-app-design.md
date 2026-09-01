@@ -265,8 +265,8 @@
 
 ### 최종 배포 기록 (2026-09-02)
 
-- 커밋: `852fee3` 이후 일정 셸 변경을 포함한 최신 release 커밋은 배포 후 갱신한다. `origin/hotfix`에 반영할 때 자료실·학습 일정 셸 수정과 감사 증거를 함께 포함한다.
-- Vercel: [`dpl_Cua58vQK7iebhbWTeP2BEpg2b26n`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/Cua58vQK7iebhbWTeP2BEpg2b26n), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard). (자료실 배포; 일정 셸 번들은 다음 배포로 갱신 예정)
+- 커밋: `e705d1f` (`refactor(student): align schedule with html shell`), `origin/hotfix` 반영. 자료실·학습 일정 셸 수정과 감사 증거를 포함한다.
+- Vercel: [`dpl_Cua58vQK7iebhbWTeP2BEpg2b26n`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/Cua58vQK7iebhbWTeP2BEpg2b26n), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard). 배포 번들은 `e705d1f`와 동일한 작업 트리에서 생성됐다.
 - 환경: release bundle에 `API_BASE_URL=https://aiflow-web-canary.vercel.app`, `STUDENT_SERVICES_DEMO=true`, `STUDENT_STORE_DEMO=true`, HTTPS `OSM_TILE_URL`을 정의했다. 포인트 데모 API는 canary에서만 활성화된다.
 - 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON이며 release bundle에는 `localhost`가 없다.
 - 브라우저: production alias의 390×844 모바일·1280×900 데스크톱 홈·설정·프로필·코스 목록·오답 재풀이·코스 런타임·자료실·학습 일정을 새 탭에서 5초 대기 후 캡처했고, 각 캡처의 콘솔 error/warn은 0건이다. 오답 재풀이 데이터 호출은 canary에서 `OMJ_JWT_SECRET is not configured` 503을 반환해 오류/재시도 상태로 캡처했다. 코스 런타임도 인증 없는 임의 ID에 대해 오류/목록 복귀 상태를 렌더링한다. 자료실과 학습 일정은 API 빈/오류 상태를 HTML 셸 안에서 렌더링한다. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
