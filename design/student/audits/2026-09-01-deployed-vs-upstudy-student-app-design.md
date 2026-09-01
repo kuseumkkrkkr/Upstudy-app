@@ -88,7 +88,7 @@
 | HTML ID | Flutter/배포 기준 | 상태 | 핵심 차이 |
 | --- | --- | --- | --- |
 | courses | `/courses` · `CourseCatalogPage` | partial | HTML library shell·filter·카드 밀도 차이 |
-| course-detail | 코스 상세 위젯 | missing | 신규 hero/progress/accordion/mobile fixed CTA 미구현 |
+| course-detail | 코스 상세 위젯 | partial | HTML 진행 hero·5단계·직각 curriculum·모바일 이어하기 CTA를 이식함. 실제 코스 유닛·등록 API 상태와 완전한 행별 결과는 데이터/인증 상태에 따라 추가 확인 필요 |
 | course-learning | 코스 학습 위젯 | partial | mission dispatcher·다음 문제·runtime 상태 차이 |
 | course-runtime | `/course_runtime` | P1 | 인자 없는 경로가 catalog fallback |
 | review-course | 복습 course 위젯 | partial | review 상태·완료 후 복귀 차이 |
@@ -247,7 +247,7 @@
 | 데모 서비스 | OSM HTTPS 타일·attribution, 로컬 fixture·검색·필터·문의 상태, flag off 메뉴 숨김 | `lib/features/student_services/student_services_demo_page.dart`, `lib/app/student_feature_flags.dart` | 반영 |
 | 수학 내신 | `GET/PUT /student/school-exam-plan/active`, task PATCH, version conflict, 연결 데이터 없을 때 빈 상태 | `api/index.py`, `omj/migrations/postgres/010_student_demo_services_store.sql` | 반영 |
 | 포인트 상점 | 4개 더미 상품, 서버 RPC 지갑 잠금·원장·중복/멱등 키·잔액 부족 분기, UI-only 구독 | `api/index.py`, `omj/migrations/postgres/010_student_demo_services_store.sql`, `lib/shared/services/api/api_client.dart` | 반영(마이그레이션 적용 필요) |
-| 캡처 근거 | 기준 HTML, 배포 canary, 로컬 hotfix의 동일 상태·뷰포트 캡처를 evidence 폴더에 저장 | 홈: `design-home-390x844.png`, `design-home-1280x900.png`, `deployed-f919869-home-390x844.png`, `deployed-f919869-home-1280x900.png`; 설정: `design-settings-390x844.png`, `design-settings-1280x900.png`, `deployed-f919869-settings-390x844.png`, `deployed-f919869-settings-1280x900.png`; 프로필: `design-profile-390x844.png`, `design-profile-1280x900.png`, `deployed-f919869-profile-390x844.png`, `deployed-f919869-profile-1280x900.png`; 코스: `design-courses-390x844.png`, `design-courses-1280x900.png`, `deployed-courses-390x844-before.png`, `deployed-courses-1280x900-before.png`; 로컬 재현: `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`, `local-settings-html-390x844.png`, `local-settings-html-1280x900.png` | 홈·설정·프로필 최종 캡처는 `f919869` production alias 기준. 코스는 기존 배포 캡처이며 API 빈 상태를 그대로 기록 |
+| 캡처 근거 | 기준 HTML, 배포 canary, 로컬 hotfix의 동일 상태·뷰포트 캡처를 evidence 폴더에 저장 | 홈: `design-home-390x844.png`, `design-home-1280x900.png`, `deployed-3adbdfe-home-390x844.png`, `deployed-3adbdfe-home-1280x900.png`; 설정: `design-settings-390x844.png`, `design-settings-1280x900.png`, `deployed-3adbdfe-settings-390x844.png`, `deployed-3adbdfe-settings-1280x900.png`; 프로필: `design-profile-390x844.png`, `design-profile-1280x900.png`, `deployed-3adbdfe-profile-390x844.png`, `deployed-3adbdfe-profile-1280x900.png`; 코스 목록: `design-courses-390x844.png`, `design-courses-1280x900.png`, `deployed-3adbdfe-courses-390x844.png`, `deployed-3adbdfe-courses-1280x900.png`; 코스 상세 기준: `design-course-detail-390x844.png`, `design-course-detail-1280x900.png`; 로컬 재현: `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`, `local-settings-html-390x844.png`, `local-settings-html-1280x900.png` | 홈·설정·프로필·코스 목록 최종 캡처는 `3adbdfe` production alias 기준이며 각 상태에서 브라우저 error/warn 0건을 새 탭·5초 대기 후 확인했다. 코스 목록은 인증 없는 API 빈 상태를 데이터 변동으로 그대로 기록하며, 상세는 기준 HTML 구조와 코드로 검증 |
 
 ### 2026-09-02 HTML 구조 이식 추가분
 
@@ -255,16 +255,17 @@
 | --- | --- | --- | --- |
 | 설정 | `StudentHtmlShell` + `_HtmlSettingsRow`/`_HtmlSettingsActionRow`로 HTML의 단일 직각 패널, 5개 행, 블랙/화이트 토글을 사용. 기존 로컬 설정 저장과 라이선스·계정 연동 안내 동작은 유지 | `lib/sessions/settings/ui/pages/settings_page.dart`; `local-settings-html-390x844.png`, `local-settings-html-1280x900.png`; 기준 `design-settings-390x844.png`, `design-settings-1280x900.png` | 계정 연동은 실제 서버 계약이 없어 안내 시트만 제공. 인증 계정에서 저장/라이선스 포커스 복귀는 별도 검증 필요 |
 | 프로필 | 로딩·인증 만료 상태를 `StudentHtmlShell`의 A 레일·HTML 상단바·모바일 탭과 재시도 카드로 감쌈. 정상 데이터 경로는 기존 `_ProfileHero`/폼/API 계약을 유지 | `lib/sessions/auth/ui/pages/profile_page.dart`; `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`; 기준 `design-profile-390x844.png`, `design-profile-1280x900.png` | 실제 계정 데이터에서 HTML 정보/보안 행·삭제 확인 모달의 일대일 캡처는 인증 세션 없이는 완료할 수 없음 |
+| 코스 상세 | `_HtmlCourseProgressHero`와 `_HtmlCourseCurriculum`으로 진행 hero·단계·유닛 상태·모바일 하단 CTA를 실제 `Course` 객체에 연결. 등록·이어하기·미리보기 API/동작은 기존 계약을 호출 | `lib/sessions/course/ui/course_detail_page.dart`; 기준 `design-course-detail-390x844.png`, `design-course-detail-1280x900.png` | 인증 없는 canary에서는 코스 상세로 진입할 코스가 없어 production 이미지 캡처는 보류. 유닛이 없을 때 샘플 코스를 만들지 않고 빈 상태로 표시 |
 
-초기 비교 캡처(`deployed-dashboard-390x844.png`)는 이전 `public/main.dart.js` 정적 번들이 배포된 상태라 흰 화면으로 기록되었다. 이후 `HtmlHomeDashboard`가 실제 Flutter 홈 본문을 대체하고 `_HtmlStudentRail`·`_HtmlStudentTopBar`·`_HtmlContextAside` 공통 셸을 추가했다. `f919869` production 배포에서 HTML과 같은 390×844·1280×900 홈 구조(모바일 상단바/하단탭, 데스크톱 A 레일, 인사·코스·이어하기, 6개 액션, 마이 대시보드, 우측 컨텍스트)를 이미지로 재확인했고, 설정·프로필에도 같은 셸과 HTML 구조를 이식했다(`deployed-f919869-*.png`). 브라우저 콘솔 error/warn은 0건이었다. 브라우저 DOM 접근성 스냅샷은 CanvasKit 특성상 `Enable accessibility` 버튼만 노출되어, Semantics·키보드 포커스는 별도 Flutter 테스트 범위로 남긴다. 기준 HTML은 `?screen=home` 상태에서 같은 순서와 밀도로 표시됨을 확인했다. 이 반영은 홈·공통 셸·설정·프로필에 한정되며, 나머지 82개 화면은 아래 매핑 상태(`partial`/`missing`) 그대로 추가 구현 대상이다.
+초기 비교 캡처(`deployed-dashboard-390x844.png`)는 이전 `public/main.dart.js` 정적 번들이 배포된 상태라 흰 화면으로 기록되었다. 이후 `HtmlHomeDashboard`가 실제 Flutter 홈 본문을 대체하고 `_HtmlStudentRail`·`_HtmlStudentTopBar`·`_HtmlContextAside` 공통 셸을 추가했다. `3adbdfe` production 배포에서 HTML과 같은 390×844·1280×900 홈 구조(모바일 상단바/하단탭, 데스크톱 A 레일, 인사·코스·이어하기, 6개 액션, 마이 대시보드, 우측 컨텍스트)를 이미지로 재확인했고, 설정·프로필·코스 목록에도 같은 셸과 HTML 구조를 이식했다(`deployed-3adbdfe-*.png`). 새 탭에서 5초 대기 후 브라우저 콘솔 error/warn은 0건이었다. 브라우저 DOM 접근성 스냅샷은 CanvasKit 특성상 `Enable accessibility` 버튼만 노출되어, Semantics·키보드 포커스는 별도 Flutter 테스트 범위로 남긴다. 기준 HTML은 `?screen=home` 상태에서 같은 순서와 밀도로 표시됨을 확인했다. 이 반영은 홈·공통 셸·설정·프로필·코스 상세 구조에 한정되며, 나머지 81개 화면은 아래 매핑 상태(`partial`/`missing`) 그대로 추가 구현 대상이다.
 
 ### 최종 배포 기록 (2026-09-02)
 
-- 커밋: `f919869` (`build(web): use canary API base for release bundle`), `origin/hotfix` 반영.
-- Vercel: [`dpl_EJrqtYnbUUDCexYUbQMCygzMkAxK`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/EJrqtYnbUUDCexYUbQMCygzMkAxK), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard).
+- 커밋: `3adbdfe` (`feat(student): port course detail HTML layout`), `origin/hotfix` 반영.
+- Vercel: [`dpl_GBx13dkkwjaNkK1QdAWdV3HH9Gz4`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/GBx13dkkwjaNkK1QdAWdV3HH9Gz4), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard).
 - 환경: release bundle에 `API_BASE_URL=https://aiflow-web-canary.vercel.app`, `STUDENT_SERVICES_DEMO=true`, `STUDENT_STORE_DEMO=true`, HTTPS `OSM_TILE_URL`을 정의했다. 포인트 데모 API는 canary에서만 활성화된다.
 - 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON이며 release bundle에는 `localhost`가 없다.
-- 브라우저: production alias의 390×844 모바일·1280×900 데스크톱 홈·설정·프로필을 최종 캡처했고 콘솔 error/warn은 각 상태에서 0건이다. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
+- 브라우저: production alias의 390×844 모바일·1280×900 데스크톱 홈·설정·프로필·코스 목록을 새 탭에서 5초 대기 후 최종 캡처했고, 각 캡처의 콘솔 error/warn은 0건이다. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
 
 자동 검증:
 
