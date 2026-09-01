@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 import 'models.dart';
 import 'student_runtime_service.dart';
@@ -97,84 +96,63 @@ class _StudentRuntimePageState extends State<StudentRuntimePage> {
   Widget build(BuildContext context) {
     final course = _courses.isEmpty ? null : _courses.first;
     final current = _currentModule(course);
-    return Scaffold(
+    return StudentHtmlShell(
       key: const ValueKey('student-runtime-screen'),
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                showLevelIndicator: false,
-                showUtilityActions: true,
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.courses,
+      title: '코스 학습',
+      activeRoute: '/courses',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: StudentDensityPage(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _RuntimeHeading(onOpenCatalog: _openCourseCatalog),
+                    const SizedBox(height: 16),
+                    _RuntimeHero(course: course),
+                    const SizedBox(height: 10),
+                    _CurrentRuntimeCard(
+                      course: course,
+                      module: current,
+                      onOpen: current == null || course == null
+                          ? _openCourseCatalog
+                          : () => _openModule(course, current),
+                    ),
+                    const SizedBox(height: 42),
+                    const StudentDensityEyebrow('COURSE ROUTE'),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '코스 진행 경로',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '현재 학습은 먼저 표시하고, 잠긴 미션은 이전 미션 완료 후 열립니다.',
+                      style: TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    if (course == null)
+                      _EmptyRuntime(onOpenCatalog: _openCourseCatalog)
+                    else
+                      _RuntimeModuleList(
+                        course: course,
+                        onOpen: (module) => _openModule(course, module),
+                      ),
+                    const SizedBox(height: 40),
+                  ],
                 ),
               ),
             ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      child: StudentDensityPage(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _RuntimeHeading(onOpenCatalog: _openCourseCatalog),
-                            const SizedBox(height: 16),
-                            _RuntimeHero(course: course),
-                            const SizedBox(height: 10),
-                            _CurrentRuntimeCard(
-                              course: course,
-                              module: current,
-                              onOpen: current == null || course == null
-                                  ? _openCourseCatalog
-                                  : () => _openModule(course, current),
-                            ),
-                            const SizedBox(height: 42),
-                            const StudentDensityEyebrow('COURSE ROUTE'),
-                            const SizedBox(height: 10),
-                            const Text(
-                              '코스 진행 경로',
-                              style: TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              '현재 학습은 먼저 표시하고, 잠긴 미션은 이전 미션 완료 후 열립니다.',
-                              style: TextStyle(
-                                color: StudentDensityTokens.muted,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            if (course == null)
-                              _EmptyRuntime(onOpenCatalog: _openCourseCatalog)
-                            else
-                              _RuntimeModuleList(
-                                course: course,
-                                onOpen: (module) => _openModule(course, module),
-                              ),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

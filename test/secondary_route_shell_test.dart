@@ -139,7 +139,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('학생 런타임은 PC 공용 코스 내비게이션과 명명 홈 이동을 쓴다', (tester) async {
+  testWidgets('학생 런타임은 PC HTML 코스 셸과 명명 홈 이동을 쓴다', (tester) async {
     _setViewport(tester, const Size(1280, 900));
     await tester.pumpWidget(
       _withRoutes(
@@ -167,15 +167,12 @@ void main() {
     await tester.pump();
 
     expect(find.byType(AppBar), findsNothing);
-    expect(find.byKey(const ValueKey('student-top-nav-코스')), findsOneWidget);
-    expect(find.byTooltip('검색'), findsOneWidget);
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
+    expect(find.byType(StudentHtmlRail), findsOneWidget);
+    expect(find.bySemanticsLabel('검색'), findsOneWidget);
     expect(find.text('개념 완성 코스'), findsOneWidget);
 
-    final onTitleTap = tester
-        .widget<Ios26TopBar>(find.byType(Ios26TopBar).first)
-        .onTitleTap;
-    expect(onTitleTap, isNotNull);
-    onTitleTap!();
+    await tester.tap(find.text('홈').first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('route:/student/dashboard'), findsOneWidget);
