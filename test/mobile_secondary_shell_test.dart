@@ -57,8 +57,12 @@ void main() {
     await _expectMobileShell(tester, const WrongAnswerListPage());
   });
 
-  testWidgets('레벨 테스트는 모바일 하단 앱 셸을 사용한다', (tester) async {
-    await _expectMobileShell(tester, const LevelTestHomePage());
+  testWidgets('레벨 테스트는 모바일 HTML 앱 셸을 사용한다', (tester) async {
+    await _expectMobileShell(
+      tester,
+      const LevelTestHomePage(),
+      htmlShell: true,
+    );
   });
 
   testWidgets('대결은 모바일 하단 앱 셸을 사용한다', (tester) async {

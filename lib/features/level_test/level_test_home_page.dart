@@ -6,10 +6,9 @@ import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 class LevelTestHomePage extends StatefulWidget {
   const LevelTestHomePage({super.key, this.initialStats});
@@ -156,63 +155,39 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       return LevelTestResultPage(placementResult: _completedResult);
     }
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
+    return StudentHtmlShell(
       key: const ValueKey('level-test-screen'),
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/level_test')
-          : null,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
+      title: '레벨 테스트',
+      activeRoute: LevelTestHomePage.routeName,
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: SingleChildScrollView(
+        child: StudentDensityPage(
+          child: mobile
+              ? _MobilePlacementBody(
+                  loading: _loading,
+                  error: _error,
+                  stats: _stats,
+                  onStart: _startPlacement,
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _PlacementHero(),
+                    const SizedBox(height: 34),
+                    const _PlacementIntro(),
+                    const SizedBox(height: 18),
+                    _PlacementStatistics(stats: _stats),
+                    const SizedBox(height: 14),
+                    _PlacementReady(
+                      loading: _loading,
+                      error: _error,
+                      onStart: _startPlacement,
+                    ),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-                showLevelIndicator: false,
-                showUtilityActions: true,
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.learning,
-                ),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: StudentDensityPage(
-                  child: mobile
-                      ? _MobilePlacementBody(
-                          loading: _loading,
-                          error: _error,
-                          stats: _stats,
-                          onStart: _startPlacement,
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const _PlacementHero(),
-                            const SizedBox(height: 34),
-                            const _PlacementIntro(),
-                            const SizedBox(height: 18),
-                            _PlacementStatistics(stats: _stats),
-                            const SizedBox(height: 14),
-                            _PlacementReady(
-                              loading: _loading,
-                              error: _error,
-                              onStart: _startPlacement,
-                            ),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
