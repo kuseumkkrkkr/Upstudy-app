@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({
@@ -427,24 +426,6 @@ class _SchedulePageState extends State<SchedulePage> {
     );
   }
 
-  /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리는 모든 폭에서 공용 드로어를 햄버거로 열고, PC만 중앙 메뉴를 추가하는 것이다.
-  Widget _buildHeader(BuildContext context) {
-    return Ios26TopBar(
-      brandColor: Colors.black,
-      showLevelIndicator: false,
-      showUtilityActions: true,
-      onMenu: () => toggleAppDrawer(context),
-      onTitleTap: () => Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
-      items: studentTopNavItems(
-        context,
-        active: StudentTopDestination.learning,
-      ),
-    );
-  }
-
   /// 필요한 변수는 화면 너비·주간/월간 상태·선택 날짜·런타임 일정이다.
   /// 작동 원리는 780px 이하에서는 일정과 요약을 세로로, PC에서는 시안 비율의 2열로 배치하는 것이다.
   @override
@@ -497,70 +478,62 @@ class _SchedulePageState extends State<SchedulePage> {
       onDeletePersonalSchedule: _deletePersonalSchedule,
     );
 
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
+    return StudentHtmlShell(
+      title: '학습 일정',
+      activeRoute: SchedulePage.routeName,
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: RefreshIndicator(
+        onRefresh: _loadRuntimeSchedule,
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
-            Builder(builder: _buildHeader),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _loadRuntimeSchedule,
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    StudentDensityPage(
-                      padding: EdgeInsets.fromLTRB(
-                        studentDensityHorizontalPadding(context),
-                        studentDensityVerticalPadding(context),
-                        studentDensityHorizontalPadding(context),
-                        40,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          StudentDensityPageHeader(
-                            eyebrow: _monthLabel(_selectedDate),
-                            title: '학습 일정',
-                            description: '오늘의 시간표와 월간 계획을 한 화면에서 전환해 확인합니다.',
-                            action: _ScheduleModeSwitch(
-                              daily: _daily,
-                              onChanged: (value) => setState(() {
-                                _daily = value;
-                                if (value) {
-                                  _selectedDate = DateUtils.dateOnly(
-                                    DateTime.now(),
-                                  );
-                                }
-                              }),
-                            ),
-                          ),
-                          SizedBox(height: mobile ? 14 : 20),
-                          if (mobile)
-                            Column(
-                              key: const ValueKey('schedule-mobile-layout'),
-                              children: [
-                                scheduleCard,
-                                const SizedBox(height: 14),
-                                summaryCard,
-                              ],
-                            )
-                          else
-                            Row(
-                              key: const ValueKey('schedule-desktop-layout'),
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(flex: 155, child: scheduleCard),
-                                const SizedBox(width: 14),
-                                Expanded(flex: 65, child: summaryCard),
-                              ],
-                            ),
-                        ],
-                      ),
+            StudentDensityPage(
+              padding: EdgeInsets.fromLTRB(
+                studentDensityHorizontalPadding(context),
+                studentDensityVerticalPadding(context),
+                studentDensityHorizontalPadding(context),
+                40,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  StudentDensityPageHeader(
+                    eyebrow: _monthLabel(_selectedDate),
+                    title: '학습 일정',
+                    description: '오늘의 시간표와 월간 계획을 한 화면에서 전환해 확인합니다.',
+                    action: _ScheduleModeSwitch(
+                      daily: _daily,
+                      onChanged: (value) => setState(() {
+                        _daily = value;
+                        if (value) {
+                          _selectedDate = DateUtils.dateOnly(DateTime.now());
+                        }
+                      }),
                     ),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: mobile ? 14 : 20),
+                  if (mobile)
+                    Column(
+                      key: const ValueKey('schedule-mobile-layout'),
+                      children: [
+                        scheduleCard,
+                        const SizedBox(height: 14),
+                        summaryCard,
+                      ],
+                    )
+                  else
+                    Row(
+                      key: const ValueKey('schedule-desktop-layout'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 155, child: scheduleCard),
+                        const SizedBox(width: 14),
+                        Expanded(flex: 65, child: summaryCard),
+                      ],
+                    ),
+                ],
               ),
             ),
           ],

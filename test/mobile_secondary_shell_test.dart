@@ -8,10 +8,15 @@ import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// 필요한 변수는 390px에서 확인할 학생 보조 화면이다.
 /// 작동 원리는 화면을 한 프레임 렌더링한 뒤 모바일 하단 앱바가 있고 PC 드로어·햄버거가 없는지 확인한다.
-Future<void> _expectMobileShell(WidgetTester tester, Widget page) async {
+Future<void> _expectMobileShell(
+  WidgetTester tester,
+  Widget page, {
+  bool htmlShell = false,
+}) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -21,8 +26,17 @@ Future<void> _expectMobileShell(WidgetTester tester, Widget page) async {
   await tester.pump();
 
   expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
+  // Scaffold.drawer는 닫힌 상태에서 트리에 삽입되지 않으므로 셸 종류와 무관하게
+  // 실제 표시 여부만 검증한다.
   expect(find.byType(Drawer), findsNothing);
-  expect(find.byKey(const ValueKey('student-mobile-menu')), findsNothing);
+  expect(
+    find.byKey(const ValueKey('student-mobile-menu')),
+    htmlShell ? findsOneWidget : findsNothing,
+  );
+  expect(
+    find.byType(StudentHtmlTopBar),
+    htmlShell ? findsOneWidget : findsNothing,
+  );
   expect(find.text('AIFlow'), findsNothing);
   expect(tester.takeException(), isNull);
 }
@@ -35,6 +49,7 @@ void main() {
         initialSchedule: const [],
         initialDate: DateTime(2026, 7, 29),
       ),
+      htmlShell: true,
     );
   });
 
