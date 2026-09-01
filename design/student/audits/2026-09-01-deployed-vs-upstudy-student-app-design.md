@@ -64,8 +64,8 @@
 | signup-profile | `/signup` · `SignupPage` | partial | 3단계는 있으나 필드 순서·검증·disabled 상태·학교 선택 동작 차이 |
 | signup-account | `/signup` · `SignupPage` | partial | 아이디 중복 검사·계정 단계 상태가 HTML 계약과 다름 |
 | signup-complete | `/signup` · `SignupPage` | partial | 확인 화면 CTA·가입 완료 후 이동·오류 재진입 차이 |
-| profile | `/profile` · `ProfilePage` | partial | HTML 요약+편집 sheet, Flutter 장문 inline form |
-| settings | `/settings` · `SettingsPage` | partial | 토글은 유사하나 account-link wizard·삭제/재인증 상태 차이 |
+| profile | `/profile` · `ProfilePage` | partial | HTML 계정 히어로·정보/보안 섹션은 이식됨. 인증 만료/로딩도 HTML 셸 재시도 카드로 렌더링하며, 실제 계정 연동·삭제/재인증 상태는 추가 확인 필요 |
+| settings | `/settings` · `SettingsPage` | partial | HTML 직각 단일 패널·5개 행(교재/간편풀이/알림/계정 연동/라이선스)과 토글·액션 순서를 이식함. 계정 연동은 서버 계약 부재를 안내하는 시트로 제한 |
 | about | `/landing/about` · `LandingAboutPage` | partial | HTML 5단계 제품 튜토리얼과 marketing/about 페이지 불일치 |
 
 ### 홈 (10)
@@ -247,7 +247,14 @@
 | 데모 서비스 | OSM HTTPS 타일·attribution, 로컬 fixture·검색·필터·문의 상태, flag off 메뉴 숨김 | `lib/features/student_services/student_services_demo_page.dart`, `lib/app/student_feature_flags.dart` | 반영 |
 | 수학 내신 | `GET/PUT /student/school-exam-plan/active`, task PATCH, version conflict, 연결 데이터 없을 때 빈 상태 | `api/index.py`, `omj/migrations/postgres/010_student_demo_services_store.sql` | 반영 |
 | 포인트 상점 | 4개 더미 상품, 서버 RPC 지갑 잠금·원장·중복/멱등 키·잔액 부족 분기, UI-only 구독 | `api/index.py`, `omj/migrations/postgres/010_student_demo_services_store.sql`, `lib/shared/services/api/api_client.dart` | 반영(마이그레이션 적용 필요) |
-| 캡처 근거 | 기준 HTML 홈, HTML 이식 후 배포 canary, 로컬 hotfix·학원 데모 캡처를 동일 evidence 폴더에 저장 | `evidence/2026-09-01-deployed-vs-design/design-home-390x844.png`, `design-home-1280x900.png`, `deployed-html-shell-390x844.png`, `deployed-html-shell-1280x900.png`, `local-hotfix-dashboard-390x844.png`, `local-academy-demo.png` | HTML 홈 구조 이식 후 모바일·PC 렌더링 확인. 새 캡처는 `649d048` 배포 기준 |
+| 캡처 근거 | 기준 HTML, 배포 canary, 로컬 hotfix의 동일 상태·뷰포트 캡처를 evidence 폴더에 저장 | 홈: `design-home-390x844.png`, `design-home-1280x900.png`, `deployed-html-shell-390x844.png`, `deployed-html-shell-1280x900.png`; 설정: `design-settings-390x844.png`, `design-settings-1280x900.png`, `local-settings-html-390x844.png`, `local-settings-html-1280x900.png`; 프로필: `design-profile-390x844.png`, `design-profile-1280x900.png`, `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`; 코스: `design-courses-390x844.png`, `design-courses-1280x900.png`, `deployed-courses-390x844-before.png`, `deployed-courses-1280x900-before.png` | 홈은 `649d048` 배포 기준. 설정·프로필은 새 Flutter 번들의 로컬 렌더링 기준이며 다음 배포에서 alias를 재검증 |
+
+### 2026-09-02 HTML 구조 이식 추가분
+
+| 화면 | 실제 Flutter 반영 | 이미지·코드 근거 | 남은 차이 |
+| --- | --- | --- | --- |
+| 설정 | `StudentHtmlShell` + `_HtmlSettingsRow`/`_HtmlSettingsActionRow`로 HTML의 단일 직각 패널, 5개 행, 블랙/화이트 토글을 사용. 기존 로컬 설정 저장과 라이선스·계정 연동 안내 동작은 유지 | `lib/sessions/settings/ui/pages/settings_page.dart`; `local-settings-html-390x844.png`, `local-settings-html-1280x900.png`; 기준 `design-settings-390x844.png`, `design-settings-1280x900.png` | 계정 연동은 실제 서버 계약이 없어 안내 시트만 제공. 인증 계정에서 저장/라이선스 포커스 복귀는 별도 검증 필요 |
+| 프로필 | 로딩·인증 만료 상태를 `StudentHtmlShell`의 A 레일·HTML 상단바·모바일 탭과 재시도 카드로 감쌈. 정상 데이터 경로는 기존 `_ProfileHero`/폼/API 계약을 유지 | `lib/sessions/auth/ui/pages/profile_page.dart`; `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`; 기준 `design-profile-390x844.png`, `design-profile-1280x900.png` | 실제 계정 데이터에서 HTML 정보/보안 행·삭제 확인 모달의 일대일 캡처는 인증 세션 없이는 완료할 수 없음 |
 
 초기 비교 캡처(`deployed-dashboard-390x844.png`)는 이전 `public/main.dart.js` 정적 번들이 배포된 상태라 흰 화면으로 기록되었다. 이후 `HtmlHomeDashboard`가 실제 Flutter 홈 본문을 대체하고 `_HtmlStudentRail`·`_HtmlStudentTopBar`·`_HtmlContextAside` 공통 셸을 추가했다. `649d048` 배포에서 HTML과 같은 390×844·1280×900 홈 구조(모바일 상단바/하단탭, 데스크톱 A 레일, 인사·코스·이어하기, 6개 액션, 마이 대시보드, 우측 컨텍스트)를 이미지로 재확인했다(`deployed-html-shell-390x844.png`, `deployed-html-shell-1280x900.png`). 브라우저 콘솔 error/warn은 0건이었다. 브라우저 DOM 접근성 스냅샷은 CanvasKit 특성상 `Enable accessibility` 버튼만 노출되어, Semantics·키보드 포커스는 별도 Flutter 테스트 범위로 남긴다. 기준 HTML은 `?screen=home` 상태에서 같은 순서와 밀도로 표시됨을 확인했다. 이 반영은 홈과 공통 셸에 한정되며, 나머지 85개 화면은 아래 매핑 상태(`partial`/`missing`) 그대로 추가 구현 대상이다.
 

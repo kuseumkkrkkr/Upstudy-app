@@ -11,6 +11,7 @@ import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 
 typedef ProfileLoader = Future<UserProfile> Function();
@@ -470,313 +471,328 @@ class _ProfilePageState extends State<ProfilePage> {
         : _nameController.text.trim();
     final mobile = isStudentDensityMobile(context);
     if (!mobile) {
-      return _buildDesktopProfile(context, name);
+      return StudentHtmlShell(
+        title: '프로필',
+        activeRoute: '/student/dashboard',
+        includeHeader: false,
+        child: _buildDesktopProfile(context, name),
+      );
     }
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.learning,
+    return StudentHtmlShell(
+      title: '프로필',
+      activeRoute: '/student/dashboard',
+      includeHeader: false,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F4F6),
+        drawer: const AppDrawer(),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Builder(
+                builder: (context) => Ios26TopBar(
+                  brandColor: Colors.black,
+                  showLevelIndicator: false,
+                  onMenu: () => toggleAppDrawer(context),
+                  onTitleTap: () =>
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/student/dashboard',
+                        (route) => false,
+                      ),
+                  items: studentTopNavItems(
+                    context,
+                    active: StudentTopDestination.learning,
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 22, 14, 40),
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'MY ACCOUNT',
-                          style: TextStyle(
-                            fontSize: 10,
-                            letterSpacing: 1.6,
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          '프로필',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          '학습 정보와 계정 정보를 확인하고 필요한 항목만 수정합니다.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.black54,
-                            height: 1.45,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          key: const ValueKey('profile-mobile-settings'),
-                          child: OutlinedButton(
-                            onPressed: _openSettings,
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(46),
-                              foregroundColor: const Color(0xFF202022),
-                              backgroundColor: Colors.white,
-                              side: const BorderSide(color: Color(0xFFE0E0E2)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: const Text('설정'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    _ProfileHero(
-                      name: name,
-                      username: _usernameController.text,
-                      grade: _gradeController.text,
-                      track: _trackController.text,
-                      subject: _subjectController.text,
-                      school: _schoolController.text,
-                      rating: _rating,
-                      totalSolvedCount: _totalSolvedCount,
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(14, 22, 14, 40),
+                    children: [
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'LEARNING PROFILE',
+                            'MY ACCOUNT',
                             style: TextStyle(
                               fontSize: 10,
                               letterSpacing: 1.6,
                               color: Colors.black54,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            '학생 정보',
-                            style: TextStyle(
-                              fontSize: 22,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
                           const SizedBox(height: 6),
                           const Text(
-                            '코스 추천과 학습 분석에 사용하는 정보입니다.',
+                            '프로필',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            '학습 정보와 계정 정보를 확인하고 필요한 항목만 수정합니다.',
+                            style: TextStyle(
+                              fontSize: 13,
                               color: Colors.black54,
                               height: 1.45,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF4F4F6),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: const Color(0xFFE0E0E2),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            key: const ValueKey('profile-mobile-settings'),
+                            child: OutlinedButton(
+                              onPressed: _openSettings,
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(46),
+                                foregroundColor: const Color(0xFF202022),
+                                backgroundColor: Colors.white,
+                                side: const BorderSide(
+                                  color: Color(0xFFE0E0E2),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
+                              child: const Text('설정'),
                             ),
-                            child: const Text(
-                              'GET /auth/me',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      _ProfileHero(
+                        name: name,
+                        username: _usernameController.text,
+                        grade: _gradeController.text,
+                        track: _trackController.text,
+                        subject: _subjectController.text,
+                        school: _schoolController.text,
+                        rating: _rating,
+                        totalSolvedCount: _totalSolvedCount,
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'LEARNING PROFILE',
                               style: TextStyle(
                                 fontSize: 10,
+                                letterSpacing: 1.6,
                                 color: Colors.black54,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          _field(
-                            controller: _nameController,
-                            label: '이름',
-                            validator: (value) =>
-                                value == null || value.trim().isEmpty
-                                ? '이름을 입력해 주세요.'
-                                : null,
-                          ),
-                          const SizedBox(height: 14),
-                          _field(
-                            controller: _usernameController,
-                            label: '아이디',
-                            validator: (value) =>
-                                value == null || value.trim().isEmpty
-                                ? 'ID를 입력해 주세요.'
-                                : null,
-                          ),
-                          const SizedBox(height: 14),
-                          _field(controller: _trackController, label: '과정'),
-                          const SizedBox(height: 14),
-                          _field(controller: _gradeController, label: '학년'),
-                          const SizedBox(height: 14),
-                          _field(controller: _subjectController, label: '과목'),
-                          const SizedBox(height: 14),
-                          _field(controller: _schoolController, label: '학교'),
-                          const SizedBox(height: 14),
-                          _field(
-                            controller: _emailController,
-                            label: '이메일',
-                            keyboardType: TextInputType.emailAddress,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _htmlAccountCard(
-                      eyebrow: 'SECURITY',
-                      title: '비밀번호 변경',
-                      description: '변경하지 않으려면 두 입력란을 비워두세요.',
-                      children: [
-                        _field(
-                          controller: _passwordController,
-                          label: '새 비밀번호',
-                          hintText: '8–20자 영문+숫자',
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 14),
-                        _field(
-                          controller: _passwordConfirmController,
-                          label: '새 비밀번호 확인',
-                          hintText: '한 번 더 입력',
-                          obscureText: true,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: _saving ? null : _saveProfile,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF202022),
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: _saving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                            const SizedBox(height: 10),
+                            const Text(
+                              '학생 정보',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
                               ),
-                            )
-                          : const Text('변경사항 저장'),
-                    ),
-                    const SizedBox(height: 12),
-                    _htmlAccountCard(
-                      eyebrow: 'READER',
-                      title: '교재 보기',
-                      description: '교재를 PDF형 페이지 단위로 표시합니다.',
-                      children: [
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          value: _textbookPageMode,
-                          onChanged: _setTextbookPageMode,
-                          title: Text(
-                            _textbookPageMode ? '페이지 보기 켜짐' : '페이지 보기 꺼짐',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              '코스 추천과 학습 분석에 사용하는 정보입니다.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                                height: 1.45,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF4F4F6),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: const Color(0xFFE0E0E2),
+                                ),
+                              ),
+                              child: const Text(
+                                'GET /auth/me',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _field(
+                              controller: _nameController,
+                              label: '이름',
+                              validator: (value) =>
+                                  value == null || value.trim().isEmpty
+                                  ? '이름을 입력해 주세요.'
+                                  : null,
+                            ),
+                            const SizedBox(height: 14),
+                            _field(
+                              controller: _usernameController,
+                              label: '아이디',
+                              validator: (value) =>
+                                  value == null || value.trim().isEmpty
+                                  ? 'ID를 입력해 주세요.'
+                                  : null,
+                            ),
+                            const SizedBox(height: 14),
+                            _field(controller: _trackController, label: '과정'),
+                            const SizedBox(height: 14),
+                            _field(controller: _gradeController, label: '학년'),
+                            const SizedBox(height: 14),
+                            _field(controller: _subjectController, label: '과목'),
+                            const SizedBox(height: 14),
+                            _field(controller: _schoolController, label: '학교'),
+                            const SizedBox(height: 14),
+                            _field(
+                              controller: _emailController,
+                              label: '이메일',
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _htmlAccountCard(
-                      eyebrow: 'SESSION',
-                      title: '로그인 상태',
-                      description: '이 기기의 JWT와 사용자명을 삭제하고 로그아웃합니다.',
-                      children: [
-                        OutlinedButton(
-                          onPressed: _logout,
-                          child: const Text('로그아웃'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7F6),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: const Color(0xFFF0B8B2)),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                      const SizedBox(height: 12),
+                      _htmlAccountCard(
+                        eyebrow: 'SECURITY',
+                        title: '비밀번호 변경',
+                        description: '변경하지 않으려면 두 입력란을 비워두세요.',
                         children: [
-                          const Text(
-                            'DANGER ZONE',
-                            style: TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 1.6,
-                              color: Colors.redAccent,
-                              fontWeight: FontWeight.w900,
-                            ),
+                          _field(
+                            controller: _passwordController,
+                            label: '새 비밀번호',
+                            hintText: '8–20자 영문+숫자',
+                            obscureText: true,
                           ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            '계정 삭제',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '현재 비밀번호 확인 후 계정과 로그인 정보를 삭제합니다. 되돌릴 수 없습니다.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              height: 1.45,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          OutlinedButton(
-                            onPressed: _deleting ? null : _openDeleteModal,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.redAccent,
-                              side: const BorderSide(color: Colors.redAccent),
-                            ),
-                            child: const Text('계정 삭제'),
+                          const SizedBox(height: 14),
+                          _field(
+                            controller: _passwordConfirmController,
+                            label: '새 비밀번호 확인',
+                            hintText: '한 번 더 입력',
+                            obscureText: true,
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: _saving ? null : _saveProfile,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF202022),
+                          minimumSize: const Size.fromHeight(52),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('변경사항 저장'),
+                      ),
+                      const SizedBox(height: 12),
+                      _htmlAccountCard(
+                        eyebrow: 'READER',
+                        title: '교재 보기',
+                        description: '교재를 PDF형 페이지 단위로 표시합니다.',
+                        children: [
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            value: _textbookPageMode,
+                            onChanged: _setTextbookPageMode,
+                            title: Text(
+                              _textbookPageMode ? '페이지 보기 켜짐' : '페이지 보기 꺼짐',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _htmlAccountCard(
+                        eyebrow: 'SESSION',
+                        title: '로그인 상태',
+                        description: '이 기기의 JWT와 사용자명을 삭제하고 로그아웃합니다.',
+                        children: [
+                          OutlinedButton(
+                            onPressed: _logout,
+                            child: const Text('로그아웃'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7F6),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: const Color(0xFFF0B8B2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'DANGER ZONE',
+                              style: TextStyle(
+                                fontSize: 10,
+                                letterSpacing: 1.6,
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            const Text(
+                              '계정 삭제',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              '현재 비밀번호 확인 후 계정과 로그인 정보를 삭제합니다. 되돌릴 수 없습니다.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                                height: 1.45,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            OutlinedButton(
+                              onPressed: _deleting ? null : _openDeleteModal,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.redAccent,
+                                side: const BorderSide(color: Colors.redAccent),
+                              ),
+                              child: const Text('계정 삭제'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1576,58 +1592,22 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// 필요한 변수: 로딩 또는 오류 상태를 나타내는 본문 위젯.
   /// 작동 원리: 정상 화면과 같은 상단바·오버레이 드로어를 유지해 상태 전환 중에도 탐색이 끊기지 않게 한다.
-  Widget _buildMobileProfileState({required Widget child}) => Scaffold(
-    backgroundColor: const Color(0xFFF4F4F6),
-    drawer: const AppDrawer(),
-    body: SafeArea(
-      child: Column(
-        children: [
-          Builder(
-            builder: (context) => Ios26TopBar(
-              brandColor: Colors.black,
-              showLevelIndicator: false,
-              onMenu: () => toggleAppDrawer(context),
-              onTitleTap: () => Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
-              items: studentTopNavItems(
-                context,
-                active: StudentTopDestination.learning,
-              ),
-            ),
-          ),
-          Expanded(child: child),
-        ],
-      ),
-    ),
+  Widget _buildMobileProfileState({required Widget child}) => StudentHtmlShell(
+    title: '프로필',
+    activeRoute: '/student/dashboard',
+    child: child,
+    onSearch: () => showStudentQuickSearch(context),
+    onNotifications: () => showStudentNotifications(context),
   );
 
   /// 필요한 변수: 로딩 또는 오류 상태를 나타내는 본문 위젯.
   /// 작동 원리: PC에서도 프로필 본문과 같은 글래스 상단바와 오버레이 드로어를 유지한다.
-  Widget _buildDesktopProfileState({required Widget child}) => Scaffold(
-    backgroundColor: const Color(0xFFF4F4F6),
-    drawer: const AppDrawer(),
-    body: SafeArea(
-      child: Column(
-        children: [
-          Builder(
-            builder: (context) => Ios26TopBar(
-              brandColor: Colors.black,
-              showLevelIndicator: false,
-              onMenu: () => toggleAppDrawer(context),
-              onTitleTap: () => Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
-              items: studentTopNavItems(
-                context,
-                active: StudentTopDestination.learning,
-              ),
-            ),
-          ),
-          Expanded(child: child),
-        ],
-      ),
-    ),
+  Widget _buildDesktopProfileState({required Widget child}) => StudentHtmlShell(
+    title: '프로필',
+    activeRoute: '/student/dashboard',
+    child: child,
+    onSearch: () => showStudentQuickSearch(context),
+    onNotifications: () => showStudentNotifications(context),
   );
 }
 
