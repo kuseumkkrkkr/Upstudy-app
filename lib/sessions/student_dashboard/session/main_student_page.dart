@@ -20,6 +20,7 @@ import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/activity_badges.dart';
 import 'package:s11/sessions/student_dashboard/business/activity_badge_catalog.dart';
 import 'package:s11/sessions/student_dashboard/ui/widgets/learning_tools_strip.dart';
+import 'package:s11/sessions/student_dashboard/ui/widgets/html_home_dashboard.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/attendance_store.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
@@ -251,6 +252,14 @@ class _MainStudentPageState extends State<MainStudentPage> {
       ),
     );
     unawaited(RatingStore.refresh());
+    unawaited(
+      ApiClient.instance
+          .fetchAccountSummary()
+          .then((summary) {
+            ActivityStore.accountSummaryNotifier.value = summary;
+          })
+          .catchError((_) {}),
+    );
     unawaited(_refreshTeacherTasks());
     unawaited(_refreshPersonalTasks());
   }
@@ -391,6 +400,94 @@ class _MainStudentPageState extends State<MainStudentPage> {
     }
   }
 
+  void _resumeCourse(Course? course) {
+    if (course == null) {
+      unawaited(_handleCourseTap());
+      return;
+    }
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => CourseLearningPage(course: course)),
+      ),
+    );
+  }
+
+  /// HTML 홈 대시보드의 카드 목적지를 기존 학생 화면·모달 계약에 연결한다.
+  void _handleDashboardAction(String id, List<_TodayTaskItem> todayTasks) {
+    switch (id) {
+      case 'today':
+        unawaited(
+          showTodayTasksModal(
+            context: context,
+            tasks: todayTasks,
+            onTaskTap: (task) => _openTodayTask(task as _TodayTaskItem),
+          ),
+        );
+        return;
+      case 'ovr':
+      case 'week':
+        unawaited(showRatingDetailModal(context: context));
+        return;
+      case 'level':
+        final account = ActivityStore.accountSummaryNotifier.value;
+        if (account != null) {
+          unawaited(LevelDetailModal.show(context, account));
+        } else {
+          _showDashboardNotice('레벨과 포인트', '계정 정보를 불러오는 중입니다.');
+        }
+        return;
+      case 'tutor':
+        unawaited(
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const ServerChatPage(standalone: true),
+            ),
+          ),
+        );
+        return;
+      case 'arena':
+        unawaited(Navigator.of(context).pushNamed(AppRoutes.arena));
+        return;
+      case 'weakness':
+        unawaited(Navigator.of(context).pushNamed(AppRoutes.wrongAnswers));
+        return;
+      default:
+        _showDashboardNotice('마이 대시보드', '연결된 학습 데이터가 없습니다.');
+    }
+  }
+
+  void _showDashboardNotice(String title, String message) {
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        useSafeArea: true,
+        showDragHandle: true,
+        backgroundColor: StudentDensityTokens.surface,
+        builder: (_) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                style: const TextStyle(color: StudentDensityTokens.muted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -400,17 +497,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final portraitMobile =
-        mobile && MediaQuery.orientationOf(context) == Orientation.portrait;
     final todayTasks = [..._todayTeacherTasks, ..._todayPersonalTasks];
-    // 필요한 변수는 화면 방향과 인사 문구의 실제 높이다.
-    // 작동 원리: 세로형 모바일은 설명을 덜어낸 전용 히어로를 사용하고,
-    // 가로형·태블릿은 기존 정보형 히어로를 유지한다.
-    final heroExtent = portraitMobile
-        ? 156.0
-        : mobile
-        ? 250.0
-        : 294.0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -432,27 +519,32 @@ class _MainStudentPageState extends State<MainStudentPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _HeroSection(
-                        username: _displayName,
-                        height: heroExtent,
-                        portraitMobile: portraitMobile,
-                      ),
                       _CourseLoader(
                         key: _courseLoaderKey,
-                        builder: (course) => _LearningSection(
-                          todayTasks: todayTasks,
+                        builder: (course) => HtmlHomeDashboard(
+                          username: _displayName,
                           activeCourse: course,
-                          portraitMobile: portraitMobile,
-                          onCourseTap: _handleCourseTap,
-                          onTodayTasksTap: () => showTodayTasksModal(
-                            context: context,
-                            tasks: todayTasks,
-                            onTaskTap: (task) =>
-                                _openTodayTask(task as _TodayTaskItem),
-                          ),
+                          todayTaskCount: todayTasks.length,
+                          onResume: () => _resumeCourse(course),
+                          onBrowseCourses: () => Navigator.of(
+                            context,
+                          ).pushNamed(AppRoutes.courses),
+                          onReview: () => Navigator.of(
+                            context,
+                          ).pushNamed(AppRoutes.wrongAnswers),
+                          onProblemSets: () => Navigator.of(
+                            context,
+                          ).pushNamed(AppRoutes.bookbag),
+                          onExams: () => Navigator.of(
+                            context,
+                          ).pushNamed(AppRoutes.bookbag),
+                          onTextbooks: () => Navigator.of(
+                            context,
+                          ).pushNamed(AppRoutes.bookbag),
+                          onDashboardAction: (id) =>
+                              _handleDashboardAction(id, todayTasks),
                         ),
                       ),
-                      _BottomSection(),
                     ],
                   ),
                 ),
