@@ -246,16 +246,24 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     return _badArgumentsRoute(settings, expected: 'String (groupId)');
   }
 
-  // Academy dashboard (needs academyId)
-  if (name == AppRoutes.academyDashboard) {
+  // Academy dashboard (needs academyId). Deep links may carry `id` or
+  // `academyId` because browser launches cannot populate RouteSettings.args.
+  if (name == AppRoutes.academyDashboard ||
+      (uri != null && uri.path == AppRoutes.academyDashboard)) {
     final args = settings.arguments;
-    if (args is String) {
+    final academyId = args is String
+        ? args
+        : uri?.queryParameters['academyId'] ?? uri?.queryParameters['id'];
+    if (academyId != null && academyId.trim().isNotEmpty) {
       return MaterialPageRoute(
         settings: settings,
-        builder: (_) => StudentAcademyPage(academyId: args),
+        builder: (_) => StudentAcademyPage(academyId: academyId),
       );
     }
-    return _badArgumentsRoute(settings, expected: 'String (academyId)');
+    return _badArgumentsRoute(
+      settings,
+      expected: 'String (academyId) or ?id=...',
+    );
   }
 
   return null;
