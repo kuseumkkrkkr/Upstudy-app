@@ -6,6 +6,7 @@ import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/timer_page.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 void main() {
   testWidgets('학습 도구 메뉴는 모바일 햄버거 셸과 세 모달 도구를 연다', (tester) async {
@@ -42,7 +43,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('student-top-nav-학습터')), findsOneWidget);
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
+    expect(find.byType(StudentHtmlRail), findsOneWidget);
     expect(find.text('AI 학습 튜터'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('learning-tools-tutor')));
@@ -97,7 +99,12 @@ void main() {
     await tester.pump();
     expect(find.text('시작'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('뒤로가기'));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('timer-tool-page')),
+        matching: find.byKey(const ValueKey('student-mobile-menu')),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(StudentLearningToolsPage), findsOneWidget);
 

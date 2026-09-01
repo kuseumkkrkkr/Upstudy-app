@@ -7,10 +7,9 @@ import 'package:flutter_math_fork/flutter_math.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 const int _maxInputChars = 250;
 
@@ -227,52 +226,31 @@ class _ServerChatPageState extends State<ServerChatPage> {
   /// 작동 원리: 모바일은 화면 전체를, 데스크톱은 중앙의 넓은 한 열을 사용해 대화에 집중한다.
   Widget _buildStandalone(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F5),
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (topBarContext) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                showUtilityActions: true,
-                onMenu: () => toggleAppDrawer(topBarContext),
-                onTitleTap: () =>
-                    Navigator.of(topBarContext).pushNamedAndRemoveUntil(
-                      '/student/dashboard',
-                      (route) => false,
-                    ),
-                items: studentTopNavItems(
-                  topBarContext,
-                  active: StudentTopDestination.learning,
-                ),
-              ),
+    return StudentHtmlShell(
+      key: const ValueKey('server-chat-page'),
+      title: 'AI 학습 튜터',
+      activeRoute: '/tools',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          mobile ? 0 : 24,
+          mobile ? 0 : 22,
+          mobile ? 0 : 24,
+          mobile ? 0 : 22,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 920),
+            child: _buildChatSurface(
+              compact: mobile,
+              showClose: false,
+              edgeToEdge: mobile,
+              showPrompts: true,
+              onPersonalized: _canSend ? _askWithMyData : null,
             ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  mobile ? 0 : 24,
-                  mobile ? 0 : 22,
-                  mobile ? 0 : 24,
-                  mobile ? 0 : 22,
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 920),
-                    child: _buildChatSurface(
-                      compact: mobile,
-                      showClose: false,
-                      edgeToEdge: mobile,
-                      showPrompts: true,
-                      onPersonalized: _canSend ? _askWithMyData : null,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

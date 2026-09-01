@@ -4,10 +4,9 @@ import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/timer_page.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// 필요한 변수는 현재 Navigator 문맥과 노트·타이머·집중 화면이다.
 /// 작동 원리: 모바일은 HTML 액션 패널처럼 전체 화면, PC는 최대 940px 모달로 도구를 연다.
@@ -58,129 +57,103 @@ class StudentLearningToolsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/tools')
-          : null,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.learning,
+    return StudentHtmlShell(
+      key: const ValueKey('learning-tools-screen'),
+      title: '학습 도구',
+      activeRoute: '/tools',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: StudentDensityPage(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              StudentDensityPageHeader(
+                eyebrow: 'LEARNING TOOLS',
+                title: '학습 도구',
+                description: '그래프 그리기를 제외한 도구는 학습 맥락을 유지하는 모달로 실행됩니다.',
+                showMobileDescription: true,
+                action: StudentDensityButton(
+                  label: '홈으로 돌아가기',
+                  primary: true,
+                  onPressed: () => _goHome(context),
                 ),
               ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: StudentDensityPage(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+              const SizedBox(height: 20),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = mobile
+                      ? 1
+                      : constraints.maxWidth < 980
+                      ? 2
+                      : 3;
+                  return GridView.count(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    childAspectRatio: mobile ? 3.05 : 3.85,
                     children: [
-                      StudentDensityPageHeader(
-                        eyebrow: 'LEARNING TOOLS',
-                        title: '학습 도구',
-                        description: '그래프 그리기를 제외한 도구는 학습 맥락을 유지하는 모달로 실행됩니다.',
-                        showMobileDescription: true,
-                        action: StudentDensityButton(
-                          label: '홈으로 돌아가기',
-                          primary: true,
-                          onPressed: () => _goHome(context),
-                        ),
+                      _ToolLaunchCard(
+                        key: const ValueKey('learning-tools-notepad'),
+                        icon: Icons.edit_outlined,
+                        title: '빠른 노트',
+                        subtitle: '자동 저장 · UTF-8',
+                        onTap: () => _openTool(context, const NotepadPage()),
                       ),
-                      const SizedBox(height: 20),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final columns = mobile
-                              ? 1
-                              : constraints.maxWidth < 980
-                              ? 2
-                              : 3;
-                          return GridView.count(
-                            crossAxisCount: columns,
-                            crossAxisSpacing: 14,
-                            mainAxisSpacing: 14,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            childAspectRatio: mobile ? 3.05 : 3.85,
-                            children: [
-                              _ToolLaunchCard(
-                                key: const ValueKey('learning-tools-notepad'),
-                                icon: Icons.edit_outlined,
-                                title: '빠른 노트',
-                                subtitle: '자동 저장 · UTF-8',
-                                onTap: () =>
-                                    _openTool(context, const NotepadPage()),
-                              ),
-                              _ToolLaunchCard(
-                                key: const ValueKey('learning-tools-timer'),
-                                icon: Icons.schedule_outlined,
-                                title: '집중 타이머',
-                                subtitle: '25분 · 학습 시간 기록',
-                                onTap: () =>
-                                    _openTool(context, const TimerPage()),
-                              ),
-                              _ToolLaunchCard(
-                                key: const ValueKey('learning-tools-focus'),
-                                icon: Icons.radio_button_checked,
-                                title: '집중 모드',
-                                subtitle: '알림 보류 · 주변 UI 절제',
-                                onTap: () =>
-                                    _openTool(context, const FocusModePage()),
-                              ),
-                            ],
-                          );
-                        },
+                      _ToolLaunchCard(
+                        key: const ValueKey('learning-tools-timer'),
+                        icon: Icons.schedule_outlined,
+                        title: '집중 타이머',
+                        subtitle: '25분 · 학습 시간 기록',
+                        onTap: () => _openTool(context, const TimerPage()),
                       ),
-                      const SizedBox(height: 14),
-                      _TutorShortcut(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const ServerChatPage(standalone: true),
-                          ),
-                        ),
+                      _ToolLaunchCard(
+                        key: const ValueKey('learning-tools-focus'),
+                        icon: Icons.radio_button_checked,
+                        title: '집중 모드',
+                        subtitle: '알림 보류 · 주변 UI 절제',
+                        onTap: () => _openTool(context, const FocusModePage()),
                       ),
-                      const SizedBox(height: 14),
-                      const Wrap(
-                        spacing: 7,
-                        runSpacing: 7,
-                        children: [
-                          _ToolFeatureChip('모달 진입'),
-                          _ToolFeatureChip('노트패드 필압 필기'),
-                          _ToolFeatureChip('무한 확장 캔버스'),
-                          _ToolFeatureChip('펜·형광펜·3색·4굵기'),
-                          _ToolFeatureChip('지우개·라인·실행 취소'),
-                          _ToolFeatureChip('500ms 로컬 저장'),
-                          _ToolFeatureChip('스톱워치·타이머 전환'),
-                          _ToolFeatureChip('랩 기록'),
-                          _ToolFeatureChip('시·분·초 직접 입력'),
-                          _ToolFeatureChip('시간 프리셋'),
-                          _ToolFeatureChip('집중 모드 30분~12시간'),
-                          _ToolFeatureChip('3초 잠금 해제'),
-                          _ToolFeatureChip('서버 AI 채팅'),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      const _ToolContractNote(),
                     ],
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+              _TutorShortcut(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ServerChatPage(standalone: true),
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 14),
+              const Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  _ToolFeatureChip('모달 진입'),
+                  _ToolFeatureChip('노트패드 필압 필기'),
+                  _ToolFeatureChip('무한 확장 캔버스'),
+                  _ToolFeatureChip('펜·형광펜·3색·4굵기'),
+                  _ToolFeatureChip('지우개·라인·실행 취소'),
+                  _ToolFeatureChip('500ms 로컬 저장'),
+                  _ToolFeatureChip('스톱워치·타이머 전환'),
+                  _ToolFeatureChip('랩 기록'),
+                  _ToolFeatureChip('시·분·초 직접 입력'),
+                  _ToolFeatureChip('시간 프리셋'),
+                  _ToolFeatureChip('집중 모드 30분~12시간'),
+                  _ToolFeatureChip('3초 잠금 해제'),
+                  _ToolFeatureChip('서버 AI 채팅'),
+                ],
+              ),
+              const SizedBox(height: 18),
+              const _ToolContractNote(),
+            ],
+          ),
         ),
       ),
     );

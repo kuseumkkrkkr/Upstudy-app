@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/app/router.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// 필요한 변수는 모바일·데스크톱 뷰포트와 `/tools` 명명 라우트다.
 /// 작동 원리: 실제 라우트 표로 챗봇 전용 화면을 열어 핵심 문구와 레이아웃 예외가 없는지 확인한다.
@@ -19,6 +21,8 @@ void main() {
 
     final page = tester.widget<ServerChatPage>(find.byType(ServerChatPage));
     expect(page.standalone, isTrue);
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
+    expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
     expect(find.text('과외봇'), findsOneWidget);
     expect(find.text('온라인 · 개념 설명과 풀이 힌트'), findsOneWidget);
     expect(find.text('과외봇에게 질문하기'), findsOneWidget);
@@ -38,6 +42,8 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
+    expect(find.byType(StudentHtmlRail), findsOneWidget);
     expect(find.text('오늘의 공부 계획'), findsOneWidget);
     expect(find.text('개념 쉽게 이해하기'), findsOneWidget);
     expect(find.text('오답 줄이는 방법'), findsOneWidget);

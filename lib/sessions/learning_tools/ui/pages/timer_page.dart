@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 class TimerPage extends StatefulWidget {
   const TimerPage({super.key});
@@ -203,76 +202,52 @@ class _TimerPageState extends State<TimerPage> {
         ? (_remainingSeconds / _timerTotalSeconds).clamp(0.0, 1.0)
         : null;
 
-    return Scaffold(
+    return StudentHtmlShell(
       key: const ValueKey('timer-tool-page'),
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/tools')
-          : null,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (headerContext) => Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                onBack: () => Navigator.maybePop(context),
-                onMenu: () => toggleAppDrawer(headerContext),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                showMenuWithBack: true,
-                showLevelIndicator: false,
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.learning,
-                ),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: StudentDensityPage(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 900),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          StudentDensityPageHeader(
-                            eyebrow: 'LEARNING TOOL',
-                            title: '집중 타이머',
-                            description: '스톱워치와 타이머를 한 화면에서 기록합니다.',
-                            showMobileDescription: true,
-                            action: StudentDensityButton(
-                              label: '도구 닫기',
-                              icon: Icons.close_rounded,
-                              onPressed: () => Navigator.maybePop(context),
-                            ),
-                          ),
-                          SizedBox(height: mobile ? 16 : 22),
-                          _buildModeToggle(cs),
-                          const SizedBox(height: 14),
-                          _buildDisplayCard(cs, progress),
-                          const SizedBox(height: 14),
-                          if (_isTimerMode) ...[
-                            _buildTimerSetup(cs),
-                            const SizedBox(height: 14),
-                          ],
-                          if (!_isTimerMode && _laps.isNotEmpty) ...[
-                            _buildLapsCard(cs),
-                            const SizedBox(height: 14),
-                          ],
-                          _buildControls(cs),
-                        ],
-                      ),
+      title: '집중 타이머',
+      activeRoute: '/tools',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onMenu: () => Navigator.maybePop(context),
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: StudentDensityPage(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  StudentDensityPageHeader(
+                    eyebrow: 'LEARNING TOOL',
+                    title: '집중 타이머',
+                    description: '스톱워치와 타이머를 한 화면에서 기록합니다.',
+                    showMobileDescription: true,
+                    action: StudentDensityButton(
+                      label: '도구 닫기',
+                      icon: Icons.close_rounded,
+                      onPressed: () => Navigator.maybePop(context),
                     ),
                   ),
-                ),
+                  SizedBox(height: mobile ? 16 : 22),
+                  _buildModeToggle(cs),
+                  const SizedBox(height: 14),
+                  _buildDisplayCard(cs, progress),
+                  const SizedBox(height: 14),
+                  if (_isTimerMode) ...[
+                    _buildTimerSetup(cs),
+                    const SizedBox(height: 14),
+                  ],
+                  if (!_isTimerMode && _laps.isNotEmpty) ...[
+                    _buildLapsCard(cs),
+                    const SizedBox(height: 14),
+                  ],
+                  _buildControls(cs),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

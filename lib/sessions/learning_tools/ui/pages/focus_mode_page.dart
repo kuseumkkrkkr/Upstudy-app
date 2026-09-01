@@ -3,10 +3,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// 집중 시간을 설정하고, 진행 중에는 남은 시간과 해제 상태만 보여주는 화면이다.
 /// 필요한 변수: 선택 시간, 남은 초, 집중·해제 타이머.
@@ -119,64 +118,40 @@ class _FocusModePageState extends State<FocusModePage> {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
+    return StudentHtmlShell(
       key: const ValueKey('focus-tool-page'),
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/tools')
-          : null,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (headerContext) => Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                onBack: () => Navigator.maybePop(context),
-                onMenu: () => toggleAppDrawer(headerContext),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                showMenuWithBack: true,
-                showLevelIndicator: false,
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.learning,
-                ),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: StudentDensityPage(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 900),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          StudentDensityPageHeader(
-                            eyebrow: 'LEARNING TOOL',
-                            title: '집중 모드',
-                            description: '정한 시간 동안 학습에만 집중할 수 있도록 합니다.',
-                            showMobileDescription: true,
-                            action: StudentDensityButton(
-                              label: '도구 닫기',
-                              icon: Icons.close_rounded,
-                              onPressed: () => Navigator.maybePop(context),
-                            ),
-                          ),
-                          SizedBox(height: mobile ? 16 : 22),
-                          _running ? _buildRunning() : _buildSetup(),
-                        ],
-                      ),
+      title: '집중 모드',
+      activeRoute: '/tools',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onMenu: () => Navigator.maybePop(context),
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: StudentDensityPage(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  StudentDensityPageHeader(
+                    eyebrow: 'LEARNING TOOL',
+                    title: '집중 모드',
+                    description: '정한 시간 동안 학습에만 집중할 수 있도록 합니다.',
+                    showMobileDescription: true,
+                    action: StudentDensityButton(
+                      label: '도구 닫기',
+                      icon: Icons.close_rounded,
+                      onPressed: () => Navigator.maybePop(context),
                     ),
                   ),
-                ),
+                  SizedBox(height: mobile ? 16 : 22),
+                  _running ? _buildRunning() : _buildSetup(),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
