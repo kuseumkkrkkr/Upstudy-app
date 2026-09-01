@@ -254,7 +254,8 @@
 ### 최종 배포 기록 (2026-09-01)
 
 - 커밋: `8894377` (`chore(hotfix): refresh Flutter web bundle`), `origin/hotfix` 반영.
-- Vercel: [`dpl_AngCDDZgX8H6bipAVDxPpZrjQLDN`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/AngCDDZgX8H6bipAVDxPpZrjQLDN), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard).
+- Vercel: [`dpl_G6G3xomTuPnPyXH6wSSi7X3kH2yQ`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/G6G3xomTuPnPyXH6wSSi7X3kH2yQ), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard).
+- 환경: `STUDENT_STORE_DEMO=true`를 Vercel Production에 추가해 포인트 데모 API를 canary에서만 활성화했다. Flutter UI의 `STUDENT_SERVICES_DEMO`·`STUDENT_STORE_DEMO`는 release 빌드 define으로 포함됐다.
 - 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 `Bearer token required`.
 - 브라우저: 390×844 모바일·1280×900 데스크톱 홈 렌더링 확인. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
 
