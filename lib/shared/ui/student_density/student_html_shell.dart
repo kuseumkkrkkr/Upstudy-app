@@ -109,6 +109,12 @@ class StudentHtmlTopBar extends StatelessWidget {
         button: true,
         label: label,
         child: SizedBox(
+          key: ValueKey(switch (label) {
+            '학생 메뉴' => 'student-mobile-menu',
+            '검색' => 'student-search-action',
+            '알림' => 'student-notifications-action',
+            _ => 'student-action-$label',
+          }),
           width: 44,
           height: 44,
           child: OutlinedButton(
@@ -135,9 +141,12 @@ class StudentHtmlTopBar extends StatelessWidget {
         children: [
           action(label: '학생 메뉴', icon: Icons.arrow_back, onTap: onMenu),
           const SizedBox(width: 10),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          KeyedSubtree(
+            key: const ValueKey('student-brand-home'),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
           ),
           const Spacer(),
           action(label: '검색', icon: Icons.search, onTap: onSearch),
@@ -171,7 +180,12 @@ class StudentHtmlRail extends StatelessWidget {
       required IconData icon,
       required String route,
     }) {
-      final active = activeRoute == route;
+      // 자료실은 HTML에서 교재 보관함과 마켓을 하나의 정보 구조로 묶지만,
+      // 실제 데이터 화면은 두 개의 명명 라우트를 유지한다. 두 목적지 모두
+      // 같은 레일 항목을 강조해 현재 위치를 잃지 않게 한다.
+      final active =
+          activeRoute == route ||
+          (route == AppRoutes.bookbag && activeRoute == AppRoutes.marketplace);
       return Semantics(
         button: true,
         label: label,

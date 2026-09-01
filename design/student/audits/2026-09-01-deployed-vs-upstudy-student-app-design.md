@@ -40,11 +40,11 @@
 
 | ID | 기준 HTML | 배포/현재 코드 | 심각도 | 결정 |
 | --- | --- | --- | --- | --- |
-| G-TOKEN-001 | canvas `#f0f0f2`, surface `#fdfdfe`, muted `#f3f3f5`, ink `#09090b`, dark `#111113` | `student_density.dart`의 배경·보조표면·dark 값이 다름 | P2 | 공통 토큰으로 통일 |
+| G-TOKEN-001 | canvas `#f0f0f2`, surface `#fdfdfe`, muted `#f3f3f5`, ink `#09090b`, dark `#111113` | `StudentDensityTokens`가 해당 값과 공통 breakpoint를 사용한다(`lib/shared/ui/student_density/student_density.dart:4-28`) | P3 | 공통 토큰 반영 완료; 화면별 legacy 색 선언만 잔여 감사 |
 | G-SHELL-001 | PC 84px rail + main + 244px context aside | 상단 메뉴 중심 셸, 화면별 drawer 혼용 | P1 | 공통 StudentShell로 통합 |
 | G-SHELL-002 | tablet 72px rail, aside 숨김 | 화면별 breakpoint가 720/780/900/980/1000으로 분산 | P2 | 공통 720/1040, 작업공간 예외만 유지 |
 | G-SHELL-003 | mobile 66px bottom nav | 일부 화면만 bottom nav를 표시 | P1 | shell-backed 학생 화면에 일관 적용 |
-| G-NAV-001 | mobile 활성 셀은 흰색 + 상단 3px 선 | 활성 셀 검은 캡슐 + 흰색 글자 | P2 | HTML 최종 cascade 적용 |
+| G-NAV-001 | mobile 활성 셀은 흰색 + 상단 3px 선 | `MobileStudentBottomAppBar`가 흰색 셀·활성 상단 3px 선을 사용한다(`lib/shared/ui/drawer/app_drawer.dart:192-237`) | P3 | 공통 하단탭 반영 완료; 화면별 activeRoute 매핑을 계속 감사 |
 | G-NAV-002 | PC Home/Courses/자료실/More와 context rail | PC top nav와 mobile 자료실이 서로 다른 목적지 | P1 | typed route registry로 목적지 통일 |
 | G-OVERLAY-001 | mobile sheet, PC dialog, home/more sheet 예외 | `showDialog`, drawer, bottom sheet가 화면별 상이 | P1 | overlay host·Escape·focus 반환 공통화 |
 | G-TYPE-001 | Malgun/Noto 계열, 30–46px 최종 heading cascade | 화면별 32/52px 등 별도 선언 | P2 | 화면 예외를 제외하고 기준 type scale 적용 |
@@ -135,7 +135,7 @@
 
 | HTML ID | Flutter/배포 기준 | 상태 | 핵심 차이 |
 | --- | --- | --- | --- |
-| marketplace | `/marketplace` · `MarketplacePage` | partial | HTML resource grid/filter와 현재 marketplace 카드·구매 상태 차이 |
+| marketplace | `/marketplace` · `MarketplacePage` | partial | HTML resource grid/filter와 실제 API·구매 상태는 유지하면서 `StudentHtmlShell` 레일/상단바/하단탭 및 검색 포커스·알림 액션을 이식함(`lib/sessions/marketplace/ui/pages/marketplace_page.dart:390-457`). 카드·필터의 세부 cascade와 데이터 상태는 추가 일치화 필요 |
 | store | 상점 route | partial | 포인트/구독 탭·wallet·확인 sheet·실구매 계약 차이 |
 | market-filter | marketplace filter sheet | partial | filter field 수·적용/닫기 상태 차이 |
 | market-preview | market preview sheet | partial | preview tab·무료/유료/owned CTA 차이 |

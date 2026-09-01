@@ -8,10 +8,9 @@ import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 typedef MarketplacePurchaseHandler = Future<void> Function(String listingId);
 typedef MarketplaceOpenHandler = void Function(String listingId);
@@ -34,6 +33,7 @@ class MarketplacePage extends StatefulWidget {
 
 class _MarketplacePageState extends State<MarketplacePage> {
   final TextEditingController _queryController = TextEditingController();
+  final FocusNode _queryFocusNode = FocusNode();
   List<_MarketItem> _items = const <_MarketItem>[];
   String _filter = '전체';
   String _courseFilter = '전체 과정';
@@ -174,6 +174,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
   @override
   void dispose() {
     _queryController.dispose();
+    _queryFocusNode.dispose();
     super.dispose();
   }
 
@@ -383,24 +384,6 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
-  /// 필요한 변수는 현재 화면 문맥이다.
-  /// 작동 원리는 PC·모바일 모두 공용 상단바와 오버레이 메뉴에서 마켓을 활성화하는 것이다.
-  Widget _buildHeader(BuildContext context) {
-    return Ios26TopBar(
-      brandColor: Colors.black,
-      showLevelIndicator: false,
-      showUtilityActions: true,
-      onMenu: () => toggleAppDrawer(context),
-      onTitleTap: () => Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
-      items: studentTopNavItems(
-        context,
-        active: StudentTopDestination.marketplace,
-      ),
-    );
-  }
-
   /// 필요한 변수는 화면 크기·검색·필터·추천 결과 상태다.
   /// 작동 원리는 세로형 휴대폰에는 검색 중심 상품 그리드를, 태블릿·PC에는 기존 정보형 마켓을 각각 렌더링하는 것이다.
   @override
@@ -408,78 +391,67 @@ class _MarketplacePageState extends State<MarketplacePage> {
     final items = _initialFilteredItems;
     final size = MediaQuery.sizeOf(context);
     final desktop = size.width >= 1000;
-    // 공용 학생 셸과 동일하게 780px 이하를 모바일로 취급한다.
-    // 그렇지 않으면 상단 바는 숨는데 본문은 데스크톱 drawer를 택하는 seam이 생긴다.
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/marketplace')
-          : null,
-      body: SafeArea(
-        child: Column(
+    return StudentHtmlShell(
+      title: '자료실',
+      activeRoute: '/marketplace',
+      showContextAside: size.width > 1040,
+      onSearch: () {
+        _queryFocusNode.requestFocus();
+      },
+      onNotifications: () => showStudentNotifications(context),
+      child: RefreshIndicator(
+        onRefresh: _search,
+        child: ListView(
+          key: ValueKey(mobile ? 'market-mobile-scroll' : 'market-wide-scroll'),
+          padding: EdgeInsets.fromLTRB(
+            mobile ? 16 : (desktop ? 40 : 14),
+            mobile ? 18 : 24,
+            mobile ? 16 : (desktop ? 40 : 14),
+            mobile ? 28 : 40,
+          ),
           children: [
-            Builder(builder: _buildHeader),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _search,
-                child: ListView(
-                  key: ValueKey(
-                    mobile ? 'market-mobile-scroll' : 'market-wide-scroll',
-                  ),
-                  padding: EdgeInsets.fromLTRB(
-                    mobile ? 16 : (desktop ? 40 : 14),
-                    mobile ? 18 : 24,
-                    mobile ? 16 : (desktop ? 40 : 14),
-                    mobile ? 28 : 40,
-                  ),
-                  children: [
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1280),
-                        child: mobile
-                            ? _MobileMarketplaceBody(
-                                controller: _queryController,
-                                corners: _corners,
-                                selected: _filter,
-                                courseFilter: _courseFilter,
-                                priceFilter: _priceFilter,
-                                items: items,
-                                loading: _loading,
-                                error: _error,
-                                hasNextPage: _nextOffset != null,
-                                onSelected: _handleFilterChanged,
-                                onOpenFilter: _openMarketFilter,
-                                onSearch: _search,
-                                onOpen: _openItem,
-                                onLoadMore: () =>
-                                    unawaited(_search(append: true)),
-                              )
-                            : _WideMarketplaceBody(
-                                controller: _queryController,
-                                corners: _corners,
-                                selected: _filter,
-                                courseFilter: _courseFilter,
-                                priceFilter: _priceFilter,
-                                items: items,
-                                title: _recommendationTitle,
-                                total: _total,
-                                loading: _loading,
-                                error: _error,
-                                desktop: desktop,
-                                hasNextPage: _nextOffset != null,
-                                onSelected: _handleFilterChanged,
-                                onOpenFilter: _openMarketFilter,
-                                onSearch: _search,
-                                onOpen: _openItem,
-                                onLoadMore: () =>
-                                    unawaited(_search(append: true)),
-                              ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1280),
+                child: mobile
+                    ? _MobileMarketplaceBody(
+                        controller: _queryController,
+                        focusNode: _queryFocusNode,
+                        corners: _corners,
+                        selected: _filter,
+                        courseFilter: _courseFilter,
+                        priceFilter: _priceFilter,
+                        items: items,
+                        loading: _loading,
+                        error: _error,
+                        hasNextPage: _nextOffset != null,
+                        onSelected: _handleFilterChanged,
+                        onOpenFilter: _openMarketFilter,
+                        onSearch: _search,
+                        onOpen: _openItem,
+                        onLoadMore: () => unawaited(_search(append: true)),
+                      )
+                    : _WideMarketplaceBody(
+                        controller: _queryController,
+                        focusNode: _queryFocusNode,
+                        corners: _corners,
+                        selected: _filter,
+                        courseFilter: _courseFilter,
+                        priceFilter: _priceFilter,
+                        items: items,
+                        title: _recommendationTitle,
+                        total: _total,
+                        loading: _loading,
+                        error: _error,
+                        desktop: desktop,
+                        hasNextPage: _nextOffset != null,
+                        onSelected: _handleFilterChanged,
+                        onOpenFilter: _openMarketFilter,
+                        onSearch: _search,
+                        onOpen: _openItem,
+                        onLoadMore: () => unawaited(_search(append: true)),
                       ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ],
@@ -492,6 +464,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
 class _WideMarketplaceBody extends StatelessWidget {
   const _WideMarketplaceBody({
     required this.controller,
+    required this.focusNode,
     required this.corners,
     required this.selected,
     required this.courseFilter,
@@ -511,6 +484,7 @@ class _WideMarketplaceBody extends StatelessWidget {
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final List<_MarketplaceCorner> corners;
   final String selected;
   final String courseFilter;
@@ -538,6 +512,7 @@ class _WideMarketplaceBody extends StatelessWidget {
       const SizedBox(height: 24),
       _SearchPanel(
         controller: controller,
+        focusNode: focusNode,
         corners: corners,
         loading: loading,
         filter: selected,
@@ -599,6 +574,7 @@ class _WideMarketplaceBody extends StatelessWidget {
 class _MobileMarketplaceBody extends StatelessWidget {
   const _MobileMarketplaceBody({
     required this.controller,
+    required this.focusNode,
     required this.corners,
     required this.selected,
     required this.courseFilter,
@@ -615,6 +591,7 @@ class _MobileMarketplaceBody extends StatelessWidget {
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final List<_MarketplaceCorner> corners;
   final String selected;
   final String courseFilter;
@@ -640,6 +617,7 @@ class _MobileMarketplaceBody extends StatelessWidget {
       const SizedBox(height: 22),
       _SearchPanel(
         controller: controller,
+        focusNode: focusNode,
         corners: corners,
         loading: loading,
         filter: selected,
@@ -1034,6 +1012,7 @@ class _MarketplaceCorner {
 class _SearchPanel extends StatelessWidget {
   const _SearchPanel({
     required this.controller,
+    required this.focusNode,
     required this.corners,
     required this.loading,
     required this.filter,
@@ -1044,6 +1023,7 @@ class _SearchPanel extends StatelessWidget {
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final List<_MarketplaceCorner> corners;
   final bool loading;
   final String filter;
@@ -1069,6 +1049,7 @@ class _SearchPanel extends StatelessWidget {
     final field = TextField(
       key: const ValueKey('market-search-field'),
       controller: controller,
+      focusNode: focusNode,
       textInputAction: TextInputAction.search,
       onSubmitted: (_) => onSearch(),
       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),

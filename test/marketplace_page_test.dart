@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 void main() {
   testWidgets('자료실 유형 탭이 실제 목록을 필터링한다', (tester) async {
@@ -204,7 +204,7 @@ void main() {
     );
   });
 
-  testWidgets('1280px 마켓은 공용 데스크톱 헤더와 본문을 겹치지 않게 분리한다', (tester) async {
+  testWidgets('1280px 마켓은 HTML 데스크톱 셸과 본문을 겹치지 않게 분리한다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -215,21 +215,18 @@ void main() {
     );
     await tester.pump();
 
-    final header = tester.getRect(find.byType(Ios26TopBar));
+    final header = tester.getRect(find.byType(StudentHtmlTopBar));
     final content = tester.getRect(
       find.byKey(const ValueKey('market-wide-scroll')),
     );
-    expect(header.height, 68);
+    expect(header.height, 64);
     expect(content.top, header.bottom);
-    expect(
-      find.byKey(const ValueKey('student-top-nav-마켓플레이스')),
-      findsOneWidget,
-    );
+    expect(find.byType(StudentHtmlRail), findsOneWidget);
     expect(find.byKey(const ValueKey('market-wide-scroll')), findsOneWidget);
     expect(find.byType(MobileStudentBottomAppBar), findsNothing);
   });
 
-  testWidgets('390px 마켓은 표준 모바일 헤더와 자료실 하단 탭을 유지한다', (tester) async {
+  testWidgets('390px 마켓은 HTML 모바일 헤더와 자료실 하단 탭을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -240,11 +237,11 @@ void main() {
     );
     await tester.pump();
 
-    final header = tester.getRect(find.byType(Ios26TopBar));
+    final header = tester.getRect(find.byType(StudentHtmlTopBar));
     final content = tester.getRect(
       find.byKey(const ValueKey('market-mobile-scroll')),
     );
-    expect(header.height, 62);
+    expect(header.height, 64);
     expect(content.top, header.bottom);
     expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
     expect(find.byKey(const ValueKey('student-brand-home')), findsOneWidget);
