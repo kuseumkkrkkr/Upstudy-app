@@ -234,16 +234,24 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     );
   }
 
-  // Group detail (needs groupId)
-  if (name == AppRoutes.groupDetail) {
+  // Group detail (needs groupId). Browser deep links may carry `id` or
+  // `groupId` because they cannot populate RouteSettings.args.
+  if (name == AppRoutes.groupDetail ||
+      (uri != null && uri.path == AppRoutes.groupDetail)) {
     final args = settings.arguments;
-    if (args is String) {
+    final groupId = args is String
+        ? args
+        : uri?.queryParameters['groupId'] ?? uri?.queryParameters['id'];
+    if (groupId != null && groupId.trim().isNotEmpty) {
       return MaterialPageRoute(
         settings: settings,
-        builder: (_) => GroupDetailPage(groupId: args),
+        builder: (_) => GroupDetailPage(groupId: groupId),
       );
     }
-    return _badArgumentsRoute(settings, expected: 'String (groupId)');
+    return _badArgumentsRoute(
+      settings,
+      expected: 'String (groupId) or ?id=...',
+    );
   }
 
   // Academy dashboard (needs academyId). Deep links may carry `id` or
