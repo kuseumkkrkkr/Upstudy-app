@@ -247,7 +247,7 @@
 | 데모 서비스 | OSM HTTPS 타일·attribution, 로컬 fixture·검색·필터·문의 상태, flag off 메뉴 숨김 | `lib/features/student_services/student_services_demo_page.dart`, `lib/app/student_feature_flags.dart` | 반영 |
 | 수학 내신 | `GET/PUT /student/school-exam-plan/active`, task PATCH, version conflict, 연결 데이터 없을 때 빈 상태 | `api/index.py`, `omj/migrations/postgres/010_student_demo_services_store.sql` | 반영 |
 | 포인트 상점 | 4개 더미 상품, 서버 RPC 지갑 잠금·원장·중복/멱등 키·잔액 부족 분기, UI-only 구독 | `api/index.py`, `omj/migrations/postgres/010_student_demo_services_store.sql`, `lib/shared/services/api/api_client.dart` | 반영(마이그레이션 적용 필요) |
-| 캡처 근거 | 기준 HTML, 배포 canary, 로컬 hotfix의 동일 상태·뷰포트 캡처를 evidence 폴더에 저장 | 홈: `design-home-390x844.png`, `design-home-1280x900.png`, `deployed-html-shell-390x844.png`, `deployed-html-shell-1280x900.png`; 설정: `design-settings-390x844.png`, `design-settings-1280x900.png`, `local-settings-html-390x844.png`, `local-settings-html-1280x900.png`; 프로필: `design-profile-390x844.png`, `design-profile-1280x900.png`, `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`; 코스: `design-courses-390x844.png`, `design-courses-1280x900.png`, `deployed-courses-390x844-before.png`, `deployed-courses-1280x900-before.png` | 홈은 `649d048` 배포 기준. 설정·프로필은 새 Flutter 번들의 로컬 렌더링 기준이며 다음 배포에서 alias를 재검증 |
+| 캡처 근거 | 기준 HTML, 배포 canary, 로컬 hotfix의 동일 상태·뷰포트 캡처를 evidence 폴더에 저장 | 홈: `design-home-390x844.png`, `design-home-1280x900.png`, `deployed-1308a7d-home-390x844.png`, `deployed-1308a7d-home-1280x900.png`; 설정: `design-settings-390x844.png`, `design-settings-1280x900.png`, `deployed-1308a7d-settings-390x844.png`, `deployed-1308a7d-settings-1280x900.png`; 프로필: `design-profile-390x844.png`, `design-profile-1280x900.png`, `deployed-1308a7d-profile-390x844.png`, `deployed-1308a7d-profile-1280x900.png`; 코스: `design-courses-390x844.png`, `design-courses-1280x900.png`, `deployed-courses-390x844-before.png`, `deployed-courses-1280x900-before.png`; 로컬 재현: `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`, `local-settings-html-390x844.png`, `local-settings-html-1280x900.png` | 홈·설정·프로필 새 캡처는 `1308a7d` 배포 기준. 코스는 기존 `649d048` 배포 캡처이며 API 빈 상태를 그대로 기록 |
 
 ### 2026-09-02 HTML 구조 이식 추가분
 
@@ -260,11 +260,11 @@
 
 ### 최종 배포 기록 (2026-09-01)
 
-- 커밋: `649d048` (`feat(student-shell): match HTML desktop shell`), `origin/hotfix` 반영.
-- Vercel: [`dpl_BYfbqiabJdjvRm3JMUSmTuLhoH4i`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/BYfbqiabJdjvRm3JMUSmTuLhoH4i), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard).
+- 커밋: `1308a7d` (`feat(student): match settings and account shell to HTML`), `origin/hotfix` 반영.
+- Vercel: [`dpl_CM65pgoetDtgy9paMyfcHuVkYDGg`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/CM65pgoetDtgy9paMyfcHuVkYDGg), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard).
 - 환경: `STUDENT_STORE_DEMO=true`를 Vercel Production에 추가해 포인트 데모 API를 canary에서만 활성화했다. Flutter UI의 `STUDENT_SERVICES_DEMO`·`STUDENT_STORE_DEMO`는 release 빌드 define으로 포함됐다.
 - 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 `Bearer token required`.
-- 브라우저: 390×844 모바일·1280×900 데스크톱 홈 렌더링 확인, 콘솔 error/warn 0건. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
+- 브라우저: 390×844 모바일·1280×900 데스크톱 홈·설정·프로필 렌더링 확인, 콘솔 error/warn 0건. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
 
 자동 검증:
 
