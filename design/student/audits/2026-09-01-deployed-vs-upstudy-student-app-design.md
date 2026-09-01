@@ -266,7 +266,7 @@
 
 ### 최종 배포 기록 (2026-09-02)
 
-- 커밋: 레벨 테스트 셸 변경을 포함한 최신 release 커밋은 배포 후 갱신한다. 자료실·학습 일정·레벨 테스트 수정과 감사 증거를 함께 반영한다.
+- 커밋: `4390325` (`refactor(student): align level test with html shell`), `origin/hotfix` 반영. 자료실·학습 일정·레벨 테스트 수정과 감사 증거를 포함한다.
 - Vercel: [`dpl_GfznG3GEcKDi6LyQoWyYDm6VNqGZ`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/GfznG3GEcKDi6LyQoWyYDm6VNqGZ), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard). 배포 번들은 레벨 테스트 셸 변경을 포함한다.
 - 환경: release bundle에 `API_BASE_URL=https://aiflow-web-canary.vercel.app`, `STUDENT_SERVICES_DEMO=true`, `STUDENT_STORE_DEMO=true`, HTTPS `OSM_TILE_URL`을 정의했다. 포인트 데모 API는 canary에서만 활성화된다.
 - 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON이며 release bundle에는 `localhost`가 없다.
