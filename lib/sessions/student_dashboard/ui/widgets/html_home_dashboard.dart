@@ -100,7 +100,7 @@ class _HtmlHomeHero extends StatelessWidget {
         ? null
         : activeCourse!.progress.clamp(0.0, 1.0).toDouble();
     return Container(
-      constraints: BoxConstraints(minHeight: mobile ? 198 : 244),
+      height: mobile ? 198 : 244,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: StudentDensityTokens.surface,
@@ -617,7 +617,7 @@ class _OvrCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          constraints: const BoxConstraints(minHeight: 138),
+          height: isStudentDensityMobile(context) ? 138 : 158,
           padding: const EdgeInsets.all(16),
           color: StudentDensityTokens.dark,
           child: Row(
