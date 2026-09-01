@@ -90,7 +90,7 @@
 | courses | `/courses` · `CourseCatalogPage` | partial | HTML library shell·filter·카드 밀도 차이 |
 | course-detail | 코스 상세 위젯 | partial | HTML 진행 hero·5단계·직각 curriculum·모바일 이어하기 CTA를 이식함. 실제 코스 유닛·등록 API 상태와 완전한 행별 결과는 데이터/인증 상태에 따라 추가 확인 필요 |
 | course-learning | 코스 학습 위젯 | partial | mission dispatcher·다음 문제·runtime 상태 차이 |
-| course-runtime | `/course_runtime` | P1 | 인자 없는 경로가 catalog fallback |
+| course-runtime | `/course_runtime` · `CourseRuntimePage` | partial | `courseId` 딥링크는 실제 코스 조회 후 `CourseLearningPage`로 연결하고, 인자 없는 레거시 경로만 코스 목록으로 위임 |
 | review-course | 복습 course 위젯 | partial | review 상태·완료 후 복귀 차이 |
 | course-curriculum | 코스 curriculum 위젯 | partial | 현재 단원 자동 펼침·선행 상태 차이 |
 | course-challenge | challenge 위젯 | partial | challenge 묶음·제한 시간·재시도 차이 |
@@ -257,6 +257,7 @@
 | 프로필 | 로딩·인증 만료 상태를 `StudentHtmlShell`의 A 레일·HTML 상단바·모바일 탭과 재시도 카드로 감쌈. 정상 데이터 경로는 기존 `_ProfileHero`/폼/API 계약을 유지 | `lib/sessions/auth/ui/pages/profile_page.dart`; `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`; 기준 `design-profile-390x844.png`, `design-profile-1280x900.png` | 실제 계정 데이터에서 HTML 정보/보안 행·삭제 확인 모달의 일대일 캡처는 인증 세션 없이는 완료할 수 없음 |
 | 코스 상세 | `_HtmlCourseProgressHero`와 `_HtmlCourseCurriculum`으로 진행 hero·단계·유닛 상태·모바일 하단 CTA를 실제 `Course` 객체에 연결. 등록·이어하기·미리보기 API/동작은 기존 계약을 호출 | `lib/sessions/course/ui/course_detail_page.dart`; 기준 `design-course-detail-390x844.png`, `design-course-detail-1280x900.png` | 인증 없는 canary에서는 코스 상세로 진입할 코스가 없어 production 이미지 캡처는 보류. 유닛이 없을 때 샘플 코스를 만들지 않고 빈 상태로 표시 |
 | 오답 재풀이 | `/wrong_answer_solve`가 `WrongAnswerReviewWidget`의 약점/습관 조회로 진입하고 `BuildpageWidget`으로 실제 풀이를 교체 연결. HTML 상단 셸·모바일 하단탭·오류/재시도 상태를 사용 | `lib/features/wrong_answer/wrong_answer_solve_page.dart`, `lib/features/wrong_answer/wrong_answer_list_page.dart`, `lib/app/router.dart`, `lib/sessions/course/ui/widgets/wrong_answer_review_widget.dart`; `test/wrong_answer_legacy_route_test.dart`, `test/secondary_route_shell_test.dart`; 배포 `deployed-98b2b26-wrong-solve-390x844.png`, `deployed-98b2b26-wrong-solve-1280x900.png` | 화면·전환은 검증했으나 canary의 실제 인증/OMJ secret 미설정으로 문제 목록은 503 오류/재시도 상태다. 샘플 문제를 삽입하지 않는다 |
+| 코스 런타임 | `/course_runtime?courseId=...`를 실제 `CourseService.fetchCourse`와 `CourseLearningPage`로 연결하고, 식별자 없는 레거시 경로는 코스 탐색으로만 위임 | `lib/features/course_runtime/course_runtime_page.dart`, `lib/app/router.dart`; `test/student_route_registry_test.dart` | 인증/코스 ID가 없는 canary에서는 조회 오류 상태만 가능하며, 임의 코스·샘플 진행을 생성하지 않는다 |
 
 초기 비교 캡처(`deployed-dashboard-390x844.png`)는 이전 `public/main.dart.js` 정적 번들이 배포된 상태라 흰 화면으로 기록되었다. 이후 `HtmlHomeDashboard`가 실제 Flutter 홈 본문을 대체하고 `_HtmlStudentRail`·`_HtmlStudentTopBar`·`_HtmlContextAside` 공통 셸을 추가했다. `725cf16` production 배포에서 HTML과 같은 390×844·1280×900 홈 구조(모바일 상단바/하단탭, 데스크톱 A 레일, 인사·코스·이어하기, 6개 액션, 마이 대시보드, 우측 컨텍스트)를 이미지로 재확인했고, 설정·프로필·코스 목록에도 같은 셸과 HTML 구조를 이식했다(`deployed-725cf16-*.png`). 새 탭에서 5초 대기 후 브라우저 콘솔 error/warn은 0건이었다. 브라우저 DOM 접근성 스냅샷은 CanvasKit 특성상 `Enable accessibility` 버튼만 노출되어, Semantics·키보드 포커스는 별도 Flutter 테스트 범위로 남긴다. 기준 HTML은 `?screen=home` 상태에서 같은 순서와 밀도로 표시됨을 확인했다. 이 반영은 홈·공통 셸·설정·프로필·코스 상세 구조에 한정되며, 나머지 81개 화면은 아래 매핑 상태(`partial`/`missing`) 그대로 추가 구현 대상이다.
 

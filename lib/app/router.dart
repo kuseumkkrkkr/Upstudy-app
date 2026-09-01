@@ -23,6 +23,7 @@ import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
 import 'package:s11/features/student_services/student_services_demo_page.dart';
+import 'package:s11/features/course_runtime/course_runtime_page.dart';
 
 /// Central route constants and route table for the AIFlow app.
 class AppRoutes {
@@ -131,7 +132,7 @@ Map<String, WidgetBuilder> appRoutes() {
     // 필요한 변수는 레거시 코스 런타임 경로다.
     // 작동 원리: 인자가 없는 과거 경로는 런타임 상태를 가진 CourseLearningPage를 직접 만들 수 없으므로,
     // 실제 학습 진입을 결정하는 코스 목록으로 연결해 개발 중 플레이스홀더를 노출하지 않는다.
-    AppRoutes.courseRuntime: (_) => const CourseCatalogPage(),
+    AppRoutes.courseRuntime: (_) => const CourseRuntimePage(),
 
     // Level Test
     AppRoutes.levelTest: (_) => const LevelTestHomePage(),
@@ -218,6 +219,18 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     return MaterialPageRoute<void>(
       settings: settings,
       builder: (_) => WrongAnswerSolvePage(sourceType: source),
+    );
+  }
+
+  // Course runtime deep links carry the real course identifier in the query.
+  // An identifier is required before starting a learning session; without it
+  // the static route above intentionally shows the catalog.
+  if (uri != null && uri.path == AppRoutes.courseRuntime) {
+    final courseId =
+        uri.queryParameters['courseId'] ?? uri.queryParameters['course_id'];
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => CourseRuntimePage(courseId: courseId),
     );
   }
 
