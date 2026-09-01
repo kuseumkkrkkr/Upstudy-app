@@ -81,7 +81,7 @@
 | activity-history | `/schedule`·활동 보고서 | partial | 56일 타임라인·활동 지표와 현재 일정/이력 분리 |
 | achievements | 활동 배지 위젯 | partial | 탭·상세 sheet·진행률 상태가 HTML 구조와 다름 |
 | schedule | `/schedule` · `SchedulePage` | partial | 실제 일정·개인 일정 API와 일간/월간 전환을 유지하면서 `StudentHtmlShell` 레일·상단바·모바일 하단탭·1040px 컨텍스트 분기를 이식함(`lib/features/student_schedule/schedule_page.dart:430-560`). 상세 타임라인 cascade와 코스 ID가 없는 오류 상태는 추가 일치화 필요 |
-| schedule-history | `/schedule/history` | partial | 커리큘럼 이력 필터·재배정 상태 차이 |
+| schedule-history | `/schedule/history` · `CurriculumHistoryPage` | partial | 실제 이력 필터·성공/실패/재분배 상태를 유지하면서 `StudentHtmlShell` 레일/상단바/모바일 하단탭을 적용함. 샘플 이력은 현재 fixture 계약 범위로 남음 |
 
 ### 코스 (14)
 
@@ -185,10 +185,10 @@
 | HTML ID | Flutter/배포 기준 | 상태 | 핵심 차이 |
 | --- | --- | --- | --- |
 | tutor | `/tools` · `ServerChatPage` | partial | HTML tutor CTA/context와 standalone chat 차이 |
-| tools-hub | learning tools hub | partial | production entry·라벨 충돌 |
+| tools-hub | `/learning-tools` · `StudentLearningToolsPage` | partial | 실제 노트·타이머·집중·AI 튜터 진입을 유지하면서 `StudentHtmlShell` 레일/상단바/모바일 하단탭과 HTML 카드 그리드를 적용함 |
 | learning-tools-modal | learning tools modal | partial | six destination·nested return 상태 차이 |
 | notepad | `NotepadPage` | partial | 저장·모바일 toolbar·복귀 차이 |
-| timer | `TimerPage` | partial | 테마/세션/완료 상태 차이 |
+| timer | `TimerPage` | partial | 기존 스톱워치·타이머·랩 상태를 유지하면서 도구 모달 내부에도 `StudentHtmlShell` 반응형 셸을 적용함 |
 | focus | `FocusModePage` | partial | hub 경유만 가능, 독립 접근 경로 차이 |
 | graph | `JsxGraphPage` | partial | canvas/식 오류/drag tray·모바일 경계 차이 |
 
@@ -263,6 +263,8 @@
 | 레벨 테스트 | `LevelTestHomePage`를 `StudentHtmlShell` 안으로 이동해 실제 배치 세션·25문항 시간 계약·결과 전환을 보존 | `lib/features/level_test/level_test_home_page.dart:170-240`, `test/level_test_home_page_test.dart`, `test/placement_exam_flow_test.dart`; 배포 `deployed-GfznG3G-level-test-390x844.png`, `deployed-GfznG3G-level-test-1280x900.png` | canary 인증 없이 시작 API를 검증할 수 없어 시작 전 overview 상태만 확인 가능. HTML 진단 overview의 완전한 데이터 매핑은 인증 세션 필요 |
 | 학생 런타임 | `/student/runtime`를 `StudentHtmlShell`로 전환하고 실제 `StudentRuntimeService` 코스·모듈·세션 시작 동작을 유지. 모바일은 HTML 상단바/하단탭, PC는 84px 레일·메인·컨텍스트 분기를 사용 | `lib/features/student_runtime/student_runtime_page.dart`, `test/secondary_route_shell_test.dart`; 배포 `deployed-Dd8WwK-student-runtime-390x844.png`, `deployed-Dd8WwK-student-runtime-1280x900.png` | 최신 production에서 두 뷰포트와 콘솔 error/warn 0건을 확인. 인증 없는 canary는 실제 코스 API 경계를 사용하므로 샘플 데이터로 덮지 않음 |
 | 오답 목록 | `/wrong_answers`를 `StudentHtmlShell`로 전환하고 실제 풀이 이력·약점 태그·복습 계획·필터/정렬 동작을 유지 | `lib/features/wrong_answer/wrong_answer_list_page.dart`, `test/wrong_answer_legacy_route_test.dart`, `test/secondary_route_shell_test.dart`; 배포 `deployed-6kkHdc-ou-wrong-list-390x844.png`, `deployed-6kkHdc-ou-wrong-list-1280x900.png` | 최신 production에서 HTML 모바일/PC 셸과 콘솔 error/warn 0건을 확인. 인증 없는 canary는 샘플 문제를 생성하지 않고 0건 빈 계획을 표시 |
+| 커리큘럼 이력 | `/schedule/history`를 `StudentHtmlShell`로 전환하고 전체/성공/실패/재분배 필터 동작을 유지 | `lib/features/student_schedule/curriculum_history_page.dart`, `test/secondary_route_shell_test.dart`; 배포 `deployed-44FnEFg-schedule-history-390x844.png`, `deployed-44FnEFg-schedule-history-1280x900.png` | 최신 production에서 HTML 모바일/PC 셸과 필터 상태를 확인 |
+| 학습 도구 허브 | `/learning-tools`를 `StudentHtmlShell`로 전환하고 노트·타이머·집중·AI 튜터 카드/모달 동작을 유지 | `lib/sessions/learning_tools/ui/pages/student_learning_tools_page.dart`, `test/student_learning_tools_route_test.dart`; 배포 `deployed-44FnEFg-learning-tools-390x844.png`, `deployed-44FnEFg-learning-tools-1280x900.png` | 최신 production에서 HTML 모바일/PC 셸과 콘솔 error/warn 0건을 확인 |
 | 학원 대시보드 | `/academy/dashboard?id=a1`을 `StudentHtmlShell`로 전환하고 학원 정보·오늘 할 일·출석·시간표 API 계약을 보존 | `lib/features/group_study/student_academy_page.dart`, `lib/app/router.dart`; 배포 `deployed-54fDiww-academy-390x844.png`, `deployed-54fDiww-academy-1280x900.png` | 최신 production에서 HTML 모바일/PC 셸과 콘솔 error/warn 0건을 확인. 인증 없는 canary는 샘플 학원 데이터를 만들지 않고 재시도 상태를 표시 |
 | 그룹 초대 | `/groups/join?code=ABC123`를 `StudentHtmlShell`로 전환하고 실제 초대 메타 조회·참가·복귀 동작을 유지 | `lib/features/group_study/group_join_page.dart`, `test/secondary_route_shell_test.dart`; 배포 `deployed-54fDiww-group-join-390x844.png`, `deployed-54fDiww-group-join-1280x900.png` | 최신 production에서 HTML 모바일/PC 셸과 콘솔 error/warn 0건을 확인. 인증/코드가 없으면 실제 404 오류·재시도 상태를 표시 |
 | 그룹 상세 | `/group/detail?id=group-1`을 `StudentHtmlShell`로 전환하고 그룹·멤버·일정·공유·채팅 동작을 유지 | `lib/features/group_study/group_detail_page.dart`, `lib/app/router.dart`, `test/group_detail_mobile_test.dart`; 배포 `deployed-54fDiww-group-detail-390x844.png`, `deployed-54fDiww-group-detail-1280x900.png` | 최신 production에서 HTML 모바일/PC 셸과 콘솔 error/warn 0건을 확인. 인증 없는 canary는 그룹 정보 오류 상태를 표시하며 임의 그룹을 삽입하지 않음 |
@@ -271,11 +273,11 @@
 
 ### 최종 배포 기록 (2026-09-02)
 
-- 커밋: `7910f58` (`fix(student): support group detail deep links`), `origin/hotfix` 반영. 학원·그룹 초대·그룹 상세 셸과 딥링크, 이전 화면 수정이 포함된다.
-- Vercel: [`dpl_54fDiwwtUpe8LpyX4ibnux8WNSbh`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/54fDiwwtUpe8LpyX4ibnux8WNSbh), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard). 새 release bundle에 학원·그룹 화면 HTML 셸 변경을 포함한다.
+- 커밋: `ae6ec27` (`refactor(student): align tools and history shells`), `origin/hotfix` 반영. 학원·그룹·학습 도구·커리큘럼 이력 셸과 딥링크, 이전 화면 수정이 포함된다.
+- Vercel: [`dpl_44FnEFgoDpiFXHiAEfGojQzANQpQ`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/44FnEFgoDpiFXHiAEfGojQzANQpQ), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard). 새 release bundle에 학습 도구·커리큘럼 이력 HTML 셸 변경을 포함한다.
 - 환경: release bundle에 `API_BASE_URL=https://aiflow-web-canary.vercel.app`, `STUDENT_SERVICES_DEMO=true`, `STUDENT_STORE_DEMO=true`, HTTPS `OSM_TILE_URL`을 정의했다. 포인트 데모 API는 canary에서만 활성화된다.
 - 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON이며 release bundle에는 `localhost`가 없다.
-- 브라우저: production alias의 390×844 모바일·1280×900 데스크톱 홈·설정·프로필·코스 목록·오답 재풀이·오답 목록·코스 런타임·자료실·학습 일정·레벨 테스트·학생 런타임·학원·그룹 초대·그룹 상세를 새 탭에서 5초 대기 후 캡처했고, 각 최신 캡처의 콘솔 error/warn은 0건이다. 학원·그룹 초대·그룹 상세는 최신 `54fDiww` 배포에서 HTML 모바일 상단바/하단탭과 PC A 레일/메인 셸을 확인했다. 오답 재풀이 데이터 호출은 canary에서 `OMJ_JWT_SECRET is not configured` 503을 반환해 오류/재시도 상태로 캡처했다. 코스 런타임도 인증 없는 임의 ID에 대해 오류/목록 복귀 상태를 렌더링한다. 자료실·학습 일정·레벨 테스트는 API 인증/데이터 경계에서 HTML 셸의 빈/오류 또는 시작 상태를 렌더링한다. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
+- 브라우저: production alias의 390×844 모바일·1280×900 데스크톱 홈·설정·프로필·코스 목록·오답 재풀이·오답 목록·코스 런타임·자료실·학습 일정·레벨 테스트·학생 런타임·학원·그룹 초대·그룹 상세·학습 도구 허브·커리큘럼 이력을 새 탭에서 5초 대기 후 캡처했고, 각 최신 캡처의 콘솔 error/warn은 0건이다. 학원·그룹 초대·그룹 상세·학습 도구 허브·커리큘럼 이력은 최신 `44FnEFg` 배포에서 HTML 모바일 상단바/하단탭과 PC A 레일/메인 셸을 확인했다. 오답 재풀이 데이터 호출은 canary에서 `OMJ_JWT_SECRET is not configured` 503을 반환해 오류/재시도 상태로 캡처했다. 코스 런타임도 인증 없는 임의 ID에 대해 오류/목록 복귀 상태를 렌더링한다. 자료실·학습 일정·레벨 테스트는 API 인증/데이터 경계에서 HTML 셸의 빈/오류 또는 시작 상태를 렌더링한다. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
 
 자동 검증:
 
