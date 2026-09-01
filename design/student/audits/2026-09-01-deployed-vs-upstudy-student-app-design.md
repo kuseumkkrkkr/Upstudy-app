@@ -247,9 +247,16 @@
 | 데모 서비스 | OSM HTTPS 타일·attribution, 로컬 fixture·검색·필터·문의 상태, flag off 메뉴 숨김 | `lib/features/student_services/student_services_demo_page.dart`, `lib/app/student_feature_flags.dart` | 반영 |
 | 수학 내신 | `GET/PUT /student/school-exam-plan/active`, task PATCH, version conflict, 연결 데이터 없을 때 빈 상태 | `api/index.py`, `omj/migrations/postgres/010_student_demo_services_store.sql` | 반영 |
 | 포인트 상점 | 4개 더미 상품, 서버 RPC 지갑 잠금·원장·중복/멱등 키·잔액 부족 분기, UI-only 구독 | `api/index.py`, `omj/migrations/postgres/010_student_demo_services_store.sql`, `lib/shared/services/api/api_client.dart` | 반영(마이그레이션 적용 필요) |
-| 캡처 근거 | 기준 HTML 홈, 배포 canary, 로컬 hotfix 홈·학원 데모 캡처를 동일 evidence 폴더에 저장 | `evidence/2026-09-01-deployed-vs-design/design-home-390x844.png`, `deployed-dashboard-390x844.png`, `local-hotfix-dashboard-390x844.png`, `local-academy-demo.png` | 배포판 P0 확인 |
+| 캡처 근거 | 기준 HTML 홈, 배포 canary, 로컬 hotfix 홈·학원 데모 캡처를 동일 evidence 폴더에 저장 | `evidence/2026-09-01-deployed-vs-design/design-home-390x844.png`, `deployed-post-hotfix-dashboard-390x844.png`, `deployed-post-hotfix-dashboard-1280x900.png`, `local-hotfix-dashboard-390x844.png`, `local-academy-demo.png` | 모바일·PC 배포 렌더링 확인 |
 
-배포판 캡처는 흰 화면으로 렌더링되었고 브라우저 콘솔에 CanvasKit `Shader compilation error`가 남았다. 이는 코드 일치 여부와 별개의 렌더러 호환성 P0이며, hotfix alias를 갱신하기 전에 지원 브라우저에서 동일 뷰포트 재확인이 필요하다. 기준 HTML은 `?screen=home` 상태에서 A rail, 현재 코스, 6개 학습 동작, 대시보드 카드와 우측 컨텍스트 영역이 표시됨을 확인했다.
+초기 비교 캡처(`deployed-dashboard-390x844.png`)는 이전 `public/main.dart.js` 정적 번들이 배포된 상태라 흰 화면으로 기록되었다. `public/`을 새 release bundle로 갱신한 최종 배포(`8894377`, Vercel `dpl_AngCDDZgX8H6bipAVDxPpZrjQLDN`)에서는 동일 390×844와 1280×900에서 홈이 렌더링됨을 이미지로 재확인했다(`deployed-post-hotfix-dashboard-390x844.png`, `deployed-post-hotfix-dashboard-1280x900.png`). 브라우저 DOM 접근성 스냅샷은 CanvasKit 특성상 `Enable accessibility` 버튼만 노출되어, Semantics·키보드 포커스는 별도 Flutter 테스트 범위로 남긴다. 기준 HTML은 `?screen=home` 상태에서 A rail, 현재 코스, 6개 학습 동작, 대시보드 카드와 우측 컨텍스트 영역이 표시됨을 확인했다.
+
+### 최종 배포 기록 (2026-09-01)
+
+- 커밋: `8894377` (`chore(hotfix): refresh Flutter web bundle`), `origin/hotfix` 반영.
+- Vercel: [`dpl_AngCDDZgX8H6bipAVDxPpZrjQLDN`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/AngCDDZgX8H6bipAVDxPpZrjQLDN), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard).
+- 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 `Bearer token required`.
+- 브라우저: 390×844 모바일·1280×900 데스크톱 홈 렌더링 확인. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
 
 자동 검증:
 
