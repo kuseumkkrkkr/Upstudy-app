@@ -57,7 +57,7 @@ class HtmlHomeDashboard extends StatelessWidget {
         : Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: hero),
+              Expanded(flex: 9, child: hero),
               const SizedBox(width: 12),
               Expanded(flex: 11, child: actions),
             ],
@@ -451,15 +451,18 @@ class _HtmlDashboardLayout extends StatelessWidget {
   final Widget arena;
   final Widget tutor;
 
-  Widget _row(List<Widget> children) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var i = 0; i < children.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
-          Expanded(child: children[i]),
+  Widget _row(List<Widget> children, {required double height}) {
+    return SizedBox(
+      height: height,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            Expanded(child: children[i]),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -474,30 +477,30 @@ class _HtmlDashboardLayout extends StatelessWidget {
           gap,
           ovr,
           gap,
-          _row([today, streak]),
+          SizedBox(height: 104, child: _row([today, streak], height: 104)),
           gap,
-          achievements,
+          SizedBox(height: 84, child: achievements),
           gap,
-          week,
+          SizedBox(height: 132, child: week),
           gap,
-          _row([weakness, arena]),
+          _row([weakness, arena], height: 104),
           gap,
-          tutor,
+          SizedBox(height: 96, child: tutor),
         ],
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        account,
+        SizedBox(height: 64, child: account),
         gap,
-        _row([ovr, today, streak]),
+        _row([ovr, today, streak], height: 158),
         gap,
-        achievements,
+        SizedBox(height: 92, child: achievements),
         gap,
-        _row([week, weakness, arena]),
+        _row([week, weakness, arena], height: 138),
         gap,
-        tutor,
+        SizedBox(height: 92, child: tutor),
       ],
     );
   }
