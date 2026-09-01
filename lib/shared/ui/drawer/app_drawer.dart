@@ -7,6 +7,8 @@ import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/app/student_feature_flags.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -207,21 +209,27 @@ class _MobileBottomDestination extends StatelessWidget {
   final VoidCallback onTap;
 
   /// 필요한 변수는 탭 아이콘·라벨, 선택 여부와 탭 콜백이다.
-  /// 작동 원리는 선택 탭에 짙은 캡슐과 흰색 콘텐츠를 적용해 작은 모바일 영역에서도 대비를 확보한다.
+  /// 작동 원리는 기준 HTML처럼 선택 탭의 상단 선만 강조하고 하단 셀은
+  /// 흰색으로 유지해 화면과 내비게이션의 경계를 보존하는 것이다.
   @override
   Widget build(BuildContext context) {
-    final color = active ? Colors.white : const Color(0xFF626269);
+    final color = active ? const Color(0xFF09090B) : const Color(0xFF626269);
     return InkWell(
       onTap: onTap,
       child: Center(
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
-          padding: const EdgeInsets.symmetric(horizontal: 9),
+          margin: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
           decoration: BoxDecoration(
-            color: active ? const Color(0xFF101012) : Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: active ? const Color(0xFF09090B) : Colors.transparent,
+                width: 3,
+              ),
+            ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -295,11 +303,19 @@ class _MobileMoreSheet extends StatefulWidget {
 class _MobileMoreSheetState extends State<_MobileMoreSheet> {
   _MobileMoreTab _selectedTab = _MobileMoreTab.learning;
 
-  List<_MobileMoreEntry> get _entries => switch (_selectedTab) {
-    _MobileMoreTab.learning => _mobileLearningEntries,
-    _MobileMoreTab.tools => _mobileToolEntries,
-    _MobileMoreTab.myMenu => _mobileMyMenuEntries,
-  };
+  List<_MobileMoreEntry> get _entries =>
+      (switch (_selectedTab) {
+            _MobileMoreTab.learning => _mobileLearningEntries,
+            _MobileMoreTab.tools => _mobileToolEntries,
+            _MobileMoreTab.myMenu => _mobileMyMenuEntries,
+          })
+          .where((entry) {
+            if (!entry.demoOnly) return true;
+            return entry.demoKind == _DemoKind.services
+                ? StudentFeatureFlags.servicesDemo
+                : StudentFeatureFlags.storeDemo;
+          })
+          .toList(growable: false);
 
   @override
   Widget build(BuildContext context) {
@@ -502,15 +518,28 @@ class _MobileMoreEntry {
     required this.icon,
     this.route,
     this.action = _MobileMoreAction.route,
+    this.demoOnly = false,
+    this.demoKind,
   });
 
   final String label;
   final IconData icon;
   final String? route;
   final _MobileMoreAction action;
+  final bool demoOnly;
+  final _DemoKind? demoKind;
 
-  String get keyPart => route ?? label;
+  String get keyPart {
+    if (route != null) return route == '/profile' ? 'profile' : route!;
+    return switch (label) {
+      '검색' => 'search',
+      '알림' => 'notifications',
+      _ => label,
+    };
+  }
 }
+
+enum _DemoKind { services, store }
 
 const _mobileLearningEntries = <_MobileMoreEntry>[
   _MobileMoreEntry(
@@ -536,7 +565,7 @@ const _mobileLearningEntries = <_MobileMoreEntry>[
   _MobileMoreEntry(
     label: '내신 대비',
     icon: Icons.assignment_outlined,
-    action: _MobileMoreAction.unavailable,
+    route: '/school-exam-prep',
   ),
   _MobileMoreEntry(
     label: '학습 지표',
@@ -593,17 +622,28 @@ const _mobileMyMenuEntries = <_MobileMoreEntry>[
   _MobileMoreEntry(
     label: 'AIFlow 학원 찾기',
     icon: Icons.school_outlined,
-    action: _MobileMoreAction.unavailable,
+    route: '/student-services/academy',
+    demoOnly: true,
+    demoKind: _DemoKind.services,
   ),
   _MobileMoreEntry(
     label: '과외 찾기',
     icon: Icons.person_search_outlined,
-    action: _MobileMoreAction.unavailable,
+    route: '/student-services/tutor',
+    demoOnly: true,
+    demoKind: _DemoKind.services,
   ),
   _MobileMoreEntry(
     label: '대결장',
     icon: Icons.emoji_events_outlined,
     route: '/arena',
+  ),
+  _MobileMoreEntry(
+    label: '마켓플레이스',
+    icon: Icons.storefront_outlined,
+    route: '/store',
+    demoOnly: true,
+    demoKind: _DemoKind.store,
   ),
   _MobileMoreEntry(
     label: '설정',
@@ -662,11 +702,22 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
+  bool _isDemoVisible(_DrawerDestination item) {
+    if (!item.demoOnly) return true;
+    return switch (item.demoKind) {
+      _DemoKind.services => StudentFeatureFlags.servicesDemo,
+      _DemoKind.store => StudentFeatureFlags.storeDemo,
+      null => false,
+    };
+  }
+
   /// 필요한 변수는 화면 너비, 현재 라우트, 프로필 요약이다.
   /// 최신 학생 시안의 작은 브랜드·이어 학습·그룹형 메뉴·하단 프로필 칩 순서로 드로어를 구성한다.
   @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final mobile =
+        MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint;
     final drawerWidth = mobile
         ? (MediaQuery.sizeOf(context).width - 16).clamp(0, 420).toDouble()
         : (MediaQuery.sizeOf(context).width - 40).clamp(0, 310).toDouble();
@@ -697,7 +748,17 @@ class _AppDrawerState extends State<AppDrawer> {
                   padding: EdgeInsets.zero,
                   children: [
                     _ResumeCard(onTap: () => _openRoute('/courses')),
-                    for (final group in _navigationGroups)
+                    for (final group
+                        in _navigationGroups
+                            .map(
+                              (group) => _DrawerNavigationGroup(
+                                label: group.label,
+                                items: group.items
+                                    .where(_isDemoVisible)
+                                    .toList(),
+                              ),
+                            )
+                            .where((group) => group.items.isNotEmpty))
                       _DrawerGroup(
                         group: group,
                         isActive: _isActive,
@@ -731,7 +792,9 @@ class _DrawerBrand extends StatelessWidget {
   /// 최신 시안의 34px 검정 브랜드 마크와 STUDENT 보조 라벨을 한 줄 헤더로 표시한다.
   @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final mobile =
+        MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint;
     return Stack(
       children: [
         InkWell(
@@ -799,7 +862,9 @@ class _ResumeCard extends StatelessWidget {
   /// 별도 DB 조회 없이 최신 시안의 검정 이어 학습 카드를 제공해 드로어를 열 때 추가 부하를 만들지 않는다.
   @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final mobile =
+        MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint;
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 2, 2, 9),
       child: Material(
@@ -883,7 +948,9 @@ class _DrawerGroup extends StatelessWidget {
   /// 메뉴를 42px 슬림 행으로 쌓고 현재 화면만 검정 캡슐로 강조한다.
   @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final mobile =
+        MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint;
     return Padding(
       padding: EdgeInsets.only(top: mobile ? 10 : 5, bottom: mobile ? 5 : 3),
       child: Column(
@@ -928,7 +995,9 @@ class _DrawerNavItem extends StatelessWidget {
   /// 비활성 메뉴는 투명 배경, 활성 메뉴는 최신 시안과 같은 검정 배경과 흰 글자로 렌더한다.
   @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final mobile =
+        MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint;
     final foreground = active ? Colors.white : const Color(0xFF505057);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
@@ -983,7 +1052,9 @@ class _ProfileChip extends StatelessWidget {
   /// 구형 로그아웃 버튼 대신 최신 시안의 원형 아바타와 학생 요약 칩을 드로어 하단에 고정한다.
   @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final mobile =
+        MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint;
     final initial = data.username.characters.first.toUpperCase();
     return Material(
       color: Colors.white.withValues(alpha: 0.76),
@@ -1061,7 +1132,9 @@ class _SquareIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBrand = label != null;
-    final mobile = MediaQuery.sizeOf(context).width <= 780;
+    final mobile =
+        MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint;
     final size = isBrand
         ? mobile
               ? 44.0
@@ -1116,12 +1189,16 @@ class _DrawerDestination {
     required this.label,
     required this.route,
     this.activeRoutes = const <String>[],
+    this.demoOnly = false,
+    this.demoKind,
   });
 
   final IconData icon;
   final String label;
   final String route;
   final List<String> activeRoutes;
+  final bool demoOnly;
+  final _DemoKind? demoKind;
 }
 
 const _navigationGroups = <_DrawerNavigationGroup>[
@@ -1202,6 +1279,30 @@ const _navigationGroups = <_DrawerNavigationGroup>[
         label: '마켓플레이스',
         route: '/marketplace',
         activeRoutes: ['/marketplace'],
+      ),
+      _DrawerDestination(
+        icon: Icons.school_outlined,
+        label: 'AIFlow 학원 찾기',
+        route: '/student-services/academy',
+        activeRoutes: ['/student-services/academy'],
+        demoOnly: true,
+        demoKind: _DemoKind.services,
+      ),
+      _DrawerDestination(
+        icon: Icons.person_search_outlined,
+        label: '과외 찾기',
+        route: '/student-services/tutor',
+        activeRoutes: ['/student-services/tutor'],
+        demoOnly: true,
+        demoKind: _DemoKind.services,
+      ),
+      _DrawerDestination(
+        icon: Icons.local_mall_outlined,
+        label: '포인트 상점',
+        route: '/store',
+        activeRoutes: ['/store'],
+        demoOnly: true,
+        demoKind: _DemoKind.store,
       ),
     ],
   ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:s11/app/student_feature_flags.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
@@ -441,6 +442,30 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
           keywords: '문제세트 시험지 수학 자료',
           route: '/marketplace',
         ),
+        (
+          title: '내신 대비',
+          detail: '수학 시험 계획과 연결된 할 일 확인',
+          keywords: '수학 내신 시험 학교 계획',
+          route: '/school-exam-prep',
+        ),
+        (
+          title: 'AIFlow 학원 찾기',
+          detail: '샘플 학원 지도·상담 신청',
+          keywords: '학원 상담 지도 중등 고등',
+          route: '/student-services/academy',
+        ),
+        (
+          title: '과외 찾기',
+          detail: '샘플 선생님 지도·수업 문의',
+          keywords: '과외 선생님 수업 지도',
+          route: '/student-services/tutor',
+        ),
+        (
+          title: '포인트 상점',
+          detail: '데모 포인트 상품 교환',
+          keywords: '포인트 상품 교환 마켓',
+          route: '/store',
+        ),
       ];
   String _query = '';
 
@@ -460,6 +485,14 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
   Widget build(BuildContext context) {
     final normalized = _query.trim().toLowerCase();
     final visible = _destinations
+        .where((item) {
+          if (item.route == '/student-services/academy' ||
+              item.route == '/student-services/tutor') {
+            return StudentFeatureFlags.servicesDemo;
+          }
+          if (item.route == '/store') return StudentFeatureFlags.storeDemo;
+          return true;
+        })
         .where(
           (item) =>
               normalized.isEmpty ||

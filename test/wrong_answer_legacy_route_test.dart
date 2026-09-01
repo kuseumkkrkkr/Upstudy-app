@@ -66,7 +66,7 @@ void main() {
         AppRoutes.wrongAnswers,
       );
 
-      if (width <= 780) {
+      if (width <= 720) {
         expect(
           find.byKey(const ValueKey('student-mobile-menu')),
           findsOneWidget,

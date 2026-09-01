@@ -1775,13 +1775,14 @@ class ApiClient {
     String path,
     Map<String, dynamic> body, {
     T Function(dynamic)? parser,
+    Map<String, String>? extraHeaders,
   }) async {
     await _ensureToken();
     final uri = ApiContract.uri(path);
     log('POST $uri', name: 'ApiClient');
     final res = await _httpClient.post(
       uri,
-      headers: _headers,
+      headers: <String, String>{..._headers, ...?extraHeaders},
       body: jsonEncode(body),
     );
     await _clearTokenOnUnauthorized(res);
@@ -4747,6 +4748,77 @@ extension ApiClientLegacyCompat on ApiClient {
       cacheTtl: const Duration(minutes: 2),
     );
     return AccountSummary.fromJson(res.data ?? const <String, dynamic>{});
+  }
+
+  /// 필요한 변수는 canary 데모 지갑·상품 스냅샷이다. 작동 원리는 서버 RPC의 원자 결과를
+  /// 그대로 반환해 화면이 로컬 잔액을 권위 데이터로 오인하지 않게 한다.
+  Future<Map<String, dynamic>> fetchDemoStudentStore() async {
+    final res = await _get<Map<String, dynamic>>(
+      '/demo/student-store',
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+      useCache: false,
+    );
+    return res.data ?? const <String, dynamic>{};
+  }
+
+  /// 필요한 변수는 상품 ID와 재시도 가능한 멱등 키다. 작동 원리는 동일 키 재전송 시
+  /// 서버가 기존 주문 결과를 돌려주도록 X-Idempotency-Key를 전송하는 것이다.
+  Future<Map<String, dynamic>> redeemDemoStudentStoreItem({
+    required String itemId,
+    required String idempotencyKey,
+  }) async {
+    final res = await _post<Map<String, dynamic>>(
+      '/demo/student-store/orders',
+      <String, dynamic>{'item_id': itemId},
+      extraHeaders: <String, String>{'X-Idempotency-Key': idempotencyKey},
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+    );
+    return res.data ?? const <String, dynamic>{};
+  }
+
+  /// 필요한 변수는 수학 내신 계획과 실제 연결된 할 일이다. 작동 원리는 연결되지 않은
+  /// 시험이면 서버가 빈 tasks를 반환하게 해 샘플 범위를 실제 콘텐츠처럼 보이지 않게 한다.
+  Future<Map<String, dynamic>> fetchActiveSchoolExamPlan() async {
+    final res = await _get<Map<String, dynamic>>(
+      '/student/school-exam-plan/active',
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+      useCache: false,
+    );
+    return res.data ?? const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> saveActiveSchoolExamPlan({
+    required String school,
+    required String examName,
+    required String examDate,
+    String? examId,
+    int version = 0,
+  }) async {
+    final res = await _put<Map<String, dynamic>>(
+      '/student/school-exam-plan/active',
+      <String, dynamic>{
+        'school': school,
+        'exam_name': examName,
+        'exam_date': examDate,
+        'exam_id': examId,
+        'version': version,
+      },
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+    );
+    return res.data ?? const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> updateSchoolExamTask({
+    required String taskId,
+    required bool completed,
+    required int version,
+  }) async {
+    final res = await _patch<Map<String, dynamic>>(
+      '/student/school-exam-plan/tasks/${Uri.encodeComponent(taskId)}',
+      <String, dynamic>{'completed': completed, 'version': version},
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+    );
+    return res.data ?? const <String, dynamic>{};
   }
 
   Future<AccountSummary> recordActivityScore({

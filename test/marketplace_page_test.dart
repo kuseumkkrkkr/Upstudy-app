@@ -252,7 +252,7 @@ void main() {
     expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
   });
 
-  for (final width in <double>[720, 760, 780]) {
+  for (final width in <double>[720, 721, 1040]) {
     testWidgets('${width}px 학생 셸 경계에서도 마켓은 모바일 본문과 하단 탐색을 쓴다', (tester) async {
       tester.view.physicalSize = Size(width, 1000);
       tester.view.devicePixelRatio = 1;
@@ -276,14 +276,26 @@ void main() {
       );
       await tester.pump();
 
+      final mobile = width <= 720;
       expect(
-        find.byKey(const ValueKey('market-mobile-scroll')),
+        find.byKey(
+          ValueKey(mobile ? 'market-mobile-scroll' : 'market-wide-scroll'),
+        ),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('market-mobile-body')), findsOneWidget);
-      expect(find.byKey(const ValueKey('market-wide-scroll')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('market-mobile-body')),
+        mobile ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('market-wide-scroll')),
+        mobile ? findsNothing : findsOneWidget,
+      );
       expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
-      expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
+      expect(
+        find.byType(MobileStudentBottomAppBar),
+        mobile ? findsOneWidget : findsNothing,
+      );
     });
   }
 }

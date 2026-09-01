@@ -15,7 +15,7 @@
   "routes": [
     { "handle": "filesystem" },
     {
-      "src": "/(health|auth|user|account|rating|arena|weakness|history|courses|academy|challenges|marketplace|analysis|social|textbooks|quests|exams|serverchat|level-tests|api)(/.*)?",
+      "src": "/(health|auth|user|account|rating|arena|weakness|history|courses|academy|challenges|marketplace|analysis|social|textbooks|quests|exams|serverchat|level-tests|demo|student|api)(/.*)?",
       "dest": "/api/index.py"
     },
     { "src": "/(.*)", "dest": "/index.html" }

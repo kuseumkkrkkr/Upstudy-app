@@ -11,9 +11,9 @@ const _drawerDestinations = <String, String>{
   '홈': '/student/dashboard',
   '일정': '/schedule',
   '코스': '/courses',
-  '책가방': '/bookbag',
+  '자료실': '/bookbag',
   '오답 노트': '/wrong_answers',
-  '보고서 보기': '/level_test',
+  '레벨 테스트': '/level_test',
   '대결': '/arena',
   '친구/소셜': '/social',
   '스터디 그룹': '/groups',
@@ -25,19 +25,17 @@ const _drawerDestinations = <String, String>{
 const _mobilePrimaryDestinations = <String, String>{
   '홈': '/student/dashboard',
   '코스': '/courses',
-  '마켓': '/marketplace',
+  '자료실': '/marketplace',
 };
 
 const _mobileMoreDestinations = <String, String>{
+  'AI 튜터': '/tools',
   '일정': '/schedule',
-  '책가방': '/bookbag',
-  '오답 노트': '/wrong_answers',
-  '보고서 보기': '/level_test',
-  '대결': '/arena',
-  '친구/소셜': '/social',
-  '스터디 그룹': '/groups',
-  '학습 도구': '/tools',
+  '자료실': '/bookbag',
+  '대결장': '/arena',
+  '친구·그룹': '/social',
   '설정': '/settings',
+  '튜토리얼': '/landing/about',
 };
 
 /// 필요한 변수는 테스트할 메뉴 항목의 목적지다.
@@ -132,7 +130,7 @@ void main() {
     expect(tester.getSize(find.byType(AppDrawer)).width, 374);
     expect(
       tester.widget<Text>(find.text('오답 노트')).style?.fontSize,
-      greaterThanOrEqualTo(17),
+      greaterThanOrEqualTo(13),
     );
   });
 
@@ -183,8 +181,16 @@ void main() {
       await tester.tap(find.text('더보기'));
       await tester.pumpAndSettle();
 
+      final tab = entry.key == 'AI 튜터' ? '학습' : '내 메뉴';
+      await tester.tap(find.byKey(ValueKey('mobile-more-tab-$tab')));
+      await tester.pumpAndSettle();
+
       final destination = find.byKey(ValueKey('mobile-more-${entry.value}'));
-      await tester.ensureVisible(destination);
+      await tester.scrollUntilVisible(
+        destination,
+        100,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.pumpAndSettle();
       await tester.tap(destination);
       await tester.pumpAndSettle();
@@ -196,6 +202,8 @@ void main() {
       _mobileBottomFixture(routes, key: const ValueKey('more-profile')),
     );
     await tester.tap(find.text('더보기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mobile-more-profile')));
     await tester.pumpAndSettle();
@@ -213,6 +221,8 @@ void main() {
     );
     await tester.tap(find.text('더보기'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mobile-more-search')));
     await tester.pump();
     expect(find.text('전체 검색'), findsOneWidget);
@@ -221,6 +231,8 @@ void main() {
       _mobileBottomFixture(const {}, key: const ValueKey('more-notifications')),
     );
     await tester.tap(find.text('더보기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mobile-more-notifications')));
     await tester.pump();
@@ -254,6 +266,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('더보기'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mobile-more-profile')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('저장하기'));
@@ -273,6 +287,8 @@ void main() {
       _mobileBottomFixture(const {}, key: const ValueKey('search-math')),
     );
     await tester.tap(find.text('더보기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mobile-more-search')));
     await tester.pump();
@@ -311,34 +327,38 @@ void main() {
     );
     final selectedDecoration = selectedCapsule.decoration! as BoxDecoration;
 
-    expect(selectedLabel.style?.color, Colors.white);
+    expect(selectedLabel.style?.color, const Color(0xFF09090B));
     expect(selectedLabel.style?.fontSize, greaterThanOrEqualTo(12));
-    expect(selectedDecoration.color, const Color(0xFF101012));
+    expect(selectedDecoration.color, Colors.white);
+    expect(selectedDecoration.border?.top.width, 3);
 
     await tester.tap(find.text('더보기'));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const ValueKey('mobile-more-tab-내 메뉴')));
+    await tester.pumpAndSettle();
+
     final moreTitles = tester
         .widgetList<Text>(find.text('더보기'))
-        .where((widget) => widget.style?.fontSize == 28);
+        .where((widget) => widget.style?.fontSize == 22);
     final scheduleLabel = tester.widget<Text>(find.text('일정'));
     final searchLabel = tester.widget<Text>(find.text('검색'));
 
     expect(moreTitles, hasLength(1));
     expect(find.text('학습과 계정 기능을 한곳에서 열어요'), findsNothing);
-    expect(find.byKey(const ValueKey('mobile-more-close')), findsNothing);
-    expect(scheduleLabel.style?.fontSize, greaterThanOrEqualTo(17));
-    expect(searchLabel.style?.fontSize, greaterThanOrEqualTo(15));
-    expect(searchLabel.style?.color, Colors.white);
+    expect(find.byKey(const ValueKey('mobile-more-close')), findsOneWidget);
+    expect(scheduleLabel.style?.fontSize, greaterThanOrEqualTo(13));
+    expect(searchLabel.style?.fontSize, greaterThanOrEqualTo(13));
+    expect(searchLabel.style?.color, const Color(0xFF18181B));
     expect(
       tester
           .getSize(find.byKey(const ValueKey('mobile-more-/schedule')))
           .height,
-      greaterThanOrEqualTo(64),
+      greaterThanOrEqualTo(56),
     );
     expect(
       tester.getSize(find.byKey(const ValueKey('mobile-more-search'))).height,
-      greaterThanOrEqualTo(76),
+      greaterThanOrEqualTo(56),
     );
   });
 }

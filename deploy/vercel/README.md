@@ -10,6 +10,11 @@ SQL Editor에서 `supabase_ocr_queue.sql`과 `supabase_auth.sql`을 각각 한 �
 `anon`/`authenticated` 직접 접근 권한이 없다. Vercel과 Lightning에만 service role key를 Secret으로 둔다.
 SQL이 `delete_expired_ocr_jobs()`를 매시간 호출하는 `aiflow-ocr-cleanup` Cron도 함께 등록한다.
 
+S11 학생 데모/API를 함께 사용할 때는 `omj/migrations/postgres/010_student_demo_services_store.sql`을
+SQL Editor에서 추가 실행한다. 이 migration은 수학 내신 계획의 optimistic version과 canary 전용
+포인트 상점의 지갑 잠금·멱등 주문·차감 원장을 생성한다. 학원·과외 데이터는 서버에 저장하지 않고
+Flutter fixture만 사용한다.
+
 `canary_users`에는 기존 앱과 호환되는 PBKDF2 비밀번호 해시만 저장한다. 카나리 종료 시
 `select public.delete_all_canary_users();`로 가입 정보를 전부 파기할 수 있다.
 
@@ -82,6 +87,18 @@ flutter build apk `
   --dart-define=API_BASE_URL=https://YOUR-LIGHTNING-PUBLIC-URL `
   --dart-define=OCR_QUEUE_BASE_URL=https://YOUR-VERCEL-PROJECT.vercel.app/api/ocr
 ```
+
+학생서비스/포인트 상점 데모를 canary에서만 보이게 하려면 웹 빌드에 아래 define을 추가한다.
+
+```powershell
+flutter build web --release `
+  --dart-define=STUDENT_SERVICES_DEMO=true `
+  --dart-define=STUDENT_STORE_DEMO=true `
+  --dart-define=OSM_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png
+```
+
+두 flag를 생략하면 서비스·상점 메뉴와 전역 검색 결과는 숨겨진다. 상점 API는
+`STUDENT_STORE_DEMO=true` 환경변수일 때만 노출하며, 구독 버튼은 결제 UI 확인만 수행한다.
 
 `OCR_QUEUE_BASE_URL`을 생략하면 `ApiClient.submitSolveAnalysis()`는 기존 `/analysis/solve`를 호출한다.
 지정하면 앱이 Vercel에 작업을 등록하고 최대 4분간 폴링한 뒤 기존 `SolveAnalysisResponse`를 반환한다.

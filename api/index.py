@@ -13,6 +13,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 import jwt
@@ -640,6 +641,29 @@ class QuestGenerateRequest(BaseModel):
     branch_conditions: int = Field(default=0, ge=0, le=20)
     seed: int | None = None
     request_id: str | None = None
+
+
+class DemoStoreOrderRequest(BaseModel):
+    """필요 변수: 데모 상품 ID. 작동 원리: 포인트 상품 주문 입력을 고정된 문자열 범위로 제한한다."""
+
+    item_id: str = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9][a-z0-9._-]{0,63}$")
+
+
+class SchoolExamPlanRequest(BaseModel):
+    """필요 변수: 학교·수학 시험·시험일·선택적 기존 시험 ID와 버전이다."""
+
+    school: str = Field(min_length=1, max_length=120)
+    exam_name: str = Field(min_length=1, max_length=120)
+    exam_date: str = Field(min_length=10, max_length=10, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    exam_id: str | None = Field(default=None, max_length=120)
+    version: int = Field(default=0, ge=0)
+
+
+class SchoolExamTaskPatchRequest(BaseModel):
+    """필요 변수: 실제 시험에 연결된 할 일의 완료 상태와 낙관적 버전이다."""
+
+    completed: bool
+    version: int = Field(default=0, ge=0)
 
 
 class SupabaseDataApi:
@@ -1512,6 +1536,187 @@ def _empty_account_summary() -> dict[str, Any]:
 def get_account_summary(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
     """필요 변수: 인증 사용자. 작동 원리: 신규 계정이 홈 화면을 열 수 있는 기본 계정 요약을 반환한다."""
     return _empty_account_summary()
+
+
+def _demo_feature_enabled(name: str) -> bool:
+    """필요 변수: Vercel 데모 feature flag. 작동 원리: 명시적으로 true인 카나리 환경에서만 데모 API를 노출한다."""
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _require_demo_feature(name: str) -> None:
+    if not _demo_feature_enabled(name):
+        raise HTTPException(status_code=404, detail="demo_feature_disabled")
+
+
+def _rpc_json(result: Any) -> dict[str, Any]:
+    """필요 변수: PostgREST RPC 반환값. 작동 원리: jsonb 객체·단일 행 래핑을 동일한 dict로 정규화한다."""
+    if isinstance(result, dict):
+        return dict(result)
+    if isinstance(result, list) and result and isinstance(result[0], dict):
+        return dict(result[0])
+    return {}
+
+
+@app.get("/demo/student-store")
+def get_demo_student_store(user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 학생과 데모 store RPC. 작동 원리: 지갑·상품·보유 상태를 한 원자 스냅샷으로 반환한다."""
+    _require_demo_feature("STUDENT_STORE_DEMO")
+    try:
+        snapshot = _rpc_json(
+            _data_api().request(
+                "POST",
+                "rpc/demo_student_store_snapshot",
+                body={"p_user_id": user_id},
+            )
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="demo_store_unavailable") from error
+    if not snapshot or not isinstance(snapshot.get("items"), list):
+        raise HTTPException(status_code=503, detail="demo_store_unavailable")
+    return {"points": int(snapshot.get("points") or 0), "items": snapshot["items"], "demo": True}
+
+
+@app.post("/demo/student-store/orders")
+def create_demo_student_store_order(
+    payload: DemoStoreOrderRequest,
+    idempotency_key: str | None = Header(default=None, alias="X-Idempotency-Key"),
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 상품 ID·멱등 키. 작동 원리: DB RPC가 지갑 잠금·중복·차감·원장을 한 트랜잭션으로 처리한다."""
+    _require_demo_feature("STUDENT_STORE_DEMO")
+    key = (idempotency_key or "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9._:-]{8,128}", key):
+        raise HTTPException(status_code=400, detail="X-Idempotency-Key is required")
+    request_hash = hashlib.sha256(
+        json.dumps(payload.model_dump(), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    try:
+        result = _rpc_json(
+            _data_api().request(
+                "POST",
+                "rpc/demo_redeem_student_store",
+                body={
+                    "p_user_id": user_id,
+                    "p_item_id": payload.item_id,
+                    "p_idempotency_key": key,
+                    "p_request_hash": request_hash,
+                },
+            )
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="demo_store_unavailable") from error
+    outcome = str(result.get("status") or "").strip()
+    if outcome == "not_found":
+        raise HTTPException(status_code=404, detail="demo_store_item_not_found")
+    if outcome == "conflict":
+        raise HTTPException(status_code=409, detail="idempotency_key_payload_mismatch")
+    if outcome == "insufficient":
+        raise HTTPException(status_code=409, detail="insufficient_demo_points")
+    if outcome not in {"completed", "duplicate"}:
+        raise HTTPException(status_code=503, detail="demo_store_unavailable")
+    return {**result, "demo": True}
+
+
+@app.get("/student/school-exam-plan/active")
+def get_active_school_exam_plan(user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 학생. 작동 원리: 저장된 수학 시험 계획과 실제 연결된 할 일만 반환한다."""
+    try:
+        plans = _data_api().request(
+            "GET",
+            "student_school_exam_plan",
+            query={"select": "user_id,school,exam_name,exam_date,exam_id,version,updated_at", "user_id": f"eq.{user_id}", "limit": "1"},
+        ) or []
+        plan = dict(plans[0]) if plans else None
+        tasks = []
+        if plan and plan.get("exam_id"):
+            tasks = _data_api().request(
+                "GET",
+                "student_school_exam_task",
+                query={
+                    "select": "id,title,completed,version,exam_id,updated_at",
+                    "user_id": f"eq.{user_id}",
+                    "exam_id": f"eq.{plan['exam_id']}",
+                    "order": "updated_at.asc",
+                },
+            ) or []
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="school_exam_plan_unavailable") from error
+    return {"plan": plan, "tasks": tasks, "subject": "math"}
+
+
+@app.put("/student/school-exam-plan/active")
+def put_active_school_exam_plan(
+    payload: SchoolExamPlanRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 수학 시험 계획과 현재 버전. 작동 원리: 버전 조건부 upsert로 동시 편집을 409로 알린다."""
+    try:
+        datetime.strptime(payload.exam_date, "%Y-%m-%d")
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail="exam_date must be YYYY-MM-DD") from error
+    try:
+        result = _rpc_json(_data_api().request(
+            "POST",
+            "rpc/upsert_student_school_exam_plan",
+            body={
+                "p_user_id": user_id,
+                "p_school": payload.school.strip(),
+                "p_exam_name": payload.exam_name.strip(),
+                "p_exam_date": payload.exam_date,
+                "p_exam_id": payload.exam_id,
+                "p_expected_version": payload.version,
+            },
+        ))
+    except HTTPException:
+        raise
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="school_exam_plan_unavailable") from error
+    if result.get("status") == "conflict":
+        raise HTTPException(status_code=409, detail="school_exam_plan_version_conflict")
+    if result.get("status") != "saved":
+        raise HTTPException(status_code=503, detail="school_exam_plan_unavailable")
+    return {**result, "subject": "math"}
+
+
+@app.patch("/student/school-exam-plan/tasks/{task_id}")
+def patch_school_exam_task(
+    task_id: str,
+    payload: SchoolExamTaskPatchRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 본인 수학 할 일 ID·완료 상태·버전. 작동 원리: 소유자와 버전을 함께 조건에 넣어 stale write를 방지한다."""
+    if not re.fullmatch(r"[0-9a-fA-F-]{16,64}", task_id):
+        raise HTTPException(status_code=400, detail="invalid_task_id")
+    try:
+        rows = _data_api().request(
+            "GET",
+            "student_school_exam_task",
+            query={"select": "id,completed,version", "id": f"eq.{task_id}", "user_id": f"eq.{user_id}", "limit": "1"},
+        ) or []
+        if not rows:
+            raise HTTPException(status_code=404, detail="school_exam_task_not_found")
+        current = dict(rows[0])
+        if int(payload.version) != int(current.get("version") or 0):
+            raise HTTPException(status_code=409, detail="school_exam_task_version_conflict")
+        next_version = int(current["version"]) + 1
+        updated = _data_api().request(
+            "PATCH",
+            "student_school_exam_task",
+            query={"id": f"eq.{task_id}", "user_id": f"eq.{user_id}", "version": f"eq.{payload.version}"},
+            body={
+                "completed": payload.completed,
+                "version": next_version,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
+            prefer="return=representation",
+        ) or []
+    except HTTPException:
+        raise
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail="school_exam_plan_unavailable") from error
+    if not updated:
+        raise HTTPException(status_code=409, detail="school_exam_task_version_conflict")
+    return {"task": dict(updated[0]), "subject": "math"}
 
 
 @app.get("/rating/user")

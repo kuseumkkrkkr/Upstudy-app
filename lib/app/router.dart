@@ -22,6 +22,7 @@ import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
+import 'package:s11/features/student_services/student_services_demo_page.dart';
 
 /// Central route constants and route table for the AIFlow app.
 class AppRoutes {
@@ -69,6 +70,13 @@ class AppRoutes {
   static const String groupJoin = '/groups/join';
   static const String groupDetail = '/group/detail';
   static const String academyDashboard = '/academy/dashboard';
+  static const String academyFind = '/student-services/academy';
+  static const String academyProfile = '/student-services/academy/profile';
+  static const String privateTutorFind = '/student-services/tutor';
+  static const String privateTutorProfile = '/student-services/tutor/profile';
+  static const String serviceRequests = '/student-services/requests';
+  static const String schoolExamPrep = '/school-exam-prep';
+  static const String store = '/store';
 }
 
 /// Static [routes] map for [MaterialApp.routes].
@@ -137,6 +145,12 @@ Map<String, WidgetBuilder> appRoutes() {
 
     // Group Study
     AppRoutes.groups: (_) => const GroupListPage(),
+    AppRoutes.academyFind: (_) => const StudentServicesDemoPage(),
+    AppRoutes.privateTutorFind: (_) =>
+        const StudentServicesDemoPage(kind: StudentServiceKind.tutor),
+    AppRoutes.serviceRequests: (_) => const StudentServiceRequestsPage(),
+    AppRoutes.schoolExamPrep: (_) => const SchoolExamPrepPage(),
+    AppRoutes.store: (_) => const StudentStoreDemoPage(),
   };
 }
 
@@ -147,6 +161,23 @@ Map<String, WidgetBuilder> appRoutes() {
 Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
   final name = settings.name;
   final uri = name == null ? null : Uri.tryParse(name);
+
+  if (name == AppRoutes.academyProfile ||
+      name == AppRoutes.privateTutorProfile) {
+    final args = settings.arguments;
+    if (args is StudentServiceProvider) {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => StudentServiceProfilePage(
+          kind: name == AppRoutes.academyProfile
+              ? StudentServiceKind.academy
+              : StudentServiceKind.tutor,
+          provider: args,
+        ),
+      );
+    }
+    return _badArgumentsRoute(settings, expected: 'StudentServiceProvider');
+  }
 
   if (uri != null && uri.path == AppRoutes.groupJoin) {
     final code = uri.queryParameters['code'] ?? '';

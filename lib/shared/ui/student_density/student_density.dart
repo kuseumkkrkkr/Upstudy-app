@@ -2,18 +2,24 @@ import 'package:flutter/material.dart';
 
 /// 학생 밀도 축소 시안에서 공통으로 사용하는 색상과 간격 토큰입니다.
 abstract final class StudentDensityTokens {
-  static const Color background = Color(0xFFF2F2F4);
+  // The reference export uses #f0f0f2 as its page canvas. Keep the token
+  // centralized so every student surface follows the same visual baseline.
+  static const Color background = Color(0xFFF0F0F2);
   static const Color surface = Colors.white;
-  static const Color surfaceMuted = Color(0xFFF6F6F8);
+  static const Color surfaceMuted = Color(0xFFF3F3F5);
   static const Color ink = Color(0xFF09090B);
   static const Color muted = Color(0xFF71717A);
   static const Color faint = Color(0xFFA1A1AA);
   static const Color line = Color(0x1A09090B);
   static const Color lineStrong = Color(0x2E09090B);
-  static const Color dark = Color(0xFF0A0A0B);
+  static const Color dark = Color(0xFF111113);
   static const Color darkSecondary = Color(0xFF232326);
   static const double desktopMaxWidth = 1500;
-  static const double mobileBreakpoint = 780;
+
+  /// The HTML reference switches the shared shell at 720px. Individual
+  /// immersive workspaces may keep their own narrower layout thresholds.
+  static const double mobileBreakpoint = 720;
+  static const double desktopBreakpoint = 1040;
   static const double radiusSmall = 14;
   static const double radiusMedium = 20;
   static const double radius = 28;
@@ -21,7 +27,7 @@ abstract final class StudentDensityTokens {
 }
 
 /// 필요 변수: 현재 화면 너비.
-/// 작동 원리: 시안의 780px 기준을 사용해 모바일 재배치 여부를 반환합니다.
+/// 작동 원리: 기준 HTML의 720px 기준을 사용해 모바일 재배치 여부를 반환합니다.
 bool isStudentDensityMobile(BuildContext context) =>
     MediaQuery.sizeOf(context).width <= StudentDensityTokens.mobileBreakpoint;
 
