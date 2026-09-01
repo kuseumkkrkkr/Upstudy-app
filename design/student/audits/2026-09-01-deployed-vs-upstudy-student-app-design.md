@@ -263,7 +263,7 @@
 
 ### 최종 배포 기록 (2026-09-02)
 
-- 커밋: `d1cd127` (`feat(student): resolve course runtime deep links`), `origin/hotfix` 반영. release bundle은 이 소스와 canary define을 포함한다.
+- 커밋: `16291ea` (`fix(student): open notifications from course shell`), `origin/hotfix` 반영. release bundle은 이 커밋까지의 코스 런타임·오답 재풀이·알림 수정과 canary define을 포함한다.
 - Vercel: [`dpl_2jGXgFvZfxtuRmCpAxh3Gzv8LDMU`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/2jGXgFvZfxtuRmCpAxh3Gzv8LDMU), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard).
 - 환경: release bundle에 `API_BASE_URL=https://aiflow-web-canary.vercel.app`, `STUDENT_SERVICES_DEMO=true`, `STUDENT_STORE_DEMO=true`, HTTPS `OSM_TILE_URL`을 정의했다. 포인트 데모 API는 canary에서만 활성화된다.
 - 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON이며 release bundle에는 `localhost`가 없다.
