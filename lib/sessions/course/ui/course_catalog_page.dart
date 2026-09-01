@@ -1359,7 +1359,7 @@ class _MobileCourseTopBar extends StatelessWidget {
         _MobileCourseTopAction(
           tooltip: '알림',
           icon: Icons.notifications_none,
-          onPressed: () => Navigator.of(context).pushNamed('/notifications'),
+          onPressed: () => showStudentNotifications(context),
         ),
       ],
     ),
