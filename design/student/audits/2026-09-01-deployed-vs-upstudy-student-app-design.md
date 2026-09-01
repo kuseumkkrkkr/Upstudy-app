@@ -106,7 +106,7 @@
 
 | HTML ID | Flutter/배포 기준 | 상태 | 핵심 차이 |
 | --- | --- | --- | --- |
-| student-runtime | `StudentRuntimePage` | partial | HTML learning runtime header와 현재 shell 차이 |
+| student-runtime | `/student/runtime` · `StudentRuntimePage` | partial | 실제 런타임 코스·모듈·시작 API 계약을 유지하면서 `StudentHtmlShell` 레일/상단바/모바일 하단탭, ACTIVE COURSE·진행률·현재 학습·COURSE ROUTE 구조를 이식함. 인증 없는 canary에서는 fixture를 삽입하지 않아 실제 코스 상태는 빈/오류 경계로 남음 |
 | solve-workspace | 학생 풀이 workspace | partial | HTML Flow 진입·toolbar·state overlay 차이 |
 | flow-view | Flow 분석 위젯 | partial | 단계별 정오답·AI 의견·그래프 표현 차이 |
 | shared-flow | 공유 Flow 위젯 | partial | 공유자·기간·취소·필터 계약 차이 |
@@ -261,16 +261,17 @@
 | 자료실·마켓 | `MarketplacePage`를 `StudentHtmlShell` 안으로 이동해 PC 84px 레일·1280px 컨텍스트·상단바, 모바일 상단바·66px 하단탭을 실제 검색/필터/구매 본문과 결합. 상단 검색 액션은 검색 필드 포커스로 연결 | `lib/sessions/marketplace/ui/pages/marketplace_page.dart:390-457`, `lib/shared/ui/student_density/student_html_shell.dart`; `test/marketplace_page_test.dart`; 배포 `deployed-663fd3d-marketplace-390x844.png`, `deployed-663fd3d-marketplace-1280x900.png` | 실제 canary 인증 없이 자료 목록은 API 오류/빈 상태이며, 카드·필터의 HTML 세부 cascade와 구매 성공 데이터는 인증 세션에서 추가 확인 필요 |
 | 학습 일정 | `SchedulePage`를 `StudentHtmlShell` 안으로 이동해 실제 일정 조회·개인 일정 저장/삭제·일간/월간 전환을 보존하고, HTML의 모바일 세로 카드/PC 2열 컨텍스트 구조를 적용 | `lib/features/student_schedule/schedule_page.dart:430-560`, `test/personal_schedule_mobile_test.dart`; 배포 `deployed-Cua58vQ-schedule-390x844.png`, `deployed-Cua58vQ-schedule-1280x900.png` | canary 인증·코스 ID가 없으면 일정 오류/빈 상태만 표시되며, 실제 일정 데이터와 월간 타임라인의 세부 cascade는 인증 세션에서 추가 확인 필요 |
 | 레벨 테스트 | `LevelTestHomePage`를 `StudentHtmlShell` 안으로 이동해 실제 배치 세션·25문항 시간 계약·결과 전환을 보존 | `lib/features/level_test/level_test_home_page.dart:170-240`, `test/level_test_home_page_test.dart`, `test/placement_exam_flow_test.dart`; 배포 `deployed-GfznG3G-level-test-390x844.png`, `deployed-GfznG3G-level-test-1280x900.png` | canary 인증 없이 시작 API를 검증할 수 없어 시작 전 overview 상태만 확인 가능. HTML 진단 overview의 완전한 데이터 매핑은 인증 세션 필요 |
+| 학생 런타임 | `/student/runtime`를 `StudentHtmlShell`로 전환하고 실제 `StudentRuntimeService` 코스·모듈·세션 시작 동작을 유지. 모바일은 HTML 상단바/하단탭, PC는 84px 레일·메인·컨텍스트 분기를 사용 | `lib/features/student_runtime/student_runtime_page.dart`, `test/secondary_route_shell_test.dart`; 배포 `deployed-Dd8WwK-student-runtime-390x844.png`, `deployed-Dd8WwK-student-runtime-1280x900.png` | 최신 production에서 두 뷰포트와 콘솔 error/warn 0건을 확인. 인증 없는 canary는 실제 코스 API 경계를 사용하므로 샘플 데이터로 덮지 않음 |
 
 초기 비교 캡처(`deployed-dashboard-390x844.png`)는 이전 `public/main.dart.js` 정적 번들이 배포된 상태라 흰 화면으로 기록되었다. 이후 `HtmlHomeDashboard`가 실제 Flutter 홈 본문을 대체하고 `_HtmlStudentRail`·`_HtmlStudentTopBar`·`_HtmlContextAside` 공통 셸을 추가했다. `725cf16` production 배포에서 HTML과 같은 390×844·1280×900 홈 구조(모바일 상단바/하단탭, 데스크톱 A 레일, 인사·코스·이어하기, 6개 액션, 마이 대시보드, 우측 컨텍스트)를 이미지로 재확인했고, 설정·프로필·코스 목록에도 같은 셸과 HTML 구조를 이식했다(`deployed-725cf16-*.png`). `663fd3d` production 배포에서는 자료실도 같은 셸로 전환해 `deployed-663fd3d-marketplace-390x844.png` 및 `deployed-663fd3d-marketplace-1280x900.png`로 확인했다. 새 탭에서 5초 대기 후 브라우저 콘솔 error/warn은 0건이었다(정보 로그에는 canary `OMJ_JWT_SECRET` 미설정 안내가 남는다). 브라우저 DOM 접근성 스냅샷은 CanvasKit 특성상 `Enable accessibility` 버튼만 노출되어, Semantics·키보드 포커스는 별도 Flutter 테스트 범위로 남긴다. 기준 HTML은 `?screen=home` 상태에서 같은 순서와 밀도로 표시됨을 확인했다. 이 반영은 홈·공통 셸·설정·프로필·코스 상세·자료실 구조에 한정되며, 나머지 화면은 아래 매핑 상태(`partial`/`missing`) 그대로 추가 구현 대상이다.
 
 ### 최종 배포 기록 (2026-09-02)
 
-- 커밋: `4390325` (`refactor(student): align level test with html shell`), `origin/hotfix` 반영. 자료실·학습 일정·레벨 테스트 수정과 감사 증거를 포함한다.
-- Vercel: [`dpl_GfznG3GEcKDi6LyQoWyYDm6VNqGZ`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/GfznG3GEcKDi6LyQoWyYDm6VNqGZ), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard). 배포 번들은 레벨 테스트 셸 변경을 포함한다.
+- 커밋: `8434c83` (`refactor(student): align runtime with html shell`), `origin/hotfix` 반영. 자료실·학습 일정·레벨 테스트·학생 런타임 수정과 감사 증거를 포함한다.
+- Vercel: [`dpl_Dd8WwKSuxJJHzGHaqSCstP7XR2eB`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/Dd8WwKSuxJJHzGHaqSCstP7XR2eB), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard). 새 release bundle에 학생 런타임 HTML 셸 변경을 포함한다.
 - 환경: release bundle에 `API_BASE_URL=https://aiflow-web-canary.vercel.app`, `STUDENT_SERVICES_DEMO=true`, `STUDENT_STORE_DEMO=true`, HTTPS `OSM_TILE_URL`을 정의했다. 포인트 데모 API는 canary에서만 활성화된다.
 - 런타임: `GET /health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON이며 release bundle에는 `localhost`가 없다.
-- 브라우저: production alias의 390×844 모바일·1280×900 데스크톱 홈·설정·프로필·코스 목록·오답 재풀이·코스 런타임·자료실·학습 일정·레벨 테스트를 새 탭에서 5초 대기 후 캡처했고, 각 캡처의 콘솔 error/warn은 0건이다. 오답 재풀이 데이터 호출은 canary에서 `OMJ_JWT_SECRET is not configured` 503을 반환해 오류/재시도 상태로 캡처했다. 코스 런타임도 인증 없는 임의 ID에 대해 오류/목록 복귀 상태를 렌더링한다. 자료실·학습 일정·레벨 테스트는 API 인증/데이터 경계에서 HTML 셸의 빈/오류 또는 시작 상태를 렌더링한다. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
+- 브라우저: production alias의 390×844 모바일·1280×900 데스크톱 홈·설정·프로필·코스 목록·오답 재풀이·코스 런타임·자료실·학습 일정·레벨 테스트·학생 런타임을 새 탭에서 5초 대기 후 캡처했고, 각 캡처의 콘솔 error/warn은 0건이다. 학생 런타임은 최신 `Dd8WwK` 배포에서 HTML 모바일 상단바/하단탭과 PC A 레일/메인 셸을 각각 확인했다. 오답 재풀이 데이터 호출은 canary에서 `OMJ_JWT_SECRET is not configured` 503을 반환해 오류/재시도 상태로 캡처했다. 코스 런타임도 인증 없는 임의 ID에 대해 오류/목록 복귀 상태를 렌더링한다. 자료실·학습 일정·레벨 테스트는 API 인증/데이터 경계에서 HTML 셸의 빈/오류 또는 시작 상태를 렌더링한다. 실제 학생 계정 데이터와 Supabase migration 적용 여부는 이 캡처에 포함하지 않는다.
 
 자동 검증:
 
