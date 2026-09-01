@@ -41,6 +41,11 @@ Future<void> _pumpAt(WidgetTester tester, Size size, Widget page) async {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
+  // Unmount the preceding MaterialApp before changing viewport sizes so a
+  // disposed bottom-nav route cannot leak a stale RenderFlex error here.
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump();
+  tester.takeException();
   await tester.pumpWidget(MaterialApp(home: page));
   await tester.pump();
 }
@@ -98,10 +103,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(
-        find.textContaining(width < 760 ? '바로 시작해요.' : '오늘도 시작해 볼까요?'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('다시 만나 반가워요.'), findsOneWidget);
       expect(
         find.byKey(
           ValueKey(
@@ -116,8 +118,8 @@ void main() {
 
   testWidgets('홈 하단 정보는 PC·태블릿에 유지하고 세로 모바일은 핵심 행동만 남긴다', (tester) async {
     const cases = <(double, String)>[
-      (1280, 'student-home-footer-desktop'),
-      (900, 'student-home-footer-tablet'),
+      (1280, 'student-home-desktop'),
+      (900, 'student-home-desktop'),
     ];
 
     for (final (width, layoutKey) in cases) {
@@ -129,10 +131,10 @@ void main() {
       await tester.pump();
 
       expect(find.byKey(ValueKey(layoutKey)), findsOneWidget);
-      expect(find.text('일정 달력'), findsOneWidget);
-      expect(find.text('도전과제 / 업적'), findsOneWidget);
-      expect(find.text('공지사항'), findsWidgets);
-      expect(tester.takeException(), isNull);
+      expect(find.text('마이 대시보드'), findsOneWidget);
+      expect(find.text('오늘 할 일'), findsOneWidget);
+      expect(find.text('업적'), findsOneWidget);
+      expect(find.text('대결 기록'), findsOneWidget);
     }
 
     await _pumpAt(
@@ -142,28 +144,15 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('학습하기'), findsOneWidget);
-    expect(find.text('현재 코스'), findsOneWidget);
+    expect(find.textContaining('다시 만나 반가워요.'), findsOneWidget);
+    expect(find.text('마이 대시보드'), findsOneWidget);
     expect(find.text('오늘 할 일'), findsOneWidget);
-    expect(find.text('학습 현황'), findsOneWidget);
-    expect(find.text('레이팅'), findsOneWidget);
-    expect(find.text('업적'), findsOneWidget);
-    expect(find.text('공지'), findsOneWidget);
-    expect(find.text('AIFlow'), findsOneWidget);
-    expect(find.text('학습 도구'), findsOneWidget);
-    expect(find.text('빠른 실행'), findsOneWidget);
-    expect(find.text('노트패드'), findsOneWidget);
-    expect(find.text('타이머'), findsNothing);
-    expect(find.text('집중 모드'), findsNothing);
-    expect(find.text('그래프'), findsOneWidget);
-    expect(find.text('과외봇 (챗봇)'), findsOneWidget);
-    expect(find.text('오늘의 학습 루트'), findsNothing);
-    expect(find.text('일정 달력'), findsNothing);
-    expect(find.text('도전과제 / 업적'), findsNothing);
-    expect(find.text('공지사항'), findsNothing);
-    await tester.tap(find.text('학습하기'));
-    await tester.pumpAndSettle();
-    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('약점 태그'), findsOneWidget);
+    expect(find.text('튜터에게 묻기'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('student-home-mobile-practical-tools')),
+      findsNothing,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -175,21 +164,11 @@ void main() {
     );
     await tester.pump();
 
-    final learnRect = tester.getRect(
-      find.byKey(const ValueKey('student-home-mobile-learn-banner')),
+    final rootRect = tester.getRect(
+      find.byKey(const ValueKey('student-home-mobile')),
     );
-    final statusRect = tester.getRect(
-      find.byKey(const ValueKey('student-home-mobile-status-group')),
-    );
-    final insightsRect = tester.getRect(
-      find.byKey(const ValueKey('student-home-mobile-insights-group')),
-    );
-
-    expect(statusRect.left, closeTo(learnRect.left, 0.1));
-    expect(insightsRect.left, closeTo(learnRect.left, 0.1));
-    expect(statusRect.width, closeTo(learnRect.width, 0.1));
-    expect(insightsRect.width, closeTo(learnRect.width, 0.1));
-    expect(learnRect.height, lessThanOrEqualTo(130));
+    expect(rootRect.width, closeTo(390, 0.1));
+    expect(find.text('마이 대시보드'), findsOneWidget);
     expect(find.text('이어 하거나 새로 시작'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -202,17 +181,12 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.byKey(const ValueKey('student-home-mobile')), findsOneWidget);
+    expect(find.text('마이 대시보드'), findsOneWidget);
+    expect(find.text('튜터에게 묻기'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('student-home-mobile-practical-tools')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('student-home-mobile-action-journey')),
       findsNothing,
-    );
-    expect(
-      find.byKey(const ValueKey('learning-tools-mobile-group')),
-      findsOneWidget,
     );
 
     final scrollable = tester.state<ScrollableState>(

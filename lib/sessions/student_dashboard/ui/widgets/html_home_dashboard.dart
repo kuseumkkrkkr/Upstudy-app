@@ -64,6 +64,7 @@ class HtmlHomeDashboard extends StatelessWidget {
           );
 
     return Padding(
+      key: ValueKey(mobile ? 'student-home-mobile' : 'student-home-desktop'),
       padding: EdgeInsets.fromLTRB(10, mobile ? 10 : 20, 10, 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -794,7 +795,7 @@ class _TutorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'AI 튜터',
+      label: 'AI 튜터에게 묻기',
       child: InkWell(
         onTap: onTap,
         child: Container(
@@ -824,7 +825,7 @@ class _TutorCard extends StatelessWidget {
                 child: const Row(
                   children: [
                     Text(
-                      '대화하기',
+                      '튜터에게 묻기',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 10,

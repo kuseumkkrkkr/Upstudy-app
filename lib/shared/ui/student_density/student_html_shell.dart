@@ -213,9 +213,9 @@ class StudentHtmlRail extends StatelessWidget {
 
     return Container(
       width: width,
-      color: StudentDensityTokens.surface,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
       decoration: const BoxDecoration(
+        color: StudentDensityTokens.surface,
         border: Border(right: BorderSide(color: StudentDensityTokens.line)),
       ),
       child: Column(
@@ -281,9 +281,9 @@ class StudentHtmlContextAside extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: 244,
-    color: StudentDensityTokens.surface,
     padding: const EdgeInsets.fromLTRB(12, 20, 12, 18),
     decoration: const BoxDecoration(
+      color: StudentDensityTokens.surface,
       border: Border(left: BorderSide(color: StudentDensityTokens.line)),
     ),
     child: const SizedBox.shrink(),
