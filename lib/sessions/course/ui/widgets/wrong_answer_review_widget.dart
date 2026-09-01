@@ -36,12 +36,13 @@ class _WrongAnswerReviewWidgetState extends State<WrongAnswerReviewWidget> {
   @override
   void initState() {
     super.initState();
-    _loadAndLaunch();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadAndLaunch();
+    });
   }
 
   Future<void> _loadAndLaunch() async {
     final config = widget.config;
-    final scaffold = ScaffoldMessenger.of(context);
     try {
       List<Map<String, dynamic>> quests = [];
 
@@ -113,7 +114,9 @@ class _WrongAnswerReviewWidgetState extends State<WrongAnswerReviewWidget> {
         _loading = false;
         _error = e.toString().replaceFirst('Exception: ', '');
       });
-      scaffold.showSnackBar(SnackBar(content: Text('문제 로드 실패: $_error')));
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text('문제 로드 실패: $_error')));
     }
   }
 
@@ -127,6 +130,7 @@ class _WrongAnswerReviewWidgetState extends State<WrongAnswerReviewWidget> {
       error: _error,
       detail: '${widget.config.questionCount}문제 · 최근 취약점과 풀이 기록을 반영합니다.',
       onRetry: _retry,
+      embedded: true,
     );
   }
 

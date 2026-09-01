@@ -6,8 +6,11 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/app/router.dart';
-import 'package:s11/features/wrong_answer/wrong_answer_list_page.dart';
+import 'package:s11/features/wrong_answer/wrong_answer_solve_page.dart';
+import 'package:s11/sessions/course/ui/widgets/wrong_answer_review_widget.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
 
 Widget _legacyWrongAnswerRouteApp(double width) => MaterialApp(
   key: ValueKey('legacy-wrong-answer-route-$width'),
@@ -39,7 +42,7 @@ void main() {
     await ApiClient.instance.clearToken();
   });
 
-  testWidgets('구형 오답 재풀이 경로는 모든 학생 폭에서 실제 오답 목록으로 간다', (tester) async {
+  testWidgets('구형 오답 재풀이 경로는 실제 복습 위젯과 HTML 셸로 간다', (tester) async {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -50,33 +53,23 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.byType(WrongAnswerListPage), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('wrong-answers-screen')),
-        findsOneWidget,
-      );
+      expect(find.byType(WrongAnswerSolvePage), findsOneWidget);
+      expect(find.byType(WrongAnswerReviewWidget), findsOneWidget);
       expect(
         find.text('재풀이 세션이 여기에서 실행됩니다. (WrongAnswerReviewWidget 연동 예정)'),
         findsNothing,
       );
       expect(
         ModalRoute.of(
-          tester.element(find.byType(WrongAnswerListPage)),
+          tester.element(find.byType(WrongAnswerSolvePage)),
         )?.settings.name,
-        AppRoutes.wrongAnswers,
+        AppRoutes.wrongAnswerSolve,
       );
 
       if (width <= 720) {
-        expect(
-          find.byKey(const ValueKey('student-mobile-menu')),
-          findsOneWidget,
-        );
-        expect(find.byKey(const ValueKey('student-top-nav-코스')), findsNothing);
+        expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
       } else {
-        expect(
-          find.byKey(const ValueKey('student-top-nav-코스')),
-          findsOneWidget,
-        );
+        expect(find.byType(StudentHtmlRail), findsOneWidget);
       }
       expect(tester.takeException(), isNull);
     }

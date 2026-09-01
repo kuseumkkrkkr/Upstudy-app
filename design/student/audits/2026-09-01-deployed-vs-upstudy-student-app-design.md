@@ -100,7 +100,7 @@
 | level-solve | level test runtime | partial | 25문항·시간·뒤로가기 상태 검증 필요 |
 | level-result | `/level_test/result` | partial | 결과·재시도·코스 추천 상태 차이 |
 | wrong-list | `/wrong_answers` | partial | filter·약점·복습 CTA 차이 |
-| wrong-solve | `/wrong_answer_solve` | P1 | 현재 목록으로 redirect, 실제 solve workspace 아님 |
+| wrong-solve | `/wrong_answer_solve` · `WrongAnswerSolvePage` + `WrongAnswerReviewWidget` | partial | 실제 약점/습관 조회와 BuildpageWidget 진입을 연결함. 인증·데이터가 없으면 HTML 셸 안에서 오류/재시도 상태를 표시 |
 
 ### 풀이 (8)
 
@@ -256,6 +256,7 @@
 | 설정 | `StudentHtmlShell` + `_HtmlSettingsRow`/`_HtmlSettingsActionRow`로 HTML의 단일 직각 패널, 5개 행, 블랙/화이트 토글을 사용. 기존 로컬 설정 저장과 라이선스·계정 연동 안내 동작은 유지 | `lib/sessions/settings/ui/pages/settings_page.dart`; `local-settings-html-390x844.png`, `local-settings-html-1280x900.png`; 기준 `design-settings-390x844.png`, `design-settings-1280x900.png` | 계정 연동은 실제 서버 계약이 없어 안내 시트만 제공. 인증 계정에서 저장/라이선스 포커스 복귀는 별도 검증 필요 |
 | 프로필 | 로딩·인증 만료 상태를 `StudentHtmlShell`의 A 레일·HTML 상단바·모바일 탭과 재시도 카드로 감쌈. 정상 데이터 경로는 기존 `_ProfileHero`/폼/API 계약을 유지 | `lib/sessions/auth/ui/pages/profile_page.dart`; `local-profile-shell-error-390x844.png`, `local-profile-shell-error-1280x900.png`; 기준 `design-profile-390x844.png`, `design-profile-1280x900.png` | 실제 계정 데이터에서 HTML 정보/보안 행·삭제 확인 모달의 일대일 캡처는 인증 세션 없이는 완료할 수 없음 |
 | 코스 상세 | `_HtmlCourseProgressHero`와 `_HtmlCourseCurriculum`으로 진행 hero·단계·유닛 상태·모바일 하단 CTA를 실제 `Course` 객체에 연결. 등록·이어하기·미리보기 API/동작은 기존 계약을 호출 | `lib/sessions/course/ui/course_detail_page.dart`; 기준 `design-course-detail-390x844.png`, `design-course-detail-1280x900.png` | 인증 없는 canary에서는 코스 상세로 진입할 코스가 없어 production 이미지 캡처는 보류. 유닛이 없을 때 샘플 코스를 만들지 않고 빈 상태로 표시 |
+| 오답 재풀이 | `/wrong_answer_solve`가 `WrongAnswerReviewWidget`의 약점/습관 조회로 진입하고 `BuildpageWidget`으로 실제 풀이를 교체 연결. HTML 상단 셸·모바일 하단탭·오류/재시도 상태를 사용 | `lib/features/wrong_answer/wrong_answer_solve_page.dart`, `lib/features/wrong_answer/wrong_answer_list_page.dart`, `lib/app/router.dart`, `lib/sessions/course/ui/widgets/wrong_answer_review_widget.dart`; `test/wrong_answer_legacy_route_test.dart`, `test/secondary_route_shell_test.dart` | 실제 인증·오답 데이터가 없는 배포에서는 문제 목록/풀이 캡처를 생성하지 않으며, 샘플 문제를 삽입하지 않는다 |
 
 초기 비교 캡처(`deployed-dashboard-390x844.png`)는 이전 `public/main.dart.js` 정적 번들이 배포된 상태라 흰 화면으로 기록되었다. 이후 `HtmlHomeDashboard`가 실제 Flutter 홈 본문을 대체하고 `_HtmlStudentRail`·`_HtmlStudentTopBar`·`_HtmlContextAside` 공통 셸을 추가했다. `725cf16` production 배포에서 HTML과 같은 390×844·1280×900 홈 구조(모바일 상단바/하단탭, 데스크톱 A 레일, 인사·코스·이어하기, 6개 액션, 마이 대시보드, 우측 컨텍스트)를 이미지로 재확인했고, 설정·프로필·코스 목록에도 같은 셸과 HTML 구조를 이식했다(`deployed-725cf16-*.png`). 새 탭에서 5초 대기 후 브라우저 콘솔 error/warn은 0건이었다. 브라우저 DOM 접근성 스냅샷은 CanvasKit 특성상 `Enable accessibility` 버튼만 노출되어, Semantics·키보드 포커스는 별도 Flutter 테스트 범위로 남긴다. 기준 HTML은 `?screen=home` 상태에서 같은 순서와 밀도로 표시됨을 확인했다. 이 반영은 홈·공통 셸·설정·프로필·코스 상세 구조에 한정되며, 나머지 81개 화면은 아래 매핑 상태(`partial`/`missing`) 그대로 추가 구현 대상이다.
 

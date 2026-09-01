@@ -208,13 +208,16 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
 
   // Legacy wrong-answer solve deep link.
   //
-  // The old route only carried a source label, not the review item/config that
-  // a real solve session needs. Route it to the existing review list instead
-  // of exposing the unfinished placeholder.
-  if (name == AppRoutes.wrongAnswerSolve) {
+  // Preserve the old path while entering the real review widget. The query
+  // source is deliberately narrow because the widget only supports weakness
+  // and habit-backed sessions; unknown values use the weakness flow.
+  if (uri != null && uri.path == AppRoutes.wrongAnswerSolve) {
+    final source = uri.queryParameters['source'] == 'habit'
+        ? 'habit'
+        : 'weakness';
     return MaterialPageRoute<void>(
-      settings: const RouteSettings(name: AppRoutes.wrongAnswers),
-      builder: (_) => const WrongAnswerListPage(),
+      settings: settings,
+      builder: (_) => WrongAnswerSolvePage(sourceType: source),
     );
   }
 

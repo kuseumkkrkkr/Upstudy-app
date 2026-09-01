@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/review_course/review_course.dart';
+import 'package:s11/features/wrong_answer/wrong_answer_solve_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
@@ -343,8 +344,13 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
   /// 필요한 변수는 현재 화면 문맥과 선택 문제다.
   /// 실제 이력과 약점 태그로 구성된 기존 복습 코스를 열어 풀이 흐름을 재사용한다.
   void _showReviewAction(String action, _ReviewItem? item) {
-    // 복습 코스는 실제 이력·약점 태그로 문제를 구성하고 기존 풀이 화면까지 연결한다.
-    unawaited(showReviewCoursePage(context: context));
+    // 실제 이력·약점 태그를 기반으로 한 풀이 위젯으로 진입한다.
+    final source = action.contains('습관') ? 'habit' : 'weakness';
+    unawaited(
+      Navigator.of(
+        context,
+      ).pushNamed('${WrongAnswerSolvePage.routeName}?source=$source'),
+    );
   }
 
   /// 필요한 변수는 선택한 필터 이름이다.

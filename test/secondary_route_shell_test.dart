@@ -12,6 +12,7 @@ import 'package:s11/features/student_schedule/curriculum_history_page.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_solve_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -124,13 +125,12 @@ void main() {
     await tester.pump();
 
     expect(find.byType(AppBar), findsNothing);
-    expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
-    expect(find.byTooltip('뒤로가기'), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
     expect(find.text('오답 노트로 돌아가기'), findsOneWidget);
 
     final onBack = tester
-        .widget<Ios26TopBar>(find.byType(Ios26TopBar).first)
-        .onBack;
+        .widget<StudentHtmlTopBar>(find.byType(StudentHtmlTopBar).first)
+        .onMenu;
     expect(onBack, isNotNull);
     onBack!();
     await tester.pump();
