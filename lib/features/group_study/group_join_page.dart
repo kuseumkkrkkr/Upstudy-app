@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 class GroupJoinPage extends StatefulWidget {
   const GroupJoinPage({super.key, required this.inviteCode});
@@ -255,34 +254,15 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                onBack: _goBack,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                showMenuWithBack: true,
-                showLevelIndicator: false,
-                showUtilityActions: true,
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.social,
-                ),
-              ),
-            ),
-            Expanded(child: _buildInviteBody(context)),
-          ],
-        ),
-      ),
+    return StudentHtmlShell(
+      key: const ValueKey('group-join-screen'),
+      title: '그룹 참여',
+      activeRoute: '/groups',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onMenu: _goBack,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: _buildInviteBody(context),
     );
   }
 }

@@ -85,14 +85,15 @@ void main() {
     await tester.pump();
 
     expect(find.byType(AppBar), findsNothing);
-    expect(find.byKey(const ValueKey('student-top-nav-친구/소셜')), findsOneWidget);
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
+    expect(find.byType(StudentHtmlRail), findsOneWidget);
     expect(find.text('중등 수학 챌린지'), findsOneWidget);
-    expect(find.byTooltip('뒤로가기'), findsOneWidget);
-    expect(find.byTooltip('검색'), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
+    expect(find.bySemanticsLabel('검색'), findsOneWidget);
 
     final onBack = tester
-        .widget<Ios26TopBar>(find.byType(Ios26TopBar).first)
-        .onBack;
+        .widget<StudentHtmlTopBar>(find.byType(StudentHtmlTopBar).first)
+        .onMenu;
     expect(onBack, isNotNull);
     onBack!();
     await tester.pump();
@@ -111,8 +112,9 @@ void main() {
     await tester.pump();
 
     expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
     expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
-    expect(find.byTooltip('뒤로가기'), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
     expect(find.text('중등 수학 챌린지'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

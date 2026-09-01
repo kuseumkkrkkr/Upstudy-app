@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/features/group_study/student_academy_details_dialog.dart';
 
 class StudentAcademyPage extends StatefulWidget {
@@ -146,117 +145,96 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
   Widget build(BuildContext context) {
     final academy = _academy;
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                onMenu: () => toggleAppDrawer(context),
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.social,
-                ),
+    return StudentHtmlShell(
+      key: const ValueKey('student-academy-screen'),
+      title: '학원',
+      activeRoute: '/academy/dashboard',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(
+              child: FilledButton(
+                onPressed: _load,
+                child: const Text('다시 불러오기'),
               ),
-            ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                  ? Center(
-                      child: FilledButton(
-                        onPressed: _load,
-                        child: const Text('다시 불러오기'),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView(
-                        padding: EdgeInsets.fromLTRB(
-                          studentDensityHorizontalPadding(context),
-                          studentDensityVerticalPadding(context),
-                          studentDensityHorizontalPadding(context),
-                          40,
-                        ),
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  studentDensityHorizontalPadding(context),
+                  studentDensityVerticalPadding(context),
+                  studentDensityHorizontalPadding(context),
+                  40,
+                ),
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1280),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 1280),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  StudentDensityPageHeader(
-                                    eyebrow: 'ACADEMY',
-                                    title: '학원',
-                                    description: '오늘 수업과 과제를 한곳에서 확인합니다.',
-                                    action: OutlinedButton(
-                                      onPressed: _openAcademyDetails,
-                                      child: const Text('학원 정보'),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _AcademyInfoCard(
-                                    academy: academy,
-                                    attendancePresent: _attendancePresent,
-                                    remainingTasks: _tasks
-                                        .where((task) => !task.completed)
-                                        .length,
-                                    nextClass: _schedule.isEmpty
-                                        ? '목 19:30'
-                                        : _schedule.first['time']?.toString() ??
-                                              '목 19:30',
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (mobile)
-                                    _TodayAcademyCard(
-                                      tasks: _tasks,
-                                      attendancePresent: _attendancePresent,
-                                    )
-                                  else
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          flex: 13,
-                                          child: _TodayAcademyCard(
-                                            tasks: _tasks,
-                                            attendancePresent:
-                                                _attendancePresent,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          flex: 7,
-                                          child: _AcademyTimetableCard(
-                                            schedule: _schedule,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  if (mobile) ...[
-                                    const SizedBox(height: 12),
-                                    _AcademyTimetableCard(schedule: _schedule),
-                                  ],
-                                ],
-                              ),
+                          StudentDensityPageHeader(
+                            eyebrow: 'ACADEMY',
+                            title: '학원',
+                            description: '오늘 수업과 과제를 한곳에서 확인합니다.',
+                            action: OutlinedButton(
+                              onPressed: _openAcademyDetails,
+                              child: const Text('학원 정보'),
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          _AcademyInfoCard(
+                            academy: academy,
+                            attendancePresent: _attendancePresent,
+                            remainingTasks: _tasks
+                                .where((task) => !task.completed)
+                                .length,
+                            nextClass: _schedule.isEmpty
+                                ? '목 19:30'
+                                : _schedule.first['time']?.toString() ??
+                                      '목 19:30',
+                          ),
+                          const SizedBox(height: 12),
+                          if (mobile)
+                            _TodayAcademyCard(
+                              tasks: _tasks,
+                              attendancePresent: _attendancePresent,
+                            )
+                          else
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 13,
+                                  child: _TodayAcademyCard(
+                                    tasks: _tasks,
+                                    attendancePresent: _attendancePresent,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  flex: 7,
+                                  child: _AcademyTimetableCard(
+                                    schedule: _schedule,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (mobile) ...[
+                            const SizedBox(height: 12),
+                            _AcademyTimetableCard(schedule: _schedule),
+                          ],
                         ],
                       ),
                     ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }
