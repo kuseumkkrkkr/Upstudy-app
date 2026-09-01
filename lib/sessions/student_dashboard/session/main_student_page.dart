@@ -625,6 +625,13 @@ class _Header extends StatelessWidget {
   /// 공용 상단 내비게이션을 사용해 홈을 포함한 학습 목적지의 이동 계약을 유지한다.
   @override
   Widget build(BuildContext context) {
+    if (isStudentDensityMobile(context)) {
+      return _HtmlStudentTopBar(
+        onMenu: () => toggleAppDrawer(context),
+        onSearch: () => showStudentQuickSearch(context),
+        onNotifications: () => showStudentNotifications(context),
+      );
+    }
     return Ios26TopBar(
       brandColor: _green,
       onMenu: () => toggleAppDrawer(context),
@@ -636,6 +643,59 @@ class _Header extends StatelessWidget {
       onNotifications: () => showStudentNotifications(context),
       onProfile: () => unawaited(_openProfile(context)),
       items: studentTopNavItems(context, active: StudentTopDestination.home),
+    );
+  }
+}
+
+class _HtmlStudentTopBar extends StatelessWidget {
+  const _HtmlStudentTopBar({
+    required this.onMenu,
+    required this.onSearch,
+    required this.onNotifications,
+  });
+
+  final VoidCallback onMenu;
+  final VoidCallback onSearch;
+  final VoidCallback onNotifications;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget action({required String label, required IconData icon, required VoidCallback onTap}) {
+      return Semantics(
+        button: true,
+        label: label,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: OutlinedButton(
+            onPressed: onTap,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              foregroundColor: StudentDensityTokens.ink,
+              side: const BorderSide(color: StudentDensityTokens.line),
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Icon(icon, size: 19),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 64,
+      color: StudentDensityTokens.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Row(
+        children: [
+          action(label: '학생 메뉴', icon: Icons.arrow_back, onTap: onMenu),
+          const SizedBox(width: 10),
+          const Text('학생 홈', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+          const Spacer(),
+          action(label: '검색', icon: Icons.search, onTap: onSearch),
+          const SizedBox(width: 8),
+          action(label: '알림', icon: Icons.notifications_none, onTap: onNotifications),
+        ],
+      ),
     );
   }
 }
