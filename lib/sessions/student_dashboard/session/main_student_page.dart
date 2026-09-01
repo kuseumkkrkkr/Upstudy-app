@@ -1035,6 +1035,7 @@ class _AppBarLevelIndicatorState extends State<_AppBarLevelIndicator> {
   }
 }
 
+// ignore: unused_element
 class _HeroSection extends StatelessWidget {
   const _HeroSection({
     required this.username,
@@ -1562,6 +1563,7 @@ class _StatPage2 extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _LearningSection extends StatelessWidget {
   const _LearningSection({
     required this.todayTasks,
@@ -2355,6 +2357,7 @@ class _DailyQuestProgressCardState extends State<_DailyQuestProgressCard> {
   }
 }
 
+// ignore: unused_element
 class _BottomSection extends StatelessWidget {
   const _BottomSection();
 

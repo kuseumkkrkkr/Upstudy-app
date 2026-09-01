@@ -529,7 +529,7 @@ class _HtmlCourseUnitRow extends StatelessWidget {
                 SizedBox(
                   width: mobile ? 30 : 42,
                   child: Text(
-                    '${(index + 1).toString().padLeft(2, '0')}',
+                    (index + 1).toString().padLeft(2, '0'),
                     style: TextStyle(
                       color: active
                           ? Colors.white70
@@ -608,6 +608,7 @@ class _HtmlCourseEmptyRow extends StatelessWidget {
   );
 }
 
+// ignore: unused_element
 class _DetailHeading extends StatelessWidget {
   const _DetailHeading({
     required this.course,
@@ -748,6 +749,7 @@ class _DetailButton extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _MetricGrid extends StatelessWidget {
   const _MetricGrid({required this.course});
 
@@ -861,6 +863,7 @@ class _MetricGrid extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _LearningFlow extends StatelessWidget {
   const _LearningFlow({required this.course});
 
@@ -983,6 +986,7 @@ class _UnitRow extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _CourseInfo extends StatelessWidget {
   const _CourseInfo({required this.course});
 
