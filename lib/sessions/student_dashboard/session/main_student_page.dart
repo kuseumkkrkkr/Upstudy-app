@@ -27,7 +27,6 @@ import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/modal/level_detail_modal.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
 import 'package:s11/shared/data/models/course.dart';
@@ -497,7 +496,53 @@ class _MainStudentPageState extends State<MainStudentPage> {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
+    final wideDesktop =
+        MediaQuery.sizeOf(context).width >
+        StudentDensityTokens.desktopBreakpoint;
     final todayTasks = [..._todayTeacherTasks, ..._todayPersonalTasks];
+
+    Widget homeScrollFor(Course? course) {
+      return SingleChildScrollView(
+        controller: _scrollController,
+        physics: const BouncingScrollPhysics(),
+        child: HtmlHomeDashboard(
+          username: _displayName,
+          activeCourse: course,
+          todayTaskCount: todayTasks.length,
+          onResume: () => _resumeCourse(course),
+          onBrowseCourses: () =>
+              Navigator.of(context).pushNamed(AppRoutes.courses),
+          onReview: () =>
+              Navigator.of(context).pushNamed(AppRoutes.wrongAnswers),
+          onProblemSets: () =>
+              Navigator.of(context).pushNamed(AppRoutes.bookbag),
+          onExams: () => Navigator.of(context).pushNamed(AppRoutes.bookbag),
+          onTextbooks: () => Navigator.of(context).pushNamed(AppRoutes.bookbag),
+          onDashboardAction: (id) => _handleDashboardAction(id, todayTasks),
+        ),
+      );
+    }
+
+    final desktopShell = Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _HtmlStudentRail(width: wideDesktop ? 84 : 72),
+        Expanded(
+          child: Column(
+            children: [
+              const _Header(),
+              Expanded(
+                child: _CourseLoader(
+                  key: _courseLoaderKey,
+                  builder: homeScrollFor,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (wideDesktop) const _HtmlContextAside(),
+      ],
+    );
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -506,51 +551,45 @@ class _MainStudentPageState extends State<MainStudentPage> {
         drawer: const AppDrawer(),
         bottomNavigationBar: mobile ? const MobileStudentBottomAppBar() : null,
         body: SafeArea(
-          child: Column(
-            children: [
-              _Header(
-                displayName: _displayName,
-                onProfileChanged: _refreshDisplayName,
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _CourseLoader(
+          child: mobile
+              ? Column(
+                  children: [
+                    const _Header(),
+                    Expanded(
+                      child: _CourseLoader(
                         key: _courseLoaderKey,
-                        builder: (course) => HtmlHomeDashboard(
-                          username: _displayName,
-                          activeCourse: course,
-                          todayTaskCount: todayTasks.length,
-                          onResume: () => _resumeCourse(course),
-                          onBrowseCourses: () => Navigator.of(
-                            context,
-                          ).pushNamed(AppRoutes.courses),
-                          onReview: () => Navigator.of(
-                            context,
-                          ).pushNamed(AppRoutes.wrongAnswers),
-                          onProblemSets: () => Navigator.of(
-                            context,
-                          ).pushNamed(AppRoutes.bookbag),
-                          onExams: () => Navigator.of(
-                            context,
-                          ).pushNamed(AppRoutes.bookbag),
-                          onTextbooks: () => Navigator.of(
-                            context,
-                          ).pushNamed(AppRoutes.bookbag),
-                          onDashboardAction: (id) =>
-                              _handleDashboardAction(id, todayTasks),
+                        builder: (course) => SingleChildScrollView(
+                          controller: _scrollController,
+                          physics: const BouncingScrollPhysics(),
+                          child: HtmlHomeDashboard(
+                            username: _displayName,
+                            activeCourse: course,
+                            todayTaskCount: todayTasks.length,
+                            onResume: () => _resumeCourse(course),
+                            onBrowseCourses: () => Navigator.of(
+                              context,
+                            ).pushNamed(AppRoutes.courses),
+                            onReview: () => Navigator.of(
+                              context,
+                            ).pushNamed(AppRoutes.wrongAnswers),
+                            onProblemSets: () => Navigator.of(
+                              context,
+                            ).pushNamed(AppRoutes.bookbag),
+                            onExams: () => Navigator.of(
+                              context,
+                            ).pushNamed(AppRoutes.bookbag),
+                            onTextbooks: () => Navigator.of(
+                              context,
+                            ).pushNamed(AppRoutes.bookbag),
+                            onDashboardAction: (id) =>
+                                _handleDashboardAction(id, todayTasks),
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+                    ),
+                  ],
+                )
+              : desktopShell,
         ),
       ),
     );
@@ -609,17 +648,7 @@ class _CourseLoaderState extends State<_CourseLoader> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.displayName, required this.onProfileChanged});
-
-  final String? displayName;
-  final Future<void> Function() onProfileChanged;
-
-  /// 필요 변수는 현재 Navigator와 프로필 변경 후 실행할 새로고침 함수다.
-  /// 작동 원리는 프로필 화면이 닫히면 이름과 아이디를 다시 읽어 앱바에 즉시 반영하는 것이다.
-  Future<void> _openProfile(BuildContext context) async {
-    await Navigator.of(context).pushNamed('/profile');
-    await onProfileChanged();
-  }
+  const _Header();
 
   /// 필요한 변수는 현재 학생 화면 문맥과 활성 홈 메뉴다.
   /// 공용 상단 내비게이션을 사용해 홈을 포함한 학습 목적지의 이동 계약을 유지한다.
@@ -632,17 +661,10 @@ class _Header extends StatelessWidget {
         onNotifications: () => showStudentNotifications(context),
       );
     }
-    return Ios26TopBar(
-      brandColor: _green,
+    return _HtmlStudentTopBar(
       onMenu: () => toggleAppDrawer(context),
-      showLevelIndicator: false,
-      showUtilityActions: true,
-      profileLabel: displayName?.trim().isNotEmpty == true
-          ? displayName!.trim()
-          : null,
+      onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
-      onProfile: () => unawaited(_openProfile(context)),
-      items: studentTopNavItems(context, active: StudentTopDestination.home),
     );
   }
 }
@@ -660,7 +682,11 @@ class _HtmlStudentTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget action({required String label, required IconData icon, required VoidCallback onTap}) {
+    Widget action({
+      required String label,
+      required IconData icon,
+      required VoidCallback onTap,
+    }) {
       return Semantics(
         button: true,
         label: label,
@@ -673,7 +699,9 @@ class _HtmlStudentTopBar extends StatelessWidget {
               padding: EdgeInsets.zero,
               foregroundColor: StudentDensityTokens.ink,
               side: const BorderSide(color: StudentDensityTokens.line),
-              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
             ),
             child: Icon(icon, size: 19),
           ),
@@ -689,13 +717,232 @@ class _HtmlStudentTopBar extends StatelessWidget {
         children: [
           action(label: '학생 메뉴', icon: Icons.arrow_back, onTap: onMenu),
           const SizedBox(width: 10),
-          const Text('학생 홈', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+          const Text(
+            '학생 홈',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          ),
           const Spacer(),
           action(label: '검색', icon: Icons.search, onTap: onSearch),
           const SizedBox(width: 8),
-          action(label: '알림', icon: Icons.notifications_none, onTap: onNotifications),
+          action(
+            label: '알림',
+            icon: Icons.notifications_none,
+            onTap: onNotifications,
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _HtmlStudentRail extends StatelessWidget {
+  const _HtmlStudentRail({required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget item({
+      required String label,
+      required IconData icon,
+      required String route,
+      bool active = false,
+    }) {
+      return Semantics(
+        button: true,
+        label: label,
+        selected: active,
+        child: SizedBox(
+          width: width - 20,
+          height: 62,
+          child: InkWell(
+            onTap: () => Navigator.of(context).pushNamed(route),
+            child: Container(
+              color: active ? StudentDensityTokens.dark : Colors.transparent,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 19,
+                    color: active ? Colors.white : StudentDensityTokens.ink,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: active ? Colors.white : StudentDensityTokens.ink,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: width,
+      color: StudentDensityTokens.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+      decoration: const BoxDecoration(
+        border: Border(right: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            color: StudentDensityTokens.dark,
+            child: const Text(
+              'A',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: 30),
+          item(
+            label: '홈',
+            icon: Icons.home_outlined,
+            route: AppRoutes.studentDashboard,
+            active: true,
+          ),
+          item(
+            label: '코스',
+            icon: Icons.view_list_outlined,
+            route: AppRoutes.courses,
+          ),
+          item(
+            label: '자료실',
+            icon: Icons.archive_outlined,
+            route: AppRoutes.bookbag,
+          ),
+          item(
+            label: '더보기',
+            icon: Icons.more_horiz,
+            route: AppRoutes.learningTools,
+          ),
+          const Spacer(),
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            color: StudentDensityTokens.dark,
+            child: const Text(
+              '학',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HtmlContextAside extends StatelessWidget {
+  const _HtmlContextAside();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 244,
+      color: StudentDensityTokens.surface,
+      padding: const EdgeInsets.fromLTRB(12, 20, 12, 18),
+      decoration: const BoxDecoration(
+        border: Border(left: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                color: StudentDensityTokens.dark,
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 17,
+                ),
+              ),
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Text(
+                  '수학 학습 컨텍스트',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(height: 1),
+          const SizedBox(height: 24),
+          const _ContextMetric(label: '오늘 집중', value: '—'),
+          const SizedBox(height: 18),
+          const _ContextMetric(label: '연속 학습', value: '—'),
+          const Spacer(),
+          SizedBox(
+            height: 44,
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ServerChatPage(standalone: true),
+                ),
+              ),
+              icon: const Icon(Icons.auto_awesome, size: 16),
+              label: const Text('튜터에게 묻기'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: StudentDensityTokens.dark,
+                foregroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContextMetric extends StatelessWidget {
+  const _ContextMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: StudentDensityTokens.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+      ],
     );
   }
 }
