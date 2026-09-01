@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:s11/sessions/review_course/review_course.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_solve_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// 필요한 변수는 홈 학습 모달의 Navigator 문맥이다.
 /// 작동 원리는 기존 학습 모달을 닫은 뒤 모바일은 둥근 복습 시트, PC는 기존 대화상자를 연다.
@@ -476,113 +475,83 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     final plan = _planFor(_selectedPlan);
-    return Scaffold(
+    return StudentHtmlShell(
       key: const ValueKey('wrong-answers-screen'),
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/wrong_answers')
-          : null,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                showLevelIndicator: false,
-                showUtilityActions: true,
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.learning,
-                ),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: StudentDensityPage(
-                  child: mobile
-                      ? _MobileReviewContent(
-                          loading: _loading,
-                          hasLoadError: _error != null,
-                          items: _visibleItems,
-                          weaknessTags: _weaknessTags,
-                          filter: _filter,
-                          latestFirst: _latestFirst,
-                          plan: plan,
-                          selectedPlan: _selectedPlan,
-                          onFilter: (value) => setState(() => _filter = value),
-                          onSort: () =>
-                              setState(() => _latestFirst = !_latestFirst),
-                          onPlanSelected: (value) =>
-                              setState(() => _selectedPlan = value),
-                          onRetry: _load,
-                          onAction: _showReviewAction,
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+      title: '오답 노트',
+      activeRoute: '/wrong_answers',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: SingleChildScrollView(
+        child: StudentDensityPage(
+          child: mobile
+              ? _MobileReviewContent(
+                  loading: _loading,
+                  hasLoadError: _error != null,
+                  items: _visibleItems,
+                  weaknessTags: _weaknessTags,
+                  filter: _filter,
+                  latestFirst: _latestFirst,
+                  plan: plan,
+                  selectedPlan: _selectedPlan,
+                  onFilter: (value) => setState(() => _filter = value),
+                  onSort: () => setState(() => _latestFirst = !_latestFirst),
+                  onPlanSelected: (value) =>
+                      setState(() => _selectedPlan = value),
+                  onRetry: _load,
+                  onAction: _showReviewAction,
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _AtlasReviewCenter(
+                      plan: plan,
+                      selectedPlan: _selectedPlan,
+                      onPlanSelected: (value) =>
+                          setState(() => _selectedPlan = value),
+                      onStart: () => _showReviewAction('복습 코스 시작', null),
+                    ),
+                    const SizedBox(height: 14),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final mobile = constraints.maxWidth <= 780;
+                        final list = _loading
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(36),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : _ReviewList(
+                                items: _visibleItems,
+                                filter: _filter,
+                                onFilter: (value) =>
+                                    setState(() => _filter = value),
+                                latestFirst: _latestFirst,
+                                onSort: () => setState(
+                                  () => _latestFirst = !_latestFirst,
+                                ),
+                                onAction: _showReviewAction,
+                              );
+                        final side = _WeakPoints(tags: _weaknessTags);
+                        if (mobile) {
+                          return Column(
+                            children: [list, const SizedBox(height: 14), side],
+                          );
+                        }
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _AtlasReviewCenter(
-                              plan: plan,
-                              selectedPlan: _selectedPlan,
-                              onPlanSelected: (value) =>
-                                  setState(() => _selectedPlan = value),
-                              onStart: () =>
-                                  _showReviewAction('복습 코스 시작', null),
-                            ),
-                            const SizedBox(height: 14),
-                            LayoutBuilder(
-                              builder: (context, constraints) {
-                                final mobile = constraints.maxWidth <= 780;
-                                final list = _loading
-                                    ? const Center(
-                                        child: Padding(
-                                          padding: EdgeInsets.all(36),
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      )
-                                    : _ReviewList(
-                                        items: _visibleItems,
-                                        filter: _filter,
-                                        onFilter: (value) =>
-                                            setState(() => _filter = value),
-                                        latestFirst: _latestFirst,
-                                        onSort: () => setState(
-                                          () => _latestFirst = !_latestFirst,
-                                        ),
-                                        onAction: _showReviewAction,
-                                      );
-                                final side = _WeakPoints(tags: _weaknessTags);
-                                if (mobile) {
-                                  return Column(
-                                    children: [
-                                      list,
-                                      const SizedBox(height: 14),
-                                      side,
-                                    ],
-                                  );
-                                }
-                                return Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(flex: 7, child: list),
-                                    const SizedBox(width: 14),
-                                    Expanded(flex: 3, child: side),
-                                  ],
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 40),
+                            Expanded(flex: 7, child: list),
+                            const SizedBox(width: 14),
+                            Expanded(flex: 3, child: side),
                           ],
-                        ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-              ),
-            ),
-          ],
         ),
       ),
     );
