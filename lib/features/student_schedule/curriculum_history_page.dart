@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// 커리큘럼 수행 이력 페이지.
 ///
@@ -91,95 +90,72 @@ class _CurriculumHistoryPageState extends State<CurriculumHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: StudentDensityTokens.dark,
-                showLevelIndicator: false,
-                showUtilityActions: true,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.learning,
+    return StudentHtmlShell(
+      key: const ValueKey('curriculum-history-screen'),
+      title: '커리큘럼 이력',
+      activeRoute: '/schedule',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: SingleChildScrollView(
+        child: StudentDensityPage(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const StudentDensityPageHeader(
+                eyebrow: 'LEARNING HISTORY',
+                title: '커리큘럼 이력',
+                description: '완료, 실패, 재분배된 학습 항목을 날짜순으로 확인하세요.',
+                showMobileDescription: true,
+              ),
+              SizedBox(height: mobile ? 20 : 28),
+              StudentDensitySurface(
+                padding: EdgeInsets.all(mobile ? 14 : 18),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _filters
+                      .map((filter) {
+                        final isSelected = filter == _selectedFilter;
+                        return ChoiceChip(
+                          key: ValueKey('curriculum-history-filter-$filter'),
+                          label: Text(filter),
+                          selected: isSelected,
+                          selectedColor: StudentDensityTokens.dark,
+                          backgroundColor: StudentDensityTokens.surfaceMuted,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : StudentDensityTokens.ink,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                          side: BorderSide(
+                            color: isSelected
+                                ? StudentDensityTokens.dark
+                                : StudentDensityTokens.line,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          onSelected: (_) =>
+                              setState(() => _selectedFilter = filter),
+                        );
+                      })
+                      .toList(growable: false),
                 ),
               ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: StudentDensityPage(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const StudentDensityPageHeader(
-                        eyebrow: 'LEARNING HISTORY',
-                        title: '커리큘럼 이력',
-                        description: '완료, 실패, 재분배된 학습 항목을 날짜순으로 확인하세요.',
-                        showMobileDescription: true,
-                      ),
-                      SizedBox(height: mobile ? 20 : 28),
-                      StudentDensitySurface(
-                        padding: EdgeInsets.all(mobile ? 14 : 18),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _filters
-                              .map((filter) {
-                                final isSelected = filter == _selectedFilter;
-                                return ChoiceChip(
-                                  key: ValueKey(
-                                    'curriculum-history-filter-$filter',
-                                  ),
-                                  label: Text(filter),
-                                  selected: isSelected,
-                                  selectedColor: StudentDensityTokens.dark,
-                                  backgroundColor:
-                                      StudentDensityTokens.surfaceMuted,
-                                  labelStyle: TextStyle(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : StudentDensityTokens.ink,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
-                                  ),
-                                  side: BorderSide(
-                                    color: isSelected
-                                        ? StudentDensityTokens.dark
-                                        : StudentDensityTokens.line,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  onSelected: (_) =>
-                                      setState(() => _selectedFilter = filter),
-                                );
-                              })
-                              .toList(growable: false),
-                        ),
-                      ),
-                      SizedBox(height: mobile ? 14 : 20),
-                      for (final item in _filteredItems) ...[
-                        _CurriculumHistoryCard(
-                          item: item,
-                          statusColor: _statusColor(item['newStatus']!),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      const SizedBox(height: 32),
-                    ],
-                  ),
+              SizedBox(height: mobile ? 14 : 20),
+              for (final item in _filteredItems) ...[
+                _CurriculumHistoryCard(
+                  item: item,
+                  statusColor: _statusColor(item['newStatus']!),
                 ),
-              ),
-            ),
-          ],
+                const SizedBox(height: 10),
+              ],
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );

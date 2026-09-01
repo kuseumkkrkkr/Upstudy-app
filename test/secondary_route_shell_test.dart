@@ -11,6 +11,7 @@ import 'package:s11/features/student_runtime/student_runtime_page.dart';
 import 'package:s11/features/student_schedule/curriculum_history_page.dart';
 import 'package:s11/features/wrong_answer/wrong_answer_solve_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
@@ -46,13 +47,15 @@ void main() {
     await ApiClient.instance.clearToken();
   });
 
-  testWidgets('커리큘럼 이력은 모바일 공용 셸과 명명 홈 이동을 쓴다', (tester) async {
+  testWidgets('커리큘럼 이력은 모바일 HTML 셸과 필터 상태를 쓴다', (tester) async {
     _setViewport(tester, const Size(390, 844));
     await tester.pumpWidget(_withRoutes(const CurriculumHistoryPage()));
     await tester.pump();
 
     expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(StudentHtmlShell), findsOneWidget);
     expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+    expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
     expect(
       find.byKey(const ValueKey('curriculum-history-filter-실패')),
       findsOneWidget,
@@ -64,14 +67,6 @@ void main() {
     await tester.pump();
     expect(find.text('영어 독해 연습 (3지문)'), findsOneWidget);
 
-    final onTitleTap = tester
-        .widget<Ios26TopBar>(find.byType(Ios26TopBar).first)
-        .onTitleTap;
-    expect(onTitleTap, isNotNull);
-    onTitleTap!();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('route:/student/dashboard'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
