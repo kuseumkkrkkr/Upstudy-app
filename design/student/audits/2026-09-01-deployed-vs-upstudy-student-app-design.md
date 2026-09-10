@@ -773,6 +773,12 @@
 - Vercel 배포 `dpl_5eLivfCZ2S77wmL3x356YKFa93Cv`, alias READY, `/health` 200. Range 전체 수집 기준 로컬·원격 번들 SHA-256 `E30CDA5E3A225E7D5E5DA0429E22474D4631F8B5E17EB4A3C4A3BEB2F4B551D9` 일치.
 - 전체 86개 화면·장면 이미지와 실제 API·DB·동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 친구 요청 장면 브라우저 재검증
+
+- canary `#/social?scene=friend-requests`를 직접 열어 배경 블러 위 `친구 요청` 모달, 받은·보낸 건수, 빈 대기 상태, 닫기 동작을 확인했다.
+- 실제 요청 데이터가 0건인 계정에서는 HTML 샘플을 복제하지 않고 `대기 중인 친구 요청이 없어요`를 표시한다.
+- 이 검증은 친구 요청 장면의 초기 진입·빈 상태 근거이며, 실제 쓰기·다른 계정 소유권·동시성 검증을 대체하지 않는다.
+
 ### 2026-09-11 친구 추가·친구 요청 장면 딥링크
 
 - `friend-add`와 `friend-requests`를 각각 `/social?scene=friend-add`, `/social?scene=friend-requests`로 연결했다.
