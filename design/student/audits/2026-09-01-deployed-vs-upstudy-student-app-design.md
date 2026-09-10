@@ -718,6 +718,8 @@
 - `/health/ready`는 `404`, `/api/app/health`는 `503`으로 확인돼 Vercel 큐 상태를 제품 서버 readiness로 간주하지 않았다.
 - 제품 서버 `/health/ready`와 실제 DB 연결은 별도 환경에서 재검증해야 하며, 상용 준비 게이트는 `pending`이다.
 
+- API 계약·학생 밀도 공통 헤더·학원 홈·학습 도구 화면의 `flutter analyze --no-pub` 대상 검사는 오류 없이 통과했다.
+
 ### 2026-09-11 웹 번들 localhost 누출 차단
 
 - 릴리스 번들에서 검출된 `http://localhost:8000` 기본 API 주소를 현재 canary origin으로 교체했다. `API_BASE_URL` 환경 지정값은 계속 우선한다.
