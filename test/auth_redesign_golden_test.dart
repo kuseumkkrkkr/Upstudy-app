@@ -63,16 +63,18 @@ void main() {
       page: const LandingPage(),
     );
     expect(find.text('새 계정 만들기'), findsNothing);
-    await tester.ensureVisible(find.text('로그인'));
+    final loginEntry = find.text('로그인').first;
+    await tester.ensureVisible(loginEntry);
     await tester.pump();
-    await tester.tap(find.text('로그인'));
+    await tester.tap(loginEntry);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('처음 오셨나요? 회원가입'));
+    final signupEntry = find.text('처음 오셨나요? 회원가입').first;
+    await tester.ensureVisible(signupEntry);
     await tester.pump();
-    await tester.tap(find.text('처음 오셨나요? 회원가입'));
+    await tester.tap(signupEntry);
     await tester.pumpAndSettle();
 
-    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
+    expect(find.text('기본 정보를 알려주세요'), findsOneWidget);
   });
 
   testWidgets('넓은 가로 랜딩은 새 계정 만들기로 정식 가입 화면을 연다', (tester) async {
@@ -84,7 +86,7 @@ void main() {
     await tester.tap(find.text('새 계정 만들기'));
     await tester.pumpAndSettle();
 
-    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
+    expect(find.text('기본 정보를 알려주세요'), findsOneWidget);
   });
 
   testWidgets('로그인 데스크톱 시안 이미지', (tester) async {
