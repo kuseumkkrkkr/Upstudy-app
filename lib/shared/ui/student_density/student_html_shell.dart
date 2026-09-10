@@ -235,9 +235,21 @@ class StudentHtmlRail extends StatelessWidget {
               Navigator.of(context).pushNamed(route);
             },
             child: Container(
-              decoration: BoxDecoration(
-                color: active ? StudentDensityTokens.dark : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+            decoration: BoxDecoration(
+                color: active
+                    ? StudentDensityTokens.surface
+                    : Colors.transparent,
+                border: Border.all(
+                  color: active
+                      ? const Color(0xFF29292D)
+                      : Colors.transparent,
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(3),
+                  bottomRight: Radius.circular(10),
+                  bottomLeft: Radius.circular(3),
+                ),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -245,13 +257,17 @@ class StudentHtmlRail extends StatelessWidget {
                   Icon(
                     icon,
                     size: 19,
-                    color: active ? Colors.white : StudentDensityTokens.ink,
+                    color: active
+                        ? StudentDensityTokens.ink
+                        : StudentDensityTokens.muted,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     label,
                     style: TextStyle(
-                      color: active ? Colors.white : StudentDensityTokens.ink,
+                      color: active
+                          ? StudentDensityTokens.ink
+                          : StudentDensityTokens.muted,
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
                     ),
@@ -268,8 +284,8 @@ class StudentHtmlRail extends StatelessWidget {
       width: railWidth,
       padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
       decoration: const BoxDecoration(
-        color: StudentDensityTokens.surface,
-        border: Border(right: BorderSide(color: StudentDensityTokens.line)),
+        color: StudentDensityTokens.dark,
+        border: Border(right: BorderSide(color: Color(0xFF29292D))),
       ),
       child: Column(
         children: [
