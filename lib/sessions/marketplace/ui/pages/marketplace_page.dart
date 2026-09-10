@@ -403,9 +403,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
       mobileBackButton: true,
       onMenu: () =>
           Navigator.of(context).pushReplacementNamed('/student/dashboard'),
-      onSearch: () {
-        _queryFocusNode.requestFocus();
-      },
+      onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: RefreshIndicator(
         onRefresh: _search,
