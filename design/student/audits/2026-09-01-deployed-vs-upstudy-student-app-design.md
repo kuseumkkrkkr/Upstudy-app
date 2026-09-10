@@ -712,6 +712,13 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 코스 선택 장면 정정
+
+- HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
+- registry를 `/student/dashboard`로 정정하고 실제 `showCurriculumModal`을 연결했다.
+- `flutter analyze` 및 `student_route_registry_test.dart` 통과. 소스·번들 커밋 `da9beb8`, Vercel 배포 `dpl_9Bw28FUXco4J9uhc8za1yFwLAHZ6`, alias READY, `/health` 200.
+- canary에서 `#/student/dashboard?scene=course-select`의 `코스를 선택하세요` 모달과 로딩 상태를 확인했다. 전체 86개 전수 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 그룹 내부 장면 딥링크 canary 반영
 
 - HTML의 `group-find`·`group-create` 내부 장면을 실제 `GroupListPage`의 검색 다이얼로그·생성 다이얼로그로 연결했다. 기존 그룹 API와 입력 검증은 그대로 사용하며 샘플 그룹 데이터는 추가하지 않았다.
