@@ -758,7 +758,9 @@ class _DemoContent extends StatelessWidget {
       'book' => '점 P(a, f(a))에서 접선의 기울기는 f′(a)입니다.',
       _ => '접선의 기울기를 어디에 대입해야 하는지 모르겠어요.',
     };
-    final cardPadding = compact ? 24.0 : 28.0;
+    final cardPadding = compact
+        ? const EdgeInsets.symmetric(horizontal: 20, vertical: 24)
+        : const EdgeInsets.all(28);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -792,7 +794,7 @@ class _DemoContent extends StatelessWidget {
           alignment: Alignment.center,
           child: Container(
             constraints: const BoxConstraints(maxWidth: 420),
-            padding: EdgeInsets.all(cardPadding),
+            padding: cardPadding,
             color: StudentDensityTokens.dark,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
