@@ -123,7 +123,7 @@ void main() {
     );
     expect(find.byType(AppBar), findsNothing);
     expect(find.byType(StudentHtmlShell), findsOneWidget);
-    expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+    expect(find.byKey(const ValueKey('student-mobile-back')), findsOneWidget);
     expect(find.byType(StudentHtmlTopBar), findsOneWidget);
     expect(find.bySemanticsLabel('검색'), findsOneWidget);
     expect(find.bySemanticsLabel('알림'), findsOneWidget);

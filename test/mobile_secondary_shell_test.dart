@@ -16,6 +16,7 @@ Future<void> _expectMobileShell(
   WidgetTester tester,
   Widget page, {
   bool htmlShell = false,
+  bool mobileBack = false,
 }) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1;
@@ -30,8 +31,8 @@ Future<void> _expectMobileShell(
   // 실제 표시 여부만 검증한다.
   expect(find.byType(Drawer), findsNothing);
   expect(
-    find.byKey(const ValueKey('student-mobile-menu')),
-    htmlShell ? findsOneWidget : findsNothing,
+    find.byKey(const ValueKey('student-mobile-back')),
+    mobileBack ? findsOneWidget : findsNothing,
   );
   expect(
     find.byType(StudentHtmlTopBar),
@@ -54,7 +55,12 @@ void main() {
   });
 
   testWidgets('오답 노트는 모바일 하단 앱 셸을 사용한다', (tester) async {
-    await _expectMobileShell(tester, const WrongAnswerListPage());
+    await _expectMobileShell(
+      tester,
+      const WrongAnswerListPage(),
+      htmlShell: true,
+      mobileBack: true,
+    );
   });
 
   testWidgets('레벨 테스트는 모바일 HTML 앱 셸을 사용한다', (tester) async {
@@ -62,6 +68,7 @@ void main() {
       tester,
       const LevelTestHomePage(),
       htmlShell: true,
+      mobileBack: true,
     );
   });
 
@@ -70,6 +77,7 @@ void main() {
       tester,
       const ArenaPage(initialSummary: {'queues': <Object>[]}),
       htmlShell: true,
+      mobileBack: true,
     );
   });
 
@@ -78,6 +86,7 @@ void main() {
       tester,
       const SoWidget(preview: true),
       htmlShell: true,
+      mobileBack: true,
     );
   });
 
@@ -86,6 +95,7 @@ void main() {
       tester,
       const GroupListPage(initialGroups: <Object>[]),
       htmlShell: true,
+      mobileBack: true,
     );
     expect(find.byKey(const ValueKey('groups-mobile-add')), findsOneWidget);
     expect(find.text('그룹 추가'), findsAtLeastNWidgets(1));
