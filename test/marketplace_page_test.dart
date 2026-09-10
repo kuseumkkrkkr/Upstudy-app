@@ -219,7 +219,7 @@ void main() {
     final content = tester.getRect(
       find.byKey(const ValueKey('market-wide-scroll')),
     );
-    expect(header.height, 64);
+    expect(header.height, 62);
     expect(content.top, header.bottom);
     expect(find.byType(StudentHtmlRail), findsOneWidget);
     expect(find.byKey(const ValueKey('market-wide-scroll')), findsOneWidget);
