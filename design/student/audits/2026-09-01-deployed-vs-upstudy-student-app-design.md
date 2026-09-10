@@ -409,4 +409,6 @@
 - Vercel: [`dpl_DpmespAwVdcGK6xwMScGmG8en7de`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/DpmespAwVdcGK6xwMScGmG8en7de), 고유 후보 [`aiflow-web-canary-8byi05a7l-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-8byi05a7l-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/login) READY 연결.
 - 정적 번들: `public/main.dart.js`와 alias 응답 SHA-256 `64CF61BE4BE4F6F999764B39C813A047984BD8DBA6DBC29CF81BA1E398563A5A`, `localhost` 문자열 없음.
 - 라이브 경계: alias `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active` 각각 401 JSON 확인.
+- 테스트 보강 커밋: `811160e` (`test(auth): cover html login submit state`). 빈 입력 비활성·두 필드 입력 후 활성화 상태를 위젯 테스트로 고정했다.
+- 전체 `student_density_responsive_test.dart` 실행은 20개 중 15개가 과거 OpenDesign 영문 라벨·구 라우트·고정 샘플을 전제로 실패했다. 이 결과를 통과로 숨기지 않으며, HTML 86화면 검증기로 교체할 별도 작업으로 남긴다. 로그인 관련 4개 테스트는 모두 통과했다.
 - 잔여: 이 배포는 로그인 구조 한 묶음의 후보 반영이다. 나머지 85개 화면·모든 장면/동작의 동일 조건 이미지, 인증된 실제 데이터, migration 적용, 200 동시성, 전체 접근성·반응형 및 저장소 기준선 오류는 미검증이다. 상용 준비 완료로 판정하지 않는다.
