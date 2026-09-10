@@ -703,3 +703,11 @@
 - 로컬·canary `main.dart.js` SHA-256은 모두 `73B8F4205AAC0FBE000C18BD933219F123BFF4830149B838C1760B490F53C0F7`이다.
 - Vercel 배포 `dpl_ASiKcGwVTk2aDqDYhWcfDGPoUgSU`, 고유 URL [`aiflow-web-canary-9i3kvarxx-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-9i3kvarxx-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 그래프 화면의 실제 이미지 재캡처와 86개 전체 화면·인증 데이터·DB 무결성/동시성·접근성 게이트는 여전히 `pending`이다.
+
+### 2026-09-11 소셜·코스 보조 라우트 셸 canary 반영
+
+- `course-runtime`, `wrong-solve`, `groups`, `group-detail`, `group-join`, `direct-chat`의 HTML `social-v2`/`workspace` 셸 설정을 Flutter 공통 셸에 맞췄다. 소셜 화면은 우측 컨텍스트 영역을 제거하고 모바일 뒤로가기를 사용한다.
+- 소스 커밋 `35c1c14`, 번들 커밋 `601645d`; 관련 셸 테스트 5개와 정적 분석을 통과했다.
+- 로컬·canary `main.dart.js` SHA-256은 모두 `77DAE38002612DB6A5D047AABBA5DC5624C751C94FFB81C7F0901EA95F6B8C9A`이다.
+- Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
