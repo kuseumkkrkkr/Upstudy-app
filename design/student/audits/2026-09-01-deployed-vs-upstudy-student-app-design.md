@@ -1142,3 +1142,12 @@
 - 친구 요청 목록·생성·수락·거절·취소 경로도 클라이언트와 서버가 `/social/friend-requests` 계열로 일치한다.
 - canary의 `/api/app/social/friends/search`는 인증·제품 서버 준비 상태가 없는 현재 환경에서 `503`을 반환했다. 이는 클라이언트 404/405 수정 근거가 아니며, 서버 readiness·배포 소스를 복구한 뒤 실제 계정으로 재검증해야 한다.
 - 제품 API가 준비되지 않은 상태에서 빈 목록이나 더미 친구를 표시해 성공으로 처리하지 않는다.
+
+### 2026-09-11 무반응 CTA 정리 및 canary 후보 반영
+
+- 가입 화면의 미연결 `학교 찾기` 버튼은 무반응 클릭을 제거하고 비활성 상태로 표시했다. 학교 자동완성 API가 연결되기 전까지 성공 동작으로 오인하지 않는다.
+- 교재 리더 데스크톱 `학습 완료`는 별도 가짜 완료 API를 만들지 않고 마지막 콘텐츠로 이동해 기존 읽기 진행률 저장 흐름을 사용한다. 콘텐츠가 없으면 비활성화한다.
+- 대상 파일 정적 분석 통과. 교재 상호작용 1개·가입 단계 검증 4개 통과.
+- 소스·정적 번들 커밋 `8f5be7d`, `public/main.dart.js` SHA-256 `B6C5DCC64D8D3D9D26BFD3C14918D591D91C42625746AC726BEF90580EFB1C95`.
+- Vercel 배포 `dpl_AUF6urSFMnHPr2ScRgF1jwA96vW6`, 고유 URL [`aiflow-web-canary-r9mykvkzt-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-r9mykvkzt-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+- 86개 전체 이미지·실제 인증 데이터·제품 서버 readiness·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
