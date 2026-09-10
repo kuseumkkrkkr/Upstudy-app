@@ -720,6 +720,8 @@
 
 - API 계약·학생 밀도 공통 헤더·학원 홈·학습 도구 화면의 `flutter analyze --no-pub` 대상 검사는 오류 없이 통과했다.
 
+- `vercel env ls` 기준 Production 환경변수는 `STUDENT_STORE_DEMO`만 확인됐다. `OMJ_JWT_SECRET` 및 제품 DB 연결값이 없어 인증된 사용자 여정·실DB 무결성 검증은 환경 설정 전까지 `pending`이다.
+
 ### 2026-09-11 웹 번들 localhost 누출 차단
 
 - 릴리스 번들에서 검출된 `http://localhost:8000` 기본 API 주소를 현재 canary origin으로 교체했다. `API_BASE_URL` 환경 지정값은 계속 우선한다.
