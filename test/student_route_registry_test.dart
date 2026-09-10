@@ -86,4 +86,13 @@ void main() {
     expect(route, isA<MaterialPageRoute<void>>());
     expect(route?.settings.name, '/social?tab=friends');
   });
+
+  test('social friend scenes resolve to their initial modal', () {
+    for (final scene in const ['friend-add', 'friend-requests']) {
+      final route = onGenerateAppRoute(
+        RouteSettings(name: '/social?scene=$scene'),
+      );
+      expect(route, isA<MaterialPageRoute<void>>());
+    }
+  });
 }

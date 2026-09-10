@@ -39,6 +39,7 @@ class SoWidget extends StatefulWidget {
     super.key,
     this.preview = false,
     this.initialTab = 0,
+    this.initialScene,
     this.searchFriends,
     this.sendFriendRequest,
   });
@@ -47,6 +48,7 @@ class SoWidget extends StatefulWidget {
 
   /// 0=대화, 1=친구. 그룹은 실제 그룹 허브로 즉시 이동한다.
   final int initialTab;
+  final String? initialScene;
   final FriendSearchCallback? searchFriends;
   final FriendRequestCallback? sendFriendRequest;
 
@@ -501,6 +503,17 @@ class _SoWidgetState extends State<SoWidget> {
     super.initState();
     _mobileSocialTab = widget.initialTab == 1 ? 1 : 0;
     _desktopSocialTab = widget.initialTab == 1 ? 1 : 0;
+    if (widget.initialScene != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        switch (widget.initialScene) {
+          case 'friend-add':
+            _openAddFriendModal();
+          case 'friend-requests':
+            _openFriendRequestsModal();
+        }
+      });
+    }
     if (widget.preview) {
       _friends = const [
         _FriendInfo(name: '이수학', status: '학습 중 · B Tier', ovr: 76),

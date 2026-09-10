@@ -533,6 +533,8 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'market-filter' => '/marketplace?scene=market-filter',
       'market-preview' => '/marketplace?scene=market-preview',
       'social-friends' => '/social?tab=friends',
+      'friend-add' => '/social?scene=friend-add',
+      'friend-requests' => '/social?scene=friend-requests',
       _ => typedDestination.routeName,
     };
   }
