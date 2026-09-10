@@ -728,6 +728,14 @@
 - Vercel 배포 `dpl_8gXKijTvH4kFhkjGQUuiBoFnAhnt`, alias READY, 번들 SHA-256 `D5E988F2BFE4A0570AC33826B4BD26E396D4D8D947C529336C7862788A54924F`, `/health` 200.
 - 86개 전체 화면·장면 이미지 검수와 제품 API·DB·동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 최종 셸 액션 토큰 재보정
+
+- 최종 `ux-revision.css`의 `.topbar-back`·`.topbar-actions button` 규칙(44×44, 12px 반경)을 재확인해 기존 38×38 원형 적용을 폐기했다.
+- 컨텍스트 영역 배경을 HTML의 보조 표면(`#f3f3f5`)으로 맞췄다.
+- 소스 커밋 `e95ea4f`, 번들 커밋 `5059210`; 레지스트리·홈 모달 집중 검사는 통과했다.
+- Vercel 배포 `dpl_FVWUqFda6KrYVZ4asFSRS6SLipht`, alias READY, 로컬·원격 번들 SHA-256 `ED9E3C41D3BC9FFC1288DD10668C5A27B496F30C254CA3ADDB0BD2C966011D83`, `/health` 200.
+- 이전의 38×38 원형 버튼 기록은 초기 CSS 기준의 중간 기록이며 최종 기준으로 대체한다. 전체 86개 검수와 API·DB·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 HTML 상단바 액션 크기 반영
 
 - 공통 학생 상단바의 메뉴·뒤로가기·검색·알림 액션을 HTML 기준 `38×38px`로 조정했다.
