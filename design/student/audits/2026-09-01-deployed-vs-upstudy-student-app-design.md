@@ -720,6 +720,13 @@
 - 소스 커밋 `d8c639b`, Vercel 배포 `dpl_CKmtW9H6LTeci5oc2eHyS7qfi3Ta`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 배포 브라우저에서 두 딥링크를 각각 열어 `그룹 찾기`·`그룹 만들기` 모달과 배경 목록이 표시되는 것을 확인했다. 전체 86개 시각 일치·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 그룹 상세 내부 장면 딥링크 반영
+
+- `GroupDetailPage`에 `initialScene`을 추가해 유효한 `groupId`가 있는 `/group/detail?id=...&scene=group-chat|group-share`에서 기존 대화 시트·자료 공유 시트를 바로 연다.
+- 잘못된 그룹 ID는 기존 인자 오류 화면을 유지하며, 실제 그룹·멤버·자료 API와 권한 검사는 변경하지 않았다.
+- 대상 파일 `flutter analyze` 통과. 소스 커밋 `9a8b573`, Vercel 배포 `dpl_9MvgFvpeoBTjwDcAGUCFUJNjUZMS`, alias READY, `/health` 200.
+- 그룹 상세의 실제 데이터가 필요한 장면은 테스트 계정·groupId 없이는 시각 검증을 완료 처리하지 않는다. 전체 86개 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
