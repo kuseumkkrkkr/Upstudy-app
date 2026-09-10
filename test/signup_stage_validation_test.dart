@@ -74,7 +74,7 @@ void main() {
 
     final panel = find.byKey(const ValueKey('signup-html-panel'));
     expect(tester.getSize(panel).width, 640);
-    expect(tester.getTopLeft(panel).dx, 320);
+    expect(tester.getTopLeft(panel).dx, closeTo(312.5, .1));
     expect(tester.getTopLeft(panel).dy, 64);
 
     tester.view.physicalSize = const Size(390, 844);

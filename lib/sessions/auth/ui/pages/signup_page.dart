@@ -176,7 +176,12 @@ class _SignupPageState extends State<SignupPage> {
     final compact = width <= 720;
     final pagePadding = compact
         ? EdgeInsets.zero
-        : EdgeInsets.symmetric(horizontal: 20, vertical: (width * .05).clamp(28, 64));
+        : EdgeInsets.only(
+            left: 20,
+            right: 35,
+            top: (width * .05).clamp(28, 64),
+            bottom: (width * .05).clamp(28, 64),
+          );
     final panelPadding = compact
         ? const EdgeInsets.fromLTRB(20, 28, 20, 38)
         : EdgeInsets.all((width * .05).clamp(30, 48));
@@ -197,13 +202,19 @@ class _SignupPageState extends State<SignupPage> {
                   border: Border(
                     top: const BorderSide(color: Color(0xFF09090B), width: 3),
                     left: BorderSide(
-                      color: const Color(0xFF09090B).withValues(alpha: compact ? 0 : .1),
+                      color: const Color(
+                        0xFF09090B,
+                      ).withValues(alpha: compact ? 0 : .1),
                     ),
                     right: BorderSide(
-                      color: const Color(0xFF09090B).withValues(alpha: compact ? 0 : .1),
+                      color: const Color(
+                        0xFF09090B,
+                      ).withValues(alpha: compact ? 0 : .1),
                     ),
                     bottom: BorderSide(
-                      color: const Color(0xFF09090B).withValues(alpha: compact ? 0 : .1),
+                      color: const Color(
+                        0xFF09090B,
+                      ).withValues(alpha: compact ? 0 : .1),
                     ),
                   ),
                 ),
@@ -245,7 +256,11 @@ class _SignupPageState extends State<SignupPage> {
           children: [
             Text(
               '${_stage + 1} / 3',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF71717A), fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF71717A),
+                fontWeight: FontWeight.w800,
+              ),
             ),
             Text(
               labels[_stage],
@@ -273,15 +288,33 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  Widget _buildHtmlHeading(String title, String description) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Text(title, style: const TextStyle(fontSize: 32, height: 1.15, letterSpacing: -.055, fontWeight: FontWeight.w900)),
-      const SizedBox(height: 8),
-      Text(description, style: const TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF71717A))),
-      const SizedBox(height: 28),
-    ],
-  );
+  Widget _buildHtmlHeading(String title, String description) {
+    final compact = MediaQuery.sizeOf(context).width <= 720;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: compact ? 26 : 32,
+            height: 1.15,
+            letterSpacing: -.055,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          description,
+          style: const TextStyle(
+            fontSize: 13,
+            height: 1.5,
+            color: Color(0xFF71717A),
+          ),
+        ),
+        const SizedBox(height: 28),
+      ],
+    );
+  }
 
   Widget _buildHtmlProfileStage() => KeyedSubtree(
     key: const ValueKey('signup-profile'),
@@ -289,7 +322,13 @@ class _SignupPageState extends State<SignupPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHtmlHeading('기본 정보를 알려주세요', '학년에 맞는 학습 내용을 준비하는 데 사용해요.'),
-        _htmlTextField(_nameController, '닉네임', helper: '다른 학습자에게 표시되는 이름이에요.', required: true),
+        _htmlTextField(
+          _nameController,
+          '닉네임',
+          hint: '닉네임을 입력하세요',
+          helper: '다른 학습자에게 표시되는 이름이에요.',
+          required: true,
+        ),
         const SizedBox(height: 18),
         _htmlTrackField(),
         const SizedBox(height: 18),
@@ -309,7 +348,12 @@ class _SignupPageState extends State<SignupPage> {
           onChanged: (value) => setState(() => _subject = value),
         ),
         const SizedBox(height: 18),
-        _htmlTextField(_schoolController, '학교명', helper: '입력하지 않아도 가입할 수 있고, 나중에 추가할 수 있어요.'),
+        _htmlTextField(
+          _schoolController,
+          '학교명',
+          hint: '학교명을 입력하세요',
+          helper: '입력하지 않아도 가입할 수 있고, 나중에 추가할 수 있어요.',
+        ),
         const SizedBox(height: 18),
         _htmlPrimaryButton('계정 정보 입력하기', () => _requestStage(1)),
         const SizedBox(height: 22),
@@ -321,7 +365,10 @@ class _SignupPageState extends State<SignupPage> {
   Widget _htmlTrackField() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Text('과정', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+      const Text(
+        '과정',
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+      ),
       const SizedBox(height: 7),
       Row(
         children: [
@@ -344,9 +391,14 @@ class _SignupPageState extends State<SignupPage> {
       side: const BorderSide(color: Color(0x1A09090B)),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       foregroundColor: _track == value ? Colors.white : const Color(0xFF09090B),
-      backgroundColor: _track == value ? const Color(0xFF09090B) : const Color(0xFFFDFDFE),
+      backgroundColor: _track == value
+          ? const Color(0xFF09090B)
+          : const Color(0xFFFDFDFE),
     ),
-    child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+    child: Text(
+      value,
+      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+    ),
   );
 
   Widget _buildHtmlAccountStage() => KeyedSubtree(
@@ -355,19 +407,47 @@ class _SignupPageState extends State<SignupPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHtmlHeading('계정 정보를 입력해 주세요', '로그인에 사용할 아이디와 비밀번호예요.'),
-        _htmlTextField(_idController, '아이디', helper: '영문과 숫자 4–16자', required: true),
+        _htmlTextField(
+          _idController,
+          '아이디',
+          helper: '영문과 숫자 4–16자',
+          required: true,
+        ),
         const SizedBox(height: 18),
-        _htmlPasswordField(_pwController, '비밀번호', helper: '영문과 숫자를 포함한 8–20자', visible: _passwordVisible, onToggle: () => setState(() => _passwordVisible = !_passwordVisible)),
+        _htmlPasswordField(
+          _pwController,
+          '비밀번호',
+          helper: '영문과 숫자를 포함한 8–20자',
+          visible: _passwordVisible,
+          onToggle: () => setState(() => _passwordVisible = !_passwordVisible),
+        ),
         const SizedBox(height: 18),
-        _htmlPasswordField(_pwConfirmController, '비밀번호 확인', visible: _passwordConfirmVisible, onToggle: () => setState(() => _passwordConfirmVisible = !_passwordConfirmVisible)),
+        _htmlPasswordField(
+          _pwConfirmController,
+          '비밀번호 확인',
+          visible: _passwordConfirmVisible,
+          onToggle: () => setState(
+            () => _passwordConfirmVisible = !_passwordConfirmVisible,
+          ),
+        ),
         const SizedBox(height: 18),
-        _htmlTextField(_emailController, '이메일', optional: true, helper: '입력하지 않아도 가입할 수 있어요.'),
+        _htmlTextField(
+          _emailController,
+          '이메일',
+          optional: true,
+          helper: '입력하지 않아도 가입할 수 있어요.',
+        ),
         const SizedBox(height: 18),
         Row(
           children: [
-            SizedBox(width: 96, child: _htmlSecondaryButton('이전', () => _setStage(0))),
+            SizedBox(
+              width: 96,
+              child: _htmlSecondaryButton('이전', () => _setStage(0)),
+            ),
             const SizedBox(width: 10),
-            Expanded(child: _htmlPrimaryButton('입력 정보 확인하기', () => _requestStage(2))),
+            Expanded(
+              child: _htmlPrimaryButton('입력 정보 확인하기', () => _requestStage(2)),
+            ),
           ],
         ),
       ],
@@ -381,7 +461,9 @@ class _SignupPageState extends State<SignupPage> {
       children: [
         _buildHtmlHeading('입력 정보를 확인해 주세요', '가입 후에도 프로필에서 변경할 수 있어요.'),
         Container(
-          decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0x1A09090B)))),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: Color(0x1A09090B))),
+          ),
           child: Column(
             children: [
               _htmlSummaryRow('닉네임', _nameController.text),
@@ -400,11 +482,17 @@ class _SignupPageState extends State<SignupPage> {
             controlAffinity: ListTileControlAffinity.leading,
             value: _agreed,
             onChanged: (value) => setState(() => _agreed = value ?? false),
-            title: const Text('입력 정보와 서비스 이용 안내를 확인했습니다.', style: TextStyle(fontSize: 12, height: 1.5)),
+            title: const Text(
+              '입력 정보와 서비스 이용 안내를 확인했습니다.',
+              style: TextStyle(fontSize: 12, height: 1.5),
+            ),
           ),
         ),
         const SizedBox(height: 10),
-        _htmlPrimaryButton('가입하고 학습 시작하기', _agreed && !_loading ? _submit : null),
+        _htmlPrimaryButton(
+          '가입하고 학습 시작하기',
+          _agreed && !_loading ? _submit : null,
+        ),
         const SizedBox(height: 10),
         _htmlSecondaryButton('이전 단계 수정', () => _setStage(1)),
       ],
@@ -414,6 +502,7 @@ class _SignupPageState extends State<SignupPage> {
   Widget _htmlTextField(
     TextEditingController controller,
     String label, {
+    String? hint,
     String? helper,
     bool required = false,
     bool optional = false,
@@ -425,12 +514,23 @@ class _SignupPageState extends State<SignupPage> {
       TextFormField(
         controller: controller,
         minLines: 1,
-        decoration: _htmlInputDecoration(),
-        validator: required ? (value) => value == null || value.trim().isEmpty ? '$label을(를) 입력하세요' : null : null,
+        decoration: _htmlInputDecoration().copyWith(hintText: hint),
+        validator: required
+            ? (value) => value == null || value.trim().isEmpty
+                  ? '$label을(를) 입력하세요'
+                  : null
+            : null,
       ),
       if (helper != null) ...[
         const SizedBox(height: 7),
-        Text(helper, style: const TextStyle(fontSize: 10, color: Color(0xFF71717A), fontWeight: FontWeight.w700)),
+        Text(
+          helper,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Color(0xFF71717A),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     ],
   );
@@ -450,13 +550,26 @@ class _SignupPageState extends State<SignupPage> {
         controller: controller,
         obscureText: !visible,
         decoration: _htmlInputDecoration().copyWith(
-          suffixIcon: TextButton(onPressed: onToggle, child: Text(visible ? '숨기기' : '보기')),
-          suffixIconConstraints: const BoxConstraints(minWidth: 56, minHeight: 48),
+          suffixIcon: TextButton(
+            onPressed: onToggle,
+            child: Text(visible ? '숨기기' : '보기'),
+          ),
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 56,
+            minHeight: 48,
+          ),
         ),
       ),
       if (helper != null) ...[
         const SizedBox(height: 7),
-        Text(helper, style: const TextStyle(fontSize: 10, color: Color(0xFF71717A), fontWeight: FontWeight.w700)),
+        Text(
+          helper,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Color(0xFF71717A),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     ],
   );
@@ -477,84 +590,165 @@ class _SignupPageState extends State<SignupPage> {
         initialValue: items.contains(value) ? value : items.first,
         decoration: _htmlInputDecoration(),
         icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-        items: [for (final item in items) DropdownMenuItem(value: item, child: Text(item))],
-        onChanged: enabled ? (next) { if (next != null) onChanged(next); } : null,
+        items: [
+          for (final item in items)
+            DropdownMenuItem(value: item, child: Text(item)),
+        ],
+        onChanged: enabled
+            ? (next) {
+                if (next != null) onChanged(next);
+              }
+            : null,
       ),
       if (helper != null) ...[
         const SizedBox(height: 7),
-        Text(helper, style: const TextStyle(fontSize: 10, color: Color(0xFF71717A), fontWeight: FontWeight.w700)),
+        Text(
+          helper,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Color(0xFF71717A),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     ],
   );
 
   Widget _htmlFieldLabel(String label, {bool optional = false}) => Row(
     children: [
-      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
-      if (optional) const Text('  선택', style: TextStyle(fontSize: 10, color: Color(0xFF71717A), fontWeight: FontWeight.w700)),
+      Text(
+        label,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+      ),
+      if (optional)
+        const Text(
+          '  선택',
+          style: TextStyle(
+            fontSize: 10,
+            color: Color(0xFF71717A),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
     ],
   );
 
   InputDecoration _htmlInputDecoration() => const InputDecoration(
     isDense: true,
     contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-    border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0x1A09090B))),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0x1A09090B))),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0xFF09090B))),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: Color(0x1A09090B)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: Color(0x1A09090B)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: Color(0xFF09090B)),
+    ),
   );
 
   Widget _htmlSummaryRow(String label, String value) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 15),
-    decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0x1A09090B)))),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: Color(0x1A09090B))),
+    ),
     child: Row(
       children: [
-        SizedBox(width: 92, child: Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
-        Expanded(child: Text(value.isEmpty ? '선택 안 함' : value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800))),
+        SizedBox(
+          width: 92,
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF71717A)),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value.isEmpty ? '선택 안 함' : value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+          ),
+        ),
       ],
     ),
   );
 
-  Widget _htmlPrimaryButton(String label, VoidCallback? onPressed) => FilledButton(
-    onPressed: onPressed,
-    style: FilledButton.styleFrom(
-      minimumSize: const Size.fromHeight(52),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      alignment: Alignment.center,
-      backgroundColor: const Color(0xFF09090B),
-      disabledBackgroundColor: const Color(0x6B09090B),
-      disabledForegroundColor: const Color(0x6BFFFFFF),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
-        if (_loading && onPressed != null) const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) else const Text('→', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-      ],
-    ),
-  );
+  Widget _htmlPrimaryButton(String label, VoidCallback? onPressed) =>
+      FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(52),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          alignment: Alignment.center,
+          backgroundColor: const Color(0xFF09090B),
+          disabledBackgroundColor: const Color(0x6B09090B),
+          disabledForegroundColor: const Color(0x6BFFFFFF),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+            ),
+            if (_loading && onPressed != null)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            else
+              const Text(
+                '→',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              ),
+          ],
+        ),
+      );
 
-  Widget _htmlSecondaryButton(String label, VoidCallback onPressed) => OutlinedButton(
-    onPressed: onPressed,
-    style: OutlinedButton.styleFrom(
-      minimumSize: const Size.fromHeight(52),
-      padding: EdgeInsets.zero,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      side: const BorderSide(color: Color(0x1A09090B)),
-      foregroundColor: const Color(0xFF09090B),
-    ),
-    child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
-  );
+  Widget _htmlSecondaryButton(String label, VoidCallback onPressed) =>
+      OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(52),
+          padding: EdgeInsets.zero,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          side: const BorderSide(color: Color(0x1A09090B)),
+          foregroundColor: const Color(0xFF09090B),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+        ),
+      );
 
   Widget _htmlLoginEntry() => Center(
     child: Wrap(
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        const Text('이미 계정이 있으신가요? ', style: TextStyle(fontSize: 12, color: Color(0xFF71717A))),
+        const Text(
+          '이미 계정이 있으신가요? ',
+          style: TextStyle(fontSize: 12, color: Color(0xFF71717A)),
+        ),
         TextButton(
           onPressed: () => Navigator.of(context).maybePop(),
-          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4), minimumSize: const Size(48, 48)),
-          child: const Text('로그인', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, decoration: TextDecoration.underline)),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            minimumSize: const Size(48, 48),
+          ),
+          child: const Text(
+            '로그인',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              decoration: TextDecoration.underline,
+            ),
+          ),
         ),
       ],
     ),
@@ -1078,10 +1272,16 @@ class _SignupHtmlBrand extends StatelessWidget {
         height: 34,
         alignment: Alignment.center,
         color: const Color(0xFF09090B),
-        child: const Text('A', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+        child: const Text(
+          'A',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+        ),
       ),
       const SizedBox(width: 10),
-      const Text('AIFlow', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+      const Text(
+        'AIFlow',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+      ),
     ],
   );
 }
