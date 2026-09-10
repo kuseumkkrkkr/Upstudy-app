@@ -369,24 +369,36 @@ Future<void> _showStudentUtilityPanel({
     return;
   }
   if (isStudentDensityMobile(context)) {
-    await showModalBottomSheet<void>(
+    await showGeneralDialog<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: const Color(0xFFF4F4F6),
-      barrierColor: Colors.black.withValues(alpha: .30),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      builder: (context) => FractionallySizedBox(
-        heightFactor: .88,
+      barrierDismissible: true,
+      barrierLabel: '검색 닫기',
+      barrierColor: Colors.black.withValues(alpha: .58),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (context, animation, secondaryAnimation) => Align(
+        alignment: Alignment.bottomCenter,
         child: Material(
-          color: const Color(0xFFF4F4F6),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          clipBehavior: Clip.antiAlias,
-          child: child,
+          color: Colors.white,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * .88,
+              minWidth: MediaQuery.sizeOf(context).width,
+            ),
+            child: child,
+          ),
         ),
       ),
+      transitionBuilder: (context, animation, secondaryAnimation, child) =>
+          SlideTransition(
+            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+                .animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+            child: child,
+          ),
     );
     return;
   }
@@ -399,11 +411,13 @@ Future<void> _showStudentUtilityPanel({
     pageBuilder: (context, animation, secondaryAnimation) {
       final width = MediaQuery.sizeOf(context).width;
       return Align(
-        alignment: Alignment.centerRight,
+        alignment: Alignment.bottomCenter,
         child: SizedBox(
-          width: width <= StudentDensityTokens.mobileBreakpoint ? width : 560,
-          height: double.infinity,
-          child: Material(color: const Color(0xFFFAFAFB), child: child),
+          width: width <= StudentDensityTokens.mobileBreakpoint ? width : 680,
+          height: width <= StudentDensityTokens.mobileBreakpoint
+              ? width * .88
+              : MediaQuery.sizeOf(context).height * .78,
+          child: Material(color: Colors.white, child: child),
         ),
       );
     },
@@ -542,28 +556,73 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
         .toList(growable: false);
     return _StudentUtilitySheet(
       kicker: 'QUICK FIND',
-      title: '전체 검색',
-      description: '코스, 교재, 문제, 친구를 현재 기능별 검색으로 연결합니다.',
+      title: '기능 검색',
+      description: '앱의 모든 기능을 바로 찾습니다.',
+      mobileHorizontalPadding: 14,
       children: [
         TextField(
           autofocus: true,
           onChanged: (value) => setState(() => _query = value),
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.search_rounded),
-            hintText: '함수, 코스, 친구 검색',
+            hintText: '예: 교재 읽기, 오답, 타이머',
+            filled: false,
+            isDense: true,
+            constraints: BoxConstraints(minHeight: 58),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF202022), width: 2),
+              borderRadius: BorderRadius.zero,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF202022), width: 2),
+              borderRadius: BorderRadius.zero,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF202022), width: 2),
+              borderRadius: BorderRadius.zero,
+            ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         for (final item in visible)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              item.title,
-              style: const TextStyle(fontWeight: FontWeight.w900),
-            ),
-            subtitle: Text(item.detail),
-            trailing: const Icon(Icons.arrow_forward_rounded),
+          InkWell(
             onTap: () => _open(item),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 64),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFE4E4E6))),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.spec.category,
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.title,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_rounded, size: 17),
+                ],
+              ),
+            ),
           ),
         if (visible.isEmpty)
           isStudentDensityMobile(context)
@@ -902,12 +961,14 @@ class _StudentUtilitySheet extends StatelessWidget {
     required this.title,
     required this.description,
     required this.children,
+    this.mobileHorizontalPadding = 18,
   });
 
   final String kicker;
   final String title;
   final String description;
   final List<Widget> children;
+  final double mobileHorizontalPadding;
 
   /// 필요한 변수는 시트 제목·설명·본문이다.
   /// 작동 원리는 HTML 공용 액션 모달의 여백·타이포·최대 높이를 모든 화면에서 동일하게 유지하는 것이다.
@@ -919,9 +980,17 @@ class _StudentUtilitySheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (mobile)
+            const Center(
+              child: SizedBox(
+                width: 42,
+                height: 4,
+                child: ColoredBox(color: Color(0xFFD0D0D4)),
+              ),
+            ),
           Padding(
             padding: mobile
-                ? const EdgeInsets.fromLTRB(20, 2, 14, 12)
+                ? const EdgeInsets.fromLTRB(16, 0, 14, 0)
                 : const EdgeInsets.fromLTRB(24, 24, 18, 20),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -945,10 +1014,19 @@ class _StudentUtilitySheet extends StatelessWidget {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontSize: 28,
+                          fontSize: 19,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
+                      if (!mobile && description.isNotEmpty)
+                        Text(
+                          description,
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -971,25 +1049,12 @@ class _StudentUtilitySheet extends StatelessWidget {
           Expanded(
             child: ListView(
               padding: EdgeInsets.fromLTRB(
-                mobile ? 20 : 24,
+                mobile ? mobileHorizontalPadding : 24,
                 mobile ? 8 : 28,
-                mobile ? 20 : 24,
+                mobile ? mobileHorizontalPadding : 24,
                 MediaQuery.viewInsetsOf(context).bottom + 24,
               ),
-              children: [
-                if (description.isNotEmpty) ...[
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: mobile ? Colors.black54 : Colors.black45,
-                      fontSize: mobile ? 15 : null,
-                      height: 1.4,
-                    ),
-                  ),
-                  SizedBox(height: mobile ? 24 : 18),
-                ],
-                ...children,
-              ],
+              children: [...children],
             ),
           ),
           if (!mobile) ...[
@@ -1030,26 +1095,14 @@ class _UtilityNoticeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     final row = Container(
-      margin: EdgeInsets.only(bottom: mobile ? 9 : 0),
+      margin: EdgeInsets.zero,
       padding: EdgeInsets.symmetric(
-        horizontal: mobile ? 16 : 0,
+        horizontal: mobile ? 0 : 0,
         vertical: mobile ? 16 : 14,
       ),
       decoration: BoxDecoration(
-        color: mobile ? Colors.white : Colors.transparent,
-        borderRadius: mobile ? BorderRadius.circular(20) : null,
-        border: mobile
-            ? null
-            : const Border(bottom: BorderSide(color: Color(0xFFE4E4E6))),
-        boxShadow: mobile
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: .055),
-                  blurRadius: 18,
-                  offset: const Offset(0, 7),
-                ),
-              ]
-            : null,
+        color: Colors.transparent,
+        border: const Border(bottom: BorderSide(color: Color(0xFFE4E4E6))),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
