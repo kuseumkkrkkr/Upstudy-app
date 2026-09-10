@@ -719,6 +719,11 @@
 - `flutter analyze` 및 `student_route_registry_test.dart` 통과. 소스·번들 커밋 `da9beb8`, Vercel 배포 `dpl_9Bw28FUXco4J9uhc8za1yFwLAHZ6`, alias READY, `/health` 200.
 - canary에서 `#/student/dashboard?scene=course-select`의 `코스를 선택하세요` 모달과 로딩 상태를 확인했다. 전체 86개 전수 게이트는 계속 `pending`이다.
 
+### 2026-09-11 학생 API·콘텐츠 계약 검사 재실행
+
+- `omj` 작업 디렉터리에서 `tests/test_vercel_student_demo_api.py` 5개와 `tests/test_content_contracts.py`, `tests/test_product_rules.py` 10개가 모두 통과했다.
+- 저장소 전체 `tests -k 'student or demo or store or school_exam'`는 기존 academy 레거시 테스트가 현재 PostgreSQL 저장소의 제거된 `DB_PATH` 전역을 참조해 수집 단계에서 실패했다. 이는 배포 번들 변경이 아니라 기존 테스트-저장소 계약 불일치로 분리 기록하며, 상용 준비 완료로 간주하지 않는다.
+
 ### 2026-09-11 그룹 내부 장면 딥링크 canary 반영
 
 - HTML의 `group-find`·`group-create` 내부 장면을 실제 `GroupListPage`의 검색 다이얼로그·생성 다이얼로그로 연결했다. 기존 그룹 API와 입력 검증은 그대로 사용하며 샘플 그룹 데이터는 추가하지 않았다.
