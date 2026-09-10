@@ -744,6 +744,14 @@
 - 원격 번들은 Range 조각 수집으로 전체 6,662,878바이트를 검증했으며 로컬과 SHA-256 `E34BD3A2C8F423AF023BB0E2209B321D268C6897D7CDA8A33CB28B2E0B9A35FC`가 일치한다. 단일 PowerShell 응답의 5.5MiB 표시값은 응답 절단 현상으로 최종 해시 근거에서 제외했다.
 - 86개 전체 화면·장면 이미지, 실제 API·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 자료실 미리보기 장면 연결
+
+- `market-preview`를 `/marketplace?scene=market-preview`로 연결했다.
+- 실제 서버 목록이 준비된 뒤 첫 자료의 기존 미리보기 시트를 열며, 목록이 비어 있으면 빈 상태를 유지해 샘플 데이터를 만들지 않는다.
+- 소스·테스트 커밋 `9a3ad3e`, 번들 커밋 `cca6431`; 라우트·코스 복구 집중 검사는 통과했다.
+- Vercel 배포 `dpl_6jwt6PeCHJXCdhQ55SAfrRNobrvi`, alias READY, `/health` 200. Range 전체 수집 기준 로컬·원격 번들 SHA-256 `546BCE4700B865A5B25CE2FE862995E8DF319FAA61070C1BAA05A284C24039A0` 일치.
+- 86개 전체 화면·장면 이미지와 실제 API·DB·동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 자료실 필터 장면 브라우저 재검증
 
 - canary 주소 `#/marketplace?scene=market-filter`를 새 브라우저 탭에서 직접 열어 자료실 본문 위에 `상세 필터` 시트가 표시되는 것을 확인했다.
