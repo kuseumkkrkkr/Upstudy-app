@@ -203,6 +203,19 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     );
   }
 
+  // Search results can target a concrete scene inside the student dashboard.
+  // The static route handles the plain dashboard path; query routes are
+  // resolved here so the requested sheet opens after the first frame.
+  if (uri != null && uri.path == AppRoutes.studentDashboard) {
+    final scene = uri.queryParameters['scene']?.trim();
+    if (scene != null && scene.isNotEmpty) {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => MainStudentPage(initialScene: scene),
+      );
+    }
+  }
+
   // Level test result (needs correctCount, totalCount, passed)
   if (name == AppRoutes.levelTestResult) {
     final args = settings.arguments;

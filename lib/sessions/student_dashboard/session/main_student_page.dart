@@ -225,8 +225,9 @@ double _fitSingleLineFontSize({
 }
 
 class MainStudentPage extends StatefulWidget {
-  const MainStudentPage({super.key, this.username});
+  const MainStudentPage({super.key, this.username, this.initialScene});
   final String? username;
+  final String? initialScene;
 
   @override
   State<MainStudentPage> createState() => _MainStudentPageState();
@@ -238,6 +239,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
   List<_TodayTaskItem> _todayPersonalTasks = const [];
   String? _displayName;
   Key _courseLoaderKey = UniqueKey();
+  bool _initialSceneOpened = false;
 
   @override
   void initState() {
@@ -261,6 +263,40 @@ class _MainStudentPageState extends State<MainStudentPage> {
     );
     unawaited(_refreshTeacherTasks());
     unawaited(_refreshPersonalTasks());
+    if (widget.initialScene?.trim().isNotEmpty == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _initialSceneOpened) return;
+        _initialSceneOpened = true;
+        _openInitialScene(widget.initialScene!.trim());
+      });
+    }
+  }
+
+  /// 검색·딥링크가 지정한 홈 내부 장면을 첫 프레임 뒤에 연다.
+  /// 데이터가 없는 경우에도 실제 빈 상태 시트를 보여 주며 샘플 데이터를 만들지 않는다.
+  void _openInitialScene(String scene) {
+    switch (scene) {
+      case 'today-tasks':
+        unawaited(
+          showTodayTasksModal(
+            context: context,
+            tasks: [..._todayTeacherTasks, ..._todayPersonalTasks],
+            onTaskTap: (task) => _openTodayTask(task as _TodayTaskItem),
+          ),
+        );
+        return;
+      case 'rating-detail':
+        unawaited(showRatingDetailModal(context: context));
+        return;
+      case 'achievements':
+        showActivityBadgeDialog(
+          context: context,
+          snapshot: ActivityStore.notifier.value,
+          accountLevel:
+              ActivityStore.accountSummaryNotifier.value?.level ?? 0,
+        );
+        return;
+    }
   }
 
   @override

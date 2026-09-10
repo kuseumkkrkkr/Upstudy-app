@@ -297,7 +297,10 @@ void main() {
 
     expect(find.text('코스'), findsAtLeastNWidgets(1));
     expect(find.text('AI 학습 튜터'), findsOneWidget);
-    expect(find.text('마켓플레이스'), findsOneWidget);
+    // HTML 기준 marketplace 화면의 표시명은 자료실이다. 마켓플레이스는
+    // canary 전용 store 플래그가 켜졌을 때만 검색 결과에 나타난다.
+    expect(find.text('자료실'), findsAtLeastNWidgets(1));
+    expect(find.text('마켓플레이스'), findsNothing);
     expect(find.text('연결할 검색 화면이 없습니다.'), findsNothing);
   });
 

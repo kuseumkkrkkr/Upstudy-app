@@ -432,7 +432,8 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
     'course-learning': '수학 학습 강의 이어하기',
     'wrong-list': '수학 오답 문제 복습',
     'solve-workspace': '수학 문제 풀이',
-    'marketplace': '수학 문제세트 시험지 교재 자료',
+    // HTML 표시는 "자료실"이지만 기존 사용자가 입력하던 명칭도 검색한다.
+    'marketplace': '수학 문제세트 시험지 교재 자료 마켓플레이스',
     'tutor': '수학 개념 질문 풀이',
     'school-exam-prep': '수학 내신 시험 학교 계획',
   };
@@ -460,7 +461,22 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
   ) {
     final navigator = Navigator.of(context, rootNavigator: true);
     Navigator.of(context).pop();
-    navigator.pushNamed(destination.route);
+    navigator.pushNamed(_routeForSearchDestination(destination));
+  }
+
+  /// 검색 결과의 상태 화면은 기본 페이지가 아니라 HTML에서 정의한 내부
+  /// 장면을 함께 연다. 상세 식별자가 필요한 화면은 기존 기본 경로를 유지한다.
+  String _routeForSearchDestination(
+    ({String id, String title, String detail, String keywords, String route})
+    destination,
+  ) {
+    if (destination.route != '/student/dashboard') return destination.route;
+    return switch (destination.id) {
+      'today-tasks' => '/student/dashboard?scene=today-tasks',
+      'rating-detail' => '/student/dashboard?scene=rating-detail',
+      'achievements' => '/student/dashboard?scene=achievements',
+      _ => destination.route,
+    };
   }
 
   /// 필요한 변수는 검색어와 네 목적지 메타다.
