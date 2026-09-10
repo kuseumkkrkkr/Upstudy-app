@@ -124,6 +124,7 @@ class DesignInteractionAuditor:
         height: int = 844,
         port: int = 8997,
         wait_ms: int = 250,
+        max_actions: int | None = None,
         screen_ids: tuple[str, ...] | None = None,
     ) -> tuple[ClickObservation, ...]:
         """각 화면을 초기화한 뒤 보이는 조작 대상을 하나씩 눌러 결과를 기록한다.
@@ -167,7 +168,8 @@ class DesignInteractionAuditor:
                     baseline.wait_for_timeout(wait_ms)
                     count = baseline.locator(CLICK_SELECTOR).count()
                     baseline.close()
-                    for index in range(count):
+                    action_count = count if max_actions is None else min(count, max_actions)
+                    for index in range(action_count):
                         page = browser.new_page(viewport={"width": width, "height": height})
                         tag = label = href = ""
                         try:
@@ -250,6 +252,8 @@ def main() -> int:
     parser.add_argument("--height", type=int, default=844)
     parser.add_argument("--port", type=int, default=8997)
     parser.add_argument("--wait-ms", type=int, default=250)
+    parser.add_argument("--max-actions", type=int)
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
     auditor = DesignInteractionAuditor(args.source)
@@ -263,14 +267,18 @@ def main() -> int:
             height=args.height,
             port=args.port,
             wait_ms=args.wait_ms,
+            max_actions=args.max_actions,
             screen_ids=tuple(args.screens) or None,
         )
         result["clicks"] = [asdict(click) for click in clicks]
+    rendered = json.dumps(result, ensure_ascii=False, indent=2)
+    if args.output:
+        args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(rendered + "\n", encoding="utf-8")
     sys.stdout.reconfigure(encoding="utf-8")
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(rendered)
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

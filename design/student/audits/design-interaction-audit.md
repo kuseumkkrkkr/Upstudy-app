@@ -11,10 +11,17 @@ python design/student/audits/design_interaction_audit.py `
 
 python design/student/audits/design_interaction_audit.py `
   --source "C:\Users\user\Downloads\Upstudy-student-app-design\upstudy-student-app-design.html" `
-  --runtime --screen home --width 390 --height 844
+  --runtime --screen home --width 390 --height 844 `
+  --output "design/student/audits/evidence/2026-09-01-deployed-vs-design/runtime-home-390x844.json"
+
+# 86개 화면의 첫 조작만 빠르게 확인할 때
+python design/student/audits/design_interaction_audit.py `
+  --source "C:\Users\user\Downloads\Upstudy-student-app-design\upstudy-student-app-design.html" `
+  --runtime --width 390 --height 844 --wait-ms 0 --max-actions 1 `
+  --output "design/student/audits/evidence/2026-09-01-deployed-vs-design/runtime-86-first-action-390x844.json"
 ```
 
-`--runtime` 결과는 표준 출력으로만 내보내며 API·Flutter·사용자 데이터를 호출하지 않는다. 전체 검수는 `--screen`을 생략해 실행하고, 오래 걸리는 화면은 화면 ID 단위로 나눠 실행한다.
+`--runtime` 결과는 표준 출력과 선택한 `--output` JSON 파일로 내보내며 API·Flutter·사용자 데이터를 호출하지 않는다. 전체 검수는 `--screen`을 생략해 실행하고, 오래 걸리는 화면은 화면 ID 단위로 나눠 실행한다. `--max-actions 1`은 화면별 첫 조작만 확인하는 빠른 스모크이며 중첩 장면 전수 검사를 의미하지 않는다.
 
 ## 함수·변수표
 
@@ -37,5 +44,3 @@ python design/student/audits/design_interaction_audit.py `
 - 로컬 HTML의 클릭 결과는 디자인 프로토타입의 동작 증거다. 실제 채점·저장·결제·권한 성공의 증거가 아니다.
 - 동일 HTML을 두 번 검사할 때도 화면별로 새 페이지를 열어 이전 클릭 상태가 다음 항목에 섞이지 않게 한다.
 - 브라우저 오류는 `ClickObservation.error`에 남긴다. 오류를 숨기거나 성공으로 바꾸지 않는다.
-
-
