@@ -479,7 +479,10 @@ class _ArenaPageState extends State<ArenaPage> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 14,
                         mainAxisSpacing: 14,
-                        childAspectRatio: 1.7,
+                        // 큐 카드의 통계·CTA가 잘리지 않도록 HTML desktop
+                        // 카드의 세로 리듬을 우선한다. 내용보다 작은 고정
+                        // 높이는 RenderFlex overflow를 만들고 CTA를 가린다.
+                        childAspectRatio: 1.25,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         children: [

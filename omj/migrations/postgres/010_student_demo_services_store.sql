@@ -46,16 +46,40 @@ BEGIN
     IF FOUND AND current_plan.version <> p_expected_version THEN
         RETURN jsonb_build_object('status', 'conflict', 'version', current_plan.version);
     END IF;
-    next_version := COALESCE(current_plan.version, 0) + 1;
-    INSERT INTO student_school_exam_plan (user_id, school, exam_name, exam_date, exam_id, version, updated_at)
-    VALUES (p_user_id, p_school, p_exam_name, p_exam_date, p_exam_id, next_version, NOW())
-    ON CONFLICT (user_id) DO UPDATE SET
-        school = EXCLUDED.school,
-        exam_name = EXCLUDED.exam_name,
-        exam_date = EXCLUDED.exam_date,
-        exam_id = EXCLUDED.exam_id,
-        version = EXCLUDED.version,
-        updated_at = NOW();
+    IF FOUND THEN
+        next_version := current_plan.version + 1;
+        UPDATE student_school_exam_plan
+        SET school = p_school,
+            exam_name = p_exam_name,
+            exam_date = p_exam_date,
+            exam_id = p_exam_id,
+            version = next_version,
+            updated_at = NOW()
+        WHERE user_id = p_user_id;
+    ELSE
+        -- 최초 생성만 기대 버전 0을 허용한다. DO NOTHING의 결과를
+        -- 확인하므로 동시에 들어온 두 생성 요청 중 하나만 삽입에 성공한다.
+        IF p_expected_version <> 0 THEN
+            RETURN jsonb_build_object('status', 'conflict', 'version', 0);
+        END IF;
+        INSERT INTO student_school_exam_plan (user_id, school, exam_name, exam_date, exam_id, version, updated_at)
+        VALUES (p_user_id, p_school, p_exam_name, p_exam_date, p_exam_id, 1, NOW())
+        ON CONFLICT (user_id) DO NOTHING;
+        IF FOUND THEN
+            next_version := 1;
+        ELSE
+            -- 다른 트랜잭션이 먼저 삽입했다면 그 행을 잠근 뒤 충돌로
+            -- 반환한다. 절대로 새 값으로 덮어쓰지 않는다.
+            SELECT * INTO current_plan
+            FROM student_school_exam_plan
+            WHERE user_id = p_user_id
+            FOR UPDATE;
+            RETURN jsonb_build_object(
+                'status', 'conflict',
+                'version', COALESCE(current_plan.version, 0)
+            );
+        END IF;
+    END IF;
     RETURN jsonb_build_object(
         'status', 'saved', 'school', p_school, 'exam_name', p_exam_name,
         'exam_date', p_exam_date, 'exam_id', p_exam_id, 'version', next_version

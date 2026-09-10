@@ -745,7 +745,7 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
               Expanded(
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: EdgeInsets.only(bottom: mobile ? 92 : 24),
                   children: [
                     _ResumeCard(onTap: () => _openRoute('/courses')),
                     for (final group

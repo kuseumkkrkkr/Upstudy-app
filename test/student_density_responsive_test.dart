@@ -186,15 +186,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('홈'), findsOneWidget);
-    expect(find.text('학습터'), findsOneWidget);
     expect(find.text('코스'), findsOneWidget);
-    expect(find.text('책가방'), findsOneWidget);
     expect(find.text('친구/소셜'), findsOneWidget);
+    expect(find.text('자료실'), findsOneWidget);
     expect(find.text('마켓플레이스'), findsOneWidget);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -180));
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('마켓플레이스'));
+    final marketplaceItem = find.ancestor(
+      of: find.text('마켓플레이스'),
+      matching: find.byType(InkWell),
+    );
+    await tester.ensureVisible(marketplaceItem.first);
+    await tester.tap(marketplaceItem.first);
     await tester.pumpAndSettle();
     expect(find.text('마켓 도착'), findsOneWidget);
   });
@@ -754,8 +758,8 @@ void main() {
   });
 
   testWidgets('실행 중 로그인한 세션은 학생 홈 명명 라우트에 즉시 반영된다', (tester) async {
-    await ApiClient.instance.clearToken();
-    addTearDown(ApiClient.instance.clearToken);
+    ApiClient.instance.clearTokenForTest();
+    addTearDown(ApiClient.instance.clearTokenForTest);
 
     late BuildContext routeContext;
     await tester.pumpWidget(
@@ -775,7 +779,7 @@ void main() {
       isA<LandingPage>(),
     );
 
-    await ApiClient.instance.setToken('runtime-login-token');
+    ApiClient.instance.setTokenForTest('runtime-login-token');
     expect(
       routes[AppRoutes.studentDashboard]!(routeContext),
       isA<MainStudentPage>(),

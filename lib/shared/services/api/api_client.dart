@@ -1478,6 +1478,15 @@ class ApiClient {
     await AuthStorage.instance.clear();
   }
 
+  /// 테스트에서 라우트의 세션 분기만 검증할 때 사용하는 비영속 토큰 주입이다.
+  /// 실제 로그인·로그아웃은 [setToken]/[clearToken]을 사용해 저장소까지 갱신한다.
+  @visibleForTesting
+  void setTokenForTest(String token) => _token = token;
+
+  /// 테스트 종료 시 네트워크·플랫폼 저장소를 건드리지 않고 메모리 세션만 지운다.
+  @visibleForTesting
+  void clearTokenForTest() => _token = null;
+
   Future<UserProfile> getMyProfile() async {
     final res = await _get<Map<String, dynamic>>(
       '/auth/me',

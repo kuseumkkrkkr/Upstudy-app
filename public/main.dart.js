@@ -142691,7 +142691,7 @@ a2=a7.e
 a3=f[a].h(0,a9)
 if(!J.j(f[a].h(0,"coming_soon"),!0)){a4=a7.e
 a4=a4!=null&&a4!==f[a].h(0,a9)}else a4=!0
-c.push(new A.arM(a0,a2==null?a3==null:a2===a3,a4,new A.b9n(a7,f,a),b,!0,a1,a8))}d.push(A.c_5(1.7,c,2,14,B.c26,14,B.h2,!0))}else{c=A.a([],p)
+c.push(new A.arM(a0,a2==null?a3==null:a2===a3,a4,new A.b9n(a7,f,a),b,!0,a1,a8))}d.push(A.c_5(1.25,c,2,14,B.c26,14,B.h2,!0))}else{c=A.a([],p)
 for(b=e.length,a0=a7.ga6O(),a5=0;a1=e.length,a5<a1;e.length===b||(0,A.R)(e),++a5){a6=e[a5]
 a1=a7.e
 a2=a6.h(0,a9)
@@ -170549,21 +170549,22 @@ case B.Fw:break
 case null:case void 0:s=!1
 break
 default:s=null}return s},
-p(a){var s,r,q,p,o,n,m,l,k,j,i,h=this,g=null,f=t.w,e=A.a5(a,B.D,f).w.a.a<=720,d=e?B.f.a8(A.a5(a,B.D,f).w.a.a-16,0,420):B.f.a8(A.a5(a,B.D,f).w.a.a-40,0,310)
-f=B.bV.ak(0.97)
-s=e?16:14
-r=e?16:20
-q=e?16:14
-p=e?16:20
-o=t.p
-n=A.a([new A.atp(new A.b8D(h),g)],o)
-for(m=new A.Q(B.bc8,new A.b8E(h),t.uA).fS(0,new A.b8F()),l=J.bn(m.a),m=new A.l2(l,m.b),k=h.gaQn();m.u();)n.push(new A.am1(l.gM(),k,new A.b8G(h),g))
-n=A.S(A.dX(n,g,g,B.Q,g,g,!1),1)
-j=h.d
-if(j===$){i=h.Kw()
-h.d!==$&&A.aQ()
-h.d=i
-j=i}return new A.a9y(f,24,B.E,B.bt,d,A.cI(!0,new A.W(new A.G(s,r,q,p),A.y(A.a([new A.am0(new A.b8H(h),new A.b8I(a),g),n,A.n1(new A.b8J(h),j,t.Ww)],o),B.H,g,B.d,B.e,0,B.i),g),B.Q,!0),g)}}
+p(a){var s,r,q,p,o,n,m,l,k,j,i,h,g=this,f=null,e=t.w,d=A.a5(a,B.D,e).w.a.a<=720,c=d?B.f.a8(A.a5(a,B.D,e).w.a.a-16,0,420):B.f.a8(A.a5(a,B.D,e).w.a.a-40,0,310)
+e=B.bV.ak(0.97)
+s=d?16:14
+r=d?16:20
+q=d?16:14
+p=d?16:20
+o=d?92:24
+n=t.p
+m=A.a([new A.atp(new A.b8D(g),f)],n)
+for(l=new A.Q(B.bc8,new A.b8E(g),t.uA).fS(0,new A.b8F()),k=J.bn(l.a),l=new A.l2(k,l.b),j=g.gaQn();l.u();)m.push(new A.am1(k.gM(),j,new A.b8G(g),f))
+o=A.S(A.dX(m,f,f,new A.G(0,0,0,o),f,f,!1),1)
+i=g.d
+if(i===$){h=g.Kw()
+g.d!==$&&A.aQ()
+g.d=h
+i=h}return new A.a9y(e,24,B.E,B.bt,c,A.cI(!0,new A.W(new A.G(s,r,q,p),A.y(A.a([new A.am0(new A.b8H(g),new A.b8I(a),f),o,A.n1(new A.b8J(g),i,t.Ww)],n),B.H,f,B.d,B.e,0,B.i),f),B.Q,!0),f)}}
 A.b8B.prototype={
 $1(a){return null},
 $S:29}
