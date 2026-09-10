@@ -712,6 +712,11 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 코스 목록 검증 계약 정리
+
+- 기존 테스트가 HTML에 없는 데스크톱 완료 코스 필터·카드 탐색을 요구해, HTML 기준 `01 학습 중`·`02 코스 관리` 섹션과 두 관리 CTA를 검증하도록 갱신했다.
+- `test/student_learning_widget_test.dart` 전체 4개가 통과했다. 실제 완료 코스 데이터·전체 86개 화면 장면 검증은 별도 원장에서 계속 `pending`이다.
+
 ### 2026-09-11 코스 상세 전용 셸 canary 반영
 
 - HTML `detail` 레이아웃 기준으로 코스 상세의 데스크톱 컨텍스트 영역, 모바일 뒤로가기, 검색·알림 동작을 공통 셸에 연결했다.
