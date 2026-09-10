@@ -8,9 +8,8 @@ import 'arena_api.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
+import 'package:s11/app/router.dart';
 
 typedef ArenaJoinCallback =
     Future<Map<String, dynamic>> Function(String queueType);
@@ -410,156 +409,129 @@ class _ArenaPageState extends State<ArenaPage> {
     final joinableQueues = visibleQueues
         .where((queue) => queue['coming_soon'] != true)
         .toList(growable: false);
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
+    return StudentHtmlShell(
+      title: '대결장',
+      activeRoute: AppRoutes.arena,
+      showContextAside: true,
+      child: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(
+            desktop ? 40 : 14,
+            24,
+            desktop ? 40 : 14,
+            40,
+          ),
           children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                showUtilityActions: true,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.learning,
-                ),
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    desktop ? 40 : 14,
-                    24,
-                    desktop ? 40 : 14,
-                    40,
-                  ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1380),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1380),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (desktop)
-                              _ArenaHero(
-                                tier: tier,
-                                rating: rating,
-                                wins: wins,
-                                losses: losses,
-                                draws: draws,
-                                winRate: winRate,
-                                desktop: true,
-                                recentResults: recentResults,
-                                onTierTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => ArenaRankingPage(
-                                      queueType:
-                                          profile['queue_type']?.toString() ??
-                                          'duel_exam',
-                                    ),
-                                  ),
-                                ),
-                              )
-                            else
-                              const _ArenaMobileHeader(),
-                            if (resumableMatchId != null &&
-                                resumableMatchId.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 16),
-                                child: _ResumeMatchBanner(
-                                  onResume: () => _openMatch(resumableMatchId),
-                                ),
-                              ),
-                            if (_error != null && _summary != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: _ArenaErrorBanner(
-                                  message: _error!,
-                                  onRetry: _load,
-                                ),
-                              ),
-                            SizedBox(height: desktop ? 56 : 28),
-                            if (desktop) ...[
-                              const _ArenaMatchHeader(),
-                              const SizedBox(height: 20),
-                            ],
-                            if (_summary == null)
-                              const Center(child: CircularProgressIndicator())
-                            else if (desktop)
-                              GridView.count(
-                                key: const ValueKey('arena-desktop-queue-grid'),
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 14,
-                                mainAxisSpacing: 14,
-                                childAspectRatio: 1.7,
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                children: [
-                                  for (
-                                    var index = 0;
-                                    index < visibleQueues.length;
-                                    index++
-                                  )
-                                    _QueueCard(
-                                      data: visibleQueues[index],
-                                      desktop: true,
-                                      // 1v1은 어둡게 강조하고 2v2는 밝게 반전한다.
-                                      featured:
-                                          visibleQueues[index]['queue_type'] ==
-                                          'duel_exam',
-                                      waiting:
-                                          _waitingQueue ==
-                                          visibleQueues[index]['queue_type'],
-                                      disabled:
-                                          visibleQueues[index]['coming_soon'] ==
-                                              true ||
-                                          (_waitingQueue != null &&
-                                              _waitingQueue !=
-                                                  visibleQueues[index]['queue_type']),
-                                      onJoin: () => _join(
-                                        visibleQueues[index]['queue_type']
-                                            .toString(),
-                                      ),
-                                      onCancel: _cancel,
-                                    ),
-                                ],
-                              )
-                            else
-                              Column(
-                                key: const ValueKey('arena-mobile-queue-list'),
-                                children: [
-                                  for (final queue in joinableQueues)
-                                    _ArenaMobileEntryCard(
-                                      data: queue,
-                                      waiting:
-                                          _waitingQueue == queue['queue_type'],
-                                      disabled:
-                                          _waitingQueue != null &&
-                                          _waitingQueue != queue['queue_type'],
-                                      onJoin: () => _confirmMobileJoin(queue),
-                                      onCancel: _cancel,
-                                    ),
-                                  if (joinableQueues.isEmpty)
-                                    _ArenaUnavailableCard(onRetry: _load),
-                                ],
-                              ),
-                            if (desktop) ...[
-                              const SizedBox(height: 20),
-                              const _ArenaRules(desktop: true),
-                            ],
-                          ],
+                    if (desktop)
+                      _ArenaHero(
+                        tier: tier,
+                        rating: rating,
+                        wins: wins,
+                        losses: losses,
+                        draws: draws,
+                        winRate: winRate,
+                        desktop: true,
+                        recentResults: recentResults,
+                        onTierTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ArenaRankingPage(
+                              queueType:
+                                  profile['queue_type']?.toString() ??
+                                  'duel_exam',
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      const _ArenaMobileHeader(),
+                    if (resumableMatchId != null && resumableMatchId.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: _ResumeMatchBanner(
+                          onResume: () => _openMatch(resumableMatchId),
                         ),
                       ),
-                    ),
+                    if (_error != null && _summary != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: _ArenaErrorBanner(
+                          message: _error!,
+                          onRetry: _load,
+                        ),
+                      ),
+                    SizedBox(height: desktop ? 56 : 28),
+                    if (desktop) ...[
+                      const _ArenaMatchHeader(),
+                      const SizedBox(height: 20),
+                    ],
+                    if (_summary == null)
+                      const Center(child: CircularProgressIndicator())
+                    else if (desktop)
+                      GridView.count(
+                        key: const ValueKey('arena-desktop-queue-grid'),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        childAspectRatio: 1.7,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          for (
+                            var index = 0;
+                            index < visibleQueues.length;
+                            index++
+                          )
+                            _QueueCard(
+                              data: visibleQueues[index],
+                              desktop: true,
+                              // 1v1은 어둡게 강조하고 2v2는 밝게 반전한다.
+                              featured:
+                                  visibleQueues[index]['queue_type'] ==
+                                  'duel_exam',
+                              waiting:
+                                  _waitingQueue ==
+                                  visibleQueues[index]['queue_type'],
+                              disabled:
+                                  visibleQueues[index]['coming_soon'] == true ||
+                                  (_waitingQueue != null &&
+                                      _waitingQueue !=
+                                          visibleQueues[index]['queue_type']),
+                              onJoin: () => _join(
+                                visibleQueues[index]['queue_type'].toString(),
+                              ),
+                              onCancel: _cancel,
+                            ),
+                        ],
+                      )
+                    else
+                      Column(
+                        key: const ValueKey('arena-mobile-queue-list'),
+                        children: [
+                          for (final queue in joinableQueues)
+                            _ArenaMobileEntryCard(
+                              data: queue,
+                              waiting: _waitingQueue == queue['queue_type'],
+                              disabled:
+                                  _waitingQueue != null &&
+                                  _waitingQueue != queue['queue_type'],
+                              onJoin: () => _confirmMobileJoin(queue),
+                              onCancel: _cancel,
+                            ),
+                          if (joinableQueues.isEmpty)
+                            _ArenaUnavailableCard(onRetry: _load),
+                        ],
+                      ),
+                    if (desktop) ...[
+                      const SizedBox(height: 20),
+                      const _ArenaRules(desktop: true),
+                    ],
                   ],
                 ),
               ),

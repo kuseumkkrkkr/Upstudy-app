@@ -1,14 +1,18 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/app/student_feature_flags.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// Canary-only student services demo. The fixture never sends an inquiry to a
-/// provider and stores only the selected demo state in this process.
+/// provider and stores only the selected demo state in local app storage.
 enum StudentServiceKind { academy, tutor }
 
 class StudentServiceProvider {
@@ -43,9 +47,98 @@ final class StudentServicesDemoStore {
   static final StudentServicesDemoStore instance = StudentServicesDemoStore._();
 
   final List<DemoServiceRequest> requests = <DemoServiceRequest>[];
+  static const _storageKey = 'aiflow.student.services.demo.v1';
+  String? _activeUserId;
 
   void add(DemoServiceRequest request) {
     requests.insert(0, request);
+    unawaited(_persist());
+  }
+
+  void cancel(DemoServiceRequest request) {
+    request.cancelled = true;
+    unawaited(_persist());
+  }
+
+  Future<void> restore() async {
+    final userId = await _currentUserId();
+    if (userId.isEmpty || userId == _activeUserId) return;
+    _activeUserId = userId;
+    requests.clear();
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_storageKey);
+    if (raw == null) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return;
+      final scoped = decoded[userId];
+      if (scoped is! List) return;
+      requests.addAll(
+        scoped.whereType<Map>().map(_fromJson).whereType<DemoServiceRequest>(),
+      );
+    } on FormatException {
+      // 손상된 데모 상태는 실제 기능·서버 데이터에 영향을 주지 않는다.
+    }
+  }
+
+  Future<void> _persist() async {
+    final userId = _activeUserId ?? await _currentUserId();
+    if (userId.isEmpty) return;
+    _activeUserId = userId;
+    final prefs = await SharedPreferences.getInstance();
+    Map<String, dynamic> scoped = <String, dynamic>{};
+    final raw = prefs.getString(_storageKey);
+    if (raw != null) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) scoped = Map<String, dynamic>.from(decoded);
+      } on FormatException {
+        scoped = <String, dynamic>{};
+      }
+    }
+    scoped[userId] = requests
+        .map(
+          (request) => {
+            'kind': request.kind.name,
+            'provider_id': request.provider.id,
+            'grade': request.grade,
+            'subject': request.subject,
+            'slot': request.slot,
+            'cancelled': request.cancelled,
+          },
+        )
+        .toList(growable: false);
+    await prefs.setString(_storageKey, jsonEncode(scoped));
+  }
+
+  Future<String> _currentUserId() async {
+    try {
+      final profile = await ApiClient.instance.getMyProfile();
+      return profile.userId.trim();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  DemoServiceRequest? _fromJson(Map value) {
+    final kind = value['kind'] == StudentServiceKind.tutor.name
+        ? StudentServiceKind.tutor
+        : StudentServiceKind.academy;
+    final provider = _providersFor(
+      kind,
+    ).where((item) => item.id == value['provider_id']?.toString()).firstOrNull;
+    if (provider == null) return null;
+    final grade = value['grade']?.toString() ?? '';
+    final subject = value['subject']?.toString() ?? '';
+    final slot = value['slot']?.toString() ?? '';
+    if (grade.isEmpty || subject.isEmpty || slot.isEmpty) return null;
+    return DemoServiceRequest(
+      kind: kind,
+      provider: provider,
+      grade: grade,
+      subject: subject,
+      slot: slot,
+    )..cancelled = value['cancelled'] == true;
   }
 }
 
@@ -144,6 +237,9 @@ const _tutors = <StudentServiceProvider>[
   ),
 ];
 
+List<StudentServiceProvider> _providersFor(StudentServiceKind kind) =>
+    kind == StudentServiceKind.academy ? _academies : _tutors;
+
 class StudentServicesDemoPage extends StatefulWidget {
   const StudentServicesDemoPage({
     super.key,
@@ -169,6 +265,7 @@ class _StudentServicesDemoPageState extends State<StudentServicesDemoPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(StudentServicesDemoStore.instance.restore());
     _selectedId = _items.first.id;
   }
 
@@ -212,28 +309,16 @@ class _StudentServicesDemoPageState extends State<StudentServicesDemoPage> {
   Widget build(BuildContext context) {
     final noun = widget.kind == StudentServiceKind.academy ? '학원' : '선생님';
     final items = _filtered;
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      appBar: AppBar(
-        title: Text('$noun 찾기'),
-        backgroundColor: Colors.white,
-        foregroundColor: StudentDensityTokens.ink,
-        elevation: 0,
-        actions: [
-          IconButton(
-            tooltip: '샘플 문의 내역',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const StudentServiceRequestsPage(),
-              ),
-            ),
-            icon: const Icon(Icons.receipt_long_outlined),
-          ),
-        ],
+    return StudentHtmlShell(
+      title: '$noun 찾기',
+      activeRoute: '/student-services/${widget.kind.name}',
+      showContextAside: true,
+      onNotifications: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const StudentServiceRequestsPage(),
+        ),
       ),
-      drawer: const AppDrawer(),
-      bottomNavigationBar: const MobileStudentBottomAppBar(),
-      body: StudentDensityPage(
+      child: StudentDensityPage(
         padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -356,16 +441,12 @@ class StudentServiceProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final academy = kind == StudentServiceKind.academy;
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      appBar: AppBar(
-        title: Text(academy ? '학원 소개' : '선생님 소개'),
-        backgroundColor: Colors.white,
-        foregroundColor: StudentDensityTokens.ink,
-        elevation: 0,
-      ),
-      bottomNavigationBar: const MobileStudentBottomAppBar(),
-      body: StudentDensityPage(
+    return StudentHtmlShell(
+      title: academy ? '학원 소개' : '선생님 소개',
+      activeRoute: '/student-services/${kind.name}/profile',
+      showContextAside: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      child: StudentDensityPage(
         padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
         child: ListView(
           children: [
@@ -480,21 +561,31 @@ class StudentServiceRequestsPage extends StatefulWidget {
 
 class _StudentServiceRequestsPageState
     extends State<StudentServiceRequestsPage> {
+  bool _restoring = true;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(
+      StudentServicesDemoStore.instance.restore().then((_) {
+        if (mounted) setState(() => _restoring = false);
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final requests = StudentServicesDemoStore.instance.requests;
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      appBar: AppBar(
-        title: const Text('샘플 문의 내역'),
-        backgroundColor: Colors.white,
-        foregroundColor: StudentDensityTokens.ink,
-        elevation: 0,
-      ),
-      bottomNavigationBar: const MobileStudentBottomAppBar(),
-      body: StudentDensityPage(
+    return StudentHtmlShell(
+      title: '샘플 문의 내역',
+      activeRoute: '/student-services/requests',
+      showContextAside: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      child: StudentDensityPage(
         padding: const EdgeInsets.all(14),
-        child: requests.isEmpty
+        child: _restoring
+            ? const Center(child: CircularProgressIndicator())
+            : requests.isEmpty
             ? const Center(child: Text('아직 샘플 문의가 없어요.'))
             : ListView.separated(
                 itemCount: requests.length,
@@ -530,8 +621,11 @@ class _StudentServiceRequestsPageState
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () =>
-                                  setState(() => request.cancelled = true),
+                              onPressed: () => setState(
+                                () => StudentServicesDemoStore.instance.cancel(
+                                  request,
+                                ),
+                              ),
                               child: const Text('신청 취소'),
                             ),
                           ),
@@ -553,6 +647,7 @@ class SchoolExamPrepPage extends StatefulWidget {
 }
 
 class _SchoolExamPrepPageState extends State<SchoolExamPrepPage> {
+  List<String> _taskIds = const <String>[];
   List<String> _tasks = const <String>[];
   List<bool> _completed = const <bool>[];
   String? _school;
@@ -561,6 +656,7 @@ class _SchoolExamPrepPageState extends State<SchoolExamPrepPage> {
   DateTime? _date;
   int _version = 0;
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -585,14 +681,65 @@ class _SchoolExamPrepPageState extends State<SchoolExamPrepPage> {
         final parsed = rawTasks is List
             ? rawTasks.whereType<Map>().toList(growable: false)
             : const <Map>[];
+        _taskIds = parsed
+            .map(
+              (task) =>
+                  task['task_id']?.toString() ?? task['id']?.toString() ?? '',
+            )
+            .toList(growable: false);
         _tasks = parsed.map((task) => task['title'].toString()).toList();
         _completed = parsed
             .map((task) => task['completed'] == true)
             .toList(growable: false);
         _loading = false;
+        _error = null;
       });
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = '내신 계획을 불러오지 못했어요. 다시 시도해 주세요.';
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleTask(int index, bool value) async {
+    if (index >= _taskIds.length || _taskIds[index].isEmpty) return;
+    final previous = _completed[index];
+    setState(() => _completed[index] = value);
+    try {
+      final saved = await ApiClient.instance.updateSchoolExamTask(
+        taskId: _taskIds[index],
+        completed: value,
+        version: _version,
+      );
+      if (!mounted) return;
+      setState(() {
+        _version = int.tryParse(saved['version']?.toString() ?? '') ?? _version;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _completed[index] = previous);
+      if (error.statusCode == 409) {
+        await _loadPlan();
+        if (!mounted) return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error.statusCode == 409
+                ? '다른 기기에서 계획이 변경됐어요. 최신 상태를 다시 확인해 주세요.'
+                : '할 일을 저장하지 못했어요.',
+          ),
+        ),
+      );
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() => _completed[index] = previous);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('할 일을 저장하지 못했어요.')));
     }
   }
 
@@ -707,136 +854,160 @@ class _SchoolExamPrepPageState extends State<SchoolExamPrepPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      appBar: AppBar(
-        title: const Text('내신 대비'),
-        backgroundColor: Colors.white,
-        foregroundColor: StudentDensityTokens.ink,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: _editSettings,
-            tooltip: '시험 설정',
-            icon: const Icon(Icons.settings_outlined),
+    return StudentHtmlShell(
+      title: '내신 대비',
+      activeRoute: '/school-exam-prep',
+      showContextAside: true,
+      onNotifications: _editSettings,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              onPressed: _editSettings,
+              tooltip: '시험 설정',
+              icon: const Icon(Icons.settings_outlined),
+            ),
           ),
-        ],
-      ),
-      bottomNavigationBar: const MobileStudentBottomAppBar(),
-      body: StudentDensityPage(
-        padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-        child: ListView(
-          children: [
-            const _DemoNotice(),
-            const SizedBox(height: 12),
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else ...[
-              StudentDensitySurface(
-                radius: 0,
-                color: StudentDensityTokens.ink,
-                child: Row(
-                  children: [
-                    Expanded(
+          Expanded(
+            child: StudentDensityPage(
+              padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
+              child: ListView(
+                children: [
+                  const _DemoNotice(),
+                  const SizedBox(height: 12),
+                  if (_loading)
+                    const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_error != null)
+                    StudentDensitySurface(
+                      radius: 0,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(_error!),
+                          const SizedBox(height: 8),
+                          OutlinedButton(
+                            onPressed: _loadPlan,
+                            child: const Text('다시 시도'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    StudentDensitySurface(
+                      radius: 0,
+                      color: StudentDensityTokens.ink,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${_school ?? '학교 미설정'} · ${_exam ?? '수학 시험 미연결'}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  '시험일까지 필요한 것만',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  '수학 시험 범위와 남은 할 일을 확인하세요.',
+                                  style: TextStyle(color: Color(0xB3FFFFFF)),
+                                ),
+                              ],
+                            ),
+                          ),
                           Text(
-                            '${_school ?? '학교 미설정'} · ${_exam ?? '수학 시험 미연결'}',
+                            'D-$_dday',
                             style: const TextStyle(
                               color: Colors.white,
+                              fontSize: 32,
                               fontWeight: FontWeight.w900,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '시험일까지 필요한 것만',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            '수학 시험 범위와 남은 할 일을 확인하세요.',
-                            style: TextStyle(color: Color(0xB3FFFFFF)),
                           ),
                         ],
                       ),
                     ),
-                    Text(
-                      'D-$_dday',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
+                    const SizedBox(height: 12),
+                    const Text(
+                      '수학',
+                      style: TextStyle(
+                        fontSize: 18,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '수학',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 8),
-              StudentDensitySurface(
-                radius: 0,
-                child: _tasks.isEmpty
-                    ? const Text('연결된 수학 시험의 범위와 할 일이 없어요. 시험을 먼저 연결해 주세요.')
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '연결된 시험 범위',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
+                    const SizedBox(height: 8),
+                    StudentDensitySurface(
+                      radius: 0,
+                      child: _tasks.isEmpty
+                          ? const Text(
+                              '연결된 수학 시험의 범위와 할 일이 없어요. 시험을 먼저 연결해 주세요.',
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '연결된 시험 범위',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                LinearProgressIndicator(
+                                  value:
+                                      _completed.where((done) => done).length /
+                                      _completed.length,
+                                  color: StudentDensityTokens.ink,
+                                  backgroundColor:
+                                      StudentDensityTokens.surfaceMuted,
+                                ),
+                                const SizedBox(height: 12),
+                                ...List.generate(
+                                  _tasks.length,
+                                  (index) => CheckboxListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    value: _completed[index],
+                                    onChanged: (value) =>
+                                        _toggleTask(index, value ?? false),
+                                    title: Text(_tasks[index]),
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          LinearProgressIndicator(
-                            value:
-                                _completed.where((done) => done).length /
-                                _completed.length,
-                            color: StudentDensityTokens.ink,
-                            backgroundColor: StudentDensityTokens.surfaceMuted,
-                          ),
-                          const SizedBox(height: 12),
-                          ...List.generate(
-                            _tasks.length,
-                            (index) => CheckboxListTile(
-                              contentPadding: EdgeInsets.zero,
-                              value: _completed[index],
-                              onChanged: (value) => setState(
-                                () => _completed[index] = value ?? false,
-                              ),
-                              title: Text(_tasks[index]),
-                              controlAffinity: ListTileControlAffinity.leading,
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: null,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                        ),
                       ),
+                      child: const Text('문제 시작 · 연결된 시험 없음'),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: null,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                ),
-                child: const Text('문제 시작 · 연결된 시험 없음'),
-              ),
-            ],
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1171,15 +1342,11 @@ class _StudentStoreDemoPageState extends State<StudentStoreDemoPage> {
   int _points = 0;
   int _tab = 0;
   final _owned = <String>{};
+  List<({String id, String name, int cost})> _serverRewards = const [];
+  final _idempotencyKeys = <String, String>{};
+  final _redeeming = <String>{};
   bool _loading = true;
   String? _error;
-
-  static const _rewards = <({String id, String name, int cost})>[
-    (id: 'background-01', name: '풀이 배경 01', cost: 1200),
-    (id: 'timer-theme', name: '집중 타이머 테마', cost: 800),
-    (id: 'profile-badge', name: '프로필 배지', cost: 2000),
-    (id: 'review-ticket', name: '오답 복습권', cost: 600),
-  ];
 
   @override
   void initState() {
@@ -1199,6 +1366,26 @@ class _StudentStoreDemoPageState extends State<StudentStoreDemoPage> {
       if (!mounted) return;
       setState(() {
         _points = int.tryParse(snapshot['points']?.toString() ?? '') ?? 0;
+        _serverRewards = items is List
+            ? items
+                  .whereType<Map>()
+                  .map(
+                    (item) => (
+                      id: item['id']?.toString() ?? '',
+                      name: item['name']?.toString() ?? '',
+                      cost:
+                          int.tryParse(item['cost_points']?.toString() ?? '') ??
+                          -1,
+                    ),
+                  )
+                  .where(
+                    (item) =>
+                        item.id.isNotEmpty &&
+                        item.name.isNotEmpty &&
+                        item.cost >= 0,
+                  )
+                  .toList(growable: false)
+            : const [];
         _owned
           ..clear()
           ..addAll(
@@ -1222,8 +1409,13 @@ class _StudentStoreDemoPageState extends State<StudentStoreDemoPage> {
   }
 
   Future<void> _redeem(({String id, String name, int cost}) reward) async {
-    if (_owned.contains(reward.id) || _loading) return;
-    final key = '${reward.id}-${DateTime.now().microsecondsSinceEpoch}';
+    if (_owned.contains(reward.id) || _loading || !_redeeming.add(reward.id)) {
+      return;
+    }
+    final key = _idempotencyKeys.putIfAbsent(
+      reward.id,
+      () => '${reward.id}-${DateTime.now().microsecondsSinceEpoch}',
+    );
     try {
       final result = await ApiClient.instance.redeemDemoStudentStoreItem(
         itemId: reward.id,
@@ -1243,6 +1435,8 @@ class _StudentStoreDemoPageState extends State<StudentStoreDemoPage> {
           const SnackBar(content: Text('포인트 교환에 실패했어요. 잠시 후 다시 시도해 주세요.')),
         );
       }
+    } finally {
+      _redeeming.remove(reward.id);
     }
   }
 
@@ -1284,16 +1478,11 @@ class _StudentStoreDemoPageState extends State<StudentStoreDemoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      appBar: AppBar(
-        title: const Text('마켓플레이스'),
-        backgroundColor: Colors.white,
-        foregroundColor: StudentDensityTokens.ink,
-        elevation: 0,
-      ),
-      bottomNavigationBar: const MobileStudentBottomAppBar(),
-      body: StudentDensityPage(
+    return StudentHtmlShell(
+      title: '마켓플레이스',
+      activeRoute: '/marketplace',
+      showContextAside: true,
+      child: StudentDensityPage(
         padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
         child: ListView(
           children: [
@@ -1366,7 +1555,7 @@ class _StudentStoreDemoPageState extends State<StudentStoreDemoPage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
-                ..._rewards.map(
+                ..._serverRewards.map(
                   (reward) => StudentDensitySurface(
                     radius: 0,
                     padding: const EdgeInsets.all(12),

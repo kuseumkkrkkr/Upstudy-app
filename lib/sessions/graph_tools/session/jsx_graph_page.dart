@@ -9,8 +9,7 @@ import 'package:s11/sessions/graph_tools/shared/aiflow_graph_expression.dart';
 import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/theme/app_colors.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 const _kGreen = Color(0xFF202022);
 const _kBorder = Color(0xFFE1E1E4);
@@ -40,7 +39,6 @@ class JsxGraphPage extends StatefulWidget {
 }
 
 class _JsxGraphPageState extends State<JsxGraphPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final List<_GraphItemDraft> _drafts = <_GraphItemDraft>[];
   final List<_GraphParameterDraft> _parameters = <_GraphParameterDraft>[];
   final List<AiFlowGraphItem> _sampledItems = <AiFlowGraphItem>[];
@@ -55,7 +53,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   bool _lockViewport = false;
   bool _degreeMode = false;
   bool _catalogDialogOpen = false;
-  bool _drawerOpen = false;
   bool _hasActiveExampleContext = true;
   String? _editorMessage;
   bool _advancedMode = true;
@@ -119,18 +116,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   /// 작동 원리는 사용자가 새 그래프를 선택하면 기존 입력을 정리하고 빈 좌표평면으로 되돌린다.
   void _resetToBlankGraph() {
     setState(_startBlankGraph);
-  }
-
-  /// 필요한 변수는 Scaffold가 전달하는 전체 메뉴 열림 상태다.
-  /// 작동 원리는 메뉴가 열리는 동안 플랫폼 웹뷰를 트리에서 제외해
-  /// 그래프 레이어가 드로어의 터치를 가로채지 않게 하는 것이다.
-  void _handleDrawerChanged(bool isOpened) {
-    if (!mounted || _drawerOpen == isOpened) {
-      return;
-    }
-    setState(() {
-      _drawerOpen = isOpened;
-    });
   }
 
   void _loadExample(AiFlowGraphExample example) {
@@ -410,118 +395,71 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   Widget build(BuildContext context) {
     final isLinux = !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: AppColors.background,
-      drawer: const AppDrawer(),
-      onDrawerChanged: _handleDrawerChanged,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildToolStrip(),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 1120;
-                      final mobileLayout = constraints.maxWidth < 720;
-                      final graphPanel = _buildGraphPanel(isLinux: isLinux);
-                      final editorPanel = _buildEditorPanel(
-                        compactMobile: mobileLayout,
-                      );
+    return StudentHtmlShell(
+      title: '그래프 탐색기',
+      activeRoute: '/learning-tools',
+      onMenu: () => Navigator.of(context).maybePop(),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
+        child: Column(
+          children: [
+            _buildToolStrip(),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 1120;
+                    final mobileLayout = constraints.maxWidth < 720;
+                    final graphPanel = _buildGraphPanel(isLinux: isLinux);
+                    final editorPanel = _buildEditorPanel(
+                      compactMobile: mobileLayout,
+                    );
 
-                      if (mobileLayout) {
-                        return Column(
-                          children: [
-                            SizedBox(
-                              height: (constraints.maxHeight * .40)
-                                  .clamp(250.0, 330.0)
-                                  .toDouble(),
-                              child: graphPanel,
-                            ),
-                            const SizedBox(height: 12),
-                            Expanded(child: editorPanel),
-                          ],
-                        );
-                      }
-
-                      if (compact) {
-                        return ListView(
-                          children: [
-                            SizedBox(height: 520, child: graphPanel),
-                            const SizedBox(height: 12),
-                            editorPanel,
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    if (mobileLayout) {
+                      return Column(
                         children: [
-                          Expanded(child: graphPanel),
-                          const SizedBox(width: 14),
                           SizedBox(
-                            width: 400,
-                            height: constraints.maxHeight,
-                            child: editorPanel,
+                            height: (constraints.maxHeight * .40)
+                                .clamp(250.0, 330.0)
+                                .toDouble(),
+                            child: graphPanel,
                           ),
+                          const SizedBox(height: 12),
+                          Expanded(child: editorPanel),
                         ],
                       );
-                    },
-                  ),
+                    }
+
+                    if (compact) {
+                      return ListView(
+                        children: [
+                          SizedBox(height: 520, child: graphPanel),
+                          const SizedBox(height: 12),
+                          editorPanel,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: graphPanel),
+                        const SizedBox(width: 14),
+                        SizedBox(
+                          width: 400,
+                          height: constraints.maxHeight,
+                          child: editorPanel,
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 필요한 변수는 현재 Scaffold·Navigator와 새 그래프·예제 콜백이다.
-  /// 작동 원리는 뒤로가기·전체 메뉴·작업 버튼을 공용 앱바 한 줄에 배치해
-  /// 그래프 전용 제목 바가 본문 공간을 차지하지 않게 하는 것이다.
-  Widget _buildHeader() {
-    return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _kBorder)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            tooltip: '뒤로가기',
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          ),
-          const VerticalDivider(width: 18, indent: 16, endIndent: 16),
-          const Text(
-            '그래프 탐색기',
-            style: TextStyle(
-              color: _kGreen,
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
             ),
-          ),
-          const Spacer(),
-          IconButton(
-            tooltip: '전체 메뉴',
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            icon: const Icon(Icons.menu_rounded, size: 20),
-          ),
-          IconButton(
-            tooltip: '예제 불러오기',
-            onPressed: _showInfoDialog,
-            icon: const Icon(Icons.search_rounded, size: 21),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -622,10 +560,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           decoration: const BoxDecoration(color: Color(0xFFFAFAFB)),
           child: _catalogDialogOpen
               ? const _GraphHiddenWhileDialogOpen()
-              : _drawerOpen
-              ? const SizedBox.expand(
-                  key: ValueKey('graph-embed-suspended-for-drawer'),
-                )
               : isLinux
               ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
               : widget.embedEnabled

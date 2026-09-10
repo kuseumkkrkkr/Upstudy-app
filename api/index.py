@@ -1,6 +1,8 @@
 """Vercel에서 Supabase OCR 작업 큐만 제공하는 경량 FastAPI 진입점."""
 from __future__ import annotations
 
+import copy
+import ast
 import json
 import hashlib
 import hmac
@@ -13,7 +15,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import jwt
@@ -622,11 +624,104 @@ class UserStorageRequest(BaseModel):
     value: str
 
 
+class ServerChatMessageRequest(BaseModel):
+    user_message: str = Field(min_length=1, max_length=250)
+    character: str | None = Field(default=None, max_length=40)
+    mode: str = Field(default="chat", pattern="^(chat|problem)$")
+    ephemeral: bool = False
+    include_user_data: bool = False
+    quest_title: str | None = Field(default=None, max_length=500)
+    flow: str | None = Field(default=None, max_length=4000)
+    ocr: str | None = Field(default=None, max_length=4000)
+
+
+class SolveHistoryCreateRequest(BaseModel):
+    """필요 변수: 문제 ID와 정오답. 작동 원리: 오답 노트에 필요한 최소 풀이 결과만 검증한다."""
+
+    quest_id: str = Field(min_length=1, max_length=200)
+    is_correct: bool
+    codebase_id: int | None = None
+    seed: int | None = None
+    tags: list[str] = Field(default_factory=list, max_length=20)
+
+
+class StudentScheduleSyncRequest(BaseModel):
+    """필요 변수: 날짜별 개인 일정. 작동 원리: 제목과 선택 시간을 사용자 단위 스냅샷으로 교체한다."""
+
+    tasks_by_date: dict[str, list[Any]]
+
+
 class MarketplaceProgressRequest(BaseModel):
     """필요 변수: 문제 위치와 완료 여부. 작동 원리: 무료 마켓 코스의 사용자별 학습 위치를 제한된 형식으로 받는다."""
 
     progress_index: int = Field(default=0, ge=0)
     completed: bool = False
+
+
+class FriendSearchRequest(BaseModel):
+    """필요 변수: 사용자명 일부와 결과 제한. 작동 원리: 공개 사용자 열만 제한 검색한다."""
+
+    query: str = Field(min_length=1, max_length=16)
+    limit: int = Field(default=20, ge=1, le=50)
+
+
+class FriendRequestCreateRequest(BaseModel):
+    """필요 변수: 대상 사용자명과 선택 메시지. 작동 원리: 인증 사용자의 대기 요청만 생성한다."""
+
+    username: str = Field(min_length=1, max_length=16)
+    message: str | None = Field(default=None, max_length=200)
+
+
+class FriendTargetRequest(BaseModel):
+    """필요 변수: 관계를 해제할 사용자명. 작동 원리: 양쪽 친구 표식을 함께 제거한다."""
+
+    username: str = Field(min_length=1, max_length=16)
+
+
+class DirectMessageCreateRequest(BaseModel):
+    """필요 변수: 친구 사용자명과 쪽지 본문. 작동 원리: 직접 메시지 입력 크기를 API 경계에서 제한한다."""
+
+    peer: str = Field(min_length=1, max_length=16)
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class StudyGroupCreateRequest(BaseModel):
+    """필요 변수: 그룹명·소개·정원과 선택 잠금 정보. 작동 원리: 웹 입력 경계에서 그룹 생성 계약을 제한한다."""
+
+    name: str = Field(min_length=1, max_length=80)
+    description: str | None = Field(default=None, max_length=500)
+    password: str | None = Field(default=None, max_length=10)
+    max_members: int = Field(default=12, ge=2, le=100)
+    is_public: bool = True
+    logo_index: int | None = Field(default=None, ge=0, le=100)
+    lock_enabled: bool = False
+    invite_code: str | None = Field(default=None, max_length=20)
+
+
+class StudyGroupJoinRequest(BaseModel):
+    password: str | None = Field(default=None, max_length=10)
+
+
+class StudyGroupJoinByCodeRequest(StudyGroupJoinRequest):
+    invite_code: str = Field(min_length=4, max_length=20)
+
+
+class StudyGroupMessageCreateRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class StudyGroupFriendInviteRequest(BaseModel):
+    username: str = Field(pattern=r"^[A-Za-z0-9]{4,16}$")
+
+
+class StudyGroupMemberRoleRequest(BaseModel):
+    role: str = Field(pattern="^(admin|deputy|member)$")
+
+
+class StudyGroupScheduleCreateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    scheduled_date: date
+    scheduled_time: str | None = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 class QuestGenerateRequest(BaseModel):
@@ -641,6 +736,22 @@ class QuestGenerateRequest(BaseModel):
     branch_conditions: int = Field(default=0, ge=0, le=20)
     seed: int | None = None
     request_id: str | None = None
+
+
+class GraphExpressionRequest(BaseModel):
+    id: str = Field(min_length=1, max_length=60)
+    label: str = Field(default="", max_length=80)
+    color_hex: str = Field(default="#2F7CF6", pattern=r"^#[0-9A-Fa-f]{6}$")
+    expression: str = Field(min_length=1, max_length=120)
+
+
+class GraphSampleRequest(BaseModel):
+    expressions: list[GraphExpressionRequest] = Field(min_length=1, max_length=6)
+    parameters: dict[str, float] = Field(default_factory=dict)
+    left: float = Field(default=-12, ge=-100, le=100)
+    right: float = Field(default=12, ge=-100, le=100)
+    samples: int = Field(default=241, ge=41, le=401)
+    degree_mode: bool = False
 
 
 class DemoStoreOrderRequest(BaseModel):
@@ -1516,6 +1627,96 @@ def delete_user_storage(key: str, user_id: str = Depends(_current_user)) -> dict
     return {"status": "ok"}
 
 
+_GRAPH_FUNCTION_NAMES = {"sin", "cos", "tan", "sqrt", "abs", "log", "ln", "exp"}
+_GRAPH_AST_NODES = (
+    ast.Expression, ast.BinOp, ast.UnaryOp, ast.Call, ast.Name, ast.Load,
+    ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod,
+    ast.UAdd, ast.USub,
+)
+
+
+def _compile_graph_expression(source: str, parameter_names: set[str]) -> Any:
+    """제한된 수학 AST만 컴파일해 사용자 입력이 Python 기능에 접근하지 못하게 한다."""
+    normalized = re.sub(r"^y\s*=\s*", "", source.strip(), flags=re.IGNORECASE)
+    normalized = normalized.replace("^", "**")
+    try:
+        tree = ast.parse(normalized, mode="eval")
+    except SyntaxError as error:
+        raise HTTPException(status_code=422, detail="지원되는 함수식을 입력해 주세요") from error
+    nodes = list(ast.walk(tree))
+    if len(nodes) > 64 or any(not isinstance(node, _GRAPH_AST_NODES) for node in nodes):
+        raise HTTPException(status_code=422, detail="지원되지 않는 함수식입니다")
+    allowed_names = {"x", "pi", "e", *parameter_names, *_GRAPH_FUNCTION_NAMES}
+    for node in nodes:
+        if isinstance(node, ast.Name) and node.id not in allowed_names:
+            raise HTTPException(status_code=422, detail=f"지원되지 않는 변수: {node.id}")
+        if isinstance(node, ast.Call):
+            if not isinstance(node.func, ast.Name) or node.func.id not in _GRAPH_FUNCTION_NAMES or len(node.args) != 1:
+                raise HTTPException(status_code=422, detail="지원되지 않는 함수 호출입니다")
+        if isinstance(node, ast.Constant) and not isinstance(node.value, (int, float)):
+            raise HTTPException(status_code=422, detail="숫자 상수만 사용할 수 있습니다")
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Pow):
+            if isinstance(node.right, ast.BinOp) and isinstance(node.right.op, ast.Pow):
+                raise HTTPException(status_code=422, detail="중첩 거듭제곱은 사용할 수 없습니다")
+            if isinstance(node.right, ast.Constant) and abs(float(node.right.value)) > 1000:
+                raise HTTPException(status_code=422, detail="지수가 너무 큽니다")
+    return compile(tree, "<graph-expression>", "eval")
+
+
+@app.post("/graphs/sample")
+def sample_graphs(payload: GraphSampleRequest) -> dict[str, Any]:
+    """함수식을 서버에서 안전하게 샘플링해 렌더러가 사용할 실제 좌표 구간을 반환한다."""
+    if payload.left >= payload.right:
+        raise HTTPException(status_code=422, detail="left는 right보다 작아야 합니다")
+    if len(payload.parameters) > 12 or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,15}", key) for key in payload.parameters):
+        raise HTTPException(status_code=422, detail="매개변수 형식이 올바르지 않습니다")
+
+    trig = {
+        "sin": lambda value: math.sin(math.radians(value)) if payload.degree_mode else math.sin(value),
+        "cos": lambda value: math.cos(math.radians(value)) if payload.degree_mode else math.cos(value),
+        "tan": lambda value: math.tan(math.radians(value)) if payload.degree_mode else math.tan(value),
+        "sqrt": math.sqrt,
+        "abs": abs,
+        "log": math.log10,
+        "ln": math.log,
+        "exp": math.exp,
+    }
+    scope = {"pi": math.pi, "e": math.e, **trig, **payload.parameters}
+    step = (payload.right - payload.left) / (payload.samples - 1)
+    series: list[dict[str, Any]] = []
+    for expression in payload.expressions:
+        compiled = _compile_graph_expression(expression.expression, set(payload.parameters))
+        segments: list[dict[str, list[float]]] = []
+        x_values: list[float] = []
+        y_values: list[float] = []
+        for index in range(payload.samples):
+            x_value = payload.left + (step * index)
+            try:
+                y_value = float(eval(compiled, {"__builtins__": {}}, {**scope, "x": x_value}))
+                valid = math.isfinite(y_value) and abs(y_value) <= 1_000_000
+            except (ArithmeticError, ValueError, TypeError, OverflowError):
+                valid = False
+            if valid:
+                x_values.append(round(x_value, 10))
+                y_values.append(round(y_value, 10))
+            elif x_values:
+                segments.append({"x_values": x_values, "y_values": y_values})
+                x_values, y_values = [], []
+        if x_values:
+            segments.append({"x_values": x_values, "y_values": y_values})
+        if not segments:
+            raise HTTPException(status_code=422, detail=f"표시 가능한 좌표가 없습니다: {expression.label or expression.id}")
+        series.append({
+            "id": expression.id,
+            "label": expression.label,
+            "color_hex": expression.color_hex,
+            "expression": expression.expression,
+            "segments": segments,
+            "point_count": sum(len(segment["x_values"]) for segment in segments),
+        })
+    return {"series": series}
+
+
 def _empty_account_summary() -> dict[str, Any]:
     """필요 변수: 없음. 작동 원리: 신규 카나리 계정의 포인트·활동 기본값을 앱 계약대로 반환한다."""
     return {
@@ -2151,7 +2352,6 @@ async def submit_course_runtime(request: Request, user_id: str = Depends(_curren
 
 
 @app.get("/academy/assignments/my")
-@app.get("/academy/students/me/schedule")
 def list_empty_student_tasks(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
     """필요 변수: 인증 사용자. 작동 원리: 배정 과제와 개인 일정이 없는 초기 홈 계약을 유지한다."""
     return {"items": []}
@@ -2407,22 +2607,1023 @@ async def analyze_solve(request: Request, _user_id: str = Depends(_current_user)
     }
 
 
+_STUDENT_SCHEDULE_STORAGE_KEY = "student.schedule.v1"
+
+
+def _normalize_student_schedule(tasks_by_date: dict[str, list[Any]]) -> dict[str, list[dict[str, str]]]:
+    """필요 변수: 날짜별 일정 목록. 작동 원리: 과거 문자열도 받아 제목·시간 객체로 정규화한다."""
+    if len(tasks_by_date) > 366:
+        raise HTTPException(status_code=400, detail="Too many schedule dates")
+    normalized: dict[str, list[dict[str, str]]] = {}
+    task_count = 0
+    for date_key, raw_titles in tasks_by_date.items():
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_key):
+            raise HTTPException(status_code=400, detail="Schedule date must be YYYY-MM-DD")
+        try:
+            date.fromisoformat(date_key)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail="Invalid schedule date") from error
+        tasks: list[dict[str, str]] = []
+        seen: set[tuple[str, str, str]] = set()
+        for raw_task in raw_titles:
+            if isinstance(raw_task, str):
+                title = raw_task.strip()
+                start_time = ""
+                end_time = ""
+            elif isinstance(raw_task, dict):
+                title = str(raw_task.get("title", "")).strip()
+                start_time = str(raw_task.get("start_time", "")).strip()
+                end_time = str(raw_task.get("end_time", "")).strip()
+            else:
+                raise HTTPException(status_code=400, detail="Schedule task must be a string or object")
+            if not title or len(title) > 60:
+                raise HTTPException(status_code=400, detail="Schedule title must be 1-60 characters")
+            for value in (start_time, end_time):
+                if value and not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", value):
+                    raise HTTPException(status_code=400, detail="Schedule time must be HH:MM")
+            if end_time and not start_time:
+                raise HTTPException(status_code=400, detail="Schedule start time is required")
+            if start_time and end_time and end_time <= start_time:
+                raise HTTPException(status_code=400, detail="Schedule end time must be after start time")
+            signature = (title, start_time, end_time)
+            if signature in seen:
+                continue
+            seen.add(signature)
+            task = {"title": title}
+            if start_time:
+                task["start_time"] = start_time
+            if end_time:
+                task["end_time"] = end_time
+            tasks.append(task)
+            task_count += 1
+            if task_count > 500:
+                raise HTTPException(status_code=400, detail="Too many schedule tasks")
+        if tasks:
+            normalized[date_key] = tasks
+    return dict(sorted(normalized.items()))
+
+
+def _student_schedule_items(
+    user_id: str, tasks_by_date: dict[str, list[dict[str, str]]]
+) -> list[dict[str, str]]:
+    """필요 변수: 사용자 ID와 정규화 일정. 작동 원리: 재조회에도 안정적인 일정 ID를 생성한다."""
+    return [
+        {
+            "task_id": hashlib.sha256(
+                f"{user_id}:{date_key}:{index}:{json.dumps(task, sort_keys=True)}".encode()
+            ).hexdigest()[:24],
+            "date": date_key,
+            **task,
+        }
+        for date_key, tasks in tasks_by_date.items()
+        for index, task in enumerate(tasks)
+    ]
+
+
+@app.get("/academy/students/me/schedule")
+def get_student_schedule(user_id: str = Depends(_current_user)) -> dict[str, list[dict[str, str]]]:
+    """필요 변수: 인증 사용자. 작동 원리: 사용자 KV의 개인 일정 스냅샷을 화면 항목으로 복원한다."""
+    raw = get_user_storage(_STUDENT_SCHEDULE_STORAGE_KEY, user_id)["value"]
+    if not raw:
+        return {"items": []}
+    try:
+        decoded = json.loads(raw)
+        if not isinstance(decoded, dict):
+            raise ValueError("schedule snapshot must be an object")
+        normalized = _normalize_student_schedule(decoded)
+    except (TypeError, ValueError, HTTPException) as error:
+        raise HTTPException(status_code=502, detail="Stored schedule is invalid") from error
+    return {"items": _student_schedule_items(user_id, normalized)}
+
+
+@app.put("/academy/students/me/schedule")
+def put_student_schedule(
+    payload: StudentScheduleSyncRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, bool]:
+    """필요 변수: 인증 사용자와 전체 일정. 작동 원리: 검증한 스냅샷을 사용자 복합키에 멱등 upsert한다."""
+    normalized = _normalize_student_schedule(payload.tasks_by_date)
+    put_user_storage(
+        _STUDENT_SCHEDULE_STORAGE_KEY,
+        UserStorageRequest(value=json.dumps(normalized, ensure_ascii=False, separators=(",", ":"))),
+        user_id,
+    )
+    return {"success": True}
+
+
+@app.get("/challenges/daily-quests")
+def get_daily_quests(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자. 작동 원리: 코스 미선택 상태의 일일 퀘스트와 계정 기본값을 반환한다."""
+    return {"items": [], "account": _empty_account_summary(), "revision": 1}
+
+
+@app.get("/marketplace/listings")
+def list_marketplace_items(
+    query: str | None = None,
+    kind: str | None = None,
+    grade_band: str | None = None,
+    price: str | None = None,
+    offset: int = 0,
+    limit: int = 20,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 검색어·자료 유형·학년·가격·페이지 범위. 작동 원리: 메모리 상주 카탈로그를 필터링하고 최대 50개만 반환해 Vercel DB 부하를 만들지 않는다."""
+    normalized_query = (query or "").strip().casefold()
+    normalized_grade = (grade_band or "").replace(" ", "")
+    safe_offset = max(0, offset)
+    safe_limit = min(max(1, limit), 50)
+
+    def matches(item: dict[str, Any]) -> bool:
+        """필요 변수: 카탈로그 항목과 정규화된 검색 조건. 작동 원리: 제목·설명·학년·난이도를 한 번씩 비교해 일치 여부를 결정한다."""
+        if kind and item["kind"] != kind:
+            return False
+        if normalized_grade and normalized_grade not in str(item["grade_band"]).replace(" ", ""):
+            return False
+        if price == "free" and int(item["price_points"]) != 0:
+            return False
+        if price == "paid" and int(item["price_points"]) <= 0:
+            return False
+        searchable = " ".join(
+            str(item[field]) for field in ("title", "description", "grade_band", "difficulty")
+        ).casefold()
+        return not normalized_query or normalized_query in searchable
+
+    filtered = sorted(
+        (item for item in MARKETPLACE_CATALOG if matches(item)),
+        key=lambda item: (-int(item["featured_rank"]), str(item["title"])),
+    )
+    page = filtered[safe_offset : safe_offset + safe_limit]
+    next_offset = safe_offset + len(page)
+    return {
+        "items": page,
+        "total": len(filtered),
+        "next_offset": next_offset if next_offset < len(filtered) else None,
+    }
+
+
+@app.get("/marketplace/my-items")
+def list_owned_marketplace_items(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 보유 상태. 작동 원리: KV의 상품 ID를 공개 카탈로그와 합쳐 내 학습 목록을 반환한다."""
+    owned = _load_owned_marketplace(user_id)
+    items = []
+    for listing_id, state in owned.items():
+        listing = _find_catalog_listing(listing_id)
+        if listing is not None:
+            items.append({**listing, **state, "owned": True})
+    return {"items": items}
+
+
+@app.get("/marketplace/my-items/{listing_id}/questions")
+def get_owned_problem_set_questions(
+    listing_id: str,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[dict[str, Any]]]:
+    """필요 변수: 인증 사용자와 보유 문제세트 ID. 작동 원리: 보유 여부를 한 번 확인한 뒤
+    세트 전체 문항을 한 응답으로 반환해 클라이언트의 문항별 직렬 API 요청을 제거한다."""
+    listing = _find_catalog_listing(listing_id)
+    if listing is None or listing["kind"] != "problem_set":
+        raise HTTPException(status_code=404, detail="problem_set_not_found")
+    if listing_id not in _load_owned_marketplace(user_id):
+        raise HTTPException(status_code=403, detail="purchase_required")
+    return {"items": _build_marketplace_questions(listing)}
+
+
+@app.post("/marketplace/listings/{listing_id}/purchase")
+def purchase_marketplace_item(
+    listing_id: str,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 무료 상품 ID와 인증 사용자. 작동 원리: 가격 차감 없이 KV 보유 목록에 멱등 등록하고 즉시 코스 조회가 가능하게 한다."""
+    listing = _find_catalog_listing(listing_id)
+    if listing is None:
+        raise HTTPException(status_code=404, detail="listing_not_found")
+    owned = _load_owned_marketplace(user_id)
+    state = owned.setdefault(
+        listing["id"],
+        {"progress_index": 0, "status": "in_progress", "completed": False},
+    )
+    _save_owned_marketplace(user_id, owned)
+    return {**listing, **state, "owned": True}
+
+
+@app.post("/marketplace/my-items/{listing_id}/progress")
+def update_owned_marketplace_progress(
+    listing_id: str,
+    payload: MarketplaceProgressRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 보유 상품 ID·문제 위치·완료 여부. 작동 원리: 기존 KV 상태 하나만 갱신해 중단 위치와 완료 상태를 저장한다."""
+    owned = _load_owned_marketplace(user_id)
+    if listing_id not in owned:
+        raise HTTPException(status_code=404, detail="purchase_not_found")
+    owned[listing_id] = {
+        "progress_index": payload.progress_index,
+        "status": "completed" if payload.completed else "in_progress",
+        "completed": payload.completed,
+    }
+    _save_owned_marketplace(user_id, owned)
+    return owned[listing_id]
+
+
+def _plain_content_text(value: Any) -> str:
+    """콘텐츠 블록·문자열에서 숫자 답과 Flow 문구 검증에 필요한 평문을 추출한다."""
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(value)
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        return " ".join(filter(None, (_plain_content_text(item) for item in value))).strip()
+    if isinstance(value, dict):
+        if isinstance(value.get("blocks"), list):
+            return _plain_content_text(value["blocks"])
+        for key in ("content", "text", "latex"):
+            text = _plain_content_text(value.get(key))
+            if text:
+                return text
+    return ""
+
+
+def _normalize_numeric_answer(value: Any) -> str | None:
+    """부호가 있는 정수·소수를 문자열 기준으로 정규화해 부동소수 오차 없이 비교한다."""
+    text = _plain_content_text(value).strip().strip("$").strip()
+    if not re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", text):
+        return None
+    negative = text.startswith("-")
+    unsigned = text.lstrip("+-")
+    whole, _, fraction = unsigned.partition(".")
+    whole = whole.lstrip("0") or "0"
+    fraction = fraction.rstrip("0")
+    normalized = whole if not fraction else f"{whole}.{fraction}"
+    if normalized == "0":
+        return "0"
+    return f"-{normalized}" if negative else normalized
+
+
+def _flow_step_count(value: Any) -> int:
+    """solves 트리의 실제 Flow 문구가 있는 노드 수를 깊이 우선 기준으로 센다."""
+    if isinstance(value, list):
+        return sum(_flow_step_count(item) for item in value)
+    if not isinstance(value, dict):
+        return 0
+    own = 1 if _plain_content_text(value.get("flow")) else 0
+    return own + _flow_step_count(value.get("branches"))
+
+
+@app.post("/analysis/solve/variant-grade")
+async def grade_variant_solve(request: Request, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """선택 답 또는 숫자 답과 사용자가 조립한 Flow 순서를 서버 원장에 함께 대조한다."""
+    try:
+        payload = await request.json()
+    except (ValueError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="invalid_json") from None
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="invalid_payload")
+    quest_id = str(payload.get("quest_id") or "").strip()
+    question = _find_marketplace_question(quest_id)
+    if question is None:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    data = question.get("data", {})
+    options = data.get("quest_options")
+    is_multiple_choice = isinstance(options, list) and bool(options)
+    if is_multiple_choice:
+        expected_index = int(data.get("correct_choice_index") or 0)
+        selected = payload.get("selected_index")
+        answer_correct = (
+            isinstance(selected, int)
+            and not isinstance(selected, bool)
+            and selected == expected_index
+        )
+        answer_reason = "normal" if answer_correct else "incorrect_choice"
+    else:
+        expected_answer = _normalize_numeric_answer(data.get("quest_answer"))
+        submitted_answer = _normalize_numeric_answer(payload.get("user_answer"))
+        answer_correct = expected_answer is not None and submitted_answer == expected_answer
+        answer_reason = "normal" if answer_correct else "incorrect_numeric_answer"
+
+    flow_count = _flow_step_count(question.get("solves"))
+    submitted_flow = payload.get("flow_order")
+    flow_correct = flow_count == 0 or (
+        isinstance(submitted_flow, list)
+        and all(isinstance(item, int) and not isinstance(item, bool) for item in submitted_flow)
+        and submitted_flow == list(range(flow_count))
+    )
+    raw_correct = answer_correct and flow_correct
+    return {
+        "quest_id": quest_id,
+        "question_type": "multiple_choice" if is_multiple_choice else "short_answer",
+        "raw_correct": raw_correct,
+        "pass": raw_correct,
+        "answer_correct": answer_correct,
+        "flow_correct": flow_correct,
+        "hints_forbidden": True,
+        "reason": "normal" if raw_correct else ("incorrect_flow" if not flow_correct else answer_reason),
+    }
+
+
+@app.post("/analysis/solve")
+async def analyze_solve(request: Request, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: main 풀이 분석 JSON의 solves 목록. 작동 원리: 카나리에서 무거운 OCR 모델을
+    동기 실행하지 않고 제출된 객관식 정답 정보만 즉시 판정해 기존 분석 응답 필드를 유지한다."""
+    try:
+        payload = await request.json()
+    except (ValueError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="invalid_json") from None
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="invalid_payload")
+    solves = payload.get("solves") if isinstance(payload.get("solves"), list) else []
+    status_items: list[dict[str, Any]] = []
+    for solve in solves:
+        if not isinstance(solve, dict):
+            continue
+        quest_id = str(solve.get("quest_id") or solve.get("id") or "").strip()
+        question = _find_marketplace_question(quest_id)
+        selected = solve.get("selected_index")
+        correct = bool(
+            question is not None
+            and isinstance(selected, int)
+            and selected == int(question.get("data", {}).get("correct_choice_index") or 0)
+        )
+        status_items.append({"quest_id": quest_id, "status": "O" if correct else "X"})
+    total = len(status_items)
+    correct_count = sum(item["status"] == "O" for item in status_items)
+    return {
+        "status": status_items,
+        "step_correctness": status_items,
+        "is_correct": total > 0 and correct_count == total,
+        "correct_rate": correct_count / total if total else 0.0,
+        "total_solved": total,
+        "total_correct": correct_count,
+        "weak_tags": [],
+        "ai_opinion": "객관식 답안을 기준으로 즉시 채점했습니다.",
+        "warnings": ["이미지 OCR 채점은 카나리 큐에서 별도로 처리됩니다."] if not solves else [],
+    }
+
+
+_SOLVE_HISTORY_PREFIX = "solve_history."
+
+
+@app.post("/history/solve")
+def save_solve_history(
+    payload: SolveHistoryCreateRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 정오답. 작동 원리: 시도마다 별도 KV 행을 추가해 동시 제출도 잃지 않는다."""
+    item = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "kind": "problem",
+        "quest_id": payload.quest_id.strip(),
+        "codebase_id": payload.codebase_id,
+        "seed": payload.seed,
+        "data": {
+            "is_correct": payload.is_correct,
+            "tags": [tag.strip()[:100] for tag in payload.tags if tag.strip()],
+        },
+    }
+    try:
+        _data_api().request(
+            "POST",
+            "canary_user_kv",
+            query={"on_conflict": "user_id,key"},
+            body={
+                "user_id": user_id,
+                "key": f"{_SOLVE_HISTORY_PREFIX}{time.time_ns()}.{uuid.uuid4().hex}",
+                "value": json.dumps(item, ensure_ascii=False, separators=(",", ":")),
+            },
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {"item": item}
+
+
 @app.get("/history/solve")
-def list_solve_history(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 풀이 이력이 없는 신규 계정의 빈 기록을 반환한다."""
-    return {"items": []}
+def list_solve_history(
+    days: int = 30,
+    kind: str | None = None,
+    limit: int = 100,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 조회 범위. 작동 원리: 사용자 KV의 최근 풀이만 역순으로 반환한다."""
+    bounded_days = min(max(days, 1), 365)
+    bounded_limit = min(max(limit, 1), 200)
+    try:
+        rows = _data_api().request(
+            "GET",
+            "canary_user_kv",
+            query={
+                "select": "key,value",
+                "user_id": f"eq.{user_id}",
+                "key": f"like.{_SOLVE_HISTORY_PREFIX}*",
+                "limit": "200",
+            },
+        ) or []
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    cutoff = datetime.now(timezone.utc) - timedelta(days=bounded_days)
+    items: list[dict[str, Any]] = []
+    for row in rows:
+        try:
+            item = json.loads(str(row.get("value") or ""))
+            created_at = datetime.fromisoformat(str(item.get("created_at") or ""))
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+        except (AttributeError, TypeError, ValueError, json.JSONDecodeError):
+            continue
+        if not isinstance(item, dict) or created_at < cutoff:
+            continue
+        if kind and item.get("kind") != kind:
+            continue
+        items.append(item)
+    seen_quest_ids = {str(item.get("quest_id") or "") for item in items}
+    try:
+        sessions = _data_api().request(
+            "GET",
+            "level_test_session",
+            query={
+                "select": "session_id,started_at",
+                "user_id": f"eq.{user_id}",
+                "started_at": f"gte.{cutoff.isoformat()}",
+                "order": "started_at.desc",
+                "limit": "20",
+            },
+        ) or []
+        session_ids = [str(row.get("session_id") or "") for row in sessions if row.get("session_id")]
+        legacy_answers = (
+            _data_api().request(
+                "GET",
+                "level_test_answer",
+                query={
+                    "select": "quest_id,is_correct,tags,submitted_at",
+                    "session_id": f"in.({','.join(session_ids)})",
+                    "order": "submitted_at.desc",
+                    "limit": "200",
+                },
+            ) or []
+            if session_ids
+            else []
+        )
+    except RuntimeError:
+        legacy_answers = []
+    for answer in legacy_answers:
+        quest_id = str(answer.get("quest_id") or "").strip()
+        if not quest_id or quest_id in seen_quest_ids:
+            continue
+        tags = answer.get("tags") if isinstance(answer.get("tags"), list) else []
+        items.append(
+            {
+                "created_at": str(answer.get("submitted_at") or datetime.now(timezone.utc).isoformat()),
+                "kind": "problem",
+                "quest_id": quest_id,
+                "codebase_id": None,
+                "seed": None,
+                "data": {"is_correct": bool(answer.get("is_correct")), "tags": tags},
+            }
+        )
+        seen_quest_ids.add(quest_id)
+    items.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return {"items": items[:bounded_limit]}
+
+
+_SOCIAL_FRIEND_PREFIX = "social.friend."
+_SOCIAL_REQUEST_IN_PREFIX = "social.friend_request.in."
+_SOCIAL_REQUEST_OUT_PREFIX = "social.friend_request.out."
+_SOCIAL_GROUP_PREFIX = "social.study_group."
+_SOCIAL_GROUP_MEMBER_PREFIX = "social.study_member."
+_SOCIAL_GROUP_MESSAGE_PREFIX = "social.study_group_message."
+_SOCIAL_GROUP_INVITE_PREFIX = "social.study_group_invite."
+_SOCIAL_GROUP_SCHEDULE_PREFIX = "social.study_group_schedule."
+_SOCIAL_MESSAGE_PREFIX = "social.message."
+_SOCIAL_CONVERSATION_PREFIX = "social.conversation."
+_SOCIAL_MESSAGE_LIMIT = 200
+_SOCIAL_GROUP_MESSAGE_LIMIT = 500
+
+
+def _social_data_request(method: str, path: str, **kwargs: Any) -> Any:
+    """필요 변수: 제한된 Data API 요청. 작동 원리: 내부 저장 오류를 공개 정보 없는 502로 변환한다."""
+    try:
+        return _data_api().request(method, path, **kwargs)
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail="Social storage unavailable") from error
+
+
+def _social_public_profile(row: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: canary_users 행. 작동 원리: 친구 화면에 필요한 공개 열만 반환한다."""
+    return {
+        "user_id": str(row.get("user_id") or ""),
+        "username": str(row.get("username") or ""),
+        "name": row.get("name"),
+        "profile_image": row.get("profile_image"),
+        "ovr": 0,
+        "status": "",
+    }
+
+
+def _social_user_by_username(username: str) -> dict[str, Any] | None:
+    rows = _social_data_request(
+        "GET",
+        "canary_users",
+        query={
+            "select": "user_id,username,name,profile_image",
+            "username": f"eq.{username}",
+            "limit": "1",
+        },
+    ) or []
+    return dict(rows[0]) if rows else None
+
+
+def _social_user_by_id(user_id: str) -> dict[str, Any] | None:
+    rows = _social_data_request(
+        "GET",
+        "canary_users",
+        query={
+            "select": "user_id,username,name,profile_image",
+            "user_id": f"eq.{user_id}",
+            "limit": "1",
+        },
+    ) or []
+    return dict(rows[0]) if rows else None
+
+
+def _social_kv_rows(user_id: str, prefix: str, *, limit: int = 200) -> list[dict[str, Any]]:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "key,value",
+            "user_id": f"eq.{user_id}",
+            "key": f"like.{prefix}*",
+            "limit": str(max(1, min(limit, 1000))),
+        },
+    ) or []
+    return [dict(row) for row in rows]
+
+
+def _social_kv_value(row: dict[str, Any]) -> dict[str, Any] | None:
+    try:
+        decoded = json.loads(str(row.get("value") or ""))
+    except (TypeError, ValueError):
+        return None
+    return dict(decoded) if isinstance(decoded, dict) else None
+
+
+def _social_group_for_user(user_id: str, group_id: str) -> dict[str, Any] | None:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "key,value",
+            "user_id": f"eq.{user_id}",
+            "key": f"eq.{_SOCIAL_GROUP_PREFIX}{group_id}",
+            "limit": "1",
+        },
+    ) or []
+    return _social_kv_value(dict(rows[0])) if rows else None
+
+
+def _social_global_group_rows(*, key: str | None = None, value_query: str | None = None, limit: int = 200) -> list[dict[str, Any]]:
+    query = {
+        "select": "user_id,key,value",
+        "key": f"eq.{key}" if key else f"like.{_SOCIAL_GROUP_PREFIX}*",
+        "limit": str(limit),
+    }
+    if value_query:
+        query["value"] = f"ilike.*{value_query}*"
+    rows = _social_data_request("GET", "canary_user_kv", query=query) or []
+    return [dict(row) for row in rows]
+
+
+def _social_canonical_group(group_id: str) -> dict[str, Any] | None:
+    fallback: dict[str, Any] | None = None
+    for row in _social_global_group_rows(key=f"{_SOCIAL_GROUP_PREFIX}{group_id}"):
+        group = _social_kv_value(row)
+        if not group:
+            continue
+        fallback = fallback or group
+        if str(row.get("user_id") or "") == str(group.get("creator_id") or ""):
+            return group
+    return fallback
+
+
+def _social_group_member_ids(group: dict[str, Any]) -> list[str]:
+    group_id = str(group.get("group_id") or "")
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "user_id",
+            "key": f"eq.{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}",
+            "limit": "101",
+        },
+    ) or []
+    ids = {str(value) for value in group.get("member_ids") or [] if str(value)}
+    ids.update(str(row.get("user_id") or "") for row in rows if row.get("user_id"))
+    return sorted(ids)
+
+
+def _social_public_group(group: dict[str, Any]) -> dict[str, Any]:
+    member_ids = _social_group_member_ids(group)
+    return {
+        key: value
+        for key, value in {**group, "member_ids": member_ids, "members": len(member_ids)}.items()
+        if key not in {
+            "password_salt",
+            "password_hash",
+            "member_ids",
+            "creator_id",
+            "admin_id",
+            "deputy_admin_ids",
+        }
+    }
+
+
+def _social_group_role(group: dict[str, Any], user_id: str) -> str:
+    admin_id = str(group.get("admin_id") or group.get("creator_id") or "")
+    if user_id == admin_id:
+        return "admin"
+    if user_id in {str(value) for value in group.get("deputy_admin_ids") or []}:
+        return "deputy"
+    return "member"
+
+
+def _social_sync_group(group: dict[str, Any]) -> None:
+    group_id = str(group.get("group_id") or "")
+    member_ids = _social_group_member_ids(group)
+    synced = {**group, "member_ids": member_ids, "members": len(member_ids)}
+    _social_upsert_kv_rows(
+        [(member_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}", synced) for member_id in member_ids]
+    )
+
+
+def _social_global_kv_rows(prefix: str, *, limit: int = 1000) -> list[dict[str, Any]]:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "user_id,key,value",
+            "key": f"like.{prefix}*",
+            "limit": str(max(1, min(limit, 1000))),
+        },
+    ) or []
+    return [dict(row) for row in rows]
+
+
+def _social_add_group_member(group: dict[str, Any], user_id: str) -> dict[str, Any]:
+    group_id = str(group.get("group_id") or "")
+    member_ids = _social_group_member_ids(group)
+    if user_id in member_ids:
+        existing = _social_group_for_user(user_id, group_id)
+        return _social_public_group(existing or group)
+    if len(member_ids) >= int(group.get("max_members") or 0):
+        raise HTTPException(status_code=409, detail="Group is full")
+    if len(_social_kv_rows(user_id, _SOCIAL_GROUP_PREFIX)) >= 3:
+        raise HTTPException(status_code=409, detail="User reached max groups")
+    joined_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    next_member_ids = [*member_ids, user_id]
+    _social_upsert_kv_rows(
+        [
+            (
+                user_id,
+                f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}",
+                {"group_id": group_id, "joined_at": joined_at},
+            ),
+            (
+                user_id,
+                f"{_SOCIAL_GROUP_PREFIX}{group_id}",
+                {**group, "member_ids": next_member_ids, "members": len(next_member_ids)},
+            ),
+        ]
+    )
+    return _social_public_group({**group, "member_ids": next_member_ids})
+
+
+def _social_join_group(group: dict[str, Any], user_id: str, password: str | None) -> dict[str, Any]:
+    member_ids = _social_group_member_ids(group)
+    if user_id in member_ids:
+        existing = _social_group_for_user(user_id, str(group.get("group_id") or ""))
+        return _social_public_group(existing or group)
+    if group.get("lock_enabled"):
+        supplied = (password or "").strip()
+        expected = str(group.get("password_hash") or "")
+        salt = str(group.get("password_salt") or "")
+        if not supplied or not expected or not hmac.compare_digest(_hash_password(supplied, salt), expected):
+            raise HTTPException(status_code=400, detail="Invalid group password")
+    return _social_add_group_member(group, user_id)
+
+
+def _social_upsert_kv(user_id: str, key: str, value: dict[str, Any]) -> None:
+    _social_data_request(
+        "POST",
+        "canary_user_kv",
+        query={"on_conflict": "user_id,key"},
+        body={
+            "user_id": user_id,
+            "key": key,
+            "value": json.dumps(value, ensure_ascii=False, separators=(",", ":")),
+        },
+        prefer="resolution=merge-duplicates,return=minimal",
+    )
+
+
+def _social_upsert_kv_rows(rows: list[tuple[str, str, dict[str, Any]]]) -> None:
+    """필요 변수: 여러 사용자 KV 행. 작동 원리: 한 PostgREST 요청으로 송수신 메시지와 대화 요약을 함께 커밋한다."""
+    _social_data_request(
+        "POST",
+        "canary_user_kv",
+        query={"on_conflict": "user_id,key"},
+        body=[
+            {
+                "user_id": user_id,
+                "key": key,
+                "value": json.dumps(value, ensure_ascii=False, separators=(",", ":")),
+            }
+            for user_id, key, value in rows
+        ],
+        prefer="resolution=merge-duplicates,return=minimal",
+    )
+
+
+def _social_delete_kv(user_id: str, key: str) -> None:
+    _social_data_request(
+        "DELETE",
+        "canary_user_kv",
+        query={"user_id": f"eq.{user_id}", "key": f"eq.{key}"},
+        prefer="return=minimal",
+    )
+
+
+def _social_group_message_rows(group_id: str) -> list[dict[str, Any]]:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "user_id,key,value",
+            "key": f"like.{_SOCIAL_GROUP_MESSAGE_PREFIX}{group_id}.*",
+            "limit": str(_SOCIAL_GROUP_MESSAGE_LIMIT + 1),
+        },
+    ) or []
+    return [dict(row) for row in rows]
+
+
+def _social_group_messages(group_id: str) -> list[dict[str, Any]]:
+    messages = [
+        value
+        for row in _social_group_message_rows(group_id)
+        if (value := _social_kv_value(row))
+    ]
+    messages.sort(key=lambda item: (str(item.get("created_at") or ""), str(item.get("message_id") or "")))
+    return messages
+
+
+def _social_next_group_created_at(group_id: str) -> str:
+    """같은 그룹 메시지의 순서를 시계 조정과 무관하게 단조롭게 만든다."""
+    current = datetime.now(timezone.utc)
+    for message in _social_group_messages(group_id):
+        raw = str(message.get("created_at") or "")
+        try:
+            previous = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if previous >= current:
+            current = previous + timedelta(microseconds=1)
+    return current.isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def _social_group_message_response(message: dict[str, Any], user_id: str) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in {**message, "is_mine": str(message.get("user_id") or "") == user_id}.items()
+        if key != "user_id"
+    }
+
+
+def _social_has_key(user_id: str, key: str) -> bool:
+    rows = _social_data_request(
+        "GET",
+        "canary_user_kv",
+        query={
+            "select": "key",
+            "user_id": f"eq.{user_id}",
+            "key": f"eq.{key}",
+            "limit": "1",
+        },
+    ) or []
+    return bool(rows)
+
+
+def _social_find_request(user_id: str, request_id: str, direction: str) -> tuple[dict[str, Any], str] | None:
+    prefix = _SOCIAL_REQUEST_IN_PREFIX if direction == "incoming" else _SOCIAL_REQUEST_OUT_PREFIX
+    for row in _social_kv_rows(user_id, prefix):
+        value = _social_kv_value(row)
+        if value and str(value.get("request_id") or value.get("id") or "") == request_id:
+            return value, str(row.get("key") or "")
+    return None
+
+
+def _social_request_response(value: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "request_id": str(value.get("request_id") or value.get("id") or ""),
+        "id": str(value.get("request_id") or value.get("id") or ""),
+        "from_user_id": str(value.get("from_user_id") or ""),
+        "to_user_id": str(value.get("to_user_id") or ""),
+        "status": str(value.get("status") or "pending"),
+        "username": str(value.get("peer_username") or ""),
+        "direction": str(value.get("direction") or "incoming"),
+        "message": value.get("message"),
+        "created_at": value.get("created_at"),
+    }
+
+
+def _social_message_response(value: dict[str, Any]) -> dict[str, Any]:
+    """필요 변수: 사용자별 메시지 KV. 작동 원리: Flutter DirectMessage 계약의 공개 필드만 반환한다."""
+    return {
+        "id": str(value.get("id") or value.get("message_id") or ""),
+        "from": str(value.get("from") or ""),
+        "to": str(value.get("to") or ""),
+        "text": str(value.get("text") or ""),
+        "created_at": str(value.get("created_at") or ""),
+        "is_mine": value.get("is_mine") is True,
+        "is_read": value.get("is_read") is True,
+    }
+
+
+def _social_trim_messages(user_id: str, peer_id: str) -> None:
+    """필요 변수: 사용자·대화 상대 ID. 작동 원리: 최신 200개를 넘는 사용자별 쪽지만 오래된 순서로 제거한다."""
+    prefix = f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}."
+    rows = _social_kv_rows(user_id, prefix, limit=_SOCIAL_MESSAGE_LIMIT + 1)
+    if len(rows) <= _SOCIAL_MESSAGE_LIMIT:
+        return
+    decoded = [
+        (str((_social_kv_value(row) or {}).get("created_at") or ""), str(row.get("key") or ""))
+        for row in rows
+    ]
+    decoded.sort()
+    for _, key in decoded[: len(decoded) - _SOCIAL_MESSAGE_LIMIT]:
+        if key:
+            _social_delete_kv(user_id, key)
+
+
+@app.post("/social/friends/search")
+def search_friends(payload: FriendSearchRequest, user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 사용자명 일부. 작동 원리: 본인을 제외한 공개 프로필을 최대 50개 검색한다."""
+    query = payload.query.strip()
+    if not re.fullmatch(r"[A-Za-z0-9]{1,16}", query):
+        return {"users": []}
+    rows = _social_data_request(
+        "GET",
+        "canary_users",
+        query={
+            "select": "user_id,username,name,profile_image",
+            "username": f"ilike.*{query}*",
+            "user_id": f"neq.{user_id}",
+            "order": "username.asc",
+            "limit": str(payload.limit),
+        },
+    ) or []
+    return {"users": [_social_public_profile(dict(row)) for row in rows]}
 
 
 @app.get("/social/friends")
-def list_friends(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 친구 관계가 없는 신규 계정의 빈 목록을 반환한다."""
-    return {"friends": []}
+def list_friends(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 사용자별 멱등 친구 표식에서 현재 공개 프로필을 복원한다."""
+    friends: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in _social_kv_rows(user_id, _SOCIAL_FRIEND_PREFIX):
+        peer_id = str(row.get("key") or "").removeprefix(_SOCIAL_FRIEND_PREFIX)
+        if not peer_id or peer_id in seen:
+            continue
+        seen.add(peer_id)
+        peer = _social_user_by_id(peer_id)
+        if peer:
+            friends.append(_social_public_profile(peer))
+    friends.sort(key=lambda item: str(item.get("username") or "").lower())
+    return {"friends": friends}
 
 
 @app.get("/social/friend-requests")
-def list_friend_requests(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 대기 요청이 없는 신규 계정의 빈 목록을 반환한다."""
-    return {"requests": []}
+def list_friend_requests(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 수신·발신 대기 요청을 하나의 시간순 목록으로 반환한다."""
+    requests: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for prefix in (_SOCIAL_REQUEST_IN_PREFIX, _SOCIAL_REQUEST_OUT_PREFIX):
+        for row in _social_kv_rows(user_id, prefix):
+            value = _social_kv_value(row)
+            if not value:
+                continue
+            request_id = str(value.get("request_id") or value.get("id") or "")
+            if not request_id or request_id in seen:
+                continue
+            seen.add(request_id)
+            requests.append(_social_request_response(value))
+    requests.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return {"requests": requests}
+
+
+@app.post("/social/friend-requests", status_code=status.HTTP_201_CREATED)
+def create_friend_request(payload: FriendRequestCreateRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 대상 사용자명. 작동 원리: 양쪽 KV에 같은 결정적 요청을 보상 가능한 순서로 저장한다."""
+    target = _social_user_by_username(payload.username.strip())
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    target_id = str(target.get("user_id") or "")
+    if target_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot add yourself")
+    if _social_has_key(user_id, f"{_SOCIAL_FRIEND_PREFIX}{target_id}"):
+        raise HTTPException(status_code=409, detail="Already friends")
+    if _social_has_key(user_id, f"{_SOCIAL_REQUEST_IN_PREFIX}{target_id}"):
+        raise HTTPException(status_code=409, detail="Incoming request already exists")
+
+    current = _social_user_by_id(user_id)
+    if not current:
+        raise HTTPException(status_code=404, detail="Current user not found")
+    request_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"aiflow-friend-request:{user_id}:{target_id}"))
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    common = {
+        "request_id": request_id,
+        "id": request_id,
+        "from_user_id": user_id,
+        "to_user_id": target_id,
+        "status": "pending",
+        "message": (payload.message or "").strip(),
+        "created_at": created_at,
+    }
+    outgoing = {**common, "direction": "outgoing", "peer_username": str(target.get("username") or "")}
+    incoming = {**common, "direction": "incoming", "peer_username": str(current.get("username") or "")}
+    outgoing_key = f"{_SOCIAL_REQUEST_OUT_PREFIX}{target_id}"
+    incoming_key = f"{_SOCIAL_REQUEST_IN_PREFIX}{user_id}"
+    _social_upsert_kv(user_id, outgoing_key, outgoing)
+    try:
+        _social_upsert_kv(target_id, incoming_key, incoming)
+    except HTTPException:
+        _social_delete_kv(user_id, outgoing_key)
+        raise
+    return _social_request_response(outgoing)
+
+
+@app.post("/social/friend-requests/{request_id}/accept")
+def accept_friend_request(request_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 수신 대기 요청 ID. 작동 원리: 양쪽 친구 표식을 먼저 저장한 뒤 대기 요청을 제거한다."""
+    found = _social_find_request(user_id, request_id, "incoming")
+    if not found:
+        raise HTTPException(status_code=404, detail="Request not found")
+    request, own_request_key = found
+    peer_id = str(request.get("from_user_id") or "")
+    peer = _social_user_by_id(peer_id)
+    if not peer:
+        raise HTTPException(status_code=404, detail="User not found")
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    _social_upsert_kv_rows(
+        [
+            (
+                user_id,
+                f"{_SOCIAL_FRIEND_PREFIX}{peer_id}",
+                {"friend_id": peer_id, "created_at": created_at},
+            ),
+            (
+                peer_id,
+                f"{_SOCIAL_FRIEND_PREFIX}{user_id}",
+                {"friend_id": user_id, "created_at": created_at},
+            ),
+        ]
+    )
+    _social_delete_kv(user_id, own_request_key)
+    _social_delete_kv(peer_id, f"{_SOCIAL_REQUEST_OUT_PREFIX}{user_id}")
+    return _social_public_profile(peer)
+
+
+def _close_friend_request(request_id: str, user_id: str, direction: str, status_value: str) -> dict[str, Any]:
+    found = _social_find_request(user_id, request_id, direction)
+    if not found:
+        raise HTTPException(status_code=404, detail="Request not found")
+    request, own_key = found
+    peer_id = str(request.get("from_user_id") if direction == "incoming" else request.get("to_user_id") or "")
+    peer_prefix = _SOCIAL_REQUEST_OUT_PREFIX if direction == "incoming" else _SOCIAL_REQUEST_IN_PREFIX
+    _social_delete_kv(user_id, own_key)
+    if peer_id:
+        _social_delete_kv(peer_id, f"{peer_prefix}{user_id}")
+    return _social_request_response({**request, "status": status_value})
+
+
+@app.post("/social/friend-requests/{request_id}/decline")
+def decline_friend_request(request_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    return _close_friend_request(request_id, user_id, "incoming", "declined")
+
+
+@app.post("/social/friend-requests/{request_id}/cancel")
+def cancel_friend_request(request_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    return _close_friend_request(request_id, user_id, "outgoing", "cancelled")
+
+
+@app.post("/social/friends/remove")
+def remove_friend(payload: FriendTargetRequest, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    target = _social_user_by_username(payload.username.strip())
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    target_id = str(target.get("user_id") or "")
+    _social_delete_kv(user_id, f"{_SOCIAL_FRIEND_PREFIX}{target_id}")
+    _social_delete_kv(target_id, f"{_SOCIAL_FRIEND_PREFIX}{user_id}")
+    return {"status": "removed"}
 
 
 @app.get("/social/friends/rankings")
@@ -2431,16 +3632,558 @@ def list_friend_rankings(_user_id: str = Depends(_current_user)) -> dict[str, li
     return {"ranks": []}
 
 
+@app.get("/social/messages")
+def list_direct_messages(
+    peer: str,
+    limit: int = 30,
+    before: str | None = None,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    """필요 변수: 친구 사용자명·페이지 제한·선택 기준 ID. 작동 원리: 사용자별 KV에서 해당 대화를 시간순으로 반환한다."""
+    peer_user = _social_user_by_username(peer.strip())
+    if not peer_user:
+        raise HTTPException(status_code=404, detail="Peer not found")
+    peer_id = str(peer_user.get("user_id") or "")
+    rows = _social_kv_rows(
+        user_id,
+        f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}.",
+        limit=_SOCIAL_MESSAGE_LIMIT,
+    )
+    messages = [value for row in rows if (value := _social_kv_value(row))]
+    messages.sort(key=lambda item: (str(item.get("created_at") or ""), str(item.get("id") or "")))
+    if before:
+        before_index = next(
+            (index for index, item in enumerate(messages) if str(item.get("id") or "") == before),
+            len(messages),
+        )
+        messages = messages[:before_index]
+    bounded_limit = max(1, min(limit, 100))
+    conversation_rows = _social_kv_rows(user_id, f"{_SOCIAL_CONVERSATION_PREFIX}{peer_id}", limit=1)
+    conversation = _social_kv_value(conversation_rows[0]) if conversation_rows else None
+    if conversation and conversation.get("is_read") is not True:
+        _social_upsert_kv(
+            user_id,
+            f"{_SOCIAL_CONVERSATION_PREFIX}{peer_id}",
+            {**conversation, "is_read": True},
+        )
+    return {"messages": [_social_message_response(item) for item in messages[-bounded_limit:]]}
+
+
+@app.post("/social/messages")
+def send_direct_message(
+    payload: DirectMessageCreateRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    """필요 변수: 인증 사용자·친구 사용자명·본문. 작동 원리: 송수신 메시지와 양쪽 대화 요약을 한 번의 DB 요청으로 저장한다."""
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+    peer = _social_user_by_username(payload.peer.strip())
+    if not peer:
+        raise HTTPException(status_code=404, detail="Peer not found")
+    peer_id = str(peer.get("user_id") or "")
+    if peer_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot message yourself")
+    if not _social_has_key(user_id, f"{_SOCIAL_FRIEND_PREFIX}{peer_id}"):
+        raise HTTPException(status_code=403, detail="Friends only")
+    current = _social_user_by_id(user_id)
+    if not current:
+        raise HTTPException(status_code=404, detail="Current user not found")
+
+    sender = str(current.get("username") or "")
+    receiver = str(peer.get("username") or "")
+    message_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    suffix = f"{time.time_ns():020d}.{message_id}"
+    common = {
+        "id": message_id,
+        "message_id": message_id,
+        "from": sender,
+        "to": receiver,
+        "text": text,
+        "created_at": created_at,
+    }
+    sender_message = {**common, "peer_id": peer_id, "is_mine": True, "is_read": True}
+    receiver_message = {**common, "peer_id": user_id, "is_mine": False, "is_read": False}
+    _social_upsert_kv_rows(
+        [
+            (user_id, f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}.{suffix}", sender_message),
+            (peer_id, f"{_SOCIAL_MESSAGE_PREFIX}{user_id}.{suffix}", receiver_message),
+            (user_id, f"{_SOCIAL_CONVERSATION_PREFIX}{peer_id}", sender_message),
+            (peer_id, f"{_SOCIAL_CONVERSATION_PREFIX}{user_id}", receiver_message),
+        ]
+    )
+    _social_trim_messages(user_id, peer_id)
+    _social_trim_messages(peer_id, user_id)
+    return _social_message_response(sender_message)
+
+
+@app.post("/social/messages/{peer}/delete")
+def delete_direct_message_thread(peer: str, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    """필요 변수: 인증 사용자와 대화 상대. 작동 원리: 요청한 사용자의 메시지 사본과 대화 요약만 제거한다."""
+    peer_user = _social_user_by_username(peer.strip())
+    if not peer_user:
+        raise HTTPException(status_code=404, detail="Peer not found")
+    peer_id = str(peer_user.get("user_id") or "")
+    for row in _social_kv_rows(user_id, f"{_SOCIAL_MESSAGE_PREFIX}{peer_id}.", limit=_SOCIAL_MESSAGE_LIMIT):
+        key = str(row.get("key") or "")
+        if key:
+            _social_delete_kv(user_id, key)
+    _social_delete_kv(user_id, f"{_SOCIAL_CONVERSATION_PREFIX}{peer_id}")
+    return {"status": "deleted"}
+
+
 @app.get("/social/conversations")
-def list_conversations(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 대화가 없는 초기 상태를 반환한다."""
-    return {"messages": []}
+def list_conversations(
+    limit: int = 15,
+    before: str | None = None,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 페이지 기준. 작동 원리: 상대별 최신 대화 요약을 최근순으로 반환한다."""
+    summaries = [
+        value
+        for row in _social_kv_rows(user_id, _SOCIAL_CONVERSATION_PREFIX)
+        if (value := _social_kv_value(row))
+    ]
+    if before:
+        summaries = [item for item in summaries if str(item.get("created_at") or "") < before]
+    summaries.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    bounded_limit = max(1, min(limit, 100))
+    return {"messages": [_social_message_response(item) for item in summaries[:bounded_limit]]}
+
+
+@app.post("/social/study-groups", status_code=status.HTTP_201_CREATED)
+def create_study_group(payload: StudyGroupCreateRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    """필요 변수: 인증 사용자와 검증된 그룹 입력. 작동 원리: 기존 사용자 KV에 생성자 멤버십을 포함한 그룹을 한 번 저장한다."""
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Group name is required")
+    password = (payload.password or "").strip()
+    if payload.lock_enabled and not re.fullmatch(r"\d{4,10}", password):
+        raise HTTPException(status_code=422, detail="Password must be 4 to 10 digits")
+    group_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    invite_code = (payload.invite_code or "").strip().upper() or secrets.token_hex(4).upper()
+    group: dict[str, Any] = {
+        "group_id": group_id,
+        "name": name,
+        "description": (payload.description or "").strip(),
+        "max_members": payload.max_members,
+        "is_public": payload.is_public,
+        "logo_index": payload.logo_index,
+        "lock_enabled": payload.lock_enabled,
+        "owner_role": "student",
+        "invite_code": invite_code,
+        "is_teacher_group": False,
+        "created_at": created_at,
+        "creator_id": user_id,
+        "admin_id": user_id,
+        "deputy_admin_ids": [],
+        "member_ids": [user_id],
+        "members": 1,
+    }
+    if payload.lock_enabled:
+        salt = secrets.token_hex(16)
+        group["password_salt"] = salt
+        group["password_hash"] = _hash_password(password, salt)
+    _social_upsert_kv(user_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}", group)
+    try:
+        _social_upsert_kv(
+            user_id,
+            f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}",
+            {"group_id": group_id, "joined_at": created_at},
+        )
+    except HTTPException:
+        _social_delete_kv(user_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}")
+        raise
+    return _social_public_group(group)
 
 
 @app.get("/social/study-groups/mine")
+def list_my_study_groups(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 사용자 KV의 그룹만 복원해 Flutter의 groups 계약으로 반환한다."""
+    groups: list[dict[str, Any]] = []
+    for row in _social_kv_rows(user_id, _SOCIAL_GROUP_PREFIX):
+        value = _social_kv_value(row)
+        if not value:
+            continue
+        groups.append(_social_public_group(value))
+    groups.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return {"groups": groups}
+
+
+@app.get("/social/study-groups/search")
+def search_study_groups(q: str, limit: int = 20, user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자와 그룹명 일부. 작동 원리: 공개 그룹 KV를 이름으로 제한 검색하고 이미 가입한 그룹은 제외한다."""
+    keyword = q.strip()
+    if not re.fullmatch(r"[가-힣A-Za-z0-9 _-]{1,80}", keyword):
+        return {"groups": []}
+    bounded_limit = max(1, min(limit, 50))
+    groups: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in _social_global_group_rows(value_query=keyword, limit=max(100, bounded_limit * 10)):
+        group = _social_kv_value(row)
+        group_id = str((group or {}).get("group_id") or "")
+        if (
+            not group
+            or not group_id
+            or group_id in seen
+            or not group.get("is_public")
+            or keyword.casefold() not in str(group.get("name") or "").casefold()
+            or user_id in _social_group_member_ids(group)
+        ):
+            continue
+        seen.add(group_id)
+        groups.append(_social_public_group(group))
+        if len(groups) >= bounded_limit:
+            break
+    return {"groups": groups}
+
+
+@app.get("/social/study-groups/invite/{invite_code}")
+def get_study_group_invite(invite_code: str, _user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    code = invite_code.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9-]{4,20}", code):
+        raise HTTPException(status_code=404, detail="Invite code not found")
+    for row in _social_global_group_rows(value_query=code, limit=50):
+        group = _social_kv_value(row)
+        if group and str(group.get("invite_code") or "").upper() == code:
+            public = _social_public_group(group)
+            return {
+                "group_id": public["group_id"],
+                "name": public["name"],
+                "description": public.get("description") or "",
+                "max_members": public["max_members"],
+                "members": public["members"],
+                "lock_enabled": bool(public.get("lock_enabled")),
+                "owner_role": public.get("owner_role") or "student",
+                "is_teacher_group": bool(public.get("is_teacher_group")),
+                "invite_code": code,
+            }
+    raise HTTPException(status_code=404, detail="Invite code not found")
+
+
+@app.post("/social/study-groups/join-by-code")
+def join_study_group_by_code(payload: StudyGroupJoinByCodeRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    code = payload.invite_code.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9-]{4,20}", code):
+        raise HTTPException(status_code=404, detail="Invite code not found")
+    for row in _social_global_group_rows(value_query=code, limit=50):
+        group = _social_kv_value(row)
+        if group and str(group.get("invite_code") or "").upper() == code:
+            return _social_join_group(group, user_id, payload.password)
+    raise HTTPException(status_code=404, detail="Invite code not found")
+
+
+@app.post("/social/study-groups/{group_id}/join")
+def join_study_group(group_id: str, payload: StudyGroupJoinRequest, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    group = _social_canonical_group(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return _social_join_group(group, user_id, payload.password)
+
+
+@app.get("/social/study-groups/{group_id}/members")
+def list_study_group_members(group_id: str, user_id: str = Depends(_current_user)) -> list[dict[str, str]]:
+    """멤버 UUID는 반환하지 않고 인증된 그룹 멤버에게 닉네임과 역할만 공개한다."""
+    group = _social_group_for_user(user_id, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    members: list[dict[str, str]] = []
+    for member_id in _social_group_member_ids(group):
+        profile = _social_user_by_id(str(member_id))
+        if profile:
+            members.append(
+                {
+                    "username": str(profile.get("username") or ""),
+                    "role": _social_group_role(group, str(member_id)),
+                }
+            )
+    members.sort(key=lambda member: ({"admin": 0, "deputy": 1}.get(member["role"], 2), member["username"]))
+    return members
+
+
+@app.post("/social/study-groups/{group_id}/invite-friend")
+def invite_friend_to_study_group(
+    group_id: str,
+    payload: StudyGroupFriendInviteRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    group = _social_group_for_user(user_id, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    friend = _social_user_by_username(payload.username.strip())
+    if not friend:
+        raise HTTPException(status_code=404, detail="Friend not found")
+    friend_id = str(friend.get("user_id") or "")
+    if friend_id == user_id or not _social_has_key(user_id, f"{_SOCIAL_FRIEND_PREFIX}{friend_id}"):
+        raise HTTPException(status_code=403, detail="Only your friends can be invited")
+    canonical = _social_canonical_group(group_id)
+    if not canonical:
+        raise HTTPException(status_code=404, detail="Group not found")
+    if friend_id in _social_group_member_ids(canonical):
+        raise HTTPException(status_code=409, detail="Already a group member")
+    if len(_social_group_member_ids(canonical)) >= int(canonical.get("max_members") or 0):
+        raise HTTPException(status_code=409, detail="Group is full")
+    inviter = _social_user_by_id(user_id) or {}
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    invitation = {
+        "invite_id": group_id,
+        "group_id": group_id,
+        "group_name": str(canonical.get("name") or "그룹"),
+        "inviter_username": str(inviter.get("username") or "그룹 멤버"),
+        "invited_by_user_id": user_id,
+        "created_at": created_at,
+    }
+    _social_upsert_kv(friend_id, f"{_SOCIAL_GROUP_INVITE_PREFIX}{group_id}", invitation)
+    return {key: value for key, value in invitation.items() if key != "invited_by_user_id"}
+
+
+@app.get("/social/study-group-invitations")
+def list_study_group_invitations(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    invitations = [
+        value
+        for row in _social_kv_rows(user_id, _SOCIAL_GROUP_INVITE_PREFIX, limit=100)
+        if (value := _social_kv_value(row))
+    ]
+    invitations.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return {
+        "invitations": [
+            {key: value for key, value in invitation.items() if key != "invited_by_user_id"}
+            for invitation in invitations
+        ]
+    }
+
+
+@app.post("/social/study-group-invitations/{group_id}/accept")
+def accept_study_group_invitation(group_id: str, user_id: str = Depends(_current_user)) -> dict[str, Any]:
+    key = f"{_SOCIAL_GROUP_INVITE_PREFIX}{group_id}"
+    rows = _social_kv_rows(user_id, key, limit=1)
+    invitation = next((_social_kv_value(row) for row in rows if str(row.get("key") or "") == key), None)
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    group = _social_canonical_group(group_id)
+    if not group:
+        _social_delete_kv(user_id, key)
+        raise HTTPException(status_code=404, detail="Group not found")
+    result = _social_add_group_member(group, user_id)
+    _social_delete_kv(user_id, key)
+    return result
+
+
+@app.post("/social/study-group-invitations/{group_id}/reject")
+def reject_study_group_invitation(group_id: str, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    key = f"{_SOCIAL_GROUP_INVITE_PREFIX}{group_id}"
+    rows = _social_kv_rows(user_id, key, limit=1)
+    if not any(str(row.get("key") or "") == key for row in rows):
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    _social_delete_kv(user_id, key)
+    return {"status": "rejected"}
+
+
+@app.post("/social/study-groups/{group_id}/members/{username}/role")
+def change_study_group_member_role(
+    group_id: str,
+    username: str,
+    payload: StudyGroupMemberRoleRequest,
+    user_id: str = Depends(_current_user),
+) -> list[dict[str, str]]:
+    if not USERNAME_RE.fullmatch(username.strip()):
+        raise HTTPException(status_code=404, detail="Member not found")
+    group = _social_canonical_group(group_id)
+    if not group or user_id not in _social_group_member_ids(group):
+        raise HTTPException(status_code=404, detail="Group not found")
+    if _social_group_role(group, user_id) != "admin":
+        raise HTTPException(status_code=403, detail="Admin permission required")
+    target = _social_user_by_username(username.strip())
+    target_id = str((target or {}).get("user_id") or "")
+    member_ids = _social_group_member_ids(group)
+    if not target_id or target_id not in member_ids:
+        raise HTTPException(status_code=404, detail="Member not found")
+    admin_id = str(group.get("admin_id") or group.get("creator_id") or "")
+    deputies = {str(value) for value in group.get("deputy_admin_ids") or []}
+    if payload.role == "admin":
+        if target_id == admin_id:
+            return list_study_group_members(group_id, user_id)
+        deputies.discard(target_id)
+        group = {**group, "admin_id": target_id, "creator_id": target_id, "deputy_admin_ids": sorted(deputies)}
+    elif target_id == admin_id:
+        raise HTTPException(status_code=409, detail="Transfer admin before changing this role")
+    elif payload.role == "deputy":
+        deputies.add(target_id)
+        group = {**group, "deputy_admin_ids": sorted(deputies)}
+    else:
+        deputies.discard(target_id)
+        group = {**group, "deputy_admin_ids": sorted(deputies)}
+    _social_sync_group(group)
+    return list_study_group_members(group_id, user_id)
+
+
+@app.delete("/social/study-groups/{group_id}/members/{username}")
+def remove_study_group_member(
+    group_id: str,
+    username: str,
+    user_id: str = Depends(_current_user),
+) -> dict[str, str]:
+    if not USERNAME_RE.fullmatch(username.strip()):
+        raise HTTPException(status_code=404, detail="Member not found")
+    group = _social_canonical_group(group_id)
+    if not group or user_id not in _social_group_member_ids(group):
+        raise HTTPException(status_code=404, detail="Group not found")
+    actor_role = _social_group_role(group, user_id)
+    if actor_role not in {"admin", "deputy"}:
+        raise HTTPException(status_code=403, detail="Manager permission required")
+    target = _social_user_by_username(username.strip())
+    target_id = str((target or {}).get("user_id") or "")
+    member_ids = _social_group_member_ids(group)
+    if not target_id or target_id not in member_ids:
+        raise HTTPException(status_code=404, detail="Member not found")
+    target_role = _social_group_role(group, target_id)
+    if target_id == user_id or target_role == "admin" or (actor_role == "deputy" and target_role == "deputy"):
+        raise HTTPException(status_code=403, detail="This member cannot be removed")
+    _social_delete_kv(target_id, f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}")
+    _social_delete_kv(target_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}")
+    deputies = [value for value in group.get("deputy_admin_ids") or [] if str(value) != target_id]
+    updated = {**group, "member_ids": [value for value in member_ids if value != target_id], "deputy_admin_ids": deputies}
+    _social_sync_group(updated)
+    return {"status": "removed"}
+
+
+@app.delete("/social/study-groups/{group_id}")
+def delete_study_group(group_id: str, user_id: str = Depends(_current_user)) -> dict[str, str]:
+    group = _social_canonical_group(group_id)
+    if not group or user_id not in _social_group_member_ids(group):
+        raise HTTPException(status_code=404, detail="Group not found")
+    if _social_group_role(group, user_id) != "admin":
+        raise HTTPException(status_code=403, detail="Admin permission required")
+    for member_id in _social_group_member_ids(group):
+        _social_delete_kv(member_id, f"{_SOCIAL_GROUP_MEMBER_PREFIX}{group_id}")
+        _social_delete_kv(member_id, f"{_SOCIAL_GROUP_PREFIX}{group_id}")
+    for prefix in (
+        f"{_SOCIAL_GROUP_MESSAGE_PREFIX}{group_id}.",
+        f"{_SOCIAL_GROUP_SCHEDULE_PREFIX}{group_id}.",
+        f"{_SOCIAL_GROUP_INVITE_PREFIX}{group_id}",
+    ):
+        for row in _social_global_kv_rows(prefix):
+            _social_delete_kv(str(row.get("user_id") or ""), str(row.get("key") or ""))
+    return {"status": "deleted"}
+
+
+@app.get("/social/study-groups/{group_id}/schedules")
+def list_study_group_schedules(group_id: str, user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    if not _social_group_for_user(user_id, group_id):
+        raise HTTPException(status_code=404, detail="Group not found")
+    schedules = [
+        value
+        for row in _social_global_kv_rows(f"{_SOCIAL_GROUP_SCHEDULE_PREFIX}{group_id}.")
+        if (value := _social_kv_value(row)) and str(value.get("scheduled_date") or "") >= date.today().isoformat()
+    ]
+    schedules.sort(key=lambda item: (str(item.get("scheduled_date") or ""), str(item.get("scheduled_time") or "")))
+    return {"schedules": schedules}
+
+
+@app.post("/social/study-groups/{group_id}/schedules", status_code=status.HTTP_201_CREATED)
+def create_study_group_schedule(
+    group_id: str,
+    payload: StudyGroupScheduleCreateRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    group = _social_canonical_group(group_id)
+    if not group or user_id not in _social_group_member_ids(group):
+        raise HTTPException(status_code=404, detail="Group not found")
+    if _social_group_role(group, user_id) not in {"admin", "deputy"}:
+        raise HTTPException(status_code=403, detail="Manager permission required")
+    schedule_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    schedule = {
+        "schedule_id": schedule_id,
+        "group_id": group_id,
+        "title": payload.title.strip(),
+        "scheduled_date": payload.scheduled_date.isoformat(),
+        "scheduled_time": payload.scheduled_time,
+        "created_at": created_at,
+    }
+    _social_upsert_kv(user_id, f"{_SOCIAL_GROUP_SCHEDULE_PREFIX}{group_id}.{schedule_id}", schedule)
+    return schedule
+
+
+@app.get("/social/study-groups/{group_id}/messages")
+def list_study_group_messages(
+    group_id: str,
+    limit: int = 30,
+    before: str | None = None,
+    user_id: str = Depends(_current_user),
+) -> dict[str, list[Any]]:
+    if not _social_group_for_user(user_id, group_id):
+        raise HTTPException(status_code=404, detail="Group not found")
+    messages = _social_group_messages(group_id)
+    if before:
+        # Prefer the exact cursor row. Timestamps can share a clock tick (and
+        # are not a stable ordering key across database replicas), so falling
+        # back to a lexical comparison can incorrectly hide the previous row.
+        cursor = next(
+            (
+                index
+                for index, item in enumerate(messages)
+                if str(item.get("created_at") or "") == before
+                or str(item.get("message_id") or "") == before
+                or str(item.get("id") or "") == before
+            ),
+            None,
+        )
+        messages = (
+            messages[:cursor]
+            if cursor is not None
+            else [item for item in messages if str(item.get("created_at") or "") < before]
+        )
+    bounded_limit = max(1, min(limit, 100))
+    return {
+        "messages": [
+            _social_group_message_response(message, user_id)
+            for message in messages[-bounded_limit:]
+        ]
+    }
+
+
+@app.post("/social/study-groups/{group_id}/messages", status_code=status.HTTP_201_CREATED)
+def create_study_group_message(
+    group_id: str,
+    payload: StudyGroupMessageCreateRequest,
+    user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    group = _social_group_for_user(user_id, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="Message text is required")
+    profile = _social_user_by_id(user_id)
+    message_id = str(uuid.uuid4())
+    created_at = _social_next_group_created_at(group_id)
+    message = {
+        "message_id": message_id,
+        "user_id": user_id,
+        "sender_name": str((profile or {}).get("name") or (profile or {}).get("username") or user_id),
+        "text": text,
+        "message_type": "text",
+        "payload": None,
+        "created_at": created_at,
+    }
+    canonical = _social_canonical_group(group_id) or group
+    owner_id = str(canonical.get("creator_id") or user_id)
+    key = f"{_SOCIAL_GROUP_MESSAGE_PREFIX}{group_id}.{created_at}.{message_id}"
+    _social_upsert_kv(owner_id, key, message)
+    rows = _social_group_message_rows(group_id)
+    if len(rows) > _SOCIAL_GROUP_MESSAGE_LIMIT:
+        rows.sort(key=lambda row: str((_social_kv_value(row) or {}).get("created_at") or ""))
+        for row in rows[: len(rows) - _SOCIAL_GROUP_MESSAGE_LIMIT]:
+            _social_delete_kv(str(row.get("user_id") or owner_id), str(row.get("key") or ""))
+    return _social_group_message_response(message, user_id)
+
+
 @app.get("/social/study-groups/notices/my/system")
-def list_my_social_items(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
-    """필요 변수: 인증 사용자. 작동 원리: 가입 그룹·알림이 없는 초기 상태를 반환한다."""
+def list_my_group_notices(_user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
+    """필요 변수: 인증 사용자. 작동 원리: 그룹 알림이 없는 초기 상태를 기존 items 계약으로 반환한다."""
     return {"items": []}
 
 
@@ -2544,10 +4287,87 @@ def get_exam_status(
     return _build_marketplace_exam_status(listing)
 
 
+_TUTOR_SYSTEM_PROMPT = (
+    "너는 AIFlow의 한국어 수학 학습 튜터다. 정답만 대신 내놓지 말고, 학생이 다음 단계를 "
+    "스스로 찾도록 짧고 명확하게 설명하라. 수식은 읽기 쉬운 텍스트로 쓰고 답변은 600자 이내로 제한하라."
+)
+
+
+def _request_tutor_reply(payload: ServerChatMessageRequest) -> tuple[str, str]:
+    api_key = os.getenv("COMETAPI_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("AI tutor is not configured")
+    model = os.getenv("OMJ_CHAT_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
+    base_url = os.getenv("COMET_OPENAI_BASE_URL", "https://api.cometapi.com/v1").rstrip("/")
+    context = "\n".join(
+        part
+        for part in (
+            f"문제: {payload.quest_title}" if payload.quest_title else "",
+            f"풀이 맥락: {payload.flow}" if payload.flow else "",
+            f"인식 내용: {payload.ocr}" if payload.ocr else "",
+        )
+        if part
+    )
+    messages = [{"role": "system", "content": _TUTOR_SYSTEM_PROMPT}]
+    if context:
+        messages.append({"role": "system", "content": context})
+    messages.append({"role": "user", "content": payload.user_message.strip()})
+    body = json.dumps(
+        {"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 300},
+        ensure_ascii=False,
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        f"{base_url}/chat/completions",
+        data=body,
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            result = json.loads(response.read(200_000))
+    except urllib.error.HTTPError as error:
+        print(f"serverchat_upstream_http_error status={error.code}")
+        raise RuntimeError("AI tutor upstream rejected the request") from error
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise RuntimeError("AI tutor upstream is unavailable") from error
+    try:
+        reply = str(result["choices"][0]["message"]["content"]).strip()
+    except (KeyError, IndexError, TypeError) as error:
+        raise RuntimeError("AI tutor returned an invalid response") from error
+    if not reply:
+        raise RuntimeError("AI tutor returned an empty response")
+    return reply, model
+
+
 @app.get("/serverchat/config")
 def get_server_chat_config(_user_id: str = Depends(_current_user)) -> dict[str, Any]:
-    """필요 변수: 인증 사용자. 작동 원리: 채팅 모델 Secret 미설정 상태를 명시적으로 비활성 응답한다."""
-    return {"enabled": False, "reason": "SAM_API_KEY is not configured"}
+    enabled = bool(os.getenv("COMETAPI_KEY", "").strip())
+    return {
+        "enabled": enabled,
+        "reason": "" if enabled else "AI tutor is not configured",
+        "character": "gemma",
+        "character_name": "AI 학습 튜터",
+        "model": os.getenv("OMJ_CHAT_MODEL", "gpt-4o-mini"),
+    }
+
+
+@app.post("/serverchat/message")
+async def send_server_chat_message(
+    payload: ServerChatMessageRequest,
+    _user_id: str = Depends(_current_user),
+) -> dict[str, Any]:
+    if not os.getenv("COMETAPI_KEY", "").strip():
+        raise HTTPException(status_code=503, detail="AI tutor is not configured")
+    try:
+        reply, model = await run_in_threadpool(_request_tutor_reply, payload)
+    except RuntimeError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
+    return {
+        "assistant_message": reply,
+        "character": payload.character or "gemma",
+        "character_name": "AI 학습 튜터",
+        "model": model,
+    }
 
 
 @app.post("/api/ocr/jobs", status_code=status.HTTP_202_ACCEPTED)

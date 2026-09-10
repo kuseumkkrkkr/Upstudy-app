@@ -13,10 +13,8 @@ import 'package:s11/shared/business/repositories/bookmark_store.dart';
 import 'package:s11/shared/services/storage/local_db.dart';
 import 'package:s11/shared/business/repositories/textbook_store.dart';
 import 'package:s11/shared/services/textbook_reader_preferences.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 
@@ -181,150 +179,92 @@ class BookLibraryPage extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final mobile = size.width <= 720 && size.height > size.width;
     if (mobile) {
-      return Scaffold(
+      return StudentHtmlShell(
         key: const ValueKey('bookbag-mobile-redesign'),
-        backgroundColor: StudentDensityTokens.background,
-        drawer: const AppDrawer(),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Builder(
-                builder: (headerContext) => Ios26TopBar(
-                  brandColor: Colors.black,
-                  showLevelIndicator: false,
-                  onMenu: () => toggleAppDrawer(headerContext),
-                  onTitleTap: () =>
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/student/dashboard',
-                        (route) => false,
-                      ),
-                  items: studentTopNavItems(
-                    context,
-                    active: StudentTopDestination.bookbag,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: _BookLibraryLoader(
-                  onSelect: (book) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => BookWidget(book: book)),
-                    );
-                  },
-                  books: books,
-                  title: libraryTitle,
-                  selectedTags: selectedTags,
-                  notice: notice,
-                  category: category,
-                  useLibrary: true,
-                  enableDownload: enableDownload,
-                  onDownload: enableDownload
-                      ? (book) => _downloadBook(context, book)
-                      : null,
-                ),
-              ),
-            ],
-          ),
+        title: libraryTitle,
+        activeRoute: '/bookbag',
+        child: _BookLibraryLoader(
+          onSelect: (book) {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => BookWidget(book: book)));
+          },
+          books: books,
+          title: libraryTitle,
+          selectedTags: selectedTags,
+          notice: notice,
+          category: category,
+          useLibrary: true,
+          enableDownload: enableDownload,
+          onDownload: enableDownload
+              ? (book) => _downloadBook(context, book)
+              : null,
         ),
       );
     }
 
     const primary = Color(0xFF202022);
-    const bg = Color(0xFFF8F8F8);
     const border = Color(0x1A000000);
 
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              height: 80,
+    return StudentHtmlShell(
+      title: libraryTitle,
+      activeRoute: '/bookbag',
+      showContextAside: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
               color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    iconSize: 36,
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xFF3B3B3B),
-                    ),
-                    onPressed: () => Navigator.maybePop(context),
-                  ),
-                  Text(
-                    'AIFlow',
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: border),
+              boxShadow: const [
+                BoxShadow(
+                  blurRadius: 14,
+                  color: Color(0x14000000),
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: const [
+                Icon(Icons.menu_book_rounded, color: primary, size: 24),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '문서고',
                     style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                       color: primary,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 48),
-                ],
-              ),
+                ),
+              ],
             ),
-            Expanded(
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: border),
-                      boxShadow: const [
-                        BoxShadow(
-                          blurRadius: 14,
-                          color: Color(0x14000000),
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.menu_book_rounded, color: primary, size: 24),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '문서고',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: _BookLibraryLoader(
-                      onSelect: (book) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => BookWidget(book: book),
-                          ),
-                        );
-                      },
-                      books: books,
-                      title: libraryTitle,
-                      selectedTags: selectedTags,
-                      notice: notice,
-                      category: category,
-                      useLibrary: true,
-                      enableDownload: enableDownload,
-                      onDownload: enableDownload
-                          ? (book) => _downloadBook(context, book)
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          Expanded(
+            child: _BookLibraryLoader(
+              onSelect: (book) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => BookWidget(book: book)),
+                );
+              },
+              books: books,
+              title: libraryTitle,
+              selectedTags: selectedTags,
+              notice: notice,
+              category: category,
+              useLibrary: true,
+              enableDownload: enableDownload,
+              onDownload: enableDownload
+                  ? (book) => _downloadBook(context, book)
+                  : null,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

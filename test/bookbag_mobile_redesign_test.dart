@@ -4,6 +4,7 @@ import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as bookbag;
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 void main() {
   const books = <BookData>[
@@ -52,7 +53,7 @@ void main() {
       find.byKey(const ValueKey('bookbag-mobile-continue')),
       findsOneWidget,
     );
-    expect(find.text('책가방'), findsOneWidget);
+    expect(find.text('책가방'), findsAtLeastNWidgets(1));
     expect(find.text('3권의 교재'), findsOneWidget);
     expect(find.text('이어 읽기'), findsOneWidget);
     expect(find.text('공통수학 개념 교재'), findsOneWidget);
@@ -192,7 +193,7 @@ void main() {
   });
 
   for (final width in <double>[720, 760, 780]) {
-    testWidgets('${width}px 학생 셸 경계에서도 통합 책가방은 모바일 탐색을 쓴다', (tester) async {
+    testWidgets('${width}px 학생 셸 경계에서 자료실 셸을 유지한다', (tester) async {
       tester.view.physicalSize = Size(width, 1000);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -203,16 +204,25 @@ void main() {
       );
       await tester.pump();
 
-      expect(
-        find.byKey(const ValueKey('bookbag-mobile-redesign')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('bookbag-mobile-featured')),
-        findsOneWidget,
-      );
-      expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
-      expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
+      if (width <= 720) {
+        expect(
+          find.byKey(const ValueKey('bookbag-mobile-redesign')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('bookbag-mobile-featured')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('student-mobile-menu')),
+          findsOneWidget,
+        );
+        expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
+      } else {
+        expect(find.byType(StudentHtmlRail), findsOneWidget);
+        expect(find.byType(StudentHtmlTopBar), findsOneWidget);
+        expect(find.byType(MobileStudentBottomAppBar), findsNothing);
+      }
     });
   }
 }

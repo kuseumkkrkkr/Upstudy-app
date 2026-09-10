@@ -5,7 +5,7 @@ abstract final class StudentDensityTokens {
   // The reference export uses #f0f0f2 as its page canvas. Keep the token
   // centralized so every student surface follows the same visual baseline.
   static const Color background = Color(0xFFF0F0F2);
-  static const Color surface = Colors.white;
+  static const Color surface = Color(0xFFFDFDFE);
   static const Color surfaceMuted = Color(0xFFF3F3F5);
   static const Color ink = Color(0xFF09090B);
   static const Color muted = Color(0xFF71717A);
@@ -13,17 +13,19 @@ abstract final class StudentDensityTokens {
   static const Color line = Color(0x1A09090B);
   static const Color lineStrong = Color(0x2E09090B);
   static const Color dark = Color(0xFF111113);
-  static const Color darkSecondary = Color(0xFF232326);
+  static const Color darkSecondary = Color(0xFF29292D);
   static const double desktopMaxWidth = 1500;
 
   /// The HTML reference switches the shared shell at 720px. Individual
   /// immersive workspaces may keep their own narrower layout thresholds.
   static const double mobileBreakpoint = 720;
   static const double desktopBreakpoint = 1040;
-  static const double radiusSmall = 14;
-  static const double radiusMedium = 20;
-  static const double radius = 28;
-  static const double radiusExtraLarge = 38;
+  // The reference keeps shared surfaces square. Rounded corners are opt-in
+  // only where the HTML screen explicitly overrides the global rule.
+  static const double radiusSmall = 0;
+  static const double radiusMedium = 0;
+  static const double radius = 0;
+  static const double radiusExtraLarge = 0;
 }
 
 /// 필요 변수: 현재 화면 너비.
@@ -268,9 +270,7 @@ class StudentDensityButton extends StatelessWidget {
           horizontal: mobile ? 18 : 16,
           vertical: mobile ? 14 : 12,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(mobile ? 18 : 16),
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         textStyle: TextStyle(
           fontSize: mobile ? 14 : 13,
           fontWeight: FontWeight.w800,

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:s11/app/router.dart';
 import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// 레벨 테스트의 일반 결과와 배치 결과를 같은 학생용 리포트 표면으로 표시한다.
 /// 필요한 값은 채점 수치 또는 배치 API 결과이며, 홈 이동은 기존 Navigator 흐름을 그대로 사용한다.
@@ -55,42 +56,42 @@ class _LevelResultScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
-      backgroundColor: _LevelResultTokens.canvas,
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/level_test/result')
-          : null,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth <= 780;
-            final horizontal = compact ? 18.0 : 42.0;
-            final content = ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1180),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontal,
-                  compact ? 16 : 28,
-                  horizontal,
-                  36,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _ResultTopBar(compact: compact),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.only(top: compact ? 22 : 34),
-                        child: _ResultBody(report: report, compact: compact),
-                      ),
-                    ),
-                  ],
-                ),
+    return StudentHtmlShell(
+      title: '레벨 테스트 결과',
+      activeRoute: AppRoutes.levelTestResult,
+      showContextAside: !mobile,
+      onMenu: () => Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth <= 780;
+          final horizontal = compact ? 18.0 : 42.0;
+          final content = ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1180),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontal,
+                compact ? 16 : 28,
+                horizontal,
+                36,
               ),
-            );
-            return Align(alignment: Alignment.topCenter, child: content);
-          },
-        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _ResultTopBar(compact: compact),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.only(top: compact ? 22 : 34),
+                      child: _ResultBody(report: report, compact: compact),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+          return Align(alignment: Alignment.topCenter, child: content);
+        },
       ),
     );
   }

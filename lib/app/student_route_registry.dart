@@ -301,6 +301,45 @@ abstract final class StudentRouteRegistry {
     ..._tools,
   ];
 
+  /// HTML QUICK FIND에 노출하는 31개 목적지다. 상태 화면은 검색 결과에서
+  /// 중복 노출하지 않고, 같은 목적지의 진입 장면은 해당 화면 내부에서 연다.
+  static const _searchIds = <String>{
+    'home',
+    'today-tasks',
+    'courses',
+    'course-learning',
+    'level-home',
+    'wrong-list',
+    'solve-workspace',
+    'bookbag',
+    'book-reader',
+    'textbook-create',
+    'exam-preview',
+    'marketplace',
+    'store',
+    'graph',
+    'notepad',
+    'timer',
+    'focus',
+    'tutor',
+    'arena-home',
+    'arena-ranking',
+    'rating-detail',
+    'activity-history',
+    'achievements',
+    'social',
+    'groups',
+    'school-exam-prep',
+    'academy-find',
+    'private-tutor-find',
+    'profile',
+    'settings',
+    'about',
+  };
+
+  static Iterable<StudentRouteSpec> get searchable =>
+      all.where((spec) => _searchIds.contains(spec.id));
+
   static StudentRouteSpec? byId(String id) {
     for (final spec in all) {
       if (spec.id == id) return spec;

@@ -366,7 +366,7 @@ void main() {
     await tester.tap(completedCard);
     await tester.pumpAndSettle();
     expect(find.byType(CourseDetailPage), findsOneWidget);
-    expect(find.text('완료한 코스 · 미리보기'), findsWidgets);
+    expect(find.textContaining('미리보기'), findsWidgets);
     expect(find.text('코스 계속하기'), findsNothing);
   });
 

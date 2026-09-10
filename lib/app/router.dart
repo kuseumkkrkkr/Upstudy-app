@@ -24,6 +24,7 @@ import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
 import 'package:s11/features/student_services/student_services_demo_page.dart';
 import 'package:s11/features/course_runtime/course_runtime_page.dart';
+import 'package:s11/app/student_feature_flags.dart';
 
 /// Central route constants and route table for the AIFlow app.
 class AppRoutes {
@@ -146,12 +147,23 @@ Map<String, WidgetBuilder> appRoutes() {
 
     // Group Study
     AppRoutes.groups: (_) => const GroupListPage(),
-    AppRoutes.academyFind: (_) => const StudentServicesDemoPage(),
-    AppRoutes.privateTutorFind: (_) =>
-        const StudentServicesDemoPage(kind: StudentServiceKind.tutor),
-    AppRoutes.serviceRequests: (_) => const StudentServiceRequestsPage(),
+    AppRoutes.academyFind: (_) => _demoRoute(
+      enabled: StudentFeatureFlags.servicesDemo,
+      child: const StudentServicesDemoPage(),
+    ),
+    AppRoutes.privateTutorFind: (_) => _demoRoute(
+      enabled: StudentFeatureFlags.servicesDemo,
+      child: const StudentServicesDemoPage(kind: StudentServiceKind.tutor),
+    ),
+    AppRoutes.serviceRequests: (_) => _demoRoute(
+      enabled: StudentFeatureFlags.servicesDemo,
+      child: const StudentServiceRequestsPage(),
+    ),
     AppRoutes.schoolExamPrep: (_) => const SchoolExamPrepPage(),
-    AppRoutes.store: (_) => const StudentStoreDemoPage(),
+    AppRoutes.store: (_) => _demoRoute(
+      enabled: StudentFeatureFlags.storeDemo,
+      child: const StudentStoreDemoPage(),
+    ),
   };
 }
 
@@ -165,6 +177,9 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
 
   if (name == AppRoutes.academyProfile ||
       name == AppRoutes.privateTutorProfile) {
+    if (!StudentFeatureFlags.servicesDemo) {
+      return _demoDisabledRoute(settings);
+    }
     final args = settings.arguments;
     if (args is StudentServiceProvider) {
       return MaterialPageRoute(
@@ -275,6 +290,35 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
   }
 
   return null;
+}
+
+Widget _demoRoute({required bool enabled, required Widget child}) {
+  return enabled ? child : const _DemoDisabledPage();
+}
+
+Route<dynamic> _demoDisabledRoute(RouteSettings settings) {
+  return MaterialPageRoute(
+    settings: settings,
+    builder: (_) => const _DemoDisabledPage(),
+  );
+}
+
+class _DemoDisabledPage extends StatelessWidget {
+  const _DemoDisabledPage();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('사용할 수 없는 기능')),
+    body: const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text(
+          '이 데모 기능은 현재 배포 설정에서 꺼져 있습니다.',
+          textAlign: TextAlign.center,
+        ),
+      ),
+    ),
+  );
 }
 
 /// Builds a fallback route when arguments are missing or of the wrong type.

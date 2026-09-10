@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/app/router.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
 /// HTML 학생 제품 셸을 실제 Flutter 화면에서 재사용하기 위한 얇은 레이아웃입니다.
@@ -17,6 +18,7 @@ class StudentHtmlShell extends StatelessWidget {
     this.onNotifications,
     this.onMenu,
     this.includeHeader = true,
+    this.railWidth,
   });
 
   final String title;
@@ -28,15 +30,19 @@ class StudentHtmlShell extends StatelessWidget {
   final VoidCallback? onMenu;
   final bool includeHeader;
 
+  /// Optional screen-specific desktop rail width from the reference CSS.
+  final double? railWidth;
+
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final wide =
-        MediaQuery.sizeOf(context).width >
-        StudentDensityTokens.desktopBreakpoint;
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width > StudentDensityTokens.desktopBreakpoint;
+    final desktopRailWidth = railWidth ?? (wide ? 84.0 : 72.0);
     final menu = onMenu ?? () => toggleAppDrawer(context);
-    final search = onSearch ?? () {};
-    final notifications = onNotifications ?? () {};
+    final search = onSearch ?? () => showStudentQuickSearch(context);
+    final notifications =
+        onNotifications ?? () => showStudentNotifications(context);
 
     return Scaffold(
       backgroundColor: StudentDensityTokens.background,
@@ -61,7 +67,10 @@ class StudentHtmlShell extends StatelessWidget {
             : Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  StudentHtmlRail(activeRoute: activeRoute),
+                  StudentHtmlRail(
+                    activeRoute: activeRoute,
+                    width: desktopRailWidth,
+                  ),
                   Expanded(
                     child: Column(
                       children: [
@@ -133,13 +142,20 @@ class StudentHtmlTopBar extends StatelessWidget {
       );
     }
 
+    final topBarHeight = isStudentDensityMobile(context) ? 64.0 : 62.0;
     return Container(
-      height: 64,
+      height: topBarHeight,
       color: StudentDensityTokens.surface,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [
-          action(label: '학생 메뉴', icon: Icons.arrow_back, onTap: onMenu),
+          action(
+            label: '학생 메뉴',
+            icon: isStudentDensityMobile(context)
+                ? Icons.menu_rounded
+                : Icons.arrow_back,
+            onTap: onMenu,
+          ),
           const SizedBox(width: 10),
           KeyedSubtree(
             key: const ValueKey('student-brand-home'),
@@ -163,17 +179,19 @@ class StudentHtmlTopBar extends StatelessWidget {
 }
 
 class StudentHtmlRail extends StatelessWidget {
-  const StudentHtmlRail({super.key, required this.activeRoute});
+  const StudentHtmlRail({super.key, required this.activeRoute, this.width});
 
   final String activeRoute;
+  final double? width;
 
   @override
   Widget build(BuildContext context) {
-    final width =
-        MediaQuery.sizeOf(context).width >
-            StudentDensityTokens.desktopBreakpoint
-        ? 84.0
-        : 72.0;
+    final railWidth =
+        width ??
+        (MediaQuery.sizeOf(context).width >
+                StudentDensityTokens.desktopBreakpoint
+            ? 84.0
+            : 72.0);
 
     Widget item({
       required String label,
@@ -191,7 +209,7 @@ class StudentHtmlRail extends StatelessWidget {
         label: label,
         selected: active,
         child: SizedBox(
-          width: width - 20,
+          width: railWidth - 20,
           height: 62,
           child: InkWell(
             onTap: () {
@@ -226,7 +244,7 @@ class StudentHtmlRail extends StatelessWidget {
     }
 
     return Container(
-      width: width,
+      width: railWidth,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
       decoration: const BoxDecoration(
         color: StudentDensityTokens.surface,
@@ -300,6 +318,59 @@ class StudentHtmlContextAside extends StatelessWidget {
       color: StudentDensityTokens.surface,
       border: Border(left: BorderSide(color: StudentDensityTokens.line)),
     ),
-    child: const SizedBox.shrink(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'CONTEXT',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.4,
+            fontWeight: FontWeight.w900,
+            color: StudentDensityTokens.muted,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          color: StudentDensityTokens.dark,
+          padding: const EdgeInsets.all(14),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '오늘의 학습',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '학습 흐름을\n이어가세요.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  height: 1.25,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
+        const Text(
+          '빠른 이동',
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '검색과 알림은 상단 버튼에서\n언제든지 열 수 있어요.',
+          style: TextStyle(color: StudentDensityTokens.muted, height: 1.45),
+        ),
+      ],
+    ),
   );
 }

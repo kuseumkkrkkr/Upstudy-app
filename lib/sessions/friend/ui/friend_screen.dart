@@ -2845,82 +2845,43 @@ class _SoWidgetState extends State<SoWidget> {
   Widget _buildHtmlSocial(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     if (mobile) return _buildMobileSocial(context);
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        key: _scaffoldKey,
-        backgroundColor: StudentDensityTokens.background,
-        drawer: mobile ? null : const AppDrawer(),
-        appBar: mobile
-            ? AppBar(
-                title: const Text(
-                  '친구 · 소셜',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                backgroundColor: StudentDensityTokens.background,
-                surfaceTintColor: Colors.transparent,
-              )
-            : null,
-        bottomNavigationBar: mobile
-            ? const MobileStudentBottomAppBar(activeRoute: '/social')
-            : null,
-        body: SafeArea(
-          child: Column(
-            children: [
-              Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                showUtilityActions: !mobile,
-                hideOnMobile: true,
-                onMenu: mobile
-                    ? null
-                    : () => _scaffoldKey.currentState?.openDrawer(),
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.social,
-                ),
+    return StudentHtmlShell(
+      title: '친구 · 소셜',
+      activeRoute: '/social',
+      showContextAside: true,
+      onNotifications: _openFriendRequestsModal,
+      child: RefreshIndicator(
+        onRefresh: _refreshPageData,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            StudentDensityPage(
+              padding: EdgeInsets.fromLTRB(
+                studentDensityHorizontalPadding(context),
+                studentDensityVerticalPadding(context),
+                studentDensityHorizontalPadding(context),
+                48,
               ),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _refreshPageData,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      StudentDensityPage(
-                        padding: EdgeInsets.fromLTRB(
-                          studentDensityHorizontalPadding(context),
-                          studentDensityVerticalPadding(context),
-                          studentDensityHorizontalPadding(context),
-                          48,
-                        ),
-                        child: Column(
-                          children: [
-                            if (mobile)
-                              _buildMobileSocialHeader()
-                            else
-                              StudentDensityPageHeader(
-                                eyebrow: 'FRIENDS & SOCIAL',
-                                title: '친구/소셜',
-                                description: '친구 요청과 최근 쪽지를 한곳에서 확인합니다.',
-                                action: StudentDensityButton(
-                                  label: '친구 추가',
-                                  primary: true,
-                                  onPressed: _openAddFriendModal,
-                                ),
-                              ),
-                            SizedBox(height: mobile ? 12 : 18),
-                            _buildSocialSummary(mobile: mobile),
-                            const SizedBox(height: 14),
-                            _buildSocialDirectory(mobile: mobile),
-                          ],
-                        ),
-                      ),
-                    ],
+              child: Column(
+                children: [
+                  StudentDensityPageHeader(
+                    eyebrow: 'FRIENDS & SOCIAL',
+                    title: '친구/소셜',
+                    description: '친구 요청과 최근 쪽지를 한곳에서 확인합니다.',
+                    action: StudentDensityButton(
+                      label: '친구 추가',
+                      primary: true,
+                      onPressed: _openAddFriendModal,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 18),
+                  _buildSocialSummary(mobile: false),
+                  const SizedBox(height: 14),
+                  _buildSocialDirectory(mobile: false),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -3840,69 +3801,13 @@ class _SoWidgetState extends State<SoWidget> {
     );
   }
 
-  Widget _buildMobileSocial(BuildContext context) => Scaffold(
-    key: _scaffoldKey,
-    backgroundColor: Colors.white,
-    bottomNavigationBar: const MobileStudentBottomAppBar(
-      activeRoute: '/social',
-    ),
-    body: Column(
+  Widget _buildMobileSocial(BuildContext context) => StudentHtmlShell(
+    title: '함께 공부',
+    activeRoute: '/social',
+    onSearch: _mobileSocialTab == 1 ? _openAddFriendModal : () {},
+    onNotifications: _openFriendRequestsModal,
+    child: Column(
       children: [
-        Container(
-          key: const ValueKey('mobile-social-topbar'),
-          height: 64,
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
-          ),
-          child: Row(
-            children: [
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 44,
-                height: 44,
-                child: IconButton(
-                  key: const ValueKey('mobile-social-back'),
-                  tooltip: '뒤로',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                  style: IconButton.styleFrom(
-                    shape: const RoundedRectangleBorder(
-                      side: BorderSide(color: Color(0xFFE1E1E3)),
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  '함께 공부',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-              ),
-              if (_mobileSocialTab == 1)
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: IconButton(
-                    key: const ValueKey('mobile-friend-add-open'),
-                    tooltip: '친구 찾기',
-                    onPressed: _openAddFriendModal,
-                    icon: const Icon(Icons.search_rounded, size: 22),
-                    style: IconButton.styleFrom(
-                      shape: const RoundedRectangleBorder(
-                        side: BorderSide(color: Color(0xFFE1E1E3)),
-                        borderRadius: BorderRadius.zero,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                const SizedBox(width: 12),
-              const SizedBox(width: 12),
-            ],
-          ),
-        ),
         SizedBox(
           key: const ValueKey('mobile-social-tabs'),
           height: 52,

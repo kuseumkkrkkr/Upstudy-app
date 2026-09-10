@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'package:s11/app/router.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
-import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/sessions/friend/friend.dart';
 
 class GroupListPage extends StatefulWidget {
@@ -513,49 +511,44 @@ class _GroupListPageState extends State<GroupListPage> {
   }
 
   Widget _buildMobilePage() {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      bottomNavigationBar: const MobileStudentBottomAppBar(
-        activeRoute: '/groups',
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const _MobileGroupTopBar(),
-            _MobileGroupTabs(
-              onConversation: () => _openSocialTab(0),
-              onFriends: () => _openSocialTab(1),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.zero,
-                  children: [
-                    _MobileGroupHeading(
-                      count: _groups.length,
-                      onAdd: _openMobileAddSheet,
-                    ),
-                    if (_loading)
-                      const SizedBox(
-                        key: ValueKey('groups-mobile-loading'),
-                        height: 92,
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (_error != null)
-                      _MobileGroupError(message: _error!, onRetry: _load)
-                    else if (_groups.isEmpty)
-                      _MobileGroupEmpty(onAdd: _openMobileAddSheet)
-                    else
-                      for (var index = 0; index < _groups.length; index++)
-                        _MobileGroupRow(group: _groups[index], index: index),
-                  ],
-                ),
+    return StudentHtmlShell(
+      title: '스터디 그룹',
+      activeRoute: AppRoutes.groups,
+      child: Column(
+        children: [
+          _MobileGroupTabs(
+            onConversation: () => _openSocialTab(0),
+            onFriends: () => _openSocialTab(1),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                children: [
+                  _MobileGroupHeading(
+                    count: _groups.length,
+                    onAdd: _openMobileAddSheet,
+                  ),
+                  if (_loading)
+                    const SizedBox(
+                      key: ValueKey('groups-mobile-loading'),
+                      height: 92,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_error != null)
+                    _MobileGroupError(message: _error!, onRetry: _load)
+                  else if (_groups.isEmpty)
+                    _MobileGroupEmpty(onAdd: _openMobileAddSheet)
+                  else
+                    for (var index = 0; index < _groups.length; index++)
+                      _MobileGroupRow(group: _groups[index], index: index),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -566,112 +559,64 @@ class _GroupListPageState extends State<GroupListPage> {
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     if (mobile) return _buildMobilePage();
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
-      drawer: mobile ? null : const AppDrawer(),
-      appBar: mobile
-          ? AppBar(
-              title: const Text(
-                '스터디 그룹',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-              backgroundColor: const Color(0xFFF4F4F6),
-              surfaceTintColor: Colors.transparent,
-            )
-          : null,
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/groups')
-          : null,
-      body: SafeArea(
-        child: Column(
+    return StudentHtmlShell(
+      title: '스터디 그룹',
+      activeRoute: AppRoutes.groups,
+      showContextAside: true,
+      child: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                showUtilityActions: !mobile,
-                hideOnMobile: true,
-                onMenu: mobile ? null : () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const MainStudentPage()),
-                  (route) => false,
-                ),
-                items: studentTopNavItems(
-                  context,
-                  active: StudentTopDestination.social,
-                ),
+            StudentDensityPage(
+              padding: EdgeInsets.fromLTRB(
+                studentDensityHorizontalPadding(context),
+                studentDensityVerticalPadding(context),
+                studentDensityHorizontalPadding(context),
+                48,
               ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    StudentDensityPage(
-                      padding: EdgeInsets.fromLTRB(
-                        studentDensityHorizontalPadding(context),
-                        studentDensityVerticalPadding(context),
-                        studentDensityHorizontalPadding(context),
-                        48,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Expanded(child: _GroupListHeading(fontSize: 54)),
+                      StudentDensityButton(
+                        onPressed: _openFindSheet,
+                        label: '그룹 찾기 · 코드 참가',
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (mobile) ...[
-                            _buildMobileActiveGroupsCard(),
-                            const SizedBox(height: 18),
-                            _buildMobileInsightsCard(),
-                          ] else ...[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Expanded(
-                                  child: _GroupListHeading(fontSize: 54),
-                                ),
-                                StudentDensityButton(
-                                  onPressed: _openFindSheet,
-                                  label: '그룹 찾기 · 코드 참가',
-                                ),
-                                const SizedBox(width: 8),
-                                StudentDensityButton(
-                                  onPressed: _openCreateDialog,
-                                  label: '그룹 만들기',
-                                  primary: true,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 22),
-                            const Text(
-                              'CONTINUE TOGETHER',
-                              style: TextStyle(
-                                fontSize: 10,
-                                letterSpacing: 1.6,
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              '내 그룹',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            if (_loading)
-                              const Center(child: CircularProgressIndicator())
-                            else if (_error != null)
-                              _GroupLoadError(message: _error!, onRetry: _load)
-                            else
-                              _GroupListCard(groups: _groups),
-                          ],
-                        ],
+                      const SizedBox(width: 8),
+                      StudentDensityButton(
+                        onPressed: _openCreateDialog,
+                        label: '그룹 만들기',
+                        primary: true,
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  const Text(
+                    'CONTINUE TOGETHER',
+                    style: TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 1.6,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w900,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '내 그룹',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 20),
+                  if (_loading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_error != null)
+                    _GroupLoadError(message: _error!, onRetry: _load)
+                  else
+                    _GroupListCard(groups: _groups),
+                ],
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:s11/app/student_route_registry.dart';
 import 'package:s11/app/student_feature_flags.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
@@ -392,87 +393,70 @@ class _StudentQuickSearchSheet extends StatefulWidget {
 }
 
 class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
-  static const _destinations =
-      <({String title, String detail, String keywords, String route})>[
-        (
-          title: '코스',
-          detail: '수강 중·추천·완료 코스 찾기',
-          keywords: '수학 함수 개념 학습 강의',
-          route: '/courses',
-        ),
-        (
-          title: '책가방',
-          detail: '교재·시험지·북마크 찾기',
-          keywords: '책 문서 문제세트 보관함',
-          route: '/bookbag',
-        ),
-        (
-          title: '오답 노트',
-          detail: '틀린 문제와 오늘 복습 확인',
-          keywords: '오답 문제 복습 수학',
-          route: '/wrong_answers',
-        ),
-        (
-          title: '레벨 테스트',
-          detail: '현재 실력과 추천 난이도 확인',
-          keywords: '진단 평가 OVR 배치',
-          route: '/level_test',
-        ),
-        (
-          title: '친구/소셜',
-          detail: '친구 요청과 새 대화 확인',
-          keywords: '친구 쪽지 대화 소셜',
-          route: '/social',
-        ),
-        (
-          title: '스터디 그룹',
-          detail: '내 그룹과 초대 코드 참가',
-          keywords: '그룹 학원 같이 공부',
-          route: '/groups',
-        ),
-        (
-          title: 'AI 학습 튜터',
-          detail: '개념과 막힌 문제 질문',
-          keywords: 'AI 도구 질문 풀이 수학 함수',
-          route: '/tools',
-        ),
-        (
-          title: '마켓플레이스',
-          detail: '문제·교재·태그 찾기',
-          keywords: '문제세트 시험지 수학 자료',
-          route: '/marketplace',
-        ),
-        (
-          title: '내신 대비',
-          detail: '수학 시험 계획과 연결된 할 일 확인',
-          keywords: '수학 내신 시험 학교 계획',
-          route: '/school-exam-prep',
-        ),
-        (
-          title: 'AIFlow 학원 찾기',
-          detail: '샘플 학원 지도·상담 신청',
-          keywords: '학원 상담 지도 중등 고등',
-          route: '/student-services/academy',
-        ),
-        (
-          title: '과외 찾기',
-          detail: '샘플 선생님 지도·수업 문의',
-          keywords: '과외 선생님 수업 지도',
-          route: '/student-services/tutor',
-        ),
-        (
-          title: '포인트 상점',
-          detail: '데모 포인트 상품 교환',
-          keywords: '포인트 상품 교환 마켓',
-          route: '/store',
-        ),
-      ];
+  static const _titles = <String, String>{
+    'home': '홈',
+    'today-tasks': '오늘 할 일',
+    'courses': '코스',
+    'course-learning': '코스 학습',
+    'level-home': '레벨 테스트',
+    'wrong-list': '오답 노트',
+    'solve-workspace': '문제 풀이',
+    'bookbag': '책가방',
+    'book-reader': '교재 읽기',
+    'textbook-create': '교재 만들기',
+    'exam-preview': '시험 미리보기',
+    'marketplace': '자료실',
+    'store': '포인트 상점',
+    'graph': '그래프',
+    'notepad': '노트패드',
+    'timer': '타이머',
+    'focus': '집중 모드',
+    'tutor': 'AI 학습 튜터',
+    'arena-home': '대결장',
+    'arena-ranking': '대결 랭킹',
+    'rating-detail': '학습 지표',
+    'activity-history': '활동 기록',
+    'achievements': '업적',
+    'social': '친구/소셜',
+    'groups': '스터디 그룹',
+    'school-exam-prep': '내신 대비',
+    'academy-find': 'AIFlow 학원 찾기',
+    'private-tutor-find': '과외 찾기',
+    'profile': '프로필',
+    'settings': '설정',
+    'about': 'AIFlow 소개',
+  };
+
+  static const _keywords = <String, String>{
+    'courses': '수학 함수 개념 학습 강의',
+    'course-learning': '수학 학습 강의 이어하기',
+    'wrong-list': '수학 오답 문제 복습',
+    'solve-workspace': '수학 문제 풀이',
+    'marketplace': '수학 문제세트 시험지 교재 자료',
+    'tutor': '수학 개념 질문 풀이',
+    'school-exam-prep': '수학 내신 시험 학교 계획',
+  };
+
+  Iterable<
+    ({String id, String title, String detail, String keywords, String route})
+  >
+  get _destinations => StudentRouteRegistry.searchable.map((spec) {
+    final title = _titles[spec.id] ?? spec.id;
+    return (
+      id: spec.id,
+      title: title,
+      detail: '${spec.category} 화면 열기',
+      keywords: _keywords[spec.id] ?? '$title ${spec.category}',
+      route: spec.route,
+    );
+  });
   String _query = '';
 
   /// 필요한 변수는 선택 목적지와 현재 시트 Navigator다.
   /// 작동 원리는 시트를 먼저 닫고 루트 Navigator에서 공용 명명 라우트를 연다.
   void _open(
-    ({String title, String detail, String keywords, String route}) destination,
+    ({String id, String title, String detail, String keywords, String route})
+    destination,
   ) {
     final navigator = Navigator.of(context, rootNavigator: true);
     Navigator.of(context).pop();
@@ -486,11 +470,10 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
     final normalized = _query.trim().toLowerCase();
     final visible = _destinations
         .where((item) {
-          if (item.route == '/student-services/academy' ||
-              item.route == '/student-services/tutor') {
+          if (item.id == 'academy-find' || item.id == 'private-tutor-find') {
             return StudentFeatureFlags.servicesDemo;
           }
-          if (item.route == '/store') return StudentFeatureFlags.storeDemo;
+          if (item.id == 'store') return StudentFeatureFlags.storeDemo;
           return true;
         })
         .where(

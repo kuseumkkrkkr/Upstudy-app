@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/features/level_test/level_test_result_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 /// 필요한 값은 지정한 논리 화면 폭과 결과 위젯이다.
 /// PC·모바일 폭을 직접 주입해 결과 카드가 두 환경 모두에서 렌더링되는지 확인한다.
@@ -73,9 +74,7 @@ void main() {
     }
   });
 
-  testWidgets('레벨 결과는 780px 이하에서 모바일 단일 열을, 781px부터 PC 2열을 유지한다', (
-    tester,
-  ) async {
+  testWidgets('레벨 결과는 셸 레일을 고려한 콘텐츠 폭에서 단일 열과 2열을 전환한다', (tester) async {
     for (final width in [760.0, 780.0, 781.0, 1280.0]) {
       await _pumpResult(
         tester,
@@ -89,7 +88,9 @@ void main() {
       final analysis = tester.getRect(
         find.byKey(const ValueKey('level-result-analysis')),
       );
-      final mobile = width <= 780;
+      // 데스크톱 셸의 72px 레일을 제외한 콘텐츠가 780px 이하이면
+      // 결과 리포트는 가독성을 위해 단일 열을 유지한다.
+      final mobile = width <= 852;
 
       if (mobile) {
         expect(find.text('홈'), findsWidgets);
@@ -97,7 +98,7 @@ void main() {
         expect(analysis.left, closeTo(overview.left, 0.1));
         expect(analysis.top, greaterThan(overview.bottom));
       } else {
-        expect(find.text('홈'), findsNothing);
+        expect(find.byType(StudentHtmlRail), findsOneWidget);
         expect(find.text('학습 홈으로'), findsOneWidget);
         expect(analysis.top, closeTo(overview.top, 0.1));
         expect(analysis.left, greaterThan(overview.left));

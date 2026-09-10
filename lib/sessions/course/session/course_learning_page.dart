@@ -12,10 +12,8 @@ import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'teacher_course_textbook_reader_page.dart';
 
 const _green = StudentDensityTokens.ink;
@@ -511,100 +509,70 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   Widget build(BuildContext context) {
     final course = _course;
     final mobile = isStudentDensityMobile(context);
-    return Scaffold(
-      key: const ValueKey('course-learning-screen'),
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            if (!mobile)
-              Builder(
-                builder: (context) => Ios26TopBar(
-                  brandColor: StudentDensityTokens.dark,
-                  onMenu: () => Scaffold.of(context).openDrawer(),
-                  onTitleTap: () =>
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/student/dashboard',
-                        (route) => false,
-                      ),
-                  showLevelIndicator: false,
-                  items: studentTopNavItems(
-                    context,
-                    active: StudentTopDestination.courses,
-                  ),
-                ),
-              ),
-            Expanded(
-              child: _loadingCourse
-                  ? const Center(child: CircularProgressIndicator())
-                  : mobile
-                  ? _MobileCourseLearningBody(
+    return StudentHtmlShell(
+      title: '코스 학습',
+      activeRoute: '/courses',
+      showContextAside: !mobile,
+      onMenu: _goBack,
+      child: _loadingCourse
+          ? const Center(child: CircularProgressIndicator())
+          : mobile
+          ? _MobileCourseLearningBody(
+              course: course,
+              expandedUnits: _expandedUnits,
+              onToggleUnit: _toggleUnit,
+              onMissionTap: _handleMissionTap,
+            )
+          : SingleChildScrollView(
+              key: const ValueKey('course-learning-screen'),
+              child: StudentDensityPage(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _LearningHeading(course: course, onBack: _goBack),
+                    const SizedBox(height: 16),
+                    _LearningHero(course: course),
+                    const SizedBox(height: 10),
+                    _CurrentLearning(
                       course: course,
-                      expandedUnits: _expandedUnits,
-                      onBack: _goBack,
-                      onToggleUnit: _toggleUnit,
                       onMissionTap: _handleMissionTap,
-                    )
-                  : SingleChildScrollView(
-                      child: StudentDensityPage(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _LearningHeading(course: course, onBack: _goBack),
-                            const SizedBox(height: 16),
-                            _LearningHero(course: course),
-                            const SizedBox(height: 10),
-                            _CurrentLearning(
-                              course: course,
-                              onMissionTap: _handleMissionTap,
-                            ),
-                            const SizedBox(height: 42),
-                            const StudentDensityEyebrow('COURSE ROUTE'),
-                            const SizedBox(height: 10),
-                            const Text(
-                              '코스 진행 경로',
-                              style: TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            const Text(
-                              '현재 단원은 자동으로 펼쳐집니다. 단원을 눌러 미션을 확인하세요.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: StudentDensityTokens.muted,
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            _RouteLegend(),
-                            const SizedBox(height: 12),
-                            for (
-                              var index = 0;
-                              index < course.units.length;
-                              index++
-                            )
-                              _LearningUnitCard(
-                                unit: course.units[index],
-                                scale: 1,
-                                isExpanded: _expandedUnits.contains(index),
-                                onToggle: () => _toggleUnit(index),
-                                onMissionTap: (mission) => _handleMissionTap(
-                                  course.units[index],
-                                  mission,
-                                ),
-                              ),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
+                    ),
+                    const SizedBox(height: 42),
+                    const StudentDensityEyebrow('COURSE ROUTE'),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '코스 진행 경로',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.2,
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      '현재 단원은 자동으로 펼쳐집니다. 단원을 눌러 미션을 확인하세요.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: StudentDensityTokens.muted,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _RouteLegend(),
+                    const SizedBox(height: 12),
+                    for (var index = 0; index < course.units.length; index++)
+                      _LearningUnitCard(
+                        unit: course.units[index],
+                        scale: 1,
+                        isExpanded: _expandedUnits.contains(index),
+                        onToggle: () => _toggleUnit(index),
+                        onMissionTap: (mission) =>
+                            _handleMissionTap(course.units[index], mission),
+                      ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -613,14 +581,12 @@ class _MobileCourseLearningBody extends StatelessWidget {
   const _MobileCourseLearningBody({
     required this.course,
     required this.expandedUnits,
-    required this.onBack,
     required this.onToggleUnit,
     required this.onMissionTap,
   });
 
   final Course course;
   final Set<int> expandedUnits;
-  final VoidCallback onBack;
   final ValueChanged<int> onToggleUnit;
   final Future<void> Function(CourseUnit, CourseUnitMission) onMissionTap;
 
@@ -641,8 +607,7 @@ class _MobileCourseLearningBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _MobileLearningNavigation(onBack: onBack),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           _MobileCourseOverview(course: course),
           const SizedBox(height: 14),
           _MobileCurrentLearningCard(
@@ -1713,7 +1678,10 @@ class _CurrentLearning extends StatelessWidget {
                 ],
               )
             : SizedBox(
-                height: 190,
+                // The HTML desktop panel uses a 252px hero rhythm. The old
+                // 190px cap left only 130px for the padded copy column, so
+                // narrow desktop shells could overflow when a title wrapped.
+                height: 252,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

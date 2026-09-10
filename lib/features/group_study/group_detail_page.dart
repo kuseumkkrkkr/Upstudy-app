@@ -23,7 +23,9 @@ class GroupDetailPage extends StatefulWidget {
 
   final String groupId;
   final Object? initialGroup;
-  final List<StudyGroupMember>? initialMembers;
+
+  /// 실제 소셜 멤버와 예전 학원 멤버 입력을 함께 받는 호환 경계다.
+  final List<Object>? initialMembers;
   final List<SolveHistoryItem>? initialShareHistory;
   final List<ExamPaperEntry>? initialShareExams;
   final List<StudyGroupMessage>? initialChatMessages;
@@ -64,7 +66,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
     unawaited(_loadCurrentUser());
     if (widget.initialGroup != null) {
       _group = _coerceGroup(widget.initialGroup!);
-      _members = widget.initialMembers ?? const [];
+      _members = _coerceMembers(widget.initialMembers);
       _loading = false;
       unawaited(_loadResources());
       unawaited(_loadSchedules());
@@ -86,6 +88,23 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       maxMembers: group.maxMembers,
       isPublic: group.searchable,
     );
+  }
+
+  List<StudyGroupMember> _coerceMembers(List<Object>? values) {
+    if (values == null) return const [];
+    return values
+        .map((value) {
+          if (value is StudyGroupMember) return value;
+          if (value is AcademyGroupMember) {
+            return StudyGroupMember(
+              username: value.userId,
+              role: value.role == 'leader' ? 'admin' : value.role,
+            );
+          }
+          return null;
+        })
+        .whereType<StudyGroupMember>()
+        .toList(growable: false);
   }
 
   /// 필요한 변수는 그룹 ID다.

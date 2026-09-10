@@ -9,6 +9,7 @@ import 'package:s11/features/group_study/group_list_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/friend/ui/student_direct_chat_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 Future<void> _openMobileFriendsTab(WidgetTester tester) async {
   expect(find.byKey(const ValueKey('mobile-social-tabs')), findsOneWidget);
@@ -73,7 +74,7 @@ void main() {
     await tester.pump();
 
     await _openMobileFriendsTab(tester);
-    await tester.tap(find.byKey(const ValueKey('mobile-friend-add-open')));
+    await tester.tap(find.byKey(const ValueKey('student-search-action')));
     await tester.pumpAndSettle();
 
     expect(
@@ -345,7 +346,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey('mobile-social-topbar')), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
     expect(find.text('함께 공부'), findsOneWidget);
     expect(find.byKey(const ValueKey('mobile-social-tabs')), findsOneWidget);
     expect(
@@ -380,7 +381,7 @@ void main() {
       const MaterialApp(home: GroupListPage(initialGroups: <Object>[])),
     );
     await tester.pump();
-    expect(find.byKey(const ValueKey('groups-mobile-topbar')), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
     expect(find.byKey(const ValueKey('groups-mobile-tabs')), findsOneWidget);
     expect(find.byKey(const ValueKey('groups-mobile-heading')), findsOneWidget);
     expect(find.byKey(const ValueKey('groups-mobile-empty')), findsOneWidget);

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 import 'package:s11/sessions/graph_tools/shared/jsx_graph_html_builder.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 void main() {
   testWidgets('그래프 직접 그리기 화면은 교과 예제 대신 빈 수식으로 시작한다', (tester) async {
@@ -26,9 +27,9 @@ void main() {
     expect(find.text('좌표평면'), findsNothing);
   });
 
-  testWidgets('전체 메뉴가 열리면 그래프 플랫폼 뷰를 잠시 제거한다', (tester) async {
-    // 필요한 변수는 데스크톱 화면과 전체 메뉴가 있는 그래프 페이지다.
-    // 작동 원리는 메뉴 아이콘을 누른 뒤 웹뷰 대신 일시 중단 영역이 렌더링되는지 확인한다.
+  testWidgets('그래프 화면은 공통 HTML 셸에서 뒤로가기와 레일을 제공한다', (tester) async {
+    // 필요한 변수는 데스크톱 화면과 공통 HTML 학생 셸이다.
+    // 작동 원리는 전용 메뉴 대신 상단바·레일 계약을 사용하고 그래프 본문을 그대로 유지하는지 확인한다.
     tester.view.physicalSize = const Size(1600, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -39,14 +40,12 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byTooltip('전체 메뉴'));
-    await tester.pump();
-
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
+    expect(find.byType(StudentHtmlRail), findsOneWidget);
     expect(
       find.byKey(const ValueKey('graph-embed-suspended-for-drawer')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.byType(Drawer), findsOneWidget);
   });
 
   testWidgets('좁은 화면에서 앱바 그래프 도구가 넘치지 않는다', (tester) async {

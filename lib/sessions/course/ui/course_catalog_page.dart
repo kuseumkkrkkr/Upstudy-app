@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:s11/app/router.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 import 'package:s11/sessions/course/ui/course_detail_page.dart';
 import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
@@ -11,6 +12,7 @@ import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 enum CourseEntryTarget { learning, detail }
 
@@ -217,9 +219,10 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
       limit: _coursePageSize,
       offset: _publicCourseOffset,
     );
-    final mine = await CourseService.fetchMyCourses().catchError(
-      (_) => const <Course>[],
-    );
+    // Keep a failed personal-course request distinct from a valid empty list;
+    // the page must offer its retry state instead of silently hiding an API
+    // outage as “no courses”.
+    final mine = await CourseService.fetchMyCourses();
     final byId = <String, Course>{};
     for (final course in [...publicCourses, ...mine]) {
       if (course.id.trim().isEmpty) continue;
@@ -534,166 +537,82 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
     final rating = _formatVisibleOvr(RatingStore.notifier.value.ovr);
-    return Scaffold(
-      backgroundColor: mobile
-          ? StudentDensityTokens.surface
-          : StudentDensityTokens.background,
-      drawer: mobile ? null : const AppDrawer(),
-      bottomNavigationBar: mobile
-          ? const MobileStudentBottomAppBar(activeRoute: '/courses')
-          : null,
-      body: SafeArea(
-        child: Column(
-          children: [
-            if (mobile) _MobileCourseTopBar(onSearch: _showMobileCatalogSearch),
-            Expanded(
-              child: FutureBuilder<List<GenerationTagGroup>>(
-                future: _tagGroupsFuture,
-                builder: (context, tagSnapshot) {
-                  final tagGroups =
-                      tagSnapshot.data ?? const <GenerationTagGroup>[];
-                  final matchingSubjects = tagGroups
-                      .where((item) => item.name == _subjectName)
-                      .toList(growable: false);
-                  final subject = matchingSubjects.isEmpty
-                      ? null
-                      : matchingSubjects.first;
-                  return FutureBuilder<List<Course>>(
-                    future: _future,
-                    builder: (context, snapshot) {
-                      final allCourses = snapshot.data ?? const <Course>[];
-                      final courses = allCourses
-                          .where((course) => _matchesFilter(course, subject))
-                          .toList(growable: false);
-                      // 공개 목록은 페이지당 6개만 추가 노출해 한 화면에 전체 재고를 렌더링하지 않는다.
-                      final libraryCourses = _publicCourseOffset == 0
-                          ? courses
-                          : courses
-                                .take(_publicCourseOffset)
-                                .toList(growable: false);
-                      final active = allCourses
-                          .where(
-                            (course) =>
-                                course.isEnrolled && !course.isCompleted,
-                          )
-                          .toList(growable: false);
-                      final recommended = _buildRecommendedCourses(
-                        allCourses,
-                        _lastRecommend,
-                      );
-                      if (!mobile) {
-                        return _DesktopCourseShell(
-                          active: active,
-                          loading:
-                              snapshot.connectionState ==
-                              ConnectionState.waiting,
-                          hasError: snapshot.hasError,
-                          onRetry: _load,
-                          onDiscover: _showMobileCatalogSearch,
-                          onAnalysis: () => _showMobileCourseAnalysis(active),
-                          onOpen: _openCourse,
-                        );
-                      }
-                      return SingleChildScrollView(
-                        key: ValueKey(
-                          mobile
-                              ? 'course-catalog-mobile'
-                              : 'course-catalog-desktop',
-                        ),
-                        child: StudentDensityPage(
-                          padding: mobile ? EdgeInsets.zero : null,
-                          child: mobile
-                              ? _MobileCourseCatalog(
-                                  rating: rating,
-                                  controller: _searchController,
-                                  filter: _filter,
-                                  tagGroups: tagGroups,
-                                  subjectName: _subjectName,
-                                  tag: _tag,
-                                  active: active,
-                                  recommended: recommended,
-                                  courses: libraryCourses,
-                                  loading:
-                                      snapshot.connectionState ==
-                                      ConnectionState.waiting,
-                                  hasMore: _hasMoreCourses,
-                                  loadingMore: _loadingMoreCourses,
-                                  onFilter: (value) =>
-                                      setState(() => _filter = value),
-                                  onTagFilter: _selectTagFilter,
-                                  onSearch: _load,
-                                  onOpen: _openCourse,
-                                  onLoadMore: _loadMoreCourses,
-                                  onAnalysis: () =>
-                                      _showMobileCourseAnalysis(active),
-                                  onDiscover: _showMobileCatalogSearch,
-                                )
-                              : Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    _CoursePageHead(rating: rating),
-                                    const SizedBox(height: 16),
-                                    _CourseSearchDock(
-                                      controller: _searchController,
-                                      filter: _filter,
-                                      tagGroups: tagGroups,
-                                      subjectName: _subjectName,
-                                      tag: _tag,
-                                      onFilter: (value) =>
-                                          setState(() => _filter = value),
-                                      onTagFilter: _selectTagFilter,
-                                      onSearch: _load,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _ResumeCourses(
-                                      courses: active,
-                                      loading:
-                                          snapshot.connectionState ==
-                                          ConnectionState.waiting,
-                                      onOpen: _openCourse,
-                                      onReorder: () => showCourseReorderDialog(
-                                        context,
-                                        courses: active,
-                                        onSaved: _load,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    if (recommended.isNotEmpty)
-                                      _RecommendationSection(
-                                        courses: recommended,
-                                        onOpen: _openCourse,
-                                        onCompare: () =>
-                                            showCourseCompareDialog(
-                                              context,
-                                              courses: recommended
-                                                  .map((item) => item.course)
-                                                  .toList(growable: false),
-                                            ),
-                                      ),
-                                    const SizedBox(height: 14),
-                                    _CourseLibrary(
-                                      courses: libraryCourses,
-                                      loading:
-                                          snapshot.connectionState ==
-                                          ConnectionState.waiting,
-                                      mobile: false,
-                                      onOpen: _openCourse,
-                                      hasMore: _hasMoreCourses,
-                                      loadingMore: _loadingMoreCourses,
-                                      onLoadMore: _loadMoreCourses,
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+    return StudentHtmlShell(
+      title: '코스',
+      activeRoute: AppRoutes.courses,
+      showContextAside: false,
+      railWidth: 76,
+      onSearch: _showMobileCatalogSearch,
+      child: FutureBuilder<List<GenerationTagGroup>>(
+        future: _tagGroupsFuture,
+        builder: (context, tagSnapshot) {
+          final tagGroups = tagSnapshot.data ?? const <GenerationTagGroup>[];
+          final matchingSubjects = tagGroups
+              .where((item) => item.name == _subjectName)
+              .toList(growable: false);
+          final subject = matchingSubjects.isEmpty
+              ? null
+              : matchingSubjects.first;
+          return FutureBuilder<List<Course>>(
+            future: _future,
+            builder: (context, snapshot) {
+              final allCourses = snapshot.data ?? const <Course>[];
+              final courses = allCourses
+                  .where((course) => _matchesFilter(course, subject))
+                  .toList(growable: false);
+              // 공개 목록은 페이지당 6개만 추가 노출해 한 화면에 전체 재고를 렌더링하지 않는다.
+              final libraryCourses = _publicCourseOffset == 0
+                  ? courses
+                  : courses.take(_publicCourseOffset).toList(growable: false);
+              final active = allCourses
+                  .where((course) => course.isEnrolled && !course.isCompleted)
+                  .toList(growable: false);
+              final recommended = _buildRecommendedCourses(
+                allCourses,
+                _lastRecommend,
+              );
+              if (!mobile) {
+                return _DesktopCourseShell(
+                  active: active,
+                  loading: snapshot.connectionState == ConnectionState.waiting,
+                  hasError: snapshot.hasError,
+                  onRetry: _load,
+                  onDiscover: _showMobileCatalogSearch,
+                  onAnalysis: () => _showMobileCourseAnalysis(active),
+                  onOpen: _openCourse,
+                );
+              }
+              return SingleChildScrollView(
+                key: const ValueKey('course-catalog-mobile'),
+                child: StudentDensityPage(
+                  padding: EdgeInsets.zero,
+                  child: _MobileCourseCatalog(
+                    rating: rating,
+                    controller: _searchController,
+                    filter: _filter,
+                    tagGroups: tagGroups,
+                    subjectName: _subjectName,
+                    tag: _tag,
+                    active: active,
+                    recommended: recommended,
+                    courses: libraryCourses,
+                    loading:
+                        snapshot.connectionState == ConnectionState.waiting,
+                    hasMore: _hasMoreCourses,
+                    loadingMore: _loadingMoreCourses,
+                    onFilter: (value) => setState(() => _filter = value),
+                    onTagFilter: _selectTagFilter,
+                    onSearch: _load,
+                    onOpen: _openCourse,
+                    onLoadMore: _loadMoreCourses,
+                    onAnalysis: () => _showMobileCourseAnalysis(active),
+                    onDiscover: _showMobileCatalogSearch,
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -719,101 +638,73 @@ class _DesktopCourseShell extends StatelessWidget {
   final ValueChanged<Course> onOpen;
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => ColoredBox(
     key: const ValueKey('course-desktop-shell'),
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const _DesktopCourseRail(),
-      Expanded(
-        child: Column(
-          children: [
-            _DesktopCourseToolbar(onSearch: onDiscover),
-            Expanded(
-              child: ColoredBox(
-                color: StudentDensityTokens.background,
-                child: SingleChildScrollView(
-                  key: const ValueKey('course-catalog-desktop'),
-                  padding: const EdgeInsets.fromLTRB(18, 22, 18, 48),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 760),
-                      child: DecoratedBox(
-                        key: const ValueKey('course-desktop-panel'),
-                        decoration: const BoxDecoration(
-                          color: StudentDensityTokens.surface,
-                          border: Border(
-                            top: BorderSide(color: StudentDensityTokens.ink),
-                            right: BorderSide(color: StudentDensityTokens.ink),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _DesktopCourseGroup(
-                              key: const ValueKey(
-                                'course-desktop-section-active',
-                              ),
-                              number: '01',
-                              title: '학습 중',
-                              child: loading
-                                  ? const _MobileCourseLoadingRow()
-                                  : hasError
-                                  ? _MobileCourseLoadErrorRow(onRetry: onRetry)
-                                  : active.isEmpty
-                                  ? _AtlasMobileCourseEmptyRow(
-                                      onDiscover: onDiscover,
-                                    )
-                                  : _DesktopCourseList(
-                                      courses: active,
-                                      onOpen: onOpen,
-                                    ),
-                            ),
-                            _DesktopCourseGroup(
-                              key: const ValueKey(
-                                'course-desktop-section-manage',
-                              ),
-                              number: '02',
-                              title: '코스 관리',
-                              child: Column(
-                                children: [
-                                  _DesktopCourseActionRow(
-                                    key: const ValueKey(
-                                      'course-desktop-discover',
-                                    ),
-                                    icon: OpenDesignIconName.search,
-                                    title: '새 코스 찾기',
-                                    detail: '자료실에서 내 학습에 맞는 코스 찾기',
-                                    action: '찾기',
-                                    onTap: onDiscover,
-                                  ),
-                                  _DesktopCourseActionRow(
-                                    key: const ValueKey(
-                                      'course-desktop-analysis',
-                                    ),
-                                    icon: OpenDesignIconName.analytics,
-                                    title: '코스 진행 분석',
-                                    detail: active.isEmpty
-                                        ? '평균 진행 0% · 학습 중 0개'
-                                        : '평균 진행 ${_averageProgress(active)}% · 학습 중 ${active.length}개',
-                                    action: '보기',
-                                    onTap: onAnalysis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+    color: StudentDensityTokens.background,
+    child: SingleChildScrollView(
+      key: const ValueKey('course-catalog-desktop'),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 48),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: DecoratedBox(
+            key: const ValueKey('course-desktop-panel'),
+            decoration: const BoxDecoration(
+              color: StudentDensityTokens.surface,
+              border: Border(
+                top: BorderSide(color: StudentDensityTokens.ink),
+                right: BorderSide(color: StudentDensityTokens.ink),
               ),
             ),
-          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _DesktopCourseGroup(
+                  key: const ValueKey('course-desktop-section-active'),
+                  number: '01',
+                  title: '학습 중',
+                  child: loading
+                      ? const _MobileCourseLoadingRow()
+                      : hasError
+                      ? _MobileCourseLoadErrorRow(onRetry: onRetry)
+                      : active.isEmpty
+                      ? _AtlasMobileCourseEmptyRow(onDiscover: onDiscover)
+                      : _DesktopCourseList(courses: active, onOpen: onOpen),
+                ),
+                _DesktopCourseGroup(
+                  key: const ValueKey('course-desktop-section-manage'),
+                  number: '02',
+                  title: '코스 관리',
+                  child: Column(
+                    children: [
+                      _DesktopCourseActionRow(
+                        key: const ValueKey('course-desktop-discover'),
+                        icon: OpenDesignIconName.search,
+                        title: '새 코스 찾기',
+                        detail: '자료실에서 내 학습에 맞는 코스 찾기',
+                        action: '찾기',
+                        onTap: onDiscover,
+                      ),
+                      _DesktopCourseActionRow(
+                        key: const ValueKey('course-desktop-analysis'),
+                        icon: OpenDesignIconName.analytics,
+                        title: '코스 진행 분석',
+                        detail: active.isEmpty
+                            ? '평균 진행 0% · 학습 중 0개'
+                            : '평균 진행 ${_averageProgress(active)}% · 학습 중 ${active.length}개',
+                        action: '보기',
+                        onTap: onAnalysis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-    ],
+    ),
   );
 }
 

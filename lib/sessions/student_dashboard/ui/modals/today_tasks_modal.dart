@@ -71,14 +71,44 @@ Future<T?> showTodayTasksModal<T>({
 class TodayTasksModal extends StatelessWidget {
   const TodayTasksModal({
     super.key,
-    required this.tasks,
-    required this.onTaskTap,
+    this.tasks = const [],
+    this.onTaskTap,
     this.mobileSheet = false,
+    this.initialTasksByDate,
+    this.lockedTasksByDate,
+    this.onTasksChanged,
   });
 
   final List<TodayTaskEntry> tasks;
-  final ValueChanged<TodayTaskEntry> onTaskTap;
+  final ValueChanged<TodayTaskEntry>? onTaskTap;
   final bool mobileSheet;
+  // 예전 일정 모달 호출부와의 호환용 입력이다. 새 홈 모달은 `tasks`를 사용한다.
+  final Map<DateTime, List<String>>? initialTasksByDate;
+  final Map<DateTime, List<String>>? lockedTasksByDate;
+  final ValueChanged<Map<DateTime, List<String>>>? onTasksChanged;
+
+  List<TodayTaskEntry> get _displayTasks {
+    if (tasks.isNotEmpty ||
+        (initialTasksByDate == null && lockedTasksByDate == null)) {
+      return tasks;
+    }
+    final today = DateTime.now();
+    final entries = <TodayTaskEntry>[];
+    void add(Map<DateTime, List<String>>? source, IconData icon) {
+      final values =
+          source?[DateTime(today.year, today.month, today.day)] ?? [];
+      entries.addAll(
+        values.map(
+          (title) =>
+              TodayTaskEntry(title: title, caption: '오늘 할 일', icon: icon),
+        ),
+      );
+    }
+
+    add(initialTasksByDate, Icons.edit_calendar_outlined);
+    add(lockedTasksByDate, Icons.lock_outline);
+    return entries;
+  }
 
   /// 필요한 변수는 화면 크기와 오늘의 할 일 목록이다.
   /// 작동 원리: 모달 본문은 스크롤 가능한 상세 카드 목록만 두며, 일정 편집·달력·
@@ -87,6 +117,7 @@ class TodayTasksModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final mobile = size.width <= 780;
+    final displayTasks = _displayTasks;
     return Container(
       key: mobileSheet ? const ValueKey('today-tasks-mobile-sheet') : null,
       width: mobile
@@ -149,21 +180,39 @@ class TodayTasksModal extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: '닫기',
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                  style: IconButton.styleFrom(
-                    fixedSize: const Size.square(48),
-                    backgroundColor: mobileSheet ? Colors.white : null,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (initialTasksByDate != null || lockedTasksByDate != null)
+                      TextButton(
+                        onPressed: () {
+                          final today = DateTime.now();
+                          showDialog<void>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: Text('${today.year}년 ${today.month}월'),
+                            ),
+                          );
+                        },
+                        child: const Text('일정 달력에서 보기'),
+                      ),
+                    IconButton(
+                      tooltip: '닫기',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      style: IconButton.styleFrom(
+                        fixedSize: const Size.square(48),
+                        backgroundColor: mobileSheet ? Colors.white : null,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           if (!mobileSheet) const Divider(height: 1, color: Color(0xFFE4E4E6)),
           Expanded(
-            child: tasks.isEmpty
+            child: displayTasks.isEmpty
                 ? const Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -191,13 +240,13 @@ class TodayTasksModal extends StatelessWidget {
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.all(24),
-                    itemCount: tasks.length,
+                    itemCount: displayTasks.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) => _TodayTaskCard(
-                      task: tasks[index],
+                      task: displayTasks[index],
                       onTap: () {
                         Navigator.of(context).pop();
-                        onTaskTap(tasks[index]);
+                        onTaskTap?.call(displayTasks[index]);
                       },
                     ),
                   ),

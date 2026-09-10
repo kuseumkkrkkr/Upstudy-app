@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/sessions/friend/shared/social_message_hub.dart';
 import 'package:s11/shared/services/api/api_client.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 class StudentDirectChatPage extends StatefulWidget {
   const StudentDirectChatPage({
@@ -343,36 +342,36 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
     ),
   );
 
-  Widget _buildMobileChat() => Scaffold(
-    key: const ValueKey('mobile-direct-chat'),
-    backgroundColor: StudentDensityTokens.background,
-    appBar: AppBar(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      titleSpacing: 0,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.peerUsername,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
-          ),
-          Text(
-            widget.peerStatus,
-            style: const TextStyle(fontSize: 11, color: Colors.black45),
-          ),
-        ],
-      ),
-      actions: [
-        IconButton(
-          onPressed: _deleteThread,
-          tooltip: '대화 삭제',
-          icon: const Icon(Icons.more_horiz_rounded),
-        ),
-      ],
-    ),
-    body: Column(
+  Widget _buildMobileChat() => StudentHtmlShell(
+    title: widget.peerUsername,
+    activeRoute: '/social',
+    onMenu: () => Navigator.of(context).maybePop(),
+    child: Column(
       children: [
+        Container(
+          key: const ValueKey('mobile-direct-chat'),
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.peerStatus,
+                  style: const TextStyle(fontSize: 12, color: Colors.black45),
+                ),
+              ),
+              IconButton(
+                onPressed: _deleteThread,
+                tooltip: '대화 삭제',
+                icon: const Icon(Icons.more_horiz_rounded),
+              ),
+            ],
+          ),
+        ),
         Expanded(child: _messageList()),
         _mobileComposer(),
       ],
@@ -384,181 +383,154 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
   @override
   Widget build(BuildContext context) {
     if (isStudentDensityMobile(context)) return _buildMobileChat();
-    return Scaffold(
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      body: SafeArea(
+    return StudentHtmlShell(
+      title: '채팅',
+      activeRoute: '/social',
+      showContextAside: true,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 22, 14, 16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Builder(
-              builder: (context) => Ios26TopBar(
-                brandColor: Colors.black,
-                showLevelIndicator: false,
-                onMenu: () => toggleAppDrawer(context),
-                onTitleTap: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/student/dashboard',
-                  (route) => false,
-                ),
-                items: const [],
+            const Text(
+              'SOCIAL',
+              style: TextStyle(
+                fontSize: 10,
+                letterSpacing: 1.7,
+                color: Colors.black54,
+                fontWeight: FontWeight.w900,
               ),
             ),
+            const SizedBox(height: 7),
+            const Text(
+              '채팅',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              '친구·그룹 대화와 자료 공유를 실시간 상태로 연결합니다.',
+              style: TextStyle(color: Colors.black45),
+            ),
+            const SizedBox(height: 14),
+            FilledButton(
+              onPressed: () => _controller.clear(),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF202022),
+                minimumSize: const Size.fromHeight(46),
+              ),
+              child: const Text('새 메시지'),
+            ),
+            const SizedBox(height: 14),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 22, 14, 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: const Color(0xFFE1E1E3)),
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'SOCIAL',
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.7,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w900,
+                    Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.peerUsername,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  widget.peerStatus,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black45,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const _LiveBadge(),
+                          IconButton(
+                            onPressed: _deleteThread,
+                            tooltip: '대화 삭제',
+                            icon: const Icon(Icons.more_horiz),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 7),
-                    const Text(
-                      '채팅',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      '친구·그룹 대화와 자료 공유를 실시간 상태로 연결합니다.',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                    const SizedBox(height: 14),
-                    FilledButton(
-                      onPressed: () => _controller.clear(),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF202022),
-                        minimumSize: const Size.fromHeight(46),
-                      ),
-                      child: const Text('새 메시지'),
-                    ),
-                    const SizedBox(height: 14),
+                    const Divider(height: 1),
                     Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: const Color(0xFFE1E1E3)),
-                        ),
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(18),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          widget.peerUsername,
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          widget.peerStatus,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black45,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const _LiveBadge(),
-                                  IconButton(
-                                    onPressed: _deleteThread,
-                                    tooltip: '대화 삭제',
-                                    icon: const Icon(Icons.more_horiz),
-                                  ),
-                                ],
+                      child: _loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.fromLTRB(
+                                18,
+                                24,
+                                18,
+                                18,
                               ),
+                              itemCount: _messages.length,
+                              itemBuilder: (_, index) =>
+                                  _bubble(_messages[index]),
                             ),
-                            const Divider(height: 1),
-                            Expanded(
-                              child: _loading
-                                  ? const Center(
-                                      child: CircularProgressIndicator(),
-                                    )
-                                  : ListView.builder(
-                                      controller: _scrollController,
-                                      padding: const EdgeInsets.fromLTRB(
-                                        18,
-                                        24,
-                                        18,
-                                        18,
-                                      ),
-                                      itemCount: _messages.length,
-                                      itemBuilder: (_, index) =>
-                                          _bubble(_messages[index]),
-                                    ),
-                            ),
-                            const Divider(height: 1),
-                            Padding(
-                              padding: const EdgeInsets.all(14),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _controller,
-                                      onSubmitted: (_) => _sendMessage(),
-                                      decoration: InputDecoration(
-                                        hintText: '메시지 입력',
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  FilledButton(
-                                    onPressed: _sending ? null : _sendMessage,
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: const Color(0xFF202022),
-                                      minimumSize: const Size(58, 54),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    child: const Text('전송'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
-                    const SizedBox(height: 10),
-                    const Wrap(
-                      spacing: 7,
-                      runSpacing: 7,
-                      children: [
-                        _ChatFeatureChip('대화 목록'),
-                        _ChatFeatureChip('메시지 조회'),
-                        _ChatFeatureChip('메시지 전송'),
-                        _ChatFeatureChip('대화 삭제'),
-                        _ChatFeatureChip('읽지 않음'),
-                        _ChatFeatureChip('Flow 공유'),
-                        _ChatFeatureChip('실시간 소셜 WebSocket'),
-                      ],
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              onSubmitted: (_) => _sendMessage(),
+                              decoration: InputDecoration(
+                                hintText: '메시지 입력',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _sending ? null : _sendMessage,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF202022),
+                              minimumSize: const Size(58, 54),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('전송'),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 10),
+            const Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: [
+                _ChatFeatureChip('대화 목록'),
+                _ChatFeatureChip('메시지 조회'),
+                _ChatFeatureChip('메시지 전송'),
+                _ChatFeatureChip('대화 삭제'),
+                _ChatFeatureChip('읽지 않음'),
+                _ChatFeatureChip('Flow 공유'),
+                _ChatFeatureChip('실시간 소셜 WebSocket'),
+              ],
             ),
           ],
         ),

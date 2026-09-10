@@ -130,7 +130,7 @@ ThemeData _studentDensityTheme() {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(StudentDensityTokens.radius),
+        borderRadius: BorderRadius.zero,
         side: const BorderSide(color: StudentDensityTokens.line),
       ),
     ),
@@ -139,15 +139,15 @@ ThemeData _studentDensityTheme() {
       fillColor: StudentDensityTokens.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.zero,
         borderSide: const BorderSide(color: StudentDensityTokens.line),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.zero,
         borderSide: const BorderSide(color: StudentDensityTokens.line),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.zero,
         borderSide: const BorderSide(
           color: StudentDensityTokens.dark,
           width: 1.5,
@@ -157,19 +157,19 @@ ThemeData _studentDensityTheme() {
     dialogTheme: DialogThemeData(
       backgroundColor: StudentDensityTokens.surface,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: StudentDensityTokens.surface,
       selectedColor: StudentDensityTokens.dark,
       side: const BorderSide(color: StudentDensityTokens.line),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: StudentDensityTokens.dark,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
     ),
   );

@@ -182,13 +182,16 @@ class _HtmlCourseDetailBody extends StatelessWidget {
                 progressLabel: progressLabel,
                 progressCopy: progressCopy,
                 units: units,
+                completedCourse: course.isCompleted,
                 enrolling: enrolling,
                 onResume: onResume,
+                onPreview: onPreview,
               ),
               SizedBox(height: mobile ? 14 : 16),
               _HtmlCourseCurriculum(
                 mobile: mobile,
                 units: units,
+                completedCourse: course.isCompleted,
                 onResume: onResume,
                 onPreview: onPreview,
               ),
@@ -207,8 +210,10 @@ class _HtmlCourseProgressHero extends StatelessWidget {
     required this.progressLabel,
     required this.progressCopy,
     required this.units,
+    required this.completedCourse,
     required this.enrolling,
     required this.onResume,
+    required this.onPreview,
   });
 
   final bool mobile;
@@ -216,8 +221,10 @@ class _HtmlCourseProgressHero extends StatelessWidget {
   final String progressLabel;
   final String progressCopy;
   final List<CourseUnit> units;
+  final bool completedCourse;
   final bool enrolling;
   final VoidCallback onResume;
+  final VoidCallback onPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +340,11 @@ class _HtmlCourseProgressHero extends StatelessWidget {
                 SizedBox(
                   height: 48,
                   child: FilledButton(
-                    onPressed: enrolling ? null : onResume,
+                    onPressed: enrolling
+                        ? null
+                        : completedCourse
+                        ? onPreview
+                        : onResume,
                     style: FilledButton.styleFrom(
                       backgroundColor: StudentDensityTokens.dark,
                       foregroundColor: Colors.white,
@@ -341,7 +352,13 @@ class _HtmlCourseProgressHero extends StatelessWidget {
                         borderRadius: BorderRadius.zero,
                       ),
                     ),
-                    child: Text(enrolling ? '불러오는 중…' : '학습 이어가기 →'),
+                    child: Text(
+                      enrolling
+                          ? '불러오는 중…'
+                          : completedCourse
+                          ? '미리보기 →'
+                          : '학습 이어가기 →',
+                    ),
                   ),
                 ),
               ],
@@ -398,12 +415,14 @@ class _HtmlCourseCurriculum extends StatelessWidget {
   const _HtmlCourseCurriculum({
     required this.mobile,
     required this.units,
+    required this.completedCourse,
     required this.onResume,
     required this.onPreview,
   });
 
   final bool mobile;
   final List<CourseUnit> units;
+  final bool completedCourse;
   final VoidCallback onResume;
   final VoidCallback onPreview;
 
@@ -450,7 +469,9 @@ class _HtmlCourseCurriculum extends StatelessWidget {
                 unit: units[index],
                 index: index,
                 mobile: mobile,
-                onTap: units[index].status == CourseUnitStatus.locked
+                onTap:
+                    completedCourse ||
+                        units[index].status == CourseUnitStatus.locked
                     ? onPreview
                     : onResume,
               ),
@@ -460,7 +481,7 @@ class _HtmlCourseCurriculum extends StatelessWidget {
               child: SizedBox(
                 height: 52,
                 child: FilledButton(
-                  onPressed: onResume,
+                  onPressed: completedCourse ? onPreview : onResume,
                   style: FilledButton.styleFrom(
                     backgroundColor: StudentDensityTokens.dark,
                     foregroundColor: Colors.white,
@@ -468,7 +489,7 @@ class _HtmlCourseCurriculum extends StatelessWidget {
                       borderRadius: BorderRadius.zero,
                     ),
                   ),
-                  child: const Text('학습 이어가기 →'),
+                  child: Text(completedCourse ? '미리보기 →' : '학습 이어가기 →'),
                 ),
               ),
             ),

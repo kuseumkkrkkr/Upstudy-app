@@ -269,6 +269,23 @@
 | 그룹 초대 | `/groups/join?code=ABC123`를 `StudentHtmlShell`로 전환하고 실제 초대 메타 조회·참가·복귀 동작을 유지 | `lib/features/group_study/group_join_page.dart`, `test/secondary_route_shell_test.dart`; 배포 `deployed-54fDiww-group-join-390x844.png`, `deployed-54fDiww-group-join-1280x900.png` | 최신 production에서 HTML 모바일/PC 셸과 콘솔 error/warn 0건을 확인. 인증/코드가 없으면 실제 404 오류·재시도 상태를 표시 |
 | 그룹 상세 | `/group/detail?id=group-1`을 `StudentHtmlShell`로 전환하고 그룹·멤버·일정·공유·채팅 동작을 유지 | `lib/features/group_study/group_detail_page.dart`, `lib/app/router.dart`, `test/group_detail_mobile_test.dart`; 배포 `deployed-54fDiww-group-detail-390x844.png`, `deployed-54fDiww-group-detail-1280x900.png` | 최신 production에서 HTML 모바일/PC 셸과 콘솔 error/warn 0건을 확인. 인증 없는 canary는 그룹 정보 오류 상태를 표시하며 임의 그룹을 삽입하지 않음 |
 
+### 2026-09-02 추가 이식분 — hotfix 작업 트리
+
+아래 항목은 지정 HTML의 구조·셸·상태 순서를 실제 Flutter 화면에 연결한 변경분이다. 배포 캡처가 생성되기 전까지 이미지 근거는 `pending`으로 남기며, 코드/테스트 근거만으로 시각적 일치를 확정하지 않는다.
+
+| HTML ID | Flutter 반영 | 코드·테스트 근거 | 이미지 근거 / 잔여 확인 |
+| --- | --- | --- | --- |
+| courses | 코스 목록을 `StudentHtmlShell`에 연결하고 HTML 순서(현재 코스 → 추천 → 전체 코스), 필터·검색·카드 CTA를 유지 | `lib/sessions/course/ui/course_catalog_page.dart`; `test/course_catalog_opendesign_recovery_test.dart`, `test/student_home_course_catalog_responsive_test.dart`, `test/student_learning_widget_test.dart` | `pending` — 390×844·1280×900 재배포 캡처 필요 |
+| course-detail | 완료 코스는 학습 CTA 대신 `미리보기 →`를 노출하고 잠금/단원 CTA도 미리보기로 연결 | `lib/sessions/course/ui/course_detail_page.dart`; `test/student_learning_widget_test.dart` | `pending` — 완료/빈 유닛 상태 이미지 필요 |
+| course-learning | 모바일/PC를 공통 셸로 전환하고 좁은 데스크톱 학습 패널의 고정 높이를 HTML 리듬(252px)에 맞춤 | `lib/sessions/course/session/course_learning_page.dart`; `test/course_learning_mobile_redesign_test.dart`, `test/student_learning_widget_test.dart` | `pending` — 390×844·1280×900 및 경계 폭 캡처 필요 |
+| social / friend / direct-chat | 친구·요청·추가·직접 채팅을 상단바·모바일 하단탭·소셜 활성 섹션으로 통일 | `lib/sessions/friend/friend.dart`, `lib/sessions/friend/ui/friend_screen.dart`, `lib/sessions/friend/ui/student_direct_chat_page.dart`; `test/friend_request_mobile_test.dart`, `test/mobile_secondary_shell_test.dart` | `pending` — 친구 목록/요청/채팅 상태별 이미지 필요 |
+| groups / arena | 그룹 목록과 대결장을 `StudentHtmlShell`로 감싸고 기존 생성·참여·매칭 API/상태를 보존 | `lib/features/group_study/group_list_page.dart`, `lib/features/arena/arena_page.dart`; `test/mobile_secondary_shell_test.dart`, `test/arena_mobile_join_test.dart` | `pending` — 390×844·1280×900 캡처 필요 |
+| graph / flow-view | 그래프 탐색기와 풀이 흐름 분석을 공통 셸로 연결하되 몰입형 전체화면·드래그 모달은 유지 | `lib/sessions/graph_tools/session/jsx_graph_page.dart`, `lib/sessions/tryout_solve/ui/pages/flow_view_page.dart`; `test/jsx_graph_page_test.dart`, `test/student_learning_widget_test.dart` | `pending` — Canvas/수식/오버레이 이미지 비교 필수 |
+| bookbag / book-library / book-reader | 책가방·교재 라이브러리·자료실을 PC 레일/컨텍스트·모바일 상단바/하단탭으로 통일하고 제목·부제 overflow를 제한 | `lib/sessions/textbook/ui/pages/book_page.dart`, `lib/sessions/textbook/ui/pages/docx_box.dart`; `test/bookbag_mobile_redesign_test.dart` | `pending` — 390×844·1280×900 및 수식 줄바꿈 캡처 필요 |
+| academy-find / tutor-find / service-requests / school-exam-prep / store | 학생서비스·내신·데모 상점 화면을 HTML 셸로 감싸고 기존 demo flag/로컬 상태/인증 경계를 유지 | `lib/features/student_services/student_services_demo_page.dart`; API 계약은 `api/index.py` 및 migration 참조 | `pending` — demo flag on/off, OSM attribution, 빈/오류 상태 이미지 필요 |
+| level-result | 레벨 결과 화면을 공통 셸로 통일하고 852px 이하 렌더링을 모바일 레이아웃으로 검증 | `lib/features/level_test/level_test_result_page.dart`; `test/level_test_result_page_test.dart` | `pending` — 결과/재시도/추천 상태 이미지 필요 |
+| study-center | 학습터를 공통 셸로 전환하고 기존 카드·검색·실행 동작을 유지 | `lib/sessions/legacy_cleanup/session/study_center.dart` | `pending` — 390×844·1280×900 캡처 필요 |
+
 초기 비교 캡처(`deployed-dashboard-390x844.png`)는 이전 `public/main.dart.js` 정적 번들이 배포된 상태라 흰 화면으로 기록되었다. 이후 `HtmlHomeDashboard`가 실제 Flutter 홈 본문을 대체하고 `_HtmlStudentRail`·`_HtmlStudentTopBar`·`_HtmlContextAside` 공통 셸을 추가했다. `725cf16` production 배포에서 HTML과 같은 390×844·1280×900 홈 구조(모바일 상단바/하단탭, 데스크톱 A 레일, 인사·코스·이어하기, 6개 액션, 마이 대시보드, 우측 컨텍스트)를 이미지로 재확인했고, 설정·프로필·코스 목록에도 같은 셸과 HTML 구조를 이식했다(`deployed-725cf16-*.png`). `663fd3d` production 배포에서는 자료실도 같은 셸로 전환해 `deployed-663fd3d-marketplace-390x844.png` 및 `deployed-663fd3d-marketplace-1280x900.png`로 확인했다. 새 탭에서 5초 대기 후 브라우저 콘솔 error/warn은 0건이었다(정보 로그에는 canary `OMJ_JWT_SECRET` 미설정 안내가 남는다). 브라우저 DOM 접근성 스냅샷은 CanvasKit 특성상 `Enable accessibility` 버튼만 노출되어, Semantics·키보드 포커스는 별도 Flutter 테스트 범위로 남긴다. 기준 HTML은 `?screen=home` 상태에서 같은 순서와 밀도로 표시됨을 확인했다. 이 반영은 홈·공통 셸·설정·프로필·코스 상세·자료실 구조에 한정되며, 나머지 화면은 아래 매핑 상태(`partial`/`missing`) 그대로 추가 구현 대상이다.
 
 ### 최종 배포 기록 (2026-09-02)
@@ -285,3 +302,5 @@
 - 수정 파일 대상 `dart analyze --format machine` — 오류 없음(신규 demo file의 기존 API deprecated hint 3건).
 - `python -m py_compile api/index.py`, `git diff --check` — 통과.
 - 전체 `flutter analyze --no-pub`는 기존 teacher/textbook 누락·타입 오류 1,269건으로 저장소 기준선에서 실패했으며, 이번 변경 범위 밖이다.
+
+기계 검수 원장은 `student-parity.json`으로 분리했다. 이 원장은 HTML 화면 ID 86개·라우트·데모 경계를 검사하는 분모이며, 레지스트리 개수만으로 시각·동작 일치를 완료 처리하지 않는다. 동일 상태·동일 뷰포트 캡처와 모든 action/overlay 결과가 채워질 때까지 장면 근거는 `pending`으로 유지한다.

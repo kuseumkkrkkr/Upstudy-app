@@ -5,9 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/business/repositories/problem_bookmark_store.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/shared/data/models/concept_textbooks.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
@@ -52,7 +51,6 @@ class SharedMeta {
 }
 
 class _FlowViewPageState extends State<FlowViewPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final _FlowGraph _graph;
   _FlowNode? _selected;
   late final Map<String, _FlowNodeState> _nodeStates;
@@ -269,53 +267,59 @@ class _FlowViewPageState extends State<FlowViewPage> {
     final questAnswerBlocks = parseContentBlocks(questData['quest_answer']);
     final questAnswerRiddle = parseContentBlocks(questData['answer_riddle']);
     final allFormulas = questData['all_formulas'];
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            _fullScreen
-                ? _buildFocusWorkspace(
-                    questTitleBlocks,
-                    questAnswerBlocks,
-                    questAnswerRiddle,
-                  )
-                : Column(
-                    children: [
-                      _buildFlowChrome(),
-                      Expanded(
-                        child: _buildFlowWorkspace(
-                          questTitleBlocks,
-                          questAnswerBlocks,
-                          questAnswerRiddle,
-                        ),
-                      ),
-                    ],
+    final flow = Stack(
+      children: [
+        _fullScreen
+            ? _buildFocusWorkspace(
+                questTitleBlocks,
+                questAnswerBlocks,
+                questAnswerRiddle,
+              )
+            : Column(
+                children: [
+                  _buildFlowChrome(),
+                  Expanded(
+                    child: _buildFlowWorkspace(
+                      questTitleBlocks,
+                      questAnswerBlocks,
+                      questAnswerRiddle,
+                    ),
                   ),
-            if (widget.sharedMode && _formulaModalVisible)
-              Positioned(
-                left: _formulaModalOffset.dx,
-                top: _formulaModalOffset.dy,
-                child: Draggable(
-                  feedback: _FormulaModal(
-                    allFormulas: allFormulas?.toString() ?? '',
-                    onClose: _toggleFormulaModal,
-                    isPreview: true,
-                  ),
-                  childWhenDragging: const SizedBox.shrink(),
-                  onDraggableCanceled: (_, offset) =>
-                      setState(() => _formulaModalOffset = offset),
-                  child: _FormulaModal(
-                    allFormulas: allFormulas?.toString() ?? '',
-                    onClose: _toggleFormulaModal,
-                  ),
-                ),
+                ],
               ),
-          ],
-        ),
-      ),
+        if (widget.sharedMode && _formulaModalVisible)
+          Positioned(
+            left: _formulaModalOffset.dx,
+            top: _formulaModalOffset.dy,
+            child: Draggable(
+              feedback: _FormulaModal(
+                allFormulas: allFormulas?.toString() ?? '',
+                onClose: _toggleFormulaModal,
+                isPreview: true,
+              ),
+              childWhenDragging: const SizedBox.shrink(),
+              onDraggableCanceled: (_, offset) =>
+                  setState(() => _formulaModalOffset = offset),
+              child: _FormulaModal(
+                allFormulas: allFormulas?.toString() ?? '',
+                onClose: _toggleFormulaModal,
+              ),
+            ),
+          ),
+      ],
+    );
+    if (_fullScreen) {
+      return Scaffold(
+        backgroundColor: StudentDensityTokens.background,
+        body: SafeArea(child: flow),
+      );
+    }
+    return StudentHtmlShell(
+      title: '풀이 흐름 분석',
+      activeRoute: '/wrong_answers',
+      showContextAside: true,
+      onMenu: _returnToPreviousPage,
+      child: flow,
     );
   }
 
@@ -512,12 +516,6 @@ class _FlowViewPageState extends State<FlowViewPage> {
   Widget _buildFlowChrome() {
     return Column(
       children: [
-        Ios26TopBar(
-          brandColor: Colors.black,
-          showLevelIndicator: false,
-          onBack: _returnToPreviousPage,
-          items: const [],
-        ),
         Container(
           width: double.infinity,
           color: StudentDensityTokens.background,

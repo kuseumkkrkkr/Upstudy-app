@@ -5,7 +5,6 @@ import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart' as book_page;
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart'
     as exam_page;
 import 'package:s11/sessions/tryout_solve/ui/pages/solution_view_page.dart';
@@ -16,9 +15,8 @@ import 'package:s11/shared/business/repositories/bookmark_store.dart';
 import 'package:s11/shared/business/repositories/problem_bookmark_store.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/data/models/course.dart';
-import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
-import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 
 void main() => runApp(const MyApp());
@@ -375,31 +373,22 @@ class _BookWidgetState extends State<BookWidget> {
     final mobile = isStudentDensityMobile(context);
     if (mobile) return _buildMobileBookbag(context);
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: BookWidget.bgColor,
-        drawer: const AppDrawer(),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Builder(builder: (ctx) => _buildHeader(ctx)),
-              Expanded(
-                // 필요 변수: 본문 섹션과 남은 화면 높이. 작동 원리: 항상 스크롤
-                // 가능한 뷰포트를 사용해 데스크톱 휠·트랙패드와 모바일 드래그가
-                // 짧은 화면에서도 같은 방식으로 다음 섹션까지 이동하게 한다.
-                child: CustomScrollView(
-                  key: const ValueKey('bookbag-desktop-body'),
-                  primary: true,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeroSection(context)),
-                    SliverToBoxAdapter(child: _buildBottomSection(context)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    return StudentHtmlShell(
+      title: '자료실',
+      activeRoute: '/bookbag',
+      showContextAside: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      onSearch: () => _showGlobalSearch(context),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: CustomScrollView(
+          key: const ValueKey('bookbag-desktop-body'),
+          primary: true,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _buildHeroSection(context)),
+            SliverToBoxAdapter(child: _buildBottomSection(context)),
+          ],
         ),
       ),
     );
@@ -420,166 +409,150 @@ class _BookWidgetState extends State<BookWidget> {
     final total =
         _bookCount + _examCount + _bookBookmarkCount + _problemBookmarkCount;
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        key: const ValueKey('bookbag-mobile-redesign'),
-        backgroundColor: const Color(0xFFF2F2F4),
-        drawer: const AppDrawer(),
-        bottomNavigationBar: const MobileStudentBottomAppBar(
-          activeRoute: '/bookbag',
-        ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Builder(builder: (headerContext) => _buildHeader(headerContext)),
-              Expanded(
-                child: CustomScrollView(
-                  key: const ValueKey('bookbag-mobile-scroll'),
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(18, 22, 18, 30),
-                      sliver: SliverList.list(
+    return StudentHtmlShell(
+      key: const ValueKey('bookbag-mobile-redesign'),
+      title: '자료실',
+      activeRoute: '/bookbag',
+      onMenu: () => Navigator.of(context).maybePop(),
+      onSearch: () => _showGlobalSearch(context),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: CustomScrollView(
+          key: const ValueKey('bookbag-mobile-scroll'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(18, 22, 18, 30),
+              sliver: SliverList.list(
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '자료실',
+                          style: TextStyle(
+                            fontSize: 40,
+                            height: 1,
+                            letterSpacing: -2,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      IconButton.filled(
+                        key: const ValueKey('bookbag-mobile-search'),
+                        tooltip: '자료실 검색',
+                        onPressed: () => _showGlobalSearch(context),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          minimumSize: const Size(48, 48),
+                        ),
+                        icon: const Icon(
+                          Icons.search_rounded,
+                          color: Colors.white,
+                          size: 25,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '내 학습 자료 $total개',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF71717A),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  _buildMobileFeatured(featured),
+                  const SizedBox(height: 26),
+                  const Text(
+                    '내 자료',
+                    style: TextStyle(
+                      fontSize: 27,
+                      letterSpacing: -1,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    key: const ValueKey('bookbag-mobile-shortcut-group'),
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildMobileShortcut(
+                          icon: Icons.menu_book_rounded,
+                          label: '교재',
+                          count: _bookCount,
+                          onTap: () => _showTextbookModal(context),
+                        ),
+                        _buildMobileShortcut(
+                          icon: Icons.description_rounded,
+                          label: '시험지',
+                          count: _examCount,
+                          onTap: () => _showExamModal(context),
+                        ),
+                        _buildMobileShortcut(
+                          icon: Icons.bookmark_rounded,
+                          label: '책 북마크',
+                          count: _bookBookmarkCount,
+                          onTap: () => _showBookmarkDetailModal(isBook: true),
+                        ),
+                        _buildMobileShortcut(
+                          icon: Icons.edit_note_rounded,
+                          label: '문제 북마크',
+                          count: _problemBookmarkCount,
+                          onTap: () => _showBookmarkDetailModal(isBook: false),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (recent.isNotEmpty) ...[
+                    const SizedBox(height: 28),
+                    const Text(
+                      '최근 항목',
+                      style: TextStyle(
+                        fontSize: 27,
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0x1F09090B)),
+                      ),
+                      child: Column(
                         children: [
-                          Row(
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  '자료실',
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    height: 1,
-                                    letterSpacing: -2,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
+                          for (
+                            var index = 0;
+                            index < recent.length;
+                            index++
+                          ) ...[
+                            _buildMobileRecentItem(recent[index]),
+                            if (index != recent.length - 1)
+                              const Divider(
+                                height: 1,
+                                indent: 67,
+                                color: Color(0xFFE7E7EA),
                               ),
-                              IconButton.filled(
-                                key: const ValueKey('bookbag-mobile-search'),
-                                tooltip: '자료실 검색',
-                                onPressed: () => _showGlobalSearch(context),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  minimumSize: const Size(48, 48),
-                                ),
-                                icon: const Icon(
-                                  Icons.search_rounded,
-                                  color: Colors.white,
-                                  size: 25,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '내 학습 자료 $total개',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF71717A),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 22),
-                          _buildMobileFeatured(featured),
-                          const SizedBox(height: 26),
-                          const Text(
-                            '내 자료',
-                            style: TextStyle(
-                              fontSize: 27,
-                              letterSpacing: -1,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            key: const ValueKey(
-                              'bookbag-mobile-shortcut-group',
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Column(
-                              children: [
-                                _buildMobileShortcut(
-                                  icon: Icons.menu_book_rounded,
-                                  label: '교재',
-                                  count: _bookCount,
-                                  onTap: () => _showTextbookModal(context),
-                                ),
-                                _buildMobileShortcut(
-                                  icon: Icons.description_rounded,
-                                  label: '시험지',
-                                  count: _examCount,
-                                  onTap: () => _showExamModal(context),
-                                ),
-                                _buildMobileShortcut(
-                                  icon: Icons.bookmark_rounded,
-                                  label: '책 북마크',
-                                  count: _bookBookmarkCount,
-                                  onTap: () =>
-                                      _showBookmarkDetailModal(isBook: true),
-                                ),
-                                _buildMobileShortcut(
-                                  icon: Icons.edit_note_rounded,
-                                  label: '문제 북마크',
-                                  count: _problemBookmarkCount,
-                                  onTap: () =>
-                                      _showBookmarkDetailModal(isBook: false),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (recent.isNotEmpty) ...[
-                            const SizedBox(height: 28),
-                            const Text(
-                              '최근 항목',
-                              style: TextStyle(
-                                fontSize: 27,
-                                letterSpacing: -1,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              clipBehavior: Clip.antiAlias,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(22),
-                                border: Border.all(
-                                  color: const Color(0x1F09090B),
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  for (
-                                    var index = 0;
-                                    index < recent.length;
-                                    index++
-                                  ) ...[
-                                    _buildMobileRecentItem(recent[index]),
-                                    if (index != recent.length - 1)
-                                      const Divider(
-                                        height: 1,
-                                        indent: 67,
-                                        color: Color(0xFFE7E7EA),
-                                      ),
-                                  ],
-                                ],
-                              ),
-                            ),
                           ],
-                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
                   ],
-                ),
+                  const SizedBox(height: 24),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -739,10 +712,12 @@ class _BookWidgetState extends State<BookWidget> {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _LatexLine(
                       item.title,
+                      maxLines: 1,
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
@@ -764,23 +739,6 @@ class _BookWidgetState extends State<BookWidget> {
           ),
         ),
       ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════
-  //  HEADER
-  // ══════════════════════════════════════════════════════════
-  /// 필요한 변수는 현재 책가방 화면 문맥이다.
-  /// PC·모바일 모두 공용 학생 상단바와 오버레이 메뉴를 유지한다.
-  Widget _buildHeader(BuildContext context) {
-    return Ios26TopBar(
-      brandColor: BookWidget.primaryGreen,
-      showUtilityActions: true,
-      onMenu: () => toggleAppDrawer(context),
-      onTitleTap: () => Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
-      items: studentTopNavItems(context, active: StudentTopDestination.bookbag),
     );
   }
 
@@ -1168,7 +1126,7 @@ class _BookWidgetState extends State<BookWidget> {
     return InkWell(
       onTap: () => _openBigItem(item),
       child: SizedBox(
-        height: 72,
+        height: 82,
         child: Container(
           decoration: const BoxDecoration(
             border: Border(bottom: BorderSide(color: Color(0xFFE0E0E2))),
@@ -1202,6 +1160,7 @@ class _BookWidgetState extends State<BookWidget> {
                     const SizedBox(height: 2),
                     _LatexLine(
                       item.subtitle,
+                      maxLines: 1,
                       style: TextStyle(
                         color: const Color(0xFF707075),
                         fontSize: 11,

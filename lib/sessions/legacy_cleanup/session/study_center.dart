@@ -10,6 +10,7 @@ import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/components/tag_picker_dialog.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_top_navigation.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/shared/data/models/concept_textbooks.dart';
 import 'package:s11/sessions/exam_paper/ui/modals/exam_mode.dart';
 import 'package:s11/shared/business/repositories/social_notification_store.dart';
@@ -66,123 +67,111 @@ class SoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: _kWhite,
-        drawer: const AppDrawer(),
-        body: SafeArea(
-          top: true,
+    return StudentHtmlShell(
+      title: '학습터',
+      activeRoute: '/study-center',
+      showContextAside: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const StudyCenterNavBar(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _HeroSection(),
-                      _SectionHeader(title: '코스'),
-                      _CardRow(
-                        cards: [
-                          _CardData(
-                            icon: Icons.search,
-                            title: '코스 찾기',
-                            subtitle: '수강중인 코스를 검색합니다',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const CourseCatalogPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          _CardData(
-                            icon: Icons.bookmark,
-                            title: '북마크',
-                            subtitle: '저장한 북마크를 확인합니다',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const book_page.BookmarkListPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          _CardData(
-                            icon: Icons.library_books_outlined,
-                            title: '교재함',
-                            subtitle: '보유한 교재를 보여줍니다',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const book_page.BookLibraryPage(
-                                        libraryTitle: '교재함',
-                                        notice: '보유한 교재를 보여줍니다.',
-                                        enableDownload: true,
-                                      ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _SectionHeader(title: '성장 사례'),
-                      _CardRow(
-                        cards: [
-                          _CardData(
-                            icon: Icons.push_pin,
-                            title: '약점 보완하기',
-                            subtitle: '학습 약점을 보완합니다',
-                          ),
-                          _CardData(
-                            icon: Icons.ads_click_outlined,
-                            title: '개념학습하기',
-                            subtitle: '개념을 학습할 수 있는 공통교재입니다',
-                            onTap: () => openConceptStudy(context),
-                          ),
-                          _CardData(
-                            icon: Icons.content_paste,
-                            title: '그래프 그리기',
-                            subtitle: '문제를 시각화 합니다',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const JsxGraphPage(),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _SectionHeader(title: '시험 연습'),
-                      const SizedBox(height: 20),
-                      _ExamBanner(),
-                      const SizedBox(height: 10),
-                      _CardRow(
-                        cards: [
-                          _CardData(
-                            icon: Icons.adf_scanner_outlined,
-                            title: '시험지 코스',
-                            subtitle: '시험 유형을 확인합니다',
-                          ),
-                          _CardData(
-                            icon: Icons.folder_open_sharp,
-                            title: '분석지 출력',
-                            subtitle: '분석지를 출력합니다',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      const SizedBox(height: 28),
-                    ],
+              _HeroSection(),
+              _SectionHeader(title: '코스'),
+              _CardRow(
+                cards: [
+                  _CardData(
+                    icon: Icons.search,
+                    title: '코스 찾기',
+                    subtitle: '수강중인 코스를 검색합니다',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const CourseCatalogPage(),
+                        ),
+                      );
+                    },
                   ),
-                ),
+                  _CardData(
+                    icon: Icons.bookmark,
+                    title: '북마크',
+                    subtitle: '저장한 북마크를 확인합니다',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const book_page.BookmarkListPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _CardData(
+                    icon: Icons.library_books_outlined,
+                    title: '교재함',
+                    subtitle: '보유한 교재를 보여줍니다',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const book_page.BookLibraryPage(
+                            libraryTitle: '교재함',
+                            notice: '보유한 교재를 보여줍니다.',
+                            enableDownload: true,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
+              const SizedBox(height: 10),
+              _SectionHeader(title: '성장 사례'),
+              _CardRow(
+                cards: [
+                  _CardData(
+                    icon: Icons.push_pin,
+                    title: '약점 보완하기',
+                    subtitle: '학습 약점을 보완합니다',
+                  ),
+                  _CardData(
+                    icon: Icons.ads_click_outlined,
+                    title: '개념학습하기',
+                    subtitle: '개념을 학습할 수 있는 공통교재입니다',
+                    onTap: () => openConceptStudy(context),
+                  ),
+                  _CardData(
+                    icon: Icons.content_paste,
+                    title: '그래프 그리기',
+                    subtitle: '문제를 시각화 합니다',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const JsxGraphPage()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _SectionHeader(title: '시험 연습'),
+              const SizedBox(height: 20),
+              _ExamBanner(),
+              const SizedBox(height: 10),
+              _CardRow(
+                cards: [
+                  _CardData(
+                    icon: Icons.adf_scanner_outlined,
+                    title: '시험지 코스',
+                    subtitle: '시험 유형을 확인합니다',
+                  ),
+                  _CardData(
+                    icon: Icons.folder_open_sharp,
+                    title: '분석지 출력',
+                    subtitle: '분석지를 출력합니다',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const SizedBox(height: 28),
             ],
           ),
         ),

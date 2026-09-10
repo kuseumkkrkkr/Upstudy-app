@@ -167,7 +167,7 @@ class MobileStudentBottomAppBar extends StatelessWidget {
           border: Border(top: BorderSide(color: Color(0x1409090B))),
         ),
         child: SizedBox(
-          height: 68,
+          height: 66,
           child: Row(
             children: [
               for (final item in _primaryItems)
@@ -271,7 +271,7 @@ class _MobileMoreOverlay extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Positioned.fill(
-          bottom: 68,
+          bottom: 66,
           child: GestureDetector(
             key: const ValueKey('mobile-more-scrim'),
             behavior: HitTestBehavior.opaque,
@@ -282,7 +282,7 @@ class _MobileMoreOverlay extends StatelessWidget {
         Positioned(
           left: 0,
           right: 0,
-          bottom: 68,
+          bottom: 66,
           height: 320,
           child: _MobileMoreSheet(onEntrySelected: onEntrySelected),
         ),

@@ -69,23 +69,33 @@ void main() {
     await _expectMobileShell(
       tester,
       const ArenaPage(initialSummary: {'queues': <Object>[]}),
+      htmlShell: true,
     );
   });
 
   testWidgets('친구와 소셜은 모바일 하단 앱 셸을 사용한다', (tester) async {
-    await _expectMobileShell(tester, const SoWidget(preview: true));
+    await _expectMobileShell(
+      tester,
+      const SoWidget(preview: true),
+      htmlShell: true,
+    );
   });
 
   testWidgets('스터디 그룹은 모바일 하단 앱 셸을 사용한다', (tester) async {
     await _expectMobileShell(
       tester,
       const GroupListPage(initialGroups: <Object>[]),
+      htmlShell: true,
     );
-    expect(find.byKey(const ValueKey('group-mobile-actions')), findsOneWidget);
-    expect(find.text('찾기 · 코드 참가'), findsOneWidget);
+    expect(find.byKey(const ValueKey('groups-mobile-add')), findsOneWidget);
+    expect(find.text('그룹 추가'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('AI 학습 튜터는 모바일 하단 앱 셸을 사용한다', (tester) async {
-    await _expectMobileShell(tester, const ServerChatPage(standalone: true));
+    await _expectMobileShell(
+      tester,
+      const ServerChatPage(standalone: true),
+      htmlShell: true,
+    );
   });
 }

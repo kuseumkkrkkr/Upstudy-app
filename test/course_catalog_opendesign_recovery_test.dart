@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 List<Course> _openDesignCourses() => const [
   Course(
@@ -57,7 +58,8 @@ void main() {
   testWidgets('OpenDesign 나의 코스 구조를 390 모바일에서 유지한다', (tester) async {
     await _pump(tester, width: 390);
 
-    expect(find.text('나의 코스'), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
+    expect(find.text('코스'), findsAtLeastNWidgets(1));
     expect(find.text('학습 중'), findsOneWidget);
     expect(find.text('코스 관리'), findsOneWidget);
     expect(find.text('미적분 핵심 완성'), findsOneWidget);
@@ -96,8 +98,9 @@ void main() {
     await _pump(tester, width: 1280);
 
     expect(find.byKey(const ValueKey('course-desktop-shell')), findsOneWidget);
-    expect(find.byKey(const ValueKey('course-desktop-rail')), findsOneWidget);
-    expect(find.text('나의 코스'), findsOneWidget);
+    expect(find.byType(StudentHtmlRail), findsOneWidget);
+    expect(find.byType(StudentHtmlTopBar), findsOneWidget);
+    expect(find.text('코스'), findsAtLeastNWidgets(1));
     expect(find.text('학습 중'), findsOneWidget);
     expect(find.text('코스 관리'), findsOneWidget);
     expect(find.text('새 코스 찾기'), findsOneWidget);
