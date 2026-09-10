@@ -320,7 +320,7 @@ void main() {
     expect(find.text('노드를 선택해주세요'), findsOneWidget);
   });
 
-  testWidgets('코스 목록은 진행 상태와 완료 상태를 서로 다른 화면으로 연다', (tester) async {
+  testWidgets('코스 목록은 HTML의 학습 중·코스 관리 영역을 연다', (tester) async {
     ApiClient.instance.setHttpClientForTest(_courseClient());
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
@@ -344,30 +344,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final activeCard = find.byWidgetPredicate(
-      (widget) => widget is CourseCard && !widget.course.isCompleted,
-    );
-    await tester.ensureVisible(activeCard);
-    await tester.tap(activeCard);
-    await tester.pumpAndSettle();
-    expect(find.byType(CourseLearningPage), findsOneWidget);
-    expect(find.text('현재 미션'), findsWidgets);
-
-    Navigator.of(tester.element(find.byType(CourseLearningPage))).pop();
-    await tester.pumpAndSettle();
-    final completedFilter = find.widgetWithText(ChoiceChip, '완료 코스');
-    await tester.ensureVisible(completedFilter);
-    await tester.tap(completedFilter);
-    await tester.pumpAndSettle();
-    final completedCard = find.byWidgetPredicate(
-      (widget) => widget is CourseCard && widget.course.isCompleted,
-    );
-    await tester.ensureVisible(completedCard);
-    await tester.tap(completedCard);
-    await tester.pumpAndSettle();
-    expect(find.byType(CourseDetailPage), findsOneWidget);
-    expect(find.textContaining('미리보기'), findsWidgets);
-    expect(find.text('코스 계속하기'), findsNothing);
+    expect(find.byKey(const ValueKey('course-desktop-section-active')), findsOneWidget);
+    expect(find.byKey(const ValueKey('course-desktop-section-manage')), findsOneWidget);
+    expect(find.byKey(const ValueKey('course-desktop-discover')), findsOneWidget);
+    expect(find.byKey(const ValueKey('course-desktop-analysis')), findsOneWidget);
   });
 
   testWidgets('코스 HTML 액션은 순서·비교·완료 조건 모달을 연다', (tester) async {
