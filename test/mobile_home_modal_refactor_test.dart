@@ -134,6 +134,14 @@ void main() {
     expect(find.byType(BottomSheet), findsNothing);
     expect(find.text('알림 센터'), findsOneWidget);
     expect(find.byTooltip('닫기'), findsOneWidget);
+    final panel = tester.getRect(
+      find.ancestor(
+        of: find.text('알림 센터'),
+        matching: find.byType(Material),
+      ).first,
+    );
+    expect(panel.width, closeTo(334, 1));
+    expect(panel.height, closeTo(844, 1));
     expect(find.text('LIVE STATUS'), findsNothing);
     expect(find.text('메시지, 친구 요청과 공지를 확인해요.'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);

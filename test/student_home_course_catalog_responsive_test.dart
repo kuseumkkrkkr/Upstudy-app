@@ -136,6 +136,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('홈의 6개 학습 타일은 모두 전용 요약 장면을 먼저 연다', (tester) async {
+    await _pumpAt(
+      tester,
+      const Size(390, 900),
+      const MainStudentPage(username: '김학생'),
+    );
+    await tester.pump();
+
+    const actions = <(String, String)>[
+      ('이어하기', 'resume'),
+      ('코스보기', 'courses'),
+      ('복습', 'review'),
+      ('문제세트', 'problemsets'),
+      ('시험지', 'exams'),
+      ('교재보기', 'textbooks'),
+    ];
+    for (final (label, id) in actions) {
+      await tester.tap(find.text(label).first);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byKey(ValueKey('home-study-sheet-$id')), findsOneWidget);
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+      await tester.pump();
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('홈 하단 정보는 PC·태블릿에 유지하고 세로 모바일은 핵심 행동만 남긴다', (tester) async {
     const cases = <(double, String)>[
       (1280, 'student-home-desktop'),
