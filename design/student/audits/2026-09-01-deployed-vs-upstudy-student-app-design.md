@@ -752,6 +752,13 @@
 - Vercel 배포 `dpl_6jwt6PeCHJXCdhQ55SAfrRNobrvi`, alias READY, `/health` 200. Range 전체 수집 기준 로컬·원격 번들 SHA-256 `546BCE4700B865A5B25CE2FE862995E8DF319FAA61070C1BAA05A284C24039A0` 일치.
 - 86개 전체 화면·장면 이미지와 실제 API·DB·동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 친구 검색·요청 POST 계약 고정
+
+- Vercel API 계약 테스트에 `/social/friends/search`와 `/social/friend-requests` POST 호출을 추가했다.
+- 검색 응답 `200`, 요청 생성 `201`, `pending` 상태를 확인하며 실제 저장소 대신 격리된 어댑터를 사용한다.
+- 테스트 파일 커밋 `9298d90`; `python -m pytest -q omj/tests/test_vercel_student_demo_api.py` 결과 5 passed.
+- 이 검사는 메서드·응답 계약 회귀를 방지하며 실제 canary 계정·DB 무결성·부하 검증을 대체하지 않는다.
+
 ### 2026-09-11 자료실 필터 장면 브라우저 재검증
 
 - canary 주소 `#/marketplace?scene=market-filter`를 새 브라우저 탭에서 직접 열어 자료실 본문 위에 `상세 필터` 시트가 표시되는 것을 확인했다.
