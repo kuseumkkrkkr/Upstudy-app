@@ -337,7 +337,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: BuildpageWidget(
           config: ProblemSolveConfig(
             hashTags: ['일차함수'],
@@ -931,7 +931,7 @@ void main() {
     expect(find.text('먼저 학생 정보를\n알려주세요.'), findsOneWidget);
   });
 
-  testWidgets('500px 프로필은 축약 히어로와 큰 편집 필드를 유지한다', (tester) async {
+  testWidgets('500px 프로필은 HTML 신원 패널과 관리 시트를 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -962,28 +962,72 @@ void main() {
     await tester.pump();
     expect(find.text('MY ACCOUNT'), findsNothing);
     expect(find.text('STUDENT PROFILE'), findsNothing);
-    expect(
-      find.byKey(const ValueKey('profile-mobile-compact-hero')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('profile-html-identity')), findsOneWidget);
+    expect(find.text('학습자 계정'), findsOneWidget);
+    expect(find.text('@student01'), findsOneWidget);
+    expect(find.text('프로필 관리'), findsOneWidget);
+    expect(find.text('계정 보안'), findsOneWidget);
+    expect(find.text('계정 관리'), findsOneWidget);
     expect(find.text('18.6'), findsOneWidget);
     expect(find.text('B'), findsOneWidget);
     expect(find.text('246'), findsOneWidget);
-    expect(find.text('@student01 · AIFlow 중학교'), findsOneWidget);
-    expect(find.text('LEARNING PROFILE'), findsNothing);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -720));
+    final studentInfo = find.ancestor(
+      of: find.text('학생 정보 관리'),
+      matching: find.byType(InkWell),
+    );
+    await tester.tap(studentInfo.first);
     await tester.pumpAndSettle();
-    expect(find.text('비밀번호 변경'), findsOneWidget);
-    expect(find.text('SECURITY'), findsNothing);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -720));
+    expect(find.text('PRIVATE MANAGEMENT'), findsOneWidget);
+    expect(find.text('이름'), findsOneWidget);
+    expect(find.text('학교'), findsOneWidget);
+    await tester.tap(find.text('취소'));
     await tester.pumpAndSettle();
-    expect(find.text('DANGER ZONE'), findsOneWidget);
-    final deleteButton = find.widgetWithText(OutlinedButton, '계정 삭제');
-    await tester.ensureVisible(deleteButton);
-    await tester.tap(deleteButton);
+    final deleteButton = find.ancestor(
+      of: find.text('계정 삭제'),
+      matching: find.byType(InkWell),
+    );
+    await tester.tap(deleteButton.first);
     await tester.pumpAndSettle();
     expect(find.text('계정 삭제'), findsWidgets);
     expect(find.text('현재 비밀번호'), findsOneWidget);
+  });
+
+  testWidgets('1280px 프로필은 HTML 76px 레일과 320px 신원 패널을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProfilePage(
+          initialProfile: UserProfile(
+            userId: 's1',
+            username: 'student01',
+            name: '김학생',
+            grade: '2학년',
+            track: '중학교',
+            subject: '수학',
+            school: 'AIFlow 중학교',
+          ),
+          initialRating: UserRating(
+            rating: 1800,
+            ovr: 3580.8,
+            ovrDelta: 0,
+            recentAccuracy: 0.8,
+            loseStreak: 0,
+          ),
+          initialTotalSolvedCount: 246,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final identity = find.byKey(const ValueKey('profile-html-identity'));
+    expect(tester.getSize(identity).width, 320);
+    expect(find.text('프로필 관리'), findsOneWidget);
+    expect(find.text('계정 관리'), findsOneWidget);
+    expect(find.text('MY ACCOUNT'), findsNothing);
+    expect(find.text('학생 정보 관리'), findsOneWidget);
   });
 
   testWidgets('500px 설정은 단일 Material 설정 목록을 유지한다', (tester) async {
