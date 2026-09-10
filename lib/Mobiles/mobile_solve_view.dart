@@ -850,8 +850,7 @@ Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
   final progress =
       (state._currentProblemIndex + 1) / math.max(1, state._problemCount);
   final hasOptions = state._currentQuestOptionBlocks().isNotEmpty;
-  final showWritingSurface =
-      !state._mobileQuickSolve && (!hasOptions || state._mobileNoteExpanded);
+  final showWritingSurface = !state._mobileQuickSolve;
   return Stack(
     children: [
       GestureDetector(
@@ -877,13 +876,29 @@ Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
                             ),
                             const SizedBox(width: 2),
                             const Expanded(
-                              child: Text(
-                                '문제 풀이',
-                                style: TextStyle(
-                                  fontSize: 19,
-                                  letterSpacing: -.6,
-                                  fontWeight: FontWeight.w900,
-                                ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'PROBLEM SESSION',
+                                    style: TextStyle(
+                                      color: Colors.black45,
+                                      fontSize: 8,
+                                      letterSpacing: 1.2,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3),
+                                  Text(
+                                    '문제 풀이',
+                                    style: TextStyle(
+                                      fontSize: 19,
+                                      letterSpacing: -.6,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             Text(
@@ -892,6 +907,15 @@ Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
                                 color: Colors.black54,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const Text(
+                              'SAVED',
+                              style: TextStyle(
+                                color: Colors.black45,
+                                fontSize: 8,
+                                letterSpacing: 1.1,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
                             IconButton(
@@ -952,9 +976,7 @@ Widget _renderMobileSolveScaffold(_BuildpageWidgetState state) {
 Widget _renderMobileToolbar(_BuildpageWidgetState state) {
   final options = state._currentQuestOptionBlocks();
   final quickSession = _mobileQuickSessionFor(state);
-  final showWritingTools =
-      !state._mobileQuickSolve &&
-      (options.isEmpty || state._mobileNoteExpanded);
+  final showWritingTools = !state._mobileQuickSolve;
   final canSubmit = options.isNotEmpty
       ? state._currentSelectedChoice() != null
       : state._strokes.isNotEmpty || state._currentStroke != null;
@@ -1037,25 +1059,28 @@ Widget _renderMobileToolbar(_BuildpageWidgetState state) {
               const Spacer(),
             Expanded(
               flex: 2,
-              child: FilledButton.icon(
-                onPressed:
-                    state._analysisBusy ||
-                        state._hasPendingGeneration ||
-                        (state._mobileQuickSolve ? !quickReady : !canSubmit)
-                    ? null
-                    : submit,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(88, 48),
-                  backgroundColor: Colors.black,
-                  disabledBackgroundColor: const Color(0xFFD8D8D6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              child: Tooltip(
+                message: '제출',
+                child: FilledButton.icon(
+                  onPressed:
+                      state._analysisBusy ||
+                          state._hasPendingGeneration ||
+                          (state._mobileQuickSolve ? !quickReady : !canSubmit)
+                      ? null
+                      : submit,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(88, 48),
+                    backgroundColor: Colors.black,
+                    disabledBackgroundColor: const Color(0xFFD8D8D6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                ),
-                icon: const Icon(Icons.check_rounded, size: 19),
-                label: Text(
-                  state._mobileQuickSolve ? '풀이 제출' : '제출',
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                  icon: const Icon(Icons.check_rounded, size: 19),
+                  label: Text(
+                    state._mobileQuickSolve ? '풀이 제출' : '제출',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
                 ),
               ),
             ),
@@ -1200,6 +1225,15 @@ Widget _renderMobileProblemCard(_BuildpageWidgetState state) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const Text(
+            '오늘의 문제',
+            style: TextStyle(
+              color: Colors.black45,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
           Row(
             children: [
               if (tag != null)
@@ -1528,57 +1562,60 @@ class _MobileSolveTool extends StatelessWidget {
   /// 필요한 변수는 도구 아이콘·활성 상태·동작 콜백이다.
   /// 작동 원리는 좁은 하단 바에서 최소 44px 터치 영역과 현재 선택 상태를 함께 제공하는 것이다.
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 45,
-    height: 48,
-    child: InkWell(
-      onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(12),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: active ? const Color(0xFFEEEEEC) : Colors.transparent,
-              borderRadius: BorderRadius.circular(11),
+  Widget build(BuildContext context) => Tooltip(
+    message: label,
+    child: SizedBox(
+      width: 45,
+      height: 48,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: active ? const Color(0xFFEEEEEC) : Colors.transparent,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(
+                icon,
+                size: 21,
+                color: enabled ? Colors.black : Colors.black26,
+              ),
             ),
-            child: Icon(
-              icon,
-              size: 21,
-              color: enabled ? Colors.black : Colors.black26,
-            ),
-          ),
-          if (indicatorColor != null)
+            if (indicatorColor != null)
+              Positioned(
+                right: 6,
+                bottom: 5,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: indicatorColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                ),
+              ),
             Positioned(
-              right: 6,
-              bottom: 5,
-              child: Container(
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: indicatorColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
+              bottom: 0,
+              child: ExcludeSemantics(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: enabled ? Colors.black54 : Colors.black26,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
-          Positioned(
-            bottom: 0,
-            child: ExcludeSemantics(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: enabled ? Colors.black54 : Colors.black26,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );
