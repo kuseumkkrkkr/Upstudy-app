@@ -390,3 +390,11 @@
 - Vercel: [`dpl_CN4MoD6CVWwe7ncj1KtbQP8bP6pq`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/CN4MoD6CVWwe7ncj1KtbQP8bP6pq), 고유 후보 [`aiflow-web-canary-6eec0hst4-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6eec0hst4-cw20208021-9200s-projects.vercel.app), production alias 연결·READY 확인.
 - 라이브 경계: alias `/health` 200, `/main.dart.js` 200 및 로컬 해시 일치, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 각각 401 JSON.
 - 이 배포는 목적지 타입 안전성과 검색 연결 회귀를 보강한 후보다. 인증된 실제 데이터, 86개 모든 장면의 동일 조건 이미지, 실제 DB migration, 200 동시성·접근성·전체 반응형 검증이 남아 있으므로 상용 준비 완료로 판정하지 않는다.
+
+### 2026-09-10 typed 목적지 생성자 호환성 배포
+
+- 코드 커밋: `94abcf5` (`refactor(student): preserve destination constructor compatibility`). 기존 positional `StudentDestination('id')` 호출을 보존하고 registry 생성 시 route·인증·데모 메타데이터를 채우도록 기본값을 추가했다.
+- 후보 빌드: 동일 Flutter release 재빌드 성공. `public/main.dart.js` SHA-256 `714ACA4C98E0737A1C05D8F8D53CCBE7DDFC483A193E5820B85BE2A1C57D1AF6`; `flutter_bootstrap.js`도 갱신했으며 번들 `localhost` 없음.
+- Vercel: [`dpl_BRVDWSmo74uYRSddt6XJW4UhuKCa`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/BRVDWSmo74uYRSddt6XJW4UhuKCa), 고유 후보 [`aiflow-web-canary-m6jef72zx-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-m6jef72zx-cw20208021-9200s-projects.vercel.app), production alias READY 연결.
+- 검증: `student_route_registry_test.dart` 4개 및 Dart analyze 통과. alias `/health` 200, main bundle 로컬 해시 일치, 인증 없는 데모 상점·내신 계획 API는 각각 401 JSON.
+- 이 배포도 상용 준비 완료가 아니다. 인증 사용자 데이터, 86개 장면별 동일 뷰포트 이미지, 실제 DB migration·동시성·접근성·전체 반응형 검증은 여전히 원장에 `pending`으로 남긴다.
