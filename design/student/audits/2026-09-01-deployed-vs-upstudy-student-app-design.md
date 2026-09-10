@@ -753,6 +753,12 @@
 - Vercel 배포 `dpl_6czWJCrCES7MY8a1qbTEzSRSJZJd`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 인증된 포인트 주문·실제 문의 전송·DB 멱등성은 Production 인증/DB 설정 부재로 `pending`이다.
 
+### 2026-09-11 canary 빌드 메타데이터 고정
+
+- Flutter release의 `public/.last_build_id`를 커밋해 배포 산출물과 소스 상태의 재현 근거를 보강했다.
+- 소스 커밋 `72bd2f3`; Vercel 배포 `dpl_BYr5PFzDzz2bt6wbCdPAEx2QpFgX` READY, `/health` 200.
+- 로컬·canary `main.dart.js` SHA-256 `FA77E85B70B5C7BAD13B12EF30115546429446D9B0D5CC596E4C0FAA09CEE3D5` 일치.
+
 ### 2026-09-11 전체 정적 분석 범위 분리
 
 - 전체 저장소 `flutter analyze --no-pub`는 962건을 보고했다. 주요 오류는 학생 앱 범위 밖의 `teacher_textbook_reader`와 `scripts` 레거시 파일에서 발생했다.
