@@ -515,4 +515,5 @@
 - Vercel 최종 alias 확인: `dpl_9RvQpfDaxXSpRzPxrMu4dFRwvBY4`, 고유 URL [`aiflow-web-canary-dll3b653q-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-dll3b653q-cw20208021-9200s-projects.vercel.app), production alias `https://aiflow-web-canary.vercel.app` READY. (직전 후보 `dpl_De2Ut8Lp99sj4mSEPcZMYLTfUTyR`도 READY였으나 alias가 최신 후보로 이동했다.)
 - 서버 경계: `/health` 200, `/graphs/sample` GET 405·유효 POST 200, `/demo/student-store` 401, `/student/school-exam-plan/active` 401. `vercel inspect`에서 alias와 deployment ID를 재확인했다.
 - 코드 검증: 그래프 위젯·홈 학습/알림·코스 반응형 집중 테스트, Vercel route contract 2개 통과. 홈 6개 타일과 알림 패널 기하(390×844 기준 334×844)를 테스트로 고정했다.
+- 과거 친구 검색/요청 실패 기록은 현재 `tests/test_vercel_social.py` 재실행에서 6개 모두 통과(경고 13개)로 갱신됐다. 이는 테스트용 KV 모사 결과이며 운영 Supabase·실제 계정 쓰기 성공을 대신하지 않는다.
 - 브라우저에서 인증 세션을 발급할 수 없는 현재 canary(`OMJ_JWT_SECRET` 미설정) 상태이므로 live 홈 타일·알림 실제 클릭과 사용자별 active-course 복원은 재현하지 못했다. 86개 전체 장면 이미지, 실제 인증 데이터·DB migration·200 동시성·접근성 및 상용 준비 판정은 `pending`이다.
