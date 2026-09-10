@@ -531,6 +531,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'activity-history' => '/student/dashboard?scene=activity-history',
       'study-mode' => '/student/dashboard?scene=study-mode',
       'market-filter' => '/marketplace?scene=market-filter',
+      'market-preview' => '/marketplace?scene=market-preview',
       _ => typedDestination.routeName,
     };
   }

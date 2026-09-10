@@ -227,6 +227,12 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
         builder: (_) => const MarketplacePage(initialScene: 'market-filter'),
       );
     }
+    if (scene == 'market-preview') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const MarketplacePage(initialScene: 'market-preview'),
+      );
+    }
   }
 
   // Level test result (needs correctCount, totalCount, passed)

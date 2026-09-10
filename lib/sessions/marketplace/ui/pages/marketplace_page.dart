@@ -46,6 +46,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
   int _total = 0;
   bool _loading = false;
   String? _error;
+  bool _initialPreviewOpened = false;
 
   /// 담은 자료의 실제 유형에 맞는 학습 화면을 즉시 연다.
   Future<void> _openPurchasedItem(_MarketItem item) async {
@@ -171,9 +172,22 @@ class _MarketplacePageState extends State<MarketplacePage> {
     if (initialData != null) {
       _items = initialData.map(_MarketItem.fromMap).toList(growable: false);
       _total = _items.length;
+      _scheduleInitialPreview();
     } else {
       unawaited(_loadInitialResults());
     }
+  }
+
+  /// 실제 목록이 준비된 뒤에만 미리보기 장면을 연다.
+  void _scheduleInitialPreview() {
+    if (widget.initialScene != 'market-preview' || _initialPreviewOpened) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _initialPreviewOpened || _items.isEmpty) return;
+      _initialPreviewOpened = true;
+      unawaited(_openItem(_items.first));
+    });
   }
 
   /// 필요한 변수는 검색 컨트롤러다.
@@ -248,6 +262,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
         _nextOffset = page.nextOffset;
         _total = page.total;
       });
+      if (!append) _scheduleInitialPreview();
     } catch (_) {
       if (!mounted) return;
       setState(() => _error = '마켓 자료를 불러오지 못했습니다.');
