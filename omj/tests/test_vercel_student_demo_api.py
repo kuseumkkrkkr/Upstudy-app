@@ -96,3 +96,36 @@ def test_school_exam_plan_is_math_only(monkeypatch):
         assert response.json() == {"plan": None, "tasks": [], "subject": "math"}
     finally:
         vercel_api.app.dependency_overrides.pop(vercel_api._current_user, None)
+
+
+def test_social_friend_search_and_request_use_post_contract(monkeypatch):
+    """친구 검색·요청은 클라이언트 계약인 POST를 유지한다."""
+    target = {
+        "user_id": "student-2",
+        "username": "friend2",
+        "name": "친구",
+        "profile_image": None,
+    }
+    monkeypatch.setattr(vercel_api, "_social_data_request", lambda *args, **kwargs: [target])
+    monkeypatch.setattr(vercel_api, "_social_user_by_username", lambda _: target)
+    monkeypatch.setattr(vercel_api, "_social_user_by_id", lambda _: target)
+    monkeypatch.setattr(vercel_api, "_social_has_key", lambda *args: False)
+    monkeypatch.setattr(vercel_api, "_social_upsert_kv", lambda *args, **kwargs: None)
+    vercel_api.app.dependency_overrides[vercel_api._current_user] = lambda: "student-1"
+    client = TestClient(vercel_api.app)
+    try:
+        search = client.post(
+            "/social/friends/search",
+            json={"query": "friend", "limit": 20},
+        )
+        assert search.status_code == 200
+        assert search.json()["users"][0]["username"] == "friend2"
+
+        request = client.post(
+            "/social/friend-requests",
+            json={"username": "friend2", "message": "안녕하세요"},
+        )
+        assert request.status_code == 201
+        assert request.json()["status"] == "pending"
+    finally:
+        vercel_api.app.dependency_overrides.pop(vercel_api._current_user, None)
