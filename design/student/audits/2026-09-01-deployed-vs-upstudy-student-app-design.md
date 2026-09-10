@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 HTML 상단바 원형 액션 반영
+
+- HTML `.topbar-back`, `.topbar-actions button`의 원형 버튼 규칙을 공통 `StudentHtmlTopBar`에 적용했다.
+- 소스·번들 커밋 `5a8ea8c`, 번들 SHA-256 `FA781AEC8A3EF27E8710C0882795DB55D3752AF0544B3B0B71661EB1A88FD2C4`.
+- `flutter analyze --no-pub lib/shared/ui/student_density/student_html_shell.dart`와 모바일 셸 검사가 통과했다.
+- Vercel 고유 URL [`aiflow-web-canary-63lqr5s1l-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-63lqr5s1l-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. alias 번들 SHA가 로컬과 일치하고 `/health`·루트가 모두 200이다.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 공통 데스크톱 레일 HTML 토큰 반영
 
 - HTML `.product-nav` 기준으로 데스크톱 레일 배경을 `#09090b`로, 활성 항목을 표면색·비대칭 반경(10/3/10/3)으로 맞췄다. 비활성 아이콘·문자는 muted 색상을 사용한다.
