@@ -748,6 +748,7 @@
 
 - 전체 저장소 `flutter analyze --no-pub`는 962건을 보고했다. 주요 오류는 학생 앱 범위 밖의 `teacher_textbook_reader`와 `scripts` 레거시 파일에서 발생했다.
 - 학생 변경 대상(`router.dart`, 학원 홈, 학습 도구, 그래프, 교재 편집·placeholder)의 집중 분석은 통과했다. 전체 analyze 0건 게이트는 teacher 레거시 정리 전까지 `pending`이다.
+- `flutter analyze --no-pub lib/features lib/sessions`를 다시 실행해 teacher reader 파일을 제외한 학생 범위 오류를 집계한 결과 `STUDENT_SCOPE_ERRORS=0`이었다.
 
 ### 2026-09-11 제품 readiness 경계 확인
 
