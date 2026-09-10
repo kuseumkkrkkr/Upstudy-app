@@ -666,3 +666,11 @@
 - 소셜 모바일 화면의 상단을 HTML 기준 뒤로가기 버튼으로 통일하고, 버튼 동작은 학생 대시보드로 복귀하도록 연결했다.
 - 소스 커밋 `15e080c`, 번들 커밋 `cfc13b0` 기준으로 canary가 이미 반영되었으며, 최신 alias 원시 번들 SHA-256은 `3738A16582792EF91E07F4D8D40BA264408382C1C3E65FA44D97DD5D8BC74CC8`이다.
 - 모바일 브라우저에서 `함께 공부`, 뒤로가기, 대화·친구·그룹 탭, 최근 대화 빈 상태와 하단 탭을 재확인했다. 실제 인증 데이터와 전체 화면 합격 조건은 계속 `pending`이다.
+
+### 2026-09-11 공통 검색·알림 시트 HTML 구조 보정 배포
+
+- 모바일 유틸리티 패널을 HTML식 하단 시트로 변경하고, 데스크톱도 중앙 하단 패널 구조로 맞췄다. 검색 입력·결과 행·알림 행의 직각 테두리와 간격을 보정했다.
+- `mobile_home_modal_refactor_test.dart` 9개와 공통 파일 정적 분석을 통과했다. 기존 검색 목적지·알림 수신·친구 요청·그룹 초대·교재 열기 동작은 유지했다.
+- 소스 커밋 `6afc055`, 번들 커밋 `fa0cd17`; `public/main.dart.js`와 alias 원시 응답 SHA-256은 `6E02465837B96A802F76826400A37EBB5A0E215D5940565FB17528AE20E3C783`로 일치한다.
+- Vercel 배포 `dpl_uCybaVKwFjX4YNsei93Byz66RpA7`, 고유 URL [`aiflow-web-canary-r06oc3vz5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-r06oc3vz5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 인증 세션과 86개 전체 장면·실제 DB 무결성·동시성·접근성 검증은 여전히 `pending`이다.
