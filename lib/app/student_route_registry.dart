@@ -1,5 +1,34 @@
 import 'package:flutter/foundation.dart';
 
+/// HTML 화면을 코드에서 식별하기 위한 불변 목적지 값이다.
+@immutable
+class StudentDestination {
+  const StudentDestination(this.screenId);
+
+  final String screenId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is StudentDestination && other.screenId == screenId;
+
+  @override
+  int get hashCode => screenId.hashCode;
+}
+
+/// 화면을 감싸는 HTML 셸의 책임을 구분한다.
+enum StudentShellKind { standard, immersive, auth, reader, tools }
+
+/// 레일·하단 탭에서 강조할 정보 구조 영역이다.
+enum StudentNavSection {
+  home,
+  courses,
+  library,
+  social,
+  services,
+  arena,
+  tools,
+}
+
 /// The reference HTML is state-oriented, while Flutter routes are feature-
 /// oriented. This registry keeps the one-to-one audit identifiers stable and
 /// prevents navigation/search code from inventing string destinations.
@@ -18,6 +47,60 @@ class StudentRouteSpec {
   final String route;
   final bool requiresAuth;
   final bool demoOnly;
+
+  /// The typed destination used by menus, search, and audit tooling.
+  StudentDestination get destination => StudentDestination(id);
+
+  /// HTML 셸은 화면 종류에서 계산해 한 곳에서 관리한다.
+  StudentShellKind get shell {
+    if (category == '시작' &&
+        const {
+          'login',
+          'signup-profile',
+          'signup-account',
+          'signup-complete',
+        }.contains(id)) {
+      return StudentShellKind.auth;
+    }
+    if (const {
+      'student-runtime',
+      'solve-workspace',
+      'flow-view',
+      'shared-flow',
+      'solution-view',
+      'solve-analysis',
+      'ox-quiz',
+    }.contains(id)) {
+      return StudentShellKind.immersive;
+    }
+    if (id == 'book-reader') return StudentShellKind.reader;
+    if (const {
+      'tutor',
+      'tools-hub',
+      'learning-tools-modal',
+      'notepad',
+      'timer',
+      'focus',
+      'graph',
+    }.contains(id)) {
+      return StudentShellKind.tools;
+    }
+    return StudentShellKind.standard;
+  }
+
+  /// 카테고리를 실제 공통 내비게이션 섹션으로 변환한다.
+  StudentNavSection get activeNav {
+    return switch (category) {
+      '홈' => StudentNavSection.home,
+      '코스' || '풀이' => StudentNavSection.courses,
+      '교재' || '자료실' => StudentNavSection.library,
+      '소셜' => StudentNavSection.social,
+      '서비스' => StudentNavSection.services,
+      '대결' => StudentNavSection.arena,
+      '도구' => StudentNavSection.tools,
+      _ => StudentNavSection.home,
+    };
+  }
 }
 
 abstract final class StudentRouteRegistry {

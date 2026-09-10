@@ -10,6 +10,18 @@ void main() {
     expect(ids.toSet(), hasLength(86));
     expect(StudentRouteRegistry.byId('academy-find')?.demoOnly, isTrue);
     expect(StudentRouteRegistry.byId('school-exam-prep')?.demoOnly, isFalse);
+    expect(
+      StudentRouteRegistry.byId('home')?.activeNav,
+      StudentNavSection.home,
+    );
+    expect(
+      StudentRouteRegistry.byId('student-runtime')?.shell,
+      StudentShellKind.immersive,
+    );
+    expect(
+      StudentRouteRegistry.byId('book-reader')?.destination.screenId,
+      'book-reader',
+    );
   });
 
   test('dashboard scene links resolve without losing the requested scene', () {
