@@ -507,3 +507,12 @@
 - Vercel 배포 `dpl_4YPXkH51KZ9H5bWuEKCjREKsVYSr`, 고유 URL [`aiflow-web-canary-6fq3ex2ih-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6fq3ex2ih-cw20208021-9200s-projects.vercel.app), production alias READY. `/health` 200, `/graphs/sample` GET 405(POST 전용 FastAPI 경로), 인증 없는 데모 상점·내신 계획은 각각 401, 유효한 그래프 POST는 200 좌표 응답이다.
 - 집중 검증: 그래프 위젯 10개, 홈/알림/코스 집중 테스트 및 Vercel route contract 2개 통과, 변경 Dart analyze 오류 없음.
 - 인증 세션이 없는 브라우저에서는 live 홈 타일·알림 클릭 결과와 사용자별 active-course 복원을 재현하지 못했다. 86개 전체 장면 이미지, 실제 인증 데이터·DB migration·200 동시성·접근성·상용 준비 판정은 `pending`이다.
+
+### 2026-09-10 active-course 포함 최종 canary 후보
+
+- 코드 기준: `origin/hotfix`의 `910f710` 및 이전 그래프·알림 변경, 번들 기준 `099775b`.
+- `flutter build web --release`를 지정 API/데모/OSM 환경값으로 재실행하고 `build/web`를 Vercel 업로드 대상 `public`에 반영했다. 최종 `public/main.dart.js` SHA-256과 alias 응답 원시 바이트 SHA-256은 `C72FDE26BE655E50005F8C42025973EF442E8224C6E6B74010B437858AE401BD`로 일치한다. `localhost`·`127.0.0.1`은 없다.
+- Vercel 최종 배포: `dpl_De2Ut8Lp99sj4mSEPcZMYLTfUTyR`, 고유 URL [`aiflow-web-canary-9aoy19pfw-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-9aoy19pfw-cw20208021-9200s-projects.vercel.app), production alias `https://aiflow-web-canary.vercel.app` READY.
+- 서버 경계: `/health` 200, `/graphs/sample` GET 405·유효 POST 200, `/demo/student-store` 401, `/student/school-exam-plan/active` 401. `vercel inspect`에서 alias와 deployment ID를 재확인했다.
+- 코드 검증: 그래프 위젯·홈 학습/알림·코스 반응형 집중 테스트, Vercel route contract 2개 통과. 홈 6개 타일과 알림 패널 기하(390×844 기준 334×844)를 테스트로 고정했다.
+- 브라우저에서 인증 세션을 발급할 수 없는 현재 canary(`OMJ_JWT_SECRET` 미설정) 상태이므로 live 홈 타일·알림 실제 클릭과 사용자별 active-course 복원은 재현하지 못했다. 86개 전체 장면 이미지, 실제 인증 데이터·DB migration·200 동시성·접근성 및 상용 준비 판정은 `pending`이다.
