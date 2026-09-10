@@ -3,16 +3,28 @@ import 'package:flutter/foundation.dart';
 /// HTML 화면을 코드에서 식별하기 위한 불변 목적지 값이다.
 @immutable
 class StudentDestination {
-  const StudentDestination(this.screenId);
+  const StudentDestination({
+    required this.screenId,
+    required this.routeName,
+    required this.requiresAuth,
+    required this.demoOnly,
+  });
 
   final String screenId;
+  final String routeName;
+  final bool requiresAuth;
+  final bool demoOnly;
 
   @override
   bool operator ==(Object other) =>
-      other is StudentDestination && other.screenId == screenId;
+      other is StudentDestination &&
+      other.screenId == screenId &&
+      other.routeName == routeName &&
+      other.requiresAuth == requiresAuth &&
+      other.demoOnly == demoOnly;
 
   @override
-  int get hashCode => screenId.hashCode;
+  int get hashCode => Object.hash(screenId, routeName, requiresAuth, demoOnly);
 }
 
 /// 화면을 감싸는 HTML 셸의 책임을 구분한다.
@@ -49,7 +61,12 @@ class StudentRouteSpec {
   final bool demoOnly;
 
   /// The typed destination used by menus, search, and audit tooling.
-  StudentDestination get destination => StudentDestination(id);
+  StudentDestination get destination => StudentDestination(
+    screenId: id,
+    routeName: route,
+    requiresAuth: requiresAuth,
+    demoOnly: demoOnly,
+  );
 
   /// HTML 셸은 화면 종류에서 계산해 한 곳에서 관리한다.
   StudentShellKind get shell {

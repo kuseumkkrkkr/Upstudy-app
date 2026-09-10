@@ -8,6 +8,7 @@
 |---|---|---|---|
 | `StudentHtmlShell.build` | 모바일·태블릿·데스크톱 셸과 레일/컨텍스트 영역을 조합 | `BuildContext` → `Widget` | 내비게이션은 전달 콜백과 명명 라우트를 사용 |
 | `StudentRouteSpec.destination` | 화면 ID를 메뉴·검색에서 재사용할 불변 목적지 값으로 노출 | 없음 → `StudentDestination` | 문자열 목적지를 화면 메타와 분리해 감사 ID를 보존 |
+| `StudentDestination` | 화면 ID·route·인증·데모 조건을 함께 보유하는 검색/메뉴용 목적지 값 | `screenId`, `routeName`, `requiresAuth`, `demoOnly` → 불변 객체 | 목적지 생성 시 registry 메타데이터를 복사하며 임의 문자열 경로를 만들지 않음 |
 | `StudentRouteSpec.shell/activeNav` | HTML 셸 종류와 활성 내비게이션 영역을 화면 ID에서 계산 | 없음 → `StudentShellKind`/`StudentNavSection` | registry 한 곳에서만 분류해 화면별 셸 복제를 막음 |
 | `StudentRouteRegistry.searchable` | HTML QUICK FIND 31개 목적지를 레지스트리에서 제공 | 없음 → `Iterable<StudentRouteSpec>` | 데모 전용 항목은 기능 플래그로 필터 |
 | `_StudentQuickSearchSheetState._open` | 검색 시트를 닫고 등록 목적지로 이동 | 검색 record → 없음 | 루트 Navigator 이동, 잘못된 목적지는 라우터가 처리 |

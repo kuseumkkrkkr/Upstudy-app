@@ -25,6 +25,10 @@ void main() {
       StudentRouteRegistry.byId('book-reader')?.destination.screenId,
       'book-reader',
     );
+    final store = StudentRouteRegistry.byId('store')!.destination;
+    expect(store.routeName, '/store');
+    expect(store.requiresAuth, isTrue);
+    expect(store.demoOnly, isTrue);
   });
 
   test('audit manifest and typed registry contain the same screen IDs', () {
