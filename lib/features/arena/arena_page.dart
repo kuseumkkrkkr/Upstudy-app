@@ -412,7 +412,10 @@ class _ArenaPageState extends State<ArenaPage> {
     return StudentHtmlShell(
       title: '대결장',
       activeRoute: AppRoutes.arena,
-      showContextAside: true,
+      showContextAside: false,
+      mobileBackButton: true,
+      onMenu: () =>
+          Navigator.of(context).pushReplacementNamed('/student/dashboard'),
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
