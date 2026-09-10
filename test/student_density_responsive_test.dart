@@ -239,7 +239,7 @@ void main() {
     await tester.tap(find.byTooltip('검색'));
     await tester.pumpAndSettle();
     expect(find.text('QUICK FIND'), findsOneWidget);
-    expect(find.text('전체 검색'), findsOneWidget);
+    expect(find.text('기능 검색'), findsOneWidget);
     expect(find.text('코스, 교재, 문제, 친구를 현재 기능별 검색으로 연결합니다.'), findsOneWidget);
     Navigator.of(tester.element(find.text('QUICK FIND'))).pop();
     await tester.pumpAndSettle();

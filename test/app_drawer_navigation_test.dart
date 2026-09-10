@@ -225,7 +225,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mobile-more-search')));
     await tester.pump();
-    expect(find.text('전체 검색'), findsOneWidget);
+    expect(find.text('기능 검색'), findsOneWidget);
 
     await tester.pumpWidget(
       _mobileBottomFixture(const {}, key: const ValueKey('more-notifications')),
@@ -277,7 +277,7 @@ void main() {
     expect(find.text('로그인 화면'), findsNothing);
   });
 
-  testWidgets('모바일 전체 검색은 수학 키워드를 실제 학습 화면과 연결한다', (tester) async {
+  testWidgets('모바일 기능 검색은 수학 키워드를 실제 학습 화면과 연결한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
