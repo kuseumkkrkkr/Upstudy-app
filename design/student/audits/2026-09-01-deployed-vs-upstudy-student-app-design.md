@@ -773,6 +773,14 @@
 - Vercel 배포 `dpl_5eLivfCZ2S77wmL3x356YKFa93Cv`, alias READY, `/health` 200. Range 전체 수집 기준 로컬·원격 번들 SHA-256 `E30CDA5E3A225E7D5E5DA0429E22474D4631F8B5E17EB4A3C4A3BEB2F4B551D9` 일치.
 - 전체 86개 화면·장면 이미지와 실제 API·DB·동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 친구 추가·친구 요청 장면 딥링크
+
+- `friend-add`와 `friend-requests`를 각각 `/social?scene=friend-add`, `/social?scene=friend-requests`로 연결했다.
+- 기존 친구 추가·요청 모달을 초기 프레임에 열고, 실제 친구 API·빈 상태·취소 동작을 유지한다.
+- 소스·테스트 커밋 `90bec94`, 번들 커밋 `26442ac`; 브라우저에서 친구 추가 모달 표시를 확인했다.
+- Vercel 배포 `dpl_CHrbNReFz4NtFM5mxSwr68wDCNXa`, alias READY, `/health` 200. Range 전체 수집 기준 로컬·원격 번들 SHA-256 `834E989F01FA91CEFE4B2DF3F547DF7AA1693A578E48B362D4B726FD0E2D75DC` 일치.
+- 전체 86개 화면·장면 이미지와 실제 API·DB·동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 자료실 필터 장면 브라우저 재검증
 
 - canary 주소 `#/marketplace?scene=market-filter`를 새 브라우저 탭에서 직접 열어 자료실 본문 위에 `상세 필터` 시트가 표시되는 것을 확인했다.
