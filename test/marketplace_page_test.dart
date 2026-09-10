@@ -46,9 +46,9 @@ void main() {
 
     expect(find.byKey(const ValueKey('market-mobile-body')), findsOneWidget);
     expect(find.byKey(const ValueKey('market-mobile-grid')), findsOneWidget);
-    expect(find.text('MATERIAL LIBRARY'), findsOneWidget);
     expect(find.text('자료실'), findsWidgets);
-    expect(find.text('필요한 학습 자료를\n형태보다 목표로 찾으세요.'), findsOneWidget);
+    expect(find.text('MATERIAL LIBRARY'), findsNothing);
+    expect(find.text('추천 자료'), findsNothing);
     expect(
       tester
           .widget<TextField>(find.byKey(const ValueKey('market-search-field')))
@@ -169,38 +169,62 @@ void main() {
     expect(find.text('가격'), findsOneWidget);
     expect(find.text('초기화'), findsOneWidget);
     expect(find.text('필터 적용'), findsOneWidget);
-    expect(find.widgetWithText(ChoiceChip, '중1'), findsOneWidget);
-    expect(find.widgetWithText(ChoiceChip, '중2'), findsOneWidget);
-    expect(find.widgetWithText(ChoiceChip, '중3'), findsOneWidget);
+    expect(find.byKey(const ValueKey('market-filter-option-중1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('market-filter-option-중2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('market-filter-option-중3')), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, '고1'));
+    await tester.tap(find.byKey(const ValueKey('market-filter-option-고1')));
     await tester.pump();
     expect(
-      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '고1')).selected,
-      isTrue,
+      tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.byKey(const ValueKey('market-filter-option-고1')),
+              matching: find.byType(Material),
+            )
+            .first,
+      ).color,
+      const Color(0xFF202022),
     );
-    await tester.tap(find.widgetWithText(ChoiceChip, '고1'));
+    await tester.tap(find.byKey(const ValueKey('market-filter-option-고1')));
     await tester.pump();
     expect(
-      tester
-          .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '전체 과정'))
-          .selected,
-      isTrue,
+      tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.byKey(const ValueKey('market-filter-option-전체 과정')),
+              matching: find.byType(Material),
+            )
+            .first,
+      ).color,
+      const Color(0xFF202022),
     );
 
-    await tester.tap(find.widgetWithText(ChoiceChip, '코스'));
-    await tester.tap(find.widgetWithText(ChoiceChip, '무료'));
+    await tester.tap(find.byKey(const ValueKey('market-filter-option-코스')));
+    await tester.tap(find.byKey(const ValueKey('market-filter-option-무료')));
     await tester.tap(find.byKey(const ValueKey('market-filter-clear-all')));
     await tester.pump();
     expect(
-      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '전체')).selected,
-      isTrue,
+      tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.byKey(const ValueKey('market-filter-option-전체')),
+              matching: find.byType(Material),
+            )
+            .first,
+      ).color,
+      const Color(0xFF202022),
     );
     expect(
-      tester
-          .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '전체 가격'))
-          .selected,
-      isTrue,
+      tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.byKey(const ValueKey('market-filter-option-전체 가격')),
+              matching: find.byType(Material),
+            )
+            .first,
+      ).color,
+      const Color(0xFF202022),
     );
   });
 
@@ -243,7 +267,7 @@ void main() {
     );
     expect(header.height, 64);
     expect(content.top, header.bottom);
-    expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+    expect(find.byKey(const ValueKey('student-mobile-back')), findsOneWidget);
     expect(find.byKey(const ValueKey('student-brand-home')), findsOneWidget);
     expect(find.byKey(const ValueKey('market-mobile-scroll')), findsOneWidget);
     expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
@@ -288,7 +312,12 @@ void main() {
         find.byKey(const ValueKey('market-wide-scroll')),
         mobile ? findsNothing : findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+      expect(
+        find.byKey(
+          ValueKey(mobile ? 'student-mobile-back' : 'student-mobile-menu'),
+        ),
+        findsOneWidget,
+      );
       expect(
         find.byType(MobileStudentBottomAppBar),
         mobile ? findsOneWidget : findsNothing,

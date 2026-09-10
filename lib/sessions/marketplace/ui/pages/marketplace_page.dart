@@ -281,8 +281,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
   Future<void> _openMarketFilter() async {
     final result = await showModalBottomSheet<(String, String, String)>(
       context: context,
-      showDragHandle: true,
+      showDragHandle: false,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) => _MarketFilterSheet(
         type: _filter,
         course: _courseFilter,
@@ -959,7 +963,7 @@ class _MarketplaceResourceResults extends StatelessWidget {
   final ValueChanged<_MarketItem> onOpen;
 
   /// 필요한 변수는 실제 자료 목록·화면 폭·열기 동작이다.
-  /// 작동 원리는 Atlas의 번호형 자료 커버와 목록을 휴대폰에는 한 열, 넓은 화면에는 두 열로 배치하는 것이다.
+  /// 작동 원리는 HTML의 번호형 자료 커버를 휴대폰 2열, 넓은 화면 3열로 배치하는 것이다.
   @override
   Widget build(BuildContext context) => Container(
     key: rootKey,
@@ -1108,129 +1112,6 @@ class _HtmlMarketplaceGridCard extends StatelessWidget {
   }
 }
 
-class _MarketplaceResourceCard extends StatelessWidget {
-  const _MarketplaceResourceCard({
-    required this.item,
-    required this.index,
-    required this.desktop,
-    required this.onOpen,
-  });
-
-  final _MarketItem item;
-  final int index;
-  final bool desktop;
-  final ValueChanged<_MarketItem> onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final action = item.owned
-        ? (item.completed ? '완료' : '열기')
-        : (item.pricePoints == 0 ? '무료' : '${item.pricePoints}P');
-    final coverWidth = desktop ? 74.0 : 62.0;
-    final coverHeight = desktop ? 92.0 : 76.0;
-    return Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFDEDEE2)),
-      ),
-      child: InkWell(
-        onTap: () => onOpen(item),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: coverWidth,
-                height: coverHeight,
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: item.mobileAccent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.typeLabel,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: item.mobileForeground.withValues(alpha: .78),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      (index + 1).toString().padLeft(2, '0'),
-                      style: TextStyle(
-                        fontSize: desktop ? 24 : 21,
-                        height: 1,
-                        letterSpacing: -1,
-                        color: item.mobileForeground,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.mobileTitle,
-                      maxLines: desktop ? 2 : 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: desktop ? 18 : 16,
-                        height: 1.2,
-                        letterSpacing: -.35,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.compactSubtitle.isEmpty
-                          ? item.typeLabel
-                          : item.compactSubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF707076),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    action,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF303034),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Icon(Icons.arrow_forward_rounded, size: 17),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _MobileMarketMessage extends StatelessWidget {
   const _MobileMarketMessage({
     required this.icon,
@@ -1249,12 +1130,8 @@ class _MobileMarketMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 42),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFDEDEE2)),
-    ),
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 60),
+    color: Colors.white,
     child: Column(
       children: [
         Icon(icon, size: 34, color: const Color(0xFF65656B)),
@@ -1646,32 +1523,70 @@ class _FilterGroup extends StatelessWidget {
   /// 작동 원리는 한 필터 그룹의 단일 선택 상태를 흑백 ChoiceChip으로 표시한다.
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 14),
+    padding: const EdgeInsets.only(bottom: 16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final value in values)
-              ChoiceChip(
-                label: Text(value),
-                selected: selected == value,
-                showCheckmark: false,
-                selectedColor: const Color(0xFF202022),
-                labelStyle: TextStyle(
-                  color: selected == value ? Colors.white : Colors.black87,
-                  fontWeight: FontWeight.w800,
-                ),
-                onSelected: (isSelected) =>
-                    onSelected(isSelected ? value : values.first),
-              ),
-          ],
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth < 560 ? 2 : 4;
+            final width = constraints.maxWidth / columns;
+            return Wrap(
+              children: [
+                for (final value in values)
+                  SizedBox(
+                    width: width,
+                    child: _MarketFilterOption(
+                      label: value,
+                      selected: selected == value,
+                      onTap: () => onSelected(
+                        selected == value ? values.first : value,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ],
+    ),
+  );
+}
+
+class _MarketFilterOption extends StatelessWidget {
+  const _MarketFilterOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: selected ? const Color(0xFF202022) : Colors.white,
+    child: InkWell(
+      key: ValueKey('market-filter-option-$label'),
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFE0E0E2)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : const Color(0xFF71717A),
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
     ),
   );
 }
