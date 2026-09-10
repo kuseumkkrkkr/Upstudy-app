@@ -458,3 +458,11 @@
 - Vercel: [`dpl_2UmMMaacKw8YveHjUqrY5594qqKH`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/2UmMMaacKw8YveHjUqrY5594qqKH), 고유 URL [`aiflow-web-canary-ocsi61rij-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-ocsi61rij-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/signup) READY 연결.
 - 라이브 경계: alias `/health` 200, 라이브 `main.dart.js` SHA-256이 로컬 번들과 일치했다. 올바른 데모 경로 `/demo/student-store`·`/student/school-exam-plan/active`는 인증 없이 각각 401이며, `/api/app/...` 프록시 경로는 503으로 제품 서버 미연결 상태를 별도 기록한다. 배포된 정적 가입 화면의 브라우저 캡처를 후속으로 갱신한다.
 - 이 배포는 가입 화면 한 묶음의 반응형 보정이다. 86개 전체 화면·장면·동작의 동일 조건 이미지, 인증된 실제 데이터, API 쓰기·DB migration·200 동시성·접근성·전체 반응형 검증은 여전히 `pending`이며 상용 준비 완료로 판정하지 않는다.
+
+### 2026-09-10 가입 모바일 스크롤바 여백 후속 배포
+
+- 코드·테스트·증거 커밋 `138df09`를 `origin/hotfix`에 반영했다. HTML이 390px 캡처에서 예약하는 15px 세로 스크롤바 여백을 모바일 패널에도 적용해 입력·버튼 우측 끝을 기준 이미지와 맞췄다.
+- 검증: 가입 단계·로그인/가입 골든 테스트 11개 통과, 릴리스 빌드 성공. 기준 HTML과 배포 화면을 동일 Playwright Chromium 조건(`390×844`, `1280×900`, DPR 1, 5초 대기)으로 캡처했다. 증거는 `evidence/2026-09-01-deployed-vs-design/design-signup-390x844.png`, `design-signup-1280x900.png`, `deployed-signup-390x844.png`, `deployed-signup-1280x900.png`이다.
+- 정적 번들: `public/main.dart.js` 및 라이브 응답 SHA-256 `2277F23A78ED18A300426D310EC4993DE613B017732C34643FDD46FA024AE237` 일치, `localhost`·`127.0.0.1` 없음.
+- Vercel: [`dpl_3cAAjAHSe1Zyz3PhL6euaZGmqANs`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/3cAAjAHSe1Zyz3PhL6euaZGmqANs), 고유 URL [`aiflow-web-canary-2kytqt3jd-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-2kytqt3jd-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/signup) READY 연결. `/health` 200, 올바른 인증 없는 데모 경로 401.
+- 이 배포도 가입 화면의 단일 묶음만 갱신한다. 86개 전체 화면·장면·동작 및 인증 사용자 데이터·쓰기 API·실제 DB migration·200 동시성·접근성·나머지 반응형은 `pending`이고 상용 준비 완료로 판정하지 않는다.
