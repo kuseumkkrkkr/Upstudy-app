@@ -480,3 +480,12 @@
 - `CourseCatalogPage`의 새 코스 찾기·상단 검색 CTA를 별도 잘린 검색 시트 대신 기존 `AppRoutes.marketplace`로 연결했다. 코스 목록·필터·진도·오류/재시도 API 계약은 그대로 둔다.
 - 코스 반응형 구조 회귀 테스트 `student_home_course_catalog_responsive_test.dart`의 1280·390·500 폭 케이스와 변경 파일 analyze를 실행했다. analyze는 기존 미사용 레거시 위젯·import 경고만 남기며 오류는 없다.
 - 이 변경은 아직 정적 번들·Vercel에 반영하지 않은 로컬 후보다. 실제 자료실 화면의 카드·유형 매핑(subject/B1/B2)과 인증 데이터는 분류표·서버 계약 확인 전까지 `pending`으로 유지한다.
+
+### 2026-09-10 홈·알림·코스 목적지 후보 배포
+
+- 코드 커밋 `4756e03`(홈 학습 요약 시트·대시보드 장면·알림 우측 패널)와 `3a662f4`(코스 탐색→자료실)를 포함한 정적 번들 커밋 `51b204f`를 canary에 반영했다.
+- 번들 SHA-256: `6F881F1BB5C66B59D68781814AC8EF2B6F3DB897DE069CAB4BF02F7AEE02324D`; 로컬 `public/main.dart.js`와 alias 응답 해시가 일치하고 `localhost` 문자열이 없다.
+- Vercel: [`dpl_ATPcV7C3Tfd9x2FdfX3HyHjvmkjp`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/ATPcV7C3Tfd9x2FdfX3HyHjvmkjp), 고유 URL [`aiflow-web-canary-3p8j1jta1-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3p8j1jta1-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard) READY. `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active` 각각 401.
+- 코드 검증: 홈 학습 타일 시트 회귀 1개, 코스 반응형 1280·390·500 폭 회귀, 알림·학습 모달 8개가 통과했다. 변경 파일 analyze는 오류 없이 기존 미사용 레거시 경고만 남긴다.
+- 이미지 경계: 가입 화면은 동일 Playwright 390×844·1280×900 기준/배포 캡처를 갱신했다. 인증이 필요한 홈 화면은 현재 독립 브라우저에 유효한 학생 세션이 없어 동일 조건 live 캡처를 수행하지 못했으며 `pending`으로 기록한다.
+- 상용 준비 판정은 하지 않는다. 실제 인증 데이터·홈 86 장면·자료실 카드/분류(subject/B1/B2)·DB migration·200 동시성·접근성·전체 API 쓰기 검증이 남아 있다.
