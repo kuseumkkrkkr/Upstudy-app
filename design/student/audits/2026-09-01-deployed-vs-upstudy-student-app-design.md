@@ -1037,3 +1037,11 @@
 
 - `student_density_responsive_test.dart`의 자료실 검사는 `COMMUNITY`를 기대하지만, 현재 HTML `marketplace` 기준 kicker는 `MATERIAL LIBRARY`다.
 - 해당 실패는 제품 코드에 임의 문구를 추가해 해소하지 않고 레거시 테스트 기대값 차이로 분류했다. 자료실의 실제 검색·필터·미리보기 동작 검수는 별도 기준으로 계속 진행한다.
+
+### 2026-09-11 학습 도구 모바일 라벨 canary 반영
+
+- HTML `LEARNING TOOLS` 문맥 라벨이 모바일에서도 보이는 화면별 규칙을 공통 헤더 옵션으로 구현했다. 기본 모바일 헤더 동작은 유지하고 학습 도구 화면만 명시적으로 활성화했다.
+- 집중 검사 `500px 학습 도구는 HTML 세 모달 카드와 타이머 실행을 유지한다` 통과.
+- 소스·번들 커밋 `049165d`; 로컬·canary `main.dart.js` SHA-256 `A0126AB718F767647607607145AAD70EB766469344B210C782BF2EAB170FF4CF` 일치.
+- Vercel 배포 `dpl_AC95qWvoDLZzSvmcCT3kFYnBvNk9`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
