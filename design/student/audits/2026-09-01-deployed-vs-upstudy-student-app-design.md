@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 공통 데스크톱 레일 HTML 토큰 반영
+
+- HTML `.product-nav` 기준으로 데스크톱 레일 배경을 `#09090b`로, 활성 항목을 표면색·비대칭 반경(10/3/10/3)으로 맞췄다. 비활성 아이콘·문자는 muted 색상을 사용한다.
+- 소스 커밋 `3e434e5`, 번들 SHA-256 `67EFFBDBDA869C235E14349B2A24C3487B7C1CAF8AABF9CE4290E94A5FB3B0FB`.
+- 정적 분석과 `mobile_secondary_shell_test.dart`, `student_route_registry_test.dart`가 통과했다.
+- Vercel 배포 고유 URL [`aiflow-web-canary-g9d56hop0-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-g9d56hop0-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. alias `/main.dart.js` 해시가 로컬 번들과 일치하고 `/health`·루트가 모두 200이다.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 HTML 셸·코스·책가방 검수 계약 정리
 
 - `group-detail`, 일정·오답·레벨·대결·소셜·그룹·튜터 모바일 셸 검사를 실제 HTML 셸 변형(뒤로가기/무버튼)에 맞춰 분리했다.
