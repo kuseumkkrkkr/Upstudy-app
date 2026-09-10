@@ -364,3 +364,12 @@
 - 잔여: 86개 화면의 모든 장면·동작 이미지 원장, 인증된 실제 데이터, DB migration 적용, 200 동시성, 전체 접근성·반응형 검사와 저장소 기준선 analyze 오류는 아직 미검증이다. 따라서 이번 배포 역시 상용 준비 완료가 아닌 후보다.
 - 후속 테스트 정정: `de1065e`에서 HTML 최종 cascade의 PC 상단바 62px에 맞춰 `marketplace_page_test.dart`의 데스크톱 기대값을 64→62로 정정했다. 모바일 64px 기대값은 유지했으며, 구 명칭·구 셸을 전제로 한 나머지 반응형 실패는 임의로 완화하지 않았다.
 - 원장 무결성 검사: `student_route_registry_test.dart`가 감사 JSON의 `screenCount`·ID 집합·QUICK FIND 31개와 typed registry를 직접 대조한다. 문서만 갱신되거나 코드만 갱신되는 분리 상태를 테스트에서 검출한다.
+
+### 2026-09-10 API 중복 핸들러 정리 후속 배포
+
+- 코드 커밋: `710b42d` (`fix(api): remove duplicated student handlers`). 일정 계약을 삽입할 때 후반에 중복으로 붙은 일일 과제·마켓·풀이 분석 핸들러 250줄을 제거하고, 단일 등록된 기존 핸들러와 새 일정·풀이 이력·소셜 핸들러를 보존했다.
+- 검증: `python -m py_compile api/index.py` 및 학생 데모·소셜·그래프·서버챗 API 12개가 통과했고, 소스에서 해당 경로의 decorator가 한 번씩만 남았음을 확인했다.
+- Vercel: [`dpl_E7afpXXmxc3wFw7Dw25aPcQ7bmmj`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/E7afpXXmxc3wFw7Dw25aPcQ7bmmj), 고유 URL [`aiflow-web-canary-j1nvsg7ik-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-j1nvsg7ik-cw20208021-9200s-projects.vercel.app), production alias READY 연결을 확인했다. 기존 정적 Flutter 번들 SHA-256 `9F8CEA6D0226EAD62F127F365B3E6088B627E5FD30FB5C83E83AC70EEF238C8A`도 alias 응답과 일치한다.
+- 라이브 경계: `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active` 각각 401, 번들 `localhost` 없음.
+- 소스 기준: 배포 뒤 `2862073`(원장·테스트 문서)와 이번 `710b42d`가 추가됐다. 이 둘은 정적 Flutter 런타임 코드를 바꾸지 않아 배포 번들의 실행 코드와 불일치하지 않으며, 현재 `HEAD`에는 배포된 API 정리 코드가 포함돼 있다.
+- 잔여: 인증 실제 데이터·DB migration 적용·200 동시성·전체 86개 장면 이미지·접근성·반응형 남은 실패는 여전히 미검증이므로 상용 준비 완료로 판정하지 않는다.
