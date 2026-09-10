@@ -133,16 +133,24 @@ class StudentDensitySurface extends StatelessWidget {
 }
 
 /// 필요 변수: 짧은 영문 또는 상태 라벨.
-/// 작동 원리: PC에서만 문맥 라벨을 표시하고 모바일은 제목만 남겨 텍스트 밀도를 줄입니다.
+/// 작동 원리: 기본은 PC 문맥 라벨만 표시하며 화면별 허용 시 모바일에도 표시합니다.
 class StudentDensityEyebrow extends StatelessWidget {
-  const StudentDensityEyebrow(this.text, {super.key, this.color});
+  const StudentDensityEyebrow(
+    this.text, {
+    super.key,
+    this.color,
+    this.showOnMobile = false,
+  });
 
   final String text;
   final Color? color;
+  final bool showOnMobile;
 
   @override
   Widget build(BuildContext context) {
-    if (isStudentDensityMobile(context)) return const SizedBox.shrink();
+    if (isStudentDensityMobile(context) && !showOnMobile) {
+      return const SizedBox.shrink();
+    }
     return Text(
       text.toUpperCase(),
       style: TextStyle(
@@ -165,6 +173,7 @@ class StudentDensityPageHeader extends StatelessWidget {
     this.description,
     this.action,
     this.showMobileDescription = false,
+    this.showMobileEyebrow = false,
   });
 
   final String eyebrow;
@@ -172,6 +181,7 @@ class StudentDensityPageHeader extends StatelessWidget {
   final String? description;
   final Widget? action;
   final bool showMobileDescription;
+  final bool showMobileEyebrow;
 
   @override
   Widget build(BuildContext context) {
@@ -179,8 +189,8 @@ class StudentDensityPageHeader extends StatelessWidget {
     final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!mobile) ...[
-          StudentDensityEyebrow(eyebrow),
+        if (!mobile || showMobileEyebrow) ...[
+          StudentDensityEyebrow(eyebrow, showOnMobile: showMobileEyebrow),
           const SizedBox(height: 10),
         ],
         Text(

@@ -75,6 +75,7 @@ class StudentLearningToolsPage extends StatelessWidget {
                 title: '학습 도구',
                 description: '그래프 그리기를 제외한 도구는 학습 맥락을 유지하는 모달로 실행됩니다.',
                 showMobileDescription: true,
+                showMobileEyebrow: true,
                 action: StudentDensityButton(
                   label: '홈으로 돌아가기',
                   primary: true,
