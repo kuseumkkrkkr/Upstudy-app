@@ -1040,6 +1040,9 @@ class _StudentUtilitySheet extends StatelessWidget {
                     side: mobile
                         ? BorderSide.none
                         : const BorderSide(color: Color(0xFFB9B9BD)),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                    ),
                   ),
                 ),
               ],
@@ -1057,19 +1060,6 @@ class _StudentUtilitySheet extends StatelessWidget {
               children: [...children],
             ),
           ),
-          if (!mobile) ...[
-            const Divider(height: 1, color: Color(0xFFE4E4E6)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('닫기'),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
