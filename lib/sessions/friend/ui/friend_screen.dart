@@ -493,12 +493,14 @@ class _SoWidgetState extends State<SoWidget> {
   Timer? _socialPollTimer;
   bool _pollingSocial = false;
   int _mobileSocialTab = 0;
+  int _desktopSocialTab = 0;
 
   // ── 원본과 동일한 lifecycle ──────────────────────────────────
   @override
   void initState() {
     super.initState();
     _mobileSocialTab = widget.initialTab == 1 ? 1 : 0;
+    _desktopSocialTab = widget.initialTab == 1 ? 1 : 0;
     if (widget.preview) {
       _friends = const [
         _FriendInfo(name: '이수학', status: '학습 중 · B Tier', ovr: 76),
@@ -2865,6 +2867,7 @@ class _SoWidgetState extends State<SoWidget> {
   }
 
   Widget _buildHtmlDesktopSocialBody() {
+    if (_desktopSocialTab == 1) return _buildHtmlDesktopFriendsBody();
     final conversations = _messages.take(8).toList(growable: false);
     return Center(
       child: ConstrainedBox(
@@ -2878,20 +2881,24 @@ class _SoWidgetState extends State<SoWidget> {
                   Expanded(
                     child: InkWell(
                       onTap: tab == '친구'
-                          ? _openAddFriendModal
+                          ? () => setState(() => _desktopSocialTab = 1)
                           : tab == '그룹'
                           ? () => Navigator.of(context).pushNamed('/groups')
-                          : null,
+                          : () => setState(() => _desktopSocialTab = 0),
                       child: Container(
                         height: 34,
                         alignment: Alignment.topCenter,
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: tab == '대화'
+                              color: (tab == '대화' && _desktopSocialTab == 0) ||
+                                      (tab == '친구' && _desktopSocialTab == 1)
                                   ? const Color(0xFF09090B)
                                   : const Color(0xFFE1E1E4),
-                              width: tab == '대화' ? 3 : 1,
+                              width: ((tab == '대화' && _desktopSocialTab == 0) ||
+                                      (tab == '친구' && _desktopSocialTab == 1))
+                                  ? 3
+                                  : 1,
                             ),
                           ),
                         ),
@@ -2980,6 +2987,86 @@ class _SoWidgetState extends State<SoWidget> {
       ),
     );
   }
+
+  Widget _buildHtmlDesktopFriendsBody() {
+    final friends = _friends.take(8).toList(growable: false);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 984),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHtmlDesktopSocialTabs(),
+            const SizedBox(height: 40),
+            Text('친구 ${friends.length}', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 5),
+            const Text('친구를 눌러 바로 대화할 수 있어요.', style: TextStyle(fontSize: 13, color: Color(0xFF71717A))),
+            const SizedBox(height: 20),
+            if (_pendingIncomingRequests.isNotEmpty || _pendingOutgoingRequests.isNotEmpty)
+              InkWell(
+                onTap: _openFriendRequestsModal,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  color: const Color(0xFFEAF0FF),
+                  child: Row(children: [
+                    const Icon(Icons.person_add_alt_1_outlined),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('친구 요청 ${_pendingIncomingRequests.length + _pendingOutgoingRequests.length}건')),
+                    const Icon(Icons.arrow_forward),
+                  ]),
+                ),
+              ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(color: Colors.white, border: Border.all(color: const Color(0xFFDCDCE0))),
+              child: friends.isEmpty
+                  ? const Padding(padding: EdgeInsets.all(28), child: Text('아직 등록된 친구가 없습니다.'))
+                  : Column(children: [
+                      for (var i = 0; i < friends.length; i++) ...[
+                        _SocialPersonRow(
+                          key: ValueKey('social-friend-${friends[i].userId ?? friends[i].name}'),
+                          name: friends[i].name,
+                          subtitle: friends[i].status,
+                          trailing: '쪽지 ›',
+                          onTap: () => _openFriendActionModal(friends[i]),
+                        ),
+                        if (i < friends.length - 1) const Divider(height: 1, indent: 22, endIndent: 22),
+                      ],
+                    ]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHtmlDesktopSocialTabs() => Row(
+    children: [
+      for (final tab in const ['대화', '친구', '그룹'])
+        Expanded(
+          child: InkWell(
+            onTap: tab == '친구'
+                ? () => setState(() => _desktopSocialTab = 1)
+                : tab == '그룹'
+                ? () => Navigator.of(context).pushNamed('/groups')
+                : () => setState(() => _desktopSocialTab = 0),
+            child: Container(
+              height: 34,
+              alignment: Alignment.topCenter,
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(
+                  color: ((tab == '대화' && _desktopSocialTab == 0) || (tab == '친구' && _desktopSocialTab == 1))
+                      ? const Color(0xFF09090B)
+                      : const Color(0xFFE1E1E4),
+                  width: ((tab == '대화' && _desktopSocialTab == 0) || (tab == '친구' && _desktopSocialTab == 1)) ? 3 : 1,
+                )),
+              ),
+              child: Text(tab, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+            ),
+          ),
+        ),
+    ],
+  );
 
   /// 필요한 변수는 친구 추가 동작이다.
   /// 작동 원리는 제목은 모바일 AppBar에 맡기고 첫 행동만 전폭 버튼으로 제공한다.
