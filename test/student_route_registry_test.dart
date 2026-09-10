@@ -46,6 +46,17 @@ void main() {
     expect(StudentRouteRegistry.searchable, hasLength(31));
   });
 
+  test('every registry route has a MaterialApp or generated route target', () {
+    final staticRoutes = appRoutes();
+    final unresolved = <String>[];
+    for (final spec in StudentRouteRegistry.all) {
+      if (staticRoutes.containsKey(spec.route)) continue;
+      final generated = onGenerateAppRoute(RouteSettings(name: spec.route));
+      if (generated == null) unresolved.add('${spec.id}:${spec.route}');
+    }
+    expect(unresolved, isEmpty);
+  });
+
   test('dashboard scene links resolve without losing the requested scene', () {
     for (final scene in const [
       'today-tasks',
