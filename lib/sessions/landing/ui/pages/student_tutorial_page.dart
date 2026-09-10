@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/app/router.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 /// HTML 학생 튜토리얼의 한 단계에 필요한 표시 정보다.
 @immutable
@@ -173,18 +174,28 @@ class _StudentTutorialPageState extends State<StudentTutorialPage> {
       backgroundColor: StudentDensityTokens.background,
       body: SafeArea(
         child: LayoutBuilder(
-          builder: (context, constraints) => _TutorialLayout(
-            compact:
-                constraints.maxWidth <= StudentDensityTokens.mobileBreakpoint,
-            current: _current,
-            step: _step,
-            practiced: _practiced,
-            onStep: _moveTo,
-            onPractice: _practice,
-            onPrevious: () => _moveTo(_current - 1),
-            onNext: () => _moveTo(_current + 1),
-            onFinish: _finish,
-          ),
+          builder: (context, constraints) {
+            final compact =
+                constraints.maxWidth <= StudentDensityTokens.mobileBreakpoint;
+            return Column(
+              children: [
+                _TutorialTopBar(compact: compact),
+                Expanded(
+                  child: _TutorialLayout(
+                    compact: compact,
+                    current: _current,
+                    step: _step,
+                    practiced: _practiced,
+                    onStep: _moveTo,
+                    onPractice: _practice,
+                    onPrevious: () => _moveTo(_current - 1),
+                    onNext: () => _moveTo(_current + 1),
+                    onFinish: _finish,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -216,7 +227,6 @@ class _TutorialLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final heading = _TutorialHeading(current: current, compact: compact);
     final steps = _TutorialSteps(
       compact: compact,
       current: current,
@@ -242,7 +252,6 @@ class _TutorialLayout extends StatelessWidget {
     if (compact) {
       return Column(
         children: [
-          heading,
           SizedBox(height: 64, child: steps),
           stage,
           footer,
@@ -251,7 +260,6 @@ class _TutorialLayout extends StatelessWidget {
     }
     return Column(
       children: [
-        heading,
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -267,58 +275,93 @@ class _TutorialLayout extends StatelessWidget {
   }
 }
 
-class _TutorialHeading extends StatelessWidget {
-  const _TutorialHeading({required this.current, required this.compact});
+class _TutorialTopBar extends StatelessWidget {
+  const _TutorialTopBar({required this.compact});
 
-  final int current;
   final bool compact;
 
   @override
   Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minHeight: 72),
-    padding: EdgeInsets.fromLTRB(
-      compact ? 16 : 22,
-      compact ? 12 : 14,
-      compact ? 16 : 28,
-      compact ? 12 : 14,
-    ),
-    decoration: const BoxDecoration(
-      color: StudentDensityTokens.surface,
-      border: Border(bottom: BorderSide(color: StudentDensityTokens.line)),
-    ),
+    height: 62,
+    color: StudentDensityTokens.surface,
+    padding: EdgeInsets.only(left: compact ? 10 : 10, right: compact ? 10 : 22),
     child: Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'STUDENT GUIDE',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.3,
-                  color: StudentDensityTokens.muted,
-                ),
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: OutlinedButton(
+            key: const ValueKey('tutorial-back'),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                Navigator.of(
+                  context,
+                ).pushReplacementNamed(AppRoutes.studentDashboard);
+              }
+            },
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              foregroundColor: StudentDensityTokens.ink,
+              side: const BorderSide(color: StudentDensityTokens.line),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
               ),
-              SizedBox(height: 6),
-              Text(
-                '처음부터 하나씩 따라 해보세요.',
-                style: TextStyle(
-                  fontSize: compact ? 22 : 30,
-                  fontWeight: FontWeight.w900,
-                  height: 1.02,
-                ),
-              ),
-            ],
+            ),
+            child: const Icon(Icons.arrow_back, size: 19),
           ),
         ),
-        SizedBox(
-          width: compact ? 82 : 240,
-          child: _TutorialProgress(current: current),
+        const SizedBox(width: 14),
+        const Text(
+          '튜토리얼',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        ),
+        const Spacer(),
+        _TutorialTopAction(
+          icon: Icons.search,
+          label: '검색',
+          onTap: () => showStudentQuickSearch(context),
+        ),
+        const SizedBox(width: 8),
+        _TutorialTopAction(
+          icon: Icons.notifications_none,
+          label: '알림',
+          onTap: () => showStudentNotifications(context),
         ),
       ],
+    ),
+  );
+}
+
+class _TutorialTopAction extends StatelessWidget {
+  const _TutorialTopAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: label,
+    child: SizedBox(
+      width: 48,
+      height: 48,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          foregroundColor: StudentDensityTokens.ink,
+          side: const BorderSide(color: StudentDensityTokens.line),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        child: Icon(icon, size: 19),
+      ),
     ),
   );
 }
@@ -423,17 +466,22 @@ class _TutorialSteps extends StatelessWidget {
                   ),
                 ),
                 child: compact
-                    ? Center(
-                        child: Text(
-                          item.shortTitle,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: active
-                                ? FontWeight.w900
-                                : FontWeight.w700,
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(item.icon, size: 19),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.shortTitle,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: active
+                                  ? FontWeight.w900
+                                  : FontWeight.w700,
+                            ),
                           ),
-                        ),
+                        ],
                       )
                     : Row(
                         children: [
@@ -504,56 +552,72 @@ class _TutorialStage extends StatelessWidget {
   final VoidCallback onPractice;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: EdgeInsets.all(compact ? 16 : 28),
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 420),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'STEP ${step.number}',
-            style: const TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.4,
+  Widget build(BuildContext context) {
+    final copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'STEP ${step.number}',
+          style: const TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.4,
+            color: StudentDensityTokens.muted,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          step.title,
+          style: TextStyle(
+            fontSize: compact ? 26 : 40,
+            fontWeight: FontWeight.w900,
+            height: 1.04,
+          ),
+        ),
+        SizedBox(height: compact ? 10 : 14),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: Text(
+            step.description,
+            style: TextStyle(
+              fontSize: compact ? 11 : 13,
+              height: 1.7,
               color: StudentDensityTokens.muted,
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            step.title,
-            style: TextStyle(
-              fontSize: compact ? 26 : 40,
-              fontWeight: FontWeight.w900,
-              height: 1.04,
-            ),
-          ),
-          SizedBox(height: compact ? 10 : 14),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Text(
-              step.description,
-              style: TextStyle(
-                fontSize: compact ? 11 : 13,
-                height: 1.7,
-                color: StudentDensityTokens.muted,
-              ),
-            ),
-          ),
-          SizedBox(height: compact ? 16 : 24),
-          _InstructionRow(number: '1', text: step.instruction),
-          const _InstructionRow(number: '2', text: '오른쪽 예시에서 강조된 버튼을 눌러보세요.'),
-          SizedBox(height: compact ? 16 : 24),
-          _TutorialDemo(
-            step: step,
-            practiced: practiced,
-            onPractice: onPractice,
-          ),
-        ],
+        ),
+        SizedBox(height: compact ? 16 : 24),
+        _InstructionRow(number: '1', text: step.instruction),
+        const _InstructionRow(number: '2', text: '오른쪽 예시에서 강조된 버튼을 눌러보세요.'),
+      ],
+    );
+    final demo = _TutorialDemo(
+      compact: compact,
+      step: step,
+      practiced: practiced,
+      onPractice: onPractice,
+    );
+    final content = compact
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [copy, const SizedBox(height: 16), demo],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: copy),
+              const SizedBox(width: 50),
+              Expanded(flex: 2, child: demo),
+            ],
+          );
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(compact ? 16 : 38),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: compact ? 420 : 600),
+        child: Align(alignment: Alignment.center, child: content),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _InstructionRow extends StatelessWidget {
@@ -599,12 +663,14 @@ class _InstructionRow extends StatelessWidget {
 
 class _TutorialDemo extends StatelessWidget {
   const _TutorialDemo({
+    required this.compact,
     required this.step,
     required this.practiced,
     required this.onPractice,
   });
 
   final StudentTutorialStep step;
+  final bool compact;
   final bool practiced;
   final VoidCallback onPractice;
 
@@ -612,7 +678,7 @@ class _TutorialDemo extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     children: [
       Container(
-        height: 260,
+        height: compact ? 312 : 394,
         padding: const EdgeInsets.all(18),
         decoration: const BoxDecoration(
           color: Color(0xFFE9EAED),
@@ -620,7 +686,11 @@ class _TutorialDemo extends StatelessWidget {
             BorderSide(color: StudentDensityTokens.line),
           ),
         ),
-        child: _DemoContent(step: step, onPractice: onPractice),
+        child: _DemoContent(
+          compact: compact,
+          step: step,
+          onPractice: onPractice,
+        ),
       ),
       const SizedBox(height: 10),
       Text(
@@ -638,90 +708,153 @@ class _TutorialDemo extends StatelessWidget {
 }
 
 class _DemoContent extends StatelessWidget {
-  const _DemoContent({required this.step, required this.onPractice});
+  const _DemoContent({
+    required this.compact,
+    required this.step,
+    required this.onPractice,
+  });
 
+  final bool compact;
   final StudentTutorialStep step;
   final VoidCallback onPractice;
 
   @override
   Widget build(BuildContext context) {
-    final title = switch (step.id) {
-      'home' => '진행 중인 코스',
+    final barTitle = switch (step.id) {
+      'home' => '오늘 학습',
       'course' => '미적분 핵심 완성',
       'solve' => '문제 03',
       'book' => '접선의 기울기',
       _ => 'AI 튜터',
     };
-    final detail = switch (step.id) {
-      'home' => '4단원 · 도함수 · 68%',
+    final barDetail = switch (step.id) {
+      'home' => '화요일 · 3개 예정',
+      'course' => '4단원',
+      'solve' => '풀이',
+      'book' => '02 / 05',
+      _ => '질문',
+    };
+    final focusTitle = switch (step.id) {
+      'home' => '미적분 핵심 완성',
       'course' => '4.2 접선의 방정식',
       'solve' => 'f(x)=x²−2x+1의 접선 기울기를 구하세요.',
-      'book' => '점 P(a, f(a))에서 접선의 기울기는 f′(a)입니다.',
+      'book' => '접선의 기울기',
       _ => '어느 부분에서 막혔나요?',
     };
+    final focusDetail = switch (step.id) {
+      'home' => '4단원 · 도함수 · 68%',
+      'course' => '4.2 접선의 방정식',
+      'solve' => '풀이를 여기에 작성하세요',
+      'book' => '점 P(a, f(a))에서 접선의 기울기는 f′(a)입니다.',
+      _ => '접선의 기울기를 어디에 대입해야 하는지 모르겠어요.',
+    };
+    final cardPadding = compact ? 20.0 : 28.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-            ),
-            const Spacer(),
-            Text(
-              step.number,
-              style: const TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w900,
-                color: StudentDensityTokens.muted,
-              ),
-            ),
-          ],
-        ),
-        const Spacer(),
         Container(
-          constraints: const BoxConstraints(maxWidth: 480),
-          padding: const EdgeInsets.all(20),
-          color: StudentDensityTokens.dark,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          height: 44,
+          color: StudentDensityTokens.surface,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
             children: [
               Text(
-                detail,
+                barTitle,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  height: 1.35,
                 ),
               ),
-              const SizedBox(height: 18),
-              const SizedBox(
-                height: 5,
-                child: LinearProgressIndicator(
-                  value: .68,
-                  backgroundColor: Color(0x44FFFFFF),
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  key: ValueKey('tutorial-practice-${step.id}'),
-                  onPressed: onPractice,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: StudentDensityTokens.dark,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                  child: Text(step.actionLabel),
+              const Spacer(),
+              Text(
+                barDetail,
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  color: StudentDensityTokens.muted,
                 ),
               ),
             ],
+          ),
+        ),
+        SizedBox(height: compact ? 20 : 38),
+        Align(
+          alignment: Alignment.center,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 420),
+            padding: EdgeInsets.all(cardPadding),
+            color: StudentDensityTokens.dark,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '진행 중인 코스',
+                  style: TextStyle(
+                    color: Color(0xFFB8BAC0),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  focusTitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  focusDetail,
+                  style: const TextStyle(
+                    color: Color(0xFFC8C9CE),
+                    fontSize: 10,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const SizedBox(
+                  height: 5,
+                  child: LinearProgressIndicator(
+                    value: .68,
+                    backgroundColor: Color(0x44FFFFFF),
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: compact ? 18 : 22),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    key: ValueKey('tutorial-practice-${step.id}'),
+                    onPressed: onPractice,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: StudentDensityTokens.dark,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            step.actionLabel,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward, size: 17),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

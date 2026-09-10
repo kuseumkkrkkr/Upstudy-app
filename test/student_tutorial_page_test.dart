@@ -24,7 +24,8 @@ void main() {
   testWidgets('HTML 튜토리얼은 모바일에서 5단계와 진행 동작을 제공한다', (tester) async {
     await pumpTutorial(tester, const Size(390, 844));
 
-    expect(find.text('처음부터 하나씩 따라 해보세요.'), findsOneWidget);
+    expect(find.text('튜토리얼'), findsOneWidget);
+    expect(find.text('오늘 학습 시작하기'), findsOneWidget);
     expect(find.byKey(const ValueKey('tutorial-step-home')), findsOneWidget);
     expect(find.byKey(const ValueKey('tutorial-next')), findsOneWidget);
 

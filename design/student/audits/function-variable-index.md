@@ -33,6 +33,7 @@
 | `_CourseLoaderState._load` | 실제 수강 코스에서 사용자별 마지막 선택 코스를 우선 복원 | 없음 → `Future<void>` | `student.active_course.v1` 조회 실패 시 서버 순서로 fallback, 코스 데이터는 API에서만 사용 |
 | `_MobileCourseCatalog` | 모바일 코스 목록의 로딩·오류·빈 목록·실제 코스 상태를 HTML 순서로 렌더링 | `loading`, `hasError`, 코스 목록·콜백 → `Widget` | API 오류는 재시도 행으로 표시하고 빈 목록으로 축약하지 않음 |
 | `StudentTutorialPage` | HTML `about` 화면의 5단계 학생 튜토리얼과 전용 셸을 렌더링 | 없음 → `Widget` | 단계 이동·실습 완료·완료 후 홈 이동, 진행 상태는 로컬 저장만 사용 |
+| `_TutorialTopBar` | 튜토리얼의 뒤로가기·제목·검색·알림 상단 바를 렌더링 | `compact`, `BuildContext` → `Widget` | 기존 검색·알림 패널을 호출하고, 뒤로가기는 이전 화면 또는 학생 홈으로 복귀 |
 | `_StudentTutorialPageState._loadState/_saveState` | 튜토리얼 현재 단계와 실습 완료 단계를 복원·저장 | 없음 → `Future<void>` | `student.atlas.tutorial.v1` 로컬 키, 저장 실패는 안내 동작을 막지 않음 |
 | `_TutorialLayout` | 720px 기준 데스크톱 레일/모바일 가로 단계 목록과 본문·하단 액션을 조합 | 폭·현재 단계·콜백 → `Widget` | HTML의 230px 단계 레일·64px 모바일 단계 바·70px 액션 바를 유지 |
 | `_TutorialDemo` | 현재 단계의 강조 실습 카드와 완료 상태를 표시 | 단계·완료 여부·콜백 → `Widget` | 샘플 문구만 사용하며 실습 버튼은 로컬 진행 상태만 변경 |
