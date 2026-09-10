@@ -761,6 +761,12 @@
 - 대상 파일 분석 통과. 소스·번들 커밋 `4d13084`, Vercel 배포 `dpl_CiRM2rca3T5YHVH2QTHPFXwceF1j`, alias READY, `/health` 200.
 - canary에서 `book-library` 딥링크의 `보관된 교재` 모달과 검색 입력을 확인했다. 전체 86개 전수 게이트는 계속 `pending`이다.
 
+### 2026-09-11 전역 검색 내부 장면 라우팅 활성화
+
+- 검색 라우터가 대시보드 외 목적지에서 기본 경로로 조기 반환하던 결함을 제거했다. 이제 자료실·도구·그룹·책가방·대결장의 `?scene=` 목적지가 실제 검색 클릭에도 적용된다.
+- `flutter analyze` 통과. 소스·번들 커밋 `a934337`, Vercel 배포 `dpl_3d9b5xg11LdWboUb2TScTwt5jTMX`, alias READY, `/health` 200.
+- 기존 데이터·인증·데모 플래그 조건은 변경하지 않았다. 전체 86개 화면의 검색·시각·API 전수 검증은 계속 `pending`이다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
