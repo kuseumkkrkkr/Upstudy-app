@@ -82,7 +82,7 @@ void main() {
     expect(find.text('문서고'), findsOneWidget);
   });
 
-  testWidgets('통합 책가방은 모바일에서 이어 보기와 네 자료 입구만 우선 표시한다', (tester) async {
+  testWidgets('통합 책가방은 HTML 자주 보는 교재와 내 자료를 표시한다', (tester) async {
     // 필요한 변수는 612px 세로 화면과 프리뷰 자료다.
     // 작동 원리는 실제 /bookbag 진입점이 긴 데스크톱 섹션 대신 모바일 전용 핵심 구조를 사용하는지 검증한다.
     tester.view.physicalSize = const Size(612, 900);
@@ -95,23 +95,16 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.byKey(const ValueKey('bookbag-html-shell')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bookbag-html-frequent')), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('bookbag-mobile-redesign')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('bookbag-mobile-featured')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('bookbag-mobile-shortcut-group')),
+      find.byKey(const ValueKey('bookbag-html-materials')),
       findsOneWidget,
     );
     expect(find.text('내 자료'), findsOneWidget);
     expect(find.text('교재'), findsWidgets);
     expect(find.text('시험지'), findsWidgets);
-    expect(find.text('책 북마크'), findsWidgets);
-    expect(find.text('문제 북마크'), findsWidgets);
+    expect(find.text('북마크'), findsWidgets);
     expect(find.text('찾고, 고정하고,'), findsNothing);
     expect(find.text('진행 중인 코스'), findsNothing);
   });
@@ -135,16 +128,9 @@ void main() {
       await tester.pump();
 
       expect(tester.takeException(), isNull, reason: '${width}px overflow');
-      expect(
-        find.byKey(const ValueKey('bookbag-desktop-body')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('bookbag-hero-stacked')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const ValueKey('bookbag-html-body')), findsOneWidget);
       await tester.drag(
-        find.byKey(const ValueKey('bookbag-desktop-body')),
+        find.byKey(const ValueKey('bookbag-html-body')),
         const Offset(0, -2000),
       );
       await tester.pump();
@@ -154,11 +140,10 @@ void main() {
         reason: '${width}px lower body overflow',
       );
       expect(
-        find.byKey(const ValueKey('bookbag-bottom-stacked')),
+        find.byKey(const ValueKey('bookbag-html-materials')),
         findsOneWidget,
       );
-      expect(find.textContaining('찾고, 고정하고'), findsOneWidget);
-      expect(find.text('진행 중인 코스'), findsOneWidget);
+      expect(find.text('내 자료'), findsOneWidget);
     }
   });
 
@@ -176,20 +161,18 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    expect(find.byKey(const ValueKey('bookbag-desktop-body')), findsOneWidget);
-    expect(find.byKey(const ValueKey('bookbag-hero-columns')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bookbag-html-body')), findsOneWidget);
     await tester.drag(
-      find.byKey(const ValueKey('bookbag-desktop-body')),
+      find.byKey(const ValueKey('bookbag-html-body')),
       const Offset(0, -2000),
     );
     await tester.pump();
     expect(tester.takeException(), isNull);
     expect(
-      find.byKey(const ValueKey('bookbag-bottom-columns')),
+      find.byKey(const ValueKey('bookbag-html-materials')),
       findsOneWidget,
     );
-    expect(find.textContaining('찾고, 고정하고'), findsOneWidget);
-    expect(find.text('진행 중인 코스'), findsOneWidget);
+    expect(find.text('내 자료'), findsOneWidget);
   });
 
   for (final width in <double>[720, 760, 780]) {
@@ -206,15 +189,15 @@ void main() {
 
       if (width <= 720) {
         expect(
-          find.byKey(const ValueKey('bookbag-mobile-redesign')),
+          find.byKey(const ValueKey('bookbag-html-shell')),
           findsOneWidget,
         );
         expect(
-          find.byKey(const ValueKey('bookbag-mobile-featured')),
+          find.byKey(const ValueKey('bookbag-html-frequent')),
           findsOneWidget,
         );
         expect(
-          find.byKey(const ValueKey('student-mobile-menu')),
+          find.byKey(const ValueKey('student-mobile-back')),
           findsOneWidget,
         );
         expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);

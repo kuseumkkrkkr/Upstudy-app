@@ -17,6 +17,7 @@ import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 
 void main() => runApp(const MyApp());
@@ -370,26 +371,163 @@ class _BookWidgetState extends State<BookWidget> {
   // ── build root ────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
-    if (mobile) return _buildMobileBookbag(context);
+    return _buildHtmlBookbag(context);
+  }
 
+  /// 지정 HTML의 책가방 대시보드 순서(자주 보는 교재 → 내 자료)를
+  /// 실제 저장소 항목과 기존 자료 시트 동작에 연결한다.
+  Widget _buildHtmlBookbag(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final mobile = width <= StudentDensityTokens.mobileBreakpoint;
+    final wide = width > StudentDensityTokens.desktopBreakpoint;
     return StudentHtmlShell(
-      title: '자료실',
+      key: const ValueKey('bookbag-html-shell'),
+      title: '책가방',
       activeRoute: '/bookbag',
-      showContextAside: true,
-      onMenu: () => Navigator.of(context).maybePop(),
-      onSearch: () => _showGlobalSearch(context),
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: CustomScrollView(
-          key: const ValueKey('bookbag-desktop-body'),
-          primary: true,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeroSection(context)),
-            SliverToBoxAdapter(child: _buildBottomSection(context)),
-          ],
+      showContextAside: wide,
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).pushNamed('/student/dashboard'),
+      onSearch: () => showStudentQuickSearch(context),
+      child: SingleChildScrollView(
+        key: const ValueKey('bookbag-html-body'),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 880),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                mobile ? 12 : 36,
+                mobile ? 22 : 36,
+                mobile ? 12 : 36,
+                mobile ? 30 : 48,
+              ),
+              child: mobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildHtmlFrequentSection(context),
+                        const SizedBox(height: 14),
+                        _buildHtmlMaterialsSection(context),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _buildHtmlFrequentSection(context)),
+                        const SizedBox(width: 14),
+                        SizedBox(
+                          width: 310,
+                          child: _buildHtmlMaterialsSection(context),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHtmlFrequentSection(BuildContext context) {
+    final items = _recentItems.take(4).toList(growable: false);
+    return Container(
+      key: const ValueKey('bookbag-html-frequent'),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '자주 보는 교재',
+            style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: StudentDensityTokens.line),
+          if (items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 54),
+              child: Center(
+                child: Text(
+                  '아직 없어요',
+                  style: TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            )
+          else
+            for (var index = 0; index < items.length; index++) ...[
+              _HtmlFrequentRow(
+                item: items[index],
+                onTap: () => _openBigItem(items[index]),
+              ),
+              if (index < items.length - 1)
+                const Divider(height: 1, color: StudentDensityTokens.line),
+            ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHtmlMaterialsSection(BuildContext context) {
+    return Container(
+      key: const ValueKey('bookbag-html-materials'),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '내 자료',
+                  style: TextStyle(fontSize: 23, fontWeight: FontWeight.w900),
+                ),
+              ),
+              TextButton(
+                onPressed: () => _showTextbookModal(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: StudentDensityTokens.muted,
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 32),
+                ),
+                child: const Text(
+                  '상세보기 →',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 1, color: StudentDensityTokens.line),
+          _HtmlMaterialRow(
+            icon: Icons.menu_book_outlined,
+            title: '교재',
+            subtitle: '읽는 중 ${_libraryBooks.length}개',
+            count: _bookCount,
+            onTap: () => _showTextbookModal(context),
+          ),
+          _HtmlMaterialRow(
+            icon: Icons.check,
+            title: '시험지',
+            subtitle: '미응시 ${_examCount}개',
+            count: _examCount,
+            onTap: () => _showExamModal(context),
+          ),
+          _HtmlMaterialRow(
+            icon: Icons.auto_awesome,
+            title: '북마크',
+            subtitle: '최근 저장 ${_bookBookmarkCount + _problemBookmarkCount}개',
+            count: _bookBookmarkCount + _problemBookmarkCount,
+            onTap: () => _showBookmarkDetailModal(isBook: true),
+          ),
+        ],
       ),
     );
   }
@@ -2932,6 +3070,141 @@ class _DocGhostCard extends StatelessWidget {
 }
 
 enum _TrackNode { done, current, next }
+
+class _HtmlFrequentRow extends StatelessWidget {
+  const _HtmlFrequentRow({required this.item, required this.onTap});
+
+  final BigSectionItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 82),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 62,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: StudentDensityTokens.surfaceMuted,
+                border: Border.all(color: StudentDensityTokens.line),
+              ),
+              child: Icon(
+                item.type == BigItemType.exam
+                    ? Icons.description_outlined
+                    : Icons.menu_book_outlined,
+                size: 25,
+                color: StudentDensityTokens.ink,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    item.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: 9,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward, size: 15),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _HtmlMaterialRow extends StatelessWidget {
+  const _HtmlMaterialRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.count,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      constraints: const BoxConstraints(minHeight: 74),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            color: StudentDensityTokens.surfaceMuted,
+            child: Icon(icon, size: 20, color: StudentDensityTokens.ink),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 9,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '$count',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_forward, size: 15),
+        ],
+      ),
+    ),
+  );
+}
 
 class _BookbagEyebrow extends StatelessWidget {
   const _BookbagEyebrow(this.label);

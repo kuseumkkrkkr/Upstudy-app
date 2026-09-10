@@ -37,6 +37,9 @@
 | `_AccountLinkSheetState._buildStep` | 역할·ID·QR 스캔·내 QR 코드 장면을 현재 단계에 맞춰 렌더링 | 없음 → `Widget` | 단계 이동은 로컬 상태, API 호출·권한 변경 없음 |
 | `_CourseLoaderState._load` | 실제 수강 코스에서 사용자별 마지막 선택 코스를 우선 복원 | 없음 → `Future<void>` | `student.active_course.v1` 조회 실패 시 서버 순서로 fallback, 코스 데이터는 API에서만 사용 |
 | `_MobileCourseCatalog` | 모바일 코스 목록의 로딩·오류·빈 목록·실제 코스 상태를 HTML 순서로 렌더링 | `loading`, `hasError`, 코스 목록·콜백 → `Widget` | API 오류는 재시도 행으로 표시하고 빈 목록으로 축약하지 않음 |
+| `_BookWidgetState._buildHtmlBookbag` | 책가방 HTML 셸과 반응형 `자주 보는 교재`·`내 자료` 열을 조합 | `BuildContext` → `Widget` | 실제 저장소 개수·최근 방문을 사용하고 각 자료 행을 기존 모달 콜백으로 연결 |
+| `_BookWidgetState._buildHtmlFrequentSection`/`_buildHtmlMaterialsSection` | 최근 교재 빈 상태와 교재·시험지·북마크 자료 행을 렌더링 | `BuildContext` → `Widget` | 데이터가 없으면 빈 안내, 행 선택은 리더·자료 모달로 이동 |
+| `_HtmlFrequentRow`/`_HtmlMaterialRow` | HTML 책가방의 아이콘·제목·보조 문구·개수·화살표 행을 표시 | 자료 모델·콜백 → `Widget` | 클릭 영역 전체를 기존 동작에 위임하고 임의 샘플 값을 만들지 않음 |
 | `StudentTutorialPage` | HTML `about` 화면의 5단계 학생 튜토리얼과 전용 셸을 렌더링 | 없음 → `Widget` | 단계 이동·실습 완료·완료 후 홈 이동, 진행 상태는 로컬 저장만 사용 |
 | `studentTopNavItems` | legacy PC 상단바를 HTML의 홈·코스·자료실·더보기 네 목적지로 생성 | `BuildContext`, `StudentTopDestination` → `List<Ios26NavItem>` | 자료실/더보기는 관련 보조 화면을 활성 처리하고, 더보기는 기존 메뉴 호스트를 연다 |
 | `_TutorialTopBar` | 튜토리얼의 뒤로가기·제목·검색·알림 상단 바를 렌더링 | `compact`, `BuildContext` → `Widget` | 기존 검색·알림 패널을 호출하고, 뒤로가기는 이전 화면 또는 학생 홈으로 복귀 |
