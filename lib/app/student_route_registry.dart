@@ -163,7 +163,11 @@ abstract final class StudentRouteRegistry {
       category: '홈',
       route: '/student/dashboard',
     ),
-    StudentRouteSpec(id: 'course-select', category: '홈', route: '/courses'),
+    StudentRouteSpec(
+      id: 'course-select',
+      category: '홈',
+      route: '/student/dashboard',
+    ),
     StudentRouteSpec(
       id: 'rating-detail',
       category: '홈',

@@ -318,6 +318,9 @@ class _MainStudentPageState extends State<MainStudentPage> {
       case 'study-mode':
         showStudyModeModal(context: context);
         return;
+      case 'course-select':
+        unawaited(showCurriculumModal(context: context));
+        return;
     }
   }
 
@@ -924,7 +927,8 @@ class _CourseLoaderState extends State<_CourseLoader> {
                   (course) => course?.id == preferred,
                   orElse: () => null,
                 );
-          _course = preferredCourse ??
+          _course =
+              preferredCourse ??
               activeCourses.firstWhere(
                 (Course c) => c.progress > 0 && !c.isDemo,
                 orElse: () => activeCourses.firstWhere(

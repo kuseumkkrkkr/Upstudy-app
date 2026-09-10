@@ -527,6 +527,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'achievements' => '/student/dashboard?scene=achievements',
       'activity-history' => '/student/dashboard?scene=activity-history',
       'study-mode' => '/student/dashboard?scene=study-mode',
+      'course-select' => '/student/dashboard?scene=course-select',
       'market-filter' => '/marketplace?scene=market-filter',
       'market-preview' => '/marketplace?scene=market-preview',
       'social-friends' => '/social?tab=friends',
