@@ -734,6 +734,13 @@
 - `flutter analyze` 통과. 소스·번들 커밋 `31407bf`, Vercel 배포 `dpl_9ZFs8hXwoQ1FERD7VCm1nA5ogGnu`, alias READY, `/health` 200.
 - canary 데스크톱 캡처에서 HTML과 동일한 탭/제목/설명 배치를 확인했다. 사용자 그룹 데이터가 비어 있어 목록 행 자체는 동적 빈 상태로 기록한다.
 
+### 2026-09-11 학습 도구 내부 장면 딥링크 반영
+
+- HTML의 `notepad`·`timer`·`focus` 장면을 `/learning-tools?scene=...`로 등록하고 기존 노트·타이머·집중 모달을 초기 장면으로 연다.
+- 전역 검색 목적지도 위 딥링크를 사용하며, 허브의 AI 튜터 기능과 기존 상태 전이는 유지했다.
+- `flutter analyze` 및 `student_learning_tools_route_test.dart` 3개 통과. 소스·번들 커밋 `06419a3`, Vercel 배포 `dpl_4oZQBswZz7tF521crYSqGKR9BFaN`, alias READY, `/health` 200.
+- canary에서 `timer` 장면의 집중 타이머 모달 표시를 확인했다. 전체 86개 전수 시각·API·DB·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
