@@ -809,7 +809,8 @@ class _MarketplaceResourceResults extends StatelessWidget {
     key: rootKey,
     child: LayoutBuilder(
       builder: (context, constraints) {
-        final columns = desktop && constraints.maxWidth >= 860 ? 2 : 1;
+        // HTML 자료실은 넓은 화면에서 3열 번호형 카드, 모바일에서 1열 목록이다.
+        final columns = desktop && constraints.maxWidth >= 860 ? 3 : 1;
         final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
         return Wrap(
           spacing: 12,
@@ -818,18 +819,137 @@ class _MarketplaceResourceResults extends StatelessWidget {
             for (var index = 0; index < items.length; index++)
               SizedBox(
                 width: width,
-                child: _MarketplaceResourceCard(
-                  item: items[index],
-                  index: index,
-                  desktop: desktop,
-                  onOpen: onOpen,
-                ),
+                child: desktop
+                    ? _HtmlMarketplaceGridCard(
+                        item: items[index],
+                        index: index,
+                        onOpen: onOpen,
+                      )
+                    : _MarketplaceResourceCard(
+                        item: items[index],
+                        index: index,
+                        desktop: desktop,
+                        onOpen: onOpen,
+                      ),
               ),
           ],
         );
       },
     ),
   );
+}
+
+class _HtmlMarketplaceGridCard extends StatelessWidget {
+  const _HtmlMarketplaceGridCard({
+    required this.item,
+    required this.index,
+    required this.onOpen,
+  });
+
+  final _MarketItem item;
+  final int index;
+  final ValueChanged<_MarketItem> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final action = item.owned
+        ? (item.completed ? '완료' : '열기')
+        : (item.pricePoints == 0 ? '무료' : '${item.pricePoints}P');
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: () => onOpen(item),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 104,
+                width: double.infinity,
+                child: ColoredBox(
+                  color: const Color(0xFFF3F3F5),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: ColoredBox(
+                            color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              child: Text(
+                                item.typeLabel,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text(
+                            (index + 1).toString().padLeft(2, '0'),
+                            style: const TextStyle(
+                              fontSize: 30,
+                              height: 1,
+                              letterSpacing: -1.5,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                item.mobileTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                item.compactSubtitle.isEmpty
+                    ? item.typeLabel
+                    : item.compactSubtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF71717A)),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Text(
+                    action,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.arrow_forward, size: 16),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _MarketplaceResourceCard extends StatelessWidget {
