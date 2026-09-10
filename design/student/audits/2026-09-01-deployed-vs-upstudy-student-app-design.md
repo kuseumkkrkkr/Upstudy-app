@@ -696,3 +696,10 @@
 - `dart analyze lib/sessions/graph_tools/session/jsx_graph_page.dart`는 기존 미사용 선택 인자 경고 1건만 남겼고 새 오류는 없었다.
 - `test/jsx_graph_page_test.dart` 10개가 통과했다.
 - 이 변경은 아직 번들 빌드·Vercel 배포·실제 이미지 재캡처 전이므로 canary 일치 또는 상용 완료 근거로 사용하지 않는다.
+
+### 2026-09-11 그래프 탐색기 전용 셸 canary 반영
+
+- 소스 커밋 `f6e0fd3`, 번들 커밋 `0363ab9`를 원격 `hotfix`에 반영하고 `flutter build web --release` 결과를 `public`에 게시했다.
+- 로컬·canary `main.dart.js` SHA-256은 모두 `73B8F4205AAC0FBE000C18BD933219F123BFF4830149B838C1760B490F53C0F7`이다.
+- Vercel 배포 `dpl_ASiKcGwVTk2aDqDYhWcfDGPoUgSU`, 고유 URL [`aiflow-web-canary-9i3kvarxx-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-9i3kvarxx-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 그래프 화면의 실제 이미지 재캡처와 86개 전체 화면·인증 데이터·DB 무결성/동시성·접근성 게이트는 여전히 `pending`이다.
