@@ -345,6 +345,7 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
   Widget _buildMobileChat() => StudentHtmlShell(
     title: widget.peerUsername,
     activeRoute: '/social',
+    mobileBackButton: true,
     onMenu: () => Navigator.of(context).maybePop(),
     child: Column(
       children: [
@@ -386,7 +387,8 @@ class _StudentDirectChatPageState extends State<StudentDirectChatPage> {
     return StudentHtmlShell(
       title: '채팅',
       activeRoute: '/social',
-      showContextAside: true,
+      showContextAside: false,
+      mobileBackButton: true,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 22, 14, 16),
         child: Column(

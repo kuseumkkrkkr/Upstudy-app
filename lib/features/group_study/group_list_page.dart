@@ -514,6 +514,9 @@ class _GroupListPageState extends State<GroupListPage> {
     return StudentHtmlShell(
       title: '스터디 그룹',
       activeRoute: AppRoutes.groups,
+      showContextAside: false,
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).pushReplacementNamed('/student/dashboard'),
       child: Column(
         children: [
           _MobileGroupTabs(
@@ -562,7 +565,9 @@ class _GroupListPageState extends State<GroupListPage> {
     return StudentHtmlShell(
       title: '스터디 그룹',
       activeRoute: AppRoutes.groups,
-      showContextAside: true,
+      showContextAside: false,
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).pushReplacementNamed('/student/dashboard'),
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(

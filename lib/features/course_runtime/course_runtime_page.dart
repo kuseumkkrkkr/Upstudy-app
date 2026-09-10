@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
@@ -34,6 +35,11 @@ class _CourseRuntimePageState extends State<CourseRuntimePage> {
     return StudentHtmlShell(
       title: '코스 런타임',
       activeRoute: '/courses',
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
       child: Center(child: child),
     );
   }

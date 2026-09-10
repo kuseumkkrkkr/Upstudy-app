@@ -108,7 +108,7 @@ void main() {
 
     expect(find.byType(AppBar), findsNothing);
     expect(find.byType(StudentHtmlShell), findsOneWidget);
-    expect(find.byKey(const ValueKey('student-mobile-menu')), findsOneWidget);
+    expect(find.byKey(const ValueKey('student-mobile-back')), findsOneWidget);
     expect(find.byType(StudentHtmlTopBar), findsOneWidget);
     expect(find.text('중등 수학 챌린지'), findsOneWidget);
     expect(tester.takeException(), isNull);

@@ -483,6 +483,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       key: const ValueKey('mobile-group-dashboard'),
       title: group?.name ?? '그룹 스터디',
       activeRoute: '/groups',
+      showContextAside: false,
+      mobileBackButton: true,
       onMenu: () => Navigator.of(context).maybePop(),
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
@@ -574,7 +576,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       key: const ValueKey('group-detail-screen'),
       title: group?.name ?? '그룹 스터디',
       activeRoute: '/groups',
-      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      showContextAside: false,
+      mobileBackButton: true,
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: _loading

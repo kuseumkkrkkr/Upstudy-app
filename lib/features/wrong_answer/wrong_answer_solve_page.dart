@@ -35,6 +35,8 @@ class WrongAnswerSolvePage extends StatelessWidget {
     return StudentHtmlShell(
       title: '오답 재풀이',
       activeRoute: AppRoutes.wrongAnswers,
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      mobileBackButton: true,
       onMenu: () => _goBack(context),
       child: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
