@@ -747,6 +747,13 @@
 - `flutter analyze`와 `friend_request_mobile_test.dart` 8개가 통과했다. 소스·번들 커밋 `9ac1794`, Vercel 배포 `dpl_7kDKTFE85diNVgtb3DXJPaKe4Khu`, alias READY, `/health` 200.
 - 데이터가 없는 계정에서는 최근 대화 빈 상태가 표시되며 임의 대화 샘플은 삽입하지 않는다. 전체 86개 전수 게이트는 계속 `pending`이다.
 
+### 2026-09-11 대결장 랭킹 장면 딥링크 반영
+
+- 경기 ID가 필요 없는 `arena-ranking`을 `/arena?scene=arena-ranking`으로 연결하고 실제 1v1 랭킹 API를 사용하도록 했다.
+- 경기 준비·진행·결과 장면은 유효한 matchId 없이는 생성하지 않는 기존 안전 경계를 유지했다.
+- `flutter analyze` 및 `student_route_registry_test.dart` 통과. 소스·번들 커밋 `ce471fe`, Vercel 배포 `dpl_DATh4rSxdjCiQCVfWHToe6XA6QfK`, alias READY, `/health` 200.
+- 랭킹 데이터·경기 상태가 필요한 장면의 전체 시각 검증은 테스트 계정 확보 후 수행한다. 전체 86개 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
