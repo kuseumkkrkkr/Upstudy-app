@@ -948,7 +948,8 @@ class _SignupPageState extends State<SignupPage> {
                 SizedBox(
                   height: 58,
                   child: OutlinedButton(
-                    onPressed: () {},
+                    // 학교 검색 API가 연결되기 전에는 무반응 버튼을 노출하지 않는다.
+                    onPressed: null,
                     child: const Text('학교 찾기'),
                   ),
                 ),

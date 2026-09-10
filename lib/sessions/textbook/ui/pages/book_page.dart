@@ -1998,6 +1998,16 @@ class _BookWidgetState extends State<BookWidget> {
     _scrollToEntry(_activeEntryIndex + 1);
   }
 
+  /// 필요한 변수는 현재 교재의 콘텐츠 목록과 읽기 위치다.
+  /// 작동 원리: 리더의 학습 완료 버튼을 마지막 항목으로 이동시키고 기존 진행률 저장 흐름을 재사용한다.
+  void _completeReading() {
+    if (_contentEntries.isEmpty) return;
+    _scrollToEntry(_contentEntries.length - 1);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('교재 학습 위치를 마지막까지 기록했습니다.')),
+    );
+  }
+
   Future<void> _openSearch() async {
     if (_contentEntries.isEmpty) return;
     final controller = TextEditingController();
@@ -2703,7 +2713,7 @@ class _BookWidgetState extends State<BookWidget> {
                 const SizedBox(width: 8),
                 if (!compact)
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: _contentEntries.isEmpty ? null : _completeReading,
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
