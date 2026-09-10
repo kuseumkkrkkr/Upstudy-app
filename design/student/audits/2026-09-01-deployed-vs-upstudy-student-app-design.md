@@ -314,3 +314,11 @@
 - 라이브 확인: `/health` 200, `/main.dart.js` 200 및 로컬 SHA 일치, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON. 브라우저에서 새 alias의 학생 홈 데스크톱 렌더링(좌측 레일·메인·우측 컨텍스트)을 확인했다.
 - 테스트: 집중 API 묶음 12 passed(경고 15). 집중 Flutter 테스트는 새 HTML 셸 계약을 포함해 대부분 통과했다. 전체 `flutter test --no-pub`는 기존 반응형 테스트의 구 명칭·셸 기대와 충돌한 23개 실패 뒤 장시간 정지하여 중단했으며, 이를 합격으로 처리하지 않는다. 저장소 전체 `dart analyze`에는 변경 범위 밖 teacher/textbook 기준선 오류가 남아 있다.
 - 시각 근거: 기존 evidence 폴더의 이전 회차 캡처는 보존한다. 이번 배포에 대해 86개 화면·모든 장면의 동일 상태/동일 뷰포트 이미지 원장은 아직 `pending`이며, 따라서 본 기록은 **상용 준비 완료 판정이 아닌 배포 후보 확인**이다. 실제 인증 계정 데이터, DB migration 적용, 200 동시 주문·내신 충돌, 전체 접근성·반응형 캡처는 추가 검증이 필요하다.
+
+### 2026-09-10 검색 장면 연결 후속 배포
+
+- 코드 커밋: `88071a1` (`fix(student): open dashboard scenes from quick search`).
+- 변경: 검색 결과의 `today-tasks`, `rating-detail`, `achievements`가 홈 기본 화면에 머물지 않고 `?scene=` 명명 라우트로 해당 시트를 연다. `마켓플레이스`는 HTML 표시명 `자료실`과 canary store 플래그를 구분하고, 테스트도 이 계약을 따른다.
+- 번들: `public/main.dart.js` 및 alias 응답 SHA-256 `E98C185C1BCF8B9776D45A9EA29DECFF14B723363C37EE678262B2A64E91EE1B`.
+- 최신 Vercel: [`dpl_8ve9avnvBict1k2AtwrCNfzsB17j`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/8ve9avnvBict1k2AtwrCNfzsB17j), production alias 연결 및 READY 상태 확인.
+- 검증: `student_route_registry_test.dart`, `app_drawer_navigation_test.dart` 및 API 12개 테스트 통과. 전체 86화면 장면 이미지·실제 인증 데이터·DB 동시성 검증은 여전히 `pending`이다.
