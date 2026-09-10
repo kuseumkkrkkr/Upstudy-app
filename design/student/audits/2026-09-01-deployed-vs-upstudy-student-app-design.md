@@ -753,6 +753,8 @@
 - Vercel 배포 `dpl_6czWJCrCES7MY8a1qbTEzSRSJZJd`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 인증된 포인트 주문·실제 문의 전송·DB 멱등성은 Production 인증/DB 설정 부재로 `pending`이다.
 
+- 최신 후보 회귀: `student_route_registry_test.dart`, `jsx_graph_page_test.dart`, `bookbag_interaction_contract_test.dart` 총 19개와 `test_vercel_student_demo_api.py` 5개가 통과했다(HTTPX deprecation warning 1건).
+
 ### 2026-09-11 canary 빌드 메타데이터 고정
 
 - Flutter release의 `public/.last_build_id`를 커밋해 배포 산출물과 소스 상태의 재현 근거를 보강했다.
