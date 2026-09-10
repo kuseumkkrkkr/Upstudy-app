@@ -59,9 +59,10 @@ class BigSectionItem {
 }
 
 class BookWidget extends StatefulWidget {
-  const BookWidget({super.key, this.previewMode = false});
+  const BookWidget({super.key, this.previewMode = false, this.initialScene});
 
   final bool previewMode;
+  final String? initialScene;
 
   static const Color primaryGreen = Colors.black;
   static const Color brightGreen = Color(0xFF707075);
@@ -155,6 +156,19 @@ class _BookWidgetState extends State<BookWidget> {
     unawaited(_loadActiveCourse());
     unawaited(_loadBookmarks());
     unawaited(_loadRecentItems());
+    if (widget.initialScene != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        switch (widget.initialScene) {
+          case 'book-library':
+          case 'bookbag-detail':
+          case 'book-reader':
+            _showTextbookModal(context);
+          case 'bookmarks':
+            _showBookmarkDetailModal(isBook: true);
+        }
+      });
+    }
   }
 
   /// 필요한 변수는 감사 프리뷰 여부와 실제 저장소 항목 수다.

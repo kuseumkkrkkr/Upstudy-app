@@ -542,6 +542,10 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'timer' => '/learning-tools?scene=timer',
       'focus' => '/learning-tools?scene=focus',
       'arena-ranking' => '/arena?scene=arena-ranking',
+      'book-library' => '/bookbag?scene=book-library',
+      'bookbag-detail' => '/bookbag?scene=bookbag-detail',
+      'book-reader' => '/bookbag?scene=book-reader',
+      'bookmarks' => '/bookbag?scene=bookmarks',
       _ => typedDestination.routeName,
     };
   }

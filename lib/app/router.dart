@@ -266,6 +266,21 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     );
   }
 
+  if (uri != null && uri.path == AppRoutes.bookbag) {
+    final scene = uri.queryParameters['scene'];
+    if (const {
+      'book-library',
+      'bookbag-detail',
+      'book-reader',
+      'bookmarks',
+    }.contains(scene)) {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => docx.BookWidget(initialScene: scene),
+      );
+    }
+  }
+
   // 소셜 하위 탭은 같은 페이지의 초기 선택 상태를 보존한다.
   if (uri != null && uri.path == AppRoutes.social) {
     final initialTab = uri.queryParameters['tab'] == 'friends' ? 1 : 0;
