@@ -720,6 +720,14 @@
 - alias 번들 SHA-256 `7DEF384C87060B8AF22CAB37BE5BA76273F485B98F006DE65B8AFF3735684DC2`, `/health` 200. 대상 파일 `flutter analyze` 통과.
 - `student_density_responsive_test.dart`는 기존 문구·동작 기대값 등 12건 실패가 남아 있어 전체 일치 완료로 판정하지 않는다. 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 활동 기록 검색·딥링크 목적지 보정
+
+- `activity-history`를 `/schedule`로 보내던 레지스트리 연결을 `/student/dashboard?scene=activity-history`로 수정했다.
+- 홈에 이미 구현된 `showActivityHistoryDetail`을 사용해 검색 결과와 직접 주소가 HTML의 “전체 활동 보고서” 장면을 열도록 연결했다.
+- 소스 커밋 `1033eb1`, 번들 커밋 `0cc70b4`; 레지스트리·홈 모달 집중 검사는 통과했다.
+- Vercel 배포 `dpl_8gXKijTvH4kFhkjGQUuiBoFnAhnt`, alias READY, 번들 SHA-256 `D5E988F2BFE4A0570AC33826B4BD26E396D4D8D947C529336C7862788A54924F`, `/health` 200.
+- 86개 전체 화면·장면 이미지 검수와 제품 API·DB·동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 HTML 상단바 액션 크기 반영
 
 - 공통 학생 상단바의 메뉴·뒤로가기·검색·알림 액션을 HTML 기준 `38×38px`로 조정했다.
