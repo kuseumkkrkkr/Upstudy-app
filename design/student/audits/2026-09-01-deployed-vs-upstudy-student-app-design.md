@@ -741,6 +741,12 @@
 - `flutter analyze` 및 `student_learning_tools_route_test.dart` 3개 통과. 소스·번들 커밋 `06419a3`, Vercel 배포 `dpl_4oZQBswZz7tF521crYSqGKR9BFaN`, alias READY, `/health` 200.
 - canary에서 `timer` 장면의 집중 타이머 모달 표시를 확인했다. 전체 86개 전수 시각·API·DB·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 쪽지 장면 검색 연결
+
+- 소셜 `direct-chat` 목적지를 `/social?scene=direct-chat`으로 등록하고 기존 실제 쪽지함·대화 API를 사용하도록 초기 장면 분기를 추가했다.
+- `flutter analyze`와 `friend_request_mobile_test.dart` 8개가 통과했다. 소스·번들 커밋 `9ac1794`, Vercel 배포 `dpl_7kDKTFE85diNVgtb3DXJPaKe4Khu`, alias READY, `/health` 200.
+- 데이터가 없는 계정에서는 최근 대화 빈 상태가 표시되며 임의 대화 샘플은 삽입하지 않는다. 전체 86개 전수 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
