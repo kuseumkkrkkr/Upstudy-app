@@ -160,6 +160,43 @@ class StudentLearningToolsPage extends StatelessWidget {
   }
 }
 
+/// HTML에서 별도 장면으로 정의한 도구를 허브 위에 바로 여는 얇은 라우트 경계다.
+class StudentLearningToolsScenePage extends StatefulWidget {
+  const StudentLearningToolsScenePage({super.key, required this.scene});
+
+  final String scene;
+
+  @override
+  State<StudentLearningToolsScenePage> createState() =>
+      _StudentLearningToolsScenePageState();
+}
+
+class _StudentLearningToolsScenePageState
+    extends State<StudentLearningToolsScenePage> {
+  bool _opened = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_opened || !{'notepad', 'timer', 'focus'}.contains(widget.scene)) {
+      return;
+    }
+    _opened = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final page = switch (widget.scene) {
+        'notepad' => const NotepadPage(),
+        'timer' => const TimerPage(),
+        _ => const FocusModePage(),
+      };
+      showStudentToolModal(context, page);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const StudentLearningToolsPage();
+}
+
 class _ToolLaunchCard extends StatelessWidget {
   const _ToolLaunchCard({
     super.key,

@@ -537,6 +537,9 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'friend-requests' => '/social?scene=friend-requests',
       'group-find' => '/groups?scene=group-find',
       'group-create' => '/groups?scene=group-create',
+      'notepad' => '/learning-tools?scene=notepad',
+      'timer' => '/learning-tools?scene=timer',
+      'focus' => '/learning-tools?scene=focus',
       _ => typedDestination.routeName,
     };
   }
