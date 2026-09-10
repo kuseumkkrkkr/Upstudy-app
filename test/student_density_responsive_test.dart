@@ -859,6 +859,21 @@ void main() {
     expect(tester.getTopLeft(panel).dy, 72);
   });
 
+  testWidgets('로그인 버튼은 두 필드 입력 전 비활성이고 입력 후 활성화된다', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    await tester.pump();
+
+    FilledButton button() =>
+        tester.widget<FilledButton>(find.widgetWithText(FilledButton, '로그인'));
+
+    expect(button().onPressed, isNull);
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'student01');
+    await tester.enterText(fields.at(1), 'password123');
+    await tester.pump();
+    expect(button().onPressed, isNotNull);
+  });
+
   testWidgets('320px 인증 화면은 사용자 상단바 없이 가로 오버플로를 만들지 않는다', (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
