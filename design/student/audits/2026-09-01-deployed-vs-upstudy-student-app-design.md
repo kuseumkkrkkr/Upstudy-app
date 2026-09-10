@@ -398,3 +398,15 @@
 - Vercel: [`dpl_BRVDWSmo74uYRSddt6XJW4UhuKCa`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/BRVDWSmo74uYRSddt6XJW4UhuKCa), 고유 후보 [`aiflow-web-canary-m6jef72zx-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-m6jef72zx-cw20208021-9200s-projects.vercel.app), production alias READY 연결.
 - 검증: `student_route_registry_test.dart` 4개 및 Dart analyze 통과. alias `/health` 200, main bundle 로컬 해시 일치, 인증 없는 데모 상점·내신 계획 API는 각각 401 JSON.
 - 이 배포도 상용 준비 완료가 아니다. 인증 사용자 데이터, 86개 장면별 동일 뷰포트 이미지, 실제 DB migration·동시성·접근성·전체 반응형 검증은 여전히 원장에 `pending`으로 남긴다.
+
+### 2026-09-10 로그인 화면 HTML 패널 일치화 배포
+
+- 코드 커밋: `d06e039` (`fix(auth): match html login submit state`).
+- 변경: 기본 로그인 화면을 기준 HTML의 단일 패널 구조로 정리했다. PC는 좌측 28px/상단 72px에서 최대 460px 패널과 3px 검은 상단선을 사용하고, 모바일은 화면 폭 전체 패널을 사용한다. 아이디·비밀번호 라벨, 입력 높이, 보기 토글, 로그인·카카오·가입 순서를 HTML과 맞췄다.
+- 유지 계약: 기존 `_submit`, Kakao 로그인, 입력 검증, 로딩 중 중복 제출 차단은 그대로 재사용했다. 다이얼로그·embedded 로그인 변형은 기존 호출 계약을 유지한다.
+- 검증: `flutter test --no-pub test/student_density_responsive_test.dart --plain-name '500px 로그인은 HTML 단일 패널과 학생 폼을 유지한다'`, `... --plain-name '1280px 로그인은 HTML 좌측 460px 패널을 유지한다'`, `... --plain-name '320px 인증 화면은 사용자 상단바 없이 가로 오버플로를 만들지 않는다'`, `dart analyze lib/sessions/auth/ui/pages/login_page.dart`, `git diff --check` 통과.
+- 이미지: 고정 CUA 브라우저에서 기준 HTML 로그인과 canary 로그인 패널의 좌측 배치·상단선·필드 순서를 확인했다. CUA 뷰포트는 1280×720이며 390×844/1280×900 일대일 증거로 주장하지 않는다.
+- Vercel: [`dpl_DpmespAwVdcGK6xwMScGmG8en7de`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/DpmespAwVdcGK6xwMScGmG8en7de), 고유 후보 [`aiflow-web-canary-8byi05a7l-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-8byi05a7l-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/login) READY 연결.
+- 정적 번들: `public/main.dart.js`와 alias 응답 SHA-256 `64CF61BE4BE4F6F999764B39C813A047984BD8DBA6DBC29CF81BA1E398563A5A`, `localhost` 문자열 없음.
+- 라이브 경계: alias `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active` 각각 401 JSON 확인.
+- 잔여: 이 배포는 로그인 구조 한 묶음의 후보 반영이다. 나머지 85개 화면·모든 장면/동작의 동일 조건 이미지, 인증된 실제 데이터, migration 적용, 200 동시성, 전체 접근성·반응형 및 저장소 기준선 오류는 미검증이다. 상용 준비 완료로 판정하지 않는다.

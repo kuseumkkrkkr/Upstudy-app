@@ -13,6 +13,9 @@
 | `StudentRouteRegistry.searchable` | HTML QUICK FIND 31개 목적지를 레지스트리에서 제공 | 없음 → `Iterable<StudentRouteSpec>` | 데모 전용 항목은 기능 플래그로 필터 |
 | `_StudentQuickSearchSheetState._open` | 검색 시트를 닫고 등록 목적지로 이동 | 검색 record → 없음 | 루트 Navigator 이동, 잘못된 목적지는 라우터가 처리 |
 | `_StudentQuickSearchSheetState._routeForSearchDestination` | 검색 목적지의 기본 라우트와 홈 내부 장면 딥링크를 변환 | 검색 record → `String` | `today-tasks`·`rating-detail`·`achievements`만 `?scene=`을 붙이고 나머지는 registry 라우트를 그대로 사용 |
+| `_LoginPageState._canSubmit` | HTML 로그인 기본 버튼의 활성 조건을 계산 | 없음 → `bool` | 아이디·비밀번호가 모두 입력되고 로딩 중이 아닐 때만 true를 반환 |
+| `_LoginPageState._buildHtmlLoginFormContents` | 기준 HTML 로그인 필드·버튼·간편 로그인·가입 진입 순서를 렌더링 | `BuildContext` → `Widget` | 기존 인증 submit/Kakao API와 입력 검증을 재사용하고 로딩 중 중복 제출을 막음 |
+| `_HtmlLoginBrand.build` | HTML 로그인 패널의 A 마크와 AIFlow 브랜드를 표시 | `BuildContext` → `Widget` | 검은 A 마크·직각 패널 토큰만 사용하며 상태 변경 없음 |
 | `StudentServicesDemoStore.restore` | 사용자별 데모 문의 상태를 로컬 저장소에서 복구 | 없음 → `Future<void>` | 손상된 데모 JSON은 무시하고 실제 서버 데이터는 변경하지 않음 |
 | `StudentServicesDemoStore.add/cancel` | 데모 문의 추가·취소와 영속 저장 | `DemoServiceRequest` → 없음 | `aiflow.student.services.demo.v1` 키로 비동기 저장 |
 | `_SchoolExamPrepPageState._loadPlan` | 실제 수학 내신 계획·task ID·버전을 조회 | 없음 → `Future<void>` | 로딩/오류/빈 상태를 분리하고 재시도 제공 |
