@@ -11,6 +11,7 @@ import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 /// 뒤로가면 학습 메뉴를 다시 열어 겹친 다이얼로그와 불필요한 라우트 누적을 막는 것이다.
 Future<T?> showStudyModeModal<T>({required BuildContext context}) async {
   while (context.mounted) {
+    final size = MediaQuery.sizeOf(context);
     final mobile = MediaQuery.sizeOf(context).width <= 780;
     // 필요한 변수는 현재 화면 폭과 여섯 학습 목적지다.
     // 작동 원리: 모바일은 하단 내비게이션 위의 직각 시트, PC는 제한 크기
@@ -26,11 +27,11 @@ Future<T?> showStudyModeModal<T>({required BuildContext context}) async {
               borderRadius: BorderRadius.zero,
             ),
             builder: (sheetContext) => ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 650),
+              constraints: BoxConstraints(maxHeight: size.height),
               child: SafeArea(
                 top: false,
                 child: SizedBox(
-                  height: 650,
+                  height: size.height,
                   child: const StudypageCopyWidget(mobileSheet: true),
                 ),
               ),
@@ -189,18 +190,18 @@ class StudypageCopyWidget extends StatelessWidget {
                 child: Text(
                   '학습 시작',
                   style: TextStyle(
-                  fontSize: 19,
+                    fontSize: 19,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1,
                   ),
                 ),
               ),
-              IconButton(
-                tooltip: '닫기',
+              TextButton.icon(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.close_rounded, size: 26),
-                style: IconButton.styleFrom(
-                  fixedSize: const Size.square(48),
+                label: const Text('닫기'),
+                style: TextButton.styleFrom(
+                  fixedSize: const Size(88, 48),
                   backgroundColor: Colors.white,
                 ),
               ),
@@ -284,7 +285,11 @@ class _MobileModeTile extends StatelessWidget {
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
             ),
             const Spacer(),
-            const Icon(Icons.arrow_forward_ios, color: Colors.black54, size: 14),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.black54,
+              size: 14,
+            ),
           ],
         ),
       ),
