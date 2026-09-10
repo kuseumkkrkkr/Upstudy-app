@@ -728,6 +728,12 @@
 - Vercel 배포 `dpl_B4eDa62sZs7Ni1NgbW1m5t7SysGj`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 실제 교재 저장 API·인증 세션·DB readiness는 Production 환경변수 부재로 `pending`이다.
 
+### 2026-09-11 레거시 채팅 placeholder 인코딩 정리
+
+- 번들·소스 인코딩 점검에서 CP949/UTF-8 혼용으로 깨진 레거시 `chat_placeholder_page.dart`를 UTF-8로 정리하고 잘못된 색상 import를 실제 공통 경로로 수정했다.
+- 단독 `flutter analyze` 통과. 해당 placeholder는 현재 실제 학생 튜터 경로가 아니므로 제품 튜터 동작의 근거로 사용하지 않는다.
+- 소스 커밋 `da054f4`; Vercel 배포 `dpl_H1uYDHEdnZNGiidTHni87zhrpGcb` READY, `/health` 200.
+
 ### 2026-09-11 제품 readiness 경계 확인
 
 - canary `/health`는 `200 {"status":"ok","service":"aiflow-ocr-queue"}`를 반환했다.
