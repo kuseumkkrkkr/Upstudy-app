@@ -234,20 +234,8 @@ class StudentHtmlRail extends StatelessWidget {
             },
             child: Container(
             decoration: BoxDecoration(
-                color: active
-                    ? StudentDensityTokens.surface
-                    : Colors.transparent,
-                border: Border.all(
-                  color: active
-                      ? const Color(0xFF29292D)
-                      : Colors.transparent,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(3),
-                  bottomRight: Radius.circular(10),
-                  bottomLeft: Radius.circular(3),
-                ),
+                color: active ? StudentDensityTokens.dark : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -255,17 +243,13 @@ class StudentHtmlRail extends StatelessWidget {
                   Icon(
                     icon,
                     size: 19,
-                    color: active
-                        ? StudentDensityTokens.ink
-                        : StudentDensityTokens.muted,
+                    color: active ? Colors.white : StudentDensityTokens.ink,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     label,
                     style: TextStyle(
-                      color: active
-                          ? StudentDensityTokens.ink
-                          : StudentDensityTokens.muted,
+                      color: active ? Colors.white : StudentDensityTokens.ink,
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
                     ),
@@ -282,8 +266,8 @@ class StudentHtmlRail extends StatelessWidget {
       width: railWidth,
       padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
       decoration: const BoxDecoration(
-        color: StudentDensityTokens.dark,
-        border: Border(right: BorderSide(color: Color(0xFF29292D))),
+        color: StudentDensityTokens.surface,
+        border: Border(right: BorderSide(color: StudentDensityTokens.line)),
       ),
       child: Column(
         children: [
@@ -291,15 +275,7 @@ class StudentHtmlRail extends StatelessWidget {
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(3),
-                bottomRight: Radius.circular(10),
-                bottomLeft: Radius.circular(3),
-              ),
-            ),
+            color: StudentDensityTokens.dark,
             child: const Text(
               'A',
               style: TextStyle(
@@ -344,10 +320,7 @@ class StudentHtmlRail extends StatelessWidget {
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white),
-              shape: BoxShape.circle,
-            ),
+            color: StudentDensityTokens.dark,
             child: const Text(
               '학',
               style: TextStyle(
