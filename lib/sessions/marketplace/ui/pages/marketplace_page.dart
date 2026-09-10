@@ -396,6 +396,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
       title: '자료실',
       activeRoute: '/marketplace',
       showContextAside: size.width > 1040,
+      mobileBackButton: true,
+      onMenu: () =>
+          Navigator.of(context).pushReplacementNamed('/student/dashboard'),
       onSearch: () {
         _queryFocusNode.requestFocus();
       },
@@ -405,9 +408,9 @@ class _MarketplacePageState extends State<MarketplacePage> {
         child: ListView(
           key: ValueKey(mobile ? 'market-mobile-scroll' : 'market-wide-scroll'),
           padding: EdgeInsets.fromLTRB(
-            mobile ? 16 : (desktop ? 40 : 14),
-            mobile ? 18 : 24,
-            mobile ? 16 : (desktop ? 40 : 14),
+            mobile ? 10 : (desktop ? 40 : 14),
+            mobile ? 10 : 24,
+            mobile ? 10 : (desktop ? 40 : 14),
             mobile ? 28 : 40,
           ),
           children: [
@@ -780,8 +783,6 @@ class _MobileMarketplaceBody extends StatelessWidget {
     key: const ValueKey('market-mobile-body'),
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const _MarketplacePageHeading(desktop: false),
-      const SizedBox(height: 22),
       _SearchPanel(
         controller: controller,
         focusNode: focusNode,
@@ -793,19 +794,7 @@ class _MobileMarketplaceBody extends StatelessWidget {
         onOpenFilter: onOpenFilter,
         onSearch: onSearch,
       ),
-      const SizedBox(height: 22),
-      _MarketplaceResultsHeading(
-        title: selected == '전체' ? '추천 자료' : selected,
-        total: items.length,
-      ),
-      if (courseFilter != '전체 과정' || priceFilter != '전체 가격') ...[
-        const SizedBox(height: 6),
-        _AppliedMarketFilters(
-          courseFilter: courseFilter,
-          priceFilter: priceFilter,
-        ),
-      ],
-      const SizedBox(height: 14),
+      const SizedBox(height: 18),
       if (loading && items.isEmpty)
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 64),
@@ -976,28 +965,27 @@ class _MarketplaceResourceResults extends StatelessWidget {
     key: rootKey,
     child: LayoutBuilder(
       builder: (context, constraints) {
-        // HTML 자료실은 넓은 화면에서 3열 번호형 카드, 모바일에서 1열 목록이다.
-        final columns = desktop && constraints.maxWidth >= 860 ? 3 : 1;
-        final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+        // HTML 자료실은 넓은 화면에서 3열, 모바일에서 2열 번호형 카드다.
+        final columns = desktop && constraints.maxWidth >= 860 ? 3 : 2;
+        final width = constraints.maxWidth / columns;
         return Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 0,
+          runSpacing: 0,
           children: [
             for (var index = 0; index < items.length; index++)
-              SizedBox(
+              Container(
                 width: width,
-                child: desktop
-                    ? _HtmlMarketplaceGridCard(
-                        item: items[index],
-                        index: index,
-                        onOpen: onOpen,
-                      )
-                    : _MarketplaceResourceCard(
-                        item: items[index],
-                        index: index,
-                        desktop: desktop,
-                        onOpen: onOpen,
-                      ),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    right: BorderSide(color: Color(0xFFE0E0E2)),
+                    bottom: BorderSide(color: Color(0xFFE0E0E2)),
+                  ),
+                ),
+                child: _HtmlMarketplaceGridCard(
+                  item: items[index],
+                  index: index,
+                  onOpen: onOpen,
+                ),
               ),
           ],
         );
@@ -1019,6 +1007,7 @@ class _HtmlMarketplaceGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 720;
     final action = item.owned
         ? (item.completed ? '완료' : '열기')
         : (item.pricePoints == 0 ? '무료' : '${item.pricePoints}P');
@@ -1032,7 +1021,7 @@ class _HtmlMarketplaceGridCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                height: 104,
+                height: mobile ? 86 : 104,
                 width: double.infinity,
                 child: ColoredBox(
                   color: const Color(0xFFF3F3F5),
@@ -1084,7 +1073,7 @@ class _HtmlMarketplaceGridCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1323,6 +1312,7 @@ class _SearchPanel extends StatelessWidget {
   /// 작동 원리는 Atlas처럼 검색과 상세 필터를 첫 줄에, 자료 유형을 둘째 줄에 두고 실제 서버 검색은 명시적으로만 요청하는 것이다.
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
     final categories = <_MarketplaceCorner>[
       const _MarketplaceCorner(
         title: '전체',
@@ -1347,21 +1337,23 @@ class _SearchPanel extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
         prefixIcon: const Icon(Icons.search_rounded, size: 21),
-        suffixIcon: IconButton(
-          key: ValueKey(
-            desktop
-                ? 'market-desktop-search-button'
-                : 'market-mobile-search-button',
-          ),
-          tooltip: '검색',
-          onPressed: loading ? null : onSearch,
-          icon: loading
-              ? const SizedBox.square(
-                  dimension: 17,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.arrow_forward_rounded, size: 20),
-        ),
+        suffixIcon: mobile
+            ? null
+            : IconButton(
+                key: ValueKey(
+                  desktop
+                      ? 'market-desktop-search-button'
+                      : 'market-mobile-search-button',
+                ),
+                tooltip: '검색',
+                onPressed: loading ? null : onSearch,
+                icon: loading
+                    ? const SizedBox.square(
+                        dimension: 17,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.arrow_forward_rounded, size: 20),
+              ),
         filled: true,
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(
@@ -1384,11 +1376,13 @@ class _SearchPanel extends StatelessWidget {
       icon: const Icon(Icons.tune_rounded, size: 18),
       label: const Text('필터'),
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size(78, 50),
+        minimumSize: Size(78, mobile ? 48 : 50),
         foregroundColor: Colors.black,
         side: const BorderSide(color: Color(0xFFBFC0C4)),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(mobile ? 0 : 10),
+        ),
         textStyle: const TextStyle(fontWeight: FontWeight.w900),
       ),
     );
@@ -1396,29 +1390,66 @@ class _SearchPanel extends StatelessWidget {
       key: ValueKey(
         desktop ? 'market-desktop-filters' : 'market-mobile-filters',
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        key: ValueKey(
-          desktop ? 'market-desktop-type-tabs' : 'market-mobile-type-tabs',
-        ),
-        child: Row(
-          children: [
-            for (var index = 0; index < categories.length; index++) ...[
-              _MarketplaceTypeTab(
-                category: categories[index],
-                selected: filter == categories[index].filter,
-                onTap: () => onFilterChanged(
-                  filter == categories[index].filter
-                      ? '전체'
-                      : categories[index].filter,
-                ),
+      child: mobile
+          ? Row(
+              children: [
+                for (var index = 0; index < categories.length; index++)
+                  Expanded(
+                    child: _MarketplaceTypeTab(
+                      category: categories[index],
+                      selected: filter == categories[index].filter,
+                      square: true,
+                      onTap: () => onFilterChanged(
+                        filter == categories[index].filter
+                            ? '전체'
+                            : categories[index].filter,
+                      ),
+                    ),
+                  ),
+              ],
+            )
+          : SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              key: ValueKey(
+                desktop
+                    ? 'market-desktop-type-tabs'
+                    : 'market-mobile-type-tabs',
               ),
-              if (index != categories.length - 1) const SizedBox(width: 8),
-            ],
-          ],
-        ),
-      ),
+              child: Row(
+                children: [
+                  for (var index = 0; index < categories.length; index++) ...[
+                    _MarketplaceTypeTab(
+                      category: categories[index],
+                      selected: filter == categories[index].filter,
+                      onTap: () => onFilterChanged(
+                        filter == categories[index].filter
+                            ? '전체'
+                            : categories[index].filter,
+                      ),
+                    ),
+                    if (index != categories.length - 1)
+                      const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+            ),
     );
+    if (mobile) {
+      return Column(
+        key: const ValueKey('market-mobile-search-panel'),
+        children: [
+          Row(
+            children: [
+              Expanded(child: field),
+              const SizedBox(width: 8),
+              detailFilter,
+            ],
+          ),
+          const SizedBox(height: 14),
+          filters,
+        ],
+      );
+    }
     return Container(
       key: ValueKey(
         desktop ? 'market-desktop-search-panel' : 'market-mobile-search-panel',
@@ -1462,24 +1493,26 @@ class _MarketplaceTypeTab extends StatelessWidget {
     required this.category,
     required this.selected,
     required this.onTap,
+    this.square = false,
   });
 
   final _MarketplaceCorner category;
   final bool selected;
   final VoidCallback onTap;
+  final bool square;
 
   @override
   Widget build(BuildContext context) => Material(
     key: ValueKey('market-type-${category.filter}'),
     color: selected ? Colors.black : const Color(0xFFF6F6F7),
-    borderRadius: BorderRadius.circular(9),
+    borderRadius: BorderRadius.circular(square ? 0 : 9),
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(9),
+      borderRadius: BorderRadius.circular(square ? 0 : 9),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 42),
+        constraints: BoxConstraints(minHeight: square ? 50 : 42),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13),
+          padding: EdgeInsets.symmetric(horizontal: square ? 4 : 13),
           child: Center(
             child: Text(
               category.title,
