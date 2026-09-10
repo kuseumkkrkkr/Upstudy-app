@@ -767,6 +767,12 @@
 - `flutter analyze` 통과. 소스·번들 커밋 `a934337`, Vercel 배포 `dpl_3d9b5xg11LdWboUb2TScTwt5jTMX`, alias READY, `/health` 200.
 - 기존 데이터·인증·데모 플래그 조건은 변경하지 않았다. 전체 86개 화면의 검색·시각·API 전수 검증은 계속 `pending`이다.
 
+### 2026-09-11 direct-chat 초기 장면 표시 보정
+
+- 초기 데이터 로딩과 모달 호출 경합으로 `direct-chat` 딥링크에서 쪽지함이 보이지 않던 문제를 수정했다. 장면 중복 방지와 250ms 지연 후 실제 쪽지함을 열도록 했다.
+- canary `#/social?scene=direct-chat`에서 `쪽지함`과 실제 빈 상태 문구가 표시되는 것을 재확인했다.
+- 소스·번들 커밋 `424a0dd`, Vercel 배포 `dpl_J8rjo7PfZKq1BDjQe3E8c3RcUPvr`, alias READY, `/health` 200. 전체 86개 전수 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
