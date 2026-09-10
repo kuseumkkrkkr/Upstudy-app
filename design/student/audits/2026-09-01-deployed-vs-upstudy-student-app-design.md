@@ -735,6 +735,12 @@
 - 로컬·alias `main.dart.js` SHA-256 `577849D5E13C0FD09C83C216DEA53E8BE3E75AC5FF181C4D041115A1EC714E96` 일치, `/health` 200.
 - 86개 전체 화면 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트와 `textbook-create/editor` import 문제는 계속 `pending`이다.
 
+### 2026-09-11 HTML source 경로 자동 대조
+
+- HTML의 86개 `defineScreen` 중 `lib/`로 시작하는 source 78개를 저장소 경로와 대조했다.
+- 실제로 존재하지 않는 경로는 `study-mode`의 `lib/sessions/student_dashboard/ui/pages/restriction_mode_page.dart` 1개였다. 현재 구현은 `study_mode_modal.dart`이므로, 원본 source 표기와 실제 구현 위치를 일치시키는 작업이 남아 있다.
+- 외부 제안·신규 제안·다중 source 문자열은 파일 존재 검사 대상에서 제외하고 별도 기능 검수 대상으로 유지했다.
+
 ### 2026-09-11 코스 선택 장면 정정
 
 - HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
