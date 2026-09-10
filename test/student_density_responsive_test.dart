@@ -901,17 +901,25 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: SignupPage(preview: true)));
     await tester.pump();
-    expect(find.text('CREATE ACCOUNT'), findsOneWidget);
-    expect(find.text('나에게 맞는 학습을\n설정해 볼까요?'), findsOneWidget);
-    expect(find.text('01  기본 정보'), findsOneWidget);
-    expect(find.text('계정 정보 입력하기 →'), findsOneWidget);
-    await tester.tap(find.text('02  계정 만들기'));
+    expect(find.text('AIFlow'), findsOneWidget);
+    expect(find.text('기본 정보를 알려주세요'), findsOneWidget);
+    expect(find.text('1 / 3'), findsOneWidget);
+    expect(find.text('계정 정보 입력하기'), findsOneWidget);
+    await tester.tap(find.text('계정 정보 입력하기'));
     await tester.pumpAndSettle();
-    expect(find.text('STEP 02 · ACCOUNT'), findsOneWidget);
-    expect(find.text('입력 정보 확인하기 →'), findsOneWidget);
-    await tester.tap(find.text('03  최종 확인'));
+    expect(find.text('계정 정보를 입력해 주세요'), findsOneWidget);
+    expect(find.text('입력 정보 확인하기'), findsOneWidget);
+    await tester.tap(find.text('이전'));
     await tester.pumpAndSettle();
-    expect(find.text('STEP 03 · CONFIRM'), findsOneWidget);
+    await tester.tap(find.text('계정 정보 입력하기'));
+    await tester.pumpAndSettle();
+    final accountFields = find.byType(TextFormField);
+    await tester.enterText(accountFields.at(0), 'student01');
+    await tester.enterText(accountFields.at(1), 'password123');
+    await tester.enterText(accountFields.at(2), 'password123');
+    await tester.tap(find.text('입력 정보 확인하기'));
+    await tester.pumpAndSettle();
+    expect(find.text('입력 정보를 확인해 주세요'), findsOneWidget);
     expect(find.text('가입하고 학습 시작하기'), findsOneWidget);
   });
 
@@ -923,12 +931,9 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SignupPage(preview: true)));
     await tester.pump();
 
-    final brand = tester.getTopLeft(find.text('AIFlow').last);
-    final title = tester.getTopLeft(find.text('CREATE ACCOUNT'));
-    final login = tester.getTopLeft(find.text('로그인으로 돌아가기'));
-    expect(brand.dx, lessThan(title.dx));
-    expect(title.dx, lessThan(login.dx));
-    expect(find.text('먼저 학생 정보를\n알려주세요.'), findsOneWidget);
+    final title = tester.getTopLeft(find.text('기본 정보를 알려주세요'));
+    expect(title.dx, greaterThan(300));
+    expect(find.text('학습 정보'), findsOneWidget);
   });
 
   testWidgets('500px 프로필은 HTML 신원 패널과 관리 시트를 유지한다', (tester) async {

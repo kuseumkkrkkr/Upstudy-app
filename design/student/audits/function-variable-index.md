@@ -16,6 +16,12 @@
 | `_LoginPageState._canSubmit` | HTML 로그인 기본 버튼의 활성 조건을 계산 | 없음 → `bool` | 아이디·비밀번호가 모두 입력되고 로딩 중이 아닐 때만 true를 반환 |
 | `_LoginPageState._buildHtmlLoginFormContents` | 기준 HTML 로그인 필드·버튼·간편 로그인·가입 진입 순서를 렌더링 | `BuildContext` → `Widget` | 기존 인증 submit/Kakao API와 입력 검증을 재사용하고 로딩 중 중복 제출을 막음 |
 | `_HtmlLoginBrand.build` | HTML 로그인 패널의 A 마크와 AIFlow 브랜드를 표시 | `BuildContext` → `Widget` | 검은 A 마크·직각 패널 토큰만 사용하며 상태 변경 없음 |
+| `_SignupPageState._buildHtmlSignupScreen` | 가입 HTML 패널·단계 헤더·현재 단계 폼을 조합 | `BuildContext` → `Widget` | 640px 데스크톱/전체 폭 모바일, 기존 가입 상태와 API 계약 재사용 |
+| `_SignupPageState._buildHtmlProfileStage` | 닉네임·과정·학년·과목·학교명과 다음 단계 CTA를 HTML 순서로 표시 | 없음 → `Widget` | 학교명 선택 입력, 중학교 과목 비활성, 단계 검증 실패 시 현재 단계 유지 |
+| `_SignupPageState._buildHtmlAccountStage` | 아이디·비밀번호·확인·이메일 입력과 이전/확인 CTA를 표시 | 없음 → `Widget` | 비밀번호 보기 상태를 로컬로 변경하고 기존 형식 검증을 재사용 |
+| `_SignupPageState._buildHtmlConfirmStage` | 가입 정보 요약·동의·실제 가입 CTA를 표시 | 없음 → `Widget` | 동의 전 제출 비활성, `_submit`의 JWT 저장·홈 이동 계약 유지 |
+| `_SignupPageState._htmlSelectField` | HTML 직각 선택 입력과 선택적 도움말을 렌더링 | label/value/items/onChanged → `Widget` | 비활성 과목은 선택을 차단하고 서버에 임의 값을 만들지 않음 |
+| `_SignupPageState._htmlPrimaryButton` | HTML 52px 검은 주요 버튼과 오른쪽 화살표를 렌더링 | label, `VoidCallback?` → `Widget` | null 콜백은 HTML 42% 비활성 색상으로 표시 |
 | `StudentServicesDemoStore.restore` | 사용자별 데모 문의 상태를 로컬 저장소에서 복구 | 없음 → `Future<void>` | 손상된 데모 JSON은 무시하고 실제 서버 데이터는 변경하지 않음 |
 | `StudentServicesDemoStore.add/cancel` | 데모 문의 추가·취소와 영속 저장 | `DemoServiceRequest` → 없음 | `aiflow.student.services.demo.v1` 키로 비동기 저장 |
 | `_SchoolExamPrepPageState._loadPlan` | 실제 수학 내신 계획·task ID·버전을 조회 | 없음 → `Future<void>` | 로딩/오류/빈 상태를 분리하고 재시도 제공 |
@@ -36,4 +42,9 @@
 | `_StudentStoreDemoPageState._idempotencyKeys` · `Map<String,String>` | 상품별 재시도 키 | 빈 map, 주문 완료까지 | `_redeem`, 메모리; 서버 주문 원장과 대응 |
 | `_StudentStoreDemoPageState._redeeming` · `Set<String>` | 진행 중 상품 잠금 | 빈 set, 요청 수명 | `_redeem` 시작/finally |
 | `_LoginPageState._canSubmit` · `bool` | 두 로그인 필드가 입력되어 기본 제출이 가능한지 나타냄 | false, 화면 수명 | 아이디·비밀번호 `onChanged`에서 재계산, 메모리 |
+| `_SignupPageState._stage` · `int` | 가입 현재 단계(0 기반) | 0, 화면 수명 | `_setStage`/`_requestStage`, 메모리 |
+| `_SignupPageState._track` · `String` | 중학교·고등학교 과정 선택 | 중학교, 화면 수명 | 과정 세그먼트 클릭, 메모리·가입 payload |
+| `_SignupPageState._subject` · `String` | 고등학교 수학 과목 선택 | 확률과통계, 화면 수명 | 과목 선택/중학교 전환 시 기본값 복구, 가입 payload |
+| `_SignupPageState._agreed` · `bool` | 최종 가입 안내 동의 여부 | false, 화면 수명 | 확인 단계 체크박스, 제출 활성 조건 |
+| `_SignupPageState._passwordVisible`/`_passwordConfirmVisible` · `bool` | 각 비밀번호 표시 상태 | false, 화면 수명 | 보기/숨기기 버튼, 메모리 |
 | `StudentFeatureFlags.servicesDemo/storeDemo` · `bool` | canary 데모 노출 여부 | build-time false, 번들 수명 | `--dart-define`, 메뉴·라우트·검색·페이지 |

@@ -32,10 +32,12 @@ class _SignupPageState extends State<SignupPage> {
   final _profileImageController = TextEditingController();
   final _schoolController = TextEditingController();
   String _track = '중학교';
-  String _subject = '수학';
+  String _subject = '확률과통계';
   int _stage = 0;
-  bool _agreed = true;
+  bool _agreed = false;
   bool _loading = false;
+  bool _passwordVisible = false;
+  bool _passwordConfirmVisible = false;
 
   /// 필요한 변수는 미리보기 여부다.
   /// 작동 원리는 시안 캡처일 때만 학생 정보를 채워 네트워크 없이 완성 상태를 보이는 것이다.
@@ -43,6 +45,7 @@ class _SignupPageState extends State<SignupPage> {
   void initState() {
     super.initState();
     _stage = widget.initialStage.clamp(0, 2);
+    _gradeController.text = '1학년';
     if (!widget.preview) return;
     _nameController.text = '김학생';
     _gradeController.text = '2학년';
@@ -128,9 +131,8 @@ class _SignupPageState extends State<SignupPage> {
   (int, String)? _profileValidationError() {
     final name = _nameController.text.trim();
     final grade = _gradeController.text.trim();
-    final school = _schoolController.text.trim();
-    if (name.isEmpty || grade.isEmpty || school.isEmpty) {
-      return (0, '이름·학년·학교를 모두 입력해 주세요.');
+    if (name.isEmpty || grade.isEmpty) {
+      return (0, '닉네임과 학년을 입력해 주세요.');
     }
     if (!RegExp(r'^[가-힣A-Za-z0-9 ]{1,20}$').hasMatch(name)) {
       return (0, '이름은 한글·영문·숫자 20자 이내로 입력해 주세요.');
@@ -164,41 +166,67 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    final compact = _isSignupCompact(context);
-    // 필요한 변수는 회원가입 단계와 화면 폭이다.
-    // 작동 원리: 인증 전용 스크롤 캔버스만 구성해 사용자·알림 상단바와
-    // 인증이 필요한 데이터 접근을 분리하고, 좁은 화면은 한 열로 안전하게 흐르게 한다.
+    return _buildHtmlSignupScreen(context);
+  }
+
+  /// HTML 가입 시안의 고정 패널·단계 헤더·폼 순서를 렌더링한다.
+  /// 실제 가입 API와 단계 검증은 기존 상태 메서드를 그대로 사용한다.
+  Widget _buildHtmlSignupScreen(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width <= 720;
+    final pagePadding = compact
+        ? EdgeInsets.zero
+        : EdgeInsets.symmetric(horizontal: 20, vertical: (width * .05).clamp(28, 64));
+    final panelPadding = compact
+        ? const EdgeInsets.fromLTRB(20, 28, 20, 38)
+        : EdgeInsets.all((width * .05).clamp(30, 48));
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F6),
+      backgroundColor: const Color(0xFFF0F0F2),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => ClipRect(
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  compact ? 14 : 52,
-                  compact ? 24 : 52,
-                  compact ? 14 : 52,
-                  48,
+        child: SingleChildScrollView(
+          padding: pagePadding,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Container(
+                key: const ValueKey('signup-html-panel'),
+                width: double.infinity,
+                padding: panelPadding,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDFDFE),
+                  border: Border(
+                    top: const BorderSide(color: Color(0xFF09090B), width: 3),
+                    left: BorderSide(
+                      color: const Color(0xFF09090B).withValues(alpha: compact ? 0 : .1),
+                    ),
+                    right: BorderSide(
+                      color: const Color(0xFF09090B).withValues(alpha: compact ? 0 : .1),
+                    ),
+                    bottom: BorderSide(
+                      color: const Color(0xFF09090B).withValues(alpha: compact ? 0 : .1),
+                    ),
+                  ),
                 ),
-                children: [
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                    child: _buildHeader(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _SignupHtmlBrand(),
+                      const SizedBox(height: 38),
+                      _buildHtmlStepHead(),
+                      const SizedBox(height: 32),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: switch (_stage) {
+                          0 => _buildHtmlProfileStage(),
+                          1 => _buildHtmlAccountStage(),
+                          _ => _buildHtmlConfirmStage(),
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _SignupSteps(stage: _stage, onSelected: _requestStage),
-                  const SizedBox(height: 12),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child: switch (_stage) {
-                      0 => _buildProfileStage(),
-                      1 => _buildAccountStage(),
-                      _ => _buildConfirmStage(),
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -207,8 +235,334 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  /// 필요한 변수는 현재 Navigator다.
+  Widget _buildHtmlStepHead() {
+    const labels = ['학습 정보', '계정 정보', '가입 확인'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${_stage + 1} / 3',
+              style: const TextStyle(fontSize: 11, color: Color(0xFF71717A), fontWeight: FontWeight.w800),
+            ),
+            Text(
+              labels[_stage],
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (var index = 0; index < 3; index++) ...[
+              Expanded(
+                child: Container(
+                  height: 3,
+                  color: index <= _stage
+                      ? const Color(0xFF09090B)
+                      : const Color(0xFFF3F3F5),
+                ),
+              ),
+              if (index != 2) const SizedBox(width: 6),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHtmlHeading(String title, String description) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(title, style: const TextStyle(fontSize: 32, height: 1.15, letterSpacing: -.055, fontWeight: FontWeight.w900)),
+      const SizedBox(height: 8),
+      Text(description, style: const TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF71717A))),
+      const SizedBox(height: 28),
+    ],
+  );
+
+  Widget _buildHtmlProfileStage() => KeyedSubtree(
+    key: const ValueKey('signup-profile'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHtmlHeading('기본 정보를 알려주세요', '학년에 맞는 학습 내용을 준비하는 데 사용해요.'),
+        _htmlTextField(_nameController, '닉네임', helper: '다른 학습자에게 표시되는 이름이에요.', required: true),
+        const SizedBox(height: 18),
+        _htmlTrackField(),
+        const SizedBox(height: 18),
+        _htmlSelectField(
+          label: '학년',
+          value: _gradeController.text.isEmpty ? '1학년' : _gradeController.text,
+          items: const ['1학년', '2학년', '3학년'],
+          onChanged: (value) => setState(() => _gradeController.text = value),
+        ),
+        const SizedBox(height: 18),
+        _htmlSelectField(
+          label: '과목',
+          value: _subject,
+          items: const ['확률과통계', '미적분', '기하'],
+          enabled: _track == '고등학교',
+          helper: _track == '중학교' ? '중학교 과정은 과목을 따로 선택하지 않아요.' : null,
+          onChanged: (value) => setState(() => _subject = value),
+        ),
+        const SizedBox(height: 18),
+        _htmlTextField(_schoolController, '학교명', helper: '입력하지 않아도 가입할 수 있고, 나중에 추가할 수 있어요.'),
+        const SizedBox(height: 18),
+        _htmlPrimaryButton('계정 정보 입력하기', () => _requestStage(1)),
+        const SizedBox(height: 22),
+        _htmlLoginEntry(),
+      ],
+    ),
+  );
+
+  Widget _htmlTrackField() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text('과정', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 7),
+      Row(
+        children: [
+          Expanded(child: _htmlSegment('중학교')),
+          const SizedBox(width: 8),
+          Expanded(child: _htmlSegment('고등학교')),
+        ],
+      ),
+    ],
+  );
+
+  Widget _htmlSegment(String value) => OutlinedButton(
+    onPressed: () => setState(() {
+      _track = value;
+      if (value == '중학교') _subject = '확률과통계';
+    }),
+    style: OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(50),
+      padding: EdgeInsets.zero,
+      side: const BorderSide(color: Color(0x1A09090B)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      foregroundColor: _track == value ? Colors.white : const Color(0xFF09090B),
+      backgroundColor: _track == value ? const Color(0xFF09090B) : const Color(0xFFFDFDFE),
+    ),
+    child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+  );
+
+  Widget _buildHtmlAccountStage() => KeyedSubtree(
+    key: const ValueKey('signup-account'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHtmlHeading('계정 정보를 입력해 주세요', '로그인에 사용할 아이디와 비밀번호예요.'),
+        _htmlTextField(_idController, '아이디', helper: '영문과 숫자 4–16자', required: true),
+        const SizedBox(height: 18),
+        _htmlPasswordField(_pwController, '비밀번호', helper: '영문과 숫자를 포함한 8–20자', visible: _passwordVisible, onToggle: () => setState(() => _passwordVisible = !_passwordVisible)),
+        const SizedBox(height: 18),
+        _htmlPasswordField(_pwConfirmController, '비밀번호 확인', visible: _passwordConfirmVisible, onToggle: () => setState(() => _passwordConfirmVisible = !_passwordConfirmVisible)),
+        const SizedBox(height: 18),
+        _htmlTextField(_emailController, '이메일', optional: true, helper: '입력하지 않아도 가입할 수 있어요.'),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            SizedBox(width: 96, child: _htmlSecondaryButton('이전', () => _setStage(0))),
+            const SizedBox(width: 10),
+            Expanded(child: _htmlPrimaryButton('입력 정보 확인하기', () => _requestStage(2))),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildHtmlConfirmStage() => KeyedSubtree(
+    key: const ValueKey('signup-complete'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHtmlHeading('입력 정보를 확인해 주세요', '가입 후에도 프로필에서 변경할 수 있어요.'),
+        Container(
+          decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0x1A09090B)))),
+          child: Column(
+            children: [
+              _htmlSummaryRow('닉네임', _nameController.text),
+              _htmlSummaryRow('학습 과정', '$_track · ${_gradeController.text}'),
+              _htmlSummaryRow('학교명', _schoolController.text),
+              _htmlSummaryRow('아이디', _idController.text),
+              _htmlSummaryRow('이메일', _emailController.text),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        Material(
+          color: Colors.transparent,
+          child: CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: _agreed,
+            onChanged: (value) => setState(() => _agreed = value ?? false),
+            title: const Text('입력 정보와 서비스 이용 안내를 확인했습니다.', style: TextStyle(fontSize: 12, height: 1.5)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _htmlPrimaryButton('가입하고 학습 시작하기', _agreed && !_loading ? _submit : null),
+        const SizedBox(height: 10),
+        _htmlSecondaryButton('이전 단계 수정', () => _setStage(1)),
+      ],
+    ),
+  );
+
+  Widget _htmlTextField(
+    TextEditingController controller,
+    String label, {
+    String? helper,
+    bool required = false,
+    bool optional = false,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _htmlFieldLabel(label, optional: optional),
+      const SizedBox(height: 7),
+      TextFormField(
+        controller: controller,
+        minLines: 1,
+        decoration: _htmlInputDecoration(),
+        validator: required ? (value) => value == null || value.trim().isEmpty ? '$label을(를) 입력하세요' : null : null,
+      ),
+      if (helper != null) ...[
+        const SizedBox(height: 7),
+        Text(helper, style: const TextStyle(fontSize: 10, color: Color(0xFF71717A), fontWeight: FontWeight.w700)),
+      ],
+    ],
+  );
+
+  Widget _htmlPasswordField(
+    TextEditingController controller,
+    String label, {
+    String? helper,
+    required bool visible,
+    required VoidCallback onToggle,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _htmlFieldLabel(label),
+      const SizedBox(height: 7),
+      TextFormField(
+        controller: controller,
+        obscureText: !visible,
+        decoration: _htmlInputDecoration().copyWith(
+          suffixIcon: TextButton(onPressed: onToggle, child: Text(visible ? '숨기기' : '보기')),
+          suffixIconConstraints: const BoxConstraints(minWidth: 56, minHeight: 48),
+        ),
+      ),
+      if (helper != null) ...[
+        const SizedBox(height: 7),
+        Text(helper, style: const TextStyle(fontSize: 10, color: Color(0xFF71717A), fontWeight: FontWeight.w700)),
+      ],
+    ],
+  );
+
+  Widget _htmlSelectField({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String> onChanged,
+    String? helper,
+    bool enabled = true,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _htmlFieldLabel(label),
+      const SizedBox(height: 7),
+      DropdownButtonFormField<String>(
+        initialValue: items.contains(value) ? value : items.first,
+        decoration: _htmlInputDecoration(),
+        icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+        items: [for (final item in items) DropdownMenuItem(value: item, child: Text(item))],
+        onChanged: enabled ? (next) { if (next != null) onChanged(next); } : null,
+      ),
+      if (helper != null) ...[
+        const SizedBox(height: 7),
+        Text(helper, style: const TextStyle(fontSize: 10, color: Color(0xFF71717A), fontWeight: FontWeight.w700)),
+      ],
+    ],
+  );
+
+  Widget _htmlFieldLabel(String label, {bool optional = false}) => Row(
+    children: [
+      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+      if (optional) const Text('  선택', style: TextStyle(fontSize: 10, color: Color(0xFF71717A), fontWeight: FontWeight.w700)),
+    ],
+  );
+
+  InputDecoration _htmlInputDecoration() => const InputDecoration(
+    isDense: true,
+    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+    border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0x1A09090B))),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0x1A09090B))),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0xFF09090B))),
+  );
+
+  Widget _htmlSummaryRow(String label, String value) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 15),
+    decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0x1A09090B)))),
+    child: Row(
+      children: [
+        SizedBox(width: 92, child: Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF71717A)))),
+        Expanded(child: Text(value.isEmpty ? '선택 안 함' : value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800))),
+      ],
+    ),
+  );
+
+  Widget _htmlPrimaryButton(String label, VoidCallback? onPressed) => FilledButton(
+    onPressed: onPressed,
+    style: FilledButton.styleFrom(
+      minimumSize: const Size.fromHeight(52),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.center,
+      backgroundColor: const Color(0xFF09090B),
+      disabledBackgroundColor: const Color(0x6B09090B),
+      disabledForegroundColor: const Color(0x6BFFFFFF),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+        if (_loading && onPressed != null) const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) else const Text('→', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+      ],
+    ),
+  );
+
+  Widget _htmlSecondaryButton(String label, VoidCallback onPressed) => OutlinedButton(
+    onPressed: onPressed,
+    style: OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(52),
+      padding: EdgeInsets.zero,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      side: const BorderSide(color: Color(0x1A09090B)),
+      foregroundColor: const Color(0xFF09090B),
+    ),
+    child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+  );
+
+  Widget _htmlLoginEntry() => Center(
+    child: Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        const Text('이미 계정이 있으신가요? ', style: TextStyle(fontSize: 12, color: Color(0xFF71717A))),
+        TextButton(
+          onPressed: () => Navigator.of(context).maybePop(),
+          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4), minimumSize: const Size(48, 48)),
+          child: const Text('로그인', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, decoration: TextDecoration.underline)),
+        ),
+      ],
+    ),
+  );
+
+  /// 이전 가입 시안 호출부와의 호환을 위해 보존한다.
   /// 작동 원리는 HTML과 같은 브랜드·제목·로그인 복귀 버튼을 한 헤더에 배치하는 것이다.
+  // ignore: unused_element
   Widget _buildHeader() => LayoutBuilder(
     builder: (context, constraints) {
       const brand = Row(
@@ -316,6 +670,7 @@ class _SignupPageState extends State<SignupPage> {
 
   /// 필요한 변수는 학생 기본 정보와 다음 단계 콜백이다.
   /// 작동 원리는 시안의 STEP 01 설명·필수 요약·과정 폼을 한 카드에 구성하는 것이다.
+  // ignore: unused_element
   Widget _buildProfileStage() => _stageCard(
     key: const ValueKey('signup-profile'),
     eyebrow: 'STEP 01 · PROFILE',
@@ -420,6 +775,7 @@ class _SignupPageState extends State<SignupPage> {
 
   /// 필요한 변수는 계정 컨트롤러와 다음 단계 콜백이다.
   /// 작동 원리는 STEP 02 규칙·아이디·비밀번호·선택 이메일 입력을 별도 패널로 제공하는 것이다.
+  // ignore: unused_element
   Widget _buildAccountStage() => _stageCard(
     key: const ValueKey('signup-account'),
     eyebrow: 'STEP 02 · ACCOUNT',
@@ -448,6 +804,7 @@ class _SignupPageState extends State<SignupPage> {
 
   /// 필요한 변수는 지금까지 입력한 학생·계정 정보와 동의 상태다.
   /// 작동 원리는 STEP 03에서 최종 값을 요약하고 실제 가입 API 버튼을 연결하는 것이다.
+  // ignore: unused_element
   Widget _buildConfirmStage() => _stageCard(
     key: const ValueKey('signup-confirm'),
     eyebrow: 'STEP 03 · CONFIRM',
@@ -709,6 +1066,27 @@ class _SignupLogo extends StatelessWidget {
   );
 }
 
+class _SignupHtmlBrand extends StatelessWidget {
+  const _SignupHtmlBrand();
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        color: const Color(0xFF09090B),
+        child: const Text('A', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+      ),
+      const SizedBox(width: 10),
+      const Text('AIFlow', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+    ],
+  );
+}
+
+// ignore: unused_element
 class _SignupSteps extends StatelessWidget {
   const _SignupSteps({required this.stage, required this.onSelected});
 
