@@ -660,3 +660,9 @@
 - 소스 커밋 `15e080c`, 번들 커밋 `cfc13b0`; `public/main.dart.js`와 alias 원시 응답 SHA-256은 `3738A16582792EF91E07F4D8D40BA264408382C1C3E65FA44D97DD5D8BC74CC8`로 일치한다.
 - Vercel 배포 `dpl_3QaYBUEKMvqsmTfmYzYXtF26aXZ9`, 고유 URL [`aiflow-web-canary-cb6gtjq2k-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-cb6gtjq2k-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/social) READY. `/health` 200.
 - 브라우저 모바일 화면에서 `함께 공부`·뒤로가기·대화/친구/그룹 탭·최근 대화 빈 상태·하단 더보기 활성 상태를 확인했다. 인증된 친구/메시지 데이터와 전체 86개 검증은 `pending`이다.
+
+### 2026-09-11 소셜 모바일 내비게이션 최종 반영
+
+- 소셜 모바일 화면의 상단을 HTML 기준 뒤로가기 버튼으로 통일하고, 버튼 동작은 학생 대시보드로 복귀하도록 연결했다.
+- 소스 커밋 `15e080c`, 번들 커밋 `cfc13b0` 기준으로 canary가 이미 반영되었으며, 최신 alias 원시 번들 SHA-256은 `3738A16582792EF91E07F4D8D40BA264408382C1C3E65FA44D97DD5D8BC74CC8`이다.
+- 모바일 브라우저에서 `함께 공부`, 뒤로가기, 대화·친구·그룹 탭, 최근 대화 빈 상태와 하단 탭을 재확인했다. 실제 인증 데이터와 전체 화면 합격 조건은 계속 `pending`이다.
