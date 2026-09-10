@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 프로필 모바일 셸 canary 반영
+
+- HTML 프로필 상단의 뒤로가기 동작을 Flutter 프로필 정상·로딩·오류 상태에 공통 적용해 모바일 햄버거 노출을 제거했다.
+- `mobile_live_regression_test.dart` 프로필 항목과 프로필 파일 정적 분석을 통과했다.
+- 소스 커밋 `35252c2`, 번들 커밋 `013fd5c`; 로컬·canary `main.dart.js` SHA-256은 `5CDBCCB8DCE109885AE0479562BD28819BB52A392AD9B3E0C8AE8A6708D43737`로 일치한다.
+- Vercel 배포 `dpl_Dcj9S9N7BgbM5ekMBmJfpKF7C175`, 고유 URL [`aiflow-web-canary-hbb0b32sj-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-hbb0b32sj-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 코스 목록 검증 계약 정리
 
 - 기존 테스트가 HTML에 없는 데스크톱 완료 코스 필터·카드 탐색을 요구해, HTML 기준 `01 학습 중`·`02 코스 관리` 섹션과 두 관리 CTA를 검증하도록 갱신했다.
