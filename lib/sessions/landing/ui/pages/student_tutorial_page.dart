@@ -907,12 +907,18 @@ class _TutorialActions extends StatelessWidget {
           ? Row(
               children: [
                 SizedBox(
-                  width: 48,
-                  child: OutlinedButton(
-                    key: const ValueKey('tutorial-previous'),
-                    onPressed: current == 0 ? null : onPrevious,
-                    style: _buttonStyle(compact: true),
-                    child: const Text('이전'),
+                  width: 64,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: 48,
+                      child: OutlinedButton(
+                        key: const ValueKey('tutorial-previous'),
+                        onPressed: current == 0 ? null : onPrevious,
+                        style: _buttonStyle(compact: true),
+                        child: const Text('이전'),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
