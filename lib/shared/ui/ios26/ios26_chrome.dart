@@ -521,9 +521,6 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
     destination,
   ) {
     final typedDestination = destination.spec.destination;
-    if (typedDestination.routeName != '/student/dashboard') {
-      return typedDestination.routeName;
-    }
     return switch (typedDestination.screenId) {
       'today-tasks' => '/student/dashboard?scene=today-tasks',
       'rating-detail' => '/student/dashboard?scene=rating-detail',

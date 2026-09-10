@@ -165892,7 +165892,6 @@ gaE3(){var s=A.ckT()
 return new A.ff(s,new A.bGa(),s.$ti.i("ff<1,+detail,keywords,spec,title(f,f,bC,f)>"))},
 aVC(a){var s=a.a[2],r=s.a
 s=s.c
-if(s!=="/student/dashboard")return s
 A:{if("today-tasks"===r){s="/student/dashboard?scene=today-tasks"
 break A}if("rating-detail"===r){s="/student/dashboard?scene=rating-detail"
 break A}if("achievements"===r){s="/student/dashboard?scene=achievements"
