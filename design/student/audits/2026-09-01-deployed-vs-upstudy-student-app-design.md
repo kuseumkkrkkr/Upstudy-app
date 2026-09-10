@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 HTML 상단바 액션 크기 반영
+
+- 공통 학생 상단바의 메뉴·뒤로가기·검색·알림 액션을 HTML 기준 `38×38px`로 조정했다.
+- 소스·번들 커밋 `46835e2`, 번들 SHA-256 `26349AA3914166DC31358627EB4CA2AB31D92ABF0AA1A4CD8E2E59BAA8445AD9`.
+- `secondary_route_shell_test.dart`와 공통 셸 정적 분석을 통과했다.
+- Vercel 고유 URL [`aiflow-web-canary-paw0w38ch-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-paw0w38ch-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. alias 번들 해시가 로컬과 일치하고 `/health`가 200이다.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 HTML 레일 브랜드·아바타 반영
 
 - 데스크톱 레일의 브랜드 마크를 HTML 비대칭 테두리, 하단 학생 식별자를 원형 아바타로 맞췄다.
