@@ -628,3 +628,12 @@
 - Vercel 배포 `dpl_7bdoS4664Qk1s9pVC5QnmuaAHo7V`, 고유 URL [`aiflow-web-canary-8josv01gm-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-8josv01gm-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/bookbag) READY. `/health` 200, 인증 없는 `/demo/student-store` 401을 확인했다.
 - 기준 HTML과 alias를 동일 Chromium/DPR 1 조건으로 `390×844`, `1280×900` 캡처했다. 증거는 `evidence/2026-09-01-deployed-vs-design/design-bookbag-390x844-2026-09-11.png`, `design-bookbag-1280x900-2026-09-11.png`, `deployed-bookbag-390x844-2026-09-11.png`, `deployed-bookbag-1280x900-2026-09-11.png`이다. 모바일 뒤로가기·상단 검색/알림·하단 탭, 데스크톱 레일·두 열 본문·컨텍스트 영역과 빈 상태 구조를 확인했다.
 - 인증 세션 발급 불가(`OMJ_JWT_SECRET` 미설정)로 실제 사용자별 최근 교재·자료 목록과 클릭 후 리더/상세 데이터는 `pending`이다. 이 배포는 책가방 묶음의 구조 후보일 뿐이며 86개 전체 장면, 전체 analyze/API·DB·동시성·접근성 검증 및 상용 준비 판정은 계속 `pending`이다.
+
+### 2026-09-11 자료실 데스크톱·모바일 셸 및 카드 보정 canary 확인
+
+- `MarketplacePage` 데스크톱 본문을 HTML의 검색 행·4개 유형 탭·맞춤 추천 헤더·3열 번호형 카드 구조로 정리했다. 모바일은 검색/필터·1열 결과 구조를 유지하고, 양쪽 모두 실제 마켓 API 결과·오류·빈 상태를 사용한다.
+- 모바일 상단을 HTML과 같은 뒤로가기 아이콘으로 교체하고 홈 복귀 목적지를 명시했다. 검색·필터·카드 열기·구매 콜백과 기존 API 계약은 변경하지 않았다.
+- 소스 커밋 `aca909f`, 정적 번들 커밋 `5278932`; 번들 및 alias 원시 응답 SHA-256은 `C70B7425DE35E42FAC1BCE646473763AE4ACA904A1E2311B9601F4353D6DAD21`로 일치한다.
+- Vercel 배포 `dpl_HCF1sCFEUZVQFZpBLpMvssKv6TyC`, 고유 URL [`aiflow-web-canary-6ibv6uwxo-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6ibv6uwxo-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/marketplace) READY. `/health` 200.
+- 실제 브라우저에서 최신 alias `390×844`를 재로드해 뒤로가기·검색·필터·전체/코스/시험지/문제세트 탭·오류 재시도와 하단 자료실 활성 탭을 확인했다. 인증되지 않은 자료 조회는 “마켓 자료를 불러오지 못했어요” 상태이며 샘플 카드는 노출되지 않는다.
+- `1280×900` 데스크톱 카드의 실제 자료 데이터·구매 후 열기와 인증 사용자별 목록은 세션 미발급으로 `pending`이다. 86개 전체 장면 및 전체 품질·상용 게이트도 `pending`이다.
