@@ -712,6 +712,15 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 HTML 셸·코스·책가방 검수 계약 정리
+
+- `group-detail`, 일정·오답·레벨·대결·소셜·그룹·튜터 모바일 셸 검사를 실제 HTML 셸 변형(뒤로가기/무버튼)에 맞춰 분리했다.
+- 코스의 모바일 `새 코스 찾기`는 기존 잘린 시트 기대값 대신 실제 `/marketplace` 목적지와 자료실 화면을 검증한다.
+- 책가방 검사는 폐기된 `bookbag-mobile-featured`/shortcut 키 대신 현재 HTML `bookbag-html-frequent`·`bookbag-html-materials` 및 `상세보기 →` 흐름을 검증한다.
+- 타이머 검사는 화면 밖 일시정지 버튼을 스크롤한 뒤 조작해 실제 시작·일시정지 전이를 확인한다.
+- 관련 테스트 커밋 `892c8c2`, `d8a645e`, `4315910`, `87682fa`; 각 집중 검사는 통과했다. 이 변경은 테스트·문서만 포함하므로 정적 번들은 재빌드하지 않았다.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 프로필 모바일 셸 canary 반영
 
 - HTML 프로필 상단의 뒤로가기 동작을 Flutter 프로필 정상·로딩·오류 상태에 공통 적용해 모바일 햄버거 노출을 제거했다.
