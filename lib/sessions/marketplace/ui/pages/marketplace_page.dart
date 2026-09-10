@@ -1105,31 +1105,36 @@ class _SearchPanel extends StatelessWidget {
         textStyle: const TextStyle(fontWeight: FontWeight.w900),
       ),
     );
-    final filters = SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    final filters = KeyedSubtree(
       key: ValueKey(
-        desktop ? 'market-desktop-type-tabs' : 'market-mobile-type-tabs',
+        desktop ? 'market-desktop-filters' : 'market-mobile-filters',
       ),
-      child: Row(
-        children: [
-          for (var index = 0; index < categories.length; index++) ...[
-            _MarketplaceTypeTab(
-              category: categories[index],
-              selected: filter == categories[index].filter,
-              onTap: () => onFilterChanged(
-                filter == categories[index].filter
-                    ? '전체'
-                    : categories[index].filter,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        key: ValueKey(
+          desktop ? 'market-desktop-type-tabs' : 'market-mobile-type-tabs',
+        ),
+        child: Row(
+          children: [
+            for (var index = 0; index < categories.length; index++) ...[
+              _MarketplaceTypeTab(
+                category: categories[index],
+                selected: filter == categories[index].filter,
+                onTap: () => onFilterChanged(
+                  filter == categories[index].filter
+                      ? '전체'
+                      : categories[index].filter,
+                ),
               ),
-            ),
-            if (index != categories.length - 1) const SizedBox(width: 8),
+              if (index != categories.length - 1) const SizedBox(width: 8),
+            ],
           ],
-        ],
+        ),
       ),
     );
     return Container(
       key: ValueKey(
-        desktop ? 'market-desktop-controls' : 'market-mobile-controls',
+        desktop ? 'market-desktop-search-panel' : 'market-mobile-search-panel',
       ),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -1137,20 +1142,30 @@ class _SearchPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE0E0E2)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(child: field),
-              const SizedBox(width: 8),
-              detailFilter,
-            ],
-          ),
-          const SizedBox(height: 10),
-          filters,
-        ],
-      ),
+      child: desktop
+          ? Row(
+              children: [
+                Expanded(child: field),
+                const SizedBox(width: 8),
+                detailFilter,
+                const SizedBox(width: 12),
+                Flexible(child: filters),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: field),
+                    const SizedBox(width: 8),
+                    detailFilter,
+                  ],
+                ),
+                const SizedBox(height: 10),
+                filters,
+              ],
+            ),
     );
   }
 }
