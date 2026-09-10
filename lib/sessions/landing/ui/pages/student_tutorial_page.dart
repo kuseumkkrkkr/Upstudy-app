@@ -377,27 +377,28 @@ class _TutorialProgress extends StatelessWidget {
     return Semantics(
       label: '튜토리얼 진행률',
       value: '${current + 1} / ${studentTutorialSteps.length}',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            '${current + 1} / ${studentTutorialSteps.length}',
-            textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 7),
-          SizedBox(
-            height: 5,
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                color: StudentDensityTokens.surfaceMuted,
-              ),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: value,
-                child: const ColoredBox(color: StudentDensityTokens.dark),
+          Expanded(
+            child: SizedBox(
+              height: 5,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: StudentDensityTokens.surfaceMuted,
+                ),
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: value,
+                  child: const ColoredBox(color: StudentDensityTokens.dark),
+                ),
               ),
             ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '${current + 1} / ${studentTutorialSteps.length}',
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
           ),
         ],
       ),
