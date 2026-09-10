@@ -586,51 +586,81 @@ class _ArenaMobileEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final waitSeconds = (data['estimated_wait_seconds'] as num? ?? 0).round();
+    final comingSoon = data['coming_soon'] == true;
     return Container(
       key: const ValueKey('arena-mobile-entry-card'),
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF171719),
-        borderRadius: BorderRadius.circular(24),
+        color: comingSoon ? const Color(0xFFF4F4F6) : Colors.white,
+        border: Border.all(color: const Color(0xFF202022)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const Text(
-            '1v1 문제풀이',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              letterSpacing: -1.2,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '10문항 · 20분${waitSeconds > 0 ? ' · 약 $waitSeconds초 대기' : ''}',
-            style: const TextStyle(color: Colors.white60, fontSize: 13),
-          ),
-          const SizedBox(height: 22),
-          SizedBox(
-            width: double.infinity,
+          Container(
+            width: 54,
             height: 54,
-            child: FilledButton(
-              key: const ValueKey('arena-mobile-join-button'),
-              onPressed: disabled ? null : (waiting ? onCancel : onJoin),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                disabledBackgroundColor: Colors.white24,
-                disabledForegroundColor: Colors.white54,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: Text(
-                waiting ? '매칭 취소' : '대결 시작',
-                style: const TextStyle(fontWeight: FontWeight.w900),
+            alignment: Alignment.center,
+            color: comingSoon ? Colors.white : const Color(0xFF09090B),
+            child: Text(
+              data['queue_type'] == 'team_exam' ? '2:2' : '1:1',
+              style: TextStyle(
+                color: comingSoon ? const Color(0xFF71717A) : Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
               ),
             ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  comingSoon ? '준비 중' : '지금 참여 가능',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data['queue_type'] == 'team_exam' ? '팀 문제풀이' : '1v1 문제풀이',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data['queue_type'] == 'team_exam'
+                      ? '팀 점수 · 실시간 메시지'
+                      : '10문항 · 제한 20분 · 같은 티어 우선',
+                  style: const TextStyle(
+                    color: Color(0xFF71717A),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            key: const ValueKey('arena-mobile-join-button'),
+            tooltip: waiting ? '매칭 취소' : '대결 시작',
+            onPressed: disabled ? null : (waiting ? onCancel : onJoin),
+            icon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (waiting)
+                  const Text(
+                    '매칭 취소',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+                  ),
+                const Icon(Icons.arrow_forward_rounded, size: 20),
+              ],
+            ),
+            color: Colors.black,
+            disabledColor: const Color(0xFFB5B5BA),
+            padding: EdgeInsets.zero,
           ),
         ],
       ),
