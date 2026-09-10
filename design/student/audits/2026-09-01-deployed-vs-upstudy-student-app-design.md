@@ -435,3 +435,10 @@
 - 기존 `AuthService.register` payload, 형식 검증, JWT 저장·홈 이동은 변경하지 않았다. 학교명은 HTML 기준 선택 입력으로 바꾸고, 최종 동의 기본값은 해제 상태로 맞췄다.
 - 검증: `signup_stage_validation_test.dart` 4개, 회원가입 반응형 테스트 2개, `dart analyze lib/sessions/auth/ui/pages/signup_page.dart`, `git diff --check` 통과. 함수·변수표는 `function-variable-index.md`에 갱신했다.
 - 이 변경은 아직 정적 번들·Vercel alias에 반영하지 않은 로컬 후보다. 가입 3단계의 HTML 기준 390×844·1280×900 이미지 비교와 실제 서버 가입 성공은 다음 빌드 게이트에서 수행한다.
+
+### 2026-09-10 가입 3단계 HTML 구조 후보 배포
+
+- 코드 커밋 `9f6b774`, 정적 번들 커밋 `8ed7085`를 canary에 반영했다. `public/main.dart.js` 및 alias 응답 SHA-256은 `88575F091CEF34065F2C01A68E8CFA0AF7C9B4EF3189AFAF4B0188B9160E76B5`로 일치한다.
+- Vercel: [`dpl_6tfh7AuWNZTeHuvdc4t99LZJ3zS5`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/6tfh7AuWNZTeHuvdc4t99LZJ3zS5), 고유 URL [`aiflow-web-canary-ggzmn3wb1-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-ggzmn3wb1-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/signup) READY 연결.
+- 라이브 경계: `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 각각 401 JSON, 번들 `localhost` 없음. 고정 CUA 1280×720에서 HTML·canary 가입 1단계의 640px 패널·3px 상단선·필드/과정/학년/과목 순서를 시각 확인했다.
+- 인증 없는 브라우저에서는 실제 회원가입 API 성공을 수행하지 않았다. 390×844·1280×900 동일 뷰포트 캡처 파일과 실제 서버 가입·중복 제출 검증은 `pending`이며, 전체 상용 준비 완료로 판정하지 않는다.
