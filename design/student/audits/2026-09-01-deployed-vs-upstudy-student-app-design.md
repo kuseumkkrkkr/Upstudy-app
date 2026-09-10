@@ -728,6 +728,8 @@
 - Vercel 배포 `dpl_B4eDa62sZs7Ni1NgbW1m5t7SysGj`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 실제 교재 저장 API·인증 세션·DB readiness는 Production 환경변수 부재로 `pending`이다.
 
+- 배포 브라우저에서 `직접 집필` 장면을 열어 교재 기본정보 입력, 대제목·소주제·내용·이미지 URL 입력, 저장·추가 동작을 확인했다. 전체 `lib/**/*.dart` UTF-8 유효성 검사도 통과했다.
+
 ### 2026-09-11 레거시 채팅 placeholder 인코딩 정리
 
 - 번들·소스 인코딩 점검에서 CP949/UTF-8 혼용으로 깨진 레거시 `chat_placeholder_page.dart`를 UTF-8로 정리하고 잘못된 색상 import를 실제 공통 경로로 수정했다.
