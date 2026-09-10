@@ -744,6 +744,15 @@
 - `jsx_graph_page_test.dart` 11개와 대상 파일 분석이 통과했다. 전체 Dart UTF-8 유효성 검사도 통과했다.
 - 해당 위젯은 현재 GraphSelector의 공용 경로에만 포함되며, 최신 정적 번들 해시는 변경되지 않았다.
 
+### 2026-09-11 canary 데모 플래그 빌드 반영
+
+- Flutter release를 `STUDENT_SERVICES_DEMO=true`, `STUDENT_STORE_DEMO=true`로 재생성해 canary 데모 메뉴·직접 주소를 활성화했다. 소스 기본값(off)은 유지한다.
+- 배포 브라우저에서 학원 찾기 화면의 샘플 데이터 고지, 지도·목록 전환, 필터와 OSM `Attributions`를 확인했다.
+- 상점 화면에서도 샘플 데이터 고지가 표시되고 인증 데이터 미연결 시 오류 상태를 노출한다. 임의 잔액·상품을 삽입하지 않는다.
+- 번들 커밋 `c0decac`; 로컬·canary `main.dart.js` SHA-256 `FA77E85B70B5C7BAD13B12EF30115546429446D9B0D5CC596E4C0FAA09CEE3D5` 일치.
+- Vercel 배포 `dpl_6czWJCrCES7MY8a1qbTEzSRSJZJd`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 인증된 포인트 주문·실제 문의 전송·DB 멱등성은 Production 인증/DB 설정 부재로 `pending`이다.
+
 ### 2026-09-11 전체 정적 분석 범위 분리
 
 - 전체 저장소 `flutter analyze --no-pub`는 962건을 보고했다. 주요 오류는 학생 앱 범위 밖의 `teacher_textbook_reader`와 `scripts` 레거시 파일에서 발생했다.
