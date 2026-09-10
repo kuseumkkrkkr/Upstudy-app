@@ -720,6 +720,14 @@
 - Vercel 배포 `dpl_DAQZyKTqGCF1Pe91Q3dbpeo99poD`, alias READY, `/health` 200, 로컬·alias 번들 SHA 일치.
 - 나머지 반응형 실패와 86개 전체 이미지·API·DB·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 모바일 문제 풀이 헤더·도구 접근성 반영
+
+- 500px 문제 풀이 화면에 HTML의 `PROBLEM SESSION`, `오늘의 문제`, `SAVED` 상태를 추가하고 펜·제출 도구에 tooltip을 부여했다.
+- 모바일 객관식도 필기 도구와 제출 영역을 동일한 화면에서 노출해 HTML의 문제·작업·제출 흐름을 유지한다.
+- 집중 반응형 테스트 `500px 문제 풀이는 HTML 집중 헤더와 세로 선택지를 유지한다` 통과.
+- 소스·번들 커밋 `2c92607`, 번들 SHA-256 `2F18E5349B7428AA8D94437460E4BD9E1416A37B88631FFDC522D42641ADC136`.
+- Vercel 배포 `dpl_CTWky2t7MH9WojVeRrhp45D1VsQt`, alias READY, `/health` 200, 로컬·alias 번들 SHA 일치.
+
 ### 2026-09-11 QUICK FIND 설명 문구 일치화
 
 - HTML 기준 설명인 `코스, 교재, 문제, 친구를 현재 기능별 검색으로 연결합니다.`를 공통 QUICK FIND 시트에 적용했다.
