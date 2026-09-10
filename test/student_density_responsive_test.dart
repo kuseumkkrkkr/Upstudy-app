@@ -820,7 +820,7 @@ void main() {
     expect(find.text('전송'), findsOneWidget);
   });
 
-  testWidgets('500px 로그인은 HTML 복원 히어로와 학생 폼을 유지한다', (tester) async {
+  testWidgets('500px 로그인은 HTML 단일 패널과 학생 폼을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -834,10 +834,11 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('WELCOME BACK'), findsOneWidget);
-    expect(find.text('멈춘 곳에서\n다시 시작해요.'), findsOneWidget);
-    expect(find.text('STUDENT LOGIN'), findsOneWidget);
-    expect(find.text('로그인'), findsWidgets);
+    expect(find.text('학습 기록을 이어서 확인하세요.'), findsOneWidget);
+    expect(find.text('아이디'), findsOneWidget);
+    expect(find.text('비밀번호'), findsOneWidget);
+    expect(find.text('카카오로 계속하기'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNWidgets(2));
   });
 
   testWidgets('320px 인증 화면은 사용자 상단바 없이 가로 오버플로를 만들지 않는다', (tester) async {
