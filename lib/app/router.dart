@@ -235,6 +235,17 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     }
   }
 
+  // 소셜 하위 탭은 같은 페이지의 초기 선택 상태를 보존한다.
+  if (uri != null && uri.path == AppRoutes.social) {
+    final initialTab = uri.queryParameters['tab'] == 'friends' ? 1 : 0;
+    if (uri.queryParameters.containsKey('tab')) {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => SoWidget(initialTab: initialTab),
+      );
+    }
+  }
+
   // Level test result (needs correctCount, totalCount, passed)
   if (name == AppRoutes.levelTestResult) {
     final args = settings.arguments;

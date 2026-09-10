@@ -78,4 +78,12 @@ void main() {
       expect(route?.settings.name, name);
     }
   });
+
+  test('social friend tab link preserves the selected tab', () {
+    final route = onGenerateAppRoute(
+      const RouteSettings(name: '/social?tab=friends'),
+    );
+    expect(route, isA<MaterialPageRoute<void>>());
+    expect(route?.settings.name, '/social?tab=friends');
+  });
 }
