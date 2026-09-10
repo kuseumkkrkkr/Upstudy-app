@@ -839,6 +839,24 @@ void main() {
     expect(find.text('비밀번호'), findsOneWidget);
     expect(find.text('카카오로 계속하기'), findsOneWidget);
     expect(find.byType(TextFormField), findsNWidgets(2));
+    final panel = find.byKey(const ValueKey('html-login-panel'));
+    expect(tester.getSize(panel).width, 500);
+    expect(tester.getTopLeft(panel).dx, 0);
+  });
+
+  testWidgets('1280px 로그인은 HTML 좌측 460px 패널을 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    await tester.pump();
+
+    final panel = find.byKey(const ValueKey('html-login-panel'));
+    expect(tester.getSize(panel).width, 460);
+    expect(tester.getTopLeft(panel).dx, 28);
+    expect(tester.getTopLeft(panel).dy, 72);
   });
 
   testWidgets('320px 인증 화면은 사용자 상단바 없이 가로 오버플로를 만들지 않는다', (tester) async {

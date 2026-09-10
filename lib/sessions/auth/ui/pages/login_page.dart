@@ -525,25 +525,39 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     // 필요한 변수는 화면 크기와 HTML 로그인 폼이다.
-    // 작동 원리: 기준 HTML처럼 모든 폭에서 460px 패널을 중앙에 두고,
+    // 작동 원리: 기준 HTML처럼 모바일은 화면 폭 전체, PC는 좌측 그리드에
+    // 460px 패널을 두고,
     // 입력·간편 로그인·가입 진입 순서를 동일하게 유지한다.
     return Scaffold(
       backgroundColor: AuthDesignTokens.canvas,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final panelWidth = (constraints.maxWidth - 40).clamp(0.0, 460.0);
-            final panelPadding = (constraints.maxWidth * .05).clamp(30.0, 48.0);
+            final desktop = constraints.maxWidth > 720;
+            final panelWidth = desktop
+                ? (constraints.maxWidth - 40).clamp(0.0, 460.0).toDouble()
+                : constraints.maxWidth;
+            final panelPadding = desktop
+                ? (constraints.maxWidth * .05).clamp(30.0, 48.0).toDouble()
+                : 20.0;
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+              padding: desktop
+                  ? const EdgeInsets.fromLTRB(28, 72, 20, 72)
+                  : EdgeInsets.zero,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 56,
+                  minHeight: desktop
+                      ? constraints.maxHeight - 144
+                      : constraints.maxHeight,
                 ),
-                child: Center(
+                child: Align(
+                  alignment: desktop ? Alignment.topLeft : Alignment.topCenter,
                   child: Container(
+                    key: const ValueKey('html-login-panel'),
                     width: panelWidth,
-                    padding: EdgeInsets.all(panelPadding),
+                    padding: desktop
+                        ? EdgeInsets.all(panelPadding)
+                        : const EdgeInsets.fromLTRB(20, 28, 20, 38),
                     decoration: const BoxDecoration(
                       color: AuthDesignTokens.surface,
                       border: Border(
