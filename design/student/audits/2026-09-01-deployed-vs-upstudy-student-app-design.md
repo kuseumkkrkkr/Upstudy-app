@@ -1135,3 +1135,10 @@
 - `secondary_route_shell_test.dart`, `mobile_secondary_shell_test.dart` 12개 통과.
 - 이미지 증거는 `evidence/2026-09-11-library-search-notify/`에 보존하며, 이번 검사는 연결·상태 코드 검증으로 기록한다.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
+### 2026-09-11 친구 검색·요청 API 계약 재확인
+
+- 클라이언트 `ApiClient.searchFriends`는 `POST /social/friends/search`에 `query`, `limit`을 보내고, 서버 `omj/server.py`도 같은 메서드·경로·응답 키(`users`)를 제공한다.
+- 친구 요청 목록·생성·수락·거절·취소 경로도 클라이언트와 서버가 `/social/friend-requests` 계열로 일치한다.
+- canary의 `/api/app/social/friends/search`는 인증·제품 서버 준비 상태가 없는 현재 환경에서 `503`을 반환했다. 이는 클라이언트 404/405 수정 근거가 아니며, 서버 readiness·배포 소스를 복구한 뒤 실제 계정으로 재검증해야 한다.
+- 제품 API가 준비되지 않은 상태에서 빈 목록이나 더미 친구를 표시해 성공으로 처리하지 않는다.
