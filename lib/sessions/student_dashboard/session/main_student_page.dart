@@ -312,6 +312,9 @@ class _MainStudentPageState extends State<MainStudentPage> {
           accountLevel: ActivityStore.accountSummaryNotifier.value?.level ?? 0,
         );
         return;
+      case 'activity-history':
+        showActivityHistoryDetail(context);
+        return;
     }
   }
 

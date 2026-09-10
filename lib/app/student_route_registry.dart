@@ -171,7 +171,11 @@ abstract final class StudentRouteRegistry {
     ),
     StudentRouteSpec(id: 'daily-test', category: '홈', route: '/level_test'),
     StudentRouteSpec(id: 'study-mode', category: '홈', route: '/learning-tools'),
-    StudentRouteSpec(id: 'activity-history', category: '홈', route: '/schedule'),
+    StudentRouteSpec(
+      id: 'activity-history',
+      category: '홈',
+      route: '/student/dashboard',
+    ),
     StudentRouteSpec(
       id: 'achievements',
       category: '홈',
