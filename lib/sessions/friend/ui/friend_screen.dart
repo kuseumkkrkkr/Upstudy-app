@@ -3898,6 +3898,9 @@ class _SoWidgetState extends State<SoWidget> {
   Widget _buildMobileSocial(BuildContext context) => StudentHtmlShell(
     title: '함께 공부',
     activeRoute: '/social',
+    mobileBackButton: true,
+    onMenu: () =>
+        Navigator.of(context).pushReplacementNamed('/student/dashboard'),
     onSearch: _mobileSocialTab == 1 ? _openAddFriendModal : () {},
     onNotifications: _openFriendRequestsModal,
     child: Column(
