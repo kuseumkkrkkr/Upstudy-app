@@ -577,7 +577,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
     return _StudentUtilitySheet(
       kicker: 'QUICK FIND',
       title: '기능 검색',
-      description: '앱의 모든 기능을 바로 찾습니다.',
+      description: '코스, 교재, 문제, 친구를 현재 기능별 검색으로 연결합니다.',
       mobileHorizontalPadding: 14,
       children: [
         TextField(
