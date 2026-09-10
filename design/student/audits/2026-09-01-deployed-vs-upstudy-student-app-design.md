@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
+
+- 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
+- 최종 기준에 맞춰 레일을 흰색 표면, 어두운 활성 캡슐, 12px 반경, 어두운 로고·푸터로 복원했다. 상단 작업 버튼의 38×38 원형 규칙은 유지했다.
+- 소스·정적 번들 커밋 `0d23e8d`; Vercel 배포 `dpl_HSYHcijCEA5fMt6b9ZpkxkwbpcaX`, 고유 URL [`aiflow-web-canary-6m7265e4s-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6m7265e4s-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY.
+- alias 번들 SHA-256 `7DEF384C87060B8AF22CAB37BE5BA76273F485B98F006DE65B8AFF3735684DC2`, `/health` 200. 대상 파일 `flutter analyze` 통과.
+- `student_density_responsive_test.dart`는 기존 문구·동작 기대값 등 12건 실패가 남아 있어 전체 일치 완료로 판정하지 않는다. 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 HTML 상단바 액션 크기 반영
 
 - 공통 학생 상단바의 메뉴·뒤로가기·검색·알림 액션을 HTML 기준 `38×38px`로 조정했다.
