@@ -95,4 +95,20 @@ void main() {
       expect(route, isA<MaterialPageRoute<void>>());
     }
   });
+
+  test('internal scene deep links generate routes', () {
+    const links = [
+      '/student/dashboard?scene=course-select',
+      '/learning-tools?scene=timer',
+      '/bookbag?scene=book-library',
+      '/arena?scene=arena-ranking',
+      '/groups?scene=group-find',
+      '/social?scene=direct-chat',
+    ];
+    for (final name in links) {
+      final route = onGenerateAppRoute(RouteSettings(name: name));
+      expect(route, isA<MaterialPageRoute<void>>(), reason: name);
+      expect(route?.settings.name, name);
+    }
+  });
 }
