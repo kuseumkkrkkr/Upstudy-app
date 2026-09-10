@@ -21,7 +21,7 @@ Future<T?> showStudyModeModal<T>({required BuildContext context}) async {
             isScrollControlled: true,
             isDismissible: true,
             barrierLabel: '학습 모드 닫기',
-            backgroundColor: const Color(0xFFF4F4F6),
+            backgroundColor: const Color(0xFFFDFDFE),
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.zero,
             ),
@@ -30,7 +30,7 @@ Future<T?> showStudyModeModal<T>({required BuildContext context}) async {
               child: SafeArea(
                 top: false,
                 child: SizedBox(
-                  height: 560,
+                  height: 650,
                   child: const StudypageCopyWidget(mobileSheet: true),
                 ),
               ),
@@ -189,7 +189,7 @@ class StudypageCopyWidget extends StatelessWidget {
                 child: Text(
                   '학습 시작',
                   style: TextStyle(
-                    fontSize: 27,
+                  fontSize: 19,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1,
                   ),
@@ -209,12 +209,12 @@ class StudypageCopyWidget extends StatelessWidget {
         ),
         Expanded(
           child: GridView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+            padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.4,
+              mainAxisSpacing: 1,
+              crossAxisSpacing: 1,
+              childAspectRatio: 2.55,
             ),
             itemCount: _kModes.length,
             itemBuilder: (context, index) {
@@ -271,41 +271,20 @@ class _MobileModeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: Colors.white,
-    elevation: 2,
-    shadowColor: Colors.black.withValues(alpha: 0.12),
-    borderRadius: BorderRadius.circular(24),
-    clipBehavior: Clip.antiAlias,
     child: InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(10),
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(mode.icon, color: Colors.white, size: 22),
-                ),
-                const Spacer(),
-                const Icon(
-                  Icons.arrow_outward_rounded,
-                  color: Colors.black38,
-                  size: 18,
-                ),
-              ],
-            ),
-            const Spacer(),
+            SizedBox(width: 28, height: 28, child: Icon(mode.icon, size: 20)),
+            const SizedBox(width: 9),
             Text(
               mode.label,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
             ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, color: Colors.black54, size: 14),
           ],
         ),
       ),
