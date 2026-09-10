@@ -566,6 +566,14 @@
 - 캡처에서 셸·단계 레일/탭·본문 순서·카드 크기·footer 그리드가 일치함을 확인했다. 글꼴/아이콘 렌더러 차이와 데스크톱 본문 카드의 약 4px 위치 차이는 P3 시각 잔여로 기록하며, 전체 86개 화면의 합격 근거로 확대하지 않는다.
 - 라이브 경계: `/health` 200, `/health/ready` 404(제품 readiness 엔드포인트 미노출), `/graphs/sample` GET 405, 인증 없는 `/demo/student-store`와 `/student/school-exam-plan/active` 각각 401. 현재 canary의 `OMJ_JWT_SECRET` 미설정으로 인증된 사용자 여정은 계속 `pending`이다.
 
+### 2026-09-10 PC 상단 내비게이션 HTML 목적지 일치화 후보 배포
+
+- `studentTopNavItems`를 지정 HTML `appNavigation()`의 `홈·코스·자료실·더보기` 4개 항목으로 정리했다. 자료실은 `/marketplace`, 더보기는 기존 메뉴 호스트, 보조 화면의 활성 상태는 typed enum으로 계산한다.
+- 코드·테스트·정적 번들 커밋 `8356aee`를 `origin/hotfix`에 반영했다. release bundle `public/main.dart.js` SHA-256과 alias 원시 응답 SHA-256은 `452C72504C7C846D5E80B2C09965460C72B246CDBC173D6320A0CE2B07BBC97F`로 일치한다.
+- Vercel 배포 `dpl_GPMBHsqHnVDLie2f2gjxcKVM7mUy`, 고유 URL [`aiflow-web-canary-jj1liavw5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-jj1liavw5-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard) READY. `vercel inspect`로 alias·배포 ID를 확인했다.
+- 회귀 검증: HTML 4개 목적지 상단 메뉴, 홈·코스 서로 다른 명명 라우트, 검색·알림 패널 테스트 통과. `/health` 200, `/graphs/sample` GET 405, 인증 없는 데모 상점 401.
+- 이 후보는 공통 내비게이션 묶음만 반영한다. 인증된 live 사용자 데이터, 86개 전체 장면 이미지, 실제 DB migration·동시성·접근성·나머지 화면 검증은 `pending`이다.
+
 ### 2026-09-10 PC 상단 내비게이션 HTML 목적지 일치화 (다음 후보)
 
 - `studentTopNavItems`의 legacy 목록을 HTML `appNavigation()`과 같은 `홈·코스·자료실·더보기` 4개로 정리했다. 자료실은 기존 `/marketplace`, 더보기는 기존 메뉴 호스트를 사용하며 친구·소셜·책가방 화면에서는 해당 보조 섹션을 활성 표시한다.
