@@ -449,3 +449,12 @@
 - Vercel: [`dpl_6tfh7AuWNZTeHuvdc4t99LZJ3zS5`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/6tfh7AuWNZTeHuvdc4t99LZJ3zS5), 고유 URL [`aiflow-web-canary-ggzmn3wb1-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-ggzmn3wb1-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/signup) READY 연결.
 - 라이브 경계: `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 각각 401 JSON, 번들 `localhost` 없음. 고정 CUA 1280×720에서 HTML·canary 가입 1단계의 640px 패널·3px 상단선·필드/과정/학년/과목 순서를 시각 확인했다.
 - 인증 없는 브라우저에서는 실제 회원가입 API 성공을 수행하지 않았다. 390×844·1280×900 동일 뷰포트 캡처 파일과 실제 서버 가입·중복 제출 검증은 `pending`이며, 전체 상용 준비 완료로 판정하지 않는다.
+
+### 2026-09-10 가입 반응형 수치 보정 후속 배포
+
+- 코드 커밋 `80bf273`의 가입 패널 보정을 정적 번들 커밋 `fc419de`로 반영했다. 모바일 제목을 26px로 고정하고, 데스크톱의 안정 스크롤바 여백을 반영했으며, 닉네임·학교 입력 안내 문구를 HTML과 맞췄다.
+- 집중 검증: `flutter test --no-pub test/signup_stage_validation_test.dart test/auth_redesign_golden_test.dart` 11개 통과. Flutter release build도 성공했다.
+- 정적 번들: `public/main.dart.js` SHA-256 `64719147094A43135669A884A0DE5F205021ABB83F38D3839F93D01CB20D7B34`, 번들 `localhost`·`127.0.0.1` 없음.
+- Vercel: [`dpl_2UmMMaacKw8YveHjUqrY5594qqKH`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/2UmMMaacKw8YveHjUqrY5594qqKH), 고유 URL [`aiflow-web-canary-ocsi61rij-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-ocsi61rij-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/signup) READY 연결.
+- 라이브 경계: alias `/health` 200, 라이브 `main.dart.js` SHA-256이 로컬 번들과 일치했다. 올바른 데모 경로 `/demo/student-store`·`/student/school-exam-plan/active`는 인증 없이 각각 401이며, `/api/app/...` 프록시 경로는 503으로 제품 서버 미연결 상태를 별도 기록한다. 배포된 정적 가입 화면의 브라우저 캡처를 후속으로 갱신한다.
+- 이 배포는 가입 화면 한 묶음의 반응형 보정이다. 86개 전체 화면·장면·동작의 동일 조건 이미지, 인증된 실제 데이터, API 쓰기·DB migration·200 동시성·접근성·전체 반응형 검증은 여전히 `pending`이며 상용 준비 완료로 판정하지 않는다.

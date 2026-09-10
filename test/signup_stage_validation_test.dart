@@ -63,7 +63,7 @@ void main() {
     expect(find.text('입력 정보를 확인해 주세요'), findsOneWidget);
   });
 
-  testWidgets('가입 패널은 HTML 기준 640px 데스크톱·전체 폭 모바일 구조를 사용한다', (tester) async {
+  testWidgets('가입 패널은 HTML 기준 640px 데스크톱·스크롤바 여백 모바일 구조를 사용한다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -79,7 +79,7 @@ void main() {
 
     tester.view.physicalSize = const Size(390, 844);
     await tester.pump();
-    expect(tester.getSize(panel).width, 390);
+    expect(tester.getSize(panel).width, 375);
     expect(tester.getTopLeft(panel).dx, 0);
   });
 }

@@ -175,7 +175,7 @@ class _SignupPageState extends State<SignupPage> {
     final width = MediaQuery.sizeOf(context).width;
     final compact = width <= 720;
     final pagePadding = compact
-        ? EdgeInsets.zero
+        ? const EdgeInsets.only(right: 15)
         : EdgeInsets.only(
             left: 20,
             right: 35,
