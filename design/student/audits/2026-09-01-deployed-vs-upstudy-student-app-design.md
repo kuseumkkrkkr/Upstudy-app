@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 웹 번들 localhost 누출 차단
+
+- 릴리스 번들에서 검출된 `http://localhost:8000` 기본 API 주소를 현재 canary origin으로 교체했다. `API_BASE_URL` 환경 지정값은 계속 우선한다.
+- 로컬·배포 번들 금지 문자열 검사에서 `localhost`, `127.0.0.1`, 비밀키 패턴이 검출되지 않았다.
+- 소스·번들 커밋 `cadd7ce`; 로컬·canary `main.dart.js` SHA-256 `DD3EA75D21A865917735776ABFC155E5241168E3360E506DEF754E0E6D09F63C` 일치.
+- Vercel 배포 `dpl_CC9WUt5sLVXYe916x3AqgqCrfwAF`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 학원 홈 모바일 kicker canary 반영
 
 - HTML `student-academy`의 `ACADEMY` kicker가 모바일에서 누락되지 않도록 화면별 모바일 표시 옵션을 적용했다.
