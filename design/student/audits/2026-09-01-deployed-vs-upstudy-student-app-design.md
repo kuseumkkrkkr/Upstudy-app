@@ -592,3 +592,10 @@
 - `level-result`는 HTML의 진단 결과·OVR/지표·신뢰도 안내·강점 태그·보완 태그·다음 학습 순서로 재구성했다. 배치 결과의 `strong_tags`·`weak_tags`를 더 이상 빈 목록으로 버리지 않고 서버 응답 그대로 막대 목록에 표시하며, 결과 CTA는 기존 `/courses` 및 문항 복귀 동작을 사용한다.
 - 회귀 검증: `test/level_test_home_page_test.dart`, `test/level_test_result_page_test.dart` 전체 통과(각 1개·5개). 390·500·760·780·781·1280 폭에서 렌더 예외가 없음을 확인했다. 변경 파일 `dart analyze`는 새 오류 없이 기존 레거시 미사용 위젯 경고만 남긴다.
 - 이 후보는 아직 release 번들·Vercel alias에 반영하지 않았다. 동일 조건 390×844·1280×900 이미지 캡처, 인증된 실제 결과 데이터, 86개 전체 장면, 전체 analyze/API·DB·동시성·접근성 검증은 `pending`이다.
+
+### 2026-09-11 레벨 화면 이미지 대조 보정
+
+- 동일 조건(DPR 1, Chromium, 390×844·1280×900)으로 기준 HTML `level-home`과 직전 canary를 좌우 캡처했다. 구조·메타 행·패널 폭·CTA 위치는 일치했지만 모바일 상단의 HTML 뒤로가기 화살표가 Flutter 햄버거로 남아 있는 차이를 확인했다.
+- `StudentHtmlShell.mobileBackButton`을 추가해 화면별 모바일 상단 아이콘을 선택할 수 있게 하고, 레벨 홈·결과는 HTML처럼 뒤로가기 아이콘과 학생 홈 복귀 콜백을 사용한다. 모바일 진입 패널의 세로 테두리도 HTML의 하단 구분선만 남기는 규칙으로 맞췄다.
+- 비교 이미지: `evidence/2026-09-01-deployed-vs-design/design-level-home-390x844-2026-09-11.png`, `design-level-home-1280x900-2026-09-11.png`, `deployed-level-home-390x844-2026-09-11.png`, `deployed-level-home-1280x900-2026-09-11.png`.
+- 해당 소스는 다음 release 번들에 포함해야 하며, 인증 데이터·level-result 실제 제출 장면·86개 전체 이미지 검증은 계속 `pending`이다.

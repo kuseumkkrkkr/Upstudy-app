@@ -60,6 +60,7 @@ class _LevelResultScaffold extends StatelessWidget {
       activeRoute: AppRoutes.levelTestResult,
       showContextAside: false,
       railWidth: 76,
+      mobileBackButton: true,
       onMenu: () => Navigator.of(
         context,
       ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),

@@ -163,6 +163,8 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       // 숨긴다. 본문 폭은 아래 `_LevelTestEntryPanel`이 직접 제한한다.
       showContextAside: false,
       railWidth: 76,
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).pushNamed('/student/dashboard'),
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: SingleChildScrollView(
@@ -208,7 +210,9 @@ class _LevelTestEntryPanel extends StatelessWidget {
       key: const ValueKey('level-test-entry'),
       decoration: BoxDecoration(
         color: StudentDensityTokens.surface,
-        border: Border.all(color: StudentDensityTokens.ink),
+        border: mobile
+            ? const Border(bottom: BorderSide(color: StudentDensityTokens.ink))
+            : Border.all(color: StudentDensityTokens.ink),
       ),
       padding: EdgeInsets.fromLTRB(side, top, side, mobile ? 26 : 34),
       child: Column(

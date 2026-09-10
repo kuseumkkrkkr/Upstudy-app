@@ -17,6 +17,7 @@ class StudentHtmlShell extends StatelessWidget {
     this.onSearch,
     this.onNotifications,
     this.onMenu,
+    this.mobileBackButton = false,
     this.includeHeader = true,
     this.railWidth,
   });
@@ -28,6 +29,7 @@ class StudentHtmlShell extends StatelessWidget {
   final VoidCallback? onSearch;
   final VoidCallback? onNotifications;
   final VoidCallback? onMenu;
+  final bool mobileBackButton;
   final bool includeHeader;
 
   /// Optional screen-specific desktop rail width from the reference CSS.
@@ -70,6 +72,7 @@ class StudentHtmlShell extends StatelessWidget {
                       onMenu: menu,
                       onSearch: search,
                       onNotifications: notifications,
+                      mobileBackButton: mobileBackButton,
                     ),
                   Expanded(child: child),
                 ],
@@ -110,12 +113,14 @@ class StudentHtmlTopBar extends StatelessWidget {
     required this.onMenu,
     required this.onSearch,
     required this.onNotifications,
+    this.mobileBackButton = false,
   });
 
   final String title;
   final VoidCallback onMenu;
   final VoidCallback onSearch;
   final VoidCallback onNotifications;
+  final bool mobileBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +135,7 @@ class StudentHtmlTopBar extends StatelessWidget {
         child: SizedBox(
           key: ValueKey(switch (label) {
             '학생 메뉴' => 'student-mobile-menu',
+            '뒤로가기' => 'student-mobile-back',
             '검색' => 'student-search-action',
             '알림' => 'student-notifications-action',
             _ => 'student-action-$label',
@@ -154,6 +160,7 @@ class StudentHtmlTopBar extends StatelessWidget {
 
     final topBarHeight = isStudentDensityMobile(context) ? 64.0 : 62.0;
     final mobile = isStudentDensityMobile(context);
+    final menuLabel = mobile && mobileBackButton ? '뒤로가기' : '학생 메뉴';
     return Container(
       height: topBarHeight,
       color: StudentDensityTokens.surface,
@@ -161,8 +168,8 @@ class StudentHtmlTopBar extends StatelessWidget {
       child: Row(
         children: [
           action(
-            label: '학생 메뉴',
-            icon: isStudentDensityMobile(context)
+            label: menuLabel,
+            icon: mobile && !mobileBackButton
                 ? Icons.menu_rounded
                 : Icons.arrow_back,
             onTap: onMenu,

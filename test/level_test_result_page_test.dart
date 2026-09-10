@@ -107,7 +107,7 @@ void main() {
       const LevelTestResultPage(placementResult: _placement),
     );
 
-    await tester.tap(find.byKey(const ValueKey('student-mobile-menu')));
+    await tester.tap(find.byKey(const ValueKey('student-mobile-back')));
     await tester.pumpAndSettle();
 
     expect(find.text('학생 홈 도착'), findsOneWidget);
