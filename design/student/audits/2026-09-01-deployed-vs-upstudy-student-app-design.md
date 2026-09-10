@@ -1126,3 +1126,12 @@
 - 소스·번들 커밋 `049165d`; 로컬·canary `main.dart.js` SHA-256 `A0126AB718F767647607607145AAD70EB766469344B210C782BF2EAB170FF4CF` 일치.
 - Vercel 배포 `dpl_AC95qWvoDLZzSvmcCT3kFYnBvNk9`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
+### 2026-09-11 공통 알림 액션 연결 검증
+
+- `StudentHtmlShell`과 `StudentHtmlTopBar`의 알림 액션은 빈 콜백이 아니라 `showStudentNotifications`로 연결된다.
+- 알림 패널은 전체 공지·학원 공지·친구 요청을 병렬 조회하고, 로딩·오류·빈 상태·친구 요청 수락·공지 본문 열람 장면을 제공한다.
+- 화면별 커스텀 동작이 필요한 친구·학생서비스 화면은 각각의 실제 요청/설정 동작을 명시적으로 주입한다.
+- `secondary_route_shell_test.dart`, `mobile_secondary_shell_test.dart` 12개 통과.
+- 이미지 증거는 `evidence/2026-09-11-library-search-notify/`에 보존하며, 이번 검사는 연결·상태 코드 검증으로 기록한다.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
