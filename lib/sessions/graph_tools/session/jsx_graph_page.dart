@@ -437,6 +437,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     return StudentHtmlShell(
       title: '그래프 탐색기',
       activeRoute: '/learning-tools',
+      // HTML의 is-graph-tool 셸은 우측 컨텍스트 영역 없이 작업면을 채운다.
+      showContextAside: false,
+      mobileBackButton: true,
       onMenu: () => Navigator.of(context).maybePop(),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),

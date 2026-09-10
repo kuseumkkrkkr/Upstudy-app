@@ -689,3 +689,10 @@
 - 현재 `public/main.dart.js`와 production alias 원시 응답 SHA-256은 `762C9A6DD4C49FC533EE6A26E537058C4AF3692A490F9C217D7C3DD447886B3A`로 일치한다.
 - Vercel 배포 `dpl_5rf77GUZQXaQ6k9tS2LGtuierJxy`, 고유 URL [`aiflow-web-canary-aaxlq02d1-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-aaxlq02d1-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 전체 86개 화면·인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이며 이 확인을 상용 완료로 확대하지 않는다.
+
+### 2026-09-11 그래프 탐색기 전용 셸 보정 (로컬 검수)
+
+- HTML의 `is-graph-tool` 규칙에 맞춰 Flutter `JsxGraphPage`에서 우측 컨텍스트 영역을 명시적으로 제거하고, 모바일 상단 동작을 뒤로가기로 지정했다.
+- `dart analyze lib/sessions/graph_tools/session/jsx_graph_page.dart`는 기존 미사용 선택 인자 경고 1건만 남겼고 새 오류는 없었다.
+- `test/jsx_graph_page_test.dart` 10개가 통과했다.
+- 이 변경은 아직 번들 빌드·Vercel 배포·실제 이미지 재캡처 전이므로 canary 일치 또는 상용 완료 근거로 사용하지 않는다.
