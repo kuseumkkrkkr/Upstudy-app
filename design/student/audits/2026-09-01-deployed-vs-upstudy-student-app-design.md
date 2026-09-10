@@ -513,6 +513,14 @@
 - `_MobileCourseCatalog`가 FutureBuilder의 `hasError`를 전달받도록 수정했다. 모바일에서도 코스 API 오류를 `코스를 불러오지 못했어요`와 `다시 시도` 행으로 표시하며, 빈 목록으로 위장하지 않는다.
 - 실패 상태 회귀 테스트를 추가했고 `student_home_course_catalog_responsive_test.dart`의 해당 케이스가 통과했다. 실제 canary 인증 코스 데이터와 재시도 성공은 다음 번들에서 확인한다.
 
+### 2026-09-10 코스 모바일 오류 상태 후보 배포
+
+- 코드 커밋 `8910358`과 정적 번들 커밋 `e56c550`을 canary에 반영했다. 모바일 코스 API 오류는 빈 목록이 아니라 오류 안내와 `다시 시도` 동작으로 표시된다.
+- 정적 번들 `public/main.dart.js`와 production alias 응답의 SHA-256은 `2980ED54060E87723CAAB31D342FEAD418808B22DA843489445C7E129F7DDF4C`로 일치한다. 번들에 `localhost`·`127.0.0.1`은 없다.
+- Vercel 배포: [`dpl_6Cf9wCFX3Kn6qzzT63PyVMag1mhx`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/6Cf9wCFX3Kn6qzzT63PyVMag1mhx), 고유 URL [`aiflow-web-canary-mjodlzzgj-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-mjodlzzgj-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard) READY 연결.
+- 라이브 경계: `/health` 200, `/graphs/sample` GET 405, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active` 각각 401이다. 인증 세션 발급은 현재 canary의 `OMJ_JWT_SECRET` 미설정으로 계속 불가능하다.
+- 집중 검증: 코스 목록 반응형·오류 상태, 홈 학습 시트·알림 패널, 그래프 위젯·Vercel route contract 테스트가 통과했다. 인증된 실제 코스 데이터, 86개 전체 장면 이미지, DB migration·200 동시성·접근성·전체 API 쓰기는 여전히 `pending`이며 상용 준비 완료로 판정하지 않는다.
+
 ### 2026-09-10 active-course 포함 최종 canary 후보
 
 - 코드 기준: `origin/hotfix`의 `910f710` 및 이전 그래프·알림 변경, 최종 번들 기준 `1ae930e`.
