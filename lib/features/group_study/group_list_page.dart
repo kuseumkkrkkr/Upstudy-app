@@ -580,7 +580,7 @@ class _GroupListPageState extends State<GroupListPage> {
     final mobile = isStudentDensityMobile(context);
     if (mobile) return _buildMobilePage();
     return StudentHtmlShell(
-      title: '스터디 그룹',
+      title: '함께 공부',
       activeRoute: AppRoutes.groups,
       showContextAside: false,
       mobileBackButton: true,
@@ -601,36 +601,44 @@ class _GroupListPageState extends State<GroupListPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const _DesktopGroupTabs(),
+                  const SizedBox(height: 38),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Expanded(child: _GroupListHeading(fontSize: 54)),
-                      StudentDensityButton(
-                        onPressed: _openFindSheet,
-                        label: '그룹 찾기 · 코드 참가',
+                      Expanded(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text(
+                              '그룹',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              '${_groups.length}/3',
+                              style: const TextStyle(
+                                color: Color(0xFF315FD6),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 8),
                       StudentDensityButton(
-                        onPressed: _openCreateDialog,
-                        label: '그룹 만들기',
-                        primary: true,
+                        onPressed: _openMobileAddSheet,
+                        label: '그룹 추가',
                       ),
                     ],
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 6),
                   const Text(
-                    'CONTINUE TOGETHER',
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 1.6,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '내 그룹',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                    '참여 중인 그룹에서 학습을 이어가세요.',
+                    style: TextStyle(fontSize: 12, color: Colors.black45),
                   ),
                   const SizedBox(height: 20),
                   if (_loading)
@@ -696,6 +704,35 @@ class _MobileGroupTopBar extends StatelessWidget {
           '함께 공부',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
         ),
+      ],
+    ),
+  );
+}
+
+class _DesktopGroupTabs extends StatelessWidget {
+  const _DesktopGroupTabs();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 58,
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: Color(0x14000000))),
+    ),
+    child: Row(
+      children: [
+        for (final tab in const ['대화', '친구', '그룹'])
+          Expanded(
+            child: Center(
+              child: Text(
+                tab,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: tab == '그룹' ? Colors.black : Colors.black45,
+                ),
+              ),
+            ),
+          ),
       ],
     ),
   );
