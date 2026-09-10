@@ -67,6 +67,7 @@ void main() {
       'today-tasks',
       'rating-detail',
       'achievements',
+      'activity-history',
     ]) {
       final name = '/student/dashboard?scene=$scene';
       final route = onGenerateAppRoute(RouteSettings(name: name));
