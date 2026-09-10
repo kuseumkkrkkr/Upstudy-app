@@ -95,6 +95,7 @@ void main() {
     await tester.tap(find.text('시작'));
     await tester.pump();
     expect(find.text('일시정지'), findsOneWidget);
+    await tester.ensureVisible(find.text('일시정지'));
     await tester.tap(find.text('일시정지'));
     await tester.pump();
     expect(find.text('시작'), findsOneWidget);
