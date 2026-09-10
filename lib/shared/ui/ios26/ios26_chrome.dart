@@ -535,6 +535,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'social-friends' => '/social?tab=friends',
       'friend-add' => '/social?scene=friend-add',
       'friend-requests' => '/social?scene=friend-requests',
+      'direct-chat' => '/social?scene=direct-chat',
       'group-find' => '/groups?scene=group-find',
       'group-create' => '/groups?scene=group-create',
       'notepad' => '/learning-tools?scene=notepad',

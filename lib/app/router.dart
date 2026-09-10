@@ -260,7 +260,9 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
   if (uri != null && uri.path == AppRoutes.social) {
     final initialTab = uri.queryParameters['tab'] == 'friends' ? 1 : 0;
     final scene = uri.queryParameters['scene'];
-    if (scene == 'friend-add' || scene == 'friend-requests') {
+    if (scene == 'friend-add' ||
+        scene == 'friend-requests' ||
+        scene == 'direct-chat') {
       return MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => SoWidget(initialScene: scene),

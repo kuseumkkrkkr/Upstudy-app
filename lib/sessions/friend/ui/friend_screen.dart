@@ -511,6 +511,8 @@ class _SoWidgetState extends State<SoWidget> {
             _openAddFriendModal();
           case 'friend-requests':
             _openFriendRequestsModal();
+          case 'direct-chat':
+            _openInboxModal();
         }
       });
     }
@@ -2904,11 +2906,13 @@ class _SoWidgetState extends State<SoWidget> {
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: (tab == '대화' && _desktopSocialTab == 0) ||
+                              color:
+                                  (tab == '대화' && _desktopSocialTab == 0) ||
                                       (tab == '친구' && _desktopSocialTab == 1)
                                   ? const Color(0xFF09090B)
                                   : const Color(0xFFE1E1E4),
-                              width: ((tab == '대화' && _desktopSocialTab == 0) ||
+                              width:
+                                  ((tab == '대화' && _desktopSocialTab == 0) ||
                                       (tab == '친구' && _desktopSocialTab == 1))
                                   ? 3
                                   : 1,
@@ -3011,41 +3015,65 @@ class _SoWidgetState extends State<SoWidget> {
           children: [
             _buildHtmlDesktopSocialTabs(),
             const SizedBox(height: 40),
-            Text('친구 ${friends.length}', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
+            Text(
+              '친구 ${friends.length}',
+              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+            ),
             const SizedBox(height: 5),
-            const Text('친구를 눌러 바로 대화할 수 있어요.', style: TextStyle(fontSize: 13, color: Color(0xFF71717A))),
+            const Text(
+              '친구를 눌러 바로 대화할 수 있어요.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF71717A)),
+            ),
             const SizedBox(height: 20),
-            if (_pendingIncomingRequests.isNotEmpty || _pendingOutgoingRequests.isNotEmpty)
+            if (_pendingIncomingRequests.isNotEmpty ||
+                _pendingOutgoingRequests.isNotEmpty)
               InkWell(
                 onTap: _openFriendRequestsModal,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   color: const Color(0xFFEAF0FF),
-                  child: Row(children: [
-                    const Icon(Icons.person_add_alt_1_outlined),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text('친구 요청 ${_pendingIncomingRequests.length + _pendingOutgoingRequests.length}건')),
-                    const Icon(Icons.arrow_forward),
-                  ]),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person_add_alt_1_outlined),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '친구 요청 ${_pendingIncomingRequests.length + _pendingOutgoingRequests.length}건',
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward),
+                    ],
+                  ),
                 ),
               ),
             const SizedBox(height: 12),
             Container(
-              decoration: BoxDecoration(color: Colors.white, border: Border.all(color: const Color(0xFFDCDCE0))),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFDCDCE0)),
+              ),
               child: friends.isEmpty
-                  ? const Padding(padding: EdgeInsets.all(28), child: Text('아직 등록된 친구가 없습니다.'))
-                  : Column(children: [
-                      for (var i = 0; i < friends.length; i++) ...[
-                        _SocialPersonRow(
-                          key: ValueKey('social-friend-${friends[i].userId ?? friends[i].name}'),
-                          name: friends[i].name,
-                          subtitle: friends[i].status,
-                          trailing: '쪽지 ›',
-                          onTap: () => _openFriendActionModal(friends[i]),
-                        ),
-                        if (i < friends.length - 1) const Divider(height: 1, indent: 22, endIndent: 22),
+                  ? const Padding(
+                      padding: EdgeInsets.all(28),
+                      child: Text('아직 등록된 친구가 없습니다.'),
+                    )
+                  : Column(
+                      children: [
+                        for (var i = 0; i < friends.length; i++) ...[
+                          _SocialPersonRow(
+                            key: ValueKey(
+                              'social-friend-${friends[i].userId ?? friends[i].name}',
+                            ),
+                            name: friends[i].name,
+                            subtitle: friends[i].status,
+                            trailing: '쪽지 ›',
+                            onTap: () => _openFriendActionModal(friends[i]),
+                          ),
+                          if (i < friends.length - 1)
+                            const Divider(height: 1, indent: 22, endIndent: 22),
+                        ],
                       ],
-                    ]),
+                    ),
             ),
           ],
         ),
@@ -3067,14 +3095,28 @@ class _SoWidgetState extends State<SoWidget> {
               height: 34,
               alignment: Alignment.topCenter,
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(
-                  color: ((tab == '대화' && _desktopSocialTab == 0) || (tab == '친구' && _desktopSocialTab == 1))
-                      ? const Color(0xFF09090B)
-                      : const Color(0xFFE1E1E4),
-                  width: ((tab == '대화' && _desktopSocialTab == 0) || (tab == '친구' && _desktopSocialTab == 1)) ? 3 : 1,
-                )),
+                border: Border(
+                  bottom: BorderSide(
+                    color:
+                        ((tab == '대화' && _desktopSocialTab == 0) ||
+                            (tab == '친구' && _desktopSocialTab == 1))
+                        ? const Color(0xFF09090B)
+                        : const Color(0xFFE1E1E4),
+                    width:
+                        ((tab == '대화' && _desktopSocialTab == 0) ||
+                            (tab == '친구' && _desktopSocialTab == 1))
+                        ? 3
+                        : 1,
+                  ),
+                ),
               ),
-              child: Text(tab, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+              child: Text(
+                tab,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
         ),
