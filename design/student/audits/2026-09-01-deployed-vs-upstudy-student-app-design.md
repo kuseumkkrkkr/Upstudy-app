@@ -736,6 +736,14 @@
 - Vercel 배포 `dpl_FVWUqFda6KrYVZ4asFSRS6SLipht`, alias READY, 로컬·원격 번들 SHA-256 `ED9E3C41D3BC9FFC1288DD10668C5A27B496F30C254CA3ADDB0BD2C966011D83`, `/health` 200.
 - 이전의 38×38 원형 버튼 기록은 초기 CSS 기준의 중간 기록이며 최종 기준으로 대체한다. 전체 86개 검수와 API·DB·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 제한 모드 장면 연결 및 전체 번들 해시 검증
+
+- HTML `study-mode`(제한 모드 설정)를 별도 학습 도구 허브가 아닌 `/student/dashboard?scene=study-mode`로 연결하고, 기존 `showStudyModeModal`을 호출하도록 수정했다.
+- 소스·테스트 커밋 `2815a7d`, 번들 커밋 `a2a5aef`; 레지스트리와 홈 모달 집중 검사는 통과했다.
+- Vercel 배포 `dpl_EQYNALA5XpS5uyB6MnRTSedHvhED`, alias READY, `/health` 200.
+- 원격 번들은 Range 조각 수집으로 전체 6,662,878바이트를 검증했으며 로컬과 SHA-256 `E34BD3A2C8F423AF023BB0E2209B321D268C6897D7CDA8A33CB28B2E0B9A35FC`가 일치한다. 단일 PowerShell 응답의 5.5MiB 표시값은 응답 절단 현상으로 최종 해시 근거에서 제외했다.
+- 86개 전체 화면·장면 이미지, 실제 API·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 HTML 상단바 액션 크기 반영
 
 - 공통 학생 상단바의 메뉴·뒤로가기·검색·알림 액션을 HTML 기준 `38×38px`로 조정했다.
