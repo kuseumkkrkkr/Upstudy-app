@@ -321,6 +321,7 @@ void showStudentNotifications(BuildContext context) {
   _showStudentUtilityPanel(
     context: context,
     child: const _StudentNotificationsSheet(),
+    sidePanel: true,
   );
 }
 
@@ -330,7 +331,38 @@ void showStudentNotifications(BuildContext context) {
 Future<void> _showStudentUtilityPanel({
   required BuildContext context,
   required Widget child,
+  bool sidePanel = false,
 }) async {
+  if (sidePanel) {
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '알림 패널 닫기',
+      barrierColor: Colors.black.withValues(alpha: .28),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        final width = MediaQuery.sizeOf(context).width;
+        return Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            width: width < 390 ? width : 390,
+            height: double.infinity,
+            child: Material(color: const Color(0xFFF4F4F6), child: child),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+              .animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
+          child: child,
+        );
+      },
+    );
+    return;
+  }
   if (isStudentDensityMobile(context)) {
     await showModalBottomSheet<void>(
       context: context,
@@ -737,7 +769,6 @@ class _StudentNotificationsSheetState
     return _StudentUtilitySheet(
       kicker: 'LIVE STATUS',
       title: '알림 센터',
-      showMobileClose: false,
       description: mobile ? '' : '과제 마감, 친구 요청, 그룹 공지, 코스 학습 상태를 한곳에서 확인합니다.',
       children: [
         const _UtilitySectionTitle('알림'),
@@ -866,14 +897,12 @@ class _StudentUtilitySheet extends StatelessWidget {
     required this.title,
     required this.description,
     required this.children,
-    this.showMobileClose = true,
   });
 
   final String kicker;
   final String title;
   final String description;
   final List<Widget> children;
-  final bool showMobileClose;
 
   /// 필요한 변수는 시트 제목·설명·본문이다.
   /// 작동 원리는 HTML 공용 액션 모달의 여백·타이포·최대 높이를 모든 화면에서 동일하게 유지하는 것이다.
@@ -918,19 +947,18 @@ class _StudentUtilitySheet extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (!mobile || showMobileClose)
-                  IconButton(
-                    tooltip: '닫기',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                    style: IconButton.styleFrom(
-                      fixedSize: const Size.square(48),
-                      backgroundColor: mobile ? Colors.white : null,
-                      side: mobile
-                          ? BorderSide.none
-                          : const BorderSide(color: Color(0xFFB9B9BD)),
-                    ),
+                IconButton(
+                  tooltip: '닫기',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  style: IconButton.styleFrom(
+                    fixedSize: const Size.square(48),
+                    backgroundColor: mobile ? Colors.white : null,
+                    side: mobile
+                        ? BorderSide.none
+                        : const BorderSide(color: Color(0xFFB9B9BD)),
                   ),
+                ),
               ],
             ),
           ),

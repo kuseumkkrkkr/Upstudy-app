@@ -466,3 +466,11 @@
 - 정적 번들: `public/main.dart.js` 및 라이브 응답 SHA-256 `2277F23A78ED18A300426D310EC4993DE613B017732C34643FDD46FA024AE237` 일치, `localhost`·`127.0.0.1` 없음.
 - Vercel: [`dpl_3cAAjAHSe1Zyz3PhL6euaZGmqANs`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/3cAAjAHSe1Zyz3PhL6euaZGmqANs), 고유 URL [`aiflow-web-canary-2kytqt3jd-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-2kytqt3jd-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/signup) READY 연결. `/health` 200, 올바른 인증 없는 데모 경로 401.
 - 이 배포도 가입 화면의 단일 묶음만 갱신한다. 86개 전체 화면·장면·동작 및 인증 사용자 데이터·쓰기 API·실제 DB migration·200 동시성·접근성·나머지 반응형은 `pending`이고 상용 준비 완료로 판정하지 않는다.
+
+### 2026-09-10 홈 학습 시트·알림 패널 동작 보정 (로컬 후보)
+
+- 홈의 작은 6개 학습 타일은 바로 라우팅하지 않고 `home-study-sheet-{resume|courses|review|problemsets|exams|textbooks}` 요약 시트를 연다. 시트의 단일 CTA만 기존 코스·오답·책가방 목적지로 이동하며, 영웅 영역의 큰 이어하기 버튼은 기존 활성 코스 직행을 유지한다.
+- 홈 대시보드의 `ovr`는 레이팅 상세, `week`는 별도 주간 학습 안내 시트로 분리했다. 업적·약점·대결·튜터도 요약 시트에서 확인 후 실제 화면으로 이동한다. 실제 데이터가 없는 경우 문구만 표시하고 샘플 수치를 만들지 않는다.
+- `showStudentNotifications`는 HTML 알림 패널처럼 모바일·데스크톱 모두 우측 전체 높이 390px 패널(폭이 작으면 화면 폭)을 사용한다. 검색은 기존 모바일 하단 시트/데스크톱 우측 패널을 유지한다. 닫기·배경 클릭·ESC와 알림 내부 친구 요청/그룹 초대 처리는 기존 API를 사용한다.
+- 검증: `flutter test --no-pub test/mobile_home_modal_refactor_test.dart` 8개 통과, 홈 타일 시트 회귀 테스트 1개 통과, 변경 Flutter 파일 analyze는 오류 없이 통과했다(기존 style info 1건).
+- 이 후보는 공통 오버레이와 홈 동작 묶음의 코드 변경만 기록한 상태이며, 정적 번들·Vercel 배포와 동일 조건 홈 390×844·1280×900 이미지 검수는 다음 빌드 게이트에서 수행한다.

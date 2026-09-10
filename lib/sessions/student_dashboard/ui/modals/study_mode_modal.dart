@@ -13,18 +13,27 @@ Future<T?> showStudyModeModal<T>({required BuildContext context}) async {
   while (context.mounted) {
     final mobile = MediaQuery.sizeOf(context).width <= 780;
     // 필요한 변수는 현재 화면 폭과 여섯 학습 목적지다.
-    // 작동 원리: 모바일은 HTML의 전체 화면 패널, PC는 제한 크기 중앙 모달을
-    // 사용하며 선택 결과 계약은 동일하게 유지한다.
+    // 작동 원리: 모바일은 하단 내비게이션 위의 직각 시트, PC는 제한 크기
+    // 중앙 모달을 사용하며 선택 결과 계약은 동일하게 유지한다.
     final destination = mobile
-        ? await showGeneralDialog<_ModeDestination>(
+        ? await showModalBottomSheet<_ModeDestination>(
             context: context,
-            barrierDismissible: true,
+            isScrollControlled: true,
+            isDismissible: true,
             barrierLabel: '학습 모드 닫기',
-            barrierColor: Colors.black.withValues(alpha: 0.38),
-            transitionDuration: Duration.zero,
-            pageBuilder: (_, __, ___) => const Material(
-              color: Color(0xFFF4F4F6),
-              child: StudypageCopyWidget(),
+            backgroundColor: const Color(0xFFF4F4F6),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.zero,
+            ),
+            builder: (sheetContext) => ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 650),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 560,
+                  child: const StudypageCopyWidget(mobileSheet: true),
+                ),
+              ),
             ),
           )
         : await showIos26Modal<_ModeDestination>(

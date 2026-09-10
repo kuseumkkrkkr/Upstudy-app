@@ -113,7 +113,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('알림 센터는 모바일에서 영문 상단바와 중복 닫기가 없는 하단 시트를 연다', (tester) async {
+  testWidgets('알림 센터는 모바일에서 우측 전체 높이 패널을 연다', (tester) async {
     _setMobileView(tester);
     await tester.pumpWidget(
       MaterialApp(
@@ -131,11 +131,11 @@ void main() {
     await tester.tap(find.text('공지 열기'));
     await tester.pump();
 
-    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
     expect(find.text('알림 센터'), findsOneWidget);
+    expect(find.byTooltip('닫기'), findsOneWidget);
     expect(find.text('LIVE STATUS'), findsNothing);
     expect(find.text('메시지, 친구 요청과 공지를 확인해요.'), findsNothing);
-    expect(find.byTooltip('닫기'), findsNothing);
     expect(find.byType(OutlinedButton), findsNothing);
   });
 

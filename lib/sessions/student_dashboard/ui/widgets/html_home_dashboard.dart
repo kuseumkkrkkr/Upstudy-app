@@ -23,6 +23,7 @@ class HtmlHomeDashboard extends StatelessWidget {
     required this.onExams,
     required this.onTextbooks,
     required this.onDashboardAction,
+    this.onStudyAction,
   });
 
   final String? username;
@@ -35,6 +36,7 @@ class HtmlHomeDashboard extends StatelessWidget {
   final VoidCallback onExams;
   final VoidCallback onTextbooks;
   final ValueChanged<String> onDashboardAction;
+  final ValueChanged<String>? onStudyAction;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +53,7 @@ class HtmlHomeDashboard extends StatelessWidget {
       onProblemSets: onProblemSets,
       onExams: onExams,
       onTextbooks: onTextbooks,
+      onStudyAction: onStudyAction,
     );
     final top = mobile
         ? Column(children: [hero, const SizedBox(height: 10), actions])
@@ -242,6 +245,7 @@ class _HtmlHomeActions extends StatelessWidget {
     required this.onProblemSets,
     required this.onExams,
     required this.onTextbooks,
+    this.onStudyAction,
   });
 
   final VoidCallback onResume;
@@ -250,18 +254,54 @@ class _HtmlHomeActions extends StatelessWidget {
   final VoidCallback onProblemSets;
   final VoidCallback onExams;
   final VoidCallback onTextbooks;
+  final ValueChanged<String>? onStudyAction;
 
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final entries = <({String label, IconData icon, VoidCallback onTap})>[
-      (label: '이어하기', icon: Icons.play_arrow_outlined, onTap: onResume),
-      (label: '코스보기', icon: Icons.view_list_outlined, onTap: onBrowseCourses),
-      (label: '복습', icon: Icons.check, onTap: onReview),
-      (label: '문제세트', icon: Icons.auto_awesome_outlined, onTap: onProblemSets),
-      (label: '시험지', icon: Icons.calendar_today_outlined, onTap: onExams),
-      (label: '교재보기', icon: Icons.menu_book_outlined, onTap: onTextbooks),
-    ];
+    void open(String id, VoidCallback fallback) {
+      (onStudyAction ?? (_) => fallback())(id);
+    }
+
+    final entries =
+        <({String id, String label, IconData icon, VoidCallback onTap})>[
+          (
+            id: 'resume',
+            label: '이어하기',
+            icon: Icons.play_arrow_outlined,
+            onTap: () => open('resume', onResume),
+          ),
+          (
+            id: 'courses',
+            label: '코스보기',
+            icon: Icons.view_list_outlined,
+            onTap: () => open('courses', onBrowseCourses),
+          ),
+          (
+            id: 'review',
+            label: '복습',
+            icon: Icons.check,
+            onTap: () => open('review', onReview),
+          ),
+          (
+            id: 'problemsets',
+            label: '문제세트',
+            icon: Icons.auto_awesome_outlined,
+            onTap: () => open('problemsets', onProblemSets),
+          ),
+          (
+            id: 'exams',
+            label: '시험지',
+            icon: Icons.calendar_today_outlined,
+            onTap: () => open('exams', onExams),
+          ),
+          (
+            id: 'textbooks',
+            label: '교재보기',
+            icon: Icons.menu_book_outlined,
+            onTap: () => open('textbooks', onTextbooks),
+          ),
+        ];
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),

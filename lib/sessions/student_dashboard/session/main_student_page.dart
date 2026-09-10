@@ -153,6 +153,22 @@ String _assignmentKindLabel(String kind) {
 
 enum _TodayTaskTarget { course, group, schedule }
 
+enum _HomeStudyAction {
+  resume,
+  courses,
+  review,
+  problemsets,
+  exams,
+  textbooks;
+
+  static _HomeStudyAction? fromId(String value) {
+    for (final action in values) {
+      if (action.name == value) return action;
+    }
+    return null;
+  }
+}
+
 class _TodayTaskItem extends TodayTaskEntry {
   const _TodayTaskItem({
     required super.title,
@@ -434,6 +450,76 @@ class _MainStudentPageState extends State<MainStudentPage> {
     }
   }
 
+  /// HTML 홈의 6개 학습 타일을 먼저 요약 시트로 열고, 시트의 단일 CTA에서
+  /// 기존 실제 화면으로 이동한다. 큰 영웅 CTA의 이어하기 직행은 유지한다.
+  void _handleStudyAction(String id, Course? course) {
+    final action = _HomeStudyAction.fromId(id);
+    if (action == null) return;
+    final title = switch (action) {
+      _HomeStudyAction.resume => '이어하기',
+      _HomeStudyAction.courses => '코스보기',
+      _HomeStudyAction.review => '복습',
+      _HomeStudyAction.problemsets => '문제세트',
+      _HomeStudyAction.exams => '시험지',
+      _HomeStudyAction.textbooks => '교재보기',
+    };
+    final description = switch (action) {
+      _HomeStudyAction.resume =>
+        course == null
+            ? '이어갈 수 있는 코스가 없습니다. 코스를 먼저 선택해 주세요.'
+            : '${course.title}\n마지막 학습 위치에서 이어갑니다.',
+      _HomeStudyAction.courses => '수강 중인 코스를 확인하고 새 코스를 찾아보세요.',
+      _HomeStudyAction.review => '저장된 오답과 복습 대상을 확인합니다.',
+      _HomeStudyAction.problemsets => '책가방에서 보유한 문제세트를 확인합니다.',
+      _HomeStudyAction.exams => '책가방에서 보유한 시험지를 확인합니다.',
+      _HomeStudyAction.textbooks => '책가방에서 학습할 교재를 선택합니다.',
+    };
+    final cta = switch (action) {
+      _HomeStudyAction.resume => course == null ? '코스 선택하기' : '학습 이어가기',
+      _HomeStudyAction.courses => '나의 코스 보기',
+      _HomeStudyAction.review => '오답 상세보기',
+      _HomeStudyAction.problemsets ||
+      _HomeStudyAction.exams ||
+      _HomeStudyAction.textbooks => '책가방 열기',
+    };
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: StudentDensityTokens.surface,
+        barrierColor: Colors.black.withValues(alpha: .28),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        builder: (sheetContext) => ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 650),
+          child: SafeArea(
+            top: false,
+            child: _HomeStudyActionSheet(
+              key: ValueKey('home-study-sheet-${action.name}'),
+              title: title,
+              description: description,
+              cta: cta,
+              onOpen: () {
+                Navigator.of(sheetContext).pop();
+                switch (action) {
+                  case _HomeStudyAction.resume:
+                    _resumeCourse(course);
+                  case _HomeStudyAction.courses:
+                    Navigator.of(context).pushNamed(AppRoutes.courses);
+                  case _HomeStudyAction.review:
+                    Navigator.of(context).pushNamed(AppRoutes.wrongAnswers);
+                  case _HomeStudyAction.problemsets ||
+                      _HomeStudyAction.exams ||
+                      _HomeStudyAction.textbooks:
+                    Navigator.of(context).pushNamed(AppRoutes.bookbag);
+                }
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _resumeCourse(Course? course) {
     if (course == null) {
       unawaited(_handleCourseTap());
@@ -459,8 +545,13 @@ class _MainStudentPageState extends State<MainStudentPage> {
         );
         return;
       case 'ovr':
-      case 'week':
         unawaited(showRatingDetailModal(context: context));
+        return;
+      case 'week':
+        _showDashboardNotice(
+          '이번 주 학습',
+          '이번 주 학습 기록을 확인할 수 있어요. 기록이 없으면 빈 상태로 표시합니다.',
+        );
         return;
       case 'level':
         final account = ActivityStore.accountSummaryNotifier.value;
@@ -471,8 +562,11 @@ class _MainStudentPageState extends State<MainStudentPage> {
         }
         return;
       case 'tutor':
-        unawaited(
-          Navigator.of(context).push(
+        _showDashboardNotice(
+          'AI 튜터',
+          '지금 배우는 내용에 대해 질문을 남겨 보세요.',
+          openLabel: 'AI 튜터와 대화하기',
+          onOpen: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => const ServerChatPage(standalone: true),
             ),
@@ -480,17 +574,45 @@ class _MainStudentPageState extends State<MainStudentPage> {
         );
         return;
       case 'arena':
-        unawaited(Navigator.of(context).pushNamed(AppRoutes.arena));
+        _showDashboardNotice(
+          '대결 기록',
+          '대결 기록을 불러오면 결과와 랭킹을 확인할 수 있어요.',
+          openLabel: '대결장 입장',
+          onOpen: () => Navigator.of(context).pushNamed(AppRoutes.arena),
+        );
         return;
       case 'weakness':
-        unawaited(Navigator.of(context).pushNamed(AppRoutes.wrongAnswers));
+        _showDashboardNotice(
+          '약점 태그',
+          '저장된 오답이 있으면 우선 복습할 태그를 보여 줍니다.',
+          openLabel: '오답 상세보기',
+          onOpen: () => Navigator.of(context).pushNamed(AppRoutes.wrongAnswers),
+        );
+        return;
+      case 'achievements':
+        _showDashboardNotice(
+          '업적',
+          '달성한 업적과 진행 중인 업적을 확인합니다.',
+          openLabel: '업적 보관함 열기',
+          onOpen: () => showActivityBadgeDialog(
+            context: context,
+            snapshot: ActivityStore.notifier.value,
+            accountLevel:
+                ActivityStore.accountSummaryNotifier.value?.level ?? 0,
+          ),
+        );
         return;
       default:
         _showDashboardNotice('마이 대시보드', '연결된 학습 데이터가 없습니다.');
     }
   }
 
-  void _showDashboardNotice(String title, String message) {
+  void _showDashboardNotice(
+    String title,
+    String message, {
+    String? openLabel,
+    VoidCallback? onOpen,
+  }) {
     unawaited(
       showModalBottomSheet<void>(
         context: context,
@@ -515,6 +637,32 @@ class _MainStudentPageState extends State<MainStudentPage> {
                 message,
                 style: const TextStyle(color: StudentDensityTokens.muted),
               ),
+              if (openLabel != null && onOpen != null) ...[
+                const SizedBox(height: 18),
+                SizedBox(
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onOpen();
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: StudentDensityTokens.dark,
+                      foregroundColor: Colors.white,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(openLabel),
+                        const Icon(Icons.arrow_forward),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -554,6 +702,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
           onExams: () => Navigator.of(context).pushNamed(AppRoutes.bookbag),
           onTextbooks: () => Navigator.of(context).pushNamed(AppRoutes.bookbag),
           onDashboardAction: (id) => _handleDashboardAction(id, todayTasks),
+          onStudyAction: (id) => _handleStudyAction(id, course),
         ),
       );
     }
@@ -618,6 +767,8 @@ class _MainStudentPageState extends State<MainStudentPage> {
                             ).pushNamed(AppRoutes.bookbag),
                             onDashboardAction: (id) =>
                                 _handleDashboardAction(id, todayTasks),
+                            onStudyAction: (id) =>
+                                _handleStudyAction(id, course),
                           ),
                         ),
                       ),
@@ -626,6 +777,92 @@ class _MainStudentPageState extends State<MainStudentPage> {
                 )
               : desktopShell,
         ),
+      ),
+    );
+  }
+}
+
+class _HomeStudyActionSheet extends StatelessWidget {
+  const _HomeStudyActionSheet({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.cta,
+    required this.onOpen,
+  });
+
+  final String title;
+  final String description;
+  final String cta;
+  final VoidCallback onOpen;
+
+  /// HTML 홈 학습 시트의 제목·설명·단일 이동 CTA를 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: SizedBox(
+              width: 42,
+              child: Divider(
+                thickness: 3,
+                color: StudentDensityTokens.lineStrong,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: '닫기',
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 52,
+            child: FilledButton(
+              onPressed: onOpen,
+              style: FilledButton.styleFrom(
+                backgroundColor: StudentDensityTokens.dark,
+                foregroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(cta),
+                  const Icon(Icons.arrow_forward, size: 18),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

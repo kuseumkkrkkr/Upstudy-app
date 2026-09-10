@@ -116,6 +116,26 @@ void main() {
     }
   });
 
+  testWidgets('홈 학습 타일은 HTML 요약 시트를 거쳐 실제 목적지 CTA를 제공한다', (tester) async {
+    await _pumpAt(
+      tester,
+      const Size(390, 900),
+      const MainStudentPage(username: '김학생'),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('코스보기').first);
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(
+      find.byKey(const ValueKey('home-study-sheet-courses')),
+      findsOneWidget,
+    );
+    expect(find.text('나의 코스 보기'), findsOneWidget);
+    expect(find.text('수강 중인 코스를 확인하고 새 코스를 찾아보세요.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('홈 하단 정보는 PC·태블릿에 유지하고 세로 모바일은 핵심 행동만 남긴다', (tester) async {
     const cases = <(double, String)>[
       (1280, 'student-home-desktop'),
