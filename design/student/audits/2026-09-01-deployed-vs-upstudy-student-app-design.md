@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 학원 홈 모바일 kicker canary 반영
+
+- HTML `student-academy`의 `ACADEMY` kicker가 모바일에서 누락되지 않도록 화면별 모바일 표시 옵션을 적용했다.
+- 집중 검사 `500px 학원은 HTML 정보·오늘 할 일·시간표 구조를 유지한다` 통과.
+- 소스·번들 커밋 `a5b43fe`; 로컬·canary `main.dart.js` SHA-256 `22C4AFE6A0E763CFEE71ECC7545A1F1C60526F9F346FCCB29295FFF6F75A8862` 일치.
+- Vercel 배포 `dpl_CDPPYKAspUAXX4uaqLXeKNTNh59Q`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 학습 액션 모바일 전체 높이 반영
 
 - 500px 모바일 학습 액션 시트를 HTML의 전체 화면 패널 기준으로 변경했다. 시트와 내부 패널을 viewport 높이에 맞추고 명시적인 `닫기` 버튼을 제공한다.
