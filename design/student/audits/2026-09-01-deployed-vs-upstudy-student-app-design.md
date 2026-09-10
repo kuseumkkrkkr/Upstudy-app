@@ -727,6 +727,13 @@
 - 대상 파일 `flutter analyze` 통과. 소스 커밋 `9a8b573`, Vercel 배포 `dpl_9MvgFvpeoBTjwDcAGUCFUJNjUZMS`, alias READY, `/health` 200.
 - 그룹 상세의 실제 데이터가 필요한 장면은 테스트 계정·groupId 없이는 시각 검증을 완료 처리하지 않는다. 전체 86개 게이트는 계속 `pending`이다.
 
+### 2026-09-11 그룹 목록 데스크톱 구조 보정
+
+- HTML `groups` 화면의 상단 탭(대화·친구·그룹), 제목 `그룹 n/3`, 설명, 단일 `그룹 추가` CTA 순서에 맞춰 Flutter 데스크톱 목록 구조를 조정했다.
+- 기존의 과대 `그룹 스터디` 영웅 영역과 중복 검색·생성 CTA를 제거하고, 실제 그룹 추가 시트와 서버 목록은 유지했다.
+- `flutter analyze` 통과. 소스·번들 커밋 `31407bf`, Vercel 배포 `dpl_9ZFs8hXwoQ1FERD7VCm1nA5ogGnu`, alias READY, `/health` 200.
+- canary 데스크톱 캡처에서 HTML과 동일한 탭/제목/설명 배치를 확인했다. 사용자 그룹 데이터가 비어 있어 목록 행 자체는 동적 빈 상태로 기록한다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
