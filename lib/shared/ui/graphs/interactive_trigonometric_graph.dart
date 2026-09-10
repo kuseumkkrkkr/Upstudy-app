@@ -4,7 +4,7 @@ import 'base_graph_painter.dart';
 import 'graph_card_shell.dart';
 import '../../theme/app_colors.dart';
 
-/// Interactive graph for trigonometric function y = A쨌cos(Bx + C) + D
+/// Interactive graph for trigonometric function y = A · cos(Bx + C) + D.
 class InteractiveTrigonometricGraph extends StatefulWidget {
   const InteractiveTrigonometricGraph({super.key});
 
@@ -41,7 +41,7 @@ class _InteractiveTrigonometricGraphState extends State<InteractiveTrigonometric
       ),
       sliders: [
         SliderDef(
-          label: 'A (吏꾪룺)',
+          label: 'A (진폭)',
           value: _a,
           min: -3,
           max: 3,
@@ -49,7 +49,7 @@ class _InteractiveTrigonometricGraphState extends State<InteractiveTrigonometric
           onChanged: (v) => setState(() => _a = v),
         ),
         SliderDef(
-          label: 'B (二쇨린 怨꾩닔)',
+          label: 'B (주기 계수)',
           value: _b,
           min: 0.1,
           max: 3,
@@ -57,7 +57,7 @@ class _InteractiveTrigonometricGraphState extends State<InteractiveTrigonometric
           onChanged: (v) => setState(() => _b = v),
         ),
         SliderDef(
-          label: 'C (?꾩긽 ?대룞)',
+          label: 'C (위상 이동)',
           value: _c,
           min: -pi,
           max: pi,
@@ -65,7 +65,7 @@ class _InteractiveTrigonometricGraphState extends State<InteractiveTrigonometric
           onChanged: (v) => setState(() => _c = v),
         ),
         SliderDef(
-          label: 'D (?섏쭅 ?대룞)',
+          label: 'D (수직 이동)',
           value: _d,
           min: -3,
           max: 3,
