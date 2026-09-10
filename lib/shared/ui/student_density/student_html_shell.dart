@@ -140,8 +140,8 @@ class StudentHtmlTopBar extends StatelessWidget {
             '알림' => 'student-notifications-action',
             _ => 'student-action-$label',
           }),
-          width: 44,
-          height: 44,
+          width: 38,
+          height: 38,
           child: OutlinedButton(
             onPressed: onTap,
             style: OutlinedButton.styleFrom(
