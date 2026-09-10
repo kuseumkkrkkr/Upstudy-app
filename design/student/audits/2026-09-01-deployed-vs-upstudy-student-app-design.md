@@ -719,6 +719,13 @@
 - `flutter test --no-pub test/student_route_registry_test.dart`: 7개 통과.
 - 이 검사는 route 생성 계약만 보장하며 실제 브라우저 장면·이미지·API·DB 무결성 검수는 대체하지 않는다.
 
+### 2026-09-11 교재 생성·편집 진입점 재확인
+
+- HTML 기준 `textbook-create`·`textbook-editor`의 구현 원본은 `lib/sessions/textbook/session/textbook_editor_page.dart`로 확인했다.
+- 현재 Flutter analyzer에서는 해당 경로를 package/relative URI로 import할 때 `uri_does_not_exist`가 발생해 라우터 연결을 보류했다. 파일 단독 분석은 통과하지만 앱 import 가능성은 입증되지 않았다.
+- 따라서 두 화면은 registry의 `/bookbag` 기본 진입으로 남겨 두었으며, 실제 생성·편집 화면 완료로 표시하지 않는다.
+- 이 항목은 import 경로 원인 확인 후 실제 위젯·저장 동작·동일 뷰포트 이미지 검수까지 별도 처리한다.
+
 ### 2026-09-11 코스 선택 장면 정정
 
 - HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
