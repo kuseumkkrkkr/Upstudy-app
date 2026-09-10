@@ -22,7 +22,7 @@ const _stats = LevelTestPlacementStats(
 );
 
 void main() {
-  testWidgets('모바일 레벨 테스트는 30분 계약과 0명에서도 추정 그래프를 안내한다', (tester) async {
+  testWidgets('모바일 레벨 테스트는 HTML 진입 구조와 실제 문항 수를 표시한다', (tester) async {
     tester.view.physicalSize = const Size(390, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -33,14 +33,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('30분 · 자유 이동 · 마지막에 한 번 채점'), findsOneWidget);
-    expect(find.text('진행 방식'), findsNothing);
-    expect(find.text('기초 5'), findsOneWidget);
-    expect(find.text('심화 3'), findsOneWidget);
-    expect(find.text('등급대별 추정 결과'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('level-test-estimated-ovr-line-chart')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('level-test-entry')), findsOneWidget);
+    expect(find.text('현재 학습 위치를 측정하는 기준점 진단입니다.'), findsOneWidget);
+    expect(find.text('25'), findsOneWidget);
+    expect(find.text('60분'), findsOneWidget);
+    expect(find.text('자동'), findsOneWidget);
+    expect(find.text('테스트 시작'), findsOneWidget);
   });
 }

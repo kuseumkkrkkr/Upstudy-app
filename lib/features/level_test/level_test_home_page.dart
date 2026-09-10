@@ -159,36 +159,235 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
       key: const ValueKey('level-test-screen'),
       title: '레벨 테스트',
       activeRoute: LevelTestHomePage.routeName,
-      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      // HTML의 level-test shell은 76px 레일만 사용하고 우측 문맥 영역을
+      // 숨긴다. 본문 폭은 아래 `_LevelTestEntryPanel`이 직접 제한한다.
+      showContextAside: false,
+      railWidth: 76,
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: SingleChildScrollView(
-        child: StudentDensityPage(
-          child: mobile
-              ? _MobilePlacementBody(
-                  loading: _loading,
-                  error: _error,
-                  stats: _stats,
-                  onStart: _startPlacement,
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 820),
+            child: _LevelTestEntryPanel(
+              mobile: mobile,
+              questionCount: _stats?.questionCount ?? 25,
+              loading: _loading,
+              error: _error,
+              onStart: _startPlacement,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// HTML `level-test-entry`를 실제 배치 테스트 시작 계약과 연결한다.
+/// 필요한 값은 서버가 제공한 문항 수, 시작 중 여부, 오류와 시작 콜백이다.
+class _LevelTestEntryPanel extends StatelessWidget {
+  const _LevelTestEntryPanel({
+    required this.mobile,
+    required this.questionCount,
+    required this.loading,
+    required this.error,
+    required this.onStart,
+  });
+
+  final bool mobile;
+  final int questionCount;
+  final bool loading;
+  final String? error;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final side = mobile ? 18.0 : 38.0;
+    final top = mobile ? 26.0 : 34.0;
+    return Container(
+      key: const ValueKey('level-test-entry'),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.ink),
+      ),
+      padding: EdgeInsets.fromLTRB(side, top, side, mobile ? 26 : 34),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Text(
+                  '01',
+                  style: TextStyle(
+                    color: StudentDensityTokens.ink,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: mobile ? 1.0 : 1.2,
+                  ),
+                ),
+              ),
+              SizedBox(width: mobile ? 10 : 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _PlacementHero(),
-                    const SizedBox(height: 34),
-                    const _PlacementIntro(),
-                    const SizedBox(height: 18),
-                    _PlacementStatistics(stats: _stats),
-                    const SizedBox(height: 14),
-                    _PlacementReady(
-                      loading: _loading,
-                      error: _error,
-                      onStart: _startPlacement,
+                    Text(
+                      '레벨 테스트',
+                      style: TextStyle(
+                        color: StudentDensityTokens.ink,
+                        fontSize: mobile ? 25 : 28,
+                        height: 1.05,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.35,
+                      ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 7),
+                    const Text(
+                      '현재 학습 위치를 측정하는 기준점 진단입니다.',
+                      style: TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 11,
+                        height: 1.55,
+                      ),
+                    ),
                   ],
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 26),
+          _LevelTestMetaRow(questionCount: questionCount, mobile: mobile),
+          Padding(
+            padding: const EdgeInsets.only(top: 22),
+            child: Align(
+              alignment: mobile ? Alignment.center : Alignment.centerRight,
+              child: SizedBox(
+                width: mobile ? double.infinity : 176,
+                height: 50,
+                child: FilledButton(
+                  key: const ValueKey('level-test-entry-start'),
+                  onPressed: loading ? null : onStart,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: StudentDensityTokens.ink,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: StudentDensityTokens.muted,
+                    disabledForegroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                    ),
+                  ),
+                  child: loading
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '테스트 시작',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Icon(Icons.arrow_forward, size: 18),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ),
+          if (error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              error!,
+              textAlign: mobile ? TextAlign.center : TextAlign.right,
+              style: const TextStyle(
+                color: Color(0xFFB42318),
+                fontSize: 10,
+                height: 1.45,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LevelTestMetaRow extends StatelessWidget {
+  const _LevelTestMetaRow({required this.questionCount, required this.mobile});
+
+  final int questionCount;
+  final bool mobile;
+
+  @override
+  Widget build(BuildContext context) {
+    final cells = <({String label, String value})>[
+      (label: '문항', value: '$questionCount'),
+      (label: '제한 시간', value: '60분'),
+      (label: '저장', value: '자동'),
+    ];
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: StudentDensityTokens.line),
+          bottom: BorderSide(color: StudentDensityTokens.line),
         ),
+      ),
+      child: Row(
+        children: [
+          for (var index = 0; index < cells.length; index++)
+            Expanded(
+              child: Container(
+                constraints: BoxConstraints(minHeight: mobile ? 70 : 78),
+                padding: EdgeInsets.symmetric(
+                  horizontal: mobile ? 8 : 14,
+                  vertical: mobile ? 10 : 12,
+                ),
+                decoration: BoxDecoration(
+                  border: index == cells.length - 1
+                      ? null
+                      : const Border(
+                          right: BorderSide(color: StudentDensityTokens.line),
+                        ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      cells[index].label,
+                      style: const TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      cells[index].value,
+                      style: TextStyle(
+                        color: StudentDensityTokens.ink,
+                        fontSize: mobile ? 16 : 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

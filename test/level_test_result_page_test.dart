@@ -41,7 +41,7 @@ const _placement = LevelTestPlacementResult(
 );
 
 void main() {
-  testWidgets('레벨 테스트 배치 결과는 1280 PC에서 분석 카드와 OVR을 표시한다', (tester) async {
+  testWidgets('레벨 테스트 배치 결과는 1280 PC에서 HTML 결과 섹션과 OVR을 표시한다', (tester) async {
     await _pumpResult(
       tester,
       const Size(1280, 900),
@@ -49,12 +49,11 @@ void main() {
     );
 
     expect(find.text('18.6'), findsOneWidget);
-    expect(find.text('OVR 배정 결과'), findsOneWidget);
+    expect(find.text('진단 결과'), findsOneWidget);
     expect(find.text('21 / 25'), findsWidgets);
-    expect(find.text('30분'), findsWidgets);
-    expect(find.text('강점 태그'), findsNothing);
-    expect(find.byKey(const ValueKey('level-result-overview')), findsOneWidget);
-    expect(find.byKey(const ValueKey('level-result-analysis')), findsOneWidget);
+    expect(find.text('60분'), findsWidgets);
+    expect(find.text('강점 태그'), findsOneWidget);
+    expect(find.byKey(const ValueKey('level-result-overall')), findsOneWidget);
   });
 
   testWidgets('레벨 테스트 배치 결과는 390과 500 모바일 폭에서 다음 행동을 유지한다', (tester) async {
@@ -65,16 +64,13 @@ void main() {
         const LevelTestResultPage(placementResult: _placement),
       );
 
-      expect(find.text('나의 학습 기준점이\n완성됐어요.'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('level-result-next-button')),
-        findsOneWidget,
-      );
+      expect(find.text('강점 태그'), findsOneWidget);
+      expect(find.text('추천 코스 보기'), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
   });
 
-  testWidgets('레벨 결과는 셸 레일을 고려한 콘텐츠 폭에서 단일 열과 2열을 전환한다', (tester) async {
+  testWidgets('레벨 결과는 HTML 셸 경계에서 단일 열과 2열을 전환한다', (tester) async {
     for (final width in [760.0, 780.0, 781.0, 1280.0]) {
       await _pumpResult(
         tester,
@@ -82,27 +78,12 @@ void main() {
         const LevelTestResultPage(placementResult: _placement),
       );
 
-      final overview = tester.getRect(
-        find.byKey(const ValueKey('level-result-overview')),
+      expect(
+        find.byKey(const ValueKey('level-result-overall')),
+        findsOneWidget,
       );
-      final analysis = tester.getRect(
-        find.byKey(const ValueKey('level-result-analysis')),
-      );
-      // 데스크톱 셸의 72px 레일을 제외한 콘텐츠가 780px 이하이면
-      // 결과 리포트는 가독성을 위해 단일 열을 유지한다.
-      final mobile = width <= 852;
-
-      if (mobile) {
-        expect(find.text('홈'), findsWidgets);
-        expect(find.text('학습 홈으로'), findsNothing);
-        expect(analysis.left, closeTo(overview.left, 0.1));
-        expect(analysis.top, greaterThan(overview.bottom));
-      } else {
-        expect(find.byType(StudentHtmlRail), findsOneWidget);
-        expect(find.text('학습 홈으로'), findsOneWidget);
-        expect(analysis.top, closeTo(overview.top, 0.1));
-        expect(analysis.left, greaterThan(overview.left));
-      }
+      expect(find.text('추천 코스 보기'), findsOneWidget);
+      expect(find.byType(StudentHtmlRail), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
   });
@@ -126,7 +107,7 @@ void main() {
       const LevelTestResultPage(placementResult: _placement),
     );
 
-    await tester.tap(find.byKey(const ValueKey('level-result-home-button')));
+    await tester.tap(find.byKey(const ValueKey('student-mobile-menu')));
     await tester.pumpAndSettle();
 
     expect(find.text('학생 홈 도착'), findsOneWidget);

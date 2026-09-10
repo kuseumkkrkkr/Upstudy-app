@@ -55,43 +55,26 @@ class _LevelResultScaffold extends StatelessWidget {
   /// 780px 이하에서는 읽기 순서를 유지한 단일 열, 그보다 넓으면 요약과 분석을 분리한 2열로 배치한다.
   @override
   Widget build(BuildContext context) {
-    final mobile = isStudentDensityMobile(context);
     return StudentHtmlShell(
       title: '레벨 테스트 결과',
       activeRoute: AppRoutes.levelTestResult,
-      showContextAside: !mobile,
+      showContextAside: false,
+      railWidth: 76,
       onMenu: () => Navigator.of(
         context,
       ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
       child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth <= 780;
-          final horizontal = compact ? 18.0 : 42.0;
-          final content = ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1180),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                horizontal,
-                compact ? 16 : 28,
-                horizontal,
-                36,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _ResultTopBar(compact: compact),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.only(top: compact ? 22 : 34),
-                      child: _ResultBody(report: report, compact: compact),
-                    ),
-                  ),
-                ],
+        builder: (context, constraints) => SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: _ResultBody(
+                report: report,
+                compact: constraints.maxWidth <= 720,
               ),
             ),
-          );
-          return Align(alignment: Alignment.topCenter, child: content);
-        },
+          ),
+        ),
       ),
     );
   }
@@ -165,57 +148,420 @@ class _ResultBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final overview = _ResultOverview(report: report, compact: compact);
-    final analysis = _ResultAnalysis(report: report, compact: compact);
+    final strongTags = report.strongTags;
+    final weakTags = report.weakTags;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          report.isPlacement ? 'PLACEMENT COMPLETE' : 'TEST COMPLETE',
-          style: const TextStyle(
-            fontSize: 10,
-            letterSpacing: 1.8,
-            fontWeight: FontWeight.w900,
-            color: _LevelResultTokens.muted,
+        Container(
+          key: const ValueKey('level-result-overall'),
+          color: _LevelResultTokens.ink,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 13,
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      '진단 결과',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      report.statusLabel,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.all(compact ? 18 : 24),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: Color(0x66FFFFFF))),
+                ),
+                child: compact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _ResultOvrValue(report: report),
+                          const SizedBox(height: 20),
+                          _ResultMetrics(report: report, compact: true),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(child: _ResultOvrValue(report: report)),
+                          const SizedBox(width: 18),
+                          Expanded(child: _ResultMetrics(report: report)),
+                        ],
+                      ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 10),
-        Text(
-          report.isPlacement ? '나의 학습 기준점이\n완성됐어요.' : '이번 테스트를\n완료했어요.',
-          style: TextStyle(
-            fontSize: compact ? 36 : 54,
-            height: .98,
-            letterSpacing: -2.2,
-            fontWeight: FontWeight.w900,
-            color: _LevelResultTokens.ink,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: const BoxDecoration(
+            border: Border(
+              right: BorderSide(color: _LevelResultTokens.ink),
+              bottom: BorderSide(color: _LevelResultTokens.ink),
+              left: BorderSide(color: _LevelResultTokens.ink),
+            ),
+          ),
+          child: Text(
+            report.confidenceCopy,
+            style: const TextStyle(
+              color: _LevelResultTokens.muted,
+              fontSize: 10,
+              height: 1.55,
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
-          report.description,
-          style: TextStyle(
-            fontSize: compact ? 14 : 16,
-            height: 1.55,
-            color: _LevelResultTokens.muted,
-          ),
+        _ResultTagSection(
+          index: '01',
+          title: '강점 태그',
+          description: '전체 기준점보다 안정적으로 응답한 영역입니다.',
+          tags: strongTags,
+          compact: compact,
         ),
-        SizedBox(height: compact ? 24 : 34),
-        if (compact) ...[
-          overview,
-          const SizedBox(height: 14),
-          analysis,
-        ] else
+        _ResultTagSection(
+          index: '02',
+          title: '보완 태그',
+          description: '다음 학습에서 먼저 확인하면 좋은 영역입니다.',
+          tags: weakTags,
+          compact: compact,
+        ),
+        _ResultNextSection(report: report, compact: compact),
+      ],
+    );
+  }
+}
+
+class _ResultOvrValue extends StatelessWidget {
+  const _ResultOvrValue({required this.report});
+
+  final _LevelResultReport report;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'MY OVR',
+        style: TextStyle(
+          color: Colors.white70,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 5),
+      Text(
+        report.primaryValue,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 68,
+          height: .9,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -5,
+        ),
+      ),
+      const SizedBox(height: 5),
+      Text(
+        report.primaryCaption,
+        style: const TextStyle(color: Colors.white70, fontSize: 10),
+      ),
+    ],
+  );
+}
+
+class _ResultMetrics extends StatelessWidget {
+  const _ResultMetrics({required this.report, this.compact = false});
+
+  final _LevelResultReport report;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (report.firstMetricLabel, report.firstMetricValue),
+      (report.secondMetricLabel, report.secondMetricValue),
+      ('분석 상태', report.analysisState),
+    ];
+    return Container(
+      decoration: BoxDecoration(
+        border: compact
+            ? const Border(top: BorderSide(color: Color(0x66FFFFFF)))
+            : const Border(left: BorderSide(color: Color(0x66FFFFFF))),
+      ),
+      child: Column(
+        children: [
+          for (var index = 0; index < items.length; index++)
+            Container(
+              padding: EdgeInsets.only(
+                top: compact || index == 0 ? 12 : 10,
+                left: compact ? 0 : 14,
+                bottom: 10,
+              ),
+              decoration: index == items.length - 1
+                  ? null
+                  : const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Color(0x66FFFFFF)),
+                      ),
+                    ),
+              child: Row(
+                children: [
+                  Text(
+                    items[index].$1,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    items[index].$2,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultTagSection extends StatelessWidget {
+  const _ResultTagSection({
+    required this.index,
+    required this.title,
+    required this.description,
+    required this.tags,
+    required this.compact,
+  });
+
+  final String index;
+  final String title;
+  final String description;
+  final List<Map<String, dynamic>> tags;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        compact ? 18 : 38,
+        26,
+        compact ? 18 : 38,
+        30,
+      ),
+      decoration: const BoxDecoration(
+        border: Border(
+          right: BorderSide(color: _LevelResultTokens.ink),
+          bottom: BorderSide(color: _LevelResultTokens.ink),
+          left: BorderSide(color: _LevelResultTokens.ink),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 6, child: overview),
-              const SizedBox(width: 18),
-              Expanded(flex: 5, child: analysis),
+              Text(
+                index,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: _LevelResultTokens.muted,
+                        fontSize: 11,
+                        height: 1.55,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-        SizedBox(height: compact ? 18 : 24),
-        _NextStepCard(report: report, compact: compact),
+          const SizedBox(height: 24),
+          if (tags.isEmpty)
+            const Text(
+              '분석할 태그가 아직 충분하지 않습니다.',
+              style: TextStyle(color: _LevelResultTokens.muted, fontSize: 11),
+            )
+          else
+            for (final tag in tags.take(3))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 15),
+                child: _ResultTagRow(tag: tag),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultTagRow extends StatelessWidget {
+  const _ResultTagRow({required this.tag});
+
+  final Map<String, dynamic> tag;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = (tag['tag'] ?? '학습 태그').toString();
+    final rating = (tag['rating'] as num?)?.toDouble();
+    final width = rating == null ? .35 : (rating / 2200).clamp(.08, 1.0);
+    return Row(
+      children: [
+        SizedBox(
+          width: 96,
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 5,
+            color: StudentDensityTokens.surfaceMuted,
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: width,
+              child: ColoredBox(color: StudentDensityTokens.ink),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          rating?.toStringAsFixed(1) ?? '--',
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+        ),
       ],
+    );
+  }
+}
+
+class _ResultNextSection extends StatelessWidget {
+  const _ResultNextSection({required this.report, required this.compact});
+
+  final _LevelResultReport report;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '다음 학습',
+          style: TextStyle(
+            color: _LevelResultTokens.muted,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          report.nextTitle,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          report.nextDescription,
+          style: const TextStyle(color: _LevelResultTokens.muted, fontSize: 10),
+        ),
+      ],
+    );
+    Widget courseAction() => FilledButton(
+      onPressed: () => Navigator.of(context).pushNamed('/courses'),
+      style: FilledButton.styleFrom(
+        backgroundColor: _LevelResultTokens.ink,
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(44),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      ),
+      child: const Text('추천 코스 보기'),
+    );
+    Widget reviewAction() => OutlinedButton(
+      onPressed: () => Navigator.of(context).pop(),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _LevelResultTokens.ink,
+        minimumSize: const Size.fromHeight(44),
+        side: const BorderSide(color: _LevelResultTokens.line),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      ),
+      child: const Text('문항별 결과 보기'),
+    );
+    return Container(
+      padding: EdgeInsets.all(compact ? 18 : 28),
+      decoration: const BoxDecoration(
+        border: Border(
+          right: BorderSide(color: _LevelResultTokens.ink),
+          bottom: BorderSide(color: _LevelResultTokens.ink),
+          left: BorderSide(color: _LevelResultTokens.ink),
+        ),
+        color: StudentDensityTokens.surfaceMuted,
+      ),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                copy,
+                const SizedBox(height: 16),
+                SizedBox(width: double.infinity, child: courseAction()),
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity, child: reviewAction()),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: copy),
+                const SizedBox(width: 12),
+                Expanded(child: courseAction()),
+                const SizedBox(width: 8),
+                Expanded(child: reviewAction()),
+              ],
+            ),
     );
   }
 }
@@ -519,12 +865,12 @@ class _LevelResultReport {
       firstMetricLabel: '정답 수',
       firstMetricValue: '$correctCount / 25',
       secondMetricLabel: '제한 시간',
-      secondMetricValue: '30분',
+      secondMetricValue: '60분',
       analysisState: 'OVR 배정',
       description: '25문항의 전체 답안을 한 번에 채점해 첫 OVR을 배정했습니다.',
       confidenceCopy: '측정 신뢰도 $confidence% · 이 시험 결과는 첫 OVR 배정에 사용됩니다.',
-      strongTags: const [],
-      weakTags: const [],
+      strongTags: result.strongTags,
+      weakTags: result.weakTags,
       nextTitle: '첫 OVR 배정이 완료됐어요.',
       nextDescription: '학습 홈으로 돌아가 원하는 학습을 시작하세요.',
     );

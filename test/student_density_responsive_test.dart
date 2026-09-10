@@ -315,7 +315,7 @@ void main() {
     expect(find.text('다시 풀기'), findsWidgets);
   });
 
-  testWidgets('레벨 테스트는 390px에서 OVR 히어로와 시작 행동을 유지한다', (tester) async {
+  testWidgets('레벨 테스트는 390px에서 HTML 진입 패널과 시작 행동을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -324,9 +324,10 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: LevelTestHomePage()));
     await tester.pumpAndSettle();
 
-    expect(find.text('처음 만나는\n나의 실력.'), findsOneWidget);
-    expect(find.text('50'), findsWidgets);
-    expect(find.text('레벨 테스트 시작 →'), findsOneWidget);
+    expect(find.byKey(const ValueKey('level-test-entry')), findsOneWidget);
+    expect(find.text('현재 학습 위치를 측정하는 기준점 진단입니다.'), findsOneWidget);
+    expect(find.text('60분'), findsOneWidget);
+    expect(find.text('테스트 시작'), findsOneWidget);
   });
 
   testWidgets('500px 문제 풀이는 HTML 집중 헤더와 세로 선택지를 유지한다', (tester) async {

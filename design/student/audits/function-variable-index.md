@@ -27,6 +27,10 @@
 | `_MainStudentPageState._handleStudyAction` | 홈 6개 학습 타일의 요약 시트를 열고 내부 CTA를 기존 실제 목적지로 dispatch | `String`, `Course?` → `void` | enum으로 목적지를 제한하고 코스·오답·책가방 라우팅은 기존 계약을 재사용 |
 | `_HomeStudyActionSheet.build` | HTML 홈 학습 시트의 제목·실제 데이터 안내·단일 CTA를 렌더링 | `BuildContext` → `Widget` | 닫기·CTA 후 Navigator를 닫고 호출자가 기존 화면으로 이동 |
 | `_CourseCatalogPageState._openMarketplace` | 코스 화면의 새 코스 찾기와 상단 검색을 기존 자료실 화면으로 연결 | 없음 → `void` | `/marketplace` 명명 라우트를 사용하고 코스 검색 전용 시트를 열지 않음 |
+| `_LevelTestEntryPanel` | HTML `level-test-entry`의 제목·설명·메타 행·시작 CTA를 렌더링 | 문항 수, 로딩, 오류, 시작 콜백 → `Widget` | 시작 콜백은 기존 placement 세션 API를 호출하고 오류는 패널 안에 표시 |
+| `_LevelTestMetaRow` | 문항·60분 제한·자동 저장의 3열 메타 행을 반응형으로 배치 | 문항 수, 모바일 여부 → `Widget` | 서버 통계의 문항 수를 표시하며 저장 상태는 기존 서버 자동 저장 계약을 설명 |
+| `_ResultBody` | HTML `level-result`의 진단 카드·지표·태그·다음 학습 순서를 조합 | 정규화 결과, 720px 경계 → `Widget` | 배치 API 태그와 수치를 표시하고 CTA는 기존 코스/문항 Navigator를 사용 |
+| `_ResultMetrics`/`_ResultTagSection` | 결과 지표와 강점·보완 태그를 HTML 순서와 막대 구조로 렌더링 | 결과 모델·태그 목록·폭 → `Widget` | 빈 태그는 안내 문구로 구분하고 서버 응답을 임의 값으로 채우지 않음 |
 | `CourseRuntimePage.build` | 실제 `courseId`가 있는 런타임만 학습 화면으로 열고 인자 없는 딥링크는 명확한 오류 상태로 표시 | `BuildContext` → `Widget` | 인자 없음·조회 실패·로딩을 구분하고 코스 목록 복귀 CTA를 제공 |
 | `_SettingsPageState._showAccountLinkSheet` | HTML 계정 연동 역할·방법·입력 시트를 연다 | 없음 → `void` | 실제 연동 API가 없을 때 전송하지 않는 안내를 유지 |
 | `_AccountLinkSheetState._buildStep` | 역할·ID·QR 스캔·내 QR 코드 장면을 현재 단계에 맞춰 렌더링 | 없음 → `Widget` | 단계 이동은 로컬 상태, API 호출·권한 변경 없음 |
@@ -65,6 +69,8 @@
 | `_SignupPageState._subject` · `String` | 고등학교 수학 과목 선택 | 확률과통계, 화면 수명 | 과목 선택/중학교 전환 시 기본값 복구, 가입 payload |
 | `_SignupPageState._agreed` · `bool` | 최종 가입 안내 동의 여부 | false, 화면 수명 | 확인 단계 체크박스, 제출 활성 조건 |
 | `_SignupPageState._passwordVisible`/`_passwordConfirmVisible` · `bool` | 각 비밀번호 표시 상태 | false, 화면 수명 | 보기/숨기기 버튼, 메모리 |
+| `_LevelTestHomePageState._stats` · `LevelTestPlacementStats?` | placement 통계 API가 제공한 실제 문항 수·난이도 정보 | null, 화면 수명 | `_loadStats`, 진입 패널의 문항 메타에 사용 |
+| `_LevelResultReport.strongTags`/`weakTags` · `List<Map<String,dynamic>>` | 배치 결과의 강점·보완 태그와 평점 | 빈 목록 또는 서버 결과, 결과 화면 수명 | `placement` factory에서 API 응답을 그대로 복사, 결과 태그 행에서 읽기 |
 | `_HomeStudyAction` · `enum` | 홈 학습 타일의 허용된 6개 dispatch 키 | `resume` 등 6개, 화면 수명 | `_handleStudyAction.fromId`, 영속화하지 않음 |
 | `_JsxGraphPageState._scheduleGraphApply` | 수식 입력을 280ms 디바운스하고 최신 요청만 그래프에 반영 | 없음 → `void` | 이전 타이머 취소, revision 불일치 응답 무시 |
 | `_JsxGraphPageState._applyCurrentDrafts` | 검증된 함수식을 `/graphs/sample`에 보내 좌표 시리즈를 갱신 | 선택 revision → `Future<void>` | 422 수식 오류와 네트워크 오류를 구분하고 마지막 정상 그래프 유지 |
