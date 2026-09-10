@@ -711,3 +711,11 @@
 - 로컬·canary `main.dart.js` SHA-256은 모두 `77DAE38002612DB6A5D047AABBA5DC5624C751C94FFB81C7F0901EA95F6B8C9A`이다.
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
+### 2026-09-11 코스 상세 전용 셸 canary 반영
+
+- HTML `detail` 레이아웃 기준으로 코스 상세의 데스크톱 컨텍스트 영역, 모바일 뒤로가기, 검색·알림 동작을 공통 셸에 연결했다.
+- 소스 커밋 `5444a63`, 번들 커밋 `dae7ed7`; 대상 파일 정적 분석은 통과했다. 기존 코스 위젯 테스트의 `CourseCard` 탐색 실패는 별도 잔여로 유지한다.
+- 로컬·canary `main.dart.js` SHA-256은 모두 `9B8FD68B0CFFE19011C10C4B873CBB7585F77A524835E27EE03592843683E6D5`이다.
+- Vercel 배포 `dpl_7uMJodVUPkAxqWX2DCcjTRTmSdWv`, 고유 URL [`aiflow-web-canary-nf6m96tcp-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-nf6m96tcp-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
