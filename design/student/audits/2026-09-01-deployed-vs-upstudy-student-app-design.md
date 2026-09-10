@@ -754,6 +754,12 @@
 - 호환 진입점 추가 후 동일한 대조를 재실행한 결과, `lib/` source 78개 중 누락은 0개다.
 - 이전 “study-mode 1개 누락” 기록은 추가 전 상태를 보존한 역사 기록이며 현재 판정에는 적용하지 않는다.
 
+### 2026-09-11 학생 핵심 집중 검사 재실행
+
+- `python -m pytest -q omj/tests/test_vercel_student_demo_api.py`: 5개 통과(Starlette deprecation warning 1개).
+- `flutter test --no-pub test/student_route_registry_test.dart test/bookbag_interaction_contract_test.dart`: 8개 통과.
+- 이 결과는 학생 route·책가방·데모 API 계약만 확인하며, 86개 화면의 시각 일치나 전체 서버 무결성·동시성 게이트를 통과했다는 의미는 아니다.
+
 ### 2026-09-11 코스 선택 장면 정정
 
 - HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
