@@ -637,3 +637,11 @@
 - Vercel 배포 `dpl_HCF1sCFEUZVQFZpBLpMvssKv6TyC`, 고유 URL [`aiflow-web-canary-6ibv6uwxo-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6ibv6uwxo-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/marketplace) READY. `/health` 200.
 - 실제 브라우저에서 최신 alias `390×844`를 재로드해 뒤로가기·검색·필터·전체/코스/시험지/문제세트 탭·오류 재시도와 하단 자료실 활성 탭을 확인했다. 인증되지 않은 자료 조회는 “마켓 자료를 불러오지 못했어요” 상태이며 샘플 카드는 노출되지 않는다.
 - `1280×900` 데스크톱 카드의 실제 자료 데이터·구매 후 열기와 인증 사용자별 목록은 세션 미발급으로 `pending`이다. 86개 전체 장면 및 전체 품질·상용 게이트도 `pending`이다.
+
+### 2026-09-11 자료실 필터·빈 상태 최종 후보 배포
+
+- 자료실 필터 시트를 HTML의 평면 선택 옵션과 상단 시트 구조로 보정하고, 인증 실패/빈 결과 패널의 둥근 카드 장식을 제거했다. 필터 선택·초기화·검색·유형 탭 동작은 기존 API 계약을 유지한다.
+- 회귀 검증 `test/marketplace_page_test.dart`: 9개 통과. `dart analyze lib/sessions/marketplace/ui/pages/marketplace_page.dart`: 새 오류 없음.
+- 번들 기준 커밋 `4e6e2d1`, `public/main.dart.js`와 alias 원시 응답 SHA-256 `710239A85B4E0D6D97B96E9E61A0D246ACC635B1142073A5257CDEFA0395F821` 일치.
+- Vercel 배포 `dpl_145vy1FxfPybaawpgJL5LirkzENo`, 고유 URL [`aiflow-web-canary-ro5fsc3gv-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-ro5fsc3gv-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/marketplace) READY, `/health` 200.
+- 브라우저에서 최신 alias 자료실을 재로드해 모바일 뒤로가기, 검색 행, 필터, 전체/코스/시험지/문제세트 탭, 오류 재시도, 하단 탭을 확인했다. 인증 세션·실제 카드 데이터·데스크톱 실데이터 구매 흐름은 `pending`이며 전체 86개 합격 조건도 미완료다.
