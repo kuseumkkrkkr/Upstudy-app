@@ -735,6 +735,13 @@
 - 소스·번들 커밋 `cb12a08`, 번들 SHA-256 `F87AF2587A3CEBBBE7769C029172A4D3C812E499EBD477D7BEE5F593B851CDCC`.
 - Vercel 배포 `dpl_4dwBfLiQn2w5nJyD5tRnhphWV82A`, alias READY, `/health` 200, 로컬·alias 번들 SHA 일치.
 
+### 2026-09-11 아레나 모바일 보조 라벨 반영
+
+- HTML 기준 `REAL-TIME MATCH` 보조 라벨을 모바일 아레나 헤더에 추가하고 공통 셸 제목과 중복되지 않도록 본문 제목을 제거했다.
+- 500px 아레나 반응형 테스트 통과.
+- 소스·번들 커밋 `9f5a7f5`, 번들 SHA-256 `5B2E12B23ABFE8BC11F0BE2FCECF790C50F781CF504A6FD79F9FDE7FDD23E714`.
+- Vercel 배포 `dpl_BKubng9cnTwEZkan968aPZhznKeR`, alias READY, `/health` 200, 로컬·alias 번들 SHA 일치.
+
 ### 2026-09-11 내부 장면 딥링크 회귀 검사 보강
 
 - `student_route_registry_test.dart`에 코스 선택·학습도구·책가방·아레나·그룹·쪽지함 내부 장면 6개를 직접 호출하는 회귀 검사를 추가했다.
