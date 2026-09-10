@@ -3,11 +3,11 @@ import 'package:flutter/foundation.dart';
 /// HTML 화면을 코드에서 식별하기 위한 불변 목적지 값이다.
 @immutable
 class StudentDestination {
-  const StudentDestination({
-    required this.screenId,
-    required this.routeName,
-    required this.requiresAuth,
-    required this.demoOnly,
+  const StudentDestination(
+    this.screenId, {
+    this.routeName = '',
+    this.requiresAuth = true,
+    this.demoOnly = false,
   });
 
   final String screenId;
@@ -62,7 +62,7 @@ class StudentRouteSpec {
 
   /// The typed destination used by menus, search, and audit tooling.
   StudentDestination get destination => StudentDestination(
-    screenId: id,
+    id,
     routeName: route,
     requiresAuth: requiresAuth,
     demoOnly: demoOnly,
