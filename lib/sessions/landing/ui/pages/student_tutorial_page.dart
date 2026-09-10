@@ -587,8 +587,10 @@ class _TutorialStage extends StatelessWidget {
           ),
         ),
         SizedBox(height: compact ? 16 : 24),
-        _InstructionRow(number: '1', text: step.instruction),
-        const _InstructionRow(number: '2', text: '오른쪽 예시에서 강조된 버튼을 눌러보세요.'),
+        if (!compact) ...[
+          _InstructionRow(number: '1', text: step.instruction),
+          const _InstructionRow(number: '2', text: '오른쪽 예시에서 강조된 버튼을 눌러보세요.'),
+        ],
       ],
     );
     final demo = _TutorialDemo(
@@ -605,16 +607,24 @@ class _TutorialStage extends StatelessWidget {
         : Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(child: copy),
+              Expanded(flex: 10, child: copy),
               const SizedBox(width: 50),
-              Expanded(flex: 2, child: demo),
+              Expanded(flex: 22, child: demo),
             ],
           );
     return SingleChildScrollView(
-      padding: EdgeInsets.all(compact ? 16 : 38),
+      padding: EdgeInsets.all(
+        compact ? (MediaQuery.sizeOf(context).width <= 390 ? 12 : 16) : 38,
+      ),
       child: ConstrainedBox(
         constraints: BoxConstraints(minHeight: compact ? 420 : 600),
-        child: Align(alignment: Alignment.center, child: content),
+        child: Align(
+          alignment: Alignment.center,
+          child: Transform.translate(
+            offset: Offset(0, compact ? 0 : 42),
+            child: content,
+          ),
+        ),
       ),
     );
   }
@@ -679,7 +689,7 @@ class _TutorialDemo extends StatelessWidget {
     children: [
       Container(
         height: compact ? 312 : 394,
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(compact ? 10 : 22),
         decoration: const BoxDecoration(
           color: Color(0xFFE9EAED),
           border: Border.fromBorderSide(
@@ -890,44 +900,56 @@ class _TutorialActions extends StatelessWidget {
         color: StudentDensityTokens.surface,
         border: Border(top: BorderSide(color: StudentDensityTokens.line)),
       ),
-      child: Row(
-        children: [
-          OutlinedButton(
-            key: const ValueKey('tutorial-previous'),
-            onPressed: current == 0 ? null : onPrevious,
-            style: _buttonStyle(),
-            child: const Text('이전'),
-          ),
-          const SizedBox(width: 18),
-          Expanded(child: _TutorialProgress(current: current)),
-          const SizedBox(width: 18),
-          if (last)
-            FilledButton(
-              key: const ValueKey('tutorial-finish'),
-              onPressed: onFinish,
-              style: _primaryStyle(),
-              child: const Text('튜토리얼 마치기'),
+      child: compact
+          ? Row(
+              children: [
+                SizedBox(
+                  width: 48,
+                  child: OutlinedButton(
+                    key: const ValueKey('tutorial-previous'),
+                    onPressed: current == 0 ? null : onPrevious,
+                    style: _buttonStyle(compact: true),
+                    child: const Text('이전'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: _TutorialProgress(current: current)),
+                const SizedBox(width: 8),
+                Expanded(flex: 14, child: _nextButton(last, compact: true)),
+              ],
             )
-          else
-            FilledButton(
-              key: const ValueKey('tutorial-next'),
-              onPressed: onNext,
-              style: _primaryStyle(),
-              child: const Text('다음'),
+          : Row(
+              children: [
+                OutlinedButton(
+                  key: const ValueKey('tutorial-previous'),
+                  onPressed: current == 0 ? null : onPrevious,
+                  style: _buttonStyle(),
+                  child: const Text('이전'),
+                ),
+                const SizedBox(width: 18),
+                Expanded(child: _TutorialProgress(current: current)),
+                const SizedBox(width: 18),
+                _nextButton(last),
+              ],
             ),
-        ],
-      ),
     );
   }
 
-  ButtonStyle _buttonStyle() => OutlinedButton.styleFrom(
-    minimumSize: const Size(72, 48),
+  Widget _nextButton(bool last, {bool compact = false}) => FilledButton(
+    key: ValueKey(last ? 'tutorial-finish' : 'tutorial-next'),
+    onPressed: last ? onFinish : onNext,
+    style: _primaryStyle(compact: compact),
+    child: Text(last ? '튜토리얼 마치기' : '다음'),
+  );
+
+  ButtonStyle _buttonStyle({bool compact = false}) => OutlinedButton.styleFrom(
+    minimumSize: Size(compact ? 48 : 72, 48),
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     side: const BorderSide(color: StudentDensityTokens.line),
   );
 
-  ButtonStyle _primaryStyle() => FilledButton.styleFrom(
-    minimumSize: const Size(120, 48),
+  ButtonStyle _primaryStyle({bool compact = false}) => FilledButton.styleFrom(
+    minimumSize: Size(compact ? 0 : 120, 48),
     backgroundColor: StudentDensityTokens.dark,
     foregroundColor: Colors.white,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
