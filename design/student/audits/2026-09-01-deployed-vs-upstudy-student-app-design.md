@@ -418,3 +418,12 @@
 - `design_interaction_audit.py`와 실행 설명서 `design-interaction-audit.md`를 감사 폴더에 추가했다. 지정 HTML만 읽고 86개 화면, 대화상자 템플릿, `data-*` 조작 계약을 JSON으로 기록하며 `--runtime`에서는 화면별 새 브라우저 페이지에서 보이는 버튼·링크를 클릭한다.
 - 정적 실행 결과: `design-inventory-2026-09-10.json`, 화면 86개, 대화상자 템플릿 43개, 원본 바이트 SHA-256 `EF8F6E40D01B099631C1940628E623A6113E1ADA68CFF3DEC0F1F89DEFCD0868`.
 - 도구는 Flutter 성공·실제 API 저장·결제·권한 성공을 의미하지 않는다. 브라우저 런타임 전수 클릭 결과와 Flutter 동일 뷰포트 캡처는 별도 실행 대상으로 남긴다.
+
+### 2026-09-10 로그인·프로필 HTML 구조 후속 배포
+
+- 프로필 코드 커밋 `b164bb6`와 정적 번들 커밋 `5a83f5c`를 반영했다. 프로필은 HTML의 76px 레일, 320px 검은 신원 패널, 우측 `프로필 관리`·`계정 관리` 패널, 모바일 세로 전환과 관리 시트를 사용한다.
+- 검증: 로그인·프로필 집중 위젯 테스트와 변경 파일 `dart analyze`, `git diff --check` 통과. 감사 도구의 raw HTML SHA 고정 테스트(`33f5510`)와 86개 화면·43개 대화상자 정적 원장 검사가 통과했다.
+- Vercel 후보: [`dpl_8dmYmbpdt3b8CpUFeZLB2E6ZwUXb`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/8dmYmbpdt3b8CpUFeZLB2E6ZwUXb), 고유 URL [`aiflow-web-canary-lqx9d34y8-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-lqx9d34y8-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/login) READY 연결.
+- `public/main.dart.js`와 alias 응답 SHA-256은 `C04B3ED153E2395776DB71B0063DEF72A5334A605F1B2F124BFCD1D314527EED`로 일치하고, 번들에 `localhost`가 없다. `/health`는 200, 인증 없는 데모 상점·내신 계획 API는 각각 401 JSON이다.
+- CUA 고정 브라우저에서 로그인 패널의 좌측 28px·상단 72px·460px 폭·3px 상단선·필드 순서를 기준 HTML과 확인했다. 고정 뷰포트가 1280×720이므로 390×844·1280×900 동일 조건 증거로 확대해석하지 않는다. 인증이 필요한 프로필 실제 데이터 캡처도 아직 보류한다.
+- 이 배포는 로그인·프로필 묶음의 후보 반영이다. 나머지 화면·장면·동작의 런타임 이미지, 실제 인증 데이터, DB migration·동시성·접근성·전체 반응형 검증은 계속 `pending`이며 상용 준비 완료로 판정하지 않는다.
