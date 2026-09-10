@@ -496,6 +496,7 @@ class _SoWidgetState extends State<SoWidget> {
   bool _pollingSocial = false;
   int _mobileSocialTab = 0;
   int _desktopSocialTab = 0;
+  bool _initialSceneOpened = false;
 
   // ── 원본과 동일한 lifecycle ──────────────────────────────────
   @override
@@ -505,14 +506,17 @@ class _SoWidgetState extends State<SoWidget> {
     _desktopSocialTab = widget.initialTab == 1 ? 1 : 0;
     if (widget.initialScene != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
+        if (!mounted || _initialSceneOpened) return;
+        _initialSceneOpened = true;
         switch (widget.initialScene) {
           case 'friend-add':
             _openAddFriendModal();
           case 'friend-requests':
             _openFriendRequestsModal();
           case 'direct-chat':
-            _openInboxModal();
+            Future<void>.delayed(const Duration(milliseconds: 250), () {
+              if (mounted) _openInboxModal();
+            });
         }
       });
     }
