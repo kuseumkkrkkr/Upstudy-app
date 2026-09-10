@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 교재 생성·편집 장면 직접 연결
+
+- `textbook-create`와 `textbook-editor` 딥링크를 책가방 기본 화면으로 흘려보내지 않고 실제 `TextbookCreationPage`·`TextbookEditorPage`로 연결했다.
+- `student_route_registry_test.dart` 통과 및 웹 릴리스 빌드 완료.
+- 소스·번들 커밋 `453fe18`; 로컬·canary `main.dart.js` SHA-256 `9B5B4A736A3CD7BE3D1D3A0079DE9A13BC41DF4E9E71A722762DDF05B72C19AC` 일치.
+- Vercel 배포 `dpl_2KJq56bPeJvBbE5Y9cLfownAz4Fe`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 실제 교재 API·인증 세션·생성 저장 결과의 live 검증은 Production 환경변수 부재로 `pending`이다.
+
 ### 2026-09-11 제품 readiness 경계 확인
 
 - canary `/health`는 `200 {"status":"ok","service":"aiflow-ocr-queue"}`를 반환했다.
