@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 학습 액션 모바일 전체 높이 반영
+
+- 500px 모바일 학습 액션 시트를 HTML의 전체 화면 패널 기준으로 변경했다. 시트와 내부 패널을 viewport 높이에 맞추고 명시적인 `닫기` 버튼을 제공한다.
+- 집중 반응형 검사 `500px 학습 액션은 HTML처럼 전체 화면 패널과 하단 닫기를 사용한다` 통과.
+- 소스·번들 커밋 `ac2b33f`, 번들 SHA-256 `076ADB53DEBA2CD4E2C99D9C7A792F3DCE274180954D0FB01E7062799999F8DD`.
+- Vercel 배포 `dpl_DAQZyKTqGCF1Pe91Q3dbpeo99poD`, alias READY, `/health` 200, 로컬·alias 번들 SHA 일치.
+- 나머지 반응형 실패와 86개 전체 이미지·API·DB·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 내부 장면 딥링크 회귀 검사 보강
 
 - `student_route_registry_test.dart`에 코스 선택·학습도구·책가방·아레나·그룹·쪽지함 내부 장면 6개를 직접 호출하는 회귀 검사를 추가했다.
