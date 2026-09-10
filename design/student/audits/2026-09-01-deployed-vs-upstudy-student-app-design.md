@@ -674,3 +674,11 @@
 - 소스 커밋 `6afc055`, 번들 커밋 `fa0cd17`; `public/main.dart.js`와 alias 원시 응답 SHA-256은 `6E02465837B96A802F76826400A37EBB5A0E215D5940565FB17528AE20E3C783`로 일치한다.
 - Vercel 배포 `dpl_uCybaVKwFjX4YNsei93Byz66RpA7`, 고유 URL [`aiflow-web-canary-r06oc3vz5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-r06oc3vz5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 인증 세션과 86개 전체 장면·실제 DB 무결성·동시성·접근성 검증은 여전히 `pending`이다.
+
+### 2026-09-11 아레나 셸 HTML 구조 보정 배포
+
+- 아레나 화면은 HTML 내부 `arena-home-side`를 사용하는 전용 구조이므로 공통 우측 문맥 영역을 제거했다. 모바일 상단은 뒤로가기와 학생 홈 복귀로 연결했다.
+- 실제 아레나 큐·매칭·결과·랭킹 API 및 재연결 동작은 변경하지 않았다. `dart analyze lib/features/arena/arena_page.dart`에서 새 오류가 없음을 확인했다.
+- 소스 커밋 `c97b202`, 번들 커밋 `0eb71c1`; `public/main.dart.js`와 alias 원시 응답 SHA-256은 `10DE7D45C098AF0212C73A06FBAB58C2E31B23657447A593623D75AE39D48978`로 일치한다.
+- Vercel 배포 `dpl_557H8XamUdqMH2qgiSqrSz43dc6i`, 고유 URL [`aiflow-web-canary-3kb1c0a1q-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3kb1c0a1q-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/arena) READY, `/health` 200.
+- 인증된 매칭 데이터·86개 전체 장면·DB 동시성·접근성 및 상용 준비 게이트는 `pending`이다.
