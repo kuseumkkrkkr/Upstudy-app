@@ -39,12 +39,22 @@ class StudentHtmlShell extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final wide = width > StudentDensityTokens.desktopBreakpoint;
     final desktopRailWidth = railWidth ?? (wide ? 84.0 : 72.0);
-    final menu = onMenu ?? () => toggleAppDrawer(context);
+    // The build context above Scaffold cannot resolve Scaffold.maybeOf.
+    // Keep the fallback action bound to the actual Scaffold state instead.
+    final scaffoldKey = GlobalKey<ScaffoldState>();
+    final menu =
+        onMenu ??
+        () {
+          final state = scaffoldKey.currentState;
+          if (state == null) return;
+          state.isDrawerOpen ? state.closeDrawer() : state.openDrawer();
+        };
     final search = onSearch ?? () => showStudentQuickSearch(context);
     final notifications =
         onNotifications ?? () => showStudentNotifications(context);
 
     return Scaffold(
+      key: scaffoldKey,
       backgroundColor: StudentDensityTokens.background,
       drawer: const AppDrawer(),
       bottomNavigationBar: mobile

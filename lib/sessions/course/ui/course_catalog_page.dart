@@ -549,7 +549,6 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
       activeRoute: AppRoutes.courses,
       showContextAside: false,
       railWidth: 76,
-      onSearch: _openMarketplace,
       child: FutureBuilder<List<GenerationTagGroup>>(
         future: _tagGroupsFuture,
         builder: (context, tagSnapshot) {
