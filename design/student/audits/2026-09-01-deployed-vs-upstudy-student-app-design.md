@@ -341,3 +341,14 @@
 - 라이브 API: `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 각각 401 JSON.
 - 브라우저: 고정 in-app 브라우저 뷰포트(1280×720)에서 새 alias 홈의 A 레일·메인 코스/학습 동작·대시보드·우측 컨텍스트 셸을 6초 대기 후 캡처했다. 이 캡처는 390×844·1280×900 일대일 증거를 대체하지 않는다.
 - 집중 검증: 학습 전체 화면 패널, 자료실 모바일/PC 검색 행, route registry·API 12개는 통과했다. 전체 반응형 검사는 구 명칭·구 셸을 기대하는 기존 테스트 19개가 남아 있고, 저장소 전체 analyze 기준선 오류와 함께 상용 준비 합격으로 처리하지 않는다.
+
+### 2026-09-10 공통 셸 수치 보정 후속 배포
+
+- 코드 커밋: `9f96e6f` (`fix(student): match desktop html shell spacing`), 정적 번들 커밋 `65debc3`.
+- 변경: PC 상단바 62px/좌우 22px, 레일 84/72px·58px 메뉴·중앙 정렬·6px 간격, 컨텍스트 18/22px 패딩, 홈 데스크톱 외곽 여백 18px을 HTML 최종 cascade에 맞췄다. 모바일 값은 기존 64px 상단바·66px 하단탭을 유지했다.
+- 대표 테스트: `student_density_responsive_test.dart` PC 셸, `group_detail_mobile_test.dart` 그룹 상세 PC 셸, route/drawer 테스트가 통과했다.
+- 후보 빌드: `public/main.dart.js` SHA-256 및 alias 응답 SHA-256 `6959BF20C0B5B5CE24E8607A9523E0422AEDB2081B511B558B63465496366EAB`; 번들 `localhost` 없음.
+- Vercel: [`dpl_B7vcZ5UKEvd4zDrSVc1yM4Rd5DoJ`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/B7vcZ5UKEvd4zDrSVc1yM4Rd5DoJ), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard) READY·연결 확인.
+- 라이브 API: `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON.
+- 이미지 비교: 동일한 1280×720 in-app 브라우저에서 기준 HTML과 alias를 각각 6초 대기 후 캡처했다. 레일 중앙 정렬과 상단/홈 좌측 여백은 일치하도록 보정됐고, 사용자 데이터가 빈 상태인 점은 데이터 변동으로 기록한다. 브라우저가 지정 390×844·1280×900 크기를 적용하지 않아 해당 증거는 별도로 `pending`이다.
+- 합격 경계: 86개 전체 장면 이미지, 인증 데이터, 실제 migration 적용, 200 동시 요청, 전체 반응형 19개 기존 실패 및 저장소 analyze 기준선 오류는 여전히 미검증이다. 이 배포도 상용 준비 완료가 아닌 후보로 기록한다.
