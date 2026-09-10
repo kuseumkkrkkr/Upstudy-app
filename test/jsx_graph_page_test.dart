@@ -174,6 +174,51 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('수식 입력은 280ms 뒤 최신 내용만 자동으로 좌표를 갱신한다', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    var callCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: JsxGraphPage(
+          embedEnabled: false,
+          sampleGraph: (_) async {
+            callCount += 1;
+            return {
+              'series': [
+                {
+                  'id': 'custom-0',
+                  'label': '함수 1',
+                  'color_hex': '#2F7CF6',
+                  'segments': [
+                    {
+                      'x_values': [0, 1],
+                      'y_values': [0, 1],
+                    },
+                  ],
+                },
+              ],
+            };
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = find.byKey(const ValueKey('mobile-math-expression-0'));
+    await tester.enterText(field, 'x');
+    await tester.pump(const Duration(milliseconds: 279));
+    expect(callCount, 0);
+    await tester.pump(const Duration(milliseconds: 2));
+    await tester.pump();
+
+    expect(callCount, 1);
+    expect(find.text('2개 좌표를 API에서 받았습니다.'), findsOneWidget);
+  });
+
   test('직접 그리기용 HTML은 내부 매개변수 슬라이더만 숨길 수 있다', () {
     // 필요한 변수는 빈 그래프 문서와 조작부 표시 옵션이다.
     // 작동 원리는 교재 기본 HTML은 슬라이더를 유지하고 직접 그리기 HTML만 display:none을 주입하는지 확인한다.

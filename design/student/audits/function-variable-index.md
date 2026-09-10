@@ -54,4 +54,10 @@
 | `_SignupPageState._agreed` · `bool` | 최종 가입 안내 동의 여부 | false, 화면 수명 | 확인 단계 체크박스, 제출 활성 조건 |
 | `_SignupPageState._passwordVisible`/`_passwordConfirmVisible` · `bool` | 각 비밀번호 표시 상태 | false, 화면 수명 | 보기/숨기기 버튼, 메모리 |
 | `_HomeStudyAction` · `enum` | 홈 학습 타일의 허용된 6개 dispatch 키 | `resume` 등 6개, 화면 수명 | `_handleStudyAction.fromId`, 영속화하지 않음 |
+| `_JsxGraphPageState._scheduleGraphApply` | 수식 입력을 280ms 디바운스하고 최신 요청만 그래프에 반영 | 없음 → `void` | 이전 타이머 취소, revision 불일치 응답 무시 |
+| `_JsxGraphPageState._applyCurrentDrafts` | 검증된 함수식을 `/graphs/sample`에 보내 좌표 시리즈를 갱신 | 선택 revision → `Future<void>` | 422 수식 오류와 네트워크 오류를 구분하고 마지막 정상 그래프 유지 |
+| `_JsxGraphPageState._buildMobileGraphLayout` | HTML 그래프의 보드·compact/expanded/collapsed 하단 트레이를 조합 | 제약·보드·편집기 → `Widget` | 트레이 높이와 애니메이션만 로컬 상태로 변경 |
 | `StudentFeatureFlags.servicesDemo/storeDemo` · `bool` | canary 데모 노출 여부 | build-time false, 번들 수명 | `--dart-define`, 메뉴·라우트·검색·페이지 |
+| `_JsxGraphPageState._sampleDebounce` · `Timer?` | 마지막 수식 입력 후 자동 갱신 예약 | null, 화면 수명 | `_scheduleGraphApply`, dispose에서 취소 |
+| `_JsxGraphPageState._sampleRevision` · `int` | 비동기 그래프 요청의 최신 순번 | 0, 화면 수명 | 입력·수동 갱신마다 증가, 오래된 응답 차단 |
+| `_JsxGraphPageState._mobileTrayState` · `_GraphTrayState` | 모바일 입력 트레이 접힘/기본/확장 상태 | `compact`, 화면 수명 | 트레이 손잡이 탭, 영속화하지 않음 |

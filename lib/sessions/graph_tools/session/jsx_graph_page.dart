@@ -28,6 +28,8 @@ const _kPalette = <Color>[
 typedef GraphSampleRequest =
     Future<Map<String, dynamic>> Function(Map<String, dynamic> payload);
 
+enum _GraphTrayState { collapsed, compact, expanded }
+
 class JsxGraphPage extends StatefulWidget {
   const JsxGraphPage({super.key, this.embedEnabled = true, this.sampleGraph});
 
@@ -59,6 +61,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   bool _sampling = false;
   int _beginnerType = 0;
   int? _activeMobileDraftId;
+  Timer? _sampleDebounce;
+  int _sampleRevision = 0;
+  _GraphTrayState _mobileTrayState = _GraphTrayState.compact;
 
   @override
   void initState() {
@@ -69,6 +74,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
 
   @override
   void dispose() {
+    _sampleDebounce?.cancel();
     for (final draft in _drafts) {
       draft.dispose();
     }
@@ -203,7 +209,20 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     });
   }
 
-  Future<void> _applyCurrentDrafts() async {
+  /// 수식 입력을 280ms 동안 기다렸다가 최신 내용만 서버에 보낸다.
+  /// 이전 요청이 늦게 도착해도 revision이 다르면 화면 상태를 덮어쓰지 않는다.
+  void _scheduleGraphApply() {
+    _sampleDebounce?.cancel();
+    final revision = ++_sampleRevision;
+    _sampleDebounce = Timer(const Duration(milliseconds: 280), () {
+      if (!mounted || revision != _sampleRevision) return;
+      unawaited(_applyCurrentDrafts(revision: revision));
+    });
+  }
+
+  Future<void> _applyCurrentDrafts({int? revision}) async {
+    _sampleDebounce?.cancel();
+    final requestRevision = revision ?? ++_sampleRevision;
     var hasError = false;
     for (final draft in _drafts) {
       if (draft.type != AiFlowGraphItemType.function) {
@@ -226,7 +245,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     }
 
     if (hasError) {
-      setState(() => _editorMessage = '검증된 형식으로 바꾼 뒤 다시 갱신하세요.');
+      if (mounted && requestRevision == _sampleRevision) {
+        setState(() => _editorMessage = '검증된 형식으로 바꾼 뒤 다시 갱신하세요.');
+      }
       return;
     }
     final functions = _drafts
@@ -236,9 +257,12 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         )
         .toList();
     if (functions.isEmpty) {
-      setState(() => _editorMessage = '표시할 함수식을 입력해 주세요.');
+      if (mounted && requestRevision == _sampleRevision) {
+        setState(() => _editorMessage = '표시할 함수식을 입력해 주세요.');
+      }
       return;
     }
+    if (!mounted || requestRevision != _sampleRevision) return;
     setState(() {
       _sampling = true;
       _editorMessage = null;
@@ -268,7 +292,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       if (sampled.isEmpty) {
         throw const FormatException('좌표 응답이 비어 있습니다.');
       }
-      if (!mounted) return;
+      if (!mounted || requestRevision != _sampleRevision) return;
       setState(() {
         _sampledItems
           ..clear()
@@ -276,14 +300,29 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         _editorMessage =
             '${sampled.fold<int>(0, (sum, item) => sum + (item.xValues?.length ?? 0))}개 좌표를 API에서 받았습니다.';
       });
-    } catch (_) {
-      if (!mounted) return;
+    } on ApiException catch (error) {
+      if (!mounted || requestRevision != _sampleRevision) return;
       setState(() {
-        _sampledItems.clear();
+        // 마지막으로 성공한 좌표는 유지해 일시적 입력/API 오류로 그래프가
+        // 사라지지 않게 한다. 422는 수식 오류, 나머지는 네트워크/서버 오류다.
+        _editorMessage = error.statusCode == 422
+            ? '수식을 확인해 주세요: ${error.message}'
+            : '그래프 좌표를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      });
+    } on FormatException catch (error) {
+      if (!mounted || requestRevision != _sampleRevision) return;
+      setState(() {
+        _editorMessage = '수식 응답을 읽지 못했습니다: ${error.message}';
+      });
+    } catch (_) {
+      if (!mounted || requestRevision != _sampleRevision) return;
+      setState(() {
         _editorMessage = '그래프 좌표를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.';
       });
     } finally {
-      if (mounted) setState(() => _sampling = false);
+      if (mounted && requestRevision == _sampleRevision) {
+        setState(() => _sampling = false);
+      }
     }
     unawaited(
       ActivityStore.recordGraphPractice(
@@ -418,17 +457,10 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                     );
 
                     if (mobileLayout) {
-                      return Column(
-                        children: [
-                          SizedBox(
-                            height: (constraints.maxHeight * .40)
-                                .clamp(250.0, 330.0)
-                                .toDouble(),
-                            child: graphPanel,
-                          ),
-                          const SizedBox(height: 12),
-                          Expanded(child: editorPanel),
-                        ],
+                      return _buildMobileGraphLayout(
+                        constraints: constraints,
+                        graphPanel: graphPanel,
+                        editorPanel: editorPanel,
                       );
                     }
 
@@ -461,6 +493,106 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           ],
         ),
       ),
+    );
+  }
+
+  /// HTML 그래프 도구의 모바일 보드·하단 트레이 구조를 유지한다.
+  /// compact를 기본으로 보여 주고 손잡이를 누르면 expanded/collapsed를
+  /// 순환시켜 작은 화면에서도 그래프와 입력을 모두 다시 볼 수 있다.
+  Widget _buildMobileGraphLayout({
+    required BoxConstraints constraints,
+    required Widget graphPanel,
+    required Widget editorPanel,
+  }) {
+    final trayHeight = switch (_mobileTrayState) {
+      _GraphTrayState.collapsed => 76.0,
+      _GraphTrayState.compact => (constraints.maxHeight * .42)
+          .clamp(310.0, 350.0)
+          .toDouble(),
+      _GraphTrayState.expanded => (constraints.maxHeight * .70)
+          .clamp(420.0, 590.0)
+          .toDouble(),
+    };
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          bottom: trayHeight - 18,
+          child: graphPanel,
+        ),
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 190),
+          curve: Curves.easeOutCubic,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: trayHeight,
+          child: Material(
+            color: _kSurface,
+            elevation: 8,
+            shadowColor: Colors.black26,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() {
+                    _mobileTrayState = switch (_mobileTrayState) {
+                      _GraphTrayState.collapsed => _GraphTrayState.compact,
+                      _GraphTrayState.compact => _GraphTrayState.expanded,
+                      _GraphTrayState.expanded => _GraphTrayState.collapsed,
+                    };
+                  }),
+                  child: SizedBox(
+                    height: 40,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: _kMuted,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          switch (_mobileTrayState) {
+                            _GraphTrayState.collapsed => '입력 트레이 열기',
+                            _GraphTrayState.compact => '입력 트레이',
+                            _GraphTrayState.expanded => '입력 트레이 닫기',
+                          },
+                          style: const TextStyle(
+                            color: _kMuted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_mobileTrayState == _GraphTrayState.collapsed)
+                  const Expanded(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Text(
+                        '수식을 입력해 그래프를 확인하세요.',
+                        style: TextStyle(color: _kMuted, fontSize: 11),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(child: editorPanel),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -552,23 +684,31 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   /// 작동 원리는 모든 화면 크기에서 JSXGraph를 유지하고, 모바일은 iframe 로드
   /// 완료 뒤 최신 수식을 다시 전달해 좌표평면과 수식 상태를 일치시키는 것이다.
   Widget _buildGraphPanel({required bool isLinux}) {
-    return _SurfaceCard(
-      padding: EdgeInsets.zero,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
+    final mobile = MediaQuery.sizeOf(context).width < 720;
+    final board = _catalogDialogOpen
+        ? const _GraphHiddenWhileDialogOpen()
+        : isLinux
+        ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
+        : widget.embedEnabled
+        ? buildJsxGraphEmbed(
+            _buildDocument(),
+            showParameterControls: false,
+            directManipulationMode: true,
+          )
+        : const _GraphEmbedDisabledForTesting();
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xFFEAEAED),
+        border: Border.fromBorderSide(BorderSide(color: _kBorder)),
+      ),
+      child: Padding(
+        padding: mobile ? EdgeInsets.zero : const EdgeInsets.all(12),
         child: DecoratedBox(
-          decoration: const BoxDecoration(color: Color(0xFFFAFAFB)),
-          child: _catalogDialogOpen
-              ? const _GraphHiddenWhileDialogOpen()
-              : isLinux
-              ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
-              : widget.embedEnabled
-              ? buildJsxGraphEmbed(
-                  _buildDocument(),
-                  showParameterControls: false,
-                  directManipulationMode: true,
-                )
-              : const _GraphEmbedDisabledForTesting(),
+          decoration: const BoxDecoration(
+            color: Color(0xFFFAFAFB),
+            border: Border.fromBorderSide(BorderSide(color: _kBorder)),
+          ),
+          child: board,
         ),
       ),
     );
@@ -644,6 +784,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
               setState(() {
                 parameter.value = value;
               });
+              _scheduleGraphApply();
             },
           ),
           const SizedBox(height: 10),
@@ -1018,8 +1159,8 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
           setState(() {
             draft.errorText = null;
             _editorMessage = null;
-            _sampledItems.clear();
           });
+          _scheduleGraphApply();
         },
         onToggle: () {
           setState(() {

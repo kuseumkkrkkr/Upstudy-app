@@ -341,7 +341,12 @@ Future<void> _showStudentUtilityPanel({
       barrierColor: Colors.black.withValues(alpha: .28),
       transitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (context, animation, secondaryAnimation) {
-        final width = MediaQuery.sizeOf(context).width;
+        final screenWidth = MediaQuery.sizeOf(context).width;
+        // The HTML notification sheet leaves a 56px reveal margin on narrow
+        // screens; desktop keeps the fixed 390px context panel.
+        final width = screenWidth <= StudentDensityTokens.mobileBreakpoint
+            ? (screenWidth - 56).clamp(280.0, 360.0).toDouble()
+            : 390.0;
         return Align(
           alignment: Alignment.centerRight,
           child: SizedBox(
