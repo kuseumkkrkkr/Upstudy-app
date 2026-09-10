@@ -653,3 +653,10 @@
 - 소스 커밋 `5021524`, 번들 커밋 `e819357`; `public/main.dart.js`와 alias 원시 응답 SHA-256은 `4924B2FB0E7769435B638CE3303C473347B3B8BC0BC16427E50B20CD65362A9D`로 일치한다.
 - Vercel 배포 `dpl_4t9ZHzPZVyY44AN8iFvuVZkMVS8d`, 고유 URL [`aiflow-web-canary-2jsvj9knx-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-2jsvj9knx-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/social) READY, `/health` 200.
 - 검증: `friend_request_mobile_test.dart`의 1280px 프로필 다이얼로그 집중 테스트 통과. 인증 세션·실제 친구/대화 데이터, 전체 86개 장면·접근성·DB 동시성 및 상용 완료 조건은 `pending`이다.
+
+### 2026-09-11 소셜 모바일 뒤로가기 보정 배포
+
+- 모바일 소셜 셸에도 HTML 기준 뒤로가기와 학생 홈 복귀 목적지를 적용했다. 친구 탭 검색, 요청, 수락, 프로필·쪽지 연결은 기존 동작을 유지했다.
+- 소스 커밋 `15e080c`, 번들 커밋 `cfc13b0`; `public/main.dart.js`와 alias 원시 응답 SHA-256은 `3738A16582792EF91E07F4D8D40BA264408382C1C3E65FA44D97DD5D8BC74CC8`로 일치한다.
+- Vercel 배포 `dpl_3QaYBUEKMvqsmTfmYzYXtF26aXZ9`, 고유 URL [`aiflow-web-canary-cb6gtjq2k-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-cb6gtjq2k-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/social) READY. `/health` 200.
+- 브라우저 모바일 화면에서 `함께 공부`·뒤로가기·대화/친구/그룹 탭·최근 대화 빈 상태·하단 더보기 활성 상태를 확인했다. 인증된 친구/메시지 데이터와 전체 86개 검증은 `pending`이다.
