@@ -11,6 +11,7 @@
 | `StudentRouteSpec.shell/activeNav` | HTML 셸 종류와 활성 내비게이션 영역을 화면 ID에서 계산 | 없음 → `StudentShellKind`/`StudentNavSection` | registry 한 곳에서만 분류해 화면별 셸 복제를 막음 |
 | `StudentRouteRegistry.searchable` | HTML QUICK FIND 31개 목적지를 레지스트리에서 제공 | 없음 → `Iterable<StudentRouteSpec>` | 데모 전용 항목은 기능 플래그로 필터 |
 | `_StudentQuickSearchSheetState._open` | 검색 시트를 닫고 등록 목적지로 이동 | 검색 record → 없음 | 루트 Navigator 이동, 잘못된 목적지는 라우터가 처리 |
+| `_StudentQuickSearchSheetState._routeForSearchDestination` | 검색 목적지의 기본 라우트와 홈 내부 장면 딥링크를 변환 | 검색 record → `String` | `today-tasks`·`rating-detail`·`achievements`만 `?scene=`을 붙이고 나머지는 registry 라우트를 그대로 사용 |
 | `StudentServicesDemoStore.restore` | 사용자별 데모 문의 상태를 로컬 저장소에서 복구 | 없음 → `Future<void>` | 손상된 데모 JSON은 무시하고 실제 서버 데이터는 변경하지 않음 |
 | `StudentServicesDemoStore.add/cancel` | 데모 문의 추가·취소와 영속 저장 | `DemoServiceRequest` → 없음 | `aiflow.student.services.demo.v1` 키로 비동기 저장 |
 | `_SchoolExamPrepPageState._loadPlan` | 실제 수학 내신 계획·task ID·버전을 조회 | 없음 → `Future<void>` | 로딩/오류/빈 상태를 분리하고 재시도 제공 |
