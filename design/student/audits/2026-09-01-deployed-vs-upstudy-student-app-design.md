@@ -330,3 +330,14 @@
 - 배포: [`dpl_Bg27aE26pt3TCD3Jijyxb96dmXbo`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/Bg27aE26pt3TCD3Jijyxb96dmXbo), alias READY.
 - 번들 SHA-256: `73022030A57EE39374591D35E1C2BFD24893D6F5CA679FB4F4A1034BF387418B` (로컬·alias 응답 일치).
 - 검증: route registry 86개, drawer navigation 10개, API 12개, 아레나 overflow·세션 분기 테스트 통과. 전체 시각/장면 원장, 인증 계정, 실제 DB migration 적용·200 동시 요청은 아직 `pending`이다.
+
+### 2026-09-10 학습 패널·자료실 반응형 후속 배포
+
+- 코드 커밋: `89d1725` (`fix(student): match full-screen study panel and market controls`), 정적 번들 커밋 `84e050f`.
+- 변경: 모바일 학습 메뉴를 HTML 기준 전체 화면 패널(하단 `닫기` 포함)로 전환하고, 자료실 검색·상세 필터·자료 유형 탭을 모바일 세로/PC 한 줄 구조로 분기했다. 검색·필터 부모에는 `market-mobile-search-panel`, `market-desktop-search-panel`, `market-mobile-filters`, `market-desktop-filters` 고정 키를 두었다.
+- 라우팅 검증: `today-tasks`, `rating-detail`, `achievements` 대시보드 장면 딥링크가 `?scene=`를 보존하는 테스트를 추가하고 통과했다.
+- 후보 빌드: Flutter Web release 빌드 성공. `public/main.dart.js` SHA-256 및 alias 응답 SHA-256은 `91B0D96A444573B662BE3ACF3D00ADD31D5EA0563D26C780FDD02B30DAA57820`이다. 번들 `localhost` 문자열은 확인되지 않았다.
+- Vercel: [`dpl_6h8WybByhyWhRCrGaGBR8SwbWUVG`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/6h8WybByhyWhRCrGaGBR8SwbWUVG), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard) READY·연결 확인.
+- 라이브 API: `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 각각 401 JSON.
+- 브라우저: 고정 in-app 브라우저 뷰포트(1280×720)에서 새 alias 홈의 A 레일·메인 코스/학습 동작·대시보드·우측 컨텍스트 셸을 6초 대기 후 캡처했다. 이 캡처는 390×844·1280×900 일대일 증거를 대체하지 않는다.
+- 집중 검증: 학습 전체 화면 패널, 자료실 모바일/PC 검색 행, route registry·API 12개는 통과했다. 전체 반응형 검사는 구 명칭·구 셸을 기대하는 기존 테스트 19개가 남아 있고, 저장소 전체 analyze 기준선 오류와 함께 상용 준비 합격으로 처리하지 않는다.
