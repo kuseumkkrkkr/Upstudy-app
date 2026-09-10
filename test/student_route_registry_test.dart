@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:s11/app/router.dart';
@@ -22,6 +25,25 @@ void main() {
       StudentRouteRegistry.byId('book-reader')?.destination.screenId,
       'book-reader',
     );
+  });
+
+  test('audit manifest and typed registry contain the same screen IDs', () {
+    final manifest =
+        jsonDecode(
+              File(
+                'design/student/audits/student-parity.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final manifestIds = (manifest['screens'] as List<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .map((screen) => screen['id'] as String)
+        .toSet();
+    final registryIds = StudentRouteRegistry.all.map((spec) => spec.id).toSet();
+
+    expect(manifest['screenCount'], registryIds.length);
+    expect(manifestIds, registryIds);
+    expect(StudentRouteRegistry.searchable, hasLength(31));
   });
 
   test('dashboard scene links resolve without losing the requested scene', () {

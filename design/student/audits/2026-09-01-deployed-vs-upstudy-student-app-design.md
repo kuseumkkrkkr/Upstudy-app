@@ -363,3 +363,4 @@
 - 라이브 경계: `/health` 200, 인증 없는 `/demo/student-store` 및 `/student/school-exam-plan/active` 401 JSON을 확인했다. 고정 in-app 브라우저 1280×720에서 기준 HTML과 alias 홈을 각각 6초 대기 후 캡처해 레일 중앙 정렬·상단/본문 여백을 재확인했다. 실제 사용자 11111 및 빈 학습 데이터는 HTML fixture와 다른 동적 데이터로 기록한다.
 - 잔여: 86개 화면의 모든 장면·동작 이미지 원장, 인증된 실제 데이터, DB migration 적용, 200 동시성, 전체 접근성·반응형 검사와 저장소 기준선 analyze 오류는 아직 미검증이다. 따라서 이번 배포 역시 상용 준비 완료가 아닌 후보다.
 - 후속 테스트 정정: `de1065e`에서 HTML 최종 cascade의 PC 상단바 62px에 맞춰 `marketplace_page_test.dart`의 데스크톱 기대값을 64→62로 정정했다. 모바일 64px 기대값은 유지했으며, 구 명칭·구 셸을 전제로 한 나머지 반응형 실패는 임의로 완화하지 않았다.
+- 원장 무결성 검사: `student_route_registry_test.dart`가 감사 JSON의 `screenCount`·ID 집합·QUICK FIND 31개와 typed registry를 직접 대조한다. 문서만 갱신되거나 코드만 갱신되는 분리 상태를 테스트에서 검출한다.
