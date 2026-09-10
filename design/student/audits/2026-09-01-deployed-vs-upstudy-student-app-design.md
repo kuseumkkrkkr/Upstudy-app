@@ -1033,3 +1033,7 @@
 - 로컬·canary `main.dart.js` SHA-256은 모두 `9B8FD68B0CFFE19011C10C4B873CBB7585F77A524835E27EE03592843683E6D5`이다.
 - Vercel 배포 `dpl_7uMJodVUPkAxqWX2DCcjTRTmSdWv`, 고유 URL [`aiflow-web-canary-nf6m96tcp-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-nf6m96tcp-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+### 2026-09-11 자료실 레거시 기대값 판정
+
+- `student_density_responsive_test.dart`의 자료실 검사는 `COMMUNITY`를 기대하지만, 현재 HTML `marketplace` 기준 kicker는 `MATERIAL LIBRARY`다.
+- 해당 실패는 제품 코드에 임의 문구를 추가해 해소하지 않고 레거시 테스트 기대값 차이로 분류했다. 자료실의 실제 검색·필터·미리보기 동작 검수는 별도 기준으로 계속 진행한다.
