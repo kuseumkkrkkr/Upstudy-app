@@ -35,4 +35,5 @@
 | `_SchoolExamPrepPageState._version` · `int` | 내신 계획 optimistic 버전 | 0, 서버 응답으로 갱신 | `_loadPlan`, 설정 저장·task PATCH |
 | `_StudentStoreDemoPageState._idempotencyKeys` · `Map<String,String>` | 상품별 재시도 키 | 빈 map, 주문 완료까지 | `_redeem`, 메모리; 서버 주문 원장과 대응 |
 | `_StudentStoreDemoPageState._redeeming` · `Set<String>` | 진행 중 상품 잠금 | 빈 set, 요청 수명 | `_redeem` 시작/finally |
+| `_LoginPageState._canSubmit` · `bool` | 두 로그인 필드가 입력되어 기본 제출이 가능한지 나타냄 | false, 화면 수명 | 아이디·비밀번호 `onChanged`에서 재계산, 메모리 |
 | `StudentFeatureFlags.servicesDemo/storeDemo` · `bool` | canary 데모 노출 여부 | build-time false, 번들 수명 | `--dart-define`, 메뉴·라우트·검색·페이지 |
