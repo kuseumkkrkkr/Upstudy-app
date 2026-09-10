@@ -500,6 +500,8 @@ class _ProfilePageState extends State<ProfilePage> {
       title: '프로필',
       activeRoute: '/student/dashboard',
       railWidth: 76,
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).maybePop(),
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: Container(
@@ -2123,6 +2125,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildMobileProfileState({required Widget child}) => StudentHtmlShell(
     title: '프로필',
     activeRoute: '/student/dashboard',
+    mobileBackButton: true,
+    onMenu: () => Navigator.of(context).maybePop(),
     child: child,
     onSearch: () => showStudentQuickSearch(context),
     onNotifications: () => showStudentNotifications(context),
@@ -2133,6 +2137,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildDesktopProfileState({required Widget child}) => StudentHtmlShell(
     title: '프로필',
     activeRoute: '/student/dashboard',
+    mobileBackButton: true,
+    onMenu: () => Navigator.of(context).maybePop(),
     child: child,
     onSearch: () => showStudentQuickSearch(context),
     onNotifications: () => showStudentNotifications(context),
