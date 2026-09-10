@@ -140,15 +140,17 @@ class StudentHtmlTopBar extends StatelessWidget {
             '알림' => 'student-notifications-action',
             _ => 'student-action-$label',
           }),
-          width: 38,
-          height: 38,
+          width: 44,
+          height: 44,
           child: OutlinedButton(
             onPressed: onTap,
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.zero,
               foregroundColor: StudentDensityTokens.ink,
               side: const BorderSide(color: StudentDensityTokens.line),
-              shape: const CircleBorder(),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
             ),
             child: Icon(icon, size: 19),
           ),
@@ -161,7 +163,7 @@ class StudentHtmlTopBar extends StatelessWidget {
     final menuLabel = mobile && mobileBackButton ? '뒤로가기' : '학생 메뉴';
     return Container(
       height: topBarHeight,
-      color: StudentDensityTokens.surface,
+      color: StudentDensityTokens.surfaceMuted,
       padding: EdgeInsets.symmetric(horizontal: mobile ? 10 : 22),
       child: Row(
         children: [
