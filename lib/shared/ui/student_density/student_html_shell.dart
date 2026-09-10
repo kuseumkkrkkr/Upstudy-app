@@ -291,7 +291,15 @@ class StudentHtmlRail extends StatelessWidget {
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            color: StudentDensityTokens.dark,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(3),
+                bottomRight: Radius.circular(10),
+                bottomLeft: Radius.circular(3),
+              ),
+            ),
             child: const Text(
               'A',
               style: TextStyle(
@@ -336,7 +344,10 @@ class StudentHtmlRail extends StatelessWidget {
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            color: StudentDensityTokens.dark,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white),
+              shape: BoxShape.circle,
+            ),
             child: const Text(
               '학',
               style: TextStyle(
