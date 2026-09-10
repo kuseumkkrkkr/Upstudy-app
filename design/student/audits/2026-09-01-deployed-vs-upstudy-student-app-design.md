@@ -555,3 +555,13 @@
 - 코드 검증: 그래프 위젯·홈 학습/알림·코스 반응형 집중 테스트, Vercel route contract 2개 통과. 홈 6개 타일과 알림 패널 기하(390×844 기준 334×844)를 테스트로 고정했다.
 - 과거 친구 검색/요청 실패 기록은 현재 `tests/test_vercel_social.py` 재실행에서 6개 모두 통과(경고 13개)로 갱신됐다. 이는 테스트용 KV 모사 결과이며 운영 Supabase·실제 계정 쓰기 성공을 대신하지 않는다.
 - 브라우저에서 인증 세션을 발급할 수 없는 현재 canary(`OMJ_JWT_SECRET` 미설정) 상태이므로 live 홈 타일·알림 실제 클릭과 사용자별 active-course 복원은 재현하지 못했다. 86개 전체 장면 이미지, 실제 인증 데이터·DB migration·200 동시성·접근성 및 상용 준비 판정은 `pending`이다.
+
+### 2026-09-10 튜토리얼 진행률 레이아웃 최종 보정 및 canary 반영
+
+- `StudentTutorialPage`의 HTML 하단 진행률 구조를 재검수했다. 데스크톱은 좌우 CTA 사이 중앙 240px 진행 영역, 모바일은 64px 이전 영역·1:1.4 진행/다음 그리드로 맞췄고, 막대와 `1 / 5` 표시는 가로로 배치했다.
+- 코드·정적 번들 커밋 `2bcd8f5`를 `origin/hotfix`에 푸시하고, 지정 build-time 값(`API_BASE_URL`, `STUDENT_SERVICES_DEMO`, `STUDENT_STORE_DEMO`)으로 release web을 다시 빌드했다.
+- `public/main.dart.js` SHA-256 및 production alias 원시 응답 SHA-256: `6E1EA3C056A27E43A709927A6F035CC24C42E2490FBABAAC6D1696955C80BB48`.
+- Vercel 배포 `dpl_8XBG8uQJbQqdnUSRUtsAHVfpvK9d`, 고유 URL [`aiflow-web-canary-qc8tva4fg-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-qc8tva4fg-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/landing/about) READY. `vercel inspect`로 alias와 배포 ID를 확인했다.
+- 동일 Playwright Chromium 조건(DPR 1, 5초 대기)으로 기준 HTML과 alias의 `390×844`, `1280×900` 튜토리얼을 다시 캡처했다. 증거: `evidence/2026-09-01-deployed-vs-design/design-tutorial-390x844.png`, `design-tutorial-1280x900.png`, `deployed-tutorial-390x844.png`, `deployed-tutorial-1280x900.png`.
+- 캡처에서 셸·단계 레일/탭·본문 순서·카드 크기·footer 그리드가 일치함을 확인했다. 글꼴/아이콘 렌더러 차이와 데스크톱 본문 카드의 약 4px 위치 차이는 P3 시각 잔여로 기록하며, 전체 86개 화면의 합격 근거로 확대하지 않는다.
+- 라이브 경계: `/health` 200, `/health/ready` 404(제품 readiness 엔드포인트 미노출), `/graphs/sample` GET 405, 인증 없는 `/demo/student-store`와 `/student/school-exam-plan/active` 각각 401. 현재 canary의 `OMJ_JWT_SECRET` 미설정으로 인증된 사용자 여정은 계속 `pending`이다.
