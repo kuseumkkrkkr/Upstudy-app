@@ -312,7 +312,7 @@ class _StudentServicesDemoPageState extends State<StudentServicesDemoPage> {
     return StudentHtmlShell(
       title: '$noun 찾기',
       activeRoute: '/student-services/${widget.kind.name}',
-      showContextAside: true,
+      showContextAside: false,
       onNotifications: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => const StudentServiceRequestsPage(),
@@ -444,7 +444,7 @@ class StudentServiceProfilePage extends StatelessWidget {
     return StudentHtmlShell(
       title: academy ? '학원 소개' : '선생님 소개',
       activeRoute: '/student-services/${kind.name}/profile',
-      showContextAside: true,
+      showContextAside: false,
       onMenu: () => Navigator.of(context).maybePop(),
       child: StudentDensityPage(
         padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
@@ -579,7 +579,7 @@ class _StudentServiceRequestsPageState
     return StudentHtmlShell(
       title: '샘플 문의 내역',
       activeRoute: '/student-services/requests',
-      showContextAside: true,
+      showContextAside: false,
       onMenu: () => Navigator.of(context).maybePop(),
       child: StudentDensityPage(
         padding: const EdgeInsets.all(14),
@@ -857,7 +857,7 @@ class _SchoolExamPrepPageState extends State<SchoolExamPrepPage> {
     return StudentHtmlShell(
       title: '내신 대비',
       activeRoute: '/school-exam-prep',
-      showContextAside: true,
+      showContextAside: false,
       onNotifications: _editSettings,
       child: Column(
         children: [
@@ -1481,7 +1481,7 @@ class _StudentStoreDemoPageState extends State<StudentStoreDemoPage> {
     return StudentHtmlShell(
       title: '마켓플레이스',
       activeRoute: '/marketplace',
-      showContextAside: true,
+      showContextAside: false,
       child: StudentDensityPage(
         padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
         child: ListView(
