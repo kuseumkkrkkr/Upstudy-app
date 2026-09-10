@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 HTML 레일 브랜드·아바타 반영
+
+- 데스크톱 레일의 브랜드 마크를 HTML 비대칭 테두리, 하단 학생 식별자를 원형 아바타로 맞췄다.
+- 소스·번들 커밋 `c1bd4e1`, 번들 SHA-256 `D8B53FDA0E89DD32F239F7B43804F403C72133634BCC8AB0264E421F6AAA8DAD`.
+- 공통 셸 정적 분석과 `secondary_route_shell_test.dart`, `mobile_secondary_shell_test.dart`를 통과했다.
+- Vercel 고유 URL [`aiflow-web-canary-pr373reov-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-pr373reov-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. alias 번들 해시가 로컬과 일치하고 `/health`가 200이다.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 홈 학습 동작 시트 HTML 구조 반영
 
 - 홈 학습 동작 모바일 시트를 HTML `home-dashboard-sheet` 기준으로 흰 표면·직각 구조·최대 650px·2열 72px 동작 행으로 조정했다.
