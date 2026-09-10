@@ -605,3 +605,10 @@
 - 기준 HTML의 코스 화면 상단은 `뒤로가기 + 나의 코스 + 검색 + 알림`이다. `CourseCatalogPage`의 제목과 모바일 뒤로가기 아이콘을 이 순서로 맞추고, 뒤로가기는 `/student/dashboard` 명명 라우트로 복귀하게 했다.
 - 코스 상단 검색은 코스 전용 마켓 이동을 사용하지 않고 공통 기능 검색 시트를 연다. `새 코스 찾기` 본문 CTA만 기존 `/marketplace`로 이동한다.
 - 코스 API가 401/오류를 반환할 때는 기존 오류·재시도 상태를 유지하며 샘플 코스를 삽입하지 않는다. 관련 셸 테스트가 통과했다.
+
+### 2026-09-11 레벨·코스 셸 후보 배포
+
+- 소스 커밋 `23ce8fd`, 정적 번들 커밋 `8d70d97`을 현재 canary에 반영했다. `public/main.dart.js`와 alias 원시 응답 SHA-256은 `E215E64CCE5CF2C8DF51180796B9A7ACFAACEF69B15B495C119B050D96863092`로 일치한다.
+- Vercel 배포 `dpl_2FF21EJp5GUM1cK2eRWaCuJnJemF`, 고유 URL [`aiflow-web-canary-pmvc09kxc-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-pmvc09kxc-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/level_test) READY. `/health` 200, `/graphs/sample` GET 405, 인증 없는 `/demo/student-store` 401을 확인했다.
+- 이미지 증거: 레벨 홈과 코스 화면의 기준 HTML/배포판을 390×844·1280×900으로 캡처했다. 레벨 셸·뒤로가기·메타·CTA 구조는 일치한다. 코스는 인증 없는 라이브에서 실제 코스 목록 대신 오류·재시도를 표시하며, 이는 샘플 데이터 삽입 금지 계약에 따른 허용 데이터 상태 차이다. 이미지 파일은 `evidence/2026-09-01-deployed-vs-design/*2026-09-11.png`에 있다.
+- 이 배포는 레벨·코스 셸 묶음만 검증한 후보다. 인증 세션 발급 불가(`OMJ_JWT_SECRET` 미설정), 실제 코스/레벨 결과 데이터, 86개 전체 장면, 전체 analyze/API·DB·동시성·접근성은 여전히 `pending`이다.
