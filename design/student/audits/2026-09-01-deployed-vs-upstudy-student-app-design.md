@@ -720,6 +720,14 @@
 - Vercel 배포 `dpl_2KJq56bPeJvBbE5Y9cLfownAz4Fe`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 실제 교재 API·인증 세션·생성 저장 결과의 live 검증은 Production 환경변수 부재로 `pending`이다.
 
+### 2026-09-11 교재 생성 화면 인코딩 복구
+
+- 교재 생성·편집 Dart 파일의 CP949 인코딩을 UTF-8로 변환해 배포 브라우저의 `����` 표시를 한글로 복구했다.
+- 배포 브라우저에서 `교재 만들기`, `생성 방식 선택`, `AI 집필`, `직접 집필` 렌더링을 확인했다.
+- 소스·번들 커밋 `75e8c70`; 로컬·canary `main.dart.js` SHA-256 `FA65C4C1AC291D10B9AEBD94A0E1DAFD24797A954A1BB961D02201E10D89EC35` 일치.
+- Vercel 배포 `dpl_B4eDa62sZs7Ni1NgbW1m5t7SysGj`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 실제 교재 저장 API·인증 세션·DB readiness는 Production 환경변수 부재로 `pending`이다.
+
 ### 2026-09-11 제품 readiness 경계 확인
 
 - canary `/health`는 `200 {"status":"ok","service":"aiflow-ocr-queue"}`를 반환했다.
