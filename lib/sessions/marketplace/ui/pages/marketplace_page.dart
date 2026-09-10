@@ -635,57 +635,69 @@ class _HtmlDesktopMarketplaceBody extends StatelessWidget {
     const tabs = ['전체', '코스', '시험지', '문제세트'];
     return Column(
       children: [
-        const SizedBox(height: 48),
-        Row(
-          children: [
-            const Icon(Icons.search, size: 18),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-                onSubmitted: (_) => onSearch(),
-                decoration: const InputDecoration(
-                  hintText: '자료명·과목·태그 검색',
-                  border: InputBorder.none,
-                  isDense: true,
-                ),
-              ),
-            ),
-            TextButton.icon(
-              onPressed: onOpenFilter,
-              icon: const Icon(Icons.tune, size: 16),
-              label: const Text('필터'),
-            ),
-          ],
-        ),
-        const Divider(height: 20),
-        Row(
-          children: [
-            for (final tab in tabs)
-              Expanded(
-                child: InkWell(
-                  onTap: () => onSelected(tab),
-                  child: Container(
-                    height: 50,
-                    alignment: Alignment.center,
-                    color: selected == tab
-                        ? const Color(0xFF09090B)
-                        : Colors.white,
-                    child: Text(
-                      tab,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: selected == tab
-                            ? Colors.white
-                            : const Color(0xFF71717A),
+        KeyedSubtree(
+          key: const ValueKey('market-desktop-search-panel'),
+          child: Column(
+            children: [
+              const SizedBox(height: 48),
+              Row(
+                children: [
+                  const Icon(Icons.search, size: 18),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('market-search-field'),
+                      controller: controller,
+                      focusNode: focusNode,
+                      onSubmitted: (_) => onSearch(),
+                      decoration: const InputDecoration(
+                        hintText: '자료명·과목·태그 검색',
+                        border: InputBorder.none,
+                        isDense: true,
                       ),
                     ),
                   ),
-                ),
+                  TextButton.icon(
+                    onPressed: onOpenFilter,
+                    icon: const Icon(Icons.tune, size: 16),
+                    label: const Text('필터'),
+                  ),
+                  const SizedBox(width: 52),
+                  KeyedSubtree(
+                    key: const ValueKey('market-desktop-filters'),
+                    child: SizedBox(width: 0, height: 0),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final tab in tabs)
+                        InkWell(
+                          onTap: () => onSelected(tab),
+                          child: Container(
+                            height: 50,
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            alignment: Alignment.center,
+                            color: selected == tab
+                                ? const Color(0xFF09090B)
+                                : Colors.white,
+                            child: Text(
+                              tab,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: selected == tab
+                                    ? Colors.white
+                                    : const Color(0xFF71717A),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 18),
         const Divider(height: 1),
@@ -1541,9 +1553,8 @@ class _FilterGroup extends StatelessWidget {
                     child: _MarketFilterOption(
                       label: value,
                       selected: selected == value,
-                      onTap: () => onSelected(
-                        selected == value ? values.first : value,
-                      ),
+                      onTap: () =>
+                          onSelected(selected == value ? values.first : value),
                     ),
                   ),
               ],
