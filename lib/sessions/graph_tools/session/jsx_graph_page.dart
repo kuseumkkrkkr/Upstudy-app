@@ -2043,13 +2043,9 @@ class _ExplorerEmpty extends StatelessWidget {
 }
 
 class _SurfaceCard extends StatelessWidget {
-  const _SurfaceCard({
-    required this.child,
-    this.padding = const EdgeInsets.all(18),
-  });
+  const _SurfaceCard({required this.child});
 
   final Widget child;
-  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
@@ -2059,7 +2055,7 @@ class _SurfaceCard extends StatelessWidget {
         borderRadius: BorderRadius.zero,
         border: Border.all(color: _kBorder),
       ),
-      child: Padding(padding: padding, child: child),
+      child: Padding(padding: const EdgeInsets.all(18), child: child),
     );
   }
 }

@@ -562,7 +562,7 @@ void main() {
     expect(find.text('확인'), findsOneWidget);
   });
 
-  testWidgets('500px 일정은 HTML 주간 타임라인과 월간 전환을 유지한다', (tester) async {
+  testWidgets('500px 일정은 HTML 월간 캘린더와 일간 전환을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -586,11 +586,11 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('JULY 2026'), findsOneWidget);
-    expect(find.text('교재 3장 읽기'), findsOneWidget);
-    await tester.tap(find.text('월간'));
-    await tester.pump();
     expect(find.text('July 2026'), findsOneWidget);
+    expect(find.text('교재 3장 읽기'), findsOneWidget);
+    await tester.tap(find.text('일간'));
+    await tester.pump();
+    expect(find.text('오늘 일정'), findsOneWidget);
   });
 
   testWidgets('500px 그룹 허브와 상세는 탐색·채팅 상호작을 유지한다', (tester) async {

@@ -32,7 +32,8 @@ class _SchedulePageState extends State<SchedulePage> {
   List<Map<String, dynamic>> _schedule = const [];
   List<StudentScheduleTask> _personalTasks = const [];
   bool _savingPersonalTask = false;
-  bool _daily = true;
+  // HTML 기준 일정 화면은 월간 캘린더를 첫 화면으로 보여준다.
+  bool _daily = false;
   late DateTime _selectedDate;
 
   /// 필요한 변수는 선택 날짜와 선택적 초기 일정이다.

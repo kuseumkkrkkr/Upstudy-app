@@ -585,7 +585,6 @@ class _ArenaMobileEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final waitSeconds = (data['estimated_wait_seconds'] as num? ?? 0).round();
     final comingSoon = data['coming_soon'] == true;
     return Container(
       key: const ValueKey('arena-mobile-entry-card'),
