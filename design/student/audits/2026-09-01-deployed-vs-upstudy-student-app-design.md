@@ -760,6 +760,12 @@
 - `flutter test --no-pub test/student_route_registry_test.dart test/bookbag_interaction_contract_test.dart`: 8개 통과.
 - 이 결과는 학생 route·책가방·데모 API 계약만 확인하며, 86개 화면의 시각 일치나 전체 서버 무결성·동시성 게이트를 통과했다는 의미는 아니다.
 
+### 2026-09-11 홈 이미지 비교의 인증 상태 경계
+
+- 기존 `design-home-1280x900.png`는 인증된 학생 홈(현재 코스·대시보드)이고, `deployed-home-1280x900.png`는 인증되지 않은 랜딩 화면으로 확인됐다.
+- 두 이미지는 동일 장면·동일 인증 상태가 아니므로 색상·레이아웃 차이의 합격 근거로 사용하지 않는다.
+- 인증 세션을 확보한 뒤 동일 사용자 상태·동일 viewport로 홈 이미지를 다시 캡처해야 한다. 현재 홈 시각 검수는 `pending`이다.
+
 ### 2026-09-11 코스 선택 장면 정정
 
 - HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
