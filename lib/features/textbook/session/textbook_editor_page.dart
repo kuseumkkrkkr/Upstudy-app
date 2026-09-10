@@ -11,7 +11,7 @@ class TextbookCreationPage extends StatelessWidget {
     const primary = Color(0xFF1B402B);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('±³Àç ¸¸µé±â'),
+        title: const Text('êµì¬ ë§Œë“¤ê¸°'),
         backgroundColor: Colors.white,
         foregroundColor: primary,
         elevation: 0.5,
@@ -22,27 +22,27 @@ class TextbookCreationPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '»ı¼º ¹æ½Ä ¼±ÅÃ',
+              'ìƒì„± ë°©ì‹ ì„ íƒ',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 16),
             _CreationCard(
               icon: Icons.auto_awesome,
-              title: 'AI ÁıÇÊ',
-              subtitle: 'AI°¡ ´ëÁ¦¸ñ/¼ÒÁÖÁ¦¸¦ ±¸¼ºÇÕ´Ï´Ù',
+              title: 'AI ì§‘í•„',
+              subtitle: 'AIê°€ ëŒ€ì œëª©/ì†Œì£¼ì œë¥¼ êµ¬ì„±í•©ë‹ˆë‹¤',
               trailing: const Icon(Icons.lock_outline),
               enabled: false,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('AI ÁıÇÊÀº ÁØºñÁßÀÔ´Ï´Ù.')),
+                  const SnackBar(content: Text('AI ì§‘í•„ì€ ì¤€ë¹„ì¤‘ì…ë‹ˆë‹¤.')),
                 );
               },
             ),
             const SizedBox(height: 12),
             _CreationCard(
               icon: Icons.edit,
-              title: 'Á÷Á¢ ÁıÇÊ',
-              subtitle: '´ëÁ¦¸ñ/¼ÒÁÖÁ¦¿Í ³»¿ëÀ» Á÷Á¢ ÀÛ¼ºÇÕ´Ï´Ù',
+              title: 'ì§ì ‘ ì§‘í•„',
+              subtitle: 'ëŒ€ì œëª©/ì†Œì£¼ì œì™€ ë‚´ìš©ì„ ì§ì ‘ ì‘ì„±í•©ë‹ˆë‹¤',
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               enabled: true,
               onTap: () {
@@ -55,7 +55,7 @@ class TextbookCreationPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'AI ÁıÇÊÀº ÃßÈÄ È°¼ºÈ­ ¿¹Á¤ÀÔ´Ï´Ù.',
+              'AI ì§‘í•„ì€ ì¶”í›„ í™œì„±í™” ì˜ˆì •ì…ë‹ˆë‹¤.',
               style: TextStyle(color: Colors.black54),
             ),
           ],
@@ -210,7 +210,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('±³Àç Á¦¸ñÀ» ÀÔ·ÂÇØÁÖ¼¼¿ä.')),
+        const SnackBar(content: Text('êµì¬ ì œëª©ì„ ì…ë ¥í•´ì£¼ì„¸ìš”.')),
       );
       return;
     }
@@ -220,7 +220,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
     for (var i = 0; i < _chapters.length; i++) {
       final draft = _chapters[i];
       final chapterTitle = draft.title.trim().isEmpty
-          ? '´ëÁ¦¸ñ ${i + 1}'
+          ? 'ëŒ€ì œëª© ${i + 1}'
           : draft.title.trim();
       final intro = draft.intro
           .map((entry) => entry.trim())
@@ -230,7 +230,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
       for (var j = 0; j < draft.sections.length; j++) {
         final section = draft.sections[j];
         final sectionTitle = section.title.trim().isEmpty
-            ? '¼ÒÁÖÁ¦ ${j + 1}'
+            ? 'ì†Œì£¼ì œ ${j + 1}'
             : section.title.trim();
         final paragraphs = section.paragraphs
             .map((entry) => entry.trim())
@@ -256,7 +256,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
     final draftBook = BookData(
       id: '',
       title: title,
-      subtitle: subtitle.isEmpty ? 'Ä¿½ºÅÒ ±³Àç' : subtitle,
+      subtitle: subtitle.isEmpty ? 'ì»¤ìŠ¤í…€ êµì¬' : subtitle,
       chapters: chapters,
       category: 'custom',
     );
@@ -271,7 +271,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('±³Àç ÀúÀå¿¡ ½ÇÆĞÇß½À´Ï´Ù.')),
+        const SnackBar(content: Text('êµì¬ ì €ì¥ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.')),
       );
     } finally {
       if (mounted) {
@@ -285,7 +285,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
     const primary = Color(0xFF1B402B);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Á÷Á¢ ÁıÇÊ'),
+        title: const Text('ì§ì ‘ ì§‘í•„'),
         backgroundColor: Colors.white,
         foregroundColor: primary,
         elevation: 0.5,
@@ -299,7 +299,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Text(
-                    'ÀúÀå',
+                    'ì €ì¥',
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
           ),
@@ -311,12 +311,12 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _SectionTitle(label: '±³Àç ±âº»Á¤º¸'),
+            _SectionTitle(label: 'êµì¬ ê¸°ë³¸ì •ë³´'),
             const SizedBox(height: 8),
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
-                labelText: '±³Àç Á¦¸ñ',
+                labelText: 'êµì¬ ì œëª©',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -324,12 +324,12 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
             TextField(
               controller: _subtitleController,
               decoration: const InputDecoration(
-                labelText: '±³Àç ¼³¸í (¼±ÅÃ)',
+                labelText: 'êµì¬ ì„¤ëª… (ì„ íƒ)',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
-            _SectionTitle(label: '´ëÁ¦¸ñ / ¼ÒÁÖÁ¦'),
+            _SectionTitle(label: 'ëŒ€ì œëª© / ì†Œì£¼ì œ'),
             const SizedBox(height: 8),
             for (var i = 0; i < _chapters.length; i++)
               _ChapterCard(
@@ -345,7 +345,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
             OutlinedButton.icon(
               onPressed: _addChapter,
               icon: const Icon(Icons.add),
-              label: const Text('´ëÁ¦¸ñ Ãß°¡'),
+              label: const Text('ëŒ€ì œëª© ì¶”ê°€'),
             ),
           ],
         ),
@@ -398,7 +398,7 @@ class _ChapterCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  '´ëÁ¦¸ñ ${chapterIndex + 1}',
+                  'ëŒ€ì œëª© ${chapterIndex + 1}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -416,13 +416,13 @@ class _ChapterCard extends StatelessWidget {
               initialValue: chapter.title,
               onChanged: (value) => chapter.title = value,
               decoration: const InputDecoration(
-                labelText: '´ëÁ¦¸ñ Á¦¸ñ',
+                labelText: 'ëŒ€ì œëª© ì œëª©',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             const Text(
-              '´ëÁ¦¸ñ ¼³¸í',
+              'ëŒ€ì œëª© ì„¤ëª…',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
@@ -430,7 +430,7 @@ class _ChapterCard extends StatelessWidget {
               _EditableLine(
                 key: ValueKey('chapter_intro_${chapter.id}_$i'),
                 value: chapter.intro[i],
-                label: '¼³¸í ${i + 1}',
+                label: 'ì„¤ëª… ${i + 1}',
                 maxLines: 2,
                 onChanged: (value) => chapter.intro[i] = value,
                 onRemove: () {
@@ -444,7 +444,7 @@ class _ChapterCard extends StatelessWidget {
                 onRefresh();
               },
               icon: const Icon(Icons.add),
-              label: const Text('¼³¸í Ãß°¡'),
+              label: const Text('ì„¤ëª… ì¶”ê°€'),
             ),
             const Divider(height: 24),
             for (var i = 0; i < chapter.sections.length; i++)
@@ -457,7 +457,7 @@ class _ChapterCard extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onAddSection,
               icon: const Icon(Icons.add),
-              label: const Text('¼ÒÁÖÁ¦ Ãß°¡'),
+              label: const Text('ì†Œì£¼ì œ ì¶”ê°€'),
             ),
           ],
         ),
@@ -495,7 +495,7 @@ class _SectionCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                '¼ÒÁÖÁ¦ ${sectionIndex + 1}',
+                'ì†Œì£¼ì œ ${sectionIndex + 1}',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const Spacer(),
@@ -510,13 +510,13 @@ class _SectionCard extends StatelessWidget {
             initialValue: section.title,
             onChanged: (value) => section.title = value,
             decoration: const InputDecoration(
-              labelText: '¼ÒÁÖÁ¦ Á¦¸ñ',
+              labelText: 'ì†Œì£¼ì œ ì œëª©',
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           const Text(
-            '³»¿ë',
+            'ë‚´ìš©',
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
@@ -524,7 +524,7 @@ class _SectionCard extends StatelessWidget {
             _EditableLine(
               key: ValueKey('section_paragraph_${section.id}_$i'),
               value: section.paragraphs[i],
-              label: '³»¿ë ${i + 1}',
+              label: 'ë‚´ìš© ${i + 1}',
               maxLines: 3,
               onChanged: (value) => section.paragraphs[i] = value,
               onRemove: () {
@@ -538,11 +538,11 @@ class _SectionCard extends StatelessWidget {
               onRefresh();
             },
             icon: const Icon(Icons.add),
-            label: const Text('³»¿ë Ãß°¡'),
+            label: const Text('ë‚´ìš© ì¶”ê°€'),
           ),
           const SizedBox(height: 8),
           const Text(
-            'ÀÌ¹ÌÁö URL',
+            'ì´ë¯¸ì§€ URL',
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
@@ -550,7 +550,7 @@ class _SectionCard extends StatelessWidget {
             _EditableLine(
               key: ValueKey('section_image_${section.id}_$i'),
               value: section.images[i],
-              label: 'ÀÌ¹ÌÁö URL ${i + 1}',
+              label: 'ì´ë¯¸ì§€ URL ${i + 1}',
               onChanged: (value) => section.images[i] = value,
               onRemove: () {
                 section.images.removeAt(i);
@@ -563,7 +563,7 @@ class _SectionCard extends StatelessWidget {
               onRefresh();
             },
             icon: const Icon(Icons.add),
-            label: const Text('ÀÌ¹ÌÁö URL Ãß°¡'),
+            label: const Text('ì´ë¯¸ì§€ URL ì¶”ê°€'),
           ),
         ],
       ),
