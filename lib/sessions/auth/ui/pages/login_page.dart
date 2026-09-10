@@ -39,6 +39,14 @@ class _LoginPageState extends State<LoginPage> {
   bool _passwordObscured = true;
   String? _errorText;
 
+  /// 필요한 변수는 로그인 제출 가능 여부다.
+  /// 작동 원리는 기준 HTML처럼 두 필드가 채워진 경우에만 기본 제출 버튼을
+  /// 활성화하고, 실제 검증은 `_submit`에서 다시 수행하는 것이다.
+  bool get _canSubmit =>
+      !_loading &&
+      _idController.text.trim().isNotEmpty &&
+      _pwController.text.isNotEmpty;
+
   /// 필요한 변수는 미리보기용 아이디와 비밀번호다.
   /// 작동 원리는 초기값이 있을 때만 폼 컨트롤러에 넣어 네트워크 없이 시안 상태를 재현하는 것이다.
   @override
@@ -302,6 +310,7 @@ class _LoginPageState extends State<LoginPage> {
           child: TextFormField(
             controller: _idController,
             decoration: fieldDecoration('아이디를 입력하세요'),
+            onChanged: (_) => setState(() {}),
             validator: (value) =>
                 (value == null || value.trim().isEmpty) ? '아이디를 입력하세요' : null,
           ),
@@ -314,6 +323,7 @@ class _LoginPageState extends State<LoginPage> {
           child: TextFormField(
             controller: _pwController,
             obscureText: _passwordObscured,
+            onChanged: (_) => setState(() {}),
             decoration: fieldDecoration('비밀번호를 입력하세요').copyWith(
               suffixIcon: TextButton(
                 onPressed: () => setState(() {
@@ -336,11 +346,14 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(
           height: 52,
           child: FilledButton(
-            onPressed: _loading ? null : _submit,
+            onPressed: _canSubmit ? _submit : null,
             style: FilledButton.styleFrom(
               backgroundColor: AuthDesignTokens.ink,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: const Color(0xFFD4D4D8),
+              disabledBackgroundColor: AuthDesignTokens.ink.withValues(
+                alpha: .42,
+              ),
+              disabledForegroundColor: Colors.white.withValues(alpha: .82),
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
               ),
@@ -353,12 +366,15 @@ class _LoginPageState extends State<LoginPage> {
                       color: Colors.white,
                     ),
                   )
-                : const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '로그인',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '로그인',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      Icon(Icons.arrow_forward, size: 18),
+                    ],
                   ),
           ),
         ),
