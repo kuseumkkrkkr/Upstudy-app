@@ -69,6 +69,7 @@ void main() {
       'achievements',
       'activity-history',
       'study-mode',
+      'market-filter',
     ]) {
       final name = '/student/dashboard?scene=$scene';
       final route = onGenerateAppRoute(RouteSettings(name: name));

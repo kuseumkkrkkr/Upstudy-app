@@ -218,6 +218,17 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     }
   }
 
+  // 자료실 내부 장면은 목록과 별도 상태로 열어야 한다.
+  if (uri != null && uri.path == AppRoutes.marketplace) {
+    final scene = uri.queryParameters['scene'];
+    if (scene == 'market-filter') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const MarketplacePage(initialScene: 'market-filter'),
+      );
+    }
+  }
+
   // Level test result (needs correctCount, totalCount, passed)
   if (name == AppRoutes.levelTestResult) {
     final args = settings.arguments;

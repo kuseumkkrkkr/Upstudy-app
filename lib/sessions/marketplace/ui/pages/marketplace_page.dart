@@ -21,11 +21,13 @@ class MarketplacePage extends StatefulWidget {
     this.initialData,
     this.purchaseHandler,
     this.openHandler,
+    this.initialScene,
   });
 
   final List<Map<String, dynamic>>? initialData;
   final MarketplacePurchaseHandler? purchaseHandler;
   final MarketplaceOpenHandler? openHandler;
+  final String? initialScene;
 
   @override
   State<MarketplacePage> createState() => _MarketplacePageState();
@@ -160,6 +162,11 @@ class _MarketplacePageState extends State<MarketplacePage> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialScene == 'market-filter') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_openMarketFilter());
+      });
+    }
     final initialData = widget.initialData;
     if (initialData != null) {
       _items = initialData.map(_MarketItem.fromMap).toList(growable: false);
