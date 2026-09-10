@@ -28,6 +28,7 @@
 | `_HomeStudyActionSheet.build` | HTML 홈 학습 시트의 제목·실제 데이터 안내·단일 CTA를 렌더링 | `BuildContext` → `Widget` | 닫기·CTA 후 Navigator를 닫고 호출자가 기존 화면으로 이동 |
 | `_CourseCatalogPageState._openMarketplace` | 코스 화면의 새 코스 찾기와 상단 검색을 기존 자료실 화면으로 연결 | 없음 → `void` | `/marketplace` 명명 라우트를 사용하고 코스 검색 전용 시트를 열지 않음 |
 | `_CourseLoaderState._load` | 실제 수강 코스에서 사용자별 마지막 선택 코스를 우선 복원 | 없음 → `Future<void>` | `student.active_course.v1` 조회 실패 시 서버 순서로 fallback, 코스 데이터는 API에서만 사용 |
+| `_MobileCourseCatalog` | 모바일 코스 목록의 로딩·오류·빈 목록·실제 코스 상태를 HTML 순서로 렌더링 | `loading`, `hasError`, 코스 목록·콜백 → `Widget` | API 오류는 재시도 행으로 표시하고 빈 목록으로 축약하지 않음 |
 | `StudentServicesDemoStore.restore` | 사용자별 데모 문의 상태를 로컬 저장소에서 복구 | 없음 → `Future<void>` | 손상된 데모 JSON은 무시하고 실제 서버 데이터는 변경하지 않음 |
 | `StudentServicesDemoStore.add/cancel` | 데모 문의 추가·취소와 영속 저장 | `DemoServiceRequest` → 없음 | `aiflow.student.services.demo.v1` 키로 비동기 저장 |
 | `_SchoolExamPrepPageState._loadPlan` | 실제 수학 내신 계획·task ID·버전을 조회 | 없음 → `Future<void>` | 로딩/오류/빈 상태를 분리하고 재시도 제공 |

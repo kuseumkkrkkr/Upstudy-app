@@ -605,6 +605,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                     courses: libraryCourses,
                     loading:
                         snapshot.connectionState == ConnectionState.waiting,
+                    hasError: snapshot.hasError,
                     hasMore: _hasMoreCourses,
                     loadingMore: _loadingMoreCourses,
                     onFilter: (value) => setState(() => _filter = value),
@@ -1840,6 +1841,7 @@ class _MobileCourseCatalog extends StatelessWidget {
     required this.recommended,
     required this.courses,
     required this.loading,
+    required this.hasError,
     required this.hasMore,
     required this.loadingMore,
     required this.onFilter,
@@ -1861,6 +1863,7 @@ class _MobileCourseCatalog extends StatelessWidget {
   final List<_RecommendedCourse> recommended;
   final List<Course> courses;
   final bool loading;
+  final bool hasError;
   final bool hasMore;
   final bool loadingMore;
   final ValueChanged<String> onFilter;
@@ -1875,7 +1878,7 @@ class _MobileCourseCatalog extends StatelessWidget {
   Widget build(BuildContext context) => _AtlasMobileCourseCatalog(
     active: active,
     loading: loading,
-    hasError: false,
+    hasError: hasError,
     onRetry: onSearch,
     onDiscover: onDiscover ?? onSearch,
     onAnalysis: onAnalysis ?? () {},

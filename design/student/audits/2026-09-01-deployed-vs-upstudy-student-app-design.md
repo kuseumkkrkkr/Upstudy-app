@@ -508,6 +508,11 @@
 - 집중 검증: 그래프 위젯 10개, 홈/알림/코스 집중 테스트 및 Vercel route contract 2개 통과, 변경 Dart analyze 오류 없음.
 - 인증 세션이 없는 브라우저에서는 live 홈 타일·알림 클릭 결과와 사용자별 active-course 복원을 재현하지 못했다. 86개 전체 장면 이미지, 실제 인증 데이터·DB migration·200 동시성·접근성·상용 준비 판정은 `pending`이다.
 
+### 2026-09-10 코스 모바일 오류 상태 보정 (다음 후보)
+
+- `_MobileCourseCatalog`가 FutureBuilder의 `hasError`를 전달받도록 수정했다. 모바일에서도 코스 API 오류를 `코스를 불러오지 못했어요`와 `다시 시도` 행으로 표시하며, 빈 목록으로 위장하지 않는다.
+- 실패 상태 회귀 테스트를 추가했고 `student_home_course_catalog_responsive_test.dart`의 해당 케이스가 통과했다. 실제 canary 인증 코스 데이터와 재시도 성공은 다음 번들에서 확인한다.
+
 ### 2026-09-10 active-course 포함 최종 canary 후보
 
 - 코드 기준: `origin/hotfix`의 `910f710` 및 이전 그래프·알림 변경, 최종 번들 기준 `1ae930e`.

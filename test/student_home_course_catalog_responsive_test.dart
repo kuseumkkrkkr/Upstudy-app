@@ -94,6 +94,24 @@ void main() {
     }
   });
 
+  testWidgets('모바일 코스 조회 실패는 빈 목록으로 숨기지 않고 재시도를 제공한다', (tester) async {
+    await _pumpAt(
+      tester,
+      const Size(390, 900),
+      CourseCatalogPage(
+        courseFeedLoader: ({required keyword, recommend}) async {
+          throw StateError('course api unavailable');
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('course-mobile-load-error')), findsOneWidget);
+    expect(find.text('코스를 불러오지 못했어요'), findsOneWidget);
+    expect(find.text('조건에 맞는 코스가 없어요'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('학생 홈은 1280 PC와 390·500 모바일에서 학습 시작 흐름을 유지한다', (tester) async {
     for (final width in [1280.0, 390.0, 500.0]) {
       await _pumpAt(
