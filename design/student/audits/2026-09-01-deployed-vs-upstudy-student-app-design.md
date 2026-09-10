@@ -539,6 +539,13 @@
 - 실제 계정 연동 API는 저장소에서 확인되지 않아 요청을 전송하지 않고 `연동 API가 준비되기 전까지 실제 요청을 보내지 않습니다.`라고 명시한다. 로컬 UI 상태만 변경하며 제품 계정·학습 데이터에는 접근하지 않는다.
 - 500px 반응형 설정 테스트와 계정 연동 장면 테스트가 통과했다. 튜토리얼·코스 런타임 변경과 함께 다음 정적 번들 후보에서 배포한다.
 
+### 2026-09-10 튜토리얼·설정·코스 런타임 후보 배포
+
+- 소스 커밋 `40eea06`을 기준으로 release web을 다시 빌드하고 `public` 정적 산출물을 반영했다. 로컬 `public/main.dart.js`와 production alias 원시 응답 SHA-256은 `4A009A4C32DE3893B8EA40F5B981E0C37829A02022E5BE7E9FBA2787B2ABE856`로 일치하며, 번들에 `localhost`·`127.0.0.1`이 없다.
+- Vercel 배포: [`dpl_DoQssteLBA2gR6GPqBdHCuN9Vxa7`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/DoQssteLBA2gR6GPqBdHCuN9Vxa7), 고유 URL [`aiflow-web-canary-daw6ii8fj-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-daw6ii8fj-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/landing/about) READY 연결.
+- 라이브 경계: `/health` 200, `/graphs/sample` GET 405, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active` 각각 401이다. 현재 canary는 `OMJ_JWT_SECRET` 미설정으로 실제 학생 세션을 발급하지 못하므로 인증된 홈·설정 저장·코스 조회·알림 동작은 `pending`이다.
+- 검증된 변경 범위는 HTML 튜토리얼 5단계·설정 계정 연동 장면·무인자 코스 런타임 오류 상태다. 86개 전체 장면 이미지, 실제 API 쓰기·DB migration·200 동시성·접근성·전체 반응형 검증은 남아 있어 상용 준비 완료로 판정하지 않는다.
+
 ### 2026-09-10 active-course 포함 최종 canary 후보
 
 - 코드 기준: `origin/hotfix`의 `910f710` 및 이전 그래프·알림 변경, 최종 번들 기준 `1ae930e`.
