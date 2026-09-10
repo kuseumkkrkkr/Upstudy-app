@@ -181,6 +181,7 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
                             eyebrow: 'ACADEMY',
                             title: '학원',
                             description: '오늘 수업과 과제를 한곳에서 확인합니다.',
+                            showMobileEyebrow: true,
                             action: OutlinedButton(
                               onPressed: _openAcademyDetails,
                               child: const Text('학원 정보'),
