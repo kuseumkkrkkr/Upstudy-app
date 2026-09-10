@@ -645,3 +645,11 @@
 - 번들 기준 커밋 `4e6e2d1`, `public/main.dart.js`와 alias 원시 응답 SHA-256 `710239A85B4E0D6D97B96E9E61A0D246ACC635B1142073A5257CDEFA0395F821` 일치.
 - Vercel 배포 `dpl_145vy1FxfPybaawpgJL5LirkzENo`, 고유 URL [`aiflow-web-canary-ro5fsc3gv-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-ro5fsc3gv-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/marketplace) READY, `/health` 200.
 - 브라우저에서 최신 alias 자료실을 재로드해 모바일 뒤로가기, 검색 행, 필터, 전체/코스/시험지/문제세트 탭, 오류 재시도, 하단 탭을 확인했다. 인증 세션·실제 카드 데이터·데스크톱 실데이터 구매 흐름은 `pending`이며 전체 86개 합격 조건도 미완료다.
+
+### 2026-09-11 소셜 데스크톱 HTML 구조 이식 및 canary 배포
+
+- `SoWidget` 데스크톱 화면을 HTML의 `함께 공부` 셸, 대화·친구·그룹 탭, 최근 대화 패널 순서로 정리했다. 모바일 기존 친구 검색·요청·쪽지 흐름과 실제 소셜 API/WebSocket 계약은 유지했다.
+- 친구 탭에서 기존 친구 프로필·쪽지 동작으로 연결되는 실제 친구 행을 보존해 기능 회귀를 막았고, 1280px 친구 프로필 다이얼로그 테스트를 통과했다.
+- 소스 커밋 `5021524`, 번들 커밋 `e819357`; `public/main.dart.js`와 alias 원시 응답 SHA-256은 `4924B2FB0E7769435B638CE3303C473347B3B8BC0BC16427E50B20CD65362A9D`로 일치한다.
+- Vercel 배포 `dpl_4t9ZHzPZVyY44AN8iFvuVZkMVS8d`, 고유 URL [`aiflow-web-canary-2jsvj9knx-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-2jsvj9knx-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/social) READY, `/health` 200.
+- 검증: `friend_request_mobile_test.dart`의 1280px 프로필 다이얼로그 집중 테스트 통과. 인증 세션·실제 친구/대화 데이터, 전체 86개 장면·접근성·DB 동시성 및 상용 완료 조건은 `pending`이다.
