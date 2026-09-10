@@ -741,6 +741,14 @@
 - 실제로 존재하지 않는 경로는 `study-mode`의 `lib/sessions/student_dashboard/ui/pages/restriction_mode_page.dart` 1개였다. 현재 구현은 `study_mode_modal.dart`이므로, 원본 source 표기와 실제 구현 위치를 일치시키는 작업이 남아 있다.
 - 외부 제안·신규 제안·다중 source 문자열은 파일 존재 검사 대상에서 제외하고 별도 기능 검수 대상으로 유지했다.
 
+### 2026-09-11 study-mode source 호환 진입점 복구
+
+- HTML이 지정한 `lib/sessions/student_dashboard/ui/pages/restriction_mode_page.dart`를 추가하고, 기존 `study_mode_modal.dart`의 `showStudyModeModal`·`StudypageCopyWidget`만 재노출했다.
+- 화면 상태·데이터·내비게이션의 단일 구현은 기존 모달에 남겨 중복 UI를 만들지 않았다.
+- 신규 파일 단독 `flutter analyze` 통과, release 번들 재생성 완료.
+- 커밋 `3a870b7`, Vercel 배포 `dpl_GuzbjhzPvZ64SHhYnCEKQkKHP6R9`, alias READY, `/health` 200.
+- 번들은 이전과 동일한 SHA-256 `577849D5E13C0FD09C83C216DEA53E8BE3E75AC5FF181C4D041115A1EC714E96`이며, 이 변경은 source 추적 경로 복구 목적이다.
+
 ### 2026-09-11 코스 선택 장면 정정
 
 - HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
