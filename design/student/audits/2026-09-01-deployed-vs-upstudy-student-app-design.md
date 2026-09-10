@@ -728,6 +728,8 @@
 - Vercel 배포 `dpl_B4eDa62sZs7Ni1NgbW1m5t7SysGj`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 실제 교재 저장 API·인증 세션·DB readiness는 Production 환경변수 부재로 `pending`이다.
 
+- 배포 브라우저에서 `#/bookbag?scene=textbook-editor`를 직접 열어 생성 화면과 분리된 `직접 집필` 편집 화면, 저장 버튼, 기본정보·대제목·소주제 입력 장면을 확인했다.
+
 - 배포 브라우저에서 `직접 집필` 장면을 열어 교재 기본정보 입력, 대제목·소주제·내용·이미지 URL 입력, 저장·추가 동작을 확인했다. 전체 `lib/**/*.dart` UTF-8 유효성 검사도 통과했다.
 
 ### 2026-09-11 레거시 채팅 placeholder 인코딩 정리
