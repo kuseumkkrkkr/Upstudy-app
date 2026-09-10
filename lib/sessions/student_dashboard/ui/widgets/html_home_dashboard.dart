@@ -65,7 +65,12 @@ class HtmlHomeDashboard extends StatelessWidget {
 
     return Padding(
       key: ValueKey(mobile ? 'student-home-mobile' : 'student-home-desktop'),
-      padding: EdgeInsets.fromLTRB(10, mobile ? 10 : 20, 10, 48),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 10 : 18,
+        mobile ? 10 : 18,
+        mobile ? 10 : 18,
+        48,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

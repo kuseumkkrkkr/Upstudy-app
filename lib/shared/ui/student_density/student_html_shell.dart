@@ -143,10 +143,11 @@ class StudentHtmlTopBar extends StatelessWidget {
     }
 
     final topBarHeight = isStudentDensityMobile(context) ? 64.0 : 62.0;
+    final mobile = isStudentDensityMobile(context);
     return Container(
       height: topBarHeight,
       color: StudentDensityTokens.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: EdgeInsets.symmetric(horizontal: mobile ? 10 : 22),
       child: Row(
         children: [
           action(
@@ -210,14 +211,17 @@ class StudentHtmlRail extends StatelessWidget {
         selected: active,
         child: SizedBox(
           width: railWidth - 20,
-          height: 62,
+          height: 58,
           child: InkWell(
             onTap: () {
               if (active) return;
               Navigator.of(context).pushNamed(route);
             },
             child: Container(
-              color: active ? StudentDensityTokens.dark : Colors.transparent,
+              decoration: BoxDecoration(
+                color: active ? StudentDensityTokens.dark : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -245,7 +249,7 @@ class StudentHtmlRail extends StatelessWidget {
 
     return Container(
       width: railWidth,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
       decoration: const BoxDecoration(
         color: StudentDensityTokens.surface,
         border: Border(right: BorderSide(color: StudentDensityTokens.line)),
@@ -265,28 +269,38 @@ class StudentHtmlRail extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 30),
-          item(
-            label: '홈',
-            icon: Icons.home_outlined,
-            route: AppRoutes.studentDashboard,
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  item(
+                    label: '홈',
+                    icon: Icons.home_outlined,
+                    route: AppRoutes.studentDashboard,
+                  ),
+                  const SizedBox(height: 6),
+                  item(
+                    label: '코스',
+                    icon: Icons.view_list_outlined,
+                    route: AppRoutes.courses,
+                  ),
+                  const SizedBox(height: 6),
+                  item(
+                    label: '자료실',
+                    icon: Icons.archive_outlined,
+                    route: AppRoutes.bookbag,
+                  ),
+                  const SizedBox(height: 6),
+                  item(
+                    label: '더보기',
+                    icon: Icons.more_horiz,
+                    route: AppRoutes.learningTools,
+                  ),
+                ],
+              ),
+            ),
           ),
-          item(
-            label: '코스',
-            icon: Icons.view_list_outlined,
-            route: AppRoutes.courses,
-          ),
-          item(
-            label: '자료실',
-            icon: Icons.archive_outlined,
-            route: AppRoutes.bookbag,
-          ),
-          item(
-            label: '더보기',
-            icon: Icons.more_horiz,
-            route: AppRoutes.learningTools,
-          ),
-          const Spacer(),
           Container(
             width: 34,
             height: 34,
@@ -313,7 +327,7 @@ class StudentHtmlContextAside extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: 244,
-    padding: const EdgeInsets.fromLTRB(12, 20, 12, 18),
+    padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
     decoration: const BoxDecoration(
       color: StudentDensityTokens.surface,
       border: Border(left: BorderSide(color: StudentDensityTokens.line)),
