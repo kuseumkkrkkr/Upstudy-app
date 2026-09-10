@@ -315,6 +315,9 @@ class _MainStudentPageState extends State<MainStudentPage> {
       case 'activity-history':
         showActivityHistoryDetail(context);
         return;
+      case 'study-mode':
+        showStudyModeModal(context: context);
+        return;
     }
   }
 

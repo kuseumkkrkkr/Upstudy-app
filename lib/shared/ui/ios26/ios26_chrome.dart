@@ -529,6 +529,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'rating-detail' => '/student/dashboard?scene=rating-detail',
       'achievements' => '/student/dashboard?scene=achievements',
       'activity-history' => '/student/dashboard?scene=activity-history',
+      'study-mode' => '/student/dashboard?scene=study-mode',
       _ => typedDestination.routeName,
     };
   }
