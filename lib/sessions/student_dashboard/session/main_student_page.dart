@@ -48,6 +48,7 @@ const List<Color> _activityTileColors = [
 ];
 
 const int _problemSolveTarget = 50;
+const String _activeCourseStorageKey = 'student.active_course.v1';
 
 const _shadow = BoxShadow(
   blurRadius: 4,
@@ -444,6 +445,11 @@ class _MainStudentPageState extends State<MainStudentPage> {
     if (!mounted) return;
     setState(() => _courseLoaderKey = UniqueKey());
     if (selected != null) {
+      // 선택한 코스 ID만 사용자별 저장소에 남긴다. 코스 상세·진도 데이터는
+      // 기존 서버 조회를 계속 사용하고, 저장 실패가 학습 진입을 막지는 않는다.
+      unawaited(
+        ApiClient.instance.setUserStorage(_activeCourseStorageKey, selected.id),
+      );
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => CourseLearningPage(course: selected)),
       );
@@ -889,6 +895,14 @@ class _CourseLoaderState extends State<_CourseLoader> {
   Future<void> _load() async {
     try {
       final courses = await CourseService.fetchMyCourses();
+      String? preferredCourseId;
+      try {
+        preferredCourseId = await ApiClient.instance.getUserStorage(
+          _activeCourseStorageKey,
+        );
+      } on ApiException {
+        // 저장소가 없는 계정/환경은 서버 코스 순서를 그대로 사용한다.
+      }
       setState(() {
         // 완료 코스는 다시 활성 코스로 선택하지 않고 검색 화면에서만 미리보기를 제공한다.
         final activeCourses = courses
@@ -897,13 +911,21 @@ class _CourseLoaderState extends State<_CourseLoader> {
         if (activeCourses.isEmpty) {
           _course = null;
         } else {
-          _course = activeCourses.firstWhere(
-            (Course c) => c.progress > 0 && !c.isDemo,
-            orElse: () => activeCourses.firstWhere(
-              (Course c) => !c.isDemo,
-              orElse: () => activeCourses.first,
-            ),
-          );
+          final preferred = preferredCourseId?.trim();
+          final preferredCourse = preferred == null || preferred.isEmpty
+              ? null
+              : activeCourses.cast<Course?>().firstWhere(
+                  (course) => course?.id == preferred,
+                  orElse: () => null,
+                );
+          _course = preferredCourse ??
+              activeCourses.firstWhere(
+                (Course c) => c.progress > 0 && !c.isDemo,
+                orElse: () => activeCourses.firstWhere(
+                  (Course c) => !c.isDemo,
+                  orElse: () => activeCourses.first,
+                ),
+              );
         }
         _loading = false;
       });

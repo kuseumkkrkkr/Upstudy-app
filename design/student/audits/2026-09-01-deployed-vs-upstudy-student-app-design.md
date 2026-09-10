@@ -497,3 +497,13 @@
 - Vercel route 목록에 `/graphs`를 FastAPI 함수로 전달하도록 추가했다. API 응답 계약은 `{series:[{segments:[{x_values,y_values}]}]}`이며, Python route contract 2개와 그래프 위젯 테스트 10개가 통과했다.
 - 알림 `sidePanel`은 모바일에서 화면 폭−56px(390px 기준 334px, 최대 360px) 우측 전체 높이 패널로 열리도록 수정했다. 홈 학습 타일 요약 시트·이번 주 학습 카드의 목적지는 최신 번들 재배포 뒤 브라우저에서 재확인한다.
 - 현재 변경은 로컬 후보이며, Flutter release build·정적 번들·Vercel alias 반영과 동일 조건 이미지 캡처가 아직 남아 있다. 인증 사용자 데이터·DB migration·200 동시성·86개 전체 장면 시각 일치는 여전히 `pending`이다.
+
+### 2026-09-10 그래프·알림·홈 선택 코스 후보 배포
+
+- 코드 커밋 `458e13b`: 그래프 API 경로·모바일 트레이·280ms 자동 갱신·최신 요청 우선·오류 시 마지막 정상 좌표 유지, 알림 우측 패널 폭 보정.
+- 후속 테스트 커밋 `a7412a6`: 6개 홈 학습 타일의 요약 시트 선행과 모바일 알림 패널의 334px×844px 기하를 회귀 테스트로 고정했다.
+- 홈에서 코스를 선택하면 `student.active_course.v1` 사용자 저장소에 ID를 저장하고 다음 홈 진입 시 실제 수강 목록에서 해당 코스를 우선 복원한다. 저장소 실패 시 서버 코스 순서로만 fallback하며 샘플 코스를 만들지 않는다.
+- 정적 번들 커밋 `24a9018`, `public/main.dart.js` SHA-256 `A995E4BDAEA61C3FD700A4B0312B1177064E3188B04A4E292366F86421DE98FF`; 라이브 alias 응답 해시가 동일하고 번들에 `localhost`·`127.0.0.1`이 없다.
+- Vercel 배포 `dpl_4YPXkH51KZ9H5bWuEKCjREKsVYSr`, 고유 URL [`aiflow-web-canary-6fq3ex2ih-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6fq3ex2ih-cw20208021-9200s-projects.vercel.app), production alias READY. `/health` 200, `/graphs/sample` GET 405(POST 전용 FastAPI 경로), 인증 없는 데모 상점·내신 계획은 각각 401, 유효한 그래프 POST는 200 좌표 응답이다.
+- 집중 검증: 그래프 위젯 10개, 홈/알림/코스 집중 테스트 및 Vercel route contract 2개 통과, 변경 Dart analyze 오류 없음.
+- 인증 세션이 없는 브라우저에서는 live 홈 타일·알림 클릭 결과와 사용자별 active-course 복원을 재현하지 못했다. 86개 전체 장면 이미지, 실제 인증 데이터·DB migration·200 동시성·접근성·상용 준비 판정은 `pending`이다.
