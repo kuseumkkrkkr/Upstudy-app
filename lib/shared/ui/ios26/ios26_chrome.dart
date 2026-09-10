@@ -541,6 +541,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'notepad' => '/learning-tools?scene=notepad',
       'timer' => '/learning-tools?scene=timer',
       'focus' => '/learning-tools?scene=focus',
+      'arena-ranking' => '/arena?scene=arena-ranking',
       _ => typedDestination.routeName,
     };
   }

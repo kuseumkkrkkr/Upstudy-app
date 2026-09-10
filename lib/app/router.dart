@@ -256,6 +256,16 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     }
   }
 
+  // 대결장 랭킹은 경기 식별자 없이도 실제 서버 랭킹을 조회할 수 있는 독립 장면이다.
+  if (uri != null &&
+      uri.path == AppRoutes.arena &&
+      uri.queryParameters['scene'] == 'arena-ranking') {
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => const ArenaRankingPage(queueType: '1v1'),
+    );
+  }
+
   // 소셜 하위 탭은 같은 페이지의 초기 선택 상태를 보존한다.
   if (uri != null && uri.path == AppRoutes.social) {
     final initialTab = uri.queryParameters['tab'] == 'friends' ? 1 : 0;
