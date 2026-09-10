@@ -712,6 +712,12 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 제품 readiness 경계 확인
+
+- canary `/health`는 `200 {"status":"ok","service":"aiflow-ocr-queue"}`를 반환했다.
+- `/health/ready`는 `404`, `/api/app/health`는 `503`으로 확인돼 Vercel 큐 상태를 제품 서버 readiness로 간주하지 않았다.
+- 제품 서버 `/health/ready`와 실제 DB 연결은 별도 환경에서 재검증해야 하며, 상용 준비 게이트는 `pending`이다.
+
 ### 2026-09-11 웹 번들 localhost 누출 차단
 
 - 릴리스 번들에서 검출된 `http://localhost:8000` 기본 API 주소를 현재 canary origin으로 교체했다. `API_BASE_URL` 환경 지정값은 계속 우선한다.
