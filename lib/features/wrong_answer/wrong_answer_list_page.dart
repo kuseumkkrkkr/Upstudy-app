@@ -477,9 +477,12 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
     final plan = _planFor(_selectedPlan);
     return StudentHtmlShell(
       key: const ValueKey('wrong-answers-screen'),
-      title: '오답 노트',
+      title: '복습센터',
       activeRoute: '/wrong_answers',
-      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      showContextAside: false,
+      mobileBackButton: true,
+      onMenu: () =>
+          Navigator.of(context).pushReplacementNamed('/student/dashboard'),
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: SingleChildScrollView(
