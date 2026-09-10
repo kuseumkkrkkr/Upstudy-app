@@ -307,7 +307,7 @@
 
 ### 2026-09-10 실행 후보 및 배포 확인
 
-- 소스 커밋: `23a936a` (`docs(audit): record S11 candidate deployment evidence`; 코드 변경 기준 `c763848`), `origin/hotfix` push 완료.
+- 배포 소스 커밋: `832798b` (코드 변경 기준 `c763848`; 이후 `761f420`은 배포 ID를 맞춘 감사 문서만 변경), `origin/hotfix` push 완료.
 - 변경 범위: 공통 HTML 셸·토큰·반응형 레일, 실제 사용 검색 레지스트리, 학생서비스 데모 사용자별 저장, 내신 task/version 오류 처리, 상점 서버 멱등 키 클라이언트, 소셜·그룹·그래프·일정·서버챗 API 복구, 86개 ID 기계 원장 및 함수·변수표.
 - 후보 빌드: `flutter build web --release --dart-define=API_BASE_URL=https://aiflow-web-canary.vercel.app --dart-define=STUDENT_SERVICES_DEMO=true --dart-define=STUDENT_STORE_DEMO=true` 성공. `public/main.dart.js` SHA-256은 `82128F44E76E4BE197CA59C9A711C2BE1D811DCA57B8D40349E956C8763FC9E4`이며 번들에서 `localhost` 문자열을 확인하지 못했다.
 - Vercel 배포: [`dpl_5G29vqh4QU4nSFf7GjaG9EMGnGfT`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/5G29vqh4QU4nSFf7GjaG9EMGnGfT), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard) 연결 확인.
