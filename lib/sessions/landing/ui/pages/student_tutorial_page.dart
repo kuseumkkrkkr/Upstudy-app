@@ -602,7 +602,7 @@ class _TutorialStage extends StatelessWidget {
     final content = compact
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [copy, const SizedBox(height: 16), demo],
+            children: [copy, demo],
           )
         : Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -758,7 +758,7 @@ class _DemoContent extends StatelessWidget {
       'book' => '점 P(a, f(a))에서 접선의 기울기는 f′(a)입니다.',
       _ => '접선의 기울기를 어디에 대입해야 하는지 모르겠어요.',
     };
-    final cardPadding = compact ? 20.0 : 28.0;
+    final cardPadding = compact ? 24.0 : 28.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -913,7 +913,7 @@ class _TutorialActions extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Expanded(child: _TutorialProgress(current: current)),
+                Expanded(flex: 10, child: _TutorialProgress(current: current)),
                 const SizedBox(width: 8),
                 Expanded(flex: 14, child: _nextButton(last, compact: true)),
               ],
@@ -944,6 +944,7 @@ class _TutorialActions extends StatelessWidget {
 
   ButtonStyle _buttonStyle({bool compact = false}) => OutlinedButton.styleFrom(
     minimumSize: Size(compact ? 48 : 72, 48),
+    padding: compact ? EdgeInsets.zero : null,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     side: const BorderSide(color: StudentDensityTokens.line),
   );
