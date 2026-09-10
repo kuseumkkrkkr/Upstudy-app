@@ -749,6 +749,11 @@
 - 커밋 `3a870b7`, Vercel 배포 `dpl_GuzbjhzPvZ64SHhYnCEKQkKHP6R9`, alias READY, `/health` 200.
 - 번들은 이전과 동일한 SHA-256 `577849D5E13C0FD09C83C216DEA53E8BE3E75AC5FF181C4D041115A1EC714E96`이며, 이 변경은 source 추적 경로 복구 목적이다.
 
+### 2026-09-11 source 경로 대조 정정
+
+- 호환 진입점 추가 후 동일한 대조를 재실행한 결과, `lib/` source 78개 중 누락은 0개다.
+- 이전 “study-mode 1개 누락” 기록은 추가 전 상태를 보존한 역사 기록이며 현재 판정에는 적용하지 않는다.
+
 ### 2026-09-11 코스 선택 장면 정정
 
 - HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
