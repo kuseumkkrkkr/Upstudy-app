@@ -115,4 +115,30 @@ void main() {
       expect(route?.settings.name, name);
     }
   });
+
+  testWidgets('textbook create and editor deep links render their real pages', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        key: const ValueKey('textbook-create-route'),
+        initialRoute: '/bookbag?scene=textbook-create',
+        onGenerateRoute: onGenerateAppRoute,
+      ),
+    );
+    await tester.pump();
+    expect(find.text('교재 만들기'), findsOneWidget);
+    expect(find.text('직접 집필'), findsOneWidget);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        key: const ValueKey('textbook-editor-route'),
+        initialRoute: '/bookbag?scene=textbook-editor',
+        onGenerateRoute: onGenerateAppRoute,
+      ),
+    );
+    await tester.pump();
+    expect(find.text('교재 기본정보'), findsOneWidget);
+    expect(find.text('저장'), findsOneWidget);
+  });
 }
