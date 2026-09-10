@@ -22,6 +22,7 @@ import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
+import 'package:s11/features/textbook/session/textbook_editor_page.dart' as textbook_editor;
 import 'package:s11/features/student_services/student_services_demo_page.dart';
 import 'package:s11/features/course_runtime/course_runtime_page.dart';
 import 'package:s11/app/student_feature_flags.dart';
@@ -268,6 +269,18 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
 
   if (uri != null && uri.path == AppRoutes.bookbag) {
     final scene = uri.queryParameters['scene'];
+    if (scene == 'textbook-create') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const textbook_editor.TextbookCreationPage(),
+      );
+    }
+    if (scene == 'textbook-editor') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const textbook_editor.TextbookEditorPage(),
+      );
+    }
     if (const {
       'book-library',
       'bookbag-detail',
