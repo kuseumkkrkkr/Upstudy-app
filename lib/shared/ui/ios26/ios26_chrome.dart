@@ -439,16 +439,15 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
   };
 
   Iterable<
-    ({String id, String title, String detail, String keywords, String route})
+    ({StudentRouteSpec spec, String title, String detail, String keywords})
   >
   get _destinations => StudentRouteRegistry.searchable.map((spec) {
     final title = _titles[spec.id] ?? spec.id;
     return (
-      id: spec.id,
+      spec: spec,
       title: title,
       detail: '${spec.category} 화면 열기',
       keywords: _keywords[spec.id] ?? '$title ${spec.category}',
-      route: spec.route,
     );
   });
   String _query = '';
@@ -456,7 +455,7 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
   /// 필요한 변수는 선택 목적지와 현재 시트 Navigator다.
   /// 작동 원리는 시트를 먼저 닫고 루트 Navigator에서 공용 명명 라우트를 연다.
   void _open(
-    ({String id, String title, String detail, String keywords, String route})
+    ({StudentRouteSpec spec, String title, String detail, String keywords})
     destination,
   ) {
     final navigator = Navigator.of(context, rootNavigator: true);
@@ -467,15 +466,17 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
   /// 검색 결과의 상태 화면은 기본 페이지가 아니라 HTML에서 정의한 내부
   /// 장면을 함께 연다. 상세 식별자가 필요한 화면은 기존 기본 경로를 유지한다.
   String _routeForSearchDestination(
-    ({String id, String title, String detail, String keywords, String route})
+    ({StudentRouteSpec spec, String title, String detail, String keywords})
     destination,
   ) {
-    if (destination.route != '/student/dashboard') return destination.route;
-    return switch (destination.id) {
+    if (destination.spec.route != '/student/dashboard') {
+      return destination.spec.route;
+    }
+    return switch (destination.spec.destination.screenId) {
       'today-tasks' => '/student/dashboard?scene=today-tasks',
       'rating-detail' => '/student/dashboard?scene=rating-detail',
       'achievements' => '/student/dashboard?scene=achievements',
-      _ => destination.route,
+      _ => destination.spec.route,
     };
   }
 
@@ -486,10 +487,11 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
     final normalized = _query.trim().toLowerCase();
     final visible = _destinations
         .where((item) {
-          if (item.id == 'academy-find' || item.id == 'private-tutor-find') {
+          if (item.spec.id == 'academy-find' ||
+              item.spec.id == 'private-tutor-find') {
             return StudentFeatureFlags.servicesDemo;
           }
-          if (item.id == 'store') return StudentFeatureFlags.storeDemo;
+          if (item.spec.id == 'store') return StudentFeatureFlags.storeDemo;
           return true;
         })
         .where(
