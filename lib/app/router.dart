@@ -273,6 +273,10 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
       'bookbag-detail',
       'book-reader',
       'bookmarks',
+      'concept-tags',
+      'exam-preview',
+      'exam-paper',
+      'exam-report',
     }.contains(scene)) {
       return MaterialPageRoute<void>(
         settings: settings,

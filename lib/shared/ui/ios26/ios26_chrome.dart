@@ -544,6 +544,10 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'bookbag-detail' => '/bookbag?scene=bookbag-detail',
       'book-reader' => '/bookbag?scene=book-reader',
       'bookmarks' => '/bookbag?scene=bookmarks',
+      'concept-tags' => '/bookbag?scene=concept-tags',
+      'exam-preview' => '/bookbag?scene=exam-preview',
+      'exam-paper' => '/bookbag?scene=exam-paper',
+      'exam-report' => '/bookbag?scene=exam-report',
       _ => typedDestination.routeName,
     };
   }

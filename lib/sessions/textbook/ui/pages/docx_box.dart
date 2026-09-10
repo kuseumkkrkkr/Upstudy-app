@@ -19,6 +19,7 @@ import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/ios26/ios26_modal.dart';
+import 'package:s11/features/textbook/ui/modals/concept_tag_dialog.dart';
 
 void main() => runApp(const MyApp());
 
@@ -166,9 +167,23 @@ class _BookWidgetState extends State<BookWidget> {
             _showTextbookModal(context);
           case 'bookmarks':
             _showBookmarkDetailModal(isBook: true);
+          case 'concept-tags':
+            _showConceptTagsDialog();
+          case 'exam-preview':
+          case 'exam-paper':
+          case 'exam-report':
+            _showExamModal(context);
         }
       });
     }
+  }
+
+  void _showConceptTagsDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (_) =>
+          ConceptTagDialog(onTagsSelected: (_) => Navigator.of(context).pop()),
+    );
   }
 
   /// 필요한 변수는 감사 프리뷰 여부와 실제 저장소 항목 수다.
