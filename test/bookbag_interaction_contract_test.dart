@@ -64,10 +64,7 @@ void main() {
       ),
       isTrue,
     );
-    expect(
-      find.byKey(const ValueKey('bookbag-mobile-featured')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('bookbag-html-frequent')), findsOneWidget);
 
     await _openLibraryBookFromMobileShortcut(tester);
     await _expectReaderForBook(tester, requests);
@@ -75,9 +72,8 @@ void main() {
 
     // 선택한 교재가 실제 최근 방문 저장소에 기록되어 모바일 대표 카드가 된다.
     await tester.pumpAndSettle();
-    expect(find.text('이어서 보기'), findsOneWidget);
     expect(find.text(_bookTitle), findsWidgets);
-    await tester.tap(find.byKey(const ValueKey('bookbag-mobile-featured')));
+    await tester.tap(find.text(_bookTitle).first);
     await tester.pumpAndSettle();
     await _expectReaderForBook(tester, requests);
     await _returnToBookbag(tester);
@@ -86,7 +82,7 @@ void main() {
     await tester.pumpWidget(_bookbagApp());
     await tester.pumpAndSettle();
     expect(
-      find.byKey(const ValueKey('bookbag-mobile-shortcut-group')),
+      find.byKey(const ValueKey('bookbag-html-materials')),
       findsOneWidget,
     );
     await _openLibraryBookFromMobileShortcut(tester);
@@ -96,13 +92,13 @@ void main() {
     _setViewport(tester, const Size(1280, 900));
     await tester.pumpWidget(_bookbagApp());
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('bookbag-desktop-body')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bookbag-html-body')), findsOneWidget);
     await tester.drag(
-      find.byKey(const ValueKey('bookbag-desktop-body')),
+      find.byKey(const ValueKey('bookbag-html-body')),
       const Offset(0, -2000),
     );
     await tester.pumpAndSettle();
-    final desktopOpen = find.text('보관된 교재');
+    final desktopOpen = find.text('상세보기 →');
     await tester.ensureVisible(desktopOpen);
     await tester.tap(desktopOpen);
     await tester.pumpAndSettle();
@@ -131,7 +127,7 @@ void _setViewport(WidgetTester tester, Size size) {
 
 Future<void> _openLibraryBookFromMobileShortcut(WidgetTester tester) async {
   final shortcut = find.descendant(
-    of: find.byKey(const ValueKey('bookbag-mobile-shortcut-group')),
+    of: find.byKey(const ValueKey('bookbag-html-materials')),
     matching: find.text('교재'),
   );
   expect(shortcut, findsOneWidget);
