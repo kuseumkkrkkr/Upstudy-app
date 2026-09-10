@@ -712,6 +712,15 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 홈 학습 동작 시트 HTML 구조 반영
+
+- 홈 학습 동작 모바일 시트를 HTML `home-dashboard-sheet` 기준으로 흰 표면·직각 구조·최대 650px·2열 72px 동작 행으로 조정했다.
+- 둥근 카드와 검은 아이콘 블록을 제거하고 HTML의 간결한 아이콘·제목·화살표 배치를 적용했다.
+- `mobile_home_modal_refactor_test.dart` 전체 통과, 대상 파일 정적 분석 통과.
+- 소스·번들 커밋 `3a0d007`, 번들 SHA-256 `0F70B0E21D0C79D89AE704075D6E3A21848BC6B5F451315D9CED7CEF693DBB6D`.
+- Vercel 고유 URL [`aiflow-web-canary-n0jjl9iz4-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-n0jjl9iz4-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. alias 번들 해시가 로컬과 일치하고 `/health`가 200이다.
+- 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 HTML 상단바 원형 액션 반영
 
 - HTML `.topbar-back`, `.topbar-actions button`의 원형 버튼 규칙을 공통 `StudentHtmlTopBar`에 적용했다.
