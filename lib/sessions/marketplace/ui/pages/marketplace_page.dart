@@ -505,70 +505,237 @@ class _WideMarketplaceBody extends StatelessWidget {
   /// 필요한 변수는 태블릿·PC용 자료실 상태다.
   /// 작동 원리는 Atlas의 검색·유형 탭·자료 카드 구조를 넓은 화면에도 같은 정보 순서로 적용하는 것이다.
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _MarketplacePageHeading(desktop: desktop),
-      const SizedBox(height: 24),
-      _SearchPanel(
+  Widget build(BuildContext context) {
+    if (desktop) {
+      return _HtmlDesktopMarketplaceBody(
         controller: controller,
         focusNode: focusNode,
-        corners: corners,
+        selected: selected,
+        items: items,
+        total: total,
         loading: loading,
-        filter: selected,
-        desktop: desktop,
-        onFilterChanged: onSelected,
+        error: error,
+        hasNextPage: hasNextPage,
+        onSelected: onSelected,
         onOpenFilter: onOpenFilter,
         onSearch: onSearch,
-      ),
-      const SizedBox(height: 20),
-      _MarketplaceResultsHeading(
-        title: selected == '전체' ? title : selected,
-        total: total,
-      ),
-      if (courseFilter != '전체 과정' || priceFilter != '전체 가격') ...[
-        const SizedBox(height: 6),
-        _AppliedMarketFilters(
-          courseFilter: courseFilter,
-          priceFilter: priceFilter,
-        ),
-      ],
-      const SizedBox(height: 12),
-      if (error != null)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Text(error!, style: const TextStyle(color: Colors.red)),
-        ),
-      if (loading && items.isEmpty)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 64),
-          child: Center(child: CircularProgressIndicator(color: Colors.black)),
-        )
-      else if (items.isEmpty)
-        _MobileMarketMessage(
-          icon: Icons.search_off_rounded,
-          message: '찾는 자료가 없습니다.',
-          action: '전체 보기',
-          onPressed: () => onSelected('전체'),
-        )
-      else
-        _MarketplaceResourceResults(
-          rootKey: const ValueKey('market-wide-results'),
-          items: items,
+        onOpen: onOpen,
+        onLoadMore: onLoadMore,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _MarketplacePageHeading(desktop: desktop),
+        const SizedBox(height: 24),
+        _SearchPanel(
+          controller: controller,
+          focusNode: focusNode,
+          corners: corners,
+          loading: loading,
+          filter: selected,
           desktop: desktop,
-          onOpen: onOpen,
+          onFilterChanged: onSelected,
+          onOpenFilter: onOpenFilter,
+          onSearch: onSearch,
         ),
-      if (hasNextPage) ...[
+        const SizedBox(height: 20),
+        _MarketplaceResultsHeading(
+          title: selected == '전체' ? title : selected,
+          total: total,
+        ),
+        if (courseFilter != '전체 과정' || priceFilter != '전체 가격') ...[
+          const SizedBox(height: 6),
+          _AppliedMarketFilters(
+            courseFilter: courseFilter,
+            priceFilter: priceFilter,
+          ),
+        ],
         const SizedBox(height: 12),
-        Center(
-          child: OutlinedButton(
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(error!, style: const TextStyle(color: Colors.red)),
+          ),
+        if (loading && items.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 64),
+            child: Center(
+              child: CircularProgressIndicator(color: Colors.black),
+            ),
+          )
+        else if (items.isEmpty)
+          _MobileMarketMessage(
+            icon: Icons.search_off_rounded,
+            message: '찾는 자료가 없습니다.',
+            action: '전체 보기',
+            onPressed: () => onSelected('전체'),
+          )
+        else
+          _MarketplaceResourceResults(
+            rootKey: const ValueKey('market-wide-results'),
+            items: items,
+            desktop: desktop,
+            onOpen: onOpen,
+          ),
+        if (hasNextPage) ...[
+          const SizedBox(height: 12),
+          Center(
+            child: OutlinedButton(
+              onPressed: loading ? null : onLoadMore,
+              child: Text(loading ? '불러오는 중' : '더 보기'),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _HtmlDesktopMarketplaceBody extends StatelessWidget {
+  const _HtmlDesktopMarketplaceBody({
+    required this.controller,
+    required this.focusNode,
+    required this.selected,
+    required this.items,
+    required this.total,
+    required this.loading,
+    required this.error,
+    required this.hasNextPage,
+    required this.onSelected,
+    required this.onOpenFilter,
+    required this.onSearch,
+    required this.onOpen,
+    required this.onLoadMore,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final String selected;
+  final List<_MarketItem> items;
+  final int total;
+  final bool loading;
+  final String? error;
+  final bool hasNextPage;
+  final ValueChanged<String> onSelected;
+  final VoidCallback onOpenFilter;
+  final VoidCallback onSearch;
+  final ValueChanged<_MarketItem> onOpen;
+  final VoidCallback onLoadMore;
+
+  @override
+  Widget build(BuildContext context) {
+    const tabs = ['전체', '코스', '시험지', '문제세트'];
+    return Column(
+      children: [
+        const SizedBox(height: 48),
+        Row(
+          children: [
+            const Icon(Icons.search, size: 18),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                onSubmitted: (_) => onSearch(),
+                decoration: const InputDecoration(
+                  hintText: '자료명·과목·태그 검색',
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: onOpenFilter,
+              icon: const Icon(Icons.tune, size: 16),
+              label: const Text('필터'),
+            ),
+          ],
+        ),
+        const Divider(height: 20),
+        Row(
+          children: [
+            for (final tab in tabs)
+              Expanded(
+                child: InkWell(
+                  onTap: () => onSelected(tab),
+                  child: Container(
+                    height: 50,
+                    alignment: Alignment.center,
+                    color: selected == tab
+                        ? const Color(0xFF09090B)
+                        : Colors.white,
+                    child: Text(
+                      tab,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: selected == tab
+                            ? Colors.white
+                            : const Color(0xFF71717A),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        const Divider(height: 1),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                selected == '전체' ? '맞춤 추천' : selected,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            Text('$total개', style: const TextStyle(color: Color(0xFF71717A))),
+          ],
+        ),
+        if (error != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                error!,
+                style: const TextStyle(color: Color(0xFFB34A4A)),
+              ),
+            ),
+          ),
+        const SizedBox(height: 12),
+        if (loading && items.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 64),
+            child: CircularProgressIndicator(color: Colors.black),
+          )
+        else if (items.isEmpty)
+          _MobileMarketMessage(
+            icon: Icons.search_off_rounded,
+            message: '찾는 자료가 없습니다.',
+            action: '전체 보기',
+            onPressed: () => onSelected('전체'),
+          )
+        else
+          _MarketplaceResourceResults(
+            rootKey: const ValueKey('market-html-desktop-results'),
+            items: items,
+            desktop: true,
+            onOpen: onOpen,
+          ),
+        if (hasNextPage)
+          TextButton(
             onPressed: loading ? null : onLoadMore,
             child: Text(loading ? '불러오는 중' : '더 보기'),
           ),
-        ),
       ],
-    ],
-  );
+    );
+  }
 }
 
 class _MobileMarketplaceBody extends StatelessWidget {
