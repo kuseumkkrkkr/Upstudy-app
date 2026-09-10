@@ -48,6 +48,42 @@ def test_demo_store_requires_flag_and_idempotency_key(monkeypatch):
         vercel_api.app.dependency_overrides.pop(vercel_api._current_user, None)
 
 
+def test_demo_store_is_hidden_when_flag_is_off(monkeypatch):
+    monkeypatch.delenv("STUDENT_STORE_DEMO", raising=False)
+    vercel_api.app.dependency_overrides[vercel_api._current_user] = lambda: "student-1"
+    client = TestClient(vercel_api.app)
+    try:
+        assert client.get("/demo/student-store").status_code == 404
+        assert client.post(
+            "/demo/student-store/orders",
+            headers={"X-Idempotency-Key": "timer-theme-1"},
+            json={"item_id": "timer-theme"},
+        ).status_code == 404
+    finally:
+        vercel_api.app.dependency_overrides.pop(vercel_api._current_user, None)
+
+
+def test_demo_store_maps_idempotency_conflict_to_409(monkeypatch):
+    class _ConflictApi:
+        def request(self, method, path, **kwargs):
+            return {"status": "conflict", "order_id": "order-1"}
+
+    monkeypatch.setenv("STUDENT_STORE_DEMO", "true")
+    monkeypatch.setattr(vercel_api, "_data_api", lambda: _ConflictApi())
+    vercel_api.app.dependency_overrides[vercel_api._current_user] = lambda: "student-1"
+    client = TestClient(vercel_api.app)
+    try:
+        response = client.post(
+            "/demo/student-store/orders",
+            headers={"X-Idempotency-Key": "timer-theme-1"},
+            json={"item_id": "timer-theme"},
+        )
+        assert response.status_code == 409
+        assert response.json()["detail"] == "idempotency_key_payload_mismatch"
+    finally:
+        vercel_api.app.dependency_overrides.pop(vercel_api._current_user, None)
+
+
 def test_school_exam_plan_is_math_only(monkeypatch):
     monkeypatch.setattr(vercel_api, "_data_api", lambda: _FakeDataApi())
     vercel_api.app.dependency_overrides[vercel_api._current_user] = lambda: "student-1"
