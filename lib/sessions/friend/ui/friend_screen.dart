@@ -2846,41 +2846,135 @@ class _SoWidgetState extends State<SoWidget> {
     final mobile = isStudentDensityMobile(context);
     if (mobile) return _buildMobileSocial(context);
     return StudentHtmlShell(
-      title: '친구 · 소셜',
+      title: '함께 공부',
       activeRoute: '/social',
-      showContextAside: true,
+      showContextAside: false,
+      mobileBackButton: true,
+      onMenu: () =>
+          Navigator.of(context).pushReplacementNamed('/student/dashboard'),
       onNotifications: _openFriendRequestsModal,
       child: RefreshIndicator(
         onRefresh: _refreshPageData,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(110, 24, 110, 48),
+          children: [_buildHtmlDesktopSocialBody()],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHtmlDesktopSocialBody() {
+    final conversations = _messages.take(8).toList(growable: false);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 984),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            StudentDensityPage(
-              padding: EdgeInsets.fromLTRB(
-                studentDensityHorizontalPadding(context),
-                studentDensityVerticalPadding(context),
-                studentDensityHorizontalPadding(context),
-                48,
-              ),
-              child: Column(
-                children: [
-                  StudentDensityPageHeader(
-                    eyebrow: 'FRIENDS & SOCIAL',
-                    title: '친구/소셜',
-                    description: '친구 요청과 최근 쪽지를 한곳에서 확인합니다.',
-                    action: StudentDensityButton(
-                      label: '친구 추가',
-                      primary: true,
-                      onPressed: _openAddFriendModal,
+            Row(
+              children: [
+                for (final tab in const ['대화', '친구', '그룹'])
+                  Expanded(
+                    child: InkWell(
+                      onTap: tab == '친구'
+                          ? _openAddFriendModal
+                          : tab == '그룹'
+                          ? () => Navigator.of(context).pushNamed('/groups')
+                          : null,
+                      child: Container(
+                        height: 34,
+                        alignment: Alignment.topCenter,
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: tab == '대화'
+                                  ? const Color(0xFF09090B)
+                                  : const Color(0xFFE1E1E4),
+                              width: tab == '대화' ? 3 : 1,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          tab,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  _buildSocialSummary(mobile: false),
-                  const SizedBox(height: 14),
-                  _buildSocialDirectory(mobile: false),
-                ],
-              ),
+              ],
             ),
+            const SizedBox(height: 40),
+            const Text(
+              '최근 대화',
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              '친구와 이어서 공부해요.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF71717A)),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFDCDCE0)),
+              ),
+              child: conversations.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.all(28),
+                      child: Text('최근 대화가 없습니다.'),
+                    )
+                  : Column(
+                      children: [
+                        for (var i = 0; i < conversations.length; i++) ...[
+                          _SocialPersonRow(
+                            name: conversations[i].name,
+                            subtitle:
+                                '${conversations[i].lastMessage} · ${conversations[i].timeAgo}',
+                            trailing:
+                                _unreadThreads.contains(conversations[i].name)
+                                ? '새 쪽지'
+                                : '›',
+                            onTap: () => _openMessageThread(conversations[i]),
+                          ),
+                          if (i < conversations.length - 1)
+                            const Divider(height: 1, indent: 22, endIndent: 22),
+                        ],
+                      ],
+                    ),
+            ),
+            if (_friends.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              const Text(
+                '친구',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    for (var i = 0; i < _friends.take(3).length; i++) ...[
+                      _SocialPersonRow(
+                        key: ValueKey(
+                          'social-friend-${_friends[i].userId ?? _friends[i].name}',
+                        ),
+                        name: _friends[i].name,
+                        subtitle: _friends[i].status,
+                        trailing: '쪽지 ›',
+                        onTap: () => _openFriendActionModal(_friends[i]),
+                      ),
+                      if (i < _friends.take(3).length - 1)
+                        const Divider(height: 1, indent: 22, endIndent: 22),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
