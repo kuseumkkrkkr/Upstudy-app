@@ -352,3 +352,13 @@
 - 라이브 API: `/health` 200, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON.
 - 이미지 비교: 동일한 1280×720 in-app 브라우저에서 기준 HTML과 alias를 각각 6초 대기 후 캡처했다. 레일 중앙 정렬과 상단/홈 좌측 여백은 일치하도록 보정됐고, 사용자 데이터가 빈 상태인 점은 데이터 변동으로 기록한다. 브라우저가 지정 390×844·1280×900 크기를 적용하지 않아 해당 증거는 별도로 `pending`이다.
 - 합격 경계: 86개 전체 장면 이미지, 인증 데이터, 실제 migration 적용, 200 동시 요청, 전체 반응형 19개 기존 실패 및 저장소 analyze 기준선 오류는 여전히 미검증이다. 이 배포도 상용 준비 완료가 아닌 후보로 기록한다.
+
+### 2026-09-10 typed route metadata·검색 연결 후속 배포
+
+- 코드 커밋: `c7f7e37` (`refactor(student): type route shell metadata`), `2a318c3` (`refactor(student): route quick find through registry`).
+- 변경: 86개 레지스트리 항목에 불변 `StudentDestination`, 화면 셸 종류(`standard/immersive/auth/reader/tools`), 활성 내비게이션 섹션 메타데이터를 추가했다. QUICK FIND 결과는 임의 문자열 대신 `StudentRouteSpec.destination`을 사용하며, 홈 내부 장면은 기존 `?scene=` 딥링크 계약을 보존한다.
+- 검증: `test/student_route_registry_test.dart`의 86개 고유 ID·데모 플래그·셸/활성 영역·대시보드 장면 라우팅 검사가 통과했고, `dart analyze lib/app/student_route_registry.dart`, `dart analyze lib/shared/ui/ios26/ios26_chrome.dart`, `git diff --check`가 통과했다.
+- 정적 번들: `fce5475` (`build(web): publish registry-backed quick find`)에 `public/main.dart.js`와 `public/flutter_bootstrap.js`를 반영했다. `public/main.dart.js` SHA-256 및 alias 응답 SHA-256은 `9F8CEA6D0226EAD62F127F365B3E6088B627E5FD30FB5C83E83AC70EEF238C8A`이며 `localhost` 문자열은 확인되지 않았다.
+- Vercel: [`dpl_5hbSec8w9mTNUhEdxRprTbxQCvAX`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/5hbSec8w9mTNUhEdxRprTbxQCvAX), 고유 후보 [`aiflow-web-canary-hxc3wzhr1-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-hxc3wzhr1-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard) READY 연결을 확인했다.
+- 라이브 경계: `/health` 200, 인증 없는 `/demo/student-store` 및 `/student/school-exam-plan/active` 401 JSON을 확인했다. 고정 in-app 브라우저 1280×720에서 기준 HTML과 alias 홈을 각각 6초 대기 후 캡처해 레일 중앙 정렬·상단/본문 여백을 재확인했다. 실제 사용자 11111 및 빈 학습 데이터는 HTML fixture와 다른 동적 데이터로 기록한다.
+- 잔여: 86개 화면의 모든 장면·동작 이미지 원장, 인증된 실제 데이터, DB migration 적용, 200 동시성, 전체 접근성·반응형 검사와 저장소 기준선 analyze 오류는 아직 미검증이다. 따라서 이번 배포 역시 상용 준비 완료가 아닌 후보다.
