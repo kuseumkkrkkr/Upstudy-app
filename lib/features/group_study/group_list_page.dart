@@ -629,9 +629,24 @@ class _GroupListPageState extends State<GroupListPage> {
                           ],
                         ),
                       ),
-                      StudentDensityButton(
-                        onPressed: _openMobileAddSheet,
-                        label: '그룹 추가',
+                      SizedBox(
+                        width: 118,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _openMobileAddSheet,
+                          icon: const Icon(Icons.auto_awesome, size: 16),
+                          label: const Text('그룹 추가'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.black,
+                            side: const BorderSide(color: Color(0xFFD8D8DC)),
+                            shape: const RoundedRectangleBorder(),
+                            padding: EdgeInsets.zero,
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
