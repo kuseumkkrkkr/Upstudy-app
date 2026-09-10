@@ -9,9 +9,12 @@ import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/sessions/friend/friend.dart';
 
 class GroupListPage extends StatefulWidget {
-  const GroupListPage({super.key, this.initialGroups});
+  const GroupListPage({super.key, this.initialGroups, this.initialScene});
 
   final List<Object>? initialGroups;
+
+  /// HTML 그룹 화면의 내부 장면을 딥링크로 열기 위한 식별자다.
+  final String? initialScene;
 
   @override
   State<GroupListPage> createState() => _GroupListPageState();
@@ -24,6 +27,7 @@ class _GroupListPageState extends State<GroupListPage> {
   UserRating? _rating;
   bool _loading = true;
   String? _error;
+  bool _initialSceneOpened = false;
 
   @override
   void initState() {
@@ -34,6 +38,18 @@ class _GroupListPageState extends State<GroupListPage> {
       _loading = false;
     } else {
       _load();
+    }
+    if (widget.initialScene == 'group-find' ||
+        widget.initialScene == 'group-create') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _initialSceneOpened) return;
+        _initialSceneOpened = true;
+        if (widget.initialScene == 'group-find') {
+          _openFindSheet();
+        } else {
+          _openCreateDialog();
+        }
+      });
     }
   }
 
@@ -516,7 +532,8 @@ class _GroupListPageState extends State<GroupListPage> {
       activeRoute: AppRoutes.groups,
       showContextAside: false,
       mobileBackButton: true,
-      onMenu: () => Navigator.of(context).pushReplacementNamed('/student/dashboard'),
+      onMenu: () =>
+          Navigator.of(context).pushReplacementNamed('/student/dashboard'),
       child: Column(
         children: [
           _MobileGroupTabs(
@@ -567,7 +584,8 @@ class _GroupListPageState extends State<GroupListPage> {
       activeRoute: AppRoutes.groups,
       showContextAside: false,
       mobileBackButton: true,
-      onMenu: () => Navigator.of(context).pushReplacementNamed('/student/dashboard'),
+      onMenu: () =>
+          Navigator.of(context).pushReplacementNamed('/student/dashboard'),
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(

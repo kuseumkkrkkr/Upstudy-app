@@ -218,6 +218,17 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     }
   }
 
+  // 그룹 목록의 HTML 내부 장면은 같은 실제 목록 위에 시트를 연다.
+  if (uri != null && uri.path == AppRoutes.groups) {
+    final scene = uri.queryParameters['scene'];
+    if (scene == 'group-find' || scene == 'group-create') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => GroupListPage(initialScene: scene),
+      );
+    }
+  }
+
   // 자료실 내부 장면은 목록과 별도 상태로 열어야 한다.
   if (uri != null && uri.path == AppRoutes.marketplace) {
     final scene = uri.queryParameters['scene'];
