@@ -726,6 +726,15 @@
 - 따라서 두 화면은 registry의 `/bookbag` 기본 진입으로 남겨 두었으며, 실제 생성·편집 화면 완료로 표시하지 않는다.
 - 이 항목은 import 경로 원인 확인 후 실제 위젯·저장 동작·동일 뷰포트 이미지 검수까지 별도 처리한다.
 
+### 2026-09-11 교재 개념 태그·시험 장면 연결 및 canary 반영
+
+- `concept-tags`는 기존 `ConceptTagDialog`를, `exam-preview`·`exam-paper`·`exam-report`는 실제 `ExamPaperStore` 기반 시험 목록 모달을 여는 내부 장면으로 연결했다.
+- 검색 목적지는 각각 `/bookbag?scene=...`로 보존하고, route 회귀 검사에 4개 링크를 추가했다. `student_route_registry_test.dart` 7개 통과.
+- release 번들을 재생성해 커밋 `11017b4`로 `origin/hotfix`에 반영했다.
+- Vercel 배포 `dpl_HJLihYgFQLq8uQAqT62s6ZFmbrFu`, 고유 URL [`aiflow-web-canary-c0k2fgxn5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-c0k2fgxn5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY.
+- 로컬·alias `main.dart.js` SHA-256 `577849D5E13C0FD09C83C216DEA53E8BE3E75AC5FF181C4D041115A1EC714E96` 일치, `/health` 200.
+- 86개 전체 화면 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트와 `textbook-create/editor` import 문제는 계속 `pending`이다.
+
 ### 2026-09-11 코스 선택 장면 정정
 
 - HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
