@@ -304,3 +304,13 @@
 - 전체 `flutter analyze --no-pub`는 기존 teacher/textbook 누락·타입 오류 1,269건으로 저장소 기준선에서 실패했으며, 이번 변경 범위 밖이다.
 
 기계 검수 원장은 `student-parity.json`으로 분리했다. 이 원장은 HTML 화면 ID 86개·라우트·데모 경계를 검사하는 분모이며, 레지스트리 개수만으로 시각·동작 일치를 완료 처리하지 않는다. 동일 상태·동일 뷰포트 캡처와 모든 action/overlay 결과가 채워질 때까지 장면 근거는 `pending`으로 유지한다.
+
+### 2026-09-10 실행 후보 및 배포 확인
+
+- 소스 커밋: `c763848` (`feat(student): align S11 parity shell and release contracts`), `origin/hotfix` push 완료.
+- 변경 범위: 공통 HTML 셸·토큰·반응형 레일, 실제 사용 검색 레지스트리, 학생서비스 데모 사용자별 저장, 내신 task/version 오류 처리, 상점 서버 멱등 키 클라이언트, 소셜·그룹·그래프·일정·서버챗 API 복구, 86개 ID 기계 원장 및 함수·변수표.
+- 후보 빌드: `flutter build web --release --dart-define=API_BASE_URL=https://aiflow-web-canary.vercel.app --dart-define=STUDENT_SERVICES_DEMO=true --dart-define=STUDENT_STORE_DEMO=true` 성공. `public/main.dart.js` SHA-256은 `82128F44E76E4BE197CA59C9A711C2BE1D811DCA57B8D40349E956C8763FC9E4`이며 번들에서 `localhost` 문자열을 확인하지 못했다.
+- Vercel 배포: [`dpl_8A5YTqGkN3fy425DmKEbhHKBaLfy`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/8A5YTqGkN3fy425DmKEbhHKBaLfy), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/student/dashboard) 연결 확인.
+- 라이브 확인: `/health` 200, `/main.dart.js` 200 및 로컬 SHA 일치, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 401 JSON. 브라우저에서 새 alias의 학생 홈 데스크톱 렌더링(좌측 레일·메인·우측 컨텍스트)을 확인했다.
+- 테스트: 집중 API 묶음 12 passed(경고 15). 집중 Flutter 테스트는 새 HTML 셸 계약을 포함해 대부분 통과했다. 전체 `flutter test --no-pub`는 기존 반응형 테스트의 구 명칭·셸 기대와 충돌한 23개 실패 뒤 장시간 정지하여 중단했으며, 이를 합격으로 처리하지 않는다. 저장소 전체 `dart analyze`에는 변경 범위 밖 teacher/textbook 기준선 오류가 남아 있다.
+- 시각 근거: 기존 evidence 폴더의 이전 회차 캡처는 보존한다. 이번 배포에 대해 86개 화면·모든 장면의 동일 상태/동일 뷰포트 이미지 원장은 아직 `pending`이며, 따라서 본 기록은 **상용 준비 완료 판정이 아닌 배포 후보 확인**이다. 실제 인증 계정 데이터, DB migration 적용, 200 동시 주문·내신 충돌, 전체 접근성·반응형 캡처는 추가 검증이 필요하다.
