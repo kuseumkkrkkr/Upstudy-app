@@ -682,3 +682,10 @@
 - 소스 커밋 `c97b202`, 번들 커밋 `0eb71c1`; `public/main.dart.js`와 alias 원시 응답 SHA-256은 `10DE7D45C098AF0212C73A06FBAB58C2E31B23657447A593623D75AE39D48978`로 일치한다.
 - Vercel 배포 `dpl_557H8XamUdqMH2qgiSqrSz43dc6i`, 고유 URL [`aiflow-web-canary-3kb1c0a1q-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3kb1c0a1q-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/arena) READY, `/health` 200.
 - 인증된 매칭 데이터·86개 전체 장면·DB 동시성·접근성 및 상용 준비 게이트는 `pending`이다.
+
+### 2026-09-11 아레나 셸·공통 닫기 컨트롤 최신 canary 확인
+
+- 아레나 셸 보정과 공통 유틸리티 닫기 컨트롤의 후속 변경이 `origin/hotfix` 최신 커밋 `a8885ad`에 포함돼 있다. 기존 실제 아레나/API 계약과 모바일 시트 닫기 동작은 유지한다.
+- 현재 `public/main.dart.js`와 production alias 원시 응답 SHA-256은 `762C9A6DD4C49FC533EE6A26E537058C4AF3692A490F9C217D7C3DD447886B3A`로 일치한다.
+- Vercel 배포 `dpl_5rf77GUZQXaQ6k9tS2LGtuierJxy`, 고유 URL [`aiflow-web-canary-aaxlq02d1-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-aaxlq02d1-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 전체 86개 화면·인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이며 이 확인을 상용 완료로 확대하지 않는다.
