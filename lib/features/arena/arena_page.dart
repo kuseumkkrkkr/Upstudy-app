@@ -555,13 +555,20 @@ class _ArenaMobileHeader extends StatelessWidget {
   const _ArenaMobileHeader();
 
   @override
-  Widget build(BuildContext context) => const Text(
-    '대결장',
-    style: TextStyle(
-      fontSize: 34,
-      letterSpacing: -1.8,
-      fontWeight: FontWeight.w900,
-    ),
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'REAL-TIME MATCH',
+        style: TextStyle(
+          fontSize: 10,
+          letterSpacing: 1.6,
+          color: Colors.black54,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      SizedBox(height: 8),
+    ],
   );
 }
 
