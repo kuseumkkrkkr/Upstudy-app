@@ -724,6 +724,11 @@
 - `omj` 작업 디렉터리에서 `tests/test_vercel_student_demo_api.py` 5개와 `tests/test_content_contracts.py`, `tests/test_product_rules.py` 10개가 모두 통과했다.
 - 저장소 전체 `tests -k 'student or demo or store or school_exam'`는 기존 academy 레거시 테스트가 현재 PostgreSQL 저장소의 제거된 `DB_PATH` 전역을 참조해 수집 단계에서 실패했다. 이는 배포 번들 변경이 아니라 기존 테스트-저장소 계약 불일치로 분리 기록하며, 상용 준비 완료로 간주하지 않는다.
 
+### 2026-09-11 학생 셸·라우팅 회귀 검사
+
+- `mobile_secondary_shell_test.dart`, `student_learning_tools_route_test.dart`, `friend_request_mobile_test.dart`, `student_route_registry_test.dart`를 함께 실행해 총 23개가 통과했다.
+- 그룹·도구·책가방·대결장·쪽지 장면 보강으로 기존 모바일 셸과 registry 계약이 깨지지 않음을 확인했다. 전체 86개 시각·실제 데이터·DB 동시성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 그룹 내부 장면 딥링크 canary 반영
 
 - HTML의 `group-find`·`group-create` 내부 장면을 실제 `GroupListPage`의 검색 다이얼로그·생성 다이얼로그로 연결했다. 기존 그룹 API와 입력 검증은 그대로 사용하며 샘플 그룹 데이터는 추가하지 않았다.
