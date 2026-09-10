@@ -19,6 +19,7 @@ class GroupDetailPage extends StatefulWidget {
     this.initialShareHistory,
     this.initialShareExams,
     this.initialChatMessages,
+    this.initialScene,
   });
 
   final String groupId;
@@ -29,6 +30,9 @@ class GroupDetailPage extends StatefulWidget {
   final List<SolveHistoryItem>? initialShareHistory;
   final List<ExamPaperEntry>? initialShareExams;
   final List<StudyGroupMessage>? initialChatMessages;
+
+  /// 그룹 상세 내부 장면(group-chat/group-share)을 딥링크로 여는 식별자다.
+  final String? initialScene;
 
   @override
   State<GroupDetailPage> createState() => _GroupDetailPageState();
@@ -72,6 +76,17 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
       unawaited(_loadSchedules());
     } else {
       unawaited(_load());
+    }
+    if (widget.initialScene == 'group-chat' ||
+        widget.initialScene == 'group-share') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (widget.initialScene == 'group-chat') {
+          _openChat();
+        } else {
+          _openShareResource();
+        }
+      });
     }
   }
 

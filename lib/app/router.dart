@@ -319,9 +319,15 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
         ? args
         : uri?.queryParameters['groupId'] ?? uri?.queryParameters['id'];
     if (groupId != null && groupId.trim().isNotEmpty) {
+      final scene = uri?.queryParameters['scene'];
       return MaterialPageRoute(
         settings: settings,
-        builder: (_) => GroupDetailPage(groupId: groupId),
+        builder: (_) => GroupDetailPage(
+          groupId: groupId,
+          initialScene: scene == 'group-chat' || scene == 'group-share'
+              ? scene
+              : null,
+        ),
       );
     }
     return _badArgumentsRoute(
