@@ -322,3 +322,11 @@
 - 번들: `public/main.dart.js` 및 alias 응답 SHA-256 `E98C185C1BCF8B9776D45A9EA29DECFF14B723363C37EE678262B2A64E91EE1B`.
 - 최신 Vercel: [`dpl_8ve9avnvBict1k2AtwrCNfzsB17j`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/8ve9avnvBict1k2AtwrCNfzsB17j), production alias 연결 및 READY 상태 확인.
 - 검증: `student_route_registry_test.dart`, `app_drawer_navigation_test.dart` 및 API 12개 테스트 통과. 전체 86화면 장면 이미지·실제 인증 데이터·DB 동시성 검증은 여전히 `pending`이다.
+
+### 2026-09-10 반응형·동시성 후속 배포
+
+- 코드 커밋: `b60b9e8` (`fix(student): close responsive overflow and exam race`).
+- 변경: 아레나 PC 큐 카드 세로 overflow 제거, 모바일 드로어 마지막 메뉴 가림 방지, 라우트 세션 테스트용 비영속 토큰 주입, 내신 최초 생성 경쟁을 `INSERT ... DO NOTHING`과 행 잠금으로 방지.
+- 배포: [`dpl_Bg27aE26pt3TCD3Jijyxb96dmXbo`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/Bg27aE26pt3TCD3Jijyxb96dmXbo), alias READY.
+- 번들 SHA-256: `73022030A57EE39374591D35E1C2BFD24893D6F5CA679FB4F4A1034BF387418B` (로컬·alias 응답 일치).
+- 검증: route registry 86개, drawer navigation 10개, API 12개, 아레나 overflow·세션 분기 테스트 통과. 전체 시각/장면 원장, 인증 계정, 실제 DB migration 적용·200 동시 요청은 아직 `pending`이다.
