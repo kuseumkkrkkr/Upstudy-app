@@ -712,6 +712,13 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 내부 장면 딥링크 회귀 검사 보강
+
+- `student_route_registry_test.dart`에 코스 선택·학습도구·책가방·아레나·그룹·쪽지함 내부 장면 6개를 직접 호출하는 회귀 검사를 추가했다.
+- 각 링크가 `MaterialPageRoute`를 만들고 원래 query string을 유지하는지 확인한다.
+- `flutter test --no-pub test/student_route_registry_test.dart`: 7개 통과.
+- 이 검사는 route 생성 계약만 보장하며 실제 브라우저 장면·이미지·API·DB 무결성 검수는 대체하지 않는다.
+
 ### 2026-09-11 코스 선택 장면 정정
 
 - HTML에서 `course-select`가 코스 목록 페이지가 아닌 홈 위 코스 선택 모달임을 확인했다.
