@@ -620,3 +620,11 @@
 - 교재·시험지·북마크 행은 기존 상세 모달/리더 콜백을 사용하고, 상단 검색은 공통 기능 검색 시트로 연결했다. 셸 제목은 `책가방`, 레일은 `/bookbag` 활성, 모바일 상단은 뒤로가기 아이콘이다.
 - 회귀 검증: `test/bookbag_mobile_redesign_test.dart` 8개 통과, 612·720·760·780·781·900·1280 폭에서 RenderFlex 예외가 없다. 변경 파일 analyze는 이전 대형 위젯의 미사용 경고만 남긴다.
 - 아직 release 번들·Vercel alias에는 반영하지 않았다. 동일 조건 이미지 대조와 실제 인증 자료 데이터 검증은 다음 배포 게이트에서 수행한다.
+
+### 2026-09-11 책가방 화면 HTML 구조 반영 및 canary 배포
+
+- 소스 기준은 `8b2761e`, 정적 번들 반영 커밋은 `8e0fe16`이다. `BookWidget`은 HTML의 `자주 보는 교재`·`내 자료` 구조를 사용하고, 실제 교재·시험지·북마크 저장소의 값만 표시한다. 인증/자료 조회 실패를 샘플 데이터로 대체하지 않는다.
+- release web을 지정 API·데모 플래그로 다시 빌드해 `public`에 반영했다. 로컬 `public/main.dart.js`와 production alias 원시 응답 SHA-256은 `1E25B9CBF34728A42936D1A2069838772084C36246929AA77E82342E3C5C7217`로 일치한다.
+- Vercel 배포 `dpl_7bdoS4664Qk1s9pVC5QnmuaAHo7V`, 고유 URL [`aiflow-web-canary-8josv01gm-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-8josv01gm-cw20208021-9200s-projects.vercel.app), production alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app/#/bookbag) READY. `/health` 200, 인증 없는 `/demo/student-store` 401을 확인했다.
+- 기준 HTML과 alias를 동일 Chromium/DPR 1 조건으로 `390×844`, `1280×900` 캡처했다. 증거는 `evidence/2026-09-01-deployed-vs-design/design-bookbag-390x844-2026-09-11.png`, `design-bookbag-1280x900-2026-09-11.png`, `deployed-bookbag-390x844-2026-09-11.png`, `deployed-bookbag-1280x900-2026-09-11.png`이다. 모바일 뒤로가기·상단 검색/알림·하단 탭, 데스크톱 레일·두 열 본문·컨텍스트 영역과 빈 상태 구조를 확인했다.
+- 인증 세션 발급 불가(`OMJ_JWT_SECRET` 미설정)로 실제 사용자별 최근 교재·자료 목록과 클릭 후 리더/상세 데이터는 `pending`이다. 이 배포는 책가방 묶음의 구조 후보일 뿐이며 86개 전체 장면, 전체 analyze/API·DB·동시성·접근성 검증 및 상용 준비 판정은 계속 `pending`이다.
