@@ -474,3 +474,9 @@
 - `showStudentNotifications`는 HTML 알림 패널처럼 모바일·데스크톱 모두 우측 전체 높이 390px 패널(폭이 작으면 화면 폭)을 사용한다. 검색은 기존 모바일 하단 시트/데스크톱 우측 패널을 유지한다. 닫기·배경 클릭·ESC와 알림 내부 친구 요청/그룹 초대 처리는 기존 API를 사용한다.
 - 검증: `flutter test --no-pub test/mobile_home_modal_refactor_test.dart` 8개 통과, 홈 타일 시트 회귀 테스트 1개 통과, 변경 Flutter 파일 analyze는 오류 없이 통과했다(기존 style info 1건).
 - 이 후보는 공통 오버레이와 홈 동작 묶음의 코드 변경만 기록한 상태이며, 정적 번들·Vercel 배포와 동일 조건 홈 390×844·1280×900 이미지 검수는 다음 빌드 게이트에서 수행한다.
+
+### 2026-09-10 코스 탐색 목적지 보정 (로컬 후보)
+
+- `CourseCatalogPage`의 새 코스 찾기·상단 검색 CTA를 별도 잘린 검색 시트 대신 기존 `AppRoutes.marketplace`로 연결했다. 코스 목록·필터·진도·오류/재시도 API 계약은 그대로 둔다.
+- 코스 반응형 구조 회귀 테스트 `student_home_course_catalog_responsive_test.dart`의 1280·390·500 폭 케이스와 변경 파일 analyze를 실행했다. analyze는 기존 미사용 레거시 위젯·import 경고만 남기며 오류는 없다.
+- 이 변경은 아직 정적 번들·Vercel에 반영하지 않은 로컬 후보다. 실제 자료실 화면의 카드·유형 매핑(subject/B1/B2)과 인증 데이터는 분류표·서버 계약 확인 전까지 `pending`으로 유지한다.

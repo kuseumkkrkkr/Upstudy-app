@@ -317,6 +317,13 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     });
   }
 
+  /// HTML의 “새 코스 찾기”는 별도 잘린 검색 시트가 아니라 자료실로 이동한다.
+  void _openMarketplace() {
+    Navigator.of(context).pushNamed(AppRoutes.marketplace);
+  }
+
+  // 호환 호출자가 남아 있어도 신규 CTA에서는 사용하지 않는다.
+  // ignore: unused_element
   Future<void> _showMobileCatalogSearch() async {
     final tagGroups =
         await (_tagGroupsFuture ?? Future.value(const <GenerationTagGroup>[]))
@@ -542,7 +549,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
       activeRoute: AppRoutes.courses,
       showContextAside: false,
       railWidth: 76,
-      onSearch: _showMobileCatalogSearch,
+      onSearch: _openMarketplace,
       child: FutureBuilder<List<GenerationTagGroup>>(
         future: _tagGroupsFuture,
         builder: (context, tagSnapshot) {
@@ -577,7 +584,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                   loading: snapshot.connectionState == ConnectionState.waiting,
                   hasError: snapshot.hasError,
                   onRetry: _load,
-                  onDiscover: _showMobileCatalogSearch,
+                  onDiscover: _openMarketplace,
                   onAnalysis: () => _showMobileCourseAnalysis(active),
                   onOpen: _openCourse,
                 );
@@ -606,7 +613,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
                     onOpen: _openCourse,
                     onLoadMore: _loadMoreCourses,
                     onAnalysis: () => _showMobileCourseAnalysis(active),
-                    onDiscover: _showMobileCatalogSearch,
+                    onDiscover: _openMarketplace,
                   ),
                 ),
               );
