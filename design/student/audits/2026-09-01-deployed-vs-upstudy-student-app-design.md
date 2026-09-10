@@ -380,3 +380,12 @@
 - `omj/tests/test_vercel_route_contract.py`를 추가해 FastAPI `APIRoute`의 `(path, HTTP method)` 조합이 한 번만 등록되는지 검사한다.
 - 중복 등록은 마지막 핸들러가 앞선 계약을 가리는 위험이 있으므로 API 단위 테스트 묶음에 포함했다. 이번 실행에서 13개 테스트가 통과했다(환경 경고 15개).
 - 이 검사는 라우트 등록 무결성만 확인하며, 실제 Supabase migration·인증 사용자 데이터·부하 환경의 동작을 대신하지 않는다.
+
+### 2026-09-10 typed 목적지 메타데이터 후보 배포
+
+- 코드 커밋: `1736f1c` (`refactor(student): carry typed route metadata`), `origin/hotfix` 반영.
+- 변경: `StudentDestination`이 화면 ID뿐 아니라 `routeName`, `requiresAuth`, `demoOnly`를 보유하도록 확장했다. QUICK FIND는 이 typed 값에서 route를 가져오고, 홈의 세 장면만 기존 `?scene=` 딥링크로 변환한다. 레지스트리·드로어·검색 테스트를 다시 통과했다.
+- 후보 빌드: `flutter build web --release` 성공. `public/main.dart.js` SHA-256 `714ACA4C98E0737A1C05D8F8D53CCBE7DDFC483A193E5820B85BE2A1C57D1AF6`, 번들 `localhost` 없음.
+- Vercel: [`dpl_CN4MoD6CVWwe7ncj1KtbQP8bP6pq`](https://vercel.com/cw20208021-9200s-projects/aiflow-web-canary/CN4MoD6CVWwe7ncj1KtbQP8bP6pq), 고유 후보 [`aiflow-web-canary-6eec0hst4-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6eec0hst4-cw20208021-9200s-projects.vercel.app), production alias 연결·READY 확인.
+- 라이브 경계: alias `/health` 200, `/main.dart.js` 200 및 로컬 해시 일치, 인증 없는 `/demo/student-store`·`/student/school-exam-plan/active`는 각각 401 JSON.
+- 이 배포는 목적지 타입 안전성과 검색 연결 회귀를 보강한 후보다. 인증된 실제 데이터, 86개 모든 장면의 동일 조건 이미지, 실제 DB migration, 200 동시성·접근성·전체 반응형 검증이 남아 있으므로 상용 준비 완료로 판정하지 않는다.
