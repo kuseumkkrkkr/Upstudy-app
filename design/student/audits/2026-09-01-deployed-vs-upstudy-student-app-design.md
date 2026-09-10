@@ -754,6 +754,13 @@
 - `flutter analyze` 및 `student_route_registry_test.dart` 통과. 소스·번들 커밋 `ce471fe`, Vercel 배포 `dpl_DATh4rSxdjCiQCVfWHToe6XA6QfK`, alias READY, `/health` 200.
 - 랭킹 데이터·경기 상태가 필요한 장면의 전체 시각 검증은 테스트 계정 확보 후 수행한다. 전체 86개 게이트는 계속 `pending`이다.
 
+### 2026-09-11 책가방 내부 장면 딥링크 반영
+
+- `book-library`·`bookbag-detail`·`book-reader`·`bookmarks`를 `/bookbag?scene=...`로 연결하고 실제 책가방 보관 교재·북마크 모달을 연다.
+- 로컬·서버 저장소의 실제 목록만 표시하며 샘플 교재를 복제하지 않는다. 생성·편집·시험 결과처럼 추가 식별자가 필요한 장면은 기존 데이터 검증을 유지한다.
+- 대상 파일 분석 통과. 소스·번들 커밋 `4d13084`, Vercel 배포 `dpl_CiRM2rca3T5YHVH2QTHPFXwceF1j`, alias READY, `/health` 200.
+- canary에서 `book-library` 딥링크의 `보관된 교재` 모달과 검색 입력을 확인했다. 전체 86개 전수 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
