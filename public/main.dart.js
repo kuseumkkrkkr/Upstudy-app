@@ -51915,7 +51915,7 @@ if(b==="solution")return A.a([new A.jK("steps","\ud480\uc774 \uccb4\ud06c\ub9ac\
 return B.o},
 eU(a,b){var s,r,q=A.bZw(a)
 B.pv.h(0,q)
-s=A.hg("http://localhost:8000"+A.cdR(q),0,null)
+s=A.hg("https://aiflow-web-canary.vercel.app"+A.cdR(q),0,null)
 if(b==null||b.gac(b))return s
 r=t.N
 r=A.ju(s.gfW(),r,r)

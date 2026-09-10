@@ -7,7 +7,7 @@ class ApiContract {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
+    defaultValue: 'https://aiflow-web-canary.vercel.app',
   );
 
   /// Optional deployment prefix such as `/api/v1`.
