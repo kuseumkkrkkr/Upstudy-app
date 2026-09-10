@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 enum StudentTopDestination {
@@ -9,6 +10,7 @@ enum StudentTopDestination {
   bookbag,
   social,
   marketplace,
+  more,
 }
 
 /// 필요한 변수는 현재 화면 문맥과 활성 학생 메뉴다.
@@ -21,7 +23,7 @@ List<Ios26NavItem> studentTopNavItems(
       <({StudentTopDestination destination, String label, String route})>[
         (
           destination: StudentTopDestination.home,
-          label: '학습터',
+          label: '홈',
           route: '/student/dashboard',
         ),
         (
@@ -32,34 +34,33 @@ List<Ios26NavItem> studentTopNavItems(
         (
           destination: StudentTopDestination.bookbag,
           label: '자료실',
-          route: '/bookbag',
-        ),
-        (
-          destination: StudentTopDestination.social,
-          label: '친구/소셜',
-          route: '/social',
-        ),
-        (
-          destination: StudentTopDestination.marketplace,
-          label: '마켓플레이스',
           route: '/marketplace',
         ),
+        (destination: StudentTopDestination.more, label: '더보기', route: ''),
       ];
   return destinations
-      .map(
-        (item) => Ios26NavItem(
+      .map((item) {
+        final itemActive = switch (item.destination) {
+          StudentTopDestination.home =>
+            active == StudentTopDestination.home ||
+                active == StudentTopDestination.learning,
+          StudentTopDestination.bookbag =>
+            active == StudentTopDestination.bookbag ||
+                active == StudentTopDestination.marketplace,
+          StudentTopDestination.more =>
+            active == StudentTopDestination.more ||
+                active == StudentTopDestination.social,
+          _ => item.destination == active,
+        };
+        return Ios26NavItem(
           label: item.label,
-          active:
-              item.destination == active ||
-              (active == StudentTopDestination.learning &&
-                  item.destination == StudentTopDestination.home),
-          onTap:
-              item.destination == active ||
-                  (active == StudentTopDestination.learning &&
-                      item.destination == StudentTopDestination.home)
+          active: itemActive,
+          onTap: itemActive
               ? null
+              : item.destination == StudentTopDestination.more
+              ? () => toggleAppDrawer(context)
               : () => Navigator.of(context).pushNamed(item.route),
-        ),
-      )
+        );
+      })
       .toList(growable: false);
 }

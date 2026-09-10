@@ -565,3 +565,9 @@
 - 동일 Playwright Chromium 조건(DPR 1, 5초 대기)으로 기준 HTML과 alias의 `390×844`, `1280×900` 튜토리얼을 다시 캡처했다. 증거: `evidence/2026-09-01-deployed-vs-design/design-tutorial-390x844.png`, `design-tutorial-1280x900.png`, `deployed-tutorial-390x844.png`, `deployed-tutorial-1280x900.png`.
 - 캡처에서 셸·단계 레일/탭·본문 순서·카드 크기·footer 그리드가 일치함을 확인했다. 글꼴/아이콘 렌더러 차이와 데스크톱 본문 카드의 약 4px 위치 차이는 P3 시각 잔여로 기록하며, 전체 86개 화면의 합격 근거로 확대하지 않는다.
 - 라이브 경계: `/health` 200, `/health/ready` 404(제품 readiness 엔드포인트 미노출), `/graphs/sample` GET 405, 인증 없는 `/demo/student-store`와 `/student/school-exam-plan/active` 각각 401. 현재 canary의 `OMJ_JWT_SECRET` 미설정으로 인증된 사용자 여정은 계속 `pending`이다.
+
+### 2026-09-10 PC 상단 내비게이션 HTML 목적지 일치화 (다음 후보)
+
+- `studentTopNavItems`의 legacy 목록을 HTML `appNavigation()`과 같은 `홈·코스·자료실·더보기` 4개로 정리했다. 자료실은 기존 `/marketplace`, 더보기는 기존 메뉴 호스트를 사용하며 친구·소셜·책가방 화면에서는 해당 보조 섹션을 활성 표시한다.
+- 기존 화면의 `StudentTopDestination` enum과 명명 라우트 호출은 보존했다. 새 임의 문자열 목적지나 샘플 데이터는 추가하지 않았다.
+- 회귀 검증: `PC 공용 상단 메뉴는 HTML 네 목적지와 명명 라우트를 공유한다`, `PC 상단 홈과 코스는 서로 다른 경로로 이동한다` 통과. 새 정적 번들·canary 반영과 `1280×900` 캡처는 다음 빌드 게이트에서 수행한다.

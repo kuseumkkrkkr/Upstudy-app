@@ -203,7 +203,7 @@ void main() {
     expect(find.text('마켓 도착'), findsOneWidget);
   });
 
-  testWidgets('PC 공용 상단 메뉴는 여섯 목적지와 명명 라우트를 공유한다', (tester) async {
+  testWidgets('PC 공용 상단 메뉴는 HTML 네 목적지와 명명 라우트를 공유한다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -228,20 +228,19 @@ void main() {
     );
 
     expect(find.text('홈'), findsOneWidget);
-    expect(find.text('학습터'), findsOneWidget);
+    expect(find.text('홈'), findsOneWidget);
     expect(find.text('코스'), findsOneWidget);
-    expect(find.text('책가방'), findsOneWidget);
-    expect(find.text('친구/소셜'), findsOneWidget);
-    expect(find.text('마켓플레이스'), findsOneWidget);
+    expect(find.text('자료실'), findsOneWidget);
+    expect(find.text('더보기'), findsOneWidget);
 
-    final activeNavChip = find.byKey(const ValueKey('student-top-nav-학습터'));
+    final activeNavChip = find.byKey(const ValueKey('student-top-nav-홈'));
     expect(tester.getSize(activeNavChip).height, 30);
 
     await tester.tap(find.byTooltip('검색'));
     await tester.pumpAndSettle();
     expect(find.text('QUICK FIND'), findsOneWidget);
     expect(find.text('전체 검색'), findsOneWidget);
-    expect(find.text('수강 중·추천·완료 코스 찾기'), findsOneWidget);
+    expect(find.text('코스, 교재, 문제, 친구를 현재 기능별 검색으로 연결합니다.'), findsOneWidget);
     Navigator.of(tester.element(find.text('QUICK FIND'))).pop();
     await tester.pumpAndSettle();
 
@@ -252,12 +251,12 @@ void main() {
     Navigator.of(tester.element(find.text('LIVE STATUS'))).pop();
     await tester.pump();
 
-    await tester.tap(find.text('마켓플레이스'));
+    await tester.tap(find.text('자료실'));
     await tester.pumpAndSettle();
     expect(find.text('상단 마켓 도착'), findsOneWidget);
   });
 
-  testWidgets('PC 상단 홈과 학습터는 서로 다른 경로로 이동한다', (tester) async {
+  testWidgets('PC 상단 홈과 코스는 서로 다른 경로로 이동한다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -279,13 +278,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         key: const ValueKey('home-active-navigation'),
-        routes: {'/study-center': (_) => const Scaffold(body: Text('학습터 도착'))},
+        routes: {'/courses': (_) => const Scaffold(body: Text('코스 도착'))},
         home: navigation(active: StudentTopDestination.home),
       ),
     );
-    await tester.tap(find.text('학습터'));
+    await tester.tap(find.text('코스'));
     await tester.pumpAndSettle();
-    expect(find.text('학습터 도착'), findsOneWidget);
+    expect(find.text('코스 도착'), findsOneWidget);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -293,7 +292,7 @@ void main() {
         routes: {
           '/student/dashboard': (_) => const Scaffold(body: Text('홈 도착')),
         },
-        home: navigation(active: StudentTopDestination.learning),
+        home: navigation(active: StudentTopDestination.courses),
       ),
     );
     await tester.tap(find.text('홈'));
