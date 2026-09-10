@@ -148,9 +148,7 @@ class StudentHtmlTopBar extends StatelessWidget {
               padding: EdgeInsets.zero,
               foregroundColor: StudentDensityTokens.ink,
               side: const BorderSide(color: StudentDensityTokens.line),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
+              shape: const CircleBorder(),
             ),
             child: Icon(icon, size: 19),
           ),
