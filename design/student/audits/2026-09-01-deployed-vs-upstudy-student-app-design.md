@@ -720,6 +720,13 @@
 - Vercel 배포 `dpl_DAQZyKTqGCF1Pe91Q3dbpeo99poD`, alias READY, `/health` 200, 로컬·alias 번들 SHA 일치.
 - 나머지 반응형 실패와 86개 전체 이미지·API·DB·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 QUICK FIND 설명 문구 일치화
+
+- HTML 기준 설명인 `코스, 교재, 문제, 친구를 현재 기능별 검색으로 연결합니다.`를 공통 QUICK FIND 시트에 적용했다.
+- PC 상단 메뉴·검색·알림 계약 테스트의 해당 항목이 통과했다.
+- 소스·번들 커밋 `cb12a08`, 번들 SHA-256 `F87AF2587A3CEBBBE7769C029172A4D3C812E499EBD477D7BEE5F593B851CDCC`.
+- Vercel 배포 `dpl_4dwBfLiQn2w5nJyD5tRnhphWV82A`, alias READY, `/health` 200, 로컬·alias 번들 SHA 일치.
+
 ### 2026-09-11 내부 장면 딥링크 회귀 검사 보강
 
 - `student_route_registry_test.dart`에 코스 선택·학습도구·책가방·아레나·그룹·쪽지함 내부 장면 6개를 직접 호출하는 회귀 검사를 추가했다.
