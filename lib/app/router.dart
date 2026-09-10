@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/profile_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
-import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
+import 'package:s11/sessions/landing/ui/pages/student_tutorial_page.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
@@ -39,7 +39,7 @@ class AppRoutes {
 
   // ─── Landing / Shell ───
   static const String landing = '/';
-  static const String landingAbout = LandingAboutPage.routeName;
+  static const String landingAbout = StudentTutorialPage.routeName;
   static const String app = '/app';
   static const String studentDashboard = '/student/dashboard';
   static const String courses = '/courses';
@@ -110,7 +110,9 @@ Map<String, WidgetBuilder> appRoutes() {
 
     // Landing / Shell
     AppRoutes.landing: (_) => const LandingPage(),
-    AppRoutes.landingAbout: (_) => const LandingAboutPage(),
+    // HTML의 about 화면은 학생용 5단계 튜토리얼이다. 기존 마케팅 소개
+    // 위젯과 분리해 학생 메뉴·검색·직접 주소가 같은 화면을 연다.
+    AppRoutes.landingAbout: (_) => const StudentTutorialPage(),
     AppRoutes.app: authedStudentDashboard(),
     AppRoutes.studentDashboard: authedStudentDashboard(),
     AppRoutes.courses: (_) => const CourseCatalogPage(),

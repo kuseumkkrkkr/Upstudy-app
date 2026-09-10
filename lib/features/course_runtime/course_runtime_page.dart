@@ -4,7 +4,6 @@ import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
-import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/session/course_learning_page.dart';
 
 /// 코스 런타임 딥링크 진입점이다.
@@ -97,7 +96,15 @@ class _CourseRuntimePageState extends State<CourseRuntimePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_future == null) return const CourseCatalogPage();
+    if (_future == null) {
+      return _shell(
+        _status(
+          title: '코스 ID가 필요해요.',
+          detail: '학습을 시작하려면 실제 코스에서 이어하기를 눌러 주세요.',
+          error: true,
+        ),
+      );
+    }
     return FutureBuilder<Course>(
       future: _future,
       builder: (context, snapshot) {

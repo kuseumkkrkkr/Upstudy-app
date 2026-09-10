@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:s11/sessions/auth/ui/pages/login_page.dart';
 import 'package:s11/sessions/auth/ui/pages/signup_page.dart';
 import 'package:s11/sessions/auth/ui/widgets/auth_design.dart';
-import 'package:s11/sessions/landing/ui/pages/landing_about_page.dart';
+import 'package:s11/sessions/landing/ui/pages/student_tutorial_page.dart';
 
 class LandingPage extends StatefulWidget {
   static const routeName = '/';
@@ -43,11 +43,11 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   /// 필요한 변수는 현재 Navigator입니다.
-  /// 작동 원리는 서비스 소개 화면을 기존 라우팅 방식 그대로 여는 것입니다.
+  /// 작동 원리는 HTML 기준 학생 튜토리얼을 정식 화면으로 여는 것입니다.
   void _goToAbout(BuildContext context) {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const LandingAboutPage()));
+    ).push(MaterialPageRoute(builder: (_) => const StudentTutorialPage()));
   }
 
   /// 필요한 변수는 현재 화면 컨텍스트와 문의 이메일입니다.

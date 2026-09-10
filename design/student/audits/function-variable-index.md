@@ -27,8 +27,15 @@
 | `_MainStudentPageState._handleStudyAction` | 홈 6개 학습 타일의 요약 시트를 열고 내부 CTA를 기존 실제 목적지로 dispatch | `String`, `Course?` → `void` | enum으로 목적지를 제한하고 코스·오답·책가방 라우팅은 기존 계약을 재사용 |
 | `_HomeStudyActionSheet.build` | HTML 홈 학습 시트의 제목·실제 데이터 안내·단일 CTA를 렌더링 | `BuildContext` → `Widget` | 닫기·CTA 후 Navigator를 닫고 호출자가 기존 화면으로 이동 |
 | `_CourseCatalogPageState._openMarketplace` | 코스 화면의 새 코스 찾기와 상단 검색을 기존 자료실 화면으로 연결 | 없음 → `void` | `/marketplace` 명명 라우트를 사용하고 코스 검색 전용 시트를 열지 않음 |
+| `CourseRuntimePage.build` | 실제 `courseId`가 있는 런타임만 학습 화면으로 열고 인자 없는 딥링크는 명확한 오류 상태로 표시 | `BuildContext` → `Widget` | 인자 없음·조회 실패·로딩을 구분하고 코스 목록 복귀 CTA를 제공 |
+| `_SettingsPageState._showAccountLinkSheet` | HTML 계정 연동 역할·방법·입력 시트를 연다 | 없음 → `void` | 실제 연동 API가 없을 때 전송하지 않는 안내를 유지 |
+| `_AccountLinkSheetState._buildStep` | 역할·ID·QR 스캔·내 QR 코드 장면을 현재 단계에 맞춰 렌더링 | 없음 → `Widget` | 단계 이동은 로컬 상태, API 호출·권한 변경 없음 |
 | `_CourseLoaderState._load` | 실제 수강 코스에서 사용자별 마지막 선택 코스를 우선 복원 | 없음 → `Future<void>` | `student.active_course.v1` 조회 실패 시 서버 순서로 fallback, 코스 데이터는 API에서만 사용 |
 | `_MobileCourseCatalog` | 모바일 코스 목록의 로딩·오류·빈 목록·실제 코스 상태를 HTML 순서로 렌더링 | `loading`, `hasError`, 코스 목록·콜백 → `Widget` | API 오류는 재시도 행으로 표시하고 빈 목록으로 축약하지 않음 |
+| `StudentTutorialPage` | HTML `about` 화면의 5단계 학생 튜토리얼과 전용 셸을 렌더링 | 없음 → `Widget` | 단계 이동·실습 완료·완료 후 홈 이동, 진행 상태는 로컬 저장만 사용 |
+| `_StudentTutorialPageState._loadState/_saveState` | 튜토리얼 현재 단계와 실습 완료 단계를 복원·저장 | 없음 → `Future<void>` | `student.atlas.tutorial.v1` 로컬 키, 저장 실패는 안내 동작을 막지 않음 |
+| `_TutorialLayout` | 720px 기준 데스크톱 레일/모바일 가로 단계 목록과 본문·하단 액션을 조합 | 폭·현재 단계·콜백 → `Widget` | HTML의 230px 단계 레일·64px 모바일 단계 바·70px 액션 바를 유지 |
+| `_TutorialDemo` | 현재 단계의 강조 실습 카드와 완료 상태를 표시 | 단계·완료 여부·콜백 → `Widget` | 샘플 문구만 사용하며 실습 버튼은 로컬 진행 상태만 변경 |
 | `StudentServicesDemoStore.restore` | 사용자별 데모 문의 상태를 로컬 저장소에서 복구 | 없음 → `Future<void>` | 손상된 데모 JSON은 무시하고 실제 서버 데이터는 변경하지 않음 |
 | `StudentServicesDemoStore.add/cancel` | 데모 문의 추가·취소와 영속 저장 | `DemoServiceRequest` → 없음 | `aiflow.student.services.demo.v1` 키로 비동기 저장 |
 | `_SchoolExamPrepPageState._loadPlan` | 실제 수학 내신 계획·task ID·버전을 조회 | 없음 → `Future<void>` | 로딩/오류/빈 상태를 분리하고 재시도 제공 |
@@ -64,3 +71,6 @@
 | `_JsxGraphPageState._sampleDebounce` · `Timer?` | 마지막 수식 입력 후 자동 갱신 예약 | null, 화면 수명 | `_scheduleGraphApply`, dispose에서 취소 |
 | `_JsxGraphPageState._sampleRevision` · `int` | 비동기 그래프 요청의 최신 순번 | 0, 화면 수명 | 입력·수동 갱신마다 증가, 오래된 응답 차단 |
 | `_JsxGraphPageState._mobileTrayState` · `_GraphTrayState` | 모바일 입력 트레이 접힘/기본/확장 상태 | `compact`, 화면 수명 | 트레이 손잡이 탭, 영속화하지 않음 |
+| `StudentTutorialPage._storageKey` · `String` | HTML 튜토리얼 진행 상태를 구분하는 로컬 저장 키 | `student.atlas.tutorial.v1`, 앱 수명 | `_loadState/_saveState`, SharedPreferences |
+| `_StudentTutorialPageState._current` · `int` | 현재 튜토리얼 단계(0 기반) | 0, 화면·로컬 저장 수명 | 단계 레일·이전/다음 버튼, SharedPreferences |
+| `_StudentTutorialPageState._practiced` · `Set<String>` | 실습을 확인한 단계 ID 집합 | 빈 집합, 화면·로컬 저장 수명 | 실습 CTA, SharedPreferences 문자열 목록 |

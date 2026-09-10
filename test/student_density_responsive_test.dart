@@ -1035,7 +1035,7 @@ void main() {
     expect(find.text('학생 정보 관리'), findsOneWidget);
   });
 
-  testWidgets('500px 설정은 단일 Material 설정 목록을 유지한다', (tester) async {
+  testWidgets('500px 설정은 HTML 단일 패널과 5개 행을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(500, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -1044,23 +1044,40 @@ void main() {
       const MaterialApp(home: SettingsPage(preview: true)),
     );
     await tester.pump();
-    expect(find.text('PREFERENCES'), findsNothing);
-    expect(find.text('LOCAL'), findsNothing);
-    expect(
-      find.byKey(const ValueKey('settings-mobile-profile-link')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('settings-mobile-flat-list')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('html-settings-panel')), findsOneWidget);
     expect(find.text('교재 페이지'), findsOneWidget);
-    expect(find.text('알림'), findsOneWidget);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
-    await tester.pumpAndSettle();
-    expect(find.text('STORAGE CONTRACT'), findsNothing);
+    expect(find.text('모바일 간편풀이'), findsOneWidget);
+    expect(find.text('전체 알림'), findsOneWidget);
+    expect(find.text('다른 계정 연동'), findsOneWidget);
+    expect(find.text('오픈소스 라이선스'), findsOneWidget);
+    expect(find.text('PREFERENCES'), findsNothing);
     expect(find.text('settings.notifications_enabled'), findsNothing);
-    expect(find.text('자동 저장'), findsNothing);
+  });
+
+  testWidgets('설정의 계정 연동은 HTML 역할·방법·입력 장면을 순서대로 연다', (tester) async {
+    tester.view.physicalSize = const Size(500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      const MaterialApp(home: SettingsPage(preview: true)),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('html-settings-account-link')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('연동할 계정 유형을 선택하세요.'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('settings-account-role-parent')),
+    );
+    await tester.pump();
+    expect(find.text('학부모 계정과 연결할 방법을 고르세요.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('settings-account-method-id')));
+    await tester.pump();
+    expect(find.text('학부모 AIFlow ID'), findsOneWidget);
+    await tester.tap(find.text('연동 요청 보내기'));
+    await tester.pump();
+    expect(find.text('연동 API가 준비되기 전까지 실제 요청을 보내지 않습니다.'), findsOneWidget);
   });
 
   testWidgets('500px 학습 액션은 HTML처럼 전체 화면 패널과 하단 닫기를 사용한다', (tester) async {

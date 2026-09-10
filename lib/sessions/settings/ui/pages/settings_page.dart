@@ -260,7 +260,7 @@ class _SettingsPageState extends State<SettingsPage> {
             title: '다른 계정 연동',
             subtitle: '학부모 또는 교사(과외)와 학습 정보를 연결합니다.',
             actionLabel: '연동',
-            onTap: _showAccountLinkNotice,
+            onTap: _showAccountLinkSheet,
           ),
           _HtmlSettingsActionRow(
             key: const ValueKey('html-settings-licenses'),
@@ -294,18 +294,17 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showAccountLinkNotice() {
+  /// HTML의 계정 연동 시트를 열어 역할·방법·입력 장면을 순서대로 표시한다.
+  /// 실제 연동 API가 없는 환경에서는 전송하지 않고 준비 상태를 명시한다.
+  void _showAccountLinkSheet() {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (_) => const Padding(
-        padding: EdgeInsets.fromLTRB(20, 4, 20, 28),
-        child: Text(
-          '다른 계정 연동은 준비 중입니다. 현재 계정과 학습 데이터는 변경되지 않습니다.',
-          style: TextStyle(fontSize: 14, height: 1.5),
-        ),
-      ),
+      backgroundColor: StudentDensityTokens.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      builder: (_) => const _AccountLinkSheet(),
     );
   }
 
@@ -466,6 +465,444 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+}
+
+enum _AccountLinkStep { role, method, id, scan, show }
+
+/// HTML 계정 연동 모달의 내부 장면을 보존하는 로컬 전용 시트다.
+/// 실제 요청 API가 연결되기 전까지 입력은 전송하지 않고 안내 상태만 보여 준다.
+class _AccountLinkSheet extends StatefulWidget {
+  const _AccountLinkSheet();
+
+  @override
+  State<_AccountLinkSheet> createState() => _AccountLinkSheetState();
+}
+
+class _AccountLinkSheetState extends State<_AccountLinkSheet> {
+  _AccountLinkStep _step = _AccountLinkStep.role;
+  String _role = '학부모';
+  String _message = '';
+  final TextEditingController _idController = TextEditingController();
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    super.dispose();
+  }
+
+  /// 선택한 역할에 맞춰 다음 연동 방법 장면을 연다.
+  void _selectRole(String role) {
+    setState(() {
+      _role = role;
+      _step = _AccountLinkStep.method;
+      _message = '';
+    });
+  }
+
+  /// API 미연결 상태를 숨기지 않고 연동 시트 안에 표시한다.
+  void _showUnavailable() {
+    setState(() => _message = '연동 API가 준비되기 전까지 실제 요청을 보내지 않습니다.');
+  }
+
+  void _backToRole() => setState(() {
+    _step = _AccountLinkStep.role;
+    _message = '';
+  });
+
+  void _backToMethod() => setState(() {
+    _step = _AccountLinkStep.method;
+    _message = '';
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final title = switch (_step) {
+      _AccountLinkStep.role => '다른 계정 연동',
+      _ => '$_role 계정 연동',
+    };
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 720),
+      child: Material(
+        color: StudentDensityTokens.surface,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ACCOUNT LINK',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.4,
+                            color: StudentDensityTokens.muted,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    key: const ValueKey('settings-account-link-close'),
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Flexible(child: SingleChildScrollView(child: _buildStep())),
+              if (_message.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  _message,
+                  key: const ValueKey('settings-account-link-message'),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: StudentDensityTokens.muted,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStep() {
+    return switch (_step) {
+      _AccountLinkStep.role => _buildRoleStep(),
+      _AccountLinkStep.method => _buildMethodStep(),
+      _AccountLinkStep.id => _buildIdStep(),
+      _AccountLinkStep.scan => _buildScanStep(),
+      _AccountLinkStep.show => _buildShowStep(),
+    };
+  }
+
+  Widget _buildRoleStep() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text(
+        '연동할 계정 유형을 선택하세요. 상대방은 요청을 확인한 뒤에만 학습 정보를 볼 수 있어요.',
+        style: TextStyle(
+          fontSize: 12,
+          height: 1.6,
+          color: StudentDensityTokens.muted,
+        ),
+      ),
+      const SizedBox(height: 16),
+      _AccountLinkChoice(
+        key: const ValueKey('settings-account-role-parent'),
+        icon: Icons.person_outline,
+        title: '학부모',
+        detail: '학습 현황 확인',
+        onTap: () => _selectRole('학부모'),
+      ),
+      _AccountLinkChoice(
+        key: const ValueKey('settings-account-role-teacher'),
+        icon: Icons.edit_outlined,
+        title: '교사 · 과외',
+        detail: '과제와 풀이 확인',
+        onTap: () => _selectRole('교사 · 과외'),
+      ),
+    ],
+  );
+
+  Widget _buildMethodStep() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      TextButton.icon(
+        onPressed: _backToRole,
+        icon: const Icon(Icons.arrow_back, size: 17),
+        label: const Text('계정 유형 다시 선택'),
+        style: TextButton.styleFrom(
+          alignment: Alignment.centerLeft,
+          padding: EdgeInsets.zero,
+          foregroundColor: StudentDensityTokens.muted,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        '$_role 계정과 연결할 방법을 고르세요.',
+        style: const TextStyle(fontSize: 12, color: StudentDensityTokens.muted),
+      ),
+      const SizedBox(height: 14),
+      _AccountLinkChoice(
+        key: const ValueKey('settings-account-method-id'),
+        icon: Icons.person_outline,
+        title: 'ID 입력',
+        detail: '상대방 AIFlow ID를 직접 입력',
+        onTap: () => setState(() => _step = _AccountLinkStep.id),
+      ),
+      _AccountLinkChoice(
+        key: const ValueKey('settings-account-method-scan'),
+        icon: Icons.qr_code_scanner,
+        title: 'QR 코드 스캔',
+        detail: '상대방 화면의 QR 코드를 카메라로 읽기',
+        onTap: () => setState(() => _step = _AccountLinkStep.scan),
+      ),
+      _AccountLinkChoice(
+        key: const ValueKey('settings-account-method-show'),
+        icon: Icons.qr_code_2,
+        title: '내 QR 코드 띄우기',
+        detail: '상대방이 이 화면을 스캔',
+        onTap: () => setState(() => _step = _AccountLinkStep.show),
+      ),
+    ],
+  );
+
+  Widget _buildIdStep() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      TextButton.icon(
+        onPressed: _backToMethod,
+        icon: const Icon(Icons.arrow_back, size: 17),
+        label: const Text('연동 방법'),
+        style: TextButton.styleFrom(
+          alignment: Alignment.centerLeft,
+          padding: EdgeInsets.zero,
+          foregroundColor: StudentDensityTokens.muted,
+        ),
+      ),
+      const SizedBox(height: 10),
+      TextField(
+        controller: _idController,
+        maxLength: 24,
+        decoration: InputDecoration(
+          labelText: '$_role AIFlow ID',
+          hintText: '예: parent_park',
+          border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
+        ),
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        '연동 요청이 전송되며, 상대방의 승인 후 연결됩니다.',
+        style: TextStyle(fontSize: 11, color: StudentDensityTokens.muted),
+      ),
+      const SizedBox(height: 16),
+      FilledButton(
+        onPressed: _showUnavailable,
+        style: _actionStyle(),
+        child: const Text('연동 요청 보내기'),
+      ),
+    ],
+  );
+
+  Widget _buildScanStep() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      TextButton.icon(
+        onPressed: _backToMethod,
+        icon: const Icon(Icons.arrow_back, size: 17),
+        label: const Text('연동 방법'),
+        style: TextButton.styleFrom(
+          alignment: Alignment.centerLeft,
+          padding: EdgeInsets.zero,
+          foregroundColor: StudentDensityTokens.muted,
+        ),
+      ),
+      const SizedBox(height: 12),
+      Container(
+        height: 190,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          border: Border.fromBorderSide(
+            BorderSide(color: StudentDensityTokens.ink),
+          ),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.qr_code_scanner, size: 44),
+            SizedBox(height: 12),
+            Text(
+              'QR 코드를 화면 중앙에 맞추세요',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            SizedBox(height: 5),
+            Text(
+              '카메라 권한을 허용하면 자동으로 읽습니다.',
+              style: TextStyle(fontSize: 11, color: StudentDensityTokens.muted),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 14),
+      FilledButton(
+        onPressed: _showUnavailable,
+        style: _actionStyle(),
+        child: const Text('QR 코드 확인하기'),
+      ),
+    ],
+  );
+
+  Widget _buildShowStep() => Column(
+    children: [
+      Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: _backToMethod,
+          icon: const Icon(Icons.arrow_back, size: 17),
+          label: const Text('연동 방법'),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            foregroundColor: StudentDensityTokens.muted,
+          ),
+        ),
+      ),
+      const SizedBox(height: 8),
+      SizedBox(
+        width: 190,
+        height: 190,
+        child: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+          ),
+          itemCount: 49,
+          itemBuilder: (context, index) => ColoredBox(
+            color: _qrDark(index)
+                ? StudentDensityTokens.dark
+                : StudentDensityTokens.surface,
+          ),
+        ),
+      ),
+      const SizedBox(height: 10),
+      const Text(
+        'STUDENT-8F2K',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.8,
+        ),
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        '이 코드는 5분 동안만 유효합니다. 상대방이 스캔하면 연동 요청이 도착합니다.',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 11,
+          height: 1.5,
+          color: StudentDensityTokens.muted,
+        ),
+      ),
+    ],
+  );
+
+  bool _qrDark(int index) => const {
+    0,
+    1,
+    2,
+    4,
+    6,
+    7,
+    8,
+    10,
+    12,
+    14,
+    15,
+    16,
+    18,
+    20,
+    21,
+    22,
+    24,
+    26,
+    28,
+    29,
+    31,
+    32,
+    34,
+    35,
+    36,
+    38,
+    40,
+    42,
+    43,
+    45,
+    47,
+    48,
+  }.contains(index);
+
+  ButtonStyle _actionStyle() => FilledButton.styleFrom(
+    backgroundColor: StudentDensityTokens.dark,
+    foregroundColor: Colors.white,
+    minimumSize: const Size.fromHeight(52),
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+  );
+}
+
+class _AccountLinkChoice extends StatelessWidget {
+  const _AccountLinkChoice({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.detail,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String detail;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Container(
+      constraints: const BoxConstraints(minHeight: 72),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 21),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  detail,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: StudentDensityTokens.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.arrow_forward, size: 18),
+        ],
+      ),
+    ),
+  );
 }
 
 class _HtmlSettingsRow extends StatelessWidget {
