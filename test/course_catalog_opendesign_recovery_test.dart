@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
+import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/ui/drawer/app_drawer.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
@@ -49,6 +50,9 @@ Future<void> _pump(WidgetTester tester, {required double width}) async {
         courseFeedLoader: ({required keyword, recommend}) async =>
             _openDesignCourses(),
       ),
+      routes: <String, WidgetBuilder>{
+        '/marketplace': (_) => const MarketplacePage(initialData: <Map<String, dynamic>>[]),
+      },
     ),
   );
   await tester.pumpAndSettle();
@@ -80,17 +84,8 @@ void main() {
     await tester.ensureVisible(discoverAction);
     await tester.tap(discoverAction);
     await tester.pumpAndSettle();
-    final discovery = find.byKey(
-      const ValueKey('course-mobile-discovery-sheet'),
-    );
-    expect(discovery, findsOneWidget);
-    final discoveryRect = tester.getRect(discovery);
-    expect(discoveryRect.width, closeTo(390, 1));
-    expect(discoveryRect.height, closeTo(412, 1));
-    expect(
-      find.byKey(const ValueKey('course-mobile-discovery-cta')),
-      findsOneWidget,
-    );
+    expect(find.byType(MarketplacePage), findsOneWidget);
+    expect(find.text('자료실'), findsAtLeastNWidgets(1));
     expect(tester.takeException(), isNull);
   });
 
