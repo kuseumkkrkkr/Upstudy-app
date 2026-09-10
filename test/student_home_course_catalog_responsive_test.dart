@@ -106,9 +106,27 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('course-mobile-load-error')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('course-mobile-load-error')),
+      findsOneWidget,
+    );
     expect(find.text('코스를 불러오지 못했어요'), findsOneWidget);
     expect(find.text('조건에 맞는 코스가 없어요'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('코스 셸은 HTML 뒤로가기와 검색을 표시한다', (tester) async {
+    await _pumpAt(
+      tester,
+      const Size(390, 900),
+      CourseCatalogPage(
+        courseFeedLoader: ({required keyword, recommend}) async => const [],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('student-mobile-back')), findsOneWidget);
+    expect(find.byKey(const ValueKey('student-search-action')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

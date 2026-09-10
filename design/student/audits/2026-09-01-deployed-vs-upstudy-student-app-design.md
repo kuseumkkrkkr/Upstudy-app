@@ -599,3 +599,9 @@
 - `StudentHtmlShell.mobileBackButton`을 추가해 화면별 모바일 상단 아이콘을 선택할 수 있게 하고, 레벨 홈·결과는 HTML처럼 뒤로가기 아이콘과 학생 홈 복귀 콜백을 사용한다. 모바일 진입 패널의 세로 테두리도 HTML의 하단 구분선만 남기는 규칙으로 맞췄다.
 - 비교 이미지: `evidence/2026-09-01-deployed-vs-design/design-level-home-390x844-2026-09-11.png`, `design-level-home-1280x900-2026-09-11.png`, `deployed-level-home-390x844-2026-09-11.png`, `deployed-level-home-1280x900-2026-09-11.png`.
 - 해당 소스는 다음 release 번들에 포함해야 하며, 인증 데이터·level-result 실제 제출 장면·86개 전체 이미지 검증은 계속 `pending`이다.
+
+### 2026-09-11 코스 셸 상단 동작 이미지 보정
+
+- 기준 HTML의 코스 화면 상단은 `뒤로가기 + 나의 코스 + 검색 + 알림`이다. `CourseCatalogPage`의 제목과 모바일 뒤로가기 아이콘을 이 순서로 맞추고, 뒤로가기는 `/student/dashboard` 명명 라우트로 복귀하게 했다.
+- 코스 상단 검색은 코스 전용 마켓 이동을 사용하지 않고 공통 기능 검색 시트를 연다. `새 코스 찾기` 본문 CTA만 기존 `/marketplace`로 이동한다.
+- 코스 API가 401/오류를 반환할 때는 기존 오류·재시도 상태를 유지하며 샘플 코스를 삽입하지 않는다. 관련 셸 테스트가 통과했다.

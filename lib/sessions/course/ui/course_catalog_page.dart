@@ -545,10 +545,14 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
     final mobile = isStudentDensityMobile(context);
     final rating = _formatVisibleOvr(RatingStore.notifier.value.ovr);
     return StudentHtmlShell(
-      title: '코스',
+      title: '나의 코스',
       activeRoute: AppRoutes.courses,
       showContextAside: false,
       railWidth: 76,
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(
+        context,
+      ).pushReplacementNamed(AppRoutes.studentDashboard),
       child: FutureBuilder<List<GenerationTagGroup>>(
         future: _tagGroupsFuture,
         builder: (context, tagSnapshot) {
