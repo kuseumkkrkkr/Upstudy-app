@@ -744,6 +744,14 @@
 - 원격 번들은 Range 조각 수집으로 전체 6,662,878바이트를 검증했으며 로컬과 SHA-256 `E34BD3A2C8F423AF023BB0E2209B321D268C6897D7CDA8A33CB28B2E0B9A35FC`가 일치한다. 단일 PowerShell 응답의 5.5MiB 표시값은 응답 절단 현상으로 최종 해시 근거에서 제외했다.
 - 86개 전체 화면·장면 이미지, 실제 API·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 자료실 필터 장면 딥링크 연결
+
+- `market-filter` 검색 목적지를 `/marketplace?scene=market-filter`로 구체화했다.
+- `MarketplacePage`가 초기 장면을 받아 실제 필터 시트를 열며, 서버 자료가 없는 경우 샘플 미리보기를 생성하지 않는다. `market-preview`는 실제 자료 로드 후 검수 대상으로 유지한다.
+- 소스·테스트 커밋 `384df86`, 번들 커밋 `3a70e47`; 라우트·코스 복구 집중 검사는 통과했다.
+- Vercel 배포 `dpl_Y17cZMYLv9FWApRM4UsS8HWdr3Tb`, alias READY, `/health` 200. Range 전체 수집 기준 로컬·원격 번들 SHA-256 `85DD00A8B9B77A5E31BA681EE5E199DD233C277C662637BB198BEDE1B90B5881` 일치.
+- 86개 전체 화면·장면 이미지, 실제 API·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 HTML 상단바 액션 크기 반영
 
 - 공통 학생 상단바의 메뉴·뒤로가기·검색·알림 액션을 HTML 기준 `38×38px`로 조정했다.
