@@ -712,6 +712,14 @@
 - Vercel 배포 `dpl_6ncCiJka16TjJpWfJ5agDirnR5nq`, 고유 URL [`aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fodg222u5-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
 - 86개 전체 이미지·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
 
+### 2026-09-11 그룹 내부 장면 딥링크 canary 반영
+
+- HTML의 `group-find`·`group-create` 내부 장면을 실제 `GroupListPage`의 검색 다이얼로그·생성 다이얼로그로 연결했다. 기존 그룹 API와 입력 검증은 그대로 사용하며 샘플 그룹 데이터는 추가하지 않았다.
+- `/groups?scene=group-find`와 `/groups?scene=group-create`를 typed route 흐름과 전역 검색 목적지에 등록했다.
+- `flutter analyze` 대상 3개 파일과 `student_route_registry_test.dart`(7개)가 통과했다. 기존 미사용 private 위젯 경고 3건은 오류가 아니다.
+- 소스 커밋 `d8c639b`, Vercel 배포 `dpl_CKmtW9H6LTeci5oc2eHyS7qfi3Ta`, alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY, `/health` 200.
+- 배포 브라우저에서 두 딥링크를 각각 열어 `그룹 찾기`·`그룹 만들기` 모달과 배경 목록이 표시되는 것을 확인했다. 전체 86개 시각 일치·실제 인증 데이터·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
 ### 2026-09-11 최종 CSS cascade 재검증 및 레일 보정
 
 - 이전 레일 반영 기록은 HTML 초기 CSS만 읽은 결과로, 최종 `ux-revision.css`의 `.product-nav`·`.nav-item.is-active` 덮어쓰기를 반영하지 못했다.
