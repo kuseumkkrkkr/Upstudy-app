@@ -738,6 +738,12 @@
 - 단독 `flutter analyze` 통과. 해당 placeholder는 현재 실제 학생 튜터 경로가 아니므로 제품 튜터 동작의 근거로 사용하지 않는다.
 - 소스 커밋 `da054f4`; Vercel 배포 `dpl_H1uYDHEdnZNGiidTHni87zhrpGcb` READY, `/health` 200.
 
+### 2026-09-11 그래프 매개변수 라벨 인코딩 정리
+
+- 학생 그래프 공용 위젯의 삼각함수 매개변수 라벨을 `진폭`, `주기 계수`, `위상 이동`, `수직 이동`으로 복구했다.
+- `jsx_graph_page_test.dart` 11개와 대상 파일 분석이 통과했다. 전체 Dart UTF-8 유효성 검사도 통과했다.
+- 해당 위젯은 현재 GraphSelector의 공용 경로에만 포함되며, 최신 정적 번들 해시는 변경되지 않았다.
+
 ### 2026-09-11 제품 readiness 경계 확인
 
 - canary `/health`는 `200 {"status":"ok","service":"aiflow-ocr-queue"}`를 반환했다.
