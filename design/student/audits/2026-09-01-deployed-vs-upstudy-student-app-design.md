@@ -510,7 +510,7 @@
 
 ### 2026-09-10 active-course 포함 최종 canary 후보
 
-- 코드 기준: `origin/hotfix`의 `910f710` 및 이전 그래프·알림 변경, 번들 기준 `099775b`.
+- 코드 기준: `origin/hotfix`의 `910f710` 및 이전 그래프·알림 변경, 최종 번들 기준 `1ae930e`.
 - `flutter build web --release`를 지정 API/데모/OSM 환경값으로 재실행하고 `build/web`를 Vercel 업로드 대상 `public`에 반영했다. 최종 `public/main.dart.js` SHA-256과 alias 응답 원시 바이트 SHA-256은 `C72FDE26BE655E50005F8C42025973EF442E8224C6E6B74010B437858AE401BD`로 일치한다. `localhost`·`127.0.0.1`은 없다.
 - Vercel 최종 배포: `dpl_De2Ut8Lp99sj4mSEPcZMYLTfUTyR`, 고유 URL [`aiflow-web-canary-9aoy19pfw-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-9aoy19pfw-cw20208021-9200s-projects.vercel.app), production alias `https://aiflow-web-canary.vercel.app` READY.
 - 서버 경계: `/health` 200, `/graphs/sample` GET 405·유효 POST 200, `/demo/student-store` 401, `/student/school-exam-plan/active` 401. `vercel inspect`에서 alias와 deployment ID를 재확인했다.
