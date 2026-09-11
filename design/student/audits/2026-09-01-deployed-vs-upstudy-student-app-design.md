@@ -1311,3 +1311,10 @@
 - `omj` 작업 디렉터리에서 친구 검색·요청·랭킹·레이팅·그룹 예외 격리 테스트를 올바른 모듈 경로로 다시 실행했다.
 - `tests/test_social_exception_isolation.py`, `tests/test_rating_access.py`, `tests/test_vercel_student_demo_api.py` 합계 11건 통과.
 - 서버 라우트(`/social/friends/search`, `/social/friend-requests`, `/social/friends/rankings`, `/rating/user`, `/social/study-groups/mine`)는 소스와 계약 테스트에 존재한다. canary에서 관측한 404는 서버 소스 부재로 확정하지 않고 배포·인증 환경 차이로 남긴다.
+
+### 2026-09-11 공통 HTML 셸 토큰·배치 보정
+
+- 실제 공통 셸의 상단 액션을 HTML 기준 38px 원형·기본 표면으로 맞추고, 레일 활성 항목을 기본 표면/본문색 조합으로 맞췄다.
+- 390px 모바일 셸 및 보조 라우트 테스트를 통과했다.
+- 소스·번들 커밋 `a8a3afe`, 로컬·alias `public/main.dart.js` SHA-256 `42CE0E5EB7CF3B62F5ECCB50C4309A25AF93145F35C5299CFE5B091FEDE97A28` 일치.
+- Vercel 고유 URL [`aiflow-web-canary-ep1fe6in3-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-ep1fe6in3-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
