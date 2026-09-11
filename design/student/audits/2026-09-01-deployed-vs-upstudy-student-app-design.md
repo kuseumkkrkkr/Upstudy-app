@@ -1192,3 +1192,10 @@
 - 튜터 화면 테스트 3개 통과.
 - 소스·번들 커밋 `c9985be`, 번들 SHA-256 `37C26F8C77B785682DCFA55868C1A88E062ACA546641432862DAE4CBB174931B`.
 - Vercel 배포 `dpl_DYz78uaw2uGWXvivwdrdr7MJsaB7`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
+
+### 2026-09-11 튜터 첫 안내 문구 HTML 일치화
+
+- 대화 시작 메시지를 HTML 항목의 `오늘 공부한 내용이나 막힌 문제를 알려주세요.`로 맞췄다. 문제 맥락이 전달된 오버레이의 별도 안내는 유지했다.
+- 정적 분석·튜터 테스트 3개 통과.
+- 소스·번들 커밋 `6516f49`, 번들 SHA-256 `0B8EF7CB97369184C1E26AA0E404952792A07F126A58F80633552C64D1C08A7D`.
+- Vercel 배포 `dpl_4L2w3v6WQvxBjN989e4fmg5yhQoM`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
