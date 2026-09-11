@@ -1486,3 +1486,8 @@
 - 최신 소스(`e08501d` 이후 교재 템플릿·편집기 변경)를 기준으로 `public` 웹 번들을 재생성했다.
 - 번들 SHA-256: `C1FD1B7ECE11752B5D079F7F0C32C83F4FA027941B8336B7E3A4381C786B1A8F`, 빌드 커밋 `a3faf23`.
 - Vercel 재배포를 시도했으나 동일하게 `api-deployments-free-per-day` 100회 초과로 거부됐다. 새 번들은 `origin/hotfix`에만 존재하고 현재 alias의 READY 배포 증거로 간주하지 않는다.
+
+### 2026-09-11 Vercel 배포 한도 3차 확인
+
+- 최신 `public` 번들로 추가 빌드 없이 재배포를 시도했으나 동일 오류(`api-deployments-free-per-day`, 100회 초과)가 반환됐다.
+- 배포 한도 복구 전에는 최신 번들의 canary alias 반영과 라이브 해시 검증을 수행할 수 없다. 소스·번들·감사 문서는 보존한다.
