@@ -352,6 +352,15 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     );
   }
 
+  if (uri != null &&
+      uri.path == AppRoutes.wrongAnswers &&
+      uri.queryParameters['scene'] == 'weakness-review') {
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => const WrongAnswerListPage(initialScene: 'weakness-review'),
+    );
+  }
+
   // Course runtime deep links carry the real course identifier in the query.
   // An identifier is required before starting a learning session; without it
   // the static route above intentionally shows the catalog.

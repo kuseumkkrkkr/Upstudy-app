@@ -8,6 +8,7 @@ import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
+import 'package:s11/sessions/tryout_solve/ui/modals/weakness_review_mode.dart';
 
 /// 필요한 변수는 홈 학습 모달의 Navigator 문맥이다.
 /// 작동 원리는 기존 학습 모달을 닫은 뒤 모바일은 둥근 복습 시트, PC는 기존 대화상자를 연다.
@@ -223,7 +224,9 @@ bool _previewIncorrect(SolveHistoryItem item) {
 
 /// HTML 시안의 오늘 복습 우선순위와 약점 요약을 제공하는 화면이다.
 class WrongAnswerListPage extends StatefulWidget {
-  const WrongAnswerListPage({super.key});
+  const WrongAnswerListPage({super.key, this.initialScene});
+
+  final String? initialScene;
 
   static const routeName = '/wrong_answers';
 
@@ -248,6 +251,12 @@ class _WrongAnswerListPageState extends State<WrongAnswerListPage> {
   void initState() {
     super.initState();
     unawaited(_load());
+    if (widget.initialScene == 'weakness-review') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(showWeaknessReviewModal<void>(context: context));
+      });
+    }
   }
 
   Future<void> _load() async {
