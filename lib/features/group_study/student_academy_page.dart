@@ -95,8 +95,8 @@ class _StudentAcademyPageState extends State<StudentAcademyPage> {
             ? null
             : _AcademyView(
                 name: academy.name,
-                subtitle: academy.address ?? '중2 심화반',
-                teacher: academy.adminUserId ?? '담당 선생님',
+                subtitle: academy.address ?? '소속 정보 미등록',
+                teacher: academy.adminUserId ?? '담당자 미등록',
               );
         _tasks = (assignmentResponse.data ?? const [])
             .map(_AcademyTask.fromServer)
@@ -303,7 +303,7 @@ class _AcademyInfoCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    '${academy?.subtitle ?? '중2 심화반'} · ${academy?.teacher ?? '담당 김선생'}',
+                    '${academy?.subtitle ?? '소속 정보 미등록'} · ${academy?.teacher ?? '담당자 미등록'}',
                     style: const TextStyle(fontSize: 10, color: Colors.black45),
                   ),
                 ],
@@ -570,8 +570,8 @@ class _AcademyView {
   /// 작동 원리는 이름·반·담당자 값을 안전하게 화면 모델로 변환하는 것이다.
   factory _AcademyView.fromMap(Map<String, dynamic> map) => _AcademyView(
     name: map['name']?.toString() ?? 'AIFlow 수학학원',
-    subtitle: map['subtitle']?.toString() ?? '중2 심화반',
-    teacher: map['teacher']?.toString() ?? '담당 김선생',
+    subtitle: map['subtitle']?.toString() ?? '소속 정보 미등록',
+    teacher: map['teacher']?.toString() ?? '담당자 미등록',
   );
 }
 
