@@ -1532,3 +1532,4 @@
 - alias·로컬 `public/main.dart.js` SHA-256이 모두 `BCEBC5E096453EAD5F1185035C7B8D00CEC79D93498EC98FF442EFA6DD93A33E`로 일치하며 `/health`는 200이다. `/health/ready` 및 전체 86화면 시각·실 API·동시성 검증은 여전히 미완료다.
 - `api/index.py`에 `/health/ready`를 추가해 제품 데이터 계층 준비 상태를 생존 확인과 분리했다. 계약 테스트 5개와 `py_compile`이 통과했으며 소스 커밋은 `8d67337`이다.
 - 해당 API 변경의 canary 배포는 다시 `api-deployments-free-per-day` 제한으로 거부됐다. 현재 alias의 readiness 응답은 변경 전 상태로 남아 있다.
+- 전체 `flutter analyze`를 재실행한 결과 기존 저장소 전역 962건(경고·정보 포함, `teacher_textbook_reader_page.dart` 등 오류 포함)이 남아 있어 전체 분석 0건 조건은 충족하지 못했다. 이번 학생 변경 파일의 개별 분석은 통과했다.
