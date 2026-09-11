@@ -1503,3 +1503,10 @@
 - 소셜 홈 변경을 포함해 `flutter build web --release`를 다시 실행했다.
 - 번들 SHA-256: `79E60A41A6FEDC6E4726975422B893FE6DD24B0000FC1468E10B2C6A71CFC237`, 빌드 커밋 `a69a5b2`.
 - `origin/hotfix` 푸시 완료. Vercel 일일 배포 한도 초과로 alias 반영은 보류 중이다.
+
+### 2026-09-11 최신 번들 canary 반영 확인
+
+- Vercel 배포 한도 복구 후 최신 `public` 번들을 canary에 반영했다.
+- 배포 `dpl_76ixqpt6RehzzxMeh1czK6CXVZHY`가 `READY`가 되었고, [고유 배포 URL](https://aiflow-web-canary-riiw9ape9-cw20208021-9200s-projects.vercel.app)과 `https://aiflow-web-canary.vercel.app` alias를 확인했다.
+- 로컬·alias `main.dart.js` SHA-256이 `79E60A41A6FEDC6E4726975422B893FE6DD24B0000FC1468E10B2C6A71CFC237`로 일치한다.
+- `/health`는 200(`aiflow-ocr-queue`), `/health/ready`는 404다. 제품 readiness가 확인된 것으로 해석하지 않는다.
