@@ -1358,3 +1358,11 @@
 - `flutter analyze lib/features/textbook/session/textbook_editor_page.dart` 및 교재 딥링크 테스트 통과.
 - 소스·번들 커밋 `d23ad65`, 로컬·alias `public/main.dart.js` SHA-256 `87D438359AC3FF5C340AE0400889D850A4A287AE285780A3D8CB76B44726E09F` 일치.
 - Vercel 배포 `dpl_3d9VXuvpR9Wa6qA4Vj4wZcUmHvnZ`, 고유 URL [`aiflow-web-canary-2j73s3ka7-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-2j73s3ka7-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
+
+### 2026-09-11 교재 작성 화면 컨텍스트 패널 보정
+
+- HTML `textbook-create`의 우측 컨텍스트 패널이 누락된 것을 실제 렌더 비교로 확인하고 `textbook-create`·`textbook-editor` 모두 `236px` 컨텍스트 영역을 사용하도록 보정했다.
+- 새 Canary 탭에서 교재 작성 화면의 `NEW TEXTBOOK` 히어로, 3개 템플릿 행, 빈 교재/템플릿 CTA와 우측 컨텍스트를 확인했다.
+- 교재 딥링크 테스트와 대상 파일 정적 분석 통과.
+- 소스·번들 커밋 `8f8ed67`, 로컬·alias `public/main.dart.js` SHA-256 `70E7F6A99DC8F2667D11510D1EE21CE3B643CE08865CBF3D7EEC0D2FA2F11420` 일치.
+- Vercel 배포 `dpl_8BDUAsFdwDW6NwuH4Zzb2jXWEGoP`, 고유 URL [`aiflow-web-canary-6cw9h06kz-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6cw9h06kz-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
