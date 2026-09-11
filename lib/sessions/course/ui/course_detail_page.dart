@@ -26,6 +26,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
   late Course _course;
   bool _loadingCourse = false;
   bool _enrolling = false;
+  String? _courseLoadError;
 
   /// 필요한 변수는 최초 코스와 코스 식별자다.
   /// 화면 조회 활동을 비동기로 남기고 유닛이 없을 때만 로딩 표시와 함께 상세를 조회한다.
@@ -50,7 +51,13 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
     try {
       final full = await CourseService.fetchCourse(widget.course.id);
       if (!mounted) return;
-      setState(() => _course = full);
+      setState(() {
+        _course = full;
+        _courseLoadError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _courseLoadError = '코스 상세 정보를 새로 불러오지 못했습니다.');
     } finally {
       if (mounted && showLoading) setState(() => _loadingCourse = false);
     }
@@ -123,14 +130,41 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
       onNotifications: () => showStudentNotifications(context),
       child: _loadingCourse
           ? const Center(child: CircularProgressIndicator())
-          : _HtmlCourseDetailBody(
-              course: course,
-              enrolling: _enrolling,
-              onResume: _enrollAndGo,
-              onPreview: _showPreview,
+          : Column(
+              children: [
+                if (_courseLoadError != null)
+                  _CourseDetailError(
+                    message: _courseLoadError!,
+                    onRetry: () => _loadCourseDetail(),
+                  ),
+                Expanded(
+                  child: _HtmlCourseDetailBody(
+                    course: course,
+                    enrolling: _enrolling,
+                    onResume: _enrollAndGo,
+                    onPreview: _showPreview,
+                  ),
+                ),
+              ],
             ),
     );
   }
+}
+
+class _CourseDetailError extends StatelessWidget {
+  const _CourseDetailError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => MaterialBanner(
+    content: Text(message),
+    leading: const Icon(Icons.cloud_off_outlined),
+    actions: [
+      TextButton(onPressed: onRetry, child: const Text('다시 시도')),
+    ],
+  );
 }
 
 /// Downloads HTML의 코스 상세 DOM을 실제 Course 상태에 바인딩한 본문이다.
