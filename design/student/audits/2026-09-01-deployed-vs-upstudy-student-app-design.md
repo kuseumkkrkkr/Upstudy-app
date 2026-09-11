@@ -1171,3 +1171,11 @@
 - 문제풀이 모바일 UI가 HTML 기준으로 필기 영역과 `PROBLEM SESSION` 헤더를 기본 표시하도록 변경된 상태에 맞춰 레거시 테스트 기대값을 갱신했다.
 - 간편풀이 golden을 현재 기준 렌더링으로 재생성했으며, 라우트·책가방·코스·셸·문제풀이 집중 묶음 총 33개가 통과했다.
 - 이 변경은 테스트·golden만 포함하며 제품 번들은 기존 `06B8549A…` 후보와 동일하다.
+
+### 2026-09-11 AI 튜터 채팅 문구·헤더 HTML 일치화
+
+- `/tools` 독립 화면의 대화 헤더를 HTML 기준 `AIFLOW TUTOR · LIVE`와 `막힌 지점부터 질문해 보세요.`로 맞췄다.
+- 서버 질문 전송, 추천 질문, 개인화 상담, 429 재시도 제한은 기존 계약을 유지하고 입력 힌트만 `질문을 입력해 보세요.`로 정렬했다.
+- 관련 정적 분석·튜터/학습도구/모바일 셸 테스트 14개 통과.
+- 소스·번들 커밋 `0a20bd0`, `public/main.dart.js` SHA-256 `608F6EA7FE4CD2F22929C3B13AB6A77A9F426F00A6C9309DEEA24C20C089D619`.
+- Vercel 배포 `dpl_Bt71TTVeYJW8cD7343oquUiQNXEF`, 고유 URL [`aiflow-web-canary-obpqc9ir3-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-obpqc9ir3-cw20208021-9200s-projects.vercel.app), alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
