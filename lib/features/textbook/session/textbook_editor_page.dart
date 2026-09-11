@@ -13,6 +13,7 @@ class TextbookCreationPage extends StatelessWidget {
     return StudentHtmlShell(
       title: '교재 만들기',
       activeRoute: '/bookbag',
+      showContextAside: true,
       mobileBackButton: true,
       onMenu: () => Navigator.of(context).maybePop(),
       onSearch: () => showStudentQuickSearch(context),
@@ -304,6 +305,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
     return StudentHtmlShell(
       title: '직접 집필',
       activeRoute: '/bookbag',
+      showContextAside: true,
       mobileBackButton: true,
       onMenu: () => Navigator.of(context).maybePop(),
       onSearch: () => showStudentQuickSearch(context),
