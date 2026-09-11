@@ -1318,3 +1318,10 @@
 - 390px 모바일 셸 및 보조 라우트 테스트를 통과했다.
 - 소스·번들 커밋 `a8a3afe`, 로컬·alias `public/main.dart.js` SHA-256 `42CE0E5EB7CF3B62F5ECCB50C4309A25AF93145F35C5299CFE5B091FEDE97A28` 일치.
 - Vercel 고유 URL [`aiflow-web-canary-ep1fe6in3-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-ep1fe6in3-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
+
+### 2026-09-11 공통 셸 레일·상단바 최종 수치
+
+- 데스크톱 기본 레일을 HTML `76px`, 상단바를 `64px`로 맞췄다. 태블릿 `72px`와 모바일 하단 탭 분기는 유지한다.
+- 프로필 76px 레일, 모바일 셸, 보조 라우트 테스트 통과.
+- 소스·번들 커밋 `3bfc840`, 로컬·alias `public/main.dart.js` SHA-256 `46C5045220684D9A96229D6D4E3E79CBC26B52114164AA9D76A7F2A83D8D26B9` 일치.
+- Vercel 고유 URL [`aiflow-web-canary-b4qkquv2c-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-b4qkquv2c-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
