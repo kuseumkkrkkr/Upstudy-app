@@ -240,6 +240,9 @@ class _StudentAcademyDetailsDialogState
   /// 작동 원리는 최신 기록부터 최대 12개를 표시하고 미리보기에서는 시안 상태를 제공한다.
   List<Widget> _attendanceRows() {
     if (_attendance.isEmpty) {
+      if (!widget.preview) {
+        return const [_DetailRow(title: '출석 기록 없음', detail: '확인된 출석 기록이 없습니다.', meta: '-')];
+      }
       return const [
         _DetailRow(title: '오늘 출석', detail: '18:54 입실이 기록되었습니다.', meta: '출석'),
         _DetailRow(title: '최근 30일', detail: '출석 11 · 지각 1 · 결석 0', meta: '92%'),
@@ -282,15 +285,16 @@ class _StudentAcademyDetailsDialogState
           })
           .toList(growable: false);
     }
-    return const [
-      _DetailRow(title: '함수 심화', detail: '중2 심화반 정규 수업', meta: '목 19:30'),
-    ];
+    return const [_DetailRow(title: '시간표 없음', detail: '등록된 시간표가 없습니다.', meta: '-')];
   }
 
   /// 필요한 변수는 학생 제출 기록이다.
   /// 작동 원리는 최신 제출을 상태·시각과 함께 최대 12개 표시한다.
   List<Widget> _submissionRows() {
     if (_submissions.isEmpty) {
+      if (!widget.preview) {
+        return const [_DetailRow(title: '제출 기록 없음', detail: '확인된 제출 기록이 없습니다.', meta: '-')];
+      }
       return const [
         _DetailRow(
           title: '일차함수 12문제',
@@ -317,6 +321,9 @@ class _StudentAcademyDetailsDialogState
   List<Widget> _reportRows() {
     final report = _report;
     if (report == null) {
+      if (!widget.preview) {
+        return const [_DetailRow(title: '학습 보고서 없음', detail: '확인된 보고서가 없습니다.', meta: '-')];
+      }
       return const [
         _DetailRow(title: '최근 정답률', detail: '일차함수 형성평가', meta: '82%'),
         _DetailRow(
@@ -349,6 +356,9 @@ class _StudentAcademyDetailsDialogState
   /// 작동 원리는 점수·출석률·생성 시각을 최신순 카드로 표시한다.
   List<Widget> _snapshotRows() {
     if (_snapshots.isEmpty) {
+      if (!widget.preview) {
+        return const [_DetailRow(title: '학습 스냅샷 없음', detail: '확인된 학습 스냅샷이 없습니다.', meta: '-')];
+      }
       return const [
         _DetailRow(
           title: '최근 학습 상태',
@@ -374,7 +384,7 @@ class _StudentAcademyDetailsDialogState
   List<Widget> _groupRows() {
     if (_groups.isEmpty) {
       return const [
-        _DetailRow(title: '중2 심화반', detail: '중학교 2학년 · 수학', meta: '12 / 20'),
+        _DetailRow(title: '소속 그룹 없음', detail: '확인된 학원 그룹이 없습니다.', meta: '-'),
       ];
     }
     return _groups
