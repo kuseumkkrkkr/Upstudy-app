@@ -1334,3 +1334,11 @@
 - 프로필 1280px 셸 테스트와 `secondary_route_shell_test.dart` 전체 통과.
 - 소스·번들 커밋 `ffd11f7`, 로컬·alias `public/main.dart.js` SHA-256 `5B554BE127975C7FAFFD4D87448381EAC713903D7F3186AB7F8528E70BEA2888` 일치.
 - Vercel 배포 고유 URL [`aiflow-web-canary-rn3ky7kcb-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-rn3ky7kcb-cw20208021-9200s-projects.vercel.app) 및 Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
+
+### 2026-09-11 그래프 도구 HTML 전용 셸 수치 보정
+
+- HTML `is-graph-tool` 기준의 84px 레일, 380px 편집 패널, 12px 본문 여백·패널 간격을 실제 `JsxGraphPage` 호출 경로에 적용했다.
+- 그래프 입력·검증·자동 반영·모바일 트레이 동작은 기존 구현과 API 계약을 유지했다.
+- `flutter analyze lib/sessions/graph_tools/session/jsx_graph_page.dart` 및 `test/jsx_graph_page_test.dart` 11건 통과.
+- 소스·번들 커밋 `9f3b96e`, 로컬·alias `public/main.dart.js` SHA-256 `82FE944E3F2DC1549297998B556A2FCE1AB88A77EDDAA9372D2803624788D8D6` 일치.
+- Vercel 배포 `dpl_By5568UoeRYbg9RB4zfYjBRA6X8w`, 고유 URL [`aiflow-web-canary-i21kevq4w-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-i21kevq4w-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
