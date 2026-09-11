@@ -1430,3 +1430,11 @@
 - 관련 통합 실행에서는 기존 레거시 반응형 기대값·pumpAndSettle 타임아웃 5건이 실패했다. 이번 제목 수정과 무관하며 기존 미해결 항목으로 남긴다.
 - 소스·번들 커밋 `8002ed1`, 로컬·alias `public/main.dart.js` SHA-256 `1CC9F9C75E8830A9FBC6BFEEFB9FD37360CE52AD51C26E62F61A98A35EE0F366` 일치.
 - Vercel 배포 `dpl_4M93tsxQj6y5srdLxPriEaLRmt7v`, 고유 URL [`aiflow-web-canary-f5za7ou71-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-f5za7ou71-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
+
+### 2026-09-11 모바일 영문 kicker 보강 및 canary 반영
+
+- HTML 기준의 `MATERIAL LIBRARY`, `GROUP STUDY`, `FRIENDS & SOCIAL` kicker가 모바일에서도 보이도록 자료실·그룹·소셜 화면의 모바일 헤더를 보강했다.
+- 마켓 테스트의 `COMMUNITY` 기대값은 기준 HTML의 실제 kicker(`MATERIAL LIBRARY`)와 달라 레거시 테스트 오류로 기록했으며 제품 코드에 잘못된 문구를 추가하지 않았다.
+- `flutter analyze` 대상 3개 파일은 오류 없이 통과했으나 기존 미사용 위젯 경고 7건은 남아 있다.
+- 소스·번들 커밋 `e1c594c`, 로컬·alias `public/main.dart.js` SHA-256 `A75EDE4663770A37E76196A5B60466D1FD9143C7438340CC7C87BDEEDB924B95` 일치.
+- Vercel 배포 `dpl_9FZmuceRM2qd48dZGXBqJYbjijQ1`, 고유 URL [`aiflow-web-canary-3fqpduvfv-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3fqpduvfv-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
