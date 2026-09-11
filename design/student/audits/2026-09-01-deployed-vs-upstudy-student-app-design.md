@@ -1199,3 +1199,11 @@
 - 정적 분석·튜터 테스트 3개 통과.
 - 소스·번들 커밋 `6516f49`, 번들 SHA-256 `0B8EF7CB97369184C1E26AA0E404952792A07F126A58F80633552C64D1C08A7D`.
 - Vercel 배포 `dpl_4L2w3v6WQvxBjN989e4fmg5yhQoM`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
+
+### 2026-09-11 학습 도구 허브 HTML 구조 반영
+
+- 도구 허브에 HTML의 그래프 탐색기·노트패드·집중 타이머·집중 모드 4개 항목을 표시했다.
+- `최근 도구 열기`는 실제 `/graph` 라우트로 이동하고, `도구 순서 편집`은 현재 기본 순서를 확인하는 다이얼로그를 연다.
+- 모바일 새 카드로 인한 화면 밖 조작은 테스트에서 `ensureVisible` 후 검증하도록 보강했다. 도구 허브 테스트 3개 통과.
+- 소스·번들 커밋 `ecd278b`, 번들 SHA-256 `39F196EECF6404D1B41F7B740DCBBD5C14AE5EC649E9B1500370C762F05700E2`.
+- Vercel 배포 `dpl_Gx3QgDyzNYz9ExKXdKEERRc6MzL7`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
