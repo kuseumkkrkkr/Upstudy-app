@@ -1252,3 +1252,11 @@
 - 정적 분석 통과.
 - 소스·번들 커밋 `ed97284`, `public/main.dart.js` SHA-256 `FAFEA34E77683344E071570978203946BF2794D2F56874F4C456A23103EBE411`.
 - Vercel 배포 `dpl_5MxiqwKpQvWFXmGtcirCFpeQ94KK`, 고유 URL [`aiflow-web-canary-h2v0ubfw5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-h2v0ubfw5-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 코스 OVR 미측정값 정리
+
+- 코스 목록의 레이팅·OVR 값이 없거나 0일 때 임의의 `18.6`을 노출하던 fallback을 `—`로 변경했다.
+- 서버가 제공한 유효한 레이팅·OVR 환산값은 기존 표시 규칙을 유지한다.
+- 정적 분석에서 기존 미사용 위젯 경고 8개가 확인됐으나 이번 변경과 무관하며, 코스 카탈로그 위젯 테스트 3개가 통과했다.
+- 소스·번들 커밋 `cd21c00`, `public/main.dart.js` SHA-256 `4FAAE75A7ED6BD40C371DA51517A0FD127C155613BBC894F2498B2CEC1558EFA`.
+- Vercel 배포 `dpl_DhvNz8NPacuG5JxEidsR48cV2Zc1`, 고유 URL [`aiflow-web-canary-4lbx5u2yc-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-4lbx5u2yc-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
