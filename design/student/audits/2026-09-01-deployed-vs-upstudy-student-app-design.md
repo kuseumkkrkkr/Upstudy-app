@@ -1534,3 +1534,4 @@
 - 해당 API 변경의 canary 배포는 다시 `api-deployments-free-per-day` 제한으로 거부됐다. 현재 alias의 readiness 응답은 변경 전 상태로 남아 있다.
 - 전체 `flutter analyze`를 재실행한 결과 기존 저장소 전역 962건(경고·정보 포함, `teacher_textbook_reader_page.dart` 등 오류 포함)이 남아 있어 전체 분석 0건 조건은 충족하지 못했다. 이번 학생 변경 파일의 개별 분석은 통과했다.
 - 최신 `hotfix` 후보로 Vercel 재시도했으나 `api-deployments-free-per-day` 동일 제한으로 거부됐다. readiness 소스 커밋 `8d67337`은 아직 alias에 반영되지 않았다.
+- canary `/\#/graph`를 브라우저에서 실제 캡처해 그래프 탐색기 셸·축·확대/축소·함수 입력·하단 탭이 렌더링되는 것을 확인했다. 이 캡처는 현재 배포의 동작 근거이며 HTML 원본과의 일대일 이미지 판정은 별도 비교가 필요하다.
