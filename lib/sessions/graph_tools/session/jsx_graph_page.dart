@@ -437,6 +437,8 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     return StudentHtmlShell(
       title: '그래프 탐색기',
       activeRoute: '/learning-tools',
+      // HTML graph-tool 셸은 일반 학생 셸보다 넓은 84px 레일을 사용한다.
+      railWidth: 84,
       // HTML의 is-graph-tool 셸은 우측 컨텍스트 영역 없이 작업면을 채운다.
       showContextAside: false,
       mobileBackButton: true,
@@ -449,7 +451,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
             const SizedBox(height: 12),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final compact = constraints.maxWidth < 1120;
@@ -481,9 +483,9 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(child: graphPanel),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         SizedBox(
-                          width: 400,
+                          width: 380,
                           height: constraints.maxHeight,
                           child: editorPanel,
                         ),
