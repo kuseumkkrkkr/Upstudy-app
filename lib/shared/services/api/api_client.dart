@@ -4854,7 +4854,8 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<Map<String, dynamic>> createTextbook(
     Map<String, dynamic> payload,
   ) async {
-    return <String, dynamic>{};
+    // 교재 생성 서버 계약이 연결되기 전에는 성공처럼 보이는 빈 응답을 만들지 않는다.
+    throw ApiException(statusCode: 501, message: 'textbook_create_unavailable');
   }
 
   Future<List<DailyQuestItem>> fetchDailyQuests({

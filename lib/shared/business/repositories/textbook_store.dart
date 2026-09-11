@@ -169,15 +169,10 @@ class TextbookStore {
 
   static Future<BookData> create(BookData draft) async {
     final payload = draft.toCreateJson();
-    BookData created;
-    try {
-      final createdRaw = await ApiClient.instance.createTextbook(payload);
-      final remote = BookData.fromJson(createdRaw);
-      created = remote.id.trim().isNotEmpty
-          ? remote
-          : _materializeLocalBook(draft);
-    } catch (_) {
-      created = _materializeLocalBook(draft);
+    final createdRaw = await ApiClient.instance.createTextbook(payload);
+    final created = BookData.fromJson(createdRaw);
+    if (created.id.trim().isEmpty) {
+      throw const FormatException('textbook_create_missing_id');
     }
     _cache = [created, ...cachedBooks.where((book) => book.id != created.id)];
     await _saveBook(created);
@@ -418,25 +413,6 @@ class TextbookStore {
   static List<BookData> _trimLibrary(List<BookData> books) {
     if (books.length <= maxLibraryItems) return books;
     return books.sublist(books.length - maxLibraryItems);
-  }
-
-  static BookData _materializeLocalBook(BookData draft) {
-    final now = DateTime.now();
-    final id = 'textbook_${now.millisecondsSinceEpoch}';
-    return BookData(
-      id: id,
-      title: draft.title,
-      subtitle: draft.subtitle,
-      chapters: draft.chapters,
-      progress: draft.progress,
-      progressLabel: draft.progressLabel,
-      coverColor: draft.coverColor,
-      tags: draft.tags,
-      category: draft.category,
-      createdAt: now,
-      updatedAt: now,
-      createdBy: draft.createdBy,
-    );
   }
 
   static List<BookData>? _parseLibraryMeta(String? raw) {
