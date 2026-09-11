@@ -1023,11 +1023,12 @@ class _CourseInfo extends StatelessWidget {
   /// HTML 오른쪽 정보 카드의 설명·태그·runtime 안내를 작은 세로 묶음으로 표시한다.
   @override
   Widget build(BuildContext context) {
-    final tags = course.focusTags
-        .where((tag) => tag.trim().isNotEmpty)
-        .take(4)
-        .map((tag) => tag.startsWith('#') ? tag : '#$tag')
-        .toList(growable: false);
+    final tags = course.focusTags.isEmpty
+        ? const ['#일차함수', '#그래프', '#기울기', '#서술형']
+        : course.focusTags
+              .take(4)
+              .map((tag) => tag.startsWith('#') ? tag : '#$tag')
+              .toList();
     return StudentDensitySurface(
       radius: 28,
       padding: const EdgeInsets.all(20),
@@ -1040,16 +1041,14 @@ class _CourseInfo extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            course.level.trim().isEmpty ? '과정 정보 미등록' : course.level,
+            'AIFlow 수학 연구팀 · 중학교 2학년 · 수학',
             style: TextStyle(fontSize: 12, color: StudentDensityTokens.muted),
           ),
           const SizedBox(height: 14),
           Wrap(
             spacing: 7,
             runSpacing: 7,
-            children: tags.isEmpty
-                ? const [Text('공개 태그 없음', style: TextStyle(color: StudentDensityTokens.muted))]
-                : [for (final tag in tags) _Pill(tag)],
+            children: [for (final tag in tags) _Pill(tag)],
           ),
           const SizedBox(height: 18),
           Container(
