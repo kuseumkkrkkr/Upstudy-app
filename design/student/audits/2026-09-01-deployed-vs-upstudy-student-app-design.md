@@ -1480,3 +1480,9 @@
 - `flutter analyze lib/features/textbook/session/textbook_editor_page.dart`: 오류 없음.
 - `flutter test test/student_route_registry_test.dart`: 9개 테스트 모두 통과.
 - 소스 커밋 `61249e8`을 `origin/hotfix`에 푸시했으며, Vercel 일일 배포 한도 복구 후 번들 재생성·canary 반영이 필요하다.
+
+### 2026-09-11 최신 소스 기준 번들 갱신 및 Vercel 한도 재확인
+
+- 최신 소스(`e08501d` 이후 교재 템플릿·편집기 변경)를 기준으로 `public` 웹 번들을 재생성했다.
+- 번들 SHA-256: `C1FD1B7ECE11752B5D079F7F0C32C83F4FA027941B8336B7E3A4381C786B1A8F`, 빌드 커밋 `a3faf23`.
+- Vercel 재배포를 시도했으나 동일하게 `api-deployments-free-per-day` 100회 초과로 거부됐다. 새 번들은 `origin/hotfix`에만 존재하고 현재 alias의 READY 배포 증거로 간주하지 않는다.
