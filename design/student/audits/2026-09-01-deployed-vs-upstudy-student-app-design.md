@@ -1305,3 +1305,9 @@
 - `flutter analyze`와 책가방 상호작용 테스트 9건 통과.
 - 소스·번들 커밋 `95f794f`, 로컬·alias `public/main.dart.js` SHA-256 `934EDB30C0D78DABF160655F331CC6DD4FE302B041F230BD1EC7A76E90BD2056` 일치.
 - Vercel 고유 URL [`aiflow-web-canary-3nq9q6rts-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3nq9q6rts-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
+
+### 2026-09-11 소셜 API 계약 재검증
+
+- `omj` 작업 디렉터리에서 친구 검색·요청·랭킹·레이팅·그룹 예외 격리 테스트를 올바른 모듈 경로로 다시 실행했다.
+- `tests/test_social_exception_isolation.py`, `tests/test_rating_access.py`, `tests/test_vercel_student_demo_api.py` 합계 11건 통과.
+- 서버 라우트(`/social/friends/search`, `/social/friend-requests`, `/social/friends/rankings`, `/rating/user`, `/social/study-groups/mine`)는 소스와 계약 테스트에 존재한다. canary에서 관측한 404는 서버 소스 부재로 확정하지 않고 배포·인증 환경 차이로 남긴다.
