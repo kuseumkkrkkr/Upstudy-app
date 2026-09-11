@@ -1530,3 +1530,5 @@
 - 그래프 도구의 `InteractiveCosineGraph` TODO 스텁을 제거하고, 축·격자·코사인 곡선·드래그 이동·핀치 확대·Semantics를 구현했다. `flutter analyze lib/shared/ui/graphs/interactive_cosine_graph.dart` 통과, 소스 커밋 `85f0267`.
 - 배포 한도 복구 후 `dpl_HCuZeNK91zm23uMbS87a6NYoiPvv`를 `READY`로 생성하고 canary alias에 반영했다. 고유 URL: `https://aiflow-web-canary-5d15u4o7h-cw20208021-9200s-projects.vercel.app`.
 - alias·로컬 `public/main.dart.js` SHA-256이 모두 `BCEBC5E096453EAD5F1185035C7B8D00CEC79D93498EC98FF442EFA6DD93A33E`로 일치하며 `/health`는 200이다. `/health/ready` 및 전체 86화면 시각·실 API·동시성 검증은 여전히 미완료다.
+- `api/index.py`에 `/health/ready`를 추가해 제품 데이터 계층 준비 상태를 생존 확인과 분리했다. 계약 테스트 5개와 `py_compile`이 통과했으며 소스 커밋은 `8d67337`이다.
+- 해당 API 변경의 canary 배포는 다시 `api-deployments-free-per-day` 제한으로 거부됐다. 현재 alias의 readiness 응답은 변경 전 상태로 남아 있다.
