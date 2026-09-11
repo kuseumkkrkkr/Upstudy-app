@@ -45,9 +45,8 @@ void main() {
     expect(find.byType(StudentHtmlShell), findsOneWidget);
     expect(find.byType(StudentHtmlRail), findsOneWidget);
     expect(find.text('오늘의 공부 계획'), findsOneWidget);
-    expect(find.text('개념 쉽게 이해하기'), findsOneWidget);
+    expect(find.text('개념 쉽게 설명'), findsOneWidget);
     expect(find.text('오답 줄이는 방법'), findsOneWidget);
-    expect(find.text('풀이 힌트 받기'), findsOneWidget);
     expect(find.text('학습 지원'), findsNothing);
     expect(find.byType(VerticalDivider), findsNothing);
     expect(find.byTooltip('전송'), findsOneWidget);

@@ -686,18 +686,13 @@ abstract final class _ChatPrompts {
     _ChatPrompt(marker: '01', title: '오늘의 공부 계획', question: '오늘 뭐부터 공부하면 좋을까?'),
     _ChatPrompt(
       marker: '02',
-      title: '개념 쉽게 이해하기',
+      title: '개념 쉽게 설명',
       question: '어려운 개념을 예시와 함께 쉽게 설명해줘.',
     ),
     _ChatPrompt(
       marker: '03',
       title: '오답 줄이는 방법',
       question: '같은 유형의 오답을 줄이는 방법을 알려줘.',
-    ),
-    _ChatPrompt(
-      marker: '04',
-      title: '풀이 힌트 받기',
-      question: '정답 말고 풀이를 시작할 수 있는 힌트만 알려줘.',
     ),
   ];
 }
