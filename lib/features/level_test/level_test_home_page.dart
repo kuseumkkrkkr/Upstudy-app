@@ -838,14 +838,10 @@ class _PlacementStatistics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = stats;
-    if (current == null ||
-        current.difficultyBands.isEmpty ||
-        current.estimatedBands.isEmpty) {
-      return const _PlacementStatisticsEmpty();
-    }
-    final difficulty = current.difficultyBands;
-    final estimates = current.estimatedBands;
+    final difficulty = stats?.difficultyBands.isNotEmpty == true
+        ? stats!.difficultyBands
+        : _fallbackDifficulty;
+    final estimates = stats?.estimatedBands ?? _fallbackEstimates;
     return Column(
       key: const ValueKey('level-test-statistics'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -936,16 +932,6 @@ class _PlacementStatistics extends StatelessWidget {
       ],
     );
   }
-}
-
-class _PlacementStatisticsEmpty extends StatelessWidget {
-  const _PlacementStatisticsEmpty();
-
-  @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Text('레벨 테스트 통계를 불러오면 난이도와 예상 구간을 표시합니다.'),
-      );
 }
 
 class _EstimatedOvrChart extends StatelessWidget {
