@@ -1528,3 +1528,5 @@
 - `python -m pytest omj/tests/test_vercel_student_demo_api.py -q`에서 친구 검색·친구 요청을 포함한 데모 API 계약 5개가 통과했다(경고 1건은 Starlette/httpx deprecation).
 - Vercel `vercel ls`에서 기존 배포는 READY로 보였지만 새 후보 배포 시도는 동일한 일일 한도 오류로 거부됐다.
 - 그래프 도구의 `InteractiveCosineGraph` TODO 스텁을 제거하고, 축·격자·코사인 곡선·드래그 이동·핀치 확대·Semantics를 구현했다. `flutter analyze lib/shared/ui/graphs/interactive_cosine_graph.dart` 통과, 소스 커밋 `85f0267`.
+- 배포 한도 복구 후 `dpl_HCuZeNK91zm23uMbS87a6NYoiPvv`를 `READY`로 생성하고 canary alias에 반영했다. 고유 URL: `https://aiflow-web-canary-5d15u4o7h-cw20208021-9200s-projects.vercel.app`.
+- alias·로컬 `public/main.dart.js` SHA-256이 모두 `BCEBC5E096453EAD5F1185035C7B8D00CEC79D93498EC98FF442EFA6DD93A33E`로 일치하며 `/health`는 200이다. `/health/ready` 및 전체 86화면 시각·실 API·동시성 검증은 여전히 미완료다.
