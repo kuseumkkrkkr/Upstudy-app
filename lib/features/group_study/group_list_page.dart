@@ -493,7 +493,7 @@ class _GroupListPageState extends State<GroupListPage> {
             const Divider(height: 1),
             _MobileGroupSheetRow(
               icon: Icons.search_rounded,
-              title: '공개 그룹 찾기',
+              title: '그룹 찾기',
               detail: '이름으로 공개 그룹을 검색해 참가',
               rowKey: const ValueKey('group-mobile-find'),
               onTap: () => Navigator.of(sheetContext).pop('find'),
@@ -824,58 +824,67 @@ class _MobileGroupHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
     key: const ValueKey('groups-mobile-heading'),
-    height: 85,
+    height: 105,
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(14, 22, 14, 15),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'GROUP STUDY',
-                style: TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 1.7,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '그룹 $count/3',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                '참여 중인 그룹에서 학습을 이어가세요.',
-                style: TextStyle(fontSize: 10, color: Colors.black45),
-              ),
-            ],
+          const Text(
+            'GROUP STUDY',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 1.7,
+              color: Colors.black54,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-          const Spacer(),
-          SizedBox(
-            width: 114,
-            height: 48,
-            child: OutlinedButton.icon(
-              key: const ValueKey('groups-mobile-add'),
-              onPressed: onAdd,
-              icon: const Icon(Icons.auto_awesome, size: 17),
-              label: const Text('그룹 추가'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.black,
-                side: const BorderSide(color: Color(0xFFD8D8DC)),
-                shape: const RoundedRectangleBorder(),
-                padding: EdgeInsets.zero,
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+          const SizedBox(height: 6),
+          Expanded(
+            child: Row(
+              key: const ValueKey('group-mobile-actions'),
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '그룹 $count/3',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        '참여 중인 그룹에서 학습을 이어가세요.',
+                        style: TextStyle(fontSize: 10, color: Colors.black45),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                SizedBox(
+                  width: 114,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('groups-mobile-add'),
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.auto_awesome, size: 17),
+                    label: const Text('코드로 참여'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.black,
+                      side: const BorderSide(color: Color(0xFFD8D8DC)),
+                      shape: const RoundedRectangleBorder(),
+                      padding: EdgeInsets.zero,
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

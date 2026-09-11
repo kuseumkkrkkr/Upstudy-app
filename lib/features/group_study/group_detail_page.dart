@@ -518,6 +518,18 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                   48,
                 ),
                 children: [
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'GROUP SPACE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.7,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
                   _MobileGroupOverview(
                     group: group,
                     memberCount: memberCount,
