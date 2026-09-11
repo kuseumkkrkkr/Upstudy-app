@@ -1157,3 +1157,11 @@
 - 약점 복습의 `방금 틀린 개념`·`최근30개 틀린 개념` 버튼을 서버 `updatedAt` 기반 기간 필터로 연결했다. 날짜가 없거나 파싱되지 않으면 선택하지 않고 빈 상태를 알린다.
 - 공통 720/721 반응형 회귀 검사를 HTML 기준으로 갱신했고 통과했다.
 - 소스 커밋 `6f091d6`. 해당 레거시 모달은 현재 웹 번들 도달 그래프에 포함되지 않아 후보 `main.dart.js` SHA는 변하지 않았다. 제품 라우트 연결 전까지 이를 배포 반영으로 주장하지 않는다.
+
+### 2026-09-11 약점 복습 딥링크 연결 및 canary 반영
+
+- `weakness-review`를 `WrongAnswerListPage`의 `initialScene`으로 연결해 `/wrong_answers?scene=weakness-review` 진입 시 실제 약점 복습 모달을 연다.
+- 전역 검색의 31개 목적지 중 약점 복습도 같은 딥링크를 사용한다.
+- 소스·번들 커밋 `cf66150`, `public/main.dart.js` SHA-256 `06B8549AEF712282B88D6892FFB2634BDA7B5163F9E3B871ECD948A363EF8FE4`.
+- Vercel 배포 `dpl_2dvYXWTH7YUSqgmT4GmrmZR2mFAS`, 고유 URL [`aiflow-web-canary-qyrzzatop-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-qyrzzatop-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. 로컬·alias 번들 SHA가 일치하고 `/health`·딥링크 HTML 응답이 200이다.
+- 86개 전체 이미지·실제 인증 데이터·제품 서버 readiness·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
