@@ -1480,7 +1480,7 @@ class _StudentStoreDemoPageState extends State<StudentStoreDemoPage> {
   Widget build(BuildContext context) {
     return StudentHtmlShell(
       title: '마켓플레이스',
-      activeRoute: '/marketplace',
+      activeRoute: '/store',
       showContextAside: false,
       child: StudentDensityPage(
         padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),

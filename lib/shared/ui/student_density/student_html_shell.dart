@@ -221,7 +221,12 @@ class StudentHtmlRail extends StatelessWidget {
       // 같은 레일 항목을 강조해 현재 위치를 잃지 않게 한다.
       final active =
           activeRoute == route ||
-          (route == AppRoutes.bookbag && activeRoute == AppRoutes.marketplace);
+          (route == AppRoutes.bookbag && activeRoute == AppRoutes.marketplace) ||
+          (route == AppRoutes.learningTools &&
+              (activeRoute == AppRoutes.store ||
+                  activeRoute == AppRoutes.tools ||
+                  activeRoute.startsWith('/student-services/') ||
+                  activeRoute == AppRoutes.schoolExamPrep));
       return Semantics(
         button: true,
         label: label,
