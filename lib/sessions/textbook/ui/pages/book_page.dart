@@ -459,6 +459,9 @@ class _BookLibraryLoader extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return const _BookLibraryError();
+          }
           final data = snapshot.data ?? const <BookData>[];
           return _BookLibraryBody(
             onSelect: onSelect,
@@ -478,7 +481,10 @@ class _BookLibraryLoader extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        final data = snapshot.data ?? TextbookStore.fallbackBooks;
+        if (snapshot.hasError) {
+          return const _BookLibraryError();
+        }
+        final data = snapshot.data ?? const <BookData>[];
         return _BookLibraryBody(
           onSelect: onSelect,
           books: data,
@@ -489,6 +495,20 @@ class _BookLibraryLoader extends StatelessWidget {
           onDownload: onDownload,
         );
       },
+    );
+  }
+}
+
+class _BookLibraryError extends StatelessWidget {
+  const _BookLibraryError();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text('교재를 불러오지 못했어요. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.'),
+      ),
     );
   }
 }

@@ -11,7 +11,6 @@ class TextbookStore {
   static const String _libraryKey = 'textbook_library_v1';
   static const String _libraryCacheKey = 'textbook_library_cache_v1';
   static const String _cachePrefix = 'textbook_cache_v1_';
-  static const String _seedStateKey = 'textbook_seed_state_v1';
   static const int maxLibraryItems = 10;
 
   static const List<BookData> _seedBooks = [
@@ -105,8 +104,9 @@ class TextbookStore {
   static List<BookData>? _libraryCache;
   static Future<List<BookData>>? _libraryFuture;
 
-  static List<BookData> get cachedBooks =>
-      _cache.isNotEmpty ? _cache : fallbackBooks;
+  /// 현재 세션에서 실제로 읽은 교재만 반환한다.
+  /// 네트워크·저장소가 비어 있을 때 샘플 교재를 상용 데이터처럼 노출하지 않는다.
+  static List<BookData> get cachedBooks => List.unmodifiable(_cache);
 
   static Future<List<BookData>> load({
     String? category,
@@ -158,8 +158,7 @@ class TextbookStore {
       return remote;
     }
     final all = await _loadAll();
-    return _firstWhereOrNull<BookData>(all, (book) => book.id == id) ??
-        _firstWhereOrNull<BookData>(fallbackBooks, (book) => book.id == id);
+    return _firstWhereOrNull<BookData>(all, (book) => book.id == id);
   }
 
   static String displayNumberFor(BookData book) {
@@ -266,9 +265,7 @@ class TextbookStore {
       _cache = local;
       return _cache;
     }
-    await _seedLibrary();
-    _cache = fallbackBooks;
-    return _cache;
+    throw StateError('교재 목록을 불러오지 못했습니다.');
   }
 
   static Future<BookData?> _fetchRemoteBook(String id) async {
@@ -332,9 +329,7 @@ class TextbookStore {
       }
     }
 
-    await _seedLibrary();
-    _libraryCache = _seedBooks.map(_stripToLibraryMeta).toList();
-    return _libraryCache!;
+    throw StateError('교재 보관함을 불러오지 못했습니다.');
   }
 
   static Future<BookData?> _loadCachedBook(String id) async {
@@ -409,7 +404,7 @@ class TextbookStore {
       }
       result.add(entry);
     }
-    return result.isEmpty ? fallbackBooks : result;
+    return result;
   }
 
   static Future<List<BookData>> _loadLibraryMetaEntries() async {
@@ -442,19 +437,6 @@ class TextbookStore {
       updatedAt: now,
       createdBy: draft.createdBy,
     );
-  }
-
-  static Future<void> _seedLibrary() async {
-    final library = await _loadLibraryMetaEntries();
-    if (library.isNotEmpty) return;
-    final seededMeta = _seedBooks.map(_stripToLibraryMeta).toList();
-    await saveLibraryMeta(seededMeta);
-    for (final book in _seedBooks) {
-      await _saveCachedBook(book);
-    }
-    try {
-      await LocalDb.instance.setString(_seedStateKey, '1');
-    } catch (_) {}
   }
 
   static List<BookData>? _parseLibraryMeta(String? raw) {
