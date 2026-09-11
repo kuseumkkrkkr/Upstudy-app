@@ -1497,3 +1497,9 @@
 - 소셜 홈 대화 장면에도 친구 요청 요약 행을 항상 표시해 HTML의 소식·요청·대화 정보 구조를 유지했다. 친구 탭의 상세 요청 행도 빈 상태에서 사라지지 않도록 정리했다.
 - `flutter analyze lib/sessions/friend/ui/friend_screen.dart`는 오류 없이 통과했으며 기존 미사용 헬퍼 경고 3건은 잔여다.
 - 소스 커밋 `e1edfeb`을 `origin/hotfix`에 푸시했다. 새 번들 생성·canary 반영은 Vercel 일일 한도 복구 후 수행해야 한다.
+
+### 2026-09-11 소셜 변경 포함 번들 고정
+
+- 소셜 홈 변경을 포함해 `flutter build web --release`를 다시 실행했다.
+- 번들 SHA-256: `79E60A41A6FEDC6E4726975422B893FE6DD24B0000FC1468E10B2C6A71CFC237`, 빌드 커밋 `a69a5b2`.
+- `origin/hotfix` 푸시 완료. Vercel 일일 배포 한도 초과로 alias 반영은 보류 중이다.
