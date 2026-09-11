@@ -1453,3 +1453,11 @@
 - 그룹 목록 헤더·참여 시트·그룹 상세의 `GROUP SPACE` 표식은 번들에 반영됐다.
 - 위젯 검수는 표식·overflow를 통과했지만 상세 채팅 진입 단계에서 `pumpAndSettle`이 네트워크 대기 때문에 타임아웃됐다. 테스트 환경에서는 HttpClient 요청이 400으로 차단되므로 제품 API 정상 동작의 증거로 사용하지 않는다.
 - 따라서 그룹의 실제 채팅·자료 공유·권한 동작은 인증된 서버 환경에서 별도 재검수해야 하며, 전체 목표는 미완료다.
+
+### 2026-09-11 교재 생성 가짜 성공 제거 및 canary 반영
+
+- `ApiClient.createTextbook()`의 빈 응답과 `TextbookStore`의 로컬 ID 대체를 제거했다.
+- 서버 생성 계약이 없는 현재 상태에서는 `textbook_create_unavailable` 오류와 저장 실패 안내를 표시한다. 실제 저장 성공으로 오인할 수 있는 로컬 가짜 교재는 만들지 않는다.
+- 대상 분석은 오류 없이 통과했으며, 교재 생성 API 자체는 서버 라우트 부재로 미구현 상태다.
+- 소스·번들 커밋 `83339f4`, 로컬·alias `public/main.dart.js` SHA-256 `C24A1169D47CAC4C52BB94092E299A4708D59AE760D9D154DBBA26578467F753` 일치.
+- Vercel 배포 `dpl_7B68SYKCiNRQ5fxGvva3h1eXMg82`, 고유 URL [`aiflow-web-canary-otlbxdsci-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-otlbxdsci-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200.
