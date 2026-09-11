@@ -1420,3 +1420,13 @@
 - HTML `marketplace`의 검색·필터·자료 유형 탭과 6개 카드 구조를 기준으로 확인했다.
 - Canary는 검색·필터·탭 셸은 표시하지만 실제 자료 API 실패를 오류·빈 결과 상태로 표시한다.
 - 샘플 자료를 상용 목록처럼 삽입하지 않는 정책을 유지한다. 인증된 자료 API 응답이 확보되면 카드 밀도·줄바꿈·필터 시트를 추가 검수한다.
+
+### 2026-09-11 학원 탐색 데모 제목 보정 및 canary 반영
+
+- HTML `academy-find`의 제목은 `AIFlow 학원 가맹점 찾기`인데 Canary는 `학원 찾기`로 표시되던 차이를 확인했다.
+- `StudentServiceKind.academy`일 때만 HTML 제목을 사용하도록 수정했다. 과외 화면 제목은 `과외 찾기`로 유지했다.
+- OSM 지도와 샘플 안내 문구는 계획에서 허용한 canary 데모 동작이므로 변경하지 않았다.
+- `flutter analyze lib/features/student_services/student_services_demo_page.dart`: 통과.
+- 관련 통합 실행에서는 기존 레거시 반응형 기대값·pumpAndSettle 타임아웃 5건이 실패했다. 이번 제목 수정과 무관하며 기존 미해결 항목으로 남긴다.
+- 소스·번들 커밋 `8002ed1`, 로컬·alias `public/main.dart.js` SHA-256 `1CC9F9C75E8830A9FBC6BFEEFB9FD37360CE52AD51C26E62F61A98A35EE0F366` 일치.
+- Vercel 배포 `dpl_4M93tsxQj6y5srdLxPriEaLRmt7v`, 고유 URL [`aiflow-web-canary-f5za7ou71-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-f5za7ou71-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
