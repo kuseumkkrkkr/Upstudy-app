@@ -70,7 +70,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
     _messages.add(
       _ChatMessage(
         text: widget.initialContext == null
-            ? '안녕하세요. 오늘 공부할 내용이나 막힌 문제를 알려주세요.'
+            ? '오늘 공부한 내용이나 막힌 문제를 알려주세요.'
             : '문제 맥락이 연결되었습니다. 막힌 부분을 편하게 물어보세요.',
         isUser: false,
       ),
