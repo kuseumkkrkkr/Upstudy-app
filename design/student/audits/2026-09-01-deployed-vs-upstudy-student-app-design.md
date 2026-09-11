@@ -1382,3 +1382,11 @@
 - 교재 딥링크 테스트와 정적 분석 통과.
 - 소스·번들 커밋 `aa3cb0a`, 로컬·alias `public/main.dart.js` SHA-256 `7F98AC4037AED539A744AE151ADB62C6DC59207C9E86520E9C9416C5349009C6` 일치.
 - Vercel 배포 `dpl_AVws4oHVSssBiY3j56PYkAwBhp6E`, 고유 URL [`aiflow-web-canary-3ugpkchzy-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3ugpkchzy-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
+
+### 2026-09-11 교재 편집 장 목록·도구 행 보강
+
+- HTML 편집 화면의 장 목록, 새 장 추가, 펜·되돌리기·그래프 도구 행을 편집 화면에 추가했다.
+- 장 추가는 기존 draft 상태를 갱신하며 저장·삭제·설명 편집 계약을 유지한다.
+- 대상 파일 정적 분석 통과.
+- 소스·번들 커밋 `a3e5c45`, 로컬·alias `public/main.dart.js` SHA-256 `EB663477E1CA7DDCB27E45D4F2E3736327E30572985C6FF8F8F7DDD9DD655F7A` 일치.
+- Vercel 배포 `dpl_2Xa9toMsVpVndduWf3CtYuGM3m2c`, 고유 URL [`aiflow-web-canary-fb2nsnrg9-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fb2nsnrg9-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
