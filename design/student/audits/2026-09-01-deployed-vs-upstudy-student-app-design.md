@@ -1325,3 +1325,12 @@
 - 프로필 76px 레일, 모바일 셸, 보조 라우트 테스트 통과.
 - 소스·번들 커밋 `3bfc840`, 로컬·alias `public/main.dart.js` SHA-256 `46C5045220684D9A96229D6D4E3E79CBC26B52114164AA9D76A7F2A83D8D26B9` 일치.
 - Vercel 고유 URL [`aiflow-web-canary-b4qkquv2c-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-b4qkquv2c-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
+
+### 2026-09-11 공통 셸 레일 배경·컨텍스트 폭 보정
+
+- HTML `product-nav` 기준으로 데스크톱 레일 전체를 어두운 표면으로 맞추고, 레일 상·하단 브랜드 블록은 기본 표면/본문색으로 조정했다.
+- 우측 컨텍스트 영역을 HTML 기준 `236px`로 변경했다. 태블릿·모바일 셸 분기는 유지했다.
+- `flutter analyze lib/shared/ui/student_density/student_html_shell.dart` 통과.
+- 프로필 1280px 셸 테스트와 `secondary_route_shell_test.dart` 전체 통과.
+- 소스·번들 커밋 `ffd11f7`, 로컬·alias `public/main.dart.js` SHA-256 `5B554BE127975C7FAFFD4D87448381EAC713903D7F3186AB7F8528E70BEA2888` 일치.
+- Vercel 배포 고유 URL [`aiflow-web-canary-rn3ky7kcb-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-rn3ky7kcb-cw20208021-9200s-projects.vercel.app) 및 Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
