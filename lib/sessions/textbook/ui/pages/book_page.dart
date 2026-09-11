@@ -416,7 +416,7 @@ class BookLibraryModal extends StatelessWidget {
   }
 }
 
-class _BookLibraryLoader extends StatelessWidget {
+class _BookLibraryLoader extends StatefulWidget {
   const _BookLibraryLoader({
     required this.onSelect,
     required this.title,
@@ -440,59 +440,96 @@ class _BookLibraryLoader extends StatelessWidget {
   final ValueChanged<BookData>? onDownload;
 
   @override
+  State<_BookLibraryLoader> createState() => _BookLibraryLoaderState();
+}
+
+class _BookLibraryLoaderState extends State<_BookLibraryLoader> {
+  Future<List<BookData>>? _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _BookLibraryLoader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.category != widget.category ||
+        oldWidget.useLibrary != widget.useLibrary ||
+        oldWidget.selectedTags.join('|') != widget.selectedTags.join('|')) {
+      _future = _load();
+    }
+  }
+
+  Future<List<BookData>> _load({bool forceRefresh = false}) {
+    return widget.useLibrary
+        ? TextbookStore.loadLibrary(forceRefresh: forceRefresh)
+        : TextbookStore.load(
+            category: widget.category,
+            tags: widget.selectedTags,
+            forceRefresh: forceRefresh,
+          );
+  }
+
+  void _retry() {
+    setState(() => _future = _load(forceRefresh: true));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (books != null) {
+    if (widget.books != null) {
       return _BookLibraryBody(
-        onSelect: onSelect,
-        books: books!,
-        title: title,
-        selectedTags: selectedTags,
-        notice: notice,
-        enableDownload: enableDownload,
-        onDownload: onDownload,
+        onSelect: widget.onSelect,
+        books: widget.books!,
+        title: widget.title,
+        selectedTags: widget.selectedTags,
+        notice: widget.notice,
+        enableDownload: widget.enableDownload,
+        onDownload: widget.onDownload,
       );
     }
-    if (useLibrary) {
+    if (widget.useLibrary) {
       return FutureBuilder<List<BookData>>(
-        future: TextbookStore.loadLibrary(),
+        future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const _BookLibraryError();
+            return _BookLibraryError(onRetry: _retry);
           }
           final data = snapshot.data ?? const <BookData>[];
           return _BookLibraryBody(
-            onSelect: onSelect,
+            onSelect: widget.onSelect,
             books: data,
-            title: title,
-            selectedTags: selectedTags,
-            notice: notice,
-            enableDownload: enableDownload,
-            onDownload: onDownload,
+            title: widget.title,
+            selectedTags: widget.selectedTags,
+            notice: widget.notice,
+            enableDownload: widget.enableDownload,
+            onDownload: widget.onDownload,
           );
         },
       );
     }
     return FutureBuilder<List<BookData>>(
-      future: TextbookStore.load(category: category, tags: selectedTags),
+      future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return const _BookLibraryError();
+          return _BookLibraryError(onRetry: _retry);
         }
         final data = snapshot.data ?? const <BookData>[];
         return _BookLibraryBody(
-          onSelect: onSelect,
+          onSelect: widget.onSelect,
           books: data,
-          title: title,
-          selectedTags: selectedTags,
-          notice: notice,
-          enableDownload: enableDownload,
-          onDownload: onDownload,
+          title: widget.title,
+          selectedTags: widget.selectedTags,
+          notice: widget.notice,
+          enableDownload: widget.enableDownload,
+          onDownload: widget.onDownload,
         );
       },
     );
@@ -500,14 +537,23 @@ class _BookLibraryLoader extends StatelessWidget {
 }
 
 class _BookLibraryError extends StatelessWidget {
-  const _BookLibraryError();
+  const _BookLibraryError({required this.onRetry});
+
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
         padding: EdgeInsets.all(24),
-        child: Text('교재를 불러오지 못했어요. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('교재를 불러오지 못했어요. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.'),
+            const SizedBox(height: 12),
+            OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
+          ],
+        ),
       ),
     );
   }
