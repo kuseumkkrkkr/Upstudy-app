@@ -1236,3 +1236,11 @@
 - 런타임 정적 분석 및 보조 라우트 회귀 테스트 5개 통과.
 - 소스·번들 커밋 `71c5ff5`, `public/main.dart.js` SHA-256 `86452CE224B9B2C359FCB7A1695421ED6C4EAE74E162FD056BA68A949AF829CB`.
 - Vercel 배포 `dpl_HcHKM7GTjB7Hb1komsAQeNci5YrA`, 고유 URL [`aiflow-web-canary-8p3q5cjvi-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-8p3q5cjvi-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 학원 상세 실제 빈 상태 정리
+
+- 실제 학원 상세 모달에서 API가 빈 응답일 때 출석·시간표·제출·보고서·스냅샷·그룹 샘플을 표시하던 fallback을 제거했다.
+- 미리보기 모드의 기준 샘플은 유지하고, 실제 모드에는 각 항목의 명시적 빈 상태를 표시한다.
+- 정적 분석 통과.
+- 소스·번들 커밋 `b7672ce`, `public/main.dart.js` SHA-256 `C6E7EC0399AC18445FF402BD272FC4AA05812804A8290C13174CECD2AB978D01`.
+- Vercel 배포 `dpl_3tPYScjQVtUTCVC4mpHE5YbPK6tp`, 고유 URL [`aiflow-web-canary-29mev6yag-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-29mev6yag-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
