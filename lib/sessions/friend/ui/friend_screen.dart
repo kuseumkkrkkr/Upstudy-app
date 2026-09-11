@@ -585,12 +585,14 @@ class _SoWidgetState extends State<SoWidget> {
     if (_refreshingPage) return;
     _refreshingPage = true;
     try {
-      final legacy = const bool.fromEnvironment('USE_LEGACY_SOCIAL');
       await Future.wait([
         _refreshFriends(),
         _loadFriendRequests(),
         _loadConversationThreads(),
-        if (legacy) ...[_loadFriendRanks(), _loadMyGroups(), _loadTagRatings()],
+        // HTML 소셜 화면의 랭킹·레이팅·그룹 영역도 기본 경로에서 실제 API를 조회한다.
+        _loadFriendRanks(),
+        _loadMyGroups(),
+        _loadTagRatings(),
       ]);
     } finally {
       _refreshingPage = false;
@@ -666,10 +668,10 @@ class _SoWidgetState extends State<SoWidget> {
     if (_loadingRanks) return;
     setState(() => _loadingRanks = true);
     try {
-      final ranksFuture = ApiClient.instance.fetchFriendRankings();
-      final ratingFuture = ApiClient.instance.fetchUserRating();
-      final ranks = await ranksFuture;
-      final myRating = await ratingFuture;
+      // 두 요청을 동시에 시작하면 첫 실패 시 다른 Future의 예외가 누락될 수 있다.
+      // 순차 조회로 각 실패를 동일한 catch 경계에서 처리한다.
+      final ranks = await ApiClient.instance.fetchFriendRankings();
+      final myRating = await ApiClient.instance.fetchUserRating();
       final resolvedRanks = ranks
           .map(
             (r) => _FriendRank(
