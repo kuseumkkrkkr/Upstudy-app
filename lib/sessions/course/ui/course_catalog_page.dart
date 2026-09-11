@@ -761,7 +761,7 @@ class _DesktopCourseRail extends StatelessWidget {
           icon: OpenDesignIconName.courses,
           label: '코스',
           active: true,
-          onTap: () {},
+          onTap: () => Navigator.of(context).pushReplacementNamed('/courses'),
         ),
         _DesktopCourseRailItem(
           icon: OpenDesignIconName.market,
