@@ -1366,3 +1366,11 @@
 - 교재 딥링크 테스트와 대상 파일 정적 분석 통과.
 - 소스·번들 커밋 `8f8ed67`, 로컬·alias `public/main.dart.js` SHA-256 `70E7F6A99DC8F2667D11510D1EE21CE3B643CE08865CBF3D7EEC0D2FA2F11420` 일치.
 - Vercel 배포 `dpl_8BDUAsFdwDW6NwuH4Zzb2jXWEGoP`, 고유 URL [`aiflow-web-canary-6cw9h06kz-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-6cw9h06kz-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
+
+### 2026-09-11 교재 편집 탭·하단 동작 보정
+
+- `textbook-editor`에 HTML 기준 `편집/태그/시험지` 탭과 `교재 저장/미리보기` 하단 동작을 추가했다.
+- 저장은 기존 실제 교재 저장 API를 호출하며, 미리보기는 현재 편집 화면을 안전하게 닫는 동작으로 연결했다.
+- 교재 생성·편집 딥링크 테스트와 대상 파일 정적 분석 통과.
+- 소스·번들 커밋 `e111172`, 로컬·alias `public/main.dart.js` SHA-256 `FD18D1B6E9A15356EECC1D769F7A806B94806660578B031AF85A4255416F1C9F` 일치.
+- Vercel 배포 `dpl_BfFX6hPKRP48U8xzfMSEcL34uhHA`, 고유 URL [`aiflow-web-canary-15w8zzh21-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-15w8zzh21-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
