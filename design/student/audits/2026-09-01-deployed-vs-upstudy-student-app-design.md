@@ -1207,3 +1207,9 @@
 - 모바일 새 카드로 인한 화면 밖 조작은 테스트에서 `ensureVisible` 후 검증하도록 보강했다. 도구 허브 테스트 3개 통과.
 - 소스·번들 커밋 `ecd278b`, 번들 SHA-256 `39F196EECF6404D1B41F7B740DCBBD5C14AE5EC649E9B1500370C762F05700E2`.
 - Vercel 배포 `dpl_Gx3QgDyzNYz9ExKXdKEERRc6MzL7`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
+
+### 2026-09-11 학습 도구 허브 후보 재배포 확인
+
+- 그래프·최근 도구·순서 편집 변경을 포함한 최신 번들을 다시 빌드하고 Canary alias에 반영했다.
+- 소스·번들 커밋 `ecd278b`, 번들 SHA-256 `39F196EECF6404D1B41F7B740DCBBD5C14AE5EC649E9B1500370C762F05700E2`.
+- Vercel 배포 `dpl_Gx3QgDyzNYz9ExKXdKEERRc6MzL7`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
