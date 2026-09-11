@@ -522,28 +522,34 @@ class _ChapterOutline extends StatelessWidget {
       child: Column(
         children: [
           for (var index = 0; index < chapters.length; index++)
-            ListTile(
+            Material(
+              color: Colors.transparent,
+              child: ListTile(
+                dense: true,
+                leading: Text(
+                  '${index + 1}장',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                title: Text(
+                  chapters[index].title.trim().isEmpty
+                      ? '새 장'
+                      : chapters[index].title,
+                ),
+                trailing: const Text('편집'),
+              ),
+            ),
+          Material(
+            color: Colors.transparent,
+            child: ListTile(
               dense: true,
-              leading: Text(
-                '${index + 1}장',
-                style: const TextStyle(fontWeight: FontWeight.w800),
+              leading: const Text(
+                '+',
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
-              title: Text(
-                chapters[index].title.trim().isEmpty
-                    ? '새 장'
-                    : chapters[index].title,
-              ),
-              trailing: const Text('편집'),
+              title: const Text('새 장 추가'),
+              onTap: onAddChapter,
+              trailing: const Text('추가'),
             ),
-          ListTile(
-            dense: true,
-            leading: const Text(
-              '+',
-              style: TextStyle(fontWeight: FontWeight.w800),
-            ),
-            title: const Text('새 장 추가'),
-            onTap: onAddChapter,
-            trailing: const Text('추가'),
           ),
         ],
       ),
