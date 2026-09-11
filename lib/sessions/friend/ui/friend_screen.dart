@@ -4098,6 +4098,31 @@ class _SoWidgetState extends State<SoWidget> {
           ),
         ),
       ),
+      InkWell(
+        key: const ValueKey('mobile-social-friend-requests-open'),
+        onTap: _openMobileFriendRequests,
+        child: Container(
+          height: 64,
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.person_add_alt_1_outlined),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  '친구 요청 · 받은 ${_pendingIncomingRequests.length} · 보낸 ${_pendingOutgoingRequests.length}',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded),
+            ],
+          ),
+        ),
+      ),
       const Padding(
         padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Text(
@@ -4143,42 +4168,40 @@ class _SoWidgetState extends State<SoWidget> {
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
         ),
       ),
-      if (_pendingIncomingRequests.isNotEmpty ||
-          _pendingOutgoingRequests.isNotEmpty)
-        InkWell(
-          key: const ValueKey('mobile-friend-requests-open'),
-          onTap: _openMobileFriendRequests,
-          child: Container(
-            height: 76,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.person_add_alt_1_outlined),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '친구 요청',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      Text(
-                        '받은 요청 ${_pendingIncomingRequests.length} · 보낸 요청 ${_pendingOutgoingRequests.length}',
-                        style: const TextStyle(fontSize: 12, color: _textMuted),
-                      ),
-                    ],
-                  ),
+      InkWell(
+        key: const ValueKey('mobile-friend-requests-open'),
+        onTap: _openMobileFriendRequests,
+        child: Container(
+          height: 76,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFE1E1E3))),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.person_add_alt_1_outlined),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '친구 요청',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      '받은 요청 ${_pendingIncomingRequests.length} · 보낸 요청 ${_pendingOutgoingRequests.length}',
+                      style: const TextStyle(fontSize: 12, color: _textMuted),
+                    ),
+                  ],
                 ),
-                const Icon(Icons.chevron_right_rounded),
-              ],
-            ),
+              ),
+              const Icon(Icons.chevron_right_rounded),
+            ],
           ),
         ),
+      ),
       if (_friends.isEmpty)
         SizedBox(
           height: 180,
