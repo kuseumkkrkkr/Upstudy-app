@@ -1390,3 +1390,9 @@
 - 대상 파일 정적 분석 통과.
 - 소스·번들 커밋 `a3e5c45`, 로컬·alias `public/main.dart.js` SHA-256 `EB663477E1CA7DDCB27E45D4F2E3736327E30572985C6FF8F8F7DDD9DD655F7A` 일치.
 - Vercel 배포 `dpl_2Xa9toMsVpVndduWf3CtYuGM3m2c`, 고유 URL [`aiflow-web-canary-fb2nsnrg9-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-fb2nsnrg9-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
+
+### 2026-09-11 코스 화면 동적 오류 상태 비교
+
+- HTML `courses`는 샘플 코스 3개와 진행률을 표시하고, Canary 익명 세션은 실제 API 오류·재시도 상태를 표시했다.
+- 사용자 코스·진도 데이터를 HTML 샘플로 덮어쓰지 않는 현재 동작을 유지한다. 오류 상태의 컨테이너·재시도 CTA는 별도 시각 검수 대상으로 남긴다.
+- 동일 데스크톱 뷰포트에서 HTML와 Canary를 새 탭으로 캡처해 비교했으며, 이 차이는 허용된 동적 데이터 차이가 아니라 인증/API 미검증 경계로 기록한다.
