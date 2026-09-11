@@ -1289,3 +1289,11 @@
 - 지원되는 실제 응답은 표시하고, 지원되지 않는 랭킹·레이팅만 빈 상태로 남긴다. 테스트 환경의 404 로그는 실패 증거로 보존했다.
 - 소스·번들 커밋 `2b0cf1b`, `public/main.dart.js` SHA-256 `2E10FD954F88DDDD3354E178BDC2CDC0274356A7E1474233A3B03A3038B4B5F1`.
 - Vercel 배포 `dpl_8hxqSvFjA7UmpZ1kBP7mdTWve9MT`, 고유 URL [`aiflow-web-canary-st01rpl2v-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-st01rpl2v-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 교재 목록 오류와 샘플 데이터 분리
+
+- 교재 API·로컬 저장소가 모두 실패한 경우 내장 샘플 교재를 상용 목록처럼 반환하던 fallback을 제거했다.
+- 실제 목록이 없으면 빈 상태를, 조회 실패면 별도 오류 장면을 표시하도록 `TextbookStore`와 교재 목록 로더를 수정했다.
+- `flutter analyze` 대상 파일 통과, 전체 Flutter 테스트 1건 포함 전체 테스트 통과.
+- 소스·번들 커밋 `dfdea94`, 로컬 `public/main.dart.js` SHA-256 `28960740D014B0AEA0C4413472BDEA1B3E084D1DDFA5BB981D1C2830D7C248ED`.
+- Vercel 배포 `dpl_7cWnyKZ6Z63XZKHDJ5afZ5Ebar3d` 고유 URL [`aiflow-web-canary-iky7bk9fq-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-iky7bk9fq-cw20208021-9200s-projects.vercel.app) 배포와 alias는 READY였으나, 익명 요청이 Vercel 인증 HTML로 응답되어 원격 번들 해시와 `/health` 제품 응답은 검증하지 못했다.
