@@ -1342,3 +1342,11 @@
 - `flutter analyze lib/sessions/graph_tools/session/jsx_graph_page.dart` 및 `test/jsx_graph_page_test.dart` 11건 통과.
 - 소스·번들 커밋 `9f3b96e`, 로컬·alias `public/main.dart.js` SHA-256 `82FE944E3F2DC1549297998B556A2FCE1AB88A77EDDAA9372D2803624788D8D6` 일치.
 - Vercel 배포 `dpl_By5568UoeRYbg9RB4zfYjBRA6X8w`, 고유 URL [`aiflow-web-canary-i21kevq4w-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-i21kevq4w-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
+
+### 2026-09-11 집중 모드 독립 딥링크
+
+- 도구 허브 장면(`/learning-tools?scene=focus`)은 유지하면서 `/focus` 직접 경로를 `FocusModePage`에 연결했다.
+- 실제 Canary 새 탭에서 `/focus`가 집중 모드 설정 화면으로 렌더링되는 것을 확인했다.
+- `flutter analyze lib/app/router.dart`, 학생 route registry·보조 셸 테스트 통과.
+- 소스·번들 커밋 `cdd7287`, 로컬·alias `public/main.dart.js` SHA-256 `0ABFFA546AA164F7BB41A81E52DF41A4756428CCB6372B3EEDBE9CFC105A75CB` 일치.
+- Vercel 배포 `dpl_AVHzWGMzKCbitkb8u5zWb9RAz2CX`, 고유 URL [`aiflow-web-canary-jeu0s07ca-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-jeu0s07ca-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
