@@ -1297,3 +1297,11 @@
 - `flutter analyze` 대상 파일 통과, 전체 Flutter 테스트 1건 포함 전체 테스트 통과.
 - 소스·번들 커밋 `dfdea94`, 로컬 `public/main.dart.js` SHA-256 `28960740D014B0AEA0C4413472BDEA1B3E084D1DDFA5BB981D1C2830D7C248ED`.
 - Vercel 배포 `dpl_7cWnyKZ6Z63XZKHDJ5afZ5Ebar3d` 고유 URL [`aiflow-web-canary-iky7bk9fq-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-iky7bk9fq-cw20208021-9200s-projects.vercel.app) 배포와 alias는 READY였으나, 익명 요청이 Vercel 인증 HTML로 응답되어 원격 번들 해시와 `/health` 제품 응답은 검증하지 못했다.
+
+### 2026-09-11 교재 보관함 오류 재시도
+
+- 교재 보관함·목록 로더를 Stateful 로더로 바꾸고 API 실패 장면에 `다시 시도`를 연결했다.
+- 필터·보관함 조건이 바뀌면 새 요청을 만들며, 강제 재시도는 캐시를 갱신한다.
+- `flutter analyze`와 책가방 상호작용 테스트 9건 통과.
+- 소스·번들 커밋 `95f794f`, 로컬·alias `public/main.dart.js` SHA-256 `934EDB30C0D78DABF160655F331CC6DD4FE302B041F230BD1EC7A76E90BD2056` 일치.
+- Vercel 고유 URL [`aiflow-web-canary-3nq9q6rts-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3nq9q6rts-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
