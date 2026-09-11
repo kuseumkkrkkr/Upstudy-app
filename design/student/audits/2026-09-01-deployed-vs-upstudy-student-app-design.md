@@ -1473,3 +1473,10 @@
 - 교재 만들기 화면의 세 템플릿 `선택` 버튼을 실제 교재 편집 화면 진입으로 연결했다. 기존 `빈 교재 만들기` CTA와 같은 경로를 사용한다.
 - 대상 분석 통과, 소스 커밋 `4fe946c`, `origin/hotfix` 푸시 완료.
 - 배포는 일일 Vercel 한도 초과로 보류 중이며 새 번들 생성·alias 검증이 필요하다.
+
+### 2026-09-11 교재 장 목록 Material 경고 제거
+
+- 교재 편집 장 목록의 `DecoratedBox` 안 `ListTile`을 투명 `Material`로 감싸 잉크 스플래시 가시성 assertion을 제거했다.
+- `flutter analyze lib/features/textbook/session/textbook_editor_page.dart`: 오류 없음.
+- `flutter test test/student_route_registry_test.dart`: 9개 테스트 모두 통과.
+- 소스 커밋 `61249e8`을 `origin/hotfix`에 푸시했으며, Vercel 일일 배포 한도 복구 후 번들 재생성·canary 반영이 필요하다.
