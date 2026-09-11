@@ -1525,3 +1525,5 @@
 - Vercel 재배포는 `api-deployments-free-per-day`(100회 초과)로 거부됐다. 따라서 최신 후보가 canary alias에 반영됐다고 주장하지 않으며, 기존 READY 배포와 최신 후보를 분리해 기록한다.
 - 재실행한 직접 경로·registry 묶음 테스트는 16개 모두 통과했다(`student_route_registry_test.dart`, `course_runtime_route_test.dart`, `wrong_answer_legacy_route_test.dart`, `secondary_route_shell_test.dart`).
 - 현재 alias의 라이브 번들은 여전히 `79E60A41A6FEDC6E4726975422B893FE6DD24B0000FC1468E10B2C6A71CFC237`이며 최신 후보 `BCEBC5E0…`와 다르다.
+- `python -m pytest omj/tests/test_vercel_student_demo_api.py -q`에서 친구 검색·친구 요청을 포함한 데모 API 계약 5개가 통과했다(경고 1건은 Starlette/httpx deprecation).
+- Vercel `vercel ls`에서 기존 배포는 READY로 보였지만 새 후보 배포 시도는 동일한 일일 한도 오류로 거부됐다.
