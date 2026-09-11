@@ -1282,3 +1282,10 @@
 - 친구·요청 모바일 테스트와 보조 라우트 테스트를 실행했고 전체 12개가 통과했다.
 - 소스·번들 커밋 `3b52fe6`, `public/main.dart.js` SHA-256 `FC292984D2CA837722862CC23D4DED2857B1655F7268B58CE4D7FDC45A0A6CF0`.
 - Vercel 배포 `dpl_5hPWYmdX2wo9eBiuz1RJVcbLiNPd`, 고유 URL [`aiflow-web-canary-2478odffr-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-2478odffr-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 소셜 랭킹·내 레이팅 독립 오류 처리
+
+- 친구 랭킹 endpoint가 실패해도 내 레이팅 조회까지 중단되지 않도록 요청과 오류 경계를 분리했다.
+- 지원되는 실제 응답은 표시하고, 지원되지 않는 랭킹·레이팅만 빈 상태로 남긴다. 테스트 환경의 404 로그는 실패 증거로 보존했다.
+- 소스·번들 커밋 `2b0cf1b`, `public/main.dart.js` SHA-256 `2E10FD954F88DDDD3354E178BDC2CDC0274356A7E1474233A3B03A3038B4B5F1`.
+- Vercel 배포 `dpl_8hxqSvFjA7UmpZ1kBP7mdTWve9MT`, 고유 URL [`aiflow-web-canary-st01rpl2v-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-st01rpl2v-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
