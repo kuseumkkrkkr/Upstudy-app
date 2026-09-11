@@ -109,6 +109,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(StudentLearningToolsPage), findsOneWidget);
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('learning-tools-focus')),
+    );
     await tester.tap(find.byKey(const ValueKey('learning-tools-focus')));
     await tester.pumpAndSettle();
     expect(find.byType(FocusModePage), findsOneWidget);

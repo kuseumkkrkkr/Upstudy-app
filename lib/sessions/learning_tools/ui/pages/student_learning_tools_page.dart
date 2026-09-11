@@ -52,6 +52,38 @@ class StudentLearningToolsPage extends StatelessWidget {
     return showStudentToolModal(context, page);
   }
 
+  /// 필요한 변수는 현재 Navigator다.
+  /// 작동 원리: HTML의 최근 도구 항목인 그래프 탐색기를 실제 독립 라우트로 연다.
+  void _openRecentTool(BuildContext context) {
+    Navigator.of(context).pushNamed('/graph');
+  }
+
+  /// 필요한 변수는 도구 순서 목록과 현재 화면 문맥이다.
+  /// 작동 원리: 서버 저장 없이 현재 기본 순서를 보여 주고 닫을 수 있는 편집 장면을 연다.
+  Future<void> _showToolOrderDialog(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('도구 순서 편집'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(leading: Text('01'), title: Text('그래프 탐색기')),
+            ListTile(leading: Text('02'), title: Text('노트패드')),
+            ListTile(leading: Text('03'), title: Text('집중 타이머')),
+            ListTile(leading: Text('04'), title: Text('집중 모드')),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 필요한 변수는 화면 폭과 세 도구의 모달 콜백이다.
   /// 작동 원리는 390px에서는 한 열, PC에서는 세 열로 같은 도구 진입점과 계약 정보를 배치한다.
   @override
@@ -83,6 +115,27 @@ class StudentLearningToolsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: StudentDensityButton(
+                      key: const ValueKey('learning-tools-recent'),
+                      label: '최근 도구 열기',
+                      primary: true,
+                      onPressed: () => _openRecentTool(context),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: StudentDensityButton(
+                      key: const ValueKey('learning-tools-reorder'),
+                      label: '도구 순서 편집',
+                      onPressed: () => _showToolOrderDialog(context),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final columns = mobile
@@ -98,6 +151,14 @@ class StudentLearningToolsPage extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     childAspectRatio: mobile ? 3.05 : 3.85,
                     children: [
+                      _ToolLaunchCard(
+                        key: const ValueKey('learning-tools-graph'),
+                        icon: Icons.show_chart_rounded,
+                        title: '그래프 탐색기',
+                        subtitle: 'y = x² - 2x · 함수 좌표 그래프',
+                        modal: false,
+                        onTap: () => _openRecentTool(context),
+                      ),
                       _ToolLaunchCard(
                         key: const ValueKey('learning-tools-notepad'),
                         icon: Icons.edit_outlined,
@@ -204,12 +265,14 @@ class _ToolLaunchCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.modal = true,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final bool modal;
   final VoidCallback onTap;
 
   /// 필요한 변수는 도구 아이콘·문구·모달 콜백이다.
@@ -255,8 +318,8 @@ class _ToolLaunchCard extends StatelessWidget {
             ],
           ),
         ),
-        const Text(
-          '모달 ›',
+        Text(
+          modal ? '모달 ›' : '열기 ›',
           style: TextStyle(
             fontWeight: FontWeight.w800,
             color: StudentDensityTokens.muted,
