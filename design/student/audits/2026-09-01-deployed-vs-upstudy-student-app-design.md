@@ -1165,3 +1165,9 @@
 - 소스·번들 커밋 `cf66150`, `public/main.dart.js` SHA-256 `06B8549AEF712282B88D6892FFB2634BDA7B5163F9E3B871ECD948A363EF8FE4`.
 - Vercel 배포 `dpl_2dvYXWTH7YUSqgmT4GmrmZR2mFAS`, 고유 URL [`aiflow-web-canary-qyrzzatop-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-qyrzzatop-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. 로컬·alias 번들 SHA가 일치하고 `/health`·딥링크 HTML 응답이 200이다.
 - 86개 전체 이미지·실제 인증 데이터·제품 서버 readiness·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
+### 2026-09-11 문제풀이 회귀 기대값 정렬
+
+- 문제풀이 모바일 UI가 HTML 기준으로 필기 영역과 `PROBLEM SESSION` 헤더를 기본 표시하도록 변경된 상태에 맞춰 레거시 테스트 기대값을 갱신했다.
+- 간편풀이 golden을 현재 기준 렌더링으로 재생성했으며, 라우트·책가방·코스·셸·문제풀이 집중 묶음 총 33개가 통과했다.
+- 이 변경은 테스트·golden만 포함하며 제품 번들은 기존 `06B8549A…` 후보와 동일하다.

@@ -90,13 +90,13 @@ void main() {
     expect(tester.getSize(problemCard).height, lessThan(330));
     expect(
       find.byKey(const ValueKey('mobile-solve-note-launcher')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.byKey(const ValueKey('mobile-solve-writing-surface')),
-      findsNothing,
+      findsOneWidget,
     );
-    expect(find.text('펜'), findsNothing);
+    expect(find.text('펜'), findsOneWidget);
 
     await tester.tap(find.text('2'));
     await tester.pump();
@@ -105,13 +105,6 @@ void main() {
     );
     expect(submit.onPressed, isNotNull);
 
-    await tester.tap(find.byKey(const ValueKey('mobile-solve-note-launcher')));
-    await tester.pump();
-    expect(
-      find.byKey(const ValueKey('mobile-solve-writing-surface')),
-      findsOneWidget,
-    );
-    expect(find.text('펜'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
