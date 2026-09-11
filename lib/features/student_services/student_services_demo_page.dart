@@ -308,9 +308,12 @@ class _StudentServicesDemoPageState extends State<StudentServicesDemoPage> {
   @override
   Widget build(BuildContext context) {
     final noun = widget.kind == StudentServiceKind.academy ? '학원' : '선생님';
+    final pageTitle = widget.kind == StudentServiceKind.academy
+        ? 'AIFlow 학원 가맹점 찾기'
+        : '과외 찾기';
     final items = _filtered;
     return StudentHtmlShell(
-      title: '$noun 찾기',
+      title: pageTitle,
       activeRoute: '/student-services/${widget.kind.name}',
       showContextAside: false,
       onNotifications: () => Navigator.of(context).push(
