@@ -1374,3 +1374,11 @@
 - 교재 생성·편집 딥링크 테스트와 대상 파일 정적 분석 통과.
 - 소스·번들 커밋 `e111172`, 로컬·alias `public/main.dart.js` SHA-256 `FD18D1B6E9A15356EECC1D769F7A806B94806660578B031AF85A4255416F1C9F` 일치.
 - Vercel 배포 `dpl_BfFX6hPKRP48U8xzfMSEcL34uhHA`, 고유 URL [`aiflow-web-canary-15w8zzh21-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-15w8zzh21-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
+
+### 2026-09-11 저장 전 미리보기 데이터 보호
+
+- 저장되지 않은 편집 내용을 버리고 뒤로 가던 `미리보기` 동작을 명시적 안내로 변경했다.
+- 사용자는 먼저 `교재 저장`을 실행해야 하며, 저장 API 실패 시 현재 입력을 유지한다.
+- 교재 딥링크 테스트와 정적 분석 통과.
+- 소스·번들 커밋 `aa3cb0a`, 로컬·alias `public/main.dart.js` SHA-256 `7F98AC4037AED539A744AE151ADB62C6DC59207C9E86520E9C9416C5349009C6` 일치.
+- Vercel 배포 `dpl_AVws4oHVSssBiY3j56PYkAwBhp6E`, 고유 URL [`aiflow-web-canary-3ugpkchzy-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3ugpkchzy-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
