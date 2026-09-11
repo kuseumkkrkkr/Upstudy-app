@@ -1438,3 +1438,12 @@
 - `flutter analyze` 대상 3개 파일은 오류 없이 통과했으나 기존 미사용 위젯 경고 7건은 남아 있다.
 - 소스·번들 커밋 `e1c594c`, 로컬·alias `public/main.dart.js` SHA-256 `A75EDE4663770A37E76196A5B60466D1FD9143C7438340CC7C87BDEEDB924B95` 일치.
 - Vercel 배포 `dpl_9FZmuceRM2qd48dZGXBqJYbjijQ1`, 고유 URL [`aiflow-web-canary-3fqpduvfv-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-3fqpduvfv-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
+
+### 2026-09-11 그룹 모바일 공간 헤더·참여 동작 보정
+
+- 모바일 그룹 목록의 `GROUP STUDY` 헤더를 고정 높이 안에서 overflow 없이 배치하고 `group-mobile-actions` 액션 행 키를 연결했다.
+- 주요 CTA를 `코드로 참여`로 표시하고 참여 시트의 공개 검색 항목을 `그룹 찾기`로 맞췄다.
+- 그룹 상세 모바일 본문에 `GROUP SPACE` kicker를 추가해 HTML 장면의 문맥 표식을 유지했다.
+- 대상 Flutter 분석은 오류 없이 통과했으며, 기존 미사용 위젯 경고 4건은 잔여로 기록한다.
+- 소스·번들 커밋 `764cf10`, 로컬·alias `public/main.dart.js` SHA-256 `6288479BBC61C7AEA6435501D190FFCAADB85BF678FAED5AE07B429125FCF2E0` 일치.
+- Vercel 배포 `dpl_f3XivFzJLqgPpMCR4AioHS4AZpLi`, 고유 URL [`aiflow-web-canary-jdzh8s5p5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-jdzh8s5p5-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
