@@ -1184,3 +1184,11 @@
 
 - 소스·번들 커밋 `0a20bd0`, 번들 SHA-256 `608F6EA7FE4CD2F22929C3B13AB6A77A9F426F00A6C9309DEEA24C20C089D619`.
 - Vercel 배포 `dpl_Bt71TTVeYJW8cD7343oquUiQNXEF`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
+
+### 2026-09-11 튜터 추천 칩 HTML 일치화
+
+- 추천 칩을 HTML의 3개 항목으로 정리했다: `오늘의 공부 계획`, `개념 쉽게 설명`, `오답 줄이는 방법`.
+- 제거한 네 번째 항목의 질문 전송 경로는 기존 일반 입력으로 유지한다.
+- 튜터 화면 테스트 3개 통과.
+- 소스·번들 커밋 `c9985be`, 번들 SHA-256 `37C26F8C77B785682DCFA55868C1A88E062ACA546641432862DAE4CBB174931B`.
+- Vercel 배포 `dpl_DYz78uaw2uGWXvivwdrdr7MJsaB7`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
