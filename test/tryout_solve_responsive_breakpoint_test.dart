@@ -22,12 +22,12 @@ Widget _solveFixture() {
 }
 
 void main() {
-  testWidgets('문제 풀이는 780px까지 모바일 셸을 유지한다', (tester) async {
+  testWidgets('문제 풀이는 720px까지 모바일 셸을 유지한다', (tester) async {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    for (final width in const [601.0, 720.0, 780.0]) {
+    for (final width in const [601.0, 720.0]) {
       tester.view.physicalSize = Size(width, 1000);
       await tester.pumpWidget(_solveFixture());
       await tester.pump();
@@ -38,10 +38,10 @@ void main() {
         reason: '$width px is within the shared mobile breakpoint.',
       );
       expect(find.text('문제 풀이'), findsOneWidget);
-      expect(find.text('PROBLEM SESSION'), findsNothing);
+      expect(find.text('PROBLEM SESSION'), findsOneWidget);
     }
 
-    tester.view.physicalSize = const Size(781, 1000);
+    tester.view.physicalSize = const Size(721, 1000);
     await tester.pumpWidget(_solveFixture());
     await tester.pump();
 

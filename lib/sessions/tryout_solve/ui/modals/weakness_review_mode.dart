@@ -292,6 +292,28 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     }
   } // ← 누락된 닫는 중괄호
 
+  /// 필요한 변수는 서버가 반환한 약점 태그의 갱신 시각과 선택 집합이다.
+  /// 작동 원리: 시각 정보가 있는 실제 태그만 기간으로 걸러 선택하고, 데이터가 없으면 빈 상태를 알린다.
+  void _selectRecentWeaknessTags({
+    required Duration window,
+    required String emptyMessage,
+  }) {
+    final now = DateTime.now().toUtc();
+    final recent = _weaknessTags.where((item) {
+      final updatedAt = item.updatedAt;
+      if (updatedAt == null) return false;
+      final parsed = DateTime.tryParse(updatedAt)?.toUtc();
+      if (parsed == null) return false;
+      final age = now.difference(parsed);
+      return age >= Duration.zero && age <= window;
+    }).map((item) => item.tag).where((tag) => tag.trim().isNotEmpty).toSet();
+    if (recent.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(emptyMessage)));
+      return;
+    }
+    setState(() => _selectedWeakTags.addAll(recent));
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -1801,11 +1823,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('미구현 기능입니다.')));
-              },
+              onPressed: () => _selectRecentWeaknessTags(
+                window: const Duration(days: 1),
+                emptyMessage: '최근 24시간에 갱신된 약점 태그가 없습니다.',
+              ),
               icon: const Icon(Icons.access_time_filled),
               label: Text('방금 틀린 개념', style: TextStyle(fontSize: 12 * scale)),
               style: OutlinedButton.styleFrom(
@@ -1818,11 +1839,10 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('미구현 기능입니다.')));
-              },
+              onPressed: () => _selectRecentWeaknessTags(
+                window: const Duration(days: 30),
+                emptyMessage: '최근 30일에 갱신된 약점 태그가 없습니다.',
+              ),
               icon: const Icon(Icons.history),
               label: Text(
                 '최근30개 틀린 개념',
