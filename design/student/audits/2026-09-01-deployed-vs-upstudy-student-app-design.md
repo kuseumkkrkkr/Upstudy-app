@@ -1515,3 +1515,11 @@
 
 - `course_runtime_route_test.dart`, `wrong_answer_legacy_route_test.dart`, `secondary_route_shell_test.dart`를 함께 실행해 총 8개 테스트가 통과했다.
 - 인자 없는 코스 런타임의 조용한 목록 fallback 방지, 구형 오답 재풀이, 커리큘럼 이력, 그룹 초대, 오답 복귀, 학생 런타임의 셸·홈 이동을 확인했다.
+
+### 2026-09-11 소셜 모바일 장면 및 최신 후보 번들
+
+- `flutter test test/student_density_responsive_test.dart --plain-name "500px 친구/소셜"` 통과.
+- `flutter analyze lib/sessions/friend/ui/friend_screen.dart`는 오류 없이 통과했으며 기존 미사용 헬퍼 경고 3건이 남아 있다.
+- 소스 커밋 `ae1655b`(소셜 모바일 흐름), 번들 커밋 `9c9463a`를 `origin/hotfix`에 푸시했다.
+- 최신 `public/main.dart.js` SHA-256: `BCEBC5E096453EAD5F1185035C7B8D00CEC79D93498EC98FF442EFA6DD93A33E`.
+- Vercel 재배포는 `api-deployments-free-per-day`(100회 초과)로 거부됐다. 따라서 최신 후보가 canary alias에 반영됐다고 주장하지 않으며, 기존 READY 배포와 최신 후보를 분리해 기록한다.
