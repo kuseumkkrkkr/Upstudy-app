@@ -140,17 +140,15 @@ class StudentHtmlTopBar extends StatelessWidget {
             '알림' => 'student-notifications-action',
             _ => 'student-action-$label',
           }),
-          width: 44,
-          height: 44,
+          width: 38,
+          height: 38,
           child: OutlinedButton(
             onPressed: onTap,
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.zero,
               foregroundColor: StudentDensityTokens.ink,
               side: const BorderSide(color: StudentDensityTokens.line),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12)),
-              ),
+              shape: const CircleBorder(),
             ),
             child: Icon(icon, size: 19),
           ),
@@ -163,7 +161,7 @@ class StudentHtmlTopBar extends StatelessWidget {
     final menuLabel = mobile && mobileBackButton ? '뒤로가기' : '학생 메뉴';
     return Container(
       height: topBarHeight,
-      color: StudentDensityTokens.surfaceMuted,
+      color: StudentDensityTokens.surface,
       padding: EdgeInsets.symmetric(horizontal: mobile ? 10 : 22),
       child: Row(
         children: [
@@ -241,8 +239,8 @@ class StudentHtmlRail extends StatelessWidget {
             },
             child: Container(
             decoration: BoxDecoration(
-                color: active ? StudentDensityTokens.dark : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+                color: active ? StudentDensityTokens.surface : Colors.transparent,
+                borderRadius: BorderRadius.zero,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -250,13 +248,13 @@ class StudentHtmlRail extends StatelessWidget {
                   Icon(
                     icon,
                     size: 19,
-                    color: active ? Colors.white : StudentDensityTokens.ink,
+                    color: active ? StudentDensityTokens.ink : StudentDensityTokens.muted,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     label,
                     style: TextStyle(
-                      color: active ? Colors.white : StudentDensityTokens.ink,
+                      color: active ? StudentDensityTokens.ink : StudentDensityTokens.muted,
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
                     ),
