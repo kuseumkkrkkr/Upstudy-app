@@ -1244,3 +1244,11 @@
 - 정적 분석 통과.
 - 소스·번들 커밋 `b7672ce`, `public/main.dart.js` SHA-256 `C6E7EC0399AC18445FF402BD272FC4AA05812804A8290C13174CECD2AB978D01`.
 - Vercel 배포 `dpl_3tPYScjQVtUTCVC4mpHE5YbPK6tp`, 고유 URL [`aiflow-web-canary-29mev6yag-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-29mev6yag-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 학원 메타데이터 기본값 정리
+
+- 실제 학원 응답에서 주소·담당자가 없을 때 임의의 반명·교사명을 표시하던 기본값을 제거했다.
+- 누락된 값은 `소속 정보 미등록`, `담당자 미등록`으로 표시하고, 미리보기 입력 데이터는 그대로 유지한다.
+- 정적 분석 통과.
+- 소스·번들 커밋 `ed97284`, `public/main.dart.js` SHA-256 `FAFEA34E77683344E071570978203946BF2794D2F56874F4C456A23103EBE411`.
+- Vercel 배포 `dpl_5MxiqwKpQvWFXmGtcirCFpeQ94KK`, 고유 URL [`aiflow-web-canary-h2v0ubfw5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-h2v0ubfw5-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
