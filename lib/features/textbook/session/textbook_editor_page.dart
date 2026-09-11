@@ -213,6 +213,17 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
     });
   }
 
+  void _undoLastChapter() {
+    if (_chapters.length <= 1) return;
+    setState(() => _chapters.removeLast());
+  }
+
+  void _showGraphNotice() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('그래프 삽입은 저장 API 연결 후 사용할 수 있습니다.')),
+    );
+  }
+
   void _addSection(_ChapterDraft chapter) {
     setState(() => chapter.sections.add(_newSection()));
   }
@@ -341,6 +352,8 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
               const SizedBox(height: 20),
               _EditorToolbar(
                 onAddChapter: _addChapter,
+                onUndo: _undoLastChapter,
+                onGraph: _showGraphNotice,
                 onSave: _saving ? null : _save,
               ),
               const SizedBox(height: 12),
@@ -433,9 +446,16 @@ class _EditorTabBar extends StatelessWidget {
 }
 
 class _EditorToolbar extends StatelessWidget {
-  const _EditorToolbar({required this.onAddChapter, required this.onSave});
+  const _EditorToolbar({
+    required this.onAddChapter,
+    required this.onUndo,
+    required this.onGraph,
+    required this.onSave,
+  });
 
   final VoidCallback onAddChapter;
+  final VoidCallback onUndo;
+  final VoidCallback onGraph;
   final VoidCallback? onSave;
 
   @override
@@ -449,13 +469,13 @@ class _EditorToolbar extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
-          onPressed: () {},
+          onPressed: onUndo,
           icon: const Icon(Icons.undo, size: 16),
           label: const Text('되돌리기'),
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
-          onPressed: () {},
+          onPressed: onGraph,
           icon: const Icon(Icons.show_chart, size: 16),
           label: const Text('그래프'),
         ),
