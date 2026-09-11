@@ -1260,3 +1260,9 @@
 - 정적 분석에서 기존 미사용 위젯 경고 8개가 확인됐으나 이번 변경과 무관하며, 코스 카탈로그 위젯 테스트 3개가 통과했다.
 - 소스·번들 커밋 `cd21c00`, `public/main.dart.js` SHA-256 `4FAAE75A7ED6BD40C371DA51517A0FD127C155613BBC894F2498B2CEC1558EFA`.
 - Vercel 배포 `dpl_DhvNz8NPacuG5JxEidsR48cV2Zc1`, 고유 URL [`aiflow-web-canary-4lbx5u2yc-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-4lbx5u2yc-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 코스 상세 미사용 위젯 검증
+
+- `_CourseInfo` 메타 카드가 현재 라우트에서 호출되지 않는 미사용 위젯임을 확인했다.
+- 해당 위젯에만 적용했던 고정 태그·메타데이터 변경은 되돌렸고, 실제 배포 UI 수정으로 집계하지 않는다.
+- 강제 clean 재빌드에서도 번들 변화가 없음을 확인했으며, 이후 코스 상세 수정은 `_HtmlCourseDetailBody`와 실제 호출 경로만 대상으로 한다.
