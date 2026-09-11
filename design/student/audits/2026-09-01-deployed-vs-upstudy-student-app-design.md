@@ -1533,3 +1533,4 @@
 - `api/index.py`에 `/health/ready`를 추가해 제품 데이터 계층 준비 상태를 생존 확인과 분리했다. 계약 테스트 5개와 `py_compile`이 통과했으며 소스 커밋은 `8d67337`이다.
 - 해당 API 변경의 canary 배포는 다시 `api-deployments-free-per-day` 제한으로 거부됐다. 현재 alias의 readiness 응답은 변경 전 상태로 남아 있다.
 - 전체 `flutter analyze`를 재실행한 결과 기존 저장소 전역 962건(경고·정보 포함, `teacher_textbook_reader_page.dart` 등 오류 포함)이 남아 있어 전체 분석 0건 조건은 충족하지 못했다. 이번 학생 변경 파일의 개별 분석은 통과했다.
+- 최신 `hotfix` 후보로 Vercel 재시도했으나 `api-deployments-free-per-day` 동일 제한으로 거부됐다. readiness 소스 커밋 `8d67337`은 아직 alias에 반영되지 않았다.
