@@ -1179,3 +1179,8 @@
 - 관련 정적 분석·튜터/학습도구/모바일 셸 테스트 14개 통과.
 - 소스·번들 커밋 `0a20bd0`, `public/main.dart.js` SHA-256 `608F6EA7FE4CD2F22929C3B13AB6A77A9F426F00A6C9309DEEA24C20C089D619`.
 - Vercel 배포 `dpl_Bt71TTVeYJW8cD7343oquUiQNXEF`, 고유 URL [`aiflow-web-canary-obpqc9ir3-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-obpqc9ir3-cw20208021-9200s-projects.vercel.app), alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 튜터 HTML 헤더 후속 배포
+
+- 소스·번들 커밋 `0a20bd0`, 번들 SHA-256 `608F6EA7FE4CD2F22929C3B13AB6A77A9F426F00A6C9309DEEA24C20C089D619`.
+- Vercel 배포 `dpl_Bt71TTVeYJW8cD7343oquUiQNXEF`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
