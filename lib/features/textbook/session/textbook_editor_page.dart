@@ -18,48 +18,75 @@ class TextbookCreationPage extends StatelessWidget {
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 36, 20, 40),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
+          constraints: const BoxConstraints(maxWidth: 876),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '생성 방식 선택',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                'NEW TEXTBOOK',
+                style: TextStyle(
+                  fontSize: 11,
+                  letterSpacing: 1.8,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF71717A),
+                ),
               ),
-              const SizedBox(height: 16),
-              _CreationCard(
-                icon: Icons.auto_awesome,
-                title: 'AI 집필',
-                subtitle: 'AI가 대제목/소주제를 구성합니다',
-                trailing: const Icon(Icons.lock_outline),
-                enabled: false,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('AI 집필은 준비중입니다.')),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              _CreationCard(
-                icon: Icons.edit,
-                title: '직접 집필',
-                subtitle: '대제목/소주제와 내용을 직접 작성합니다',
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                enabled: true,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const TextbookEditorPage(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               const Text(
-                'AI 집필은 추후 활성화 예정입니다.',
-                style: TextStyle(color: Colors.black54),
+                '배운 내용을\n내 순서로 엮어보세요.',
+                style: TextStyle(
+                  fontSize: 38,
+                  height: 1.08,
+                  letterSpacing: -1.3,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF09090B),
+                ),
+              ),
+              const SizedBox(height: 28),
+              _TemplateRow(tag: '빠른 시작', title: '개념 + 예제', meta: '두 섹션 기본 구성'),
+              _TemplateRow(tag: '복습', title: '오답 + 해설', meta: '오답에서 자동 수집'),
+              _TemplateRow(tag: '직접 집필', title: '빈 교재', meta: '완전히 새로 구성'),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const TextbookEditorPage(),
+                      ),
+                    ),
+                    icon: const Icon(Icons.arrow_forward, size: 18),
+                    label: const Text('빈 교재 만들기'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF09090B),
+                      foregroundColor: Colors.white,
+                      shape: const RoundedRectangleBorder(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('템플릿은 준비 중입니다.')),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF09090B),
+                      shape: const RoundedRectangleBorder(),
+                      side: const BorderSide(color: Color(0xFF09090B)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                    child: const Text('템플릿으로 시작'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -69,78 +96,66 @@ class TextbookCreationPage extends StatelessWidget {
   }
 }
 
-class _CreationCard extends StatelessWidget {
-  const _CreationCard({
-    required this.icon,
+class _TemplateRow extends StatelessWidget {
+  const _TemplateRow({
+    required this.tag,
     required this.title,
-    required this.subtitle,
-    required this.trailing,
-    required this.enabled,
-    required this.onTap,
+    required this.meta,
   });
 
-  final IconData icon;
+  final String tag;
   final String title;
-  final String subtitle;
-  final Widget trailing;
-  final bool enabled;
-  final VoidCallback onTap;
+  final String meta;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: enabled ? Colors.white : const Color(0xFFF3F3F3),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: enabled ? const Color(0xFFE0E3E7) : const Color(0xFFEAEAEA),
+    return Container(
+      constraints: const BoxConstraints(minHeight: 68),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFFFDFDFE),
+        border: Border(bottom: BorderSide(color: Color(0xFFE1E1E4))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            color: const Color(0xFFF3F3F5),
+            child: Text(
+              tag,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+            ),
           ),
-          boxShadow: const [
-            BoxShadow(
-              blurRadius: 4,
-              color: Color(0x14000000),
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: enabled ? const Color(0xFF1B402B) : Colors.grey,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Colors.white),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  meta,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF71717A),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            trailing,
-          ],
-        ),
+          ),
+          OutlinedButton(
+            onPressed: () {},
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF09090B),
+              shape: const RoundedRectangleBorder(),
+              side: const BorderSide(color: Color(0xFFE1E1E4)),
+            ),
+            child: const Text('선택'),
+          ),
+        ],
       ),
     );
   }
