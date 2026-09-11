@@ -1447,3 +1447,9 @@
 - 대상 Flutter 분석은 오류 없이 통과했으며, 기존 미사용 위젯 경고 4건은 잔여로 기록한다.
 - 소스·번들 커밋 `764cf10`, 로컬·alias `public/main.dart.js` SHA-256 `6288479BBC61C7AEA6435501D190FFCAADB85BF678FAED5AE07B429125FCF2E0` 일치.
 - Vercel 배포 `dpl_f3XivFzJLqgPpMCR4AioHS4AZpLi`, 고유 URL [`aiflow-web-canary-jdzh8s5p5-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-jdzh8s5p5-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`).
+
+### 2026-09-11 그룹 상세 후속 동작 검수 경계
+
+- 그룹 목록 헤더·참여 시트·그룹 상세의 `GROUP SPACE` 표식은 번들에 반영됐다.
+- 위젯 검수는 표식·overflow를 통과했지만 상세 채팅 진입 단계에서 `pumpAndSettle`이 네트워크 대기 때문에 타임아웃됐다. 테스트 환경에서는 HttpClient 요청이 400으로 차단되므로 제품 API 정상 동작의 증거로 사용하지 않는다.
+- 따라서 그룹의 실제 채팅·자료 공유·권한 동작은 인증된 서버 환경에서 별도 재검수해야 하며, 전체 목표는 미완료다.
