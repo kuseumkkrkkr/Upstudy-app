@@ -271,8 +271,7 @@ class StudentHtmlRail extends StatelessWidget {
       width: railWidth,
       padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
       decoration: const BoxDecoration(
-        color: StudentDensityTokens.surface,
-        border: Border(right: BorderSide(color: StudentDensityTokens.line)),
+        color: StudentDensityTokens.dark,
       ),
       child: Column(
         children: [
@@ -280,11 +279,11 @@ class StudentHtmlRail extends StatelessWidget {
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            color: StudentDensityTokens.dark,
+            color: StudentDensityTokens.surface,
             child: const Text(
               'A',
               style: TextStyle(
-                color: Colors.white,
+                color: StudentDensityTokens.ink,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -325,11 +324,11 @@ class StudentHtmlRail extends StatelessWidget {
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            color: StudentDensityTokens.dark,
+            color: StudentDensityTokens.surface,
             child: const Text(
               '학',
               style: TextStyle(
-                color: Colors.white,
+                color: StudentDensityTokens.ink,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
               ),
@@ -346,7 +345,7 @@ class StudentHtmlContextAside extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: 244,
+    width: 236,
     padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
     decoration: const BoxDecoration(
       color: StudentDensityTokens.surface,
