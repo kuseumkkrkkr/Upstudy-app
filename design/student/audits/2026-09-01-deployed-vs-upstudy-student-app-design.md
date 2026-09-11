@@ -1536,3 +1536,4 @@
 - 최신 `hotfix` 후보로 Vercel 재시도했으나 `api-deployments-free-per-day` 동일 제한으로 거부됐다. readiness 소스 커밋 `8d67337`은 아직 alias에 반영되지 않았다.
 - canary `/\#/graph`를 브라우저에서 실제 캡처해 그래프 탐색기 셸·축·확대/축소·함수 입력·하단 탭이 렌더링되는 것을 확인했다. 이 캡처는 현재 배포의 동작 근거이며 HTML 원본과의 일대일 이미지 판정은 별도 비교가 필요하다.
 - 로컬 FastAPI TestClient에서 준비된 데이터 어댑터를 주입해 `/health/ready`가 200과 5개 테이블 검사 결과를 반환하는 것을 확인했다. 실제 canary에는 아직 해당 API 변경이 배포되지 않았다.
+- OMJ 작업 디렉터리에서 콘텐츠 계약·제품 규칙 테스트 10개가 통과했다(`python -m pytest tests/test_content_contracts.py tests/test_product_rules.py -q`). 저장소 루트에서 실행하면 패키지 경로가 없어 실패하므로 실행 위치를 고정한다.
