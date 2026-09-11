@@ -18,6 +18,7 @@ import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/student_learning_tools_page.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
@@ -49,6 +50,7 @@ class AppRoutes {
   static const String marketplace = '/marketplace';
   static const String arena = '/arena';
   static const String learningTools = '/learning-tools';
+  static const String focus = '/focus';
   static const String graph = '/graph';
   static const String tools = '/tools';
 
@@ -124,6 +126,8 @@ Map<String, WidgetBuilder> appRoutes() {
     // 필요한 변수는 노트·타이머·집중 모드를 여는 도구 허브다.
     // 작동 원리: 학생 내비게이션의 학습 도구는 시안의 모달형 도구 목록으로 연결한다.
     AppRoutes.learningTools: (_) => const StudentLearningToolsPage(),
+    // 허브 장면과 별도로 공유 가능한 집중 모드 딥링크를 제공한다.
+    AppRoutes.focus: (_) => const FocusModePage(),
     // 필요한 변수는 독립적인 함수 그래프 작업 공간이다.
     // 작동 원리: 홈 카드 외에도 전체 메뉴에서 실제 그래프 도구로 도달하게 한다.
     AppRoutes.graph: (_) => const JsxGraphPage(),
