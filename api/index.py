@@ -1407,6 +1407,15 @@ def health() -> dict[str, str]:
     return {"status": "ok", "service": "aiflow-ocr-queue"}
 
 
+@app.get("/health/ready")
+def health_ready() -> dict[str, Any]:
+    """제품 데이터 계층 준비 상태를 생존 확인과 분리해 반환한다."""
+    report = level_test_health()
+    if report.get("status") != "ok":
+        raise HTTPException(status_code=503, detail=report)
+    return {"status": "ok", "service": "aiflow-student-api", "checks": report["checks"]}
+
+
 @app.get("/health/level-test")
 def level_test_health() -> dict[str, Any]:
     """Report whether the Supabase placement tables are available without exposing data."""
