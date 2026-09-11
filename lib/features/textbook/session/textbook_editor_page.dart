@@ -339,6 +339,13 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
               const SizedBox(height: 12),
               const _EditorTabBar(),
               const SizedBox(height: 20),
+              _EditorToolbar(
+                onAddChapter: _addChapter,
+                onSave: _saving ? null : _save,
+              ),
+              const SizedBox(height: 12),
+              _ChapterOutline(chapters: _chapters, onAddChapter: _addChapter),
+              const SizedBox(height: 20),
               _SectionTitle(label: '교재 기본정보'),
               const SizedBox(height: 8),
               TextField(
@@ -421,6 +428,86 @@ class _EditorTabBar extends StatelessWidget {
         _EditorTab(label: '태그'),
         _EditorTab(label: '시험지'),
       ],
+    );
+  }
+}
+
+class _EditorToolbar extends StatelessWidget {
+  const _EditorToolbar({required this.onAddChapter, required this.onSave});
+
+  final VoidCallback onAddChapter;
+  final VoidCallback? onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        OutlinedButton.icon(
+          onPressed: onAddChapter,
+          icon: const Icon(Icons.edit_outlined, size: 16),
+          label: const Text('펜'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.undo, size: 16),
+          label: const Text('되돌리기'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.show_chart, size: 16),
+          label: const Text('그래프'),
+        ),
+        const Spacer(),
+        TextButton(onPressed: onSave, child: const Text('교재 저장')),
+      ],
+    );
+  }
+}
+
+class _ChapterOutline extends StatelessWidget {
+  const _ChapterOutline({required this.chapters, required this.onAddChapter});
+
+  final List<_ChapterDraft> chapters;
+  final VoidCallback onAddChapter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFFFDFDFE),
+        border: Border.fromBorderSide(BorderSide(color: Color(0xFFE1E1E4))),
+      ),
+      child: Column(
+        children: [
+          for (var index = 0; index < chapters.length; index++)
+            ListTile(
+              dense: true,
+              leading: Text(
+                '${index + 1}장',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              title: Text(
+                chapters[index].title.trim().isEmpty
+                    ? '새 장'
+                    : chapters[index].title,
+              ),
+              trailing: const Text('편집'),
+            ),
+          ListTile(
+            dense: true,
+            leading: const Text(
+              '+',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            title: const Text('새 장 추가'),
+            onTap: onAddChapter,
+            trailing: const Text('추가'),
+          ),
+        ],
+      ),
     );
   }
 }
