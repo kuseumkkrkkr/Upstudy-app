@@ -1266,3 +1266,11 @@
 - `_CourseInfo` 메타 카드가 현재 라우트에서 호출되지 않는 미사용 위젯임을 확인했다.
 - 해당 위젯에만 적용했던 고정 태그·메타데이터 변경은 되돌렸고, 실제 배포 UI 수정으로 집계하지 않는다.
 - 강제 clean 재빌드에서도 번들 변화가 없음을 확인했으며, 이후 코스 상세 수정은 `_HtmlCourseDetailBody`와 실제 호출 경로만 대상으로 한다.
+
+### 2026-09-11 코스 상세 조회 오류 장면
+
+- 실제 호출되는 `CourseDetailPage`에서 최신 상세 API 실패를 조용히 무시하던 경로를 제거했다.
+- 최초 요약 코스는 유지하면서 상단 오류 배너와 `다시 시도`를 제공하고, 성공한 상세 응답이 도착하면 오류를 지운다.
+- 코스 상세·보조 라우트 분석 및 회귀 테스트 7개 통과.
+- 소스·번들 커밋 `5f4091d`, `public/main.dart.js` SHA-256 `C283ED4CB4E38223C0AD6D1E1B4BF2186125106D19699821F3199811F8B3FB55`.
+- Vercel 배포 `dpl_5Acb5NZhJhk5YHBfBV5tyZ3V2fQq`, 고유 URL [`aiflow-web-canary-azz959jwe-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-azz959jwe-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
