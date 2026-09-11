@@ -1151,3 +1151,9 @@
 - 소스·정적 번들 커밋 `8f5be7d`, `public/main.dart.js` SHA-256 `B6C5DCC64D8D3D9D26BFD3C14918D591D91C42625746AC726BEF90580EFB1C95`.
 - Vercel 배포 `dpl_AUF6urSFMnHPr2ScRgF1jwA96vW6`, 고유 URL [`aiflow-web-canary-r9mykvkzt-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-r9mykvkzt-cw20208021-9200s-projects.vercel.app), alias [`aiflow-web-canary.vercel.app`](https://aiflow-web-canary.vercel.app) READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
 - 86개 전체 이미지·실제 인증 데이터·제품 서버 readiness·DB 무결성/동시성·접근성 게이트는 계속 `pending`이다.
+
+### 2026-09-11 약점 복습 기간 선택 연결
+
+- 약점 복습의 `방금 틀린 개념`·`최근30개 틀린 개념` 버튼을 서버 `updatedAt` 기반 기간 필터로 연결했다. 날짜가 없거나 파싱되지 않으면 선택하지 않고 빈 상태를 알린다.
+- 공통 720/721 반응형 회귀 검사를 HTML 기준으로 갱신했고 통과했다.
+- 소스 커밋 `6f091d6`. 해당 레거시 모달은 현재 웹 번들 도달 그래프에 포함되지 않아 후보 `main.dart.js` SHA는 변하지 않았다. 제품 라우트 연결 전까지 이를 배포 반영으로 주장하지 않는다.
