@@ -71,7 +71,7 @@ const int _coursePageSize = 6;
 /// 작동 원리: 원시 레이팅은 OVR로 환산하고 작은 값은 화면 표시값으로 그대로 사용한다.
 String _formatVisibleOvr(num value) {
   final raw = value.toDouble();
-  if (raw.isNaN || raw <= 0) return '18.6';
+  if (raw.isNaN || raw <= 0) return '—';
   if (raw < _ratingOvrFloor) return raw.toStringAsFixed(1);
   return ((raw - _ratingOvrFloor) / _ratingOvrDivider).toStringAsFixed(1);
 }
