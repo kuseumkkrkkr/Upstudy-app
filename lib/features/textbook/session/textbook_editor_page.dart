@@ -2,63 +2,67 @@ import 'package:flutter/material.dart';
 import 'package:s11/features/textbook/ui/pages/book_page.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/business/repositories/textbook_store.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
+import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 class TextbookCreationPage extends StatelessWidget {
   const TextbookCreationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF1B402B);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('교재 만들기'),
-        backgroundColor: Colors.white,
-        foregroundColor: primary,
-        elevation: 0.5,
-      ),
-      body: Padding(
+    return StudentHtmlShell(
+      title: '교재 만들기',
+      activeRoute: '/bookbag',
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '생성 방식 선택',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 16),
-            _CreationCard(
-              icon: Icons.auto_awesome,
-              title: 'AI 집필',
-              subtitle: 'AI가 대제목/소주제를 구성합니다',
-              trailing: const Icon(Icons.lock_outline),
-              enabled: false,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('AI 집필은 준비중입니다.')),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            _CreationCard(
-              icon: Icons.edit,
-              title: '직접 집필',
-              subtitle: '대제목/소주제와 내용을 직접 작성합니다',
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              enabled: true,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const TextbookEditorPage(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'AI 집필은 추후 활성화 예정입니다.',
-              style: TextStyle(color: Colors.black54),
-            ),
-          ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '생성 방식 선택',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              _CreationCard(
+                icon: Icons.auto_awesome,
+                title: 'AI 집필',
+                subtitle: 'AI가 대제목/소주제를 구성합니다',
+                trailing: const Icon(Icons.lock_outline),
+                enabled: false,
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('AI 집필은 준비중입니다.')),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _CreationCard(
+                icon: Icons.edit,
+                title: '직접 집필',
+                subtitle: '대제목/소주제와 내용을 직접 작성합니다',
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                enabled: true,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TextbookEditorPage(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'AI 집필은 추후 활성화 예정입니다.',
+                style: TextStyle(color: Colors.black54),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -209,9 +213,9 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
   Future<void> _save() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('교재 제목을 입력해주세요.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('교재 제목을 입력해주세요.')));
       return;
     }
 
@@ -270,9 +274,9 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('교재 저장에 실패했습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('교재 저장에 실패했습니다.')));
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -282,72 +286,77 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF1B402B);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('직접 집필'),
-        backgroundColor: Colors.white,
-        foregroundColor: primary,
-        elevation: 0.5,
-        actions: [
-          TextButton(
-            onPressed: _saving ? null : _save,
-            child: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text(
-                    '저장',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
+    return StudentHtmlShell(
+      title: '직접 집필',
+      activeRoute: '/bookbag',
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SectionTitle(label: '교재 기본정보'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: '교재 제목',
-                border: OutlineInputBorder(),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '직접 집필',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                  ),
+                  TextButton(
+                    onPressed: _saving ? null : _save,
+                    child: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('저장'),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _subtitleController,
-              decoration: const InputDecoration(
-                labelText: '교재 설명 (선택)',
-                border: OutlineInputBorder(),
+              _SectionTitle(label: '교재 기본정보'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: '교재 제목',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            _SectionTitle(label: '대제목 / 소주제'),
-            const SizedBox(height: 8),
-            for (var i = 0; i < _chapters.length; i++)
-              _ChapterCard(
-                chapter: _chapters[i],
-                chapterIndex: i,
-                onRemove: () => _removeChapter(_chapters[i]),
-                onAddSection: () => _addSection(_chapters[i]),
-                onRemoveSection: (section) =>
-                    _removeSection(_chapters[i], section),
-                onRefresh: () => setState(() {}),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _subtitleController,
+                decoration: const InputDecoration(
+                  labelText: '교재 설명 (선택)',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: _addChapter,
-              icon: const Icon(Icons.add),
-              label: const Text('대제목 추가'),
-            ),
-          ],
+              const SizedBox(height: 24),
+              _SectionTitle(label: '대제목 / 소주제'),
+              const SizedBox(height: 8),
+              for (var i = 0; i < _chapters.length; i++)
+                _ChapterCard(
+                  chapter: _chapters[i],
+                  chapterIndex: i,
+                  onRemove: () => _removeChapter(_chapters[i]),
+                  onAddSection: () => _addSection(_chapters[i]),
+                  onRemoveSection: (section) =>
+                      _removeSection(_chapters[i], section),
+                  onRefresh: () => setState(() {}),
+                ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _addChapter,
+                icon: const Icon(Icons.add),
+                label: const Text('대제목 추가'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -421,10 +430,7 @@ class _ChapterCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              '대제목 설명',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
+            const Text('대제목 설명', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             for (var i = 0; i < chapter.intro.length; i++)
               _EditableLine(
@@ -515,10 +521,7 @@ class _SectionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            '내용',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
+          const Text('내용', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           for (var i = 0; i < section.paragraphs.length; i++)
             _EditableLine(
@@ -541,10 +544,7 @@ class _SectionCard extends StatelessWidget {
             label: const Text('내용 추가'),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '이미지 URL',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
+          const Text('이미지 URL', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           for (var i = 0; i < section.images.length; i++)
             _EditableLine(
@@ -605,10 +605,7 @@ class _EditableLine extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            onPressed: onRemove,
-            icon: const Icon(Icons.close),
-          ),
+          IconButton(onPressed: onRemove, icon: const Icon(Icons.close)),
         ],
       ),
     );
@@ -616,8 +613,10 @@ class _EditableLine extends StatelessWidget {
 }
 
 class _ChapterDraft {
-  _ChapterDraft({required this.id, required _SectionDraft Function() sectionFactory})
-      : sections = [sectionFactory()];
+  _ChapterDraft({
+    required this.id,
+    required _SectionDraft Function() sectionFactory,
+  }) : sections = [sectionFactory()];
 
   final String id;
   String title = '';
