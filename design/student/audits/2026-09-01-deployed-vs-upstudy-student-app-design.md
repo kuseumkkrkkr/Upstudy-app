@@ -1274,3 +1274,11 @@
 - 코스 상세·보조 라우트 분석 및 회귀 테스트 7개 통과.
 - 소스·번들 커밋 `5f4091d`, `public/main.dart.js` SHA-256 `C283ED4CB4E38223C0AD6D1E1B4BF2186125106D19699821F3199811F8B3FB55`.
 - Vercel 배포 `dpl_5Acb5NZhJhk5YHBfBV5tyZ3V2fQq`, 고유 URL [`aiflow-web-canary-azz959jwe-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-azz959jwe-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 소셜 HTML 영역 실제 데이터 조회
+
+- 기본 HTML 소셜 경로에서도 친구 OVR 랭킹·내 레이팅·그룹을 실제 API에서 조회하도록 연결했다.
+- 구형 `USE_LEGACY_SOCIAL` 플래그가 꺼져도 해당 영역을 비워 두지 않으며, API 실패는 기존 빈 상태·오류 로그 정책으로 처리한다.
+- 친구·요청 모바일 테스트와 보조 라우트 테스트를 실행했고 전체 12개가 통과했다.
+- 소스·번들 커밋 `3b52fe6`, `public/main.dart.js` SHA-256 `FC292984D2CA837722862CC23D4DED2857B1655F7268B58CE4D7FDC45A0A6CF0`.
+- Vercel 배포 `dpl_5hPWYmdX2wo9eBiuz1RJVcbLiNPd`, 고유 URL [`aiflow-web-canary-2478odffr-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-2478odffr-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
