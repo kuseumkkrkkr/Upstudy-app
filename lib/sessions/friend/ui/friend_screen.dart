@@ -4087,6 +4087,18 @@ class _SoWidgetState extends State<SoWidget> {
     padding: EdgeInsets.zero,
     children: [
       const Padding(
+        padding: EdgeInsets.fromLTRB(20, 18, 20, 0),
+        child: Text(
+          'FRIENDS & SOCIAL',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.3,
+            color: _textMuted,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+      const Padding(
         padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Text(
           '최근 대화',
@@ -4112,6 +4124,18 @@ class _SoWidgetState extends State<SoWidget> {
     key: const ValueKey('mobile-social-friends'),
     padding: EdgeInsets.zero,
     children: [
+      const Padding(
+        padding: EdgeInsets.fromLTRB(20, 18, 20, 0),
+        child: Text(
+          'FRIENDS & SOCIAL',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.3,
+            color: _textMuted,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
       const Padding(
         padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Text(

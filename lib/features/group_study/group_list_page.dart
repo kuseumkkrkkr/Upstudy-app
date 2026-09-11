@@ -833,6 +833,16 @@ class _MobileGroupHeading extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                'GROUP STUDY',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.7,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 6),
               Text(
                 '그룹 $count/3',
                 style: const TextStyle(

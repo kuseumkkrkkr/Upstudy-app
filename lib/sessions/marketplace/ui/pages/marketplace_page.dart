@@ -819,6 +819,29 @@ class _MobileMarketplaceBody extends StatelessWidget {
     key: const ValueKey('market-mobile-body'),
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      const Padding(
+        padding: EdgeInsets.fromLTRB(2, 4, 2, 0),
+        child: Text(
+          'MATERIAL LIBRARY',
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.7,
+            color: Color(0xFF5E5E64),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        '자료실',
+        style: TextStyle(
+          fontSize: 38,
+          height: .98,
+          letterSpacing: -1.8,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 10),
       _SearchPanel(
         controller: controller,
         focusNode: focusNode,
