@@ -1510,3 +1510,8 @@
 - 배포 `dpl_76ixqpt6RehzzxMeh1czK6CXVZHY`가 `READY`가 되었고, [고유 배포 URL](https://aiflow-web-canary-riiw9ape9-cw20208021-9200s-projects.vercel.app)과 `https://aiflow-web-canary.vercel.app` alias를 확인했다.
 - 로컬·alias `main.dart.js` SHA-256이 `79E60A41A6FEDC6E4726975422B893FE6DD24B0000FC1468E10B2C6A71CFC237`로 일치한다.
 - `/health`는 200(`aiflow-ocr-queue`), `/health/ready`는 404다. 제품 readiness가 확인된 것으로 해석하지 않는다.
+
+### 2026-09-11 핵심 직접 경로 재검증
+
+- `course_runtime_route_test.dart`, `wrong_answer_legacy_route_test.dart`, `secondary_route_shell_test.dart`를 함께 실행해 총 8개 테스트가 통과했다.
+- 인자 없는 코스 런타임의 조용한 목록 fallback 방지, 구형 오답 재풀이, 커리큘럼 이력, 그룹 초대, 오답 복귀, 학생 런타임의 셸·홈 이동을 확인했다.
