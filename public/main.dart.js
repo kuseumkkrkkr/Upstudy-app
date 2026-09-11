@@ -173113,7 +173113,7 @@ m=j?14:12
 return A.jK(i,k,s,l.d,A.cJ(k,q,B.zr,B.Y,0,p,new A.V(0,o),new A.C(n,m,n,m),B.aQ,r,A.ac(k,k,k,k,k,k,k,k,k,k,k,j?14:13,k,k,B.Q,k,k,!0,k,k,k,k,k,k,k,k)))}}
 A.agQ.prototype={
 p(a){var s,r,q,p,o,n,m=this,l=null,k=t.w,j=A.a6(a,B.G,k).w.a.a<=720,i=A.a6(a,B.G,k).w.a.a>1040,h=m.Q
-if(h==null)h=i?84:72
+if(h==null)h=i?76:72
 s=new A.bI(l,t.sW)
 r=m.x
 if(r==null)r=new A.b30(s)
@@ -173149,10 +173149,8 @@ $0(){A.d3(B.c0,this.a,!0)
 return null},
 $S:0}
 A.WS.prototype={
-p(a){var s,r=this,q=null,p=new A.b33(),o=t.w,n=A.a6(a,B.G,o).w.a.a<=720?64:62,m=A.a6(a,B.G,o).w.a.a<=720,l=m&&r.r?"\ub4a4\ub85c\uac00\uae30":"\ud559\uc0dd \uba54\ub274"
-o=m?10:22
-s=m&&!r.r?B.P2:B.h_
-return A.B(q,A.N(A.a([p.$3$icon$label$onTap(s,l,r.d),B.aT,new A.iz(A.h(r.c,q,q,q,q,q,B.ct,q,q,q),B.ajw),B.aV,p.$3$icon$label$onTap(B.kY,"\uac80\uc0c9",r.e),B.a5,p.$3$icon$label$onTap(B.uh,"\uc54c\ub9bc",r.f)],t.p),B.k,q,B.d,B.e,0,q,q),B.j,B.a8,q,q,q,n,q,q,new A.C(o,0,o,0),q,q,q)}}
+p(a){var s=this,r=null,q=new A.b33(),p=A.a6(a,B.G,t.w).w.a.a<=720,o=p&&s.r?"\ub4a4\ub85c\uac00\uae30":"\ud559\uc0dd \uba54\ub274",n=p?10:22,m=p&&!s.r?B.P2:B.h_
+return A.B(r,A.N(A.a([q.$3$icon$label$onTap(m,o,s.d),B.aT,new A.iz(A.h(s.c,r,r,r,r,r,B.ct,r,r,r),B.ajw),B.aV,q.$3$icon$label$onTap(B.kY,"\uac80\uc0c9",s.e),B.a5,q.$3$icon$label$onTap(B.uh,"\uc54c\ub9bc",s.f)],t.p),B.k,r,B.d,B.e,0,r,r),B.j,B.a8,r,r,r,64,r,r,new A.C(n,0,n,0),r,r,r)}}
 A.b33.prototype={
 $3$icon$label$onTap(a,b,c){var s,r,q=null
 A:{if("\ud559\uc0dd \uba54\ub274"===b){s="student-mobile-menu"

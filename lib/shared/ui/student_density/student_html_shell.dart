@@ -40,7 +40,7 @@ class StudentHtmlShell extends StatelessWidget {
     final mobile = isStudentDensityMobile(context);
     final width = MediaQuery.sizeOf(context).width;
     final wide = width > StudentDensityTokens.desktopBreakpoint;
-    final desktopRailWidth = railWidth ?? (wide ? 84.0 : 72.0);
+    final desktopRailWidth = railWidth ?? (wide ? 76.0 : 72.0);
     // The build context above Scaffold cannot resolve Scaffold.maybeOf.
     // Keep the fallback action bound to the actual Scaffold state instead.
     final scaffoldKey = GlobalKey<ScaffoldState>();
@@ -156,7 +156,7 @@ class StudentHtmlTopBar extends StatelessWidget {
       );
     }
 
-    final topBarHeight = isStudentDensityMobile(context) ? 64.0 : 62.0;
+    final topBarHeight = 64.0;
     final mobile = isStudentDensityMobile(context);
     final menuLabel = mobile && mobileBackButton ? '뒤로가기' : '학생 메뉴';
     return Container(
