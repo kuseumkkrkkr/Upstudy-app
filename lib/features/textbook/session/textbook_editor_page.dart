@@ -46,19 +46,30 @@ class TextbookCreationPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-              _TemplateRow(tag: '빠른 시작', title: '개념 + 예제', meta: '두 섹션 기본 구성'),
-              _TemplateRow(tag: '복습', title: '오답 + 해설', meta: '오답에서 자동 수집'),
-              _TemplateRow(tag: '직접 집필', title: '빈 교재', meta: '완전히 새로 구성'),
+              _TemplateRow(
+                tag: '빠른 시작',
+                title: '개념 + 예제',
+                meta: '두 섹션 기본 구성',
+                onSelect: () => _openEditor(context),
+              ),
+              _TemplateRow(
+                tag: '복습',
+                title: '오답 + 해설',
+                meta: '오답에서 자동 수집',
+                onSelect: () => _openEditor(context),
+              ),
+              _TemplateRow(
+                tag: '직접 집필',
+                title: '빈 교재',
+                meta: '완전히 새로 구성',
+                onSelect: () => _openEditor(context),
+              ),
               const SizedBox(height: 18),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   FilledButton.icon(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const TextbookEditorPage(),
-                      ),
-                    ),
+                    onPressed: () => _openEditor(context),
                     icon: const Icon(Icons.arrow_forward, size: 18),
                     label: const Text('빈 교재 만들기'),
                     style: FilledButton.styleFrom(
@@ -95,6 +106,12 @@ class TextbookCreationPage extends StatelessWidget {
       ),
     );
   }
+
+  static void _openEditor(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const TextbookEditorPage()));
+  }
 }
 
 class _TemplateRow extends StatelessWidget {
@@ -102,11 +119,13 @@ class _TemplateRow extends StatelessWidget {
     required this.tag,
     required this.title,
     required this.meta,
+    required this.onSelect,
   });
 
   final String tag;
   final String title;
   final String meta;
+  final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +167,7 @@ class _TemplateRow extends StatelessWidget {
             ),
           ),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: onSelect,
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF09090B),
               shape: const RoundedRectangleBorder(),
