@@ -1213,3 +1213,9 @@
 - 그래프·최근 도구·순서 편집 변경을 포함한 최신 번들을 다시 빌드하고 Canary alias에 반영했다.
 - 소스·번들 커밋 `ecd278b`, 번들 SHA-256 `39F196EECF6404D1B41F7B740DCBBD5C14AE5EC649E9B1500370C762F05700E2`.
 - Vercel 배포 `dpl_Gx3QgDyzNYz9ExKXdKEERRc6MzL7`, alias READY, 로컬·alias 번들 SHA 일치, `/health` 200.
+
+### 2026-09-11 86개 화면 ID 집합 재대조
+
+- Downloads HTML `defineScreen` 추출 86개, `student-parity.json` 86개, `StudentRouteRegistry.all` 86개를 비교했다.
+- HTML 대비 manifest·registry 누락 0개, 중복 0개, 추가 ID 0개.
+- 이 검사는 ID·분모 정합성만 증명하며 화면 시각·동작 일치와 실제 데이터 검증의 합격 근거로 확대하지 않는다.
