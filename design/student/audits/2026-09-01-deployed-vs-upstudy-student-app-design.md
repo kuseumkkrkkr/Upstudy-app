@@ -1537,6 +1537,7 @@
 - canary `/\#/graph`를 브라우저에서 실제 캡처해 그래프 탐색기 셸·축·확대/축소·함수 입력·하단 탭이 렌더링되는 것을 확인했다. 이 캡처는 현재 배포의 동작 근거이며 HTML 원본과의 일대일 이미지 판정은 별도 비교가 필요하다.
 - 기준 HTML 정적 인벤토리를 재실행해 SHA-256 `EF8F6E40…`, 화면 수 86, 모달 템플릿 43개를 확인했다. 이는 기준 집합 검증이며 Flutter의 시각·동작 일치 완료를 의미하지 않는다.
 - 제공된 runtime 감사 도구로 HTML `dashboard`를 `390×844`에서 열고 20개 동작을 순회했다. 검색·알림·6개 학습 동작·카드 CTA의 URL/시트 결과를 수집했으며, 이 결과를 Flutter 일대일 동작 비교의 기준으로 사용한다.
+- 캡처 도구의 HTML 기준을 지정된 Downloads 원본으로 교정했다. 지정 원본의 `dashboard` `390×844` 렌더를 재캡처해 Flutter canary와 비교할 기준 이미지를 갱신했다. 저장소의 `full_face_preview.html`은 더 이상 기준으로 사용하지 않는다.
 - 로컬 FastAPI TestClient에서 준비된 데이터 어댑터를 주입해 `/health/ready`가 200과 5개 테이블 검사 결과를 반환하는 것을 확인했다. 실제 canary에는 아직 해당 API 변경이 배포되지 않았다.
 - OMJ 작업 디렉터리에서 콘텐츠 계약·제품 규칙 테스트 10개가 통과했다(`python -m pytest tests/test_content_contracts.py tests/test_product_rules.py -q`). 저장소 루트에서 실행하면 패키지 경로가 없어 실패하므로 실행 위치를 고정한다.
 - `interactive_cosine_graph_test.dart`를 추가해 그래프 Semantics 라벨과 제스처 위젯 회귀를 확인했으며 테스트 1개가 통과했다.

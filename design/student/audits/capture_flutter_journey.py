@@ -17,6 +17,9 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[3]
 FLUTTER_WEB_ROOT = ROOT / "build" / "web"
 HTML_ROOT = ROOT / "design" / "student"
+REFERENCE_HTML = Path(
+    r"C:\Users\user\Downloads\Upstudy-student-app-design\upstudy-student-app-design.html"
+)
 PREVIEW_ROOT = HTML_ROOT / "previews"
 EDGE = Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
 
@@ -146,8 +149,14 @@ def capture(args: argparse.Namespace) -> int:
     """
 
     flutter_source = args.source == "flutter"
-    web_root = FLUTTER_WEB_ROOT if flutter_source else HTML_ROOT
-    entry = "index.html" if flutter_source else "full_face_preview.html"
+    if flutter_source:
+        web_root = FLUTTER_WEB_ROOT
+        entry = "index.html"
+    else:
+        # The Downloads export is the approved reference; keep the repository
+        # preview only as a fallback for offline historical captures.
+        web_root = REFERENCE_HTML.parent if REFERENCE_HTML.is_file() else HTML_ROOT
+        entry = REFERENCE_HTML.name if REFERENCE_HTML.is_file() else "full_face_preview.html"
     if not web_root.joinpath(entry).is_file():
         raise FileNotFoundError(f"감사 진입 파일이 없습니다: {web_root / entry}")
     if not EDGE.is_file():
