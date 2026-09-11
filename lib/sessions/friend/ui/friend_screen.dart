@@ -4113,9 +4113,19 @@ class _SoWidgetState extends State<SoWidget> {
               const Icon(Icons.person_add_alt_1_outlined),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(
-                  '친구 요청 · 받은 ${_pendingIncomingRequests.length} · 보낸 ${_pendingOutgoingRequests.length}',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '친구 요청',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      '받은 요청 ${_pendingIncomingRequests.length} · 보낸 요청 ${_pendingOutgoingRequests.length}',
+                      style: const TextStyle(fontSize: 12, color: _textMuted),
+                    ),
+                  ],
                 ),
               ),
               const Icon(Icons.chevron_right_rounded),
@@ -4142,6 +4152,19 @@ class _SoWidgetState extends State<SoWidget> {
             subtitle: '${message.lastMessage} · ${message.timeAgo}',
             onTap: () => _openMessageThread(message),
           ),
+      const Padding(
+        padding: EdgeInsets.fromLTRB(20, 24, 20, 8),
+        child: Text(
+          '친구 상태',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+      ),
+      for (final friend in _friends)
+        _mobilePersonRow(
+          name: friend.name,
+          subtitle: friend.status,
+          onTap: () => _openFriendActionModal(friend),
+        ),
     ],
   );
 
