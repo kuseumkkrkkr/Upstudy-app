@@ -1523,3 +1523,5 @@
 - 소스 커밋 `ae1655b`(소셜 모바일 흐름), 번들 커밋 `9c9463a`를 `origin/hotfix`에 푸시했다.
 - 최신 `public/main.dart.js` SHA-256: `BCEBC5E096453EAD5F1185035C7B8D00CEC79D93498EC98FF442EFA6DD93A33E`.
 - Vercel 재배포는 `api-deployments-free-per-day`(100회 초과)로 거부됐다. 따라서 최신 후보가 canary alias에 반영됐다고 주장하지 않으며, 기존 READY 배포와 최신 후보를 분리해 기록한다.
+- 재실행한 직접 경로·registry 묶음 테스트는 16개 모두 통과했다(`student_route_registry_test.dart`, `course_runtime_route_test.dart`, `wrong_answer_legacy_route_test.dart`, `secondary_route_shell_test.dart`).
+- 현재 alias의 라이브 번들은 여전히 `79E60A41A6FEDC6E4726975422B893FE6DD24B0000FC1468E10B2C6A71CFC237`이며 최신 후보 `BCEBC5E0…`와 다르다.
