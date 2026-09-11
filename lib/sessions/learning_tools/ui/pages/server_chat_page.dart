@@ -493,24 +493,26 @@ class _ChatHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '과외봇',
+                  'AIFLOW TUTOR · LIVE',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 10,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    color: StudentDensityTokens.ink,
+                    letterSpacing: 1.1,
+                    color: StudentDensityTokens.muted,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 6),
                 const Text(
-                  '온라인 · 개념 설명과 풀이 힌트',
+                  '막힌 지점부터 질문해 보세요.',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: StudentDensityTokens.muted,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.4,
+                    color: StudentDensityTokens.ink,
                   ),
                 ),
               ],
@@ -965,7 +967,7 @@ class _ChatComposer extends StatelessWidget {
                   ],
                   onSubmitted: (_) => onSend(),
                   decoration: InputDecoration(
-                    hintText: blocked ? '잠시 후 다시 입력해 주세요' : '과외봇에게 질문하기',
+                    hintText: blocked ? '잠시 후 다시 입력해 주세요' : '질문을 입력해 보세요.',
                     counterText: '',
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.fromLTRB(16, 15, 8, 15),

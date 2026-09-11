@@ -23,9 +23,9 @@ void main() {
     expect(page.standalone, isTrue);
     expect(find.byType(StudentHtmlShell), findsOneWidget);
     expect(find.byType(MobileStudentBottomAppBar), findsOneWidget);
-    expect(find.text('과외봇'), findsOneWidget);
-    expect(find.text('온라인 · 개념 설명과 풀이 힌트'), findsOneWidget);
-    expect(find.text('과외봇에게 질문하기'), findsOneWidget);
+    expect(find.text('AIFLOW TUTOR · LIVE'), findsOneWidget);
+    expect(find.text('막힌 지점부터 질문해 보세요.'), findsOneWidget);
+    expect(find.text('질문을 입력해 보세요.'), findsOneWidget);
     expect(find.byKey(const ValueKey('tutor-personalized')), findsOneWidget);
     expect(find.byKey(const ValueKey('tutor-quick-prompts')), findsOneWidget);
     expect(tester.takeException(), isNull);
