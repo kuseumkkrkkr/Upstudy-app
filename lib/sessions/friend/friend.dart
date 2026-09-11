@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:s11/shared/services/api/api_client.dart' hide FriendRank;
+import 'package:s11/shared/services/api/api_client.dart' as api;
 import 'package:s11/features/level_test/level_test.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/business/repositories/exam_paper_store.dart';

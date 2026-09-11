@@ -668,10 +668,19 @@ class _SoWidgetState extends State<SoWidget> {
     if (_loadingRanks) return;
     setState(() => _loadingRanks = true);
     try {
-      // 두 요청을 동시에 시작하면 첫 실패 시 다른 Future의 예외가 누락될 수 있다.
-      // 순차 조회로 각 실패를 동일한 catch 경계에서 처리한다.
-      final ranks = await ApiClient.instance.fetchFriendRankings();
-      final myRating = await ApiClient.instance.fetchUserRating();
+      List<api.FriendRank> ranks = const [];
+      UserRating? myRating;
+      try {
+        ranks = await ApiClient.instance.fetchFriendRankings();
+      } catch (error, stack) {
+        // 랭킹 endpoint가 없는 배포에서도 내 레이팅 조회는 계속한다.
+        debugPrint('_loadFriendRanks ranking error: $error\n$stack');
+      }
+      try {
+        myRating = await ApiClient.instance.fetchUserRating();
+      } catch (error, stack) {
+        debugPrint('_loadFriendRanks rating error: $error\n$stack');
+      }
       final resolvedRanks = ranks
           .map(
             (r) => _FriendRank(
