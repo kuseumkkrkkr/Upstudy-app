@@ -391,7 +391,9 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton(
-                    onPressed: () => Navigator.of(context).maybePop(),
+                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('미리보기 전에 교재를 먼저 저장해주세요.')),
+                    ),
                     style: OutlinedButton.styleFrom(
                       shape: const RoundedRectangleBorder(),
                     ),
