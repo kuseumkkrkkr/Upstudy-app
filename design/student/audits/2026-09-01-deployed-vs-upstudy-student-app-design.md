@@ -1538,6 +1538,7 @@
 - 배포 후 `/health`는 200, `/health/ready`는 503으로 응답했다. readiness 엔드포인트가 404가 아닌 제품 데이터 미준비 상태를 정확히 보고한다. 실제 데이터 계층이 준비되지 않았으므로 상용 readiness 통과로 해석하지 않는다.
 - `vercel env ls`에서 Production 환경에는 `STUDENT_STORE_DEMO`만 확인됐고 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OMJ_JWT_SECRET`은 존재 목록에 나타나지 않았다. readiness 503은 이 배포 설정 부족과 일치하며, 비밀값을 추측하거나 임의로 추가하지 않는다.
 - OMJ 무결성·라우트·대결·등급·데모 API 묶음 31개 테스트가 통과했다(`test_arena.py`, `test_rating_service_contract.py`, `test_vercel_route_contract.py`, `test_vercel_student_demo_api.py`). 실제 PostgreSQL 200 동시 요청 검증은 아직 수행하지 않았다.
+- 최신 canary `/courses`에서 17초 대기 후 무한 스피너가 `코스를 불러오지 못했어요`와 `다시 시도` CTA로 전환되는 것을 브라우저에서 확인했다. 네트워크 오류 장면의 실제 동작 근거를 확보했다.
 - canary `/\#/graph`를 브라우저에서 실제 캡처해 그래프 탐색기 셸·축·확대/축소·함수 입력·하단 탭이 렌더링되는 것을 확인했다. 이 캡처는 현재 배포의 동작 근거이며 HTML 원본과의 일대일 이미지 판정은 별도 비교가 필요하다.
 - 기준 HTML 정적 인벤토리를 재실행해 SHA-256 `EF8F6E40…`, 화면 수 86, 모달 템플릿 43개를 확인했다. 이는 기준 집합 검증이며 Flutter의 시각·동작 일치 완료를 의미하지 않는다.
 - 제공된 runtime 감사 도구로 HTML `dashboard`를 `390×844`에서 열고 20개 동작을 순회했다. 검색·알림·6개 학습 동작·카드 CTA의 URL/시트 결과를 수집했으며, 이 결과를 Flutter 일대일 동작 비교의 기준으로 사용한다.
