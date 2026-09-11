@@ -1350,3 +1350,11 @@
 - `flutter analyze lib/app/router.dart`, 학생 route registry·보조 셸 테스트 통과.
 - 소스·번들 커밋 `cdd7287`, 로컬·alias `public/main.dart.js` SHA-256 `0ABFFA546AA164F7BB41A81E52DF41A4756428CCB6372B3EEDBE9CFC105A75CB` 일치.
 - Vercel 배포 `dpl_AVHzWGMzKCbitkb8u5zWb9RAz2CX`, 고유 URL [`aiflow-web-canary-jeu0s07ca-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-jeu0s07ca-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
+
+### 2026-09-11 교재 작성 화면 HTML 셸 이식
+
+- `textbook-create`와 `textbook-editor`를 독립 Material Scaffold에서 공통 학생 HTML 셸로 전환했다.
+- 모바일 상단바·하단 탭, 데스크톱 레일·컨텍스트, 본문 최대폭을 적용하고 저장·실패 메시지·실제 교재 저장 계약은 유지했다.
+- `flutter analyze lib/features/textbook/session/textbook_editor_page.dart` 및 교재 딥링크 테스트 통과.
+- 소스·번들 커밋 `d23ad65`, 로컬·alias `public/main.dart.js` SHA-256 `87D438359AC3FF5C340AE0400889D850A4A287AE285780A3D8CB76B44726E09F` 일치.
+- Vercel 배포 `dpl_3d9VXuvpR9Wa6qA4Vj4wZcUmHvnZ`, 고유 URL [`aiflow-web-canary-2j73s3ka7-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-2j73s3ka7-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200 (`aiflow-ocr-queue`), `/health/ready` 404.
