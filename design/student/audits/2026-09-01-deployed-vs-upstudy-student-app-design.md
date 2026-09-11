@@ -1461,3 +1461,9 @@
 - 대상 분석은 오류 없이 통과했으며, 교재 생성 API 자체는 서버 라우트 부재로 미구현 상태다.
 - 소스·번들 커밋 `83339f4`, 로컬·alias `public/main.dart.js` SHA-256 `C24A1169D47CAC4C52BB94092E299A4708D59AE760D9D154DBBA26578467F753` 일치.
 - Vercel 배포 `dpl_7B68SYKCiNRQ5fxGvva3h1eXMg82`, 고유 URL [`aiflow-web-canary-otlbxdsci-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-otlbxdsci-cw20208021-9200s-projects.vercel.app), Canary alias READY. `/health` 200.
+
+### 2026-09-11 교재 편집기 동작 연결 및 배포 한도 경계
+
+- 편집기 `되돌리기`는 마지막 장을 제거하고, `그래프`는 저장 API 미연결 안내를 표시하도록 연결했다.
+- 정적 분석은 통과했고 소스·번들 커밋은 `c2c8cd3`, 로컬 번들 SHA-256은 `82E5EF85DD423A594AB897C63B8CEBA9287FC0F3E6D8B2AB0F80CB57643F881A`다.
+- 새 Vercel 배포는 `api-deployments-free-per-day` 100회 초과로 거부됐다. 따라서 이 커밋의 alias 반영·라이브 해시 검증은 한도 복구 후 재시도 대상이며, 이전 READY 배포를 새 번들의 증거로 사용하지 않는다.
