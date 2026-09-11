@@ -303,7 +303,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
   @override
   Widget build(BuildContext context) {
     return StudentHtmlShell(
-      title: '직접 집필',
+      title: '교재 편집',
       activeRoute: '/bookbag',
       showContextAside: true,
       mobileBackButton: true,
@@ -321,7 +321,7 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    '직접 집필',
+                    '교재 편집',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                   ),
                   TextButton(
@@ -336,6 +336,9 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              const _EditorTabBar(),
+              const SizedBox(height: 20),
               _SectionTitle(label: '교재 기본정보'),
               const SizedBox(height: 8),
               TextField(
@@ -372,8 +375,71 @@ class _TextbookEditorPageState extends State<TextbookEditorPage> {
                 icon: const Icon(Icons.add),
                 label: const Text('대제목 추가'),
               ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    icon: const Icon(Icons.arrow_forward, size: 18),
+                    label: const Text('교재 저장'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF09090B),
+                      foregroundColor: Colors.white,
+                      shape: const RoundedRectangleBorder(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    style: OutlinedButton.styleFrom(
+                      shape: const RoundedRectangleBorder(),
+                    ),
+                    child: const Text('미리보기'),
+                  ),
+                ],
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditorTabBar extends StatelessWidget {
+  const _EditorTabBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _EditorTab(label: '편집', selected: true),
+        _EditorTab(label: '태그'),
+        _EditorTab(label: '시험지'),
+      ],
+    );
+  }
+}
+
+class _EditorTab extends StatelessWidget {
+  const _EditorTab({required this.label, this.selected = false});
+
+  final String label;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      color: selected ? const Color(0xFF09090B) : const Color(0xFFFDFDFE),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: selected ? Colors.white : const Color(0xFF09090B),
         ),
       ),
     );
