@@ -1227,3 +1227,12 @@
 - 정적 분석과 라우트·모바일 셸 회귀 테스트 16개 통과.
 - 소스·번들 커밋 `7d3e3cb`, `public/main.dart.js` SHA-256 `59399747E96BAECAD0465DFDA1FEBED6100A502D8E512EE0FDAB7E87E23105A4`.
 - Vercel 배포 `dpl_9HMctXQiLPo9kUuteK7UTkkiLwfK`, 고유 URL [`aiflow-web-canary-rz2emen65-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-rz2emen65-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
+
+### 2026-09-11 런타임 API 오류와 빈 상태 분리
+
+- `/student/runtime`의 수강 코스 조회 실패 시 `샘플 강의`를 반환하던 fallback을 제거했다.
+- 실제 API 오류는 오류 장면으로 표시하고 `다시 시도`를 제공하며, 성공한 빈 응답만 빈 수강 상태로 표시한다.
+- 공개되지 않은 세션 종료 API를 성공으로 가장하지 않고 `false`를 반환하도록 정리했다.
+- 런타임 정적 분석 및 보조 라우트 회귀 테스트 5개 통과.
+- 소스·번들 커밋 `71c5ff5`, `public/main.dart.js` SHA-256 `86452CE224B9B2C359FCB7A1695421ED6C4EAE74E162FD056BA68A949AF829CB`.
+- Vercel 배포 `dpl_HcHKM7GTjB7Hb1komsAQeNci5YrA`, 고유 URL [`aiflow-web-canary-8p3q5cjvi-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-8p3q5cjvi-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
