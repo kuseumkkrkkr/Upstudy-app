@@ -1219,3 +1219,11 @@
 - Downloads HTML `defineScreen` 추출 86개, `student-parity.json` 86개, `StudentRouteRegistry.all` 86개를 비교했다.
 - HTML 대비 manifest·registry 누락 0개, 중복 0개, 추가 ID 0개.
 - 이 검사는 ID·분모 정합성만 증명하며 화면 시각·동작 일치와 실제 데이터 검증의 합격 근거로 확대하지 않는다.
+
+### 2026-09-11 스토어·더보기 활성 내비게이션 정렬
+
+- 스토어(`/store`)에서 자료실이 잘못 활성화되던 상태를 제거하고, 현재 경로에 맞는 더보기 섹션을 활성화했다.
+- `/tools`, 학생서비스 데모, 수학 내신 대비도 더보기 레일의 동일한 활성 규칙을 사용하도록 공통 셸에서 처리했다.
+- 정적 분석과 라우트·모바일 셸 회귀 테스트 16개 통과.
+- 소스·번들 커밋 `7d3e3cb`, `public/main.dart.js` SHA-256 `59399747E96BAECAD0465DFDA1FEBED6100A502D8E512EE0FDAB7E87E23105A4`.
+- Vercel 배포 `dpl_9HMctXQiLPo9kUuteK7UTkkiLwfK`, 고유 URL [`aiflow-web-canary-rz2emen65-cw20208021-9200s-projects.vercel.app`](https://aiflow-web-canary-rz2emen65-cw20208021-9200s-projects.vercel.app), Canary alias READY. 로컬·alias 번들 SHA가 일치하고 `/health`가 200이다.
