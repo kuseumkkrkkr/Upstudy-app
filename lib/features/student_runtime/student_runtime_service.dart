@@ -48,9 +48,9 @@ class StudentRuntimeService {
       return courses
           .map((e) => RuntimeCourseModel.fromJson(e as Map<String, dynamic>))
           .toList();
-    } on Exception catch (_) {
-      // API 실패 시에도 UI가 깨지지 않도록 샘플 데이터 반환.
-      return _mockCourses();
+    } on Exception catch (error) {
+      // 서버 오류를 실제 빈 수강 목록으로 오인하지 않도록 호출자에게 전달한다.
+      throw StudentRuntimeLoadException(error);
     }
   }
 
@@ -136,69 +136,19 @@ class StudentRuntimeService {
     }
   }
 
-  /// 세션 종료는 현재 백엔드 미구현으로 임시 true 처리.
+  /// 세션 종료 API가 아직 공개되지 않아 호출하지 않는다.
   Future<bool> endSession(String sessionId) async {
-    return true;
+    // 공개된 종료 경로가 없으므로 성공으로 가장하지 않는다.
+    return false;
   }
+}
 
-  /// API 장애 시 화면 렌더링을 보장하기 위한 더미 데이터.
-  List<RuntimeCourseModel> _mockCourses() {
-    return [
-      RuntimeCourseModel(
-        id: 1,
-        title: '샘플 강의',
-        modules: [
-          RuntimeModuleModel(
-            id: 101,
-            moduleType: RuntimeModuleType.textbookView,
-            title: '1단계 교재 강의',
-            status: 'completed',
-            progressPercent: 100,
-            configJson: '{}',
-          ),
-          RuntimeModuleModel(
-            id: 102,
-            moduleType: RuntimeModuleType.problemSolve,
-            title: '1단계 문제 풀이',
-            status: 'completed',
-            progressPercent: 100,
-            configJson: '{}',
-          ),
-          RuntimeModuleModel(
-            id: 103,
-            moduleType: RuntimeModuleType.examSolve,
-            title: '1단계 모의고사',
-            status: 'available',
-            progressPercent: 0,
-            configJson: '{}',
-          ),
-          RuntimeModuleModel(
-            id: 104,
-            moduleType: RuntimeModuleType.wrongAnswerReview,
-            title: '오답 노트',
-            status: 'locked',
-            progressPercent: 0,
-            configJson: '{}',
-          ),
-          RuntimeModuleModel(
-            id: 105,
-            moduleType: RuntimeModuleType.challenge,
-            title: '챌린지 모드',
-            status: 'locked',
-            progressPercent: 0,
-            configJson: '{}',
-          ),
-          RuntimeModuleModel(
-            id: 106,
-            moduleType: RuntimeModuleType.levelTest,
-            title: '레벨 테스트',
-            status: 'locked',
-            progressPercent: 0,
-            configJson: '{}',
-          ),
-        ],
-        overallProgress: 33,
-      ),
-    ];
-  }
+/// 런타임 코스 조회 실패를 빈 데이터와 구분하기 위한 예외다.
+class StudentRuntimeLoadException implements Exception {
+  const StudentRuntimeLoadException(this.cause);
+
+  final Object cause;
+
+  @override
+  String toString() => 'StudentRuntimeLoadException: $cause';
 }

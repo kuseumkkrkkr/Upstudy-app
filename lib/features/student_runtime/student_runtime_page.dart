@@ -24,6 +24,7 @@ class StudentRuntimePage extends StatefulWidget {
 class _StudentRuntimePageState extends State<StudentRuntimePage> {
   List<RuntimeCourseModel> _courses = const [];
   bool _loading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -37,12 +38,19 @@ class _StudentRuntimePageState extends State<StudentRuntimePage> {
   }
 
   /// 필요한 변수는 런타임 코스 API 응답이다.
-  /// 작동 원리: 기존 서비스의 20초 캐시·장애 시 샘플 데이터 정책을 그대로 사용하고 화면 상태만 갱신한다.
+  /// 작동 원리: 기존 서비스의 20초 캐시를 사용하며 조회 실패는 빈 목록과 구분해 재시도를 제공한다.
   Future<void> _loadCourses() async {
-    final courses = await StudentRuntimeService.instance.loadEnrolledCourses();
+    List<RuntimeCourseModel> courses = const [];
+    String? errorMessage;
+    try {
+      courses = await StudentRuntimeService.instance.loadEnrolledCourses();
+    } on StudentRuntimeLoadException {
+      errorMessage = '수강 중인 코스를 불러오지 못했습니다.';
+    }
     if (!mounted) return;
     setState(() {
       _courses = courses;
+      _errorMessage = errorMessage;
       _loading = false;
     });
   }
@@ -141,7 +149,9 @@ class _StudentRuntimePageState extends State<StudentRuntimePage> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    if (course == null)
+                    if (_errorMessage != null)
+                      _RuntimeError(onRetry: _loadCourses)
+                    else if (course == null)
                       _EmptyRuntime(onOpenCatalog: _openCourseCatalog)
                     else
                       _RuntimeModuleList(
@@ -388,6 +398,26 @@ class _EmptyRuntime extends StatelessWidget {
           primary: true,
           onPressed: onOpenCatalog,
         ),
+      ],
+    ),
+  );
+}
+
+class _RuntimeError extends StatelessWidget {
+  const _RuntimeError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => StudentDensitySurface(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('코스 정보를 불러오지 못했습니다.', style: TextStyle(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 8),
+        const Text('네트워크 상태를 확인한 뒤 다시 시도해 주세요.', style: TextStyle(color: StudentDensityTokens.muted)),
+        const SizedBox(height: 16),
+        StudentDensityButton(label: '다시 시도', primary: true, onPressed: onRetry),
       ],
     ),
   );
