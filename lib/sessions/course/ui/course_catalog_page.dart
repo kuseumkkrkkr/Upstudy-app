@@ -145,6 +145,7 @@ class CourseCatalogPage extends StatefulWidget {
 }
 
 class _CourseCatalogPageState extends State<CourseCatalogPage> {
+  static const _courseFeedTimeout = Duration(seconds: 15);
   final TextEditingController _searchController = TextEditingController();
   Future<List<Course>>? _future;
   Future<List<GenerationTagGroup>>? _tagGroupsFuture;
@@ -203,7 +204,7 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
       _future = (widget.courseFeedLoader ?? _loadCourseFeed)(
         keyword: keyword,
         recommend: recommend,
-      );
+      ).timeout(_courseFeedTimeout);
     });
   }
 

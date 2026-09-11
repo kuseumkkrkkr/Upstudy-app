@@ -1539,6 +1539,7 @@
 - 제공된 runtime 감사 도구로 HTML `dashboard`를 `390×844`에서 열고 20개 동작을 순회했다. 검색·알림·6개 학습 동작·카드 CTA의 URL/시트 결과를 수집했으며, 이 결과를 Flutter 일대일 동작 비교의 기준으로 사용한다.
 - 캡처 도구의 HTML 기준을 지정된 Downloads 원본으로 교정했다. 지정 원본의 `dashboard` `390×844` 렌더를 재캡처해 Flutter canary와 비교할 기준 이미지를 갱신했다. 저장소의 `full_face_preview.html`은 더 이상 기준으로 사용하지 않는다.
 - 동일 조건 캡처에서 로컬 Flutter 번들은 인증 세션이 없어 로그인 화면으로 진입했고, HTML은 학생 홈을 렌더링했다. 이 결과는 인증 상태를 맞추지 않은 일대일 비교가 부적합함을 확인한 것으로, 로그인된 canary 브라우저 캡처와의 비교는 별도 인증 세션에서 수행해야 한다.
+- 코스 목록의 실제 API 지연으로 로딩 스피너가 무한히 남지 않도록 피드 Future에 15초 제한을 추가했다. 제한 초과는 기존 오류·재시도 장면으로 전달되며, `course_catalog_page.dart` 분석과 registry 경로 테스트가 통과했다.
 - 로컬 FastAPI TestClient에서 준비된 데이터 어댑터를 주입해 `/health/ready`가 200과 5개 테이블 검사 결과를 반환하는 것을 확인했다. 실제 canary에는 아직 해당 API 변경이 배포되지 않았다.
 - OMJ 작업 디렉터리에서 콘텐츠 계약·제품 규칙 테스트 10개가 통과했다(`python -m pytest tests/test_content_contracts.py tests/test_product_rules.py -q`). 저장소 루트에서 실행하면 패키지 경로가 없어 실패하므로 실행 위치를 고정한다.
 - `interactive_cosine_graph_test.dart`를 추가해 그래프 Semantics 라벨과 제스처 위젯 회귀를 확인했으며 테스트 1개가 통과했다.
