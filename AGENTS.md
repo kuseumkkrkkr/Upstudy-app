@@ -11,6 +11,11 @@
 - `D:\AIFlow-Workspace\Projects\Aiflow\Upstudy-leveltest-deploy` 등 별도 데이터·가져오기 작업본을 앱 전체의 빌드 또는 Vercel 배포 원본으로 사용하지 않는다. 데이터 작업과 앱 UI 배포를 혼합하지 않는다.
 - 기존 미커밋 변경은 사용자 작업으로 간주하고 보존한다. 작업 범위와 관계없는 파일을 되돌리거나 덮어쓰지 않는다.
 
+## AI 제공자 경계
+
+- Kiln은 채팅과 텍스트 기반 풀이 채점에만 사용한다. 학생 필기 이미지·획 데이터는 OCR 단계에서만 처리하고 Kiln 채점 요청에는 이미지를 보내지 않는다.
+- Lightning Studio의 TexTeller 경로는 필기 수식 인식 전용이다. Lightning 모델을 채팅·채점에 사용하지 않는다. 다만 기존 Lightning Studio가 일반 제품 API의 서버 호스트/프록시 역할도 하므로, 이를 모델 추론 사용과 혼동하지 않는다. 일반 API 호스트를 바꾸려면 대체 서버와 라우팅을 먼저 검증한다.
+
 ## Flutter 웹 산출물과 Vercel
 
 - Dart UI를 바꾼 뒤에는 이 작업본에서 Flutter 웹 release 빌드를 다시 생성한다. Vercel이 서빙하는 `public` 산출물에 새 `main.dart.js`와 관련 manifest/bootstrap 파일이 실제로 반영되었는지 확인한다. Dart 소스 수정이나 Git 커밋만으로 배포 완료라고 하지 않는다.
