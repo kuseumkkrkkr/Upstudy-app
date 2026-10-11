@@ -153,6 +153,8 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     }
     setState(() {
       _currentPageIndex = clamped;
+      _focusedQuestionIndex = 0;
+      _focusedExamQuestionKey = null;
     });
     _pageSwitching = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -256,15 +258,6 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
     }
   }
 
-  void _scheduleCenterIfNeeded(Size viewport) {
-    if (!_hasCentered) {
-      _focusCurrentPage();
-    } else {
-      _centerInViewport(viewport);
-      _updateViewMatrix();
-    }
-  }
-
   /// 필요한 변수는 현재 viewport·기준 배율·페이지 위치다.
   /// 작동 원리는 종이를 모바일 가로 폭에 맞춘 1배 기준으로 초기화한 뒤 현재 페이지를 상단에 배치하는 것이다.
   void _focusCurrentPage() {
@@ -328,7 +321,7 @@ mixin _ExamPaperInteractionMixin on _ExamPaperStateBase {
         _pollTimer?.cancel();
       }
       if (status.status == 'done' && status.items.isNotEmpty) {
-        unawaited(_indexExamForArchiveSearch(status));
+        unawaited(_indexExamForArchiveSearch(status).catchError((_) {}));
       }
     } catch (error) {
       if (!mounted) {

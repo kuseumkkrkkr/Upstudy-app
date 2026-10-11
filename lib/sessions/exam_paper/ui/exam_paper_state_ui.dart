@@ -2,6 +2,235 @@ part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
 mixin _ExamPaperUiMixin
     on _ExamPaperStateBase, _ExamPaperInteractionMixin, _ExamPaperGradingMixin {
+  /// 모바일 첫 진입에서는 첫 문항을 읽기 크기로 맞추고, 문항이 없으면 페이지 전체를 맞춘다.
+  void _scheduleCenterIfNeeded() {
+    if (_hasCentered) return;
+    final isCompactPortrait =
+        _isPortrait && (_viewportSize?.width ?? double.infinity) <= 600;
+    final regions = isCompactPortrait ? _currentQuestionRegions() : const [];
+    if (regions.isNotEmpty) {
+      _focusedExamQuestionKey = regions.first.item.itemIndex;
+      _focusedQuestionIndex = regions.length > 1 ? 1 : 0;
+      _focusQuestionRegion(regions.first, pageIndex: _currentPageIndex);
+      _hasCentered = true;
+      return;
+    }
+    _focusCurrentPage();
+  }
+
+  /// 현재 페이지의 문항 영역을 순환하며 확대해 모바일 읽기·필기를 돕는다.
+  void _focusNextQuestion() {
+    final viewport = _viewportSize;
+    final regions = _currentQuestionRegions();
+    if (viewport == null || regions.isEmpty) return;
+
+    final region = regions[_focusedQuestionIndex % regions.length];
+    _focusedExamQuestionKey = region.item.itemIndex;
+    _focusedQuestionIndex = ((_focusedQuestionIndex + 1) % regions.length)
+        .toInt();
+    _focusQuestionRegion(region, pageIndex: _currentPageIndex);
+  }
+
+  void _focusQuestionRegion(_QuestionRegion region, {required int pageIndex}) {
+    final viewport = _viewportSize;
+    if (viewport == null) return;
+    _setZoom(2.0);
+
+    final scale = _currentScale;
+    final questionCenter = region.rect.center.translate(
+      0,
+      _pageOffsetY(pageIndex),
+    );
+    _panOffset = Offset(
+      (viewport.width + 60) / 2 - questionCenter.dx * scale,
+      (viewport.height + 72) / 2 - questionCenter.dy * scale,
+    );
+    _clampPanOffset();
+    _updateViewMatrix();
+  }
+
+  int _examQuestionKey(ExamItem item, int index) => item.itemIndex ?? index;
+
+  String _examQuestionStatus(ExamItem item, int index) {
+    final itemKey = item.itemIndex ?? index;
+    final result = _gradeResults[itemKey];
+    if (result != null) {
+      if (result.error != null) return '채점 오류';
+      if (result.isCorrect != null) return result.isCorrect! ? '정답' : '오답';
+      if (result.empty) return '미응답';
+      return '채점 전';
+    }
+    if (item.questOptions?.isNotEmpty == true &&
+        _selectedOptions[itemKey] != null) {
+      return '선택 완료';
+    }
+    return _hasQuestionInk(item, itemKey) ? '필기 있음' : '미응답';
+  }
+
+  bool _hasQuestionInk(ExamItem item, int itemKey) {
+    for (var pageIndex = 0; pageIndex < _pageLayouts.length; pageIndex++) {
+      final layout = _pageLayouts[pageIndex];
+      final region =
+          _questionRegionsForPage(layout, isFirstPage: pageIndex == 0).where(
+            (entry) =>
+                identical(entry.item, item) || entry.item.itemIndex == itemKey,
+          );
+      if (region.isEmpty || pageIndex >= _pageStrokes.length) continue;
+      final questionRect = region.first.rect;
+      if (_pageStrokes[pageIndex].any(
+        (stroke) =>
+            stroke.points.any((point) => questionRect.contains(point.position)),
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  int? _activeExamQuestionKey() {
+    if (_focusedExamQuestionKey != null) return _focusedExamQuestionKey;
+    final regions = _currentQuestionRegions();
+    return regions.isEmpty ? null : regions.first.item.itemIndex;
+  }
+
+  void _toggleCurrentQuestionReview() {
+    final regions = _currentQuestionRegions();
+    if (regions.isEmpty) return;
+    final item = regions
+        .firstWhere(
+          (region) => region.item.itemIndex == _focusedExamQuestionKey,
+          orElse: () => regions.first,
+        )
+        .item;
+    final key = _examQuestionKey(item, _examStatus?.items.indexOf(item) ?? 0);
+    setState(() {
+      if (!_examQuestionsMarkedForReview.add(key)) {
+        _examQuestionsMarkedForReview.remove(key);
+      }
+    });
+  }
+
+  Future<void> _showQuestionNavigator() async {
+    final items = _examStatus?.items ?? const <ExamItem>[];
+    if (items.isEmpty) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.sizeOf(sheetContext).height * 0.72,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '문항 목록',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Text('${_examQuestionsMarkedForReview.length}개 다시 보기'),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final key = _examQuestionKey(item, index);
+                    final marked = _examQuestionsMarkedForReview.contains(key);
+                    final status = _examQuestionStatus(item, index);
+                    return ListTile(
+                      key: ValueKey('exam-question-nav-$key'),
+                      leading: CircleAvatar(
+                        backgroundColor: key == _focusedExamQuestionKey
+                            ? Colors.black
+                            : const Color(0xFFF0F0F2),
+                        foregroundColor: key == _focusedExamQuestionKey
+                            ? Colors.white
+                            : Colors.black87,
+                        child: Text('${index + 1}'),
+                      ),
+                      title: Text(
+                        item.title?.trim().isNotEmpty == true
+                            ? item.title!.trim()
+                            : '문항 ${index + 1}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(status),
+                      trailing: Icon(
+                        marked ? Icons.flag : Icons.flag_outlined,
+                        color: marked ? Colors.deepOrange : Colors.black54,
+                      ),
+                      onTap: () {
+                        Navigator.of(sheetContext).pop();
+                        _navigateToExamQuestion(item, index);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToExamQuestion(ExamItem item, int itemIndex) {
+    final itemKey = _examQuestionKey(item, itemIndex);
+    final targetPage = _pageLayouts.indexWhere(
+      (layout) =>
+          layout.entries.any((entry) => entry.item.itemIndex == item.itemIndex),
+    );
+    if (targetPage < 0) return;
+    final targetRegion = _pageLayouts[targetPage].entries.indexWhere(
+      (entry) => entry.item.itemIndex == item.itemIndex,
+    );
+    if (targetPage != _currentPageIndex) {
+      _setCurrentPage(targetPage);
+    }
+    if (mounted) {
+      setState(() {
+        _focusedQuestionIndex = targetRegion < 0 ? 0 : targetRegion;
+        _focusedExamQuestionKey = itemKey;
+      });
+    }
+    final targetRegions = _questionRegionsForPage(
+      _pageLayouts[targetPage],
+      isFirstPage: targetPage == 0,
+    );
+    final viewport = _viewportSize;
+    if (viewport != null &&
+        viewport.width <= 720 &&
+        targetRegion >= 0 &&
+        targetRegion < targetRegions.length) {
+      // Mobile reference apps keep the active problem readable. Selecting a
+      // row from the question list should therefore focus it immediately.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _focusQuestionRegion(
+          targetRegions[targetRegion],
+          pageIndex: targetPage,
+        );
+      });
+    }
+  }
+
+  /// 확대된 문항에서 현재 페이지 전체 보기로 돌아간다.
+  void _fitPageToViewport() {
+    _focusedQuestionIndex = 0;
+    _focusCurrentPage();
+  }
+
   void _handleOptionSelection(int itemIndex, int optionIndex) {
     setState(() {
       final current = _selectedOptions[itemIndex];
@@ -128,7 +357,7 @@ mixin _ExamPaperUiMixin
             ),
           ),
         ),
-        if (_remainingSeconds != null)
+        if (_remainingSeconds != null && (!isCompact || _pageLayouts.isEmpty))
           Positioned(
             top: 16,
             right: 16,
@@ -145,6 +374,84 @@ mixin _ExamPaperUiMixin
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
+              ),
+            ),
+          ),
+        if (isCompact && _pageLayouts.isNotEmpty)
+          Positioned(
+            right: 12,
+            top: 8,
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.96),
+              elevation: 2,
+              borderRadius: BorderRadius.circular(18),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: '문항 목록',
+                    onPressed: _showQuestionNavigator,
+                    icon: const Icon(Icons.grid_view_rounded),
+                  ),
+                  IconButton(
+                    tooltip: '다시 볼 문항 표시',
+                    onPressed: _toggleCurrentQuestionReview,
+                    icon: Icon(
+                      _examQuestionsMarkedForReview.contains(
+                            _activeExamQuestionKey(),
+                          )
+                          ? Icons.flag
+                          : Icons.flag_outlined,
+                    ),
+                  ),
+                  if (_remainingSeconds != null) ...[
+                    IconButton(
+                      tooltip: _timerVisible ? '시간 표시 숨기기' : '시간 표시 보기',
+                      onPressed: () =>
+                          setState(() => _timerVisible = !_timerVisible),
+                      icon: Icon(
+                        _timerVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                    ),
+                    if (_timerVisible)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          _formatRemaining(_remainingSeconds!),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                  ],
+                  PopupMenuButton<_CompactExamViewAction>(
+                    tooltip: '화면 도구',
+                    onSelected: (action) {
+                      switch (action) {
+                        case _CompactExamViewAction.focusQuestion:
+                          _focusNextQuestion();
+                          break;
+                        case _CompactExamViewAction.fitPage:
+                          _fitPageToViewport();
+                          break;
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: _CompactExamViewAction.focusQuestion,
+                        child: Text('문항 확대'),
+                      ),
+                      PopupMenuItem(
+                        value: _CompactExamViewAction.fitPage,
+                        child: Text('페이지 맞춤'),
+                      ),
+                    ],
+                    icon: const Icon(Icons.more_horiz),
+                  ),
+                ],
               ),
             ),
           ),
@@ -877,7 +1184,7 @@ mixin _ExamPaperUiMixin
           _updateViewMatrix();
         }
 
-        _scheduleCenterIfNeeded(viewportSize);
+        _scheduleCenterIfNeeded();
         final visiblePages = _visiblePagesForViewport(viewportSize);
 
         return ClipRect(
@@ -887,6 +1194,7 @@ mixin _ExamPaperUiMixin
                 valueListenable: _viewMatrix,
                 builder: (context, matrix, child) {
                   return Transform(
+                    key: const ValueKey('exam-paper-canvas-transform'),
                     transform: matrix,
                     alignment: Alignment.topLeft,
                     child: child,
