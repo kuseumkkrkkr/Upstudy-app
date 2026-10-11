@@ -32,3 +32,4 @@ def test_approved_level_test_questions_are_intact_and_seeded():
         assert isinstance(json.loads(solves_json), list)
         assert "'" + title.replace("'", "''") + "'" in seed
         assert "'" + answer.replace("'", "''") + "'" in seed
+        assert "'" + solves_json.replace("'", "''") + "'::jsonb" in seed

@@ -22,7 +22,7 @@
 ## 레벨테스트 — 문항 풀 확인과 레벨 배정은 별개
 
 - 재확인: 제공 원본과 hotfix 사본 SHA-256이 모두 `90F5CC3C811D43857DE3821E47242141B6DCA7DE17C137217315AA25CBDE6E3`이다. 두 SQLite 파일 모두 읽기 전용 `integrity_check=ok`, 776개 문항이다. DB에는 `question(quest_title, quest_answer, solves_json)`만 있고 difficulty/tag 메타데이터는 없다.
-- seed 회귀를 보강해 SQL migration의 문항 수, 고유 ID, 연속 순번 `1..776`을 원본 문항 수와 대조한다. 원본의 모든 문항·답안 존재 및 풀이 JSON 형식도 검사하며, seed/V2 테스트 **6 passed**.
+- seed 회귀를 보강해 SQL migration의 문항 수, 고유 ID, 연속 순번 `1..776`을 원본 문항 수와 대조한다. 원본의 모든 문항·답안·원본 `solves_json` SQL literal이 포함되는지와 JSON 형식도 검사한다. DB 원본/사본 checksum·무결성과 seed/V2 테스트 **6 passed**.
 - 기존 확인 기록상 Canary 통계도 776개 / 트랙 9개다. 이는 live Supabase의 전체 title/answer/solves 및 metadata가 SQLite·SQL seed와 행별로 일치한다는 증명은 아니다.
 - V2 제출 경로는 응답 수·정답률·태그·트랙을 계산하지만 `placement` 또는 `rating` 값을 반환하거나 갱신하지 않는다. 테스트도 이를 명시적으로 확인한다.
 - 따라서 현재 승인된 코드·데이터만으로 실제 배정 등급 결과를 검증할 수 없다. 점수→등급 경계와 레이팅 갱신 정책이 연결되지 않았으므로, 임의 점수 경계나 등급을 만들어 결과를 주장하지 않는다.
