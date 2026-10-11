@@ -15,6 +15,9 @@ def test_handwriting_grading_prompt_is_fair_and_tolerant():
     assert "정답 인정 쪽으로 판단" in prompt
     assert "판독 불확실성만으로 감점하지 않는다" in prompt
     assert "타당한 대안 풀이" in prompt
+    assert "처음 발생한 flow에서만 반영" in prompt
+    assert "판독 불확실성을 ai_opinion에 알린다" in prompt
+    assert "중간 설명·단위·약분 과정 생략은 허용" in prompt
     assert "낙관 편향을 낮춰서 엄격하게" not in prompt
 
 
