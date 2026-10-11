@@ -1,16 +1,19 @@
 ﻿import base64
 import json
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
+from pydantic import BaseModel, Field
 
 from storage.storage import get_quest
 from clean_riddles import build_clean_payload
 from env_loader import load_env
 from services.ai.sam_client import (
-    DEFAULT_ANALYSIS_MODEL,
+    KILN_GRADING_MODEL,
+    KilnRequestError,
     SAM_API_KEY_ENV,
     generate_json,
     is_sam_configured,
+    is_kiln_configured,
 )
 from services.ai.prompts import solve_grading_prompt, solve_ocr_prompt
 from services.ocr.texteller_grid import extract_math_with_texteller_grid
@@ -22,13 +25,25 @@ from services.ocr.handwriting_probability import (
 load_env()
 
 
-ANALYSIS_MODEL = DEFAULT_ANALYSIS_MODEL
+ANALYSIS_MODEL = KILN_GRADING_MODEL
 # 로컬 TexTeller 실패 때만 사용하는 Qwen 비전 OCR 모델이다.
 QWEN_OCR_MODEL = os.getenv("OMJ_OCR_QWEN_MODEL", "fw-qwen3.7-plus")
 DISCRETE_GUARD_ENABLED = os.getenv("OMJ_OCR_DISCRETE_GUARD", "1").strip().lower() in {"1", "true", "yes", "y"}
 
 _DEFAULT_OCR_PROMPT = solve_ocr_prompt()
 _DEFAULT_GRADING_PROMPT = solve_grading_prompt()
+
+
+class _KilnFlowGrade(BaseModel):
+    flow_number: int
+    status: Literal["O", "X"]
+
+
+class _KilnGradingResponse(BaseModel):
+    model_config = {"extra": "allow"}
+    status: List[_KilnFlowGrade]
+    in_panic: List[int] = Field(default_factory=list)
+    ai_opinion: str = ""
 
 
 def analyze_submission(
@@ -104,14 +119,21 @@ def analyze_submission(
     )
     images: List[bytes] = []
 
+    # Lightning-hosted worker performs handwriting OCR above; textual scoring is Kiln-only.
     result_json, warning = _generate_json_with_images(
         prompt=prompt,
         model=analysis_model,
         images=images,
         gen_config=gen_config,
+        provider="kiln",
     )
     if warning:
-        warnings.append(warning)
+        raise KilnRequestError("AI grading could not be completed.")
+
+    raw_status = result_json.get("status", [])
+    indices = [entry.get("flow_number") for entry in raw_status if isinstance(entry, dict)]
+    if len(indices) != len(flow_items) or set(indices) != set(range(len(flow_items))):
+        raise KilnRequestError("AI grading returned incomplete flow results.", 502)
 
     status = _normalize_status_list(result_json.get("status"), len(flow_items))
     in_panic = _normalize_in_panic(result_json.get("in_panic"), len(flow_items))
@@ -386,8 +408,11 @@ def _generate_json_with_images(
     model: str,
     images: List[bytes],
     gen_config: Optional[Dict[str, Any]] = None,
+    provider: str = "sam",
 ) -> Tuple[Dict[str, Any], Optional[str]]:
-    if not is_sam_configured():
+    if provider == "kiln" and not is_kiln_configured():
+        raise KilnRequestError("Kiln is not configured")
+    if provider == "sam" and not is_sam_configured():
         return {}, f"{SAM_API_KEY_ENV} is not set"
 
     config: Dict[str, Any] = {"temperature": 0.1, "top_p": 0.3, "max_tokens": 4096}
@@ -407,12 +432,18 @@ def _generate_json_with_images(
             temperature=config["temperature"],
             top_p=config["top_p"],
             max_tokens=config["max_tokens"],
+            provider=provider,
+            schema=_KilnGradingResponse if provider == "kiln" else None,
         )
         if isinstance(data, dict):
             return data, None
+    except KilnRequestError:
+        raise
     except json.JSONDecodeError:
         return {}, "grading json parse failed"
     except Exception as exc:
+        if provider == "kiln":
+            raise KilnRequestError("AI grading response is invalid.", 502) from None
         return {}, f"grading request failed: {exc}"
     return {}, "grading returned invalid format"
 
