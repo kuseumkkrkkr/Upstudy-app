@@ -1,6 +1,5 @@
 ﻿import base64
 import json
-import os
 from typing import Any, Dict, List, Literal, Optional, Tuple
 from pydantic import BaseModel, Field
 
@@ -26,9 +25,6 @@ load_env()
 
 
 ANALYSIS_MODEL = KILN_GRADING_MODEL
-# 로컬 TexTeller 실패 때만 사용하는 Qwen 비전 OCR 모델이다.
-QWEN_OCR_MODEL = os.getenv("OMJ_OCR_QWEN_MODEL", "fw-qwen3.7-plus")
-DISCRETE_GUARD_ENABLED = os.getenv("OMJ_OCR_DISCRETE_GUARD", "1").strip().lower() in {"1", "true", "yes", "y"}
 
 _DEFAULT_OCR_PROMPT = solve_ocr_prompt()
 _DEFAULT_GRADING_PROMPT = solve_grading_prompt()
@@ -201,72 +197,18 @@ def analyze_pregrade(
 ) -> Dict[str, Any]:
     debug_mode = _parse_debug_flag(payload.get("debug"))
     warnings: List[str] = []
-    analysis_prompt = _normalize_optional_text(payload.get("analysis_prompt")) or _DEFAULT_OCR_PROMPT
-    # Qwen은 TexTeller가 실패한 요청에만 사용하고 채점 모델은 OCR 문자열만 받는다.
-    analysis_model = _normalize_optional_text(payload.get("ocr_analysis_model")) or QWEN_OCR_MODEL
-    gen_config = _normalize_gen_config(payload.get("gen_config"))
-
     if student_work_image_bytes is None and payload.get("student_work_image"):
         student_work_image_bytes = _decode_base64(payload.get("student_work_image"))
     if heatmap_image_bytes is None and payload.get("heatmap_image"):
         heatmap_image_bytes = _decode_base64(payload.get("heatmap_image"))
 
-    # OCR은 창작이 아니라 전사 작업이므로 Qwen 응답 편차를 최소화한다.
-    ocr_gen_config = dict(gen_config or {})
-    ocr_gen_config.setdefault("temperature", 0.0)
-    ocr_gen_config.setdefault("top_p", 0.1)
-    prompt = _augment_ocr_prompt(
-        analysis_prompt=analysis_prompt,
-    )
-    images: List[bytes] = []
-    if student_work_image_bytes:
-        images.append(student_work_image_bytes)
-    if heatmap_image_bytes:
-        images.append(heatmap_image_bytes)
     texteller_result = extract_math_with_texteller_grid(
         student_work_image_bytes or b"",
         payload.get("writing_events"),
     )
-    if texteller_result.get("accepted"):
-        result_json: Dict[str, Any] = {}
-        warning: Optional[str] = None
-        if DISCRETE_GUARD_ENABLED:
-            qwen_result = _run_qwen_ocr(
-                prompt=prompt,
-                model=analysis_model,
-                images=images,
-                gen_config=ocr_gen_config,
-            )
-            warnings.extend(_normalize_warning_list(qwen_result.get("warnings")))
-            ocr_result = _merge_ocr_with_discrete_prior(
-                texteller_result,
-                qwen_result,
-                review_context="texteller_accepted_with_guard",
-            )
-        else:
-            ocr_result = texteller_result
-    else:
-        # TexTeller가 실패·포화·비정상 출력일 때만 Qwen이 원본 이미지 OCR을 담당한다.
-        warnings.extend(_normalize_warning_list(texteller_result.get("warnings")))
-        result_json, warning = _generate_json_with_images(
-            prompt=prompt,
-            model=analysis_model,
-            images=images,
-            gen_config=ocr_gen_config,
-        )
-        qwen_formulas = _normalize_ocr_list(result_json.get("all_formulas"))
-        qwen_purple = _normalize_ocr_list(result_json.get("purple_formulas"))
-        if warning:
-            warnings.append(f"Qwen OCR failed: {warning}")
-        elif not qwen_formulas:
-            warnings.append("Qwen OCR returned no formulas")
-        ocr_result = {
-            **result_json,
-            "all_formulas": qwen_formulas,
-            "purple_formulas": qwen_purple,
-            "ocr_source": "qwen_vision" if qwen_formulas else "qwen_vision_empty",
-            "accepted": bool(qwen_formulas),
-        }
+    # Lightning/TexTeller handles handwriting transcription only. A failed
+    # recognition is returned for review; images are never sent to another model.
+    ocr_result = texteller_result
     warnings.extend(_normalize_warning_list(ocr_result.get("warnings")))
     all_formulas = _normalize_ocr_list(ocr_result.get("all_formulas"))
     purple_formulas = _normalize_ocr_list(ocr_result.get("purple_formulas"))
@@ -279,17 +221,17 @@ def analyze_pregrade(
     )
     debug_info = (
         _build_debug_info(
-            prompt=prompt,
-            model=analysis_model,
-            gen_config=ocr_gen_config,
+            prompt=_DEFAULT_OCR_PROMPT,
+            model="TexTeller",
+            gen_config=None,
             payload=payload,
-            result_json=result_json,
+            result_json=ocr_result,
             student_work_image_bytes=student_work_image_bytes,
             heatmap_image_bytes=heatmap_image_bytes,
             ocr_all_formulas=all_formulas,
             ocr_purple_formulas=purple_formulas,
             ocr_details={
-                "source": ocr_result.get("ocr_source", "qwen_vision"),
+                "source": ocr_result.get("ocr_source", "texteller_unavailable"),
                 "texteller": texteller_result,
                 "warnings": warnings,
             },
@@ -304,7 +246,7 @@ def analyze_pregrade(
         "hit_mapped": hit_mapped,
         "user_answer": user_answer,
         "warnings": warnings,
-        "ocr_source": str(ocr_result.get("ocr_source") or "qwen_vision_empty"),
+        "ocr_source": str(ocr_result.get("ocr_source") or "texteller_unavailable"),
         "ocr_guard": ocr_result.get("ocr_guard"),
         "debug": debug_info,
     }

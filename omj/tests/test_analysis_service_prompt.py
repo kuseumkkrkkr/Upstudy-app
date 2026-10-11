@@ -13,6 +13,8 @@ def test_handwriting_grading_prompt_is_fair_and_tolerant():
     assert "관대하게 평가" in prompt
     assert "동치 표기" in prompt
     assert "정답 인정 쪽으로 판단" in prompt
+    assert "판독 불확실성만으로 감점하지 않는다" in prompt
+    assert "타당한 대안 풀이" in prompt
     assert "낙관 편향을 낮춰서 엄격하게" not in prompt
 
 
@@ -64,8 +66,6 @@ def test_analyze_submission_uses_reference_steps_when_quest_is_missing(monkeypat
         *, prompt, model, images, gen_config=None, provider=None
     ):
         prompts.append(prompt)
-        if len(prompts) == 1:
-            return {"all_formulas": ["x=1"], "purple_formulas": []}, None
         return {
             "status": [{"flow_number": 0, "status": "O"}],
             "in_panic": [],
@@ -76,6 +76,11 @@ def test_analyze_submission_uses_reference_steps_when_quest_is_missing(monkeypat
         analysis_service,
         "_generate_json_with_images",
         fake_generate_json_with_images,
+    )
+    monkeypatch.setattr(
+        analysis_service,
+        "extract_math_with_texteller_grid",
+        lambda *_: {"all_formulas": ["x=1"], "purple_formulas": [], "warnings": []},
     )
 
     result = analysis_service.analyze_submission(
@@ -102,15 +107,13 @@ def test_analyze_submission_uses_reference_steps_when_quest_is_missing(monkeypat
     assert '"hash_tag": ["linear_equation"]' in prompt
 
 
-def test_grading_prompt_override_does_not_replace_ocr_prompt(monkeypatch):
+def test_grading_prompt_override_is_only_used_for_textual_grading(monkeypatch):
     prompts = []
 
     def fake_generate_json_with_images(
         *, prompt, model, images, gen_config=None, provider=None
     ):
         prompts.append(prompt)
-        if len(prompts) == 1:
-            return {"all_formulas": ["x=1"], "purple_formulas": []}, None
         return {
             "status": [{"flow_number": 0, "status": "X"}],
             "in_panic": [],
@@ -122,6 +125,11 @@ def test_grading_prompt_override_does_not_replace_ocr_prompt(monkeypatch):
         "_generate_json_with_images",
         fake_generate_json_with_images,
     )
+    monkeypatch.setattr(
+        analysis_service,
+        "extract_math_with_texteller_grid",
+        lambda *_: {"all_formulas": ["x=1"], "purple_formulas": [], "warnings": []},
+    )
 
     analysis_service.analyze_submission(
         {
@@ -132,6 +140,5 @@ def test_grading_prompt_override_does_not_replace_ocr_prompt(monkeypatch):
         heatmap_image_bytes=b"fake",
     )
 
-    assert "너는 수학 OCR 추출기다." in prompts[0]
-    assert "CUSTOM_GRADING_PROMPT" not in prompts[0]
-    assert "CUSTOM_GRADING_PROMPT" in prompts[1]
+    assert len(prompts) == 1
+    assert "CUSTOM_GRADING_PROMPT" in prompts[0]
