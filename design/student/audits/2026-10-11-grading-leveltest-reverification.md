@@ -41,3 +41,4 @@
 - `/level-tests/placement/stats`: `pool_count=776`, 9개 트랙, 난이도 tier 2/3/4/5가 128/270/270/108개다. 각 트랙의 A/B/C/S 폼 수와 문항 수가 응답에 포함된다.
 - 배포 `main.dart.js`와 hotfix의 `public/main.dart.js`는 각각 7,127,425 bytes, SHA-256 `BC03458BB806B11561A2857EC7CAB0A75C0BBDBC2BA5574F45674E3A54D89931`로 동일하다. 이 비교는 정적 산출물 동일성만 증명하며, 현재 Flutter 소스 변경이 그 산출물에 반영됐다는 증명은 아니다.
 - 라이브 요청은 GET만 수행했다. Canary에 시험 응시·제출·레이팅을 쓰지 않았고, 배포 alias도 변경하지 않았다.
+- 배치 경로 추가 추적: Vercel V2는 versioned `level_test_question_bank`를 읽지만, OMJ `apply_level_test_placement`는 기존 `level_test_template_item`/`problem_payload` 저장소에서 문제를 읽는다. 새 테이블을 읽는 연결은 아직 없다. 새 tier를 내부 OVR 난이도로 바꾸는 보정 규칙도 해당 SQL 스키마에 없으므로 임의 변환하지 않는다.
