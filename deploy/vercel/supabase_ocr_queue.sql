@@ -24,7 +24,7 @@ returns setof public.ocr_jobs language plpgsql security definer set search_path=
 begin
   return query with candidate as (
     select id from public.ocr_jobs
-    where expires_at > now() and attempts < 3
+    where mode = 'ocr' and expires_at > now() and attempts < 3
       and (status='queued' or (status='running' and lease_until < now()))
     order by created_at for update skip locked limit 1
   ) update public.ocr_jobs j set status='running', attempts=j.attempts+1,
