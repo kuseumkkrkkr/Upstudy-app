@@ -15,6 +15,8 @@
 
 ## 다음 작업 및 완료 조건
 
+- 두 서비스에 전용키 저장을 확인한 뒤 D: 임시 `.ocr-link-keys.json`을 제거했다. 키는 Vercel Sensitive 환경변수와 remote private `.env`에 유지된다. source/public backup은 삭제하지 않았다. 다음 callback base 변경은 기존 remote `.env`의 키를 보존하며 URL만 변경한다.
+
 1. 현재 Studio 원격 편집기를 다시 연결해 `texteller-smoke-20261013.log`를 회수한다. 실제 accepted/formula/warnings를 기록하고 실패면 원인만 고친다. 다른 모델로 대체하지 않는다.
 2. remote callback base를 공개 canonical canary 주소로 바꾼 뒤 worker 재시작과 후보 검수/alias 전환을 하나의 짧은 canary cutover로 조정한다. 비공개 후보를 callback 주소로 유지하거나 보호 우회키를 worker에 제공하지 않는다. 전환 전 실제 모델 로드/인식을 확인해야 한다.
 3. candidate→canary 승격 후 실제 테스트 계정의 이미지 제출/조회/채점 및 재시도, 이력·약점 저장을 검증한다. 실패면 검증된 이전 alias로 복구하고 주문/학생 원장을 삭제하지 않는다.
