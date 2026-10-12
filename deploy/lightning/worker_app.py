@@ -1,28 +1,28 @@
-"""Lightning AI에서 TexTeller 작업을 한 번씩 가져와 처리하는 공개 wake API."""
+"""Lightning wake worker: handwriting OCR only; product APIs and grading stay on Vercel."""
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
+import hmac
 import os
 import socket
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
-from fastapi import Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parents[2]
 OMJ = ROOT / "omj"
 sys.path.insert(0, str(OMJ))
-os.chdir(OMJ)
 
-from analysis_service import analyze_pregrade, analyze_submission  # noqa: E402
-from storage.solve_history import save_solve_history  # noqa: E402
-from server import app as full_api_app  # noqa: E402
+from services.ocr.texteller_grid import extract_math_with_texteller_grid  # noqa: E402
 
-# 기존 FastAPI 전체 라우트에 OCR wake만 추가해, Lightning 한 포트에서 모든 제품 API를 제공한다.
-app = full_api_app
+app = FastAPI(title="AIFlow Handwriting OCR Worker")
 _worker_id = f"lightning-{socket.gethostname()}-{os.getpid()}"
 _run_lock = asyncio.Lock()
 
@@ -33,99 +33,92 @@ class WakeRequest(BaseModel):
 
 
 def _client() -> httpx.Client:
-    """필요 변수: Supabase Secret. 작동 원리: service role로 원자적 큐 RPC만 호출한다."""
-    url = os.environ["SUPABASE_URL"].rstrip("/")
-    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-    return httpx.Client(base_url=f"{url}/rest/v1", headers={"apikey":key,"Authorization":f"Bearer {key}"}, timeout=30)
+    """필요 변수: Vercel OCR URL·전용 worker secret. DB 자격 증명은 Lightning에 두지 않는다."""
+    url = os.environ["VERCEL_API_BASE_URL"].strip().rstrip("/")
+    secret = os.environ["VERCEL_OCR_WORKER_SECRET"].strip()
+    try:
+        parsed = urlsplit(url)
+        host = parsed.hostname or ""
+        port = parsed.port
+    except ValueError as error:
+        raise RuntimeError("Vercel OCR worker configuration is invalid") from error
+    is_vercel_host = host == "vercel.app" or host.endswith(".vercel.app")
+    if (
+        parsed.scheme != "https"
+        or not is_vercel_host
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in (None, 443)
+        or parsed.path not in ("", "/")
+        or parsed.query
+        or parsed.fragment
+        or not secret
+    ):
+        raise RuntimeError("Vercel OCR worker configuration is invalid")
+    return httpx.Client(
+        base_url=f"https://{host}",
+        headers={"X-Worker-Secret": secret},
+        timeout=httpx.Timeout(30, connect=5),
+    )
 
 
-def _rpc(client: httpx.Client, name: str, body: dict[str, Any]) -> Any:
-    """필요 변수: RPC 이름·인자. 작동 원리: 실패 응답을 즉시 예외로 바꾸고 JSON 결과를 반환한다."""
-    response = client.post(f"/rpc/{name}", json=body)
+def _request(client: httpx.Client, path: str, body: dict[str, Any]) -> Any:
+    """필요 변수: Vercel 내부 OCR 경로·본문. 응답 오류를 예외로 바꾼다."""
+    response = client.post(path, json=body)
     response.raise_for_status()
     return response.json()
 
 
-def _extract_codebase_seed(payload: dict[str, Any]) -> tuple[int | None, int | None]:
-    """필요 변수: 기존 풀이 payload의 선택 data 객체다.
-    작동 원리: 동적 문제에서만 쓰는 codebase_id·seed를 정수로 정규화해 복습 이력과
-    문제 재생 기능이 일반 HTTP 풀이 경로와 같은 식별자를 사용하게 한다.
-    """
-    data = payload.get("data")
-    if not isinstance(data, dict):
-        return None, None
+def _decode_image(value: Any) -> bytes:
+    """Decode only the base64 handwriting image Vercel projected for OCR."""
+    if not isinstance(value, str) or not value:
+        return b""
+    if len(value) > 6_000_000:
+        raise ValueError("invalid_handwriting_image")
     try:
-        codebase_id = int(data["codebase_id"]) if data.get("codebase_id") is not None else None
-    except (TypeError, ValueError):
-        codebase_id = None
-    try:
-        seed = int(data["seed"]) if data.get("seed") is not None else None
-    except (TypeError, ValueError):
-        seed = None
-    return codebase_id, seed
-
-
-def _save_queued_solve_history(
-    *,
-    user_id: str,
-    payload: dict[str, Any],
-    result: dict[str, Any],
-) -> None:
-    """필요 변수: 큐 소유자·분석 입력·분석 결과다.
-    작동 원리: 큐 worker가 분석 서비스만 직접 호출해도 일반 `/analysis/solve`와 같은
-    7일 보관 풀이 이력을 저장하여 오답노트·복습 화면에서 누락되지 않게 한다.
-    """
-    if not user_id:
-        return
-    exam_id = str(payload.get("exam_id") or "").strip() or None
-    quest_id = str(payload.get("quest_id") or "").strip() or None
-    codebase_id, seed = _extract_codebase_seed(payload)
-    history_payload = {
-        **result,
-        "all_formulas": payload.get("all_formulas") or [],
-        "ocr_all_formulas": payload.get("ocr_all_formulas") or [],
-        "ocr_purple_formulas": payload.get("ocr_purple_formulas") or [],
-        "codebase_id": codebase_id,
-        "seed": seed,
-        "exam_id": exam_id,
-        "quest_id": quest_id,
-    }
-    save_solve_history(
-        user_id=user_id,
-        kind="exam" if exam_id else "problem",
-        quest_id=quest_id,
-        exam_id=exam_id,
-        codebase_id=codebase_id,
-        seed=seed,
-        payload=history_payload,
-        delete_after_max=True,
-    )
+        return base64.b64decode(value, validate=True)
+    except (ValueError, binascii.Error):
+        return b""
 
 
 def _process_available_jobs() -> None:
-    """필요 변수: Supabase 큐·기존 분석 서비스. 작동 원리: SKIP LOCKED로 선점해 한 번에 하나씩 최대 20건 처리한다."""
+    """Run TexTeller on leased handwriting input supplied by the Vercel API only."""
     with _client() as client:
         for _ in range(20):
-            rows = _rpc(client,"claim_ocr_job",{"p_worker_id":_worker_id,"p_lease_seconds":900}) or []
+            rows = _request(
+                client,
+                "/internal/ocr/claim",
+                {"worker_id": _worker_id, "lease_seconds": 900},
+            ) or []
             if not rows:
                 return
             job = rows[0]
             try:
+                if not isinstance(job, dict) or job.get("mode") != "ocr":
+                    raise ValueError(
+                        "Lightning accepts OCR-only jobs; grading and product logic belong to Vercel."
+                    )
                 payload = dict(job.get("payload") or {})
-                result = analyze_submission(payload) if job.get("mode") == "solve" else analyze_pregrade(payload)
-                if job.get("mode") == "solve":
-                    # 분석 성공 뒤에만 저장한다. 이력 저장 실패가 OCR 결과 응답을 막지는 않는다.
-                    try:
-                        _save_queued_solve_history(
-                            user_id=str(job.get("user_id") or ""),
-                            payload=payload,
-                            result=result,
-                        )
-                    except Exception:
-                        pass
-                _rpc(client,"complete_ocr_job",{"p_job_id":job["id"],"p_worker_id":_worker_id,"p_result":result})
+                if set(payload) - {"student_work_image", "writing_events"}:
+                    raise ValueError("non-OCR payload reached Lightning")
+                result = extract_math_with_texteller_grid(
+                    _decode_image(payload.get("student_work_image")),
+                    payload.get("writing_events"),
+                )
+                _request(
+                    client,
+                    f"/internal/ocr/jobs/{job['id']}/complete",
+                    {"worker_id": _worker_id, "result": result},
+                )
             except Exception as error:
-                _rpc(client,"fail_ocr_job",{"p_job_id":job["id"],"p_worker_id":_worker_id,"p_error":f"{type(error).__name__}: {error}"})
+                job_id = job.get("id") if isinstance(job, dict) else None
+                if not isinstance(job_id, str) or not job_id:
+                    raise
+                _request(
+                    client,
+                    f"/internal/ocr/jobs/{job_id}/fail",
+                    {"worker_id": _worker_id, "error": type(error).__name__},
+                )
 
 
 async def _run_once() -> None:
@@ -138,21 +131,22 @@ async def _run_once() -> None:
 
 @app.on_event("startup")
 async def drain_queue_on_startup() -> None:
-    """필요 변수: Supabase 큐 환경값. 작동 원리: 콜드 스타트 wake 연결이 끊겨도 남은 작업을 자동 소비한다."""
-    if os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
+    """필요 변수: Vercel OCR endpoint와 전용 secret. 콜드 스타트 뒤 큐 복구를 시도한다."""
+    if os.getenv("VERCEL_API_BASE_URL") and os.getenv("VERCEL_OCR_WORKER_SECRET"):
         asyncio.create_task(_run_once())
 
 
 @app.get("/health")
 def health() -> dict[str,str]:
     """필요 변수: 없음. 작동 원리: 모델 로드 없이 worker HTTP 프로세스 생존을 알린다."""
-    return {"status":"ok","worker_id":_worker_id}
+    return {"status":"ok","worker_id":_worker_id,"scope":"handwriting_ocr_only"}
 
 
 @app.post("/wake", status_code=202)
 async def wake(_: WakeRequest, x_worker_secret: str | None = Header(default=None)) -> dict[str,str]:
     """필요 변수: Vercel과 공유한 Secret. 작동 원리: 즉시 응답하고 단일 백그라운드 소비 루프를 시작한다."""
-    if not os.getenv("LIGHTNING_WAKE_SECRET") or x_worker_secret != os.getenv("LIGHTNING_WAKE_SECRET"):
+    expected = os.getenv("LIGHTNING_WAKE_SECRET", "")
+    if not expected or not x_worker_secret or not hmac.compare_digest(x_worker_secret, expected):
         raise HTTPException(status_code=401,detail="invalid worker secret")
     asyncio.create_task(_run_once())
     return {"status":"accepted"}

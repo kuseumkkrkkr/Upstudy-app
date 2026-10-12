@@ -2,7 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "functions": {
-    "api/index.py": { "maxDuration": 30 }
+    "api/index.py": {
+      "maxDuration": 30,
+      "includeFiles": "data/content/**",
+      "excludeFiles": "{.dart_tool/**,omj/**,build/**,design/**,lib/**,test/**,tests/**,assets/**,public/**,s11_teacher/**,android/**,ios/**,web/**,windows/**,linux/**,macos/**,scripts/**,tool/**}"
+    }
   },
   "headers": [
     {
@@ -15,7 +19,7 @@
   "routes": [
     { "handle": "filesystem" },
     {
-      "src": "/(health|auth|user|account|rating|arena|weakness|history|courses|academy|challenges|marketplace|analysis|social|textbooks|quests|exams|serverchat|level-tests|graphs|demo|student|api)(/.*)?",
+      "src": "/(health|auth|user|account|rating|arena|weakness|history|courses|academy|challenges|marketplace|analysis|social|textbooks|quests|exams|continue|serverchat|level-tests|graphs|demo|student|api|internal)(/.*)?",
       "dest": "/api/index.py"
     },
     { "src": "/(.*)", "dest": "/index.html" }

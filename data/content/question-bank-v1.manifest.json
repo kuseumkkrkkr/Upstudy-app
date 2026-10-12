@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "source": "omj/quests.db",
+  "source_sha256": "ab32a63dac62b316b2a301f2b83f86d83dd699b730ffc41acda76c861c932fca",
+  "tables": [
+    "quest_header",
+    "quest_info",
+    "quest_data",
+    "solve_step"
+  ],
+  "row_counts": {
+    "quest_header": 3111,
+    "quest_info": 3111,
+    "quest_data": 3111,
+    "solve_step": 12392
+  },
+  "question_count": 3111,
+  "solve_step_count": 12392,
+  "database_sha256": "a0ff8d47a4207802a25fb17b2534b8e65ead0c8d5f352e81de35bb7dc2ebd009",
+  "database_bytes": 15044608,
+  "scope": "shared question content only; excludes users, ratings, submissions, and other runtime state"
+}

@@ -11,8 +11,11 @@ android/
 assets/
 artifacts/
 build/
-data/
 deploy/
+data/*
+!data/content/
+!data/content/**
+data/content/leveltest-expanded-v1/
 design/
 docs/
 gen_textbook/
@@ -31,6 +34,7 @@ test/
 tests/
 test_simulation/
 tool/
+tools/
 web/
 windows/
 .env*
@@ -38,6 +42,9 @@ windows/
 *.lock
 *.yaml
 *.md
+*.log
+.flutter-plugins-dependencies
+.metadata
 CODE_GUIDELINES.md
 devtools_options.yaml
 pubspec.yaml

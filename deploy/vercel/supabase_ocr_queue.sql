@@ -20,7 +20,7 @@ alter table public.ocr_jobs enable row level security;
 revoke all on public.ocr_jobs from anon, authenticated;
 
 create or replace function public.claim_ocr_job(p_worker_id text, p_lease_seconds integer default 600)
-returns setof public.ocr_jobs language plpgsql security definer set search_path=public as $$
+returns setof public.ocr_jobs language plpgsql security definer set search_path=pg_catalog,public as $$
 begin
   return query with candidate as (
     select id from public.ocr_jobs
@@ -34,7 +34,7 @@ begin
 end $$;
 
 create or replace function public.complete_ocr_job(p_job_id uuid,p_worker_id text,p_result jsonb)
-returns boolean language plpgsql security definer set search_path=public as $$
+returns boolean language plpgsql security definer set search_path=pg_catalog,public as $$
 declare changed integer; begin
   update public.ocr_jobs set status='completed',result=p_result,error=null,payload='{}'::jsonb,
     lease_owner=null,lease_until=null,updated_at=now()
@@ -43,7 +43,7 @@ declare changed integer; begin
 end $$;
 
 create or replace function public.fail_ocr_job(p_job_id uuid,p_worker_id text,p_error text)
-returns boolean language plpgsql security definer set search_path=public as $$
+returns boolean language plpgsql security definer set search_path=pg_catalog,public as $$
 declare changed integer; begin
   update public.ocr_jobs set status=case when attempts>=3 then 'failed' else 'queued' end,
     error=left(p_error,2000),lease_owner=null,lease_until=null,updated_at=now()
@@ -52,7 +52,7 @@ declare changed integer; begin
 end $$;
 
 create or replace function public.delete_expired_ocr_jobs() returns bigint
-language plpgsql security definer set search_path=public as $$
+language plpgsql security definer set search_path=pg_catalog,public as $$
 declare changed bigint; begin delete from public.ocr_jobs where expires_at<now();
 get diagnostics changed=row_count; return changed; end $$;
 
