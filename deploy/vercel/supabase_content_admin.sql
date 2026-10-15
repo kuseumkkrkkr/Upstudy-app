@@ -30,7 +30,7 @@ grant select on public.canary_content_admins, public.canary_content to service_r
 
 create or replace function public.admin_write_content(
   p_actor uuid, p_id text, p_payload jsonb, p_version integer,
-  p_archived boolean, p_key text
+  p_archived boolean, p_key text, p_operation text
 ) returns jsonb language plpgsql security definer set search_path=pg_catalog,public as $$
 declare
   previous public.canary_content%rowtype;
@@ -43,11 +43,15 @@ begin
   end if;
   if p_id is null or p_id !~ '^[a-z0-9][a-z0-9-]{2,119}$' or p_version is null or p_version < 0
      or p_archived is null or p_key is null or length(p_key) not between 1 and 160
+     or p_operation is null or p_operation not in ('save','archive','restore')
+     or (p_operation='archive') <> p_archived
      or p_payload is null or jsonb_typeof(p_payload) <> 'object' or octet_length(p_payload::text) > 100000 then
     raise exception 'invalid_content_request';
   end if;
-  signature := encode(sha256(convert_to(jsonb_build_object('id',p_id,'payload',p_payload,
-    'version',p_version,'archived',p_archived)::text,'UTF8')),'hex');
+  -- Archive/restore have no client body: reread metadata must not change a retry's identity.
+  signature := encode(sha256(convert_to(jsonb_build_object('id',p_id,
+    'payload',case when p_operation='save' then p_payload else null end,
+    'version',p_version,'operation',p_operation)::text,'UTF8')),'hex');
   -- Same key on different content cannot race; then serialize all edits to this ID.
   perform pg_advisory_xact_lock(hashtextextended('content-key:'||p_actor::text||':'||p_key,0));
   select * into receipt from public.canary_content_changes where actor=p_actor and request_key=p_key;
@@ -67,6 +71,12 @@ begin
     values(p_actor,p_key,signature,p_id,previous.payload,result);
   return result;
 end $$;
-revoke all on function public.admin_write_content(uuid,text,jsonb,integer,boolean,text) from public,anon,authenticated;
-grant execute on function public.admin_write_content(uuid,text,jsonb,integer,boolean,text) to service_role;
+revoke all on function public.admin_write_content(uuid,text,jsonb,integer,boolean,text,text) from public,anon,authenticated;
+grant execute on function public.admin_write_content(uuid,text,jsonb,integer,boolean,text,text) to service_role;
+-- If an earlier draft was installed, retire its RPC access without deleting audit data.
+do $$ begin
+  if to_regprocedure('public.admin_write_content(uuid,text,jsonb,integer,boolean,text)') is not null then
+    execute 'revoke all on function public.admin_write_content(uuid,text,jsonb,integer,boolean,text) from public,anon,authenticated,service_role';
+  end if;
+end $$;
 commit;

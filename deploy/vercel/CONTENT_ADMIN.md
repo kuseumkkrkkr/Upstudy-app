@@ -42,4 +42,8 @@ API 키·Bearer는 탭 메모리에만 존재한다. 새로고침·연결 해제
 
 ## 현재 검증 범위
 
+보관/복원 요청의 멱등 지문은 `id/version/operation` 기준이며 서버에서 재조회한 메타데이터는 제외한다. 저장 요청은 본문도 지문에 포함한다. 따라서 보관 성공 이후 다른 관리자가 제목을 수정해도 응답 유실 재시도는 최초 결과를 반환하고 후속 변경을 덮어쓰지 않는다. RPC에는 `p_operation`이 필수이며 이전 초안 6인자 RPC의 service_role 실행 권한도 회수한다.
+
+계정 준비 도구는 `tools/create_content_admin_account.ps1`이다. 비밀번호를 Windows DPAPI CLIXML로 암호화하고 디렉터리 ACL도 현재 사용자 SID로 제한한다. 기존 계정은 초기화하지 않으며 같은 자격증명으로 로그인할 수 있을 때만 복구를 인정한다. 이 도구는 admin membership을 부여하지 않는다.
+
 API 단위/회귀와 Flutter 위젯 검사는 실행 원장에 기록한다. 실제 관리자 계정/전용 키 설정, Supabase migration 적용, 실제 PostgreSQL 동시성, 배포본 권한 검사는 별도 통과 전까지 미검증이다. 일반 사용자 로그인 실패를 관리자 권한으로 우회하지 않는다.

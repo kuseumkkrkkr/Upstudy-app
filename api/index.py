@@ -3278,8 +3278,9 @@ def list_enrolled_courses(user_id: str = Depends(_current_user)) -> dict[str, li
     """필요 변수: 인증 사용자와 무료 마켓 보유 상태. 작동 원리: 구매한 코스 asset ID를 내 코스 화면의 등록 계약으로 변환한다."""
     owned = _load_owned_marketplace(user_id)
     items = []
+    catalog = {item['id']: item for item in _effective_catalog(include_archived=True)}
     for listing_id, state in owned.items():
-        listing = _find_catalog_listing(listing_id)
+        listing = catalog.get(listing_id)
         if listing is None or listing["kind"] != "course":
             continue
         items.append(
@@ -3317,10 +3318,11 @@ def reorder_course_enrollments(
     if len(set(course_ids)) != len(course_ids):
         raise HTTPException(status_code=422, detail="duplicate_course_ids")
     owned = _load_owned_marketplace(user_id)
+    catalog = {item['id']: item for item in _effective_catalog(include_archived=True)}
     enrolled_ids = {
         str(listing["asset_id"])
         for listing_id in owned
-        if (listing := _find_catalog_listing(listing_id)) is not None
+        if (listing := catalog.get(listing_id)) is not None
         and listing.get("kind") == "course"
     }
     if set(course_ids) != enrolled_ids:

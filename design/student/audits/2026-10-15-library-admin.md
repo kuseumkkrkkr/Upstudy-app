@@ -23,6 +23,15 @@
 
 ## 남은 항목 / 재개
 
+### 후속 재시도 경계 점검
+
+- 보관 성공→다른 관리자 제목 변경→원래 보관 재시도에서 409를 재현했다. 서버 재조회 payload가 아니라 HTTP 요청의 id/version/operation으로 멱등 지문을 계산하도록 수정하고 회귀 테스트를 추가했다.
+- 코스 등록 목록/정렬은 보유 항목마다 DB 원장을 읽던 부분을 요청당 한 번으로 변경했다. 호출 횟수 검사 추가. 기존 미추적 `test_vercel_course_order.py`의 mock도 새 조회 경계에 맞춰 수정했으나 이전 사용자 파일 전체를 함께 커밋하지 않는다.
+- API 전체 재실행: **241 passed**, 기존 경고82. 실제 PostgreSQL 검증으로 대체하지 않는다.
+- 로컬 Docker Desktop 실행을 시도했으나 실제 Linux engine pipe가 없고 backend 로그 상태는 stopped였다. Docker CLI 시작도 반환이 지연되어 실DB 검증 환경이 아직 확보되지 않았다.
+- 사용자가 임시 강력 비밀번호 자동 생성/보호 파일 전달을 승인했다. 생성 정보는 `build/temp/private-content-admin/admin.credential.clixml`에 Windows DPAPI 암호화, 현재 SID만 ACL 허용으로 보존했다. 비밀번호·토큰은 출력하지 않았다.
+- 실제 canary `/auth/username/check`: `admin`은 이미 사용 중. 새 생성 자격증명으로 `/auth/login` 실패. **계정 생성 성공/로그인 검증/권한 부여라고 보고하지 않음**. 보호 파일 State는 `existing-admin-login-not-verified`; 작동하는 관리자 비밀번호 파일이 아니다. 기존 계정 초기화 없음. 기존 계정 소유 확인·로그인 또는 새 관리자 아이디 지정 필요.
+
 1. admin 계정 비밀번호: 사용자 지정값은 기존 가입 정책(영문·숫자 8~20자)에 부적합. 정책을 약화하거나 임의 비밀번호로 계정을 만들지 않음. 사용자 안전 입력 필요.
 2. Supabase 추가 SQL 검토/적용, 정확한 admin 계정 UUID membership 등록 및 전용 API key 설정 필요. 현재 실서비스는 이 기능 비활성 상태다.
 3. 실제 PostgreSQL 복수 연결 충돌/멱등·권한, canary 보유 시험지 열기/새로고침, 관리자 로그인+CRUD 검증 필요.

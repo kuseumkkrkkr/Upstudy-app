@@ -27,15 +27,18 @@ class Store:
             return list(self.rows.values())
         assert path == 'rpc/admin_write_content'
         key = (body['p_actor'], body['p_key'])
+        identity = {**body}
+        if body.get('p_operation') in {'archive','restore'}:
+            identity.pop('p_payload', None)
         if key in self.receipts:
             original, result = self.receipts[key]
-            return result if original == body else {'error': 'idempotency_conflict'}
+            return result if original == identity else {'error': 'idempotency_conflict'}
         previous = self.rows.get(body['p_id'])
         if (previous or {}).get('version', 0) != body['p_version']:
             return {'error': 'version_conflict'}
         result = {'id': body['p_id'], 'version': body['p_version'] + 1, 'archived': body['p_archived']}
         self.rows[body['p_id']] = {**result, 'payload': body['p_payload']}
-        self.receipts[key] = (body, result)
+        self.receipts[key] = (identity, result)
         self.writes += 1
         return result
 
@@ -112,6 +115,21 @@ def test_invalid_input_and_missing_key_never_write(setup):
     assert store.writes == 0
 
 
+def test_archive_retry_keeps_original_result_after_later_metadata_edit(setup):
+    _, store, client, headers, payload = setup
+    path = '/admin/api/content/' + payload['id']
+    assert client.put(path, json=payload, headers=headers()).status_code == 200
+    archive_headers = {**headers(), 'X-Idempotency-Key':'archive-response-lost'}
+    first = client.delete(path+'?version=1', headers=archive_headers)
+    assert first.status_code == 200
+    update_headers = {**headers(), 'X-Idempotency-Key':'later-edit'}
+    assert client.put(path, json={**payload, 'version':2, 'title':'Changed later'}, headers=update_headers).status_code == 200
+    retry = client.delete(path+'?version=1', headers=archive_headers)
+    assert retry.status_code == 200, retry.text
+    assert retry.json() == first.json()
+    assert store.rows[payload['id']]['version'] == 3
+
+
 def test_ui_is_no_store_and_does_not_persist_credentials(setup):
     _, _, client, _, _ = setup
     response = client.get('/admin')
@@ -130,3 +148,20 @@ def test_migration_privileges_and_transaction_guards():
     assert 'pg_advisory_xact_lock' in sql and 'version_conflict' in sql
     assert 'delete from' not in sql.lower()
     assert 'from public,anon,authenticated' in sql
+
+
+def test_enrollment_lookup_reads_catalog_once_per_request(setup, monkeypatch):
+    api, _, _, _, _ = setup
+    courses = [item for item in api.MARKETPLACE_CATALOG if item['kind'] == 'course'][:3]
+    reads = []
+    def catalog(**kwargs):
+        reads.append(kwargs)
+        return courses
+    monkeypatch.setattr(api, '_effective_catalog', catalog)
+    monkeypatch.setattr(api, '_load_owned_marketplace', lambda _: {item['id']:{} for item in courses})
+    monkeypatch.setattr(api, '_load_course_enrollment_order', lambda _: [])
+    monkeypatch.setattr(api, '_save_course_enrollment_order', lambda *_: None)
+    assert len(api.list_enrolled_courses('admin-user')['items']) == len(courses)
+    assert len(reads) == 1
+    api.reorder_course_enrollments(api.CourseEnrollmentOrderRequest(course_ids=[item['asset_id'] for item in courses]), 'admin-user')
+    assert len(reads) == 2

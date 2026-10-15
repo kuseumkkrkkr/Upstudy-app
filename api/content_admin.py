@@ -81,13 +81,14 @@ def install(app, data_api, current_user, seed, find_question):
             raise HTTPException(403, "Admin account and API key required")
         return user_id
 
-    def write(actor, content_id, payload, version, archived, key):
+    def write(actor, content_id, payload, version, archived, key, operation="save"):
         if not key or len(key) > 160:
             raise HTTPException(422, "X-Idempotency-Key required (1..160 characters)")
         try:
             result = data_api().request("POST", "rpc/admin_write_content", body={
                 "p_actor": actor, "p_id": content_id, "p_payload": payload,
                 "p_version": version, "p_archived": archived, "p_key": key,
+                "p_operation": operation,
             })
         except RuntimeError as error:
             raise HTTPException(503, "Content write unavailable; retry with the same key") from error
@@ -145,7 +146,7 @@ def install(app, data_api, current_user, seed, find_question):
         stored = next((row for row in stored_rows(data_api) if row["id"] == content_id), None)
         if not stored and not original:
             raise HTTPException(404, "Content not found")
-        return write(actor, content_id, (stored or {}).get("payload", original), version, True, x_idempotency_key)
+        return write(actor, content_id, (stored or {}).get("payload", original), version, True, x_idempotency_key, "archive")
 
     @app.post("/admin/api/content/{content_id}/restore")
     def restore(content_id: str, version: int = Query(ge=1), actor: str = Depends(admin),
@@ -153,4 +154,4 @@ def install(app, data_api, current_user, seed, find_question):
         stored = next((row for row in stored_rows(data_api) if row["id"] == content_id), None)
         if not stored:
             raise HTTPException(404, "Content not found")
-        return write(actor, content_id, stored["payload"], version, False, x_idempotency_key)
+        return write(actor, content_id, stored["payload"], version, False, x_idempotency_key, "restore")
