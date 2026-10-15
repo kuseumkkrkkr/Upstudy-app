@@ -2,6 +2,32 @@
 
 ## 최신 상태: 별도 관리자 DB로 전환
 
+### 최종 요청 범위 검수 — 2026-10-15
+
+아래 결과가 이후의 중간/미완료 기록을 대체한다. 앱 전체 86화면 디자인 일치나 전체 200명 동시 세션 상용 검증 완료를 뜻하지 않는다.
+
+| 요구사항 | 실제 근거 | 판정 |
+|---|---|---|
+| D: hotfix만 사용 | 매 셸 가드, 소스 변경13b98c3·정적 빌드c9e0dae | 통과 |
+| 더보기 자료실→marketplace / 기본 자료실→책가방 | 최종 alias 실제 버튼 클릭으로 두 URL 확인 | 통과 |
+| 보유 시험지 목록·열람 | 테스트 계정 보유3개, 기존10문항 시험지 실제 지문 열람·나가기. 답안 제출 없음 | 통과 |
+| 분류·가변 높이 | 학습8/도구7/내 메뉴7(demo on), shrinkWrap/maxHeight, demo off 높이 축소 위젯 검사, 390px 이미지 | 통과 |
+| 관리자3종 조회/추가/삭제 | 실제 별도 DB API course/exam/problem_set 생성·조회·보관, UI 시험지 저장/재조회/복원/보관 | 통과 |
+| 관리자 계정+키 서버 검증 | 별도 계정/JWT, 잘못된 키 실제403, 최종 alias 인증 없음401, RLS4개·노출 권한0 | 통과 |
+| 영속·변경 충돌·멱등성 | 같은 키200회/최대HTTP20 worker, 최종 원장5건/version5, 동시버전 충돌1건, 다른 본문409 | 통과 |
+| 기존 사용자 기록·무관한 수정 보존 | 학생 DB 관리자 생성/삭제 없음, QA 자료만 보관, public 세 회분 D: 백업, 홈은 연결 hunk만 stage | 통과 |
+| Flutter/API 검사 | 집중4파일8 passed + 홈 데스크톱/공통 시트2 passed, 전체API243 passed/기존82 warnings | 통과 |
+| D: 새 빌드·실제 UI | Flutter3.44.6/Dart3.12.2 release223.9초 성공, 아래 alias 해시·화면·동작 확인 | 통과 |
+
+- 최종 소스 연결 수정 `13b98c38dbe21e1541769d216c74eee98d00410a`, 배포 정적 산출물 커밋 `c9e0daee92e3919d1b7129079b4255d5275243f4`.
+- 배포 `dpl_Cj8J32MwUXBxxoRrXgH8hzSHSNwd`, 고유 URL `https://aiflow-web-canary-6fxdyrc5w-cw20208021-9200s-projects.vercel.app`, 지정 alias `https://aiflow-web-canary.vercel.app` 재확인. 지정 alias 이외 운영 도메인 수정 없음.
+- 최종 main.dart.js 7,114,794 bytes / SHA256 `135933D9B8DE0C2EB95F86133198F826335D6BF04EEADD20D21743BE2954078F`: D: build/web, public, 후보 및 alias 다운로드 일치. /health ok, 최종 admin API 미인증401. DB 실제 검사 이후 API/admin HTML·JS·SQL 변경0건 확인.
+- API_BASE_URL=지정 canary, STUDENT_SERVICES_DEMO=true, STUDENT_STORE_DEMO=true. Wasm dry run 성공, 기존 CupertinoIcons 폰트 경고는 남음. full analyze/앱 전체 테스트·상용 처리량 검증을 통과했다고 확대 보고하지 않음.
+- 최종 홈 데스크톱 더보기: URL은 /student/dashboard 유지하면서 공통 시트 열림, '더보기 닫기' 이름 존재, Escape로 홈 복귀. 이전 learning-tools 구형 목적지를 root callback에서 수정. 레이아웃·색상 변경 없음. 집중 회귀2 passed (`home-more-regression.log`).
+- 최종 이미지 `canary-final-more-1280.png`, `canary-final-owned-exams-1280.png`, `canary-final-exam-open-1280.png`; 기준/이전은 기존 html-more.png / dart-before-more.png. 앞서 잘린 모바일 이미지는 제외하고 *-verified.png 및 canary-more-measured-390.png만 사용.
+- 기존 큰 미커밋 변경은 여전히 보존돼 있다(예: bookbag/홈 디자인 관련 기존 변경). 최종 SHA만으로 모든 dirty Dart 소스를 재현할 수 있다고 주장하지 않는다. 현재 검증된 D: 작업본과 커밋된 public를 기준으로 이어가며, 다른 작업본·오래된 소스로 재빌드 금지.
+- 이번 목표의 요구사항에 미검증 잔여 없음. 광범위한 학생앱 전체 디자인/트래픽 과제는 이 검수의 완료 범위가 아니다.
+
 ### 2026-10-15 실제 canary 반영 및 사용자 여정
 
 - 새 관리자 dialog 후보: `dpl_7g3WN9KaQvE3Nqb5Ynx35xowmuxg`, `https://aiflow-web-canary-t5ntqqghy-cw20208021-9200s-projects.vercel.app`, 배포 HEAD `b6d93f49d9035ba409580cfc8f3c13f9d3afe788` (기존 dirty 소스 보존). 전체 API 243 passed/기존82 warnings.
